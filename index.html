@@ -1,1 +1,258 @@
 <!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>מערכת ניהול ישיבה</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0e0a;--bg2:#1a1812;--bg3:#242018;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0e8d0;--text2:#b8a880;--text3:#7a6e58;--red:#c0392b;--border:#3a3428;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+#setup{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:48px;max-width:480px;width:100%;text-align:center}
+.box h1{font-family:'Frank Ruhl Libre',serif;font-size:2rem;color:var(--gold);margin-bottom:8px}
+.box p{color:var(--text2);margin-bottom:32px}
+label{display:block;text-align:right;margin-bottom:6px;color:var(--text2);font-size:.9rem}
+input[type=text]{width:100%;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.95rem;margin-bottom:16px;direction:ltr;text-align:left}
+input:focus{outline:none;border-color:var(--gold)}
+.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);border:none;padding:14px;border-radius:var(--r);font-size:1rem;font-weight:700;cursor:pointer;width:100%;font-family:Heebo}
+.err{color:var(--red);font-size:.85rem;margin-top:12px}
+#app{display:none}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
+.logo{font-family:'Frank Ruhl Libre',serif;font-size:1.4rem;color:var(--gold);display:flex;align-items:center;gap:10px}
+nav{display:flex;gap:4px}
+.nb{background:none;border:none;color:var(--text2);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:Heebo;font-size:.9rem;display:flex;align-items:center;gap:6px;transition:all .2s}
+.nb:hover,.nb.on{background:var(--bg3);color:var(--gold)}
+main{padding:32px 24px;max-width:1200px;margin:0 auto}
+.pg{display:none}.pg.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.ph h2{font-family:'Frank Ruhl Libre',serif;font-size:1.8rem;color:#f5e0a0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center}
+.card .n{font-family:'Frank Ruhl Libre',serif;font-size:2.5rem;color:var(--gold);line-height:1}
+.card .l{color:var(--text2);font-size:.9rem;margin-top:6px}
+.tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--bg3);color:var(--gold2);font-weight:600;padding:14px 16px;text-align:right;font-size:.9rem;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.95rem;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(201,168,76,.04)}
+.bg{background:none;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.9rem;font-family:Heebo;transition:all .2s}
+.bg:hover{border-color:var(--gold);color:var(--gold)}
+.gg{background:var(--gold);color:var(--bg);border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:700;font-family:Heebo;display:flex;align-items:center;gap:8px}
+.gg:hover{opacity:.85}
+.bd{color:var(--red);border:none;background:none;cursor:pointer;font-size:.85rem;font-family:Heebo}
+.bd:hover{text-decoration:underline}
+.bpres{background:rgba(39,174,96,.18);color:#4cd97a;display:inline-block;padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:600}
+.babs{background:rgba(192,57,43,.18);color:#e74c3c;display:inline-block;padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:600}
+.blate{background:rgba(201,168,76,.18);color:var(--gold2);display:inline-block;padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:600}
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
+.mb.on{display:flex}
+.md{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:36px;width:100%;max-width:480px;position:relative}
+.md h3{font-family:'Frank Ruhl Libre',serif;font-size:1.5rem;color:#f5e0a0;margin-bottom:24px}
+.md label{display:block;color:var(--text2);font-size:.9rem;margin-bottom:6px}
+.md input{width:100%;padding:11px 14px;margin-bottom:16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Heebo;font-size:.95rem}
+.md input:focus{outline:none;border-color:var(--gold)}
+.ma{display:flex;gap:12px;margin-top:8px;justify-content:flex-end}
+.mc{position:absolute;top:16px;left:16px;background:none;border:none;color:var(--text3);font-size:1.4rem;cursor:pointer}
+.mc:hover{color:var(--text)}
+.ar{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.ar:last-child{border-bottom:none}
+.abox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
+.abox h3{font-family:'Frank Ruhl Libre',serif;color:var(--gold2);margin-bottom:16px;font-size:1.2rem}
+.abtns{display:flex;gap:8px}
+.ab{padding:6px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:.85rem;font-family:Heebo;background:none;color:var(--text3);transition:all .15s}
+.ab.sp{background:rgba(39,174,96,.2);border-color:#27ae60;color:#4cd97a}
+.ab.sa{background:rgba(192,57,43,.2);border-color:#c0392b;color:#e74c3c}
+.ab.sl{background:rgba(201,168,76,.2);border-color:var(--gold);color:var(--gold2)}
+.sb{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;width:100%;max-width:320px;color:var(--text);font-family:Heebo;font-size:.95rem;margin-bottom:20px}
+.sb:focus{outline:none;border-color:var(--gold)}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty .ic{font-size:3rem;margin-bottom:12px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--gold);color:var(--gold2);padding:12px 24px;border-radius:30px;font-size:.95rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.on{opacity:1}
+.ld{text-align:center;padding:40px;color:var(--text3)}
+@media(max-width:640px){header{padding:0 12px}.nl{display:none}main{padding:16px 12px}.md{margin:16px;padding:24px}}
+</style>
+</head>
+<body>
+<div id="setup">
+  <div class="box">
+    <h1>📚 מערכת ניהול ישיבה</h1>
+    <p>הגדרה ראשונית — הכנס פרטי Supabase</p>
+    <label>Supabase URL</label>
+    <input id="su" type="text" placeholder="https://xxxx.supabase.co" value="https://hdcsqajavhxsbscgnpob.supabase.co">
+    <label>Supabase Anon Key</label>
+    <input id="sk" type="text" placeholder="eyJ...">
+    <button class="btn-p" onclick="init()">התחל ←</button>
+    <div id="er" class="err"></div>
+  </div>
+</div>
+<div id="app">
+  <header>
+    <div class="logo">📚 מערכת ניהול ישיבה</div>
+    <nav>
+      <button class="nb on" onclick="pg('dash')" id="nb-dash">🏠 <span class="nl">בית</span></button>
+      <button class="nb" onclick="pg('students')" id="nb-students">👥 <span class="nl">תלמידים</span></button>
+      <button class="nb" onclick="pg('attend')" id="nb-attend">✅ <span class="nl">נוכחות</span></button>
+      <button class="nb" onclick="pg('reports')" id="nb-reports">📊 <span class="nl">דוחות</span></button>
+    </nav>
+  </header>
+  <main>
+    <div class="pg on" id="pg-dash">
+      <div class="ph"><h2>סקירה כללית</h2><span id="td" style="color:var(--text2)"></span></div>
+      <div class="grid">
+        <div class="card"><div class="n" id="s-tot">—</div><div class="l">סך תלמידים</div></div>
+        <div class="card"><div class="n" id="s-pre">—</div><div class="l">נוכחים היום</div></div>
+        <div class="card"><div class="n" id="s-abs">—</div><div class="l">נעדרים היום</div></div>
+        <div class="card"><div class="n" id="s-rate">—</div><div class="l">אחוז נוכחות</div></div>
+      </div>
+      <div class="ph" style="margin-top:8px"><h2 style="font-size:1.3rem">נוכחות מהירה — היום</h2><button class="gg" onclick="saveQ()">💾 שמור</button></div>
+      <div id="qa"></div>
+    </div>
+    <div class="pg" id="pg-students">
+      <div class="ph"><h2>ניהול תלמידים</h2><button class="gg" onclick="openAdd()">➕ הוסף תלמיד</button></div>
+      <input class="sb" type="text" placeholder="🔍 חיפוש..." oninput="filt(this.value)">
+      <div class="tw"><table><thead><tr><th>שם</th><th>שיעור</th><th>טלפון הורה</th><th>תאריך</th><th>פעולות</th></tr></thead><tbody id="stb"><tr><td colspan="5"><div class="ld">טוען...</div></td></tr></tbody></table></div>
+    </div>
+    <div class="pg" id="pg-attend">
+      <div class="ph"><h2>רישום נוכחות</h2><div style="display:flex;gap:12px;align-items:center"><input type="date" id="dp" class="sb" style="margin:0;width:auto" onchange="loadA(this.value)"><button class="gg" onclick="saveA()">💾 שמור</button></div></div>
+      <div id="al"></div>
+    </div>
+    <div class="pg" id="pg-reports">
+      <div class="ph"><h2>דוחות נוכחות</h2><div style="display:flex;gap:12px"><input type="month" id="rm" class="sb" style="margin:0;width:auto"><button class="gg" onclick="loadR()">📊 הצג</button></div></div>
+      <div id="rc"></div>
+    </div>
+  </main>
+</div>
+<div class="mb" id="ms"><div class="md">
+  <button class="mc" onclick="cm('ms')">✕</button>
+  <h3 id="mt"></h3>
+  <input type="hidden" id="sid">
+  <label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי">
+  <label>שיעור</label><input type="text" id="sc" placeholder="שיעור א׳">
+  <label>טלפון הורה</label><input type="tel" id="sp" placeholder="050-0000000">
+  <label>הערות</label><input type="text" id="snotes" placeholder="הערות">
+  <div class="ma"><button class="bg" onclick="cm('ms')">ביטול</button><button class="gg" onclick="saveS()">💾 שמור</button></div>
+</div></div>
+<div id="toast"></div>
+<script>
+let SB=null,students=[],todayAtt={},curAtt={};
+const TODAY=new Date().toISOString().split('T')[0];
+function fmtD(d){return new Date(d+'T12:00:00').toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
+async function init(){
+  const u=document.getElementById('su').value.trim(),k=document.getElementById('sk').value.trim();
+  if(!u||!k){document.getElementById('er').textContent='נא להכניס URL ומפתח';return}
+  try{
+    SB=supabase.createClient(u,k);
+    await SB.from('students').select('id').limit(1);
+    localStorage.setItem('sbu',u);localStorage.setItem('sbk',k);
+    document.getElementById('setup').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('td').textContent=fmtD(TODAY);
+    document.getElementById('dp').value=TODAY;
+    document.getElementById('rm').value=TODAY.substring(0,7);
+    await loadDash();
+  }catch(e){document.getElementById('er').textContent='שגיאה: '+e.message}
+}
+function pg(n){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+n).classList.add('on');
+  document.getElementById('nb-'+n).classList.add('on');
+  if(n==='students')loadSt();
+  if(n==='attend')loadA(document.getElementById('dp').value);
+  if(n==='dash')loadDash();
+}
+async function loadDash(){
+  const{data:s}=await SB.from('students').select('*').eq('active',true);
+  students=s||[];
+  document.getElementById('s-tot').textContent=students.length;
+  const{data:a}=await SB.from('attendance').select('*').eq('date',TODAY);
+  const p=(a||[]).filter(x=>x.status==='present').length;
+  const ab=(a||[]).filter(x=>x.status==='absent').length;
+  document.getElementById('s-pre').textContent=p;
+  document.getElementById('s-abs').textContent=ab;
+  document.getElementById('s-rate').textContent=(students.length?Math.round(p/students.length*100):0)+'%';
+  todayAtt={};(a||[]).forEach(x=>todayAtt[x.student_id]=x.status);
+  renderQ();
+}
+function renderQ(){
+  const el=document.getElementById('qa');
+  if(!students.length){el.innerHTML='<div class="empty"><div class="ic">👥</div><p>אין תלמידים</p></div>';return}
+  el.innerHTML='<div class="abox"><h3>'+fmtD(TODAY)+'</h3>'+students.map(s=>'<div class="ar"><span>'+s.name+(s.class_name?' <small style="color:var(--text3)">· '+s.class_name+'</small>':'')+'</span><div class="abtns"><button class="ab'+(todayAtt[s.id]==='present'?' sp':'')+'" onclick="setQ('+s.id+','present',this)">✓ נוכח</button><button class="ab'+(todayAtt[s.id]==='late'?' sl':'')+'" onclick="setQ('+s.id+','late',this)">⏰ איחור</button><button class="ab'+(todayAtt[s.id]==='absent'?' sa':'')+'" onclick="setQ('+s.id+','absent',this)">✗ נעדר</button></div></div>').join('')+'</div>';
+}
+function setQ(id,st,btn){todayAtt[id]=st;updBtns(btn,st)}
+function updBtns(btn,st){
+  btn.closest('.abtns').querySelectorAll('.ab').forEach(b=>{
+    b.className='ab';
+    if(b.textContent.includes('נוכח')&&st==='present')b.classList.add('sp');
+    if(b.textContent.includes('איחור')&&st==='late')b.classList.add('sl');
+    if(b.textContent.includes('נעדר')&&st==='absent')b.classList.add('sa');
+  });
+}
+async function saveQ(){await saveAttData(TODAY,todayAtt);loadDash()}
+async function loadSt(){
+  document.getElementById('stb').innerHTML='<tr><td colspan="5"><div class="ld">טוען...</div></td></tr>';
+  const{data}=await SB.from('students').select('*').eq('active',true).order('name');
+  students=data||[];renderSt(students);
+}
+function renderSt(list){
+  const tb=document.getElementById('stb');
+  if(!list.length){tb.innerHTML='<tr><td colspan="5"><div class="empty"><div class="ic">👥</div><p>אין תלמידים</p></div></td></tr>';return}
+  tb.innerHTML=list.map(s=>'<tr><td><strong>'+s.name+'</strong></td><td>'+(s.class_name||'—')+'</td><td style="direction:ltr">'+(s.parent_phone||'—')+'</td><td>'+(s.created_at?new Date(s.created_at).toLocaleDateString('he-IL'):'—')+'</td><td style="display:flex;gap:8px"><button class="bg" style="padding:6px 10px" onclick="editS('+s.id+')">✏️</button><button class="bd" onclick="delS('+s.id+',''+s.name+'')">מחק</button></td></tr>').join('');
+}
+function filt(q){renderSt(students.filter(s=>s.name.includes(q)||(s.class_name||'').includes(q)))}
+function openAdd(){document.getElementById('mt').textContent='הוסף תלמיד';['sid','sn','sc','sp','snotes'].forEach(id=>document.getElementById(id).value='');document.getElementById('ms').classList.add('on')}
+function editS(id){const s=students.find(x=>x.id==id);if(!s)return;document.getElementById('mt').textContent='עריכת תלמיד';document.getElementById('sid').value=s.id;document.getElementById('sn').value=s.name;document.getElementById('sc').value=s.class_name||'';document.getElementById('sp').value=s.parent_phone||'';document.getElementById('snotes').value=s.notes||'';document.getElementById('ms').classList.add('on')}
+async function saveS(){
+  const name=document.getElementById('sn').value.trim();
+  if(!name){toast('נא להכניס שם');return}
+  const id=document.getElementById('sid').value;
+  const d={name,class_name:document.getElementById('sc').value.trim(),parent_phone:document.getElementById('sp').value.trim(),notes:document.getElementById('snotes').value.trim(),active:true};
+  if(id){await SB.from('students').update(d).eq('id',id);toast('✅ עודכן')}
+  else{await SB.from('students').insert(d);toast('✅ נוסף')}
+  cm('ms');loadSt();
+}
+async function delS(id,name){if(!confirm('למחוק את '+name+'?'))return;await SB.from('students').update({active:false}).eq('id',id);toast('🗑️ הוסר');loadSt()}
+async function loadA(date){
+  const el=document.getElementById('al');
+  el.innerHTML='<div class="ld">טוען...</div>';
+  if(!students.length){const{data}=await SB.from('students').select('*').eq('active',true).order('name');students=data||[]}
+  const{data:a}=await SB.from('attendance').select('*').eq('date',date);
+  curAtt={};(a||[]).forEach(x=>curAtt[x.student_id]=x.status);
+  if(!students.length){el.innerHTML='<div class="empty"><div class="ic">👥</div><p>אין תלמידים</p></div>';return}
+  el.innerHTML='<div class="abox"><h3>'+fmtD(date)+'</h3>'+students.map(s=>'<div class="ar"><span>'+s.name+(s.class_name?' <small style="color:var(--text3)">· '+s.class_name+'</small>':'')+'</span><div class="abtns"><button class="ab'+(curAtt[s.id]==='present'?' sp':'')+'" onclick="setA('+s.id+','present',this)">✓ נוכח</button><button class="ab'+(curAtt[s.id]==='late'?' sl':'')+'" onclick="setA('+s.id+','late',this)">⏰ איחור</button><button class="ab'+(curAtt[s.id]==='absent'?' sa':'')+'" onclick="setA('+s.id+','absent',this)">✗ נעדר</button></div></div>').join('')+'</div>';
+}
+function setA(id,st,btn){curAtt[id]=st;updBtns(btn,st)}
+async function saveA(){await saveAttData(document.getElementById('dp').value,curAtt)}
+async function saveAttData(date,map){
+  const u=Object.entries(map).map(([sid,status])=>({student_id:sid,date,status}));
+  if(!u.length){toast('לא נבחרה נוכחות');return}
+  const{error}=await SB.from('attendance').upsert(u,{onConflict:'student_id,date'});
+  if(error){toast('שגיאה: '+error.message);return}
+  toast('✅ נוכחות נשמרה!');
+}
+async function loadR(){
+  const month=document.getElementById('rm').value;if(!month)return;
+  const[y,m]=month.split('-');
+  const el=document.getElementById('rc');el.innerHTML='<div class="ld">מחשב...</div>';
+  const{data:a}=await SB.from('attendance').select('*').gte('date',y+'-'+m+'-01').lte('date',y+'-'+m+'-31');
+  const{data:s}=await SB.from('students').select('*').eq('active',true).order('name');
+  if(!s?.length){el.innerHTML='<div class="empty"><div class="ic">📊</div><p>אין נתונים</p></div>';return}
+  const rows=s.map(x=>{const mine=(a||[]).filter(r=>r.student_id==x.id);const p=mine.filter(r=>r.status==='present').length,l=mine.filter(r=>r.status==='late').length,ab=mine.filter(r=>r.status==='absent').length,tot=p+l+ab,rate=tot?Math.round((p+l)/tot*100):0;return{...x,p,l,ab,tot,rate}});
+  el.innerHTML='<div class="tw"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>%</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><strong>'+r.name+'</strong></td><td>'+(r.class_name||'—')+'</td><td style="color:#4cd97a">'+r.p+'</td><td style="color:var(--gold2)">'+r.l+'</td><td style="color:#e74c3c">'+r.ab+'</td><td>'+r.tot+'</td><td><span class="'+(r.rate>=80?'bpres':r.rate>=60?'blate':'babs')+'">'+r.rate+'%</span></td></tr>').join('')+'</tbody></table></div>';
+}
+function cm(id){document.getElementById(id).classList.remove('on')}
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2500)}
+window.onload=()=>{
+  const u=localStorage.getItem('sbu'),k=localStorage.getItem('sbk');
+  if(u)document.getElementById('su').value=u;
+  if(k)document.getElementById('sk').value=k;
+  if(u&&k)init();
+};
+</script>
+</body>
+</html>
