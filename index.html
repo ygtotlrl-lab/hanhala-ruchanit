@@ -201,8 +201,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div id="toast"></div>
 <script>
 var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTQwMjIsImV4cCI6MjA4OTIzMDAyMn0.hf_jjLyAZk3IS6IPF_skyEEsrG50AXvJqI790qdJdlo';
-var URL='https://hdcsqajavhxsbscgnpob.supabase.co';
-var SB=supabase.createClient(URL,KEY);
+var SB_URL='https://hdcsqajavhxsbscgnpob.supabase.co';
+var SB=supabase.createClient(SB_URL,KEY);
 var students=[],curAtt={};
 var TODAY=new Date().toISOString().split('T')[0];
 
