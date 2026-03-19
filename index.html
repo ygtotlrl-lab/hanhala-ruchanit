@@ -10,7 +10,7 @@
 :root{
   --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;
   --blue-light:#eef2fa;--blue-mid:#d0ddf5;
-  --gold:#c9a84c;--gold2:#e8c060;
+  --gold:#c9a84c;
   --text:#1a2340;--text2:#4a5568;--text3:#8a97b0;
   --border:#d8e2f0;--bg:#f0f4fa;--bg2:#fff;
   --red:#c0392b;--green:#1a7a4a;
@@ -24,196 +24,173 @@ body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-hei
 /* HEADER */
 header{
   background:linear-gradient(135deg,var(--navy3) 0%,var(--navy) 60%,var(--navy2) 100%);
-  padding:0 32px;display:flex;align-items:center;justify-content:space-between;
-  height:74px;box-shadow:0 3px 16px rgba(0,0,0,0.22);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  height:76px;box-shadow:0 3px 16px rgba(0,0,0,0.22);
   position:sticky;top:0;z-index:100;
 }
-.header-logo{display:flex;align-items:center;gap:0}
-.header-divider{width:1px;height:44px;background:rgba(255,255,255,0.2);margin:0 20px}
+.header-left{display:flex;align-items:center;gap:16px}
+.header-logo img{height:58px;width:auto;display:block}
+.header-divider{width:1px;height:48px;background:rgba(255,255,255,0.2)}
 .header-text{color:rgba(255,255,255,0.9);font-size:.88rem;line-height:1.5}
-.header-text strong{display:block;font-size:1rem;color:#fff}
-nav{display:flex;gap:4px}
+.header-text strong{display:block;font-size:1rem;color:#fff;font-weight:700}
+nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .nb{
   background:none;border:none;color:rgba(255,255,255,0.72);
-  padding:9px 16px;border-radius:6px;cursor:pointer;
-  font-family:Heebo;font-size:.88rem;font-weight:500;
-  display:flex;align-items:center;gap:7px;transition:all .18s;
+  padding:7px 12px;border-radius:6px;cursor:pointer;
+  font-family:Heebo;font-size:.82rem;font-weight:500;
+  display:flex;align-items:center;gap:6px;transition:all .18s;
+  white-space:nowrap;
 }
 .nb:hover{background:rgba(255,255,255,0.13);color:#fff}
 .nb.on{background:rgba(255,255,255,0.20);color:#fff;font-weight:600}
+.nb .ic{font-size:.95rem}
 
 /* MAIN */
 main{padding:0;max-width:100%}
-
-/* PAGE */
 .pg{display:none}.pg.on{display:block}
 
-/* ── HOME PAGE ── */
-#pg-home{
-  min-height:calc(100vh - 74px);
-  background:linear-gradient(160deg,#eef2fa 0%,#f8f9ff 50%,#e8f0fb 100%);
-}
+/* HOME */
+#pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,#eef2fa 0%,#f8f9ff 50%,#e8f0fb 100%)}
 .home-hero{
   background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));
-  color:#fff;padding:40px 40px 50px;
-  position:relative;overflow:hidden;
+  color:#fff;padding:36px 40px 46px;position:relative;overflow:hidden;
 }
-.home-hero::before{
-  content:"";position:absolute;
-  top:-60px;left:-60px;width:300px;height:300px;
-  border-radius:50%;background:rgba(255,255,255,0.04);
-}
-.home-hero::after{
-  content:"";position:absolute;
-  bottom:-80px;right:10%;width:400px;height:400px;
-  border-radius:50%;background:rgba(255,255,255,0.03);
-}
-.hero-date{font-size:.85rem;opacity:.7;margin-bottom:6px;letter-spacing:.03em}
-.hero-title{font-size:1.7rem;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
-.hero-sub{font-size:.92rem;opacity:.8;position:relative;z-index:1}
+.home-hero::before{content:"";position:absolute;top:-60px;left:-60px;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,0.04)}
+.home-hero::after{content:"";position:absolute;bottom:-80px;right:10%;width:360px;height:360px;border-radius:50%;background:rgba(255,255,255,0.03)}
+.hero-date{font-size:.83rem;opacity:.72;margin-bottom:6px;letter-spacing:.03em}
+.hero-title{font-size:1.65rem;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.hero-sub{font-size:.9rem;opacity:.8;position:relative;z-index:1}
 
-/* STATS BAR */
-.stats-bar{
-  display:grid;grid-template-columns:repeat(4,1fr);
-  background:var(--bg2);
-  border-bottom:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
-.stat-item{
-  padding:18px 20px;text-align:center;
-  border-left:1px solid var(--border);
-  transition:background .15s;cursor:default;
-}
+/* STATS */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+.stat-item{padding:16px 20px;text-align:center;border-left:1px solid var(--border)}
 .stat-item:last-child{border-left:none}
 .stat-item:hover{background:var(--blue-light)}
-.stat-num{font-size:2rem;font-weight:700;color:var(--navy);line-height:1}
-.stat-lbl{font-size:.78rem;color:var(--text2);margin-top:3px}
+.stat-num{font-size:1.9rem;font-weight:700;color:var(--navy);line-height:1}
+.stat-lbl{font-size:.76rem;color:var(--text2);margin-top:3px}
 
-/* MODULES GRID */
-.modules-section{padding:32px 40px 40px}
-.modules-title{
-  font-size:1.1rem;font-weight:600;color:var(--text2);
-  margin-bottom:20px;display:flex;align-items:center;gap:10px;
-  text-transform:uppercase;letter-spacing:.05em;font-size:.82rem;
-}
-.modules-title::before{content:"";width:3px;height:18px;background:var(--navy);border-radius:2px;display:inline-block}
-.modules-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
+/* MODULES */
+.modules-section{padding:28px 40px 40px}
+.modules-title{font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:18px;display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.05em}
+.modules-title::before{content:"";width:3px;height:16px;background:var(--navy);border-radius:2px;display:inline-block}
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .module-btn{
-  background:var(--bg2);
-  border:1.5px solid var(--border);
-  border-radius:14px;
-  padding:28px 24px;
-  cursor:pointer;
-  display:flex;align-items:flex-start;gap:16px;
-  transition:all .22s;
-  box-shadow:var(--shadow);
-  text-align:right;
+  background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;
+  padding:24px 20px;cursor:pointer;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:all .22s;box-shadow:var(--shadow);text-align:right;
   position:relative;overflow:hidden;
 }
-.module-btn::before{
-  content:"";position:absolute;
-  top:0;right:0;width:4px;height:100%;
-  background:var(--color,var(--navy));
-  border-radius:0 14px 14px 0;
-  transition:width .22s;
-}
-.module-btn:hover{
-  border-color:var(--color,var(--navy));
-  box-shadow:var(--shadow2);
-  transform:translateY(-2px);
-}
+.module-btn::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy));border-radius:0 12px 12px 0;transition:width .22s}
+.module-btn:hover{border-color:var(--color,var(--navy));box-shadow:var(--shadow2);transform:translateY(-2px)}
 .module-btn:hover::before{width:6px}
-.module-icon{
-  width:52px;height:52px;border-radius:12px;
-  background:var(--icon-bg,var(--blue-light));
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.6rem;flex-shrink:0;
-  transition:transform .22s;
-}
+.module-icon{width:48px;height:48px;border-radius:10px;background:var(--icon-bg,var(--blue-light));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:transform .22s}
 .module-btn:hover .module-icon{transform:scale(1.08)}
 .module-info{flex:1;min-width:0}
-.module-name{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px}
-.module-desc{font-size:.8rem;color:var(--text3);line-height:1.4}
-.module-arrow{
-  position:absolute;left:18px;top:50%;transform:translateY(-50%);
-  color:var(--text3);font-size:1.1rem;opacity:0;
-  transition:opacity .2s,transform .2s;
-}
+.module-name{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.module-desc{font-size:.78rem;color:var(--text3);line-height:1.4}
+.module-arrow{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:1rem;opacity:0;transition:opacity .2s,transform .2s}
 .module-btn:hover .module-arrow{opacity:1;transform:translateY(-50%) translateX(-4px)}
 
-/* INNER PAGE WRAPPER */
-.inner-page{padding:28px 40px;max-width:1100px;margin:0 auto}
+/* INNER PAGE */
+.inner-page{padding:26px 40px;max-width:1100px;margin:0 auto}
 
 /* PAGE TITLE */
 .pg-title{
-  font-size:1.4rem;font-weight:700;color:var(--navy);
-  display:flex;align-items:center;gap:12px;margin-bottom:24px;
+  font-size:1.3rem;font-weight:700;color:var(--navy);
+  display:flex;align-items:center;gap:10px;margin-bottom:22px;
   padding-bottom:14px;border-bottom:2px solid var(--border);
+  flex-wrap:wrap;
 }
-.pg-title .back-btn{
+.back-btn{
   background:none;border:1.5px solid var(--border);color:var(--text2);
-  border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Heebo;
+  border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;
   cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:5px;
+  white-space:nowrap;
 }
-.pg-title .back-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--blue-light)}
+.back-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--blue-light)}
+
+/* GEAR BUTTON */
+.gear-btn{
+  background:none;border:1.5px solid var(--border);color:var(--text3);
+  border-radius:50%;width:34px;height:34px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;
+}
+.gear-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--blue-light);transform:rotate(30deg)}
+.title-gap{flex:1}
+
+/* EDIT PANEL */
+.edit-panel{
+  background:var(--bg2);border:1.5px solid var(--border);
+  border-radius:var(--r);padding:20px;margin-bottom:20px;
+  box-shadow:var(--shadow);
+  display:none;
+}
+.edit-panel.open{display:block}
+.edit-panel h4{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.edit-panel textarea{
+  width:100%;padding:10px 14px;background:#f8fafd;
+  border:1.5px solid var(--border);border-radius:var(--r);
+  color:var(--text);font-family:Heebo;font-size:.9rem;
+  resize:vertical;min-height:80px;
+}
+.edit-panel textarea:focus{outline:none;border-color:var(--navy)}
+.edit-panel .ep-actions{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}
 
 /* BTN GOV */
 .btn-gov{
   display:inline-flex;align-items:center;gap:10px;
   background:var(--navy);color:#fff;
   border:2px solid var(--navy);border-radius:30px;
-  padding:9px 22px;font-family:Heebo;font-size:.9rem;font-weight:600;
+  padding:9px 20px;font-family:Heebo;font-size:.88rem;font-weight:600;
   cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap;
 }
 .btn-gov:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .btn-gov.outline{background:#fff;color:var(--navy);border-color:var(--navy)}
 .btn-gov.outline:hover{background:var(--blue-light)}
 .btn-gov.gold{background:var(--gold);border-color:var(--gold);color:#fff}
-.btn-gov .btn-icon{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
-.btn-gov.outline .btn-icon{background:var(--blue-light)}
+.btn-gov .btn-icon{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
 
 /* ROW HEADER */
-.row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
 
 /* TABLE */
 .tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy),var(--navy2))}
-th{color:#fff;font-weight:600;padding:13px 16px;text-align:right;font-size:.87rem}
-td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.92rem;vertical-align:middle}
+th{color:#fff;font-weight:600;padding:12px 16px;text-align:right;font-size:.86rem}
+td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--blue-light)}
 
 /* ATTENDANCE */
 .abox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.abox-header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:14px 20px;font-weight:600;font-size:.95rem}
-.ar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)}
+.abox-header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:13px 20px;font-weight:600;font-size:.93rem}
+.ar{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border)}
 .ar:last-child{border-bottom:none}
 .ar:hover{background:var(--blue-light)}
 .ar-name{font-weight:500}
-.ar-name small{color:var(--text3);font-weight:400;font-size:.8rem;margin-right:6px}
-.abtns{display:flex;gap:8px}
-.ab{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.82rem;font-family:Heebo;font-weight:500;background:#fff;color:var(--text2);transition:all .15s}
+.ar-name small{color:var(--text3);font-weight:400;font-size:.78rem;margin-right:6px}
+.abtns{display:flex;gap:7px}
+.ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:#fff;color:var(--text2);transition:all .15s}
 .ab:hover{border-color:var(--navy);color:var(--navy)}
 .ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
 .ab.sa{background:#fdf0f0;border-color:#e74c3c;color:#c0392b;font-weight:600}
 .ab.sl{background:#fff8e8;border-color:#c9a84c;color:#a07830;font-weight:600}
 
 /* SEARCH */
-.search-wrap{position:relative;margin-bottom:16px;max-width:340px}
-.search-wrap input{width:100%;padding:10px 16px 10px 40px;background:#fff;border:1.5px solid var(--border);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.9rem}
-.search-wrap input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,107,0.08)}
-.search-wrap::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.82rem;pointer-events:none}
+.search-wrap{position:relative;margin-bottom:14px;max-width:320px}
+.search-wrap input{width:100%;padding:9px 16px 9px 36px;background:#fff;border:1.5px solid var(--border);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem}
+.search-wrap input:focus{outline:none;border-color:var(--navy)}
+.search-wrap::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none}
 
-input[type=date],input[type=month]{padding:9px 14px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.88rem;cursor:pointer}
+input[type=date],input[type=month]{padding:8px 12px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy)}
 
 /* BADGES */
-.badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:600}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:600}
 .badge-p{background:#eaf7f0;color:#1a7a4a;border:1px solid #a8dfc0}
 .badge-a{background:#fdf0f0;color:#c0392b;border:1px solid #f5b8b8}
 .badge-l{background:#fff8e8;color:#a07830;border:1px solid #e8d090}
@@ -221,167 +198,139 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 /* MODAL */
 .mb{display:none;position:fixed;inset:0;background:rgba(10,20,50,0.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .mb.on{display:flex}
-.md{background:var(--bg2);border-radius:14px;padding:36px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,0.22);position:relative;border-top:4px solid var(--navy)}
-.md-title{font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:22px;display:flex;align-items:center;gap:10px}
-.md label{display:block;color:var(--text2);font-size:.84rem;font-weight:600;margin-bottom:5px}
-.md input{width:100%;padding:11px 14px;margin-bottom:14px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.9rem}
+.md{background:var(--bg2);border-radius:14px;padding:32px;width:100%;max-width:490px;box-shadow:0 20px 60px rgba(0,0,0,0.22);position:relative;border-top:4px solid var(--navy)}
+.md-title{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.md label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
+.md input{width:100%;padding:10px 14px;margin-bottom:13px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
 .md input:focus{outline:none;border-color:var(--navy);background:#fff}
 .ma{display:flex;gap:10px;margin-top:8px;justify-content:flex-end}
-.mc{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.mc{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .mc:hover{background:var(--blue-light);color:var(--navy)}
 
 /* COMING SOON */
-.coming-soon{
-  text-align:center;padding:80px 40px;
-  background:var(--bg2);border-radius:14px;border:1px solid var(--border);
-  box-shadow:var(--shadow);
-}
-.coming-soon .cs-icon{font-size:3.5rem;margin-bottom:16px;opacity:.6}
-.coming-soon h3{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:8px}
-.coming-soon p{color:var(--text2);font-size:.92rem}
+.coming-soon{text-align:center;padding:70px 40px;background:var(--bg2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.coming-soon .cs-icon{font-size:3.2rem;margin-bottom:14px;opacity:.6}
+.coming-soon h3{font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+.coming-soon p{color:var(--text2);font-size:.9rem}
 
-.empty{text-align:center;padding:60px 20px;color:var(--text3)}
-.empty .ic{font-size:3rem;margin-bottom:12px;opacity:.5}
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 24px;border-radius:30px;font-size:.9rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
+.empty{text-align:center;padding:56px 20px;color:var(--text3)}
+.empty .ic{font-size:2.8rem;margin-bottom:12px;opacity:.5}
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
-.ld{text-align:center;padding:48px;color:var(--text3)}
-.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
-.rs-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--shadow)}
-.rs-card .n{font-size:1.7rem;font-weight:700;color:var(--navy)}
-.rs-card .l{font-size:.78rem;color:var(--text2);margin-top:3px}
+.ld{text-align:center;padding:44px;color:var(--text3)}
+.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.rs-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.rs-card .n{font-size:1.65rem;font-weight:700;color:var(--navy)}
+.rs-card .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 
-@media(max-width:900px){
-  .modules-grid{grid-template-columns:repeat(2,1fr)}
-  .stats-bar{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:600px){
-  header{padding:0 14px}
+@media(max-width:960px){.modules-grid{grid-template-columns:repeat(2,1fr)}.stats-bar{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){
+  header{padding:0 12px;height:64px}
+  .header-logo img{height:44px}
   .nb .nb-label{display:none}
-  .modules-section{padding:20px 16px}
+  .modules-section{padding:18px 14px}
   .modules-grid{grid-template-columns:1fr}
-  .inner-page{padding:18px 14px}
-  .home-hero{padding:28px 16px 36px}
+  .inner-page{padding:16px 12px}
+  .home-hero{padding:24px 16px 32px}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 90" width="155" height="63">
-      <g stroke="#c5d8ff" stroke-width="1.8" stroke-linecap="round">
-        <line x1="110" y1="42" x2="110" y2="8"/>
-        <line x1="110" y1="42" x2="127" y2="10"/>
-        <line x1="110" y1="42" x2="142" y2="18"/>
-        <line x1="110" y1="42" x2="152" y2="30"/>
-        <line x1="110" y1="42" x2="157" y2="42"/>
-        <line x1="110" y1="42" x2="93" y2="10"/>
-        <line x1="110" y1="42" x2="78" y2="18"/>
-        <line x1="110" y1="42" x2="68" y2="30"/>
-        <line x1="110" y1="42" x2="63" y2="42"/>
-      </g>
-      <path d="M 88 42 A 22 22 0 0 1 132 42" fill="none" stroke="#c5d8ff" stroke-width="1.8"/>
-      <line x1="55" y1="42" x2="165" y2="42" stroke="#c5d8ff" stroke-width="1.8"/>
-      <text x="110" y="60" text-anchor="middle" font-family="serif" font-size="9" fill="#a8c4f0">ישיבת תומכי תמימים ליובאוויטש</text>
-      <text x="110" y="80" text-anchor="middle" font-family="serif" font-size="17" font-weight="bold" fill="#fff">ראשון לציון</text>
-    </svg>
+  <div class="header-left">
+    <div class="header-logo">
+      <img src="logo.png" alt="ישיבת תומכי תמימים ראשון לציון">
+    </div>
     <div class="header-divider"></div>
-    <div class="header-text"><strong>מערכת ניהול הישיבה</strong>פורטל הנהלה ומנהל</div>
+    <div class="header-text">
+      <strong>מערכת ניהול הישיבה</strong>
+      פורטל הנהלה ומנהל
+    </div>
   </div>
   <nav>
-    <button class="nb on" data-pg="home" id="nb-home">🏠 <span class="nb-label">ראשי</span></button>
-    <button class="nb" data-pg="students" id="nb-students">👥 <span class="nb-label">תלמידים</span></button>
-    <button class="nb" data-pg="attend" id="nb-attend">✅ <span class="nb-label">נוכחות</span></button>
-    <button class="nb" data-pg="reports" id="nb-reports">📊 <span class="nb-label">דוחות</span></button>
+    <button class="nb on" data-pg="home" id="nb-home"><span class="ic">🏠</span><span class="nb-label">ראשי</span></button>
+    <button class="nb" data-pg="students" id="nb-students"><span class="ic">👥</span><span class="nb-label">מצבת תלמידים</span></button>
+    <button class="nb" data-pg="attend" id="nb-attend"><span class="ic">✅</span><span class="nb-label">שמירת הסדרים</span></button>
+    <button class="nb" data-pg="sleep" id="nb-sleep"><span class="ic">🌙</span><span class="nb-label">זמן שינה</span></button>
+    <button class="nb" data-pg="exams" id="nb-exams"><span class="ic">📝</span><span class="nb-label">מבחנים</span></button>
+    <button class="nb" data-pg="files" id="nb-files"><span class="ic">📁</span><span class="nb-label">תיקים אישיים</span></button>
+    <button class="nb" data-pg="reports" id="nb-reports"><span class="ic">📊</span><span class="nb-label">גיליונות חודשיים</span></button>
   </nav>
 </header>
 
 <main>
 
-<!-- ── HOME PAGE ── -->
+<!-- HOME -->
 <div class="pg on" id="pg-home">
   <div class="home-hero">
     <div class="hero-date" id="hero-date"></div>
     <div class="hero-title">שלום וברכה 👋</div>
     <div class="hero-sub">ברוכים הבאים למערכת ניהול ישיבת תומכי תמימים ראשון לציון</div>
   </div>
-
   <div class="stats-bar">
     <div class="stat-item"><div class="stat-num" id="s-tot">—</div><div class="stat-lbl">תלמידים רשומים</div></div>
     <div class="stat-item"><div class="stat-num" style="color:#1a7a4a" id="s-pre">—</div><div class="stat-lbl">נוכחים היום</div></div>
     <div class="stat-item"><div class="stat-num" style="color:#c0392b" id="s-abs">—</div><div class="stat-lbl">נעדרים היום</div></div>
     <div class="stat-item"><div class="stat-num" id="s-rate">—</div><div class="stat-lbl">% נוכחות היום</div></div>
   </div>
-
   <div class="modules-section">
     <div class="modules-title">מודולים</div>
     <div class="modules-grid">
-
       <button class="module-btn" data-pg="students" style="--color:#1a3a6b;--icon-bg:#eef2fa">
         <div class="module-icon">👥</div>
-        <div class="module-info">
-          <div class="module-name">מצבת התלמידים</div>
-          <div class="module-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div>
-        </div>
+        <div class="module-info"><div class="module-name">מצבת התלמידים</div><div class="module-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div>
         <span class="module-arrow">←</span>
       </button>
-
       <button class="module-btn" data-pg="attend" style="--color:#1a7a4a;--icon-bg:#eaf7f0">
         <div class="module-icon">✅</div>
-        <div class="module-info">
-          <div class="module-name">שמירת הסדרים</div>
-          <div class="module-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div>
-        </div>
+        <div class="module-info"><div class="module-name">שמירת הסדרים</div><div class="module-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div>
         <span class="module-arrow">←</span>
       </button>
-
       <button class="module-btn" data-pg="sleep" style="--color:#6b3a9a;--icon-bg:#f3eefa">
         <div class="module-icon">🌙</div>
-        <div class="module-info">
-          <div class="module-name">זמן שינה</div>
-          <div class="module-desc">מעקב שעות שינה וכיבוי אורות</div>
-        </div>
+        <div class="module-info"><div class="module-name">זמן שינה</div><div class="module-desc">מעקב שעות שינה וכיבוי אורות</div></div>
         <span class="module-arrow">←</span>
       </button>
-
       <button class="module-btn" data-pg="exams" style="--color:#a07830;--icon-bg:#fff8e8">
         <div class="module-icon">📝</div>
-        <div class="module-info">
-          <div class="module-name">מבחנים</div>
-          <div class="module-desc">ניהול בחינות, ציונים ותוצאות</div>
-        </div>
+        <div class="module-info"><div class="module-name">מבחנים</div><div class="module-desc">ניהול בחינות, ציונים ותוצאות</div></div>
         <span class="module-arrow">←</span>
       </button>
-
       <button class="module-btn" data-pg="files" style="--color:#c0392b;--icon-bg:#fdf0f0">
         <div class="module-icon">📁</div>
-        <div class="module-info">
-          <div class="module-name">תיקים אישיים</div>
-          <div class="module-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div>
-        </div>
+        <div class="module-info"><div class="module-name">תיקים אישיים</div><div class="module-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div>
         <span class="module-arrow">←</span>
       </button>
-
       <button class="module-btn" data-pg="reports" style="--color:#0a6a8a;--icon-bg:#e8f5fa">
         <div class="module-icon">📊</div>
-        <div class="module-info">
-          <div class="module-name">גיליונות חודשיים וסיכומים</div>
-          <div class="module-desc">דוחות נוכחות חודשיים, סטטיסטיקות וסיכומים</div>
-        </div>
+        <div class="module-info"><div class="module-name">גיליונות חודשיים וסיכומים</div><div class="module-desc">דוחות נוכחות חודשיים, סטטיסטיקות וסיכומים</div></div>
         <span class="module-arrow">←</span>
       </button>
-
     </div>
   </div>
 </div>
 
-<!-- ── STUDENTS ── -->
+<!-- STUDENTS -->
 <div class="pg" id="pg-students">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      👥 מצבת התלמידים
-      <button class="btn-gov" id="btn-add-student" style="margin-right:auto"><span class="btn-icon">➕</span> הוסף תלמיד</button>
+      <span>👥 מצבת התלמידים</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="students" title="עריכת טקסטים">⚙️</button>
+      <button class="btn-gov" id="btn-add-student"><span class="btn-icon">➕</span> הוסף תלמיד</button>
+    </div>
+    <div class="edit-panel" id="ep-students">
+      <h4>⚙️ עריכת כותרות — מצבת התלמידים</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-students-title" rows="1">מצבת התלמידים</textarea>
+      <label>הערות / תיאור הדף</label>
+      <textarea id="ep-students-desc" rows="2">ניהול רשימת התלמידים הרשומים בישיבה</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-students')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('students')"><span class="btn-icon">💾</span> שמור</button>
+      </div>
     </div>
     <div class="search-wrap"><input type="text" id="search-st" placeholder="חיפוש לפי שם או שיעור..."></div>
     <div class="tw">
@@ -393,78 +342,127 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   </div>
 </div>
 
-<!-- ── ATTENDANCE ── -->
+<!-- ATTEND -->
 <div class="pg" id="pg-attend">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      ✅ שמירת הסדרים
-      <div style="display:flex;gap:10px;align-items:center;margin-right:auto">
-        <input type="date" id="dp">
-        <button class="btn-gov" id="btn-save-a"><span class="btn-icon">💾</span> שמור</button>
+      <span>✅ שמירת הסדרים</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="attend" title="עריכת טקסטים">⚙️</button>
+      <input type="date" id="dp">
+      <button class="btn-gov" id="btn-save-a"><span class="btn-icon">💾</span> שמור</button>
+    </div>
+    <div class="edit-panel" id="ep-attend">
+      <h4>⚙️ עריכת כותרות — שמירת הסדרים</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-attend-title" rows="1">שמירת הסדרים</textarea>
+      <label>הוראות לרושם</label>
+      <textarea id="ep-attend-desc" rows="2">בחר תאריך וסמן נוכחות/איחור/היעדרות לכל תלמיד</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-attend')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('attend')"><span class="btn-icon">💾</span> שמור</button>
       </div>
     </div>
     <div id="al"></div>
   </div>
 </div>
 
-<!-- ── REPORTS ── -->
+<!-- REPORTS -->
 <div class="pg" id="pg-reports">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      📊 גיליונות חודשיים וסיכומים
-      <div style="display:flex;gap:10px;align-items:center;margin-right:auto">
-        <input type="month" id="rm">
-        <button class="btn-gov" id="btn-load-r"><span class="btn-icon">📊</span> הצג דוח</button>
+      <span>📊 גיליונות חודשיים וסיכומים</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="reports" title="עריכת טקסטים">⚙️</button>
+      <input type="month" id="rm">
+      <button class="btn-gov" id="btn-load-r"><span class="btn-icon">📊</span> הצג דוח</button>
+    </div>
+    <div class="edit-panel" id="ep-reports">
+      <h4>⚙️ עריכת כותרות — גיליונות חודשיים</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-reports-title" rows="1">גיליונות חודשיים וסיכומים</textarea>
+      <label>הסבר / הערות</label>
+      <textarea id="ep-reports-desc" rows="2">בחר חודש להצגת דוח נוכחות מפורט לכל התלמידים</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-reports')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('reports')"><span class="btn-icon">💾</span> שמור</button>
       </div>
     </div>
     <div id="rc"></div>
   </div>
 </div>
 
-<!-- ── SLEEP ── -->
+<!-- SLEEP -->
 <div class="pg" id="pg-sleep">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      🌙 זמן שינה
+      <span>🌙 זמן שינה</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="sleep" title="עריכת טקסטים">⚙️</button>
     </div>
-    <div class="coming-soon">
-      <div class="cs-icon">🌙</div>
-      <h3>מודול זמן שינה</h3>
-      <p>מודול זה בפיתוח — יאפשר מעקב שעות שינה וכיבוי אורות</p>
+    <div class="edit-panel" id="ep-sleep">
+      <h4>⚙️ עריכת כותרות — זמן שינה</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-sleep-title" rows="1">זמן שינה</textarea>
+      <label>תיאור</label>
+      <textarea id="ep-sleep-desc" rows="2">מעקב שעות שינה וכיבוי אורות</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-sleep')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('sleep')"><span class="btn-icon">💾</span> שמור</button>
+      </div>
     </div>
+    <div class="coming-soon"><div class="cs-icon">🌙</div><h3>מודול זמן שינה</h3><p>מודול זה בפיתוח — יאפשר מעקב שעות שינה וכיבוי אורות</p></div>
   </div>
 </div>
 
-<!-- ── EXAMS ── -->
+<!-- EXAMS -->
 <div class="pg" id="pg-exams">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      📝 מבחנים
+      <span>📝 מבחנים</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="exams" title="עריכת טקסטים">⚙️</button>
     </div>
-    <div class="coming-soon">
-      <div class="cs-icon">📝</div>
-      <h3>מודול מבחנים</h3>
-      <p>מודול זה בפיתוח — יאפשר ניהול בחינות, ציונים ותוצאות</p>
+    <div class="edit-panel" id="ep-exams">
+      <h4>⚙️ עריכת כותרות — מבחנים</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-exams-title" rows="1">מבחנים</textarea>
+      <label>תיאור</label>
+      <textarea id="ep-exams-desc" rows="2">ניהול בחינות, ציונים ותוצאות</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-exams')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('exams')"><span class="btn-icon">💾</span> שמור</button>
+      </div>
     </div>
+    <div class="coming-soon"><div class="cs-icon">📝</div><h3>מודול מבחנים</h3><p>מודול זה בפיתוח — יאפשר ניהול בחינות, ציונים ותוצאות</p></div>
   </div>
 </div>
 
-<!-- ── FILES ── -->
+<!-- FILES -->
 <div class="pg" id="pg-files">
   <div class="inner-page">
     <div class="pg-title">
       <button class="back-btn" data-pg="home">← חזרה</button>
-      📁 תיקים אישיים
+      <span>📁 תיקים אישיים</span>
+      <span class="title-gap"></span>
+      <button class="gear-btn" data-gear="files" title="עריכת טקסטים">⚙️</button>
     </div>
-    <div class="coming-soon">
-      <div class="cs-icon">📁</div>
-      <h3>מודול תיקים אישיים</h3>
-      <p>מודול זה בפיתוח — יאפשר ניהול מסמכים והערות אישיות לכל תלמיד</p>
+    <div class="edit-panel" id="ep-files">
+      <h4>⚙️ עריכת כותרות — תיקים אישיים</h4>
+      <label>כותרת הדף</label>
+      <textarea id="ep-files-title" rows="1">תיקים אישיים</textarea>
+      <label>תיאור</label>
+      <textarea id="ep-files-desc" rows="2">מסמכים, הערות ומעקב אישי לכל תלמיד</textarea>
+      <div class="ep-actions">
+        <button class="btn-gov outline" onclick="closeEp('ep-files')">סגור</button>
+        <button class="btn-gov" onclick="saveEp('files')"><span class="btn-icon">💾</span> שמור</button>
+      </div>
     </div>
+    <div class="coming-soon"><div class="cs-icon">📁</div><h3>מודול תיקים אישיים</h3><p>מודול זה בפיתוח — יאפשר ניהול מסמכים והערות אישיות לכל תלמיד</p></div>
   </div>
 </div>
 
@@ -476,7 +474,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <button class="mc" id="btn-close-modal">✕</button>
     <div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div>
     <input type="hidden" id="sid">
-    <label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי">
+    <label>שם ילא *</label><input type="text" id="sn" placeholder="ישראל ישראלי">
     <label>שיעור / כיתה</label><input type="text" id="sc" placeholder="שיעור א׳">
     <label>טלפון הורה</label><input type="tel" id="sp" placeholder="050-0000000">
     <label>הערות</label><input type="text" id="snotes" placeholder="הערות">
@@ -493,43 +491,54 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 var SB=supabase.createClient("https://hdcsqajavhxsbscgnpob.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTQwMjIsImV4cCI6MjA4OTIzMDAyMn0.hf_jjLyAZk3IS6IPF_skyEEsrG50AXvJqI790qdJdlo");
 var students=[],todayAtt={},curAtt={};
 var TODAY=new Date().toISOString().split("T")[0];
-
 function fmtD(d){return new Date(d+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
-function fmtDShort(d){return new Date(d+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"})}
 
-// Init UI
+// Init
 document.getElementById("hero-date").textContent=fmtD(TODAY);
 document.getElementById("dp").value=TODAY;
 document.getElementById("rm").value=TODAY.substring(0,7);
 
-// ── NAVIGATION ──
+// ── NAV ──
 function showPg(n){
   document.querySelectorAll(".pg").forEach(function(p){p.classList.remove("on")});
   document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on")});
-  var pg=document.getElementById("pg-"+n);
-  if(pg)pg.classList.add("on");
-  var nb=document.getElementById("nb-"+n);
-  if(nb)nb.classList.add("on");
-  else{var nbHome=document.getElementById("nb-home");if(nbHome)nbHome.classList.remove("on")}
+  var pg=document.getElementById("pg-"+n);if(pg)pg.classList.add("on");
+  var nb=document.getElementById("nb-"+n);if(nb)nb.classList.add("on");
   window.scrollTo(0,0);
   if(n==="students")loadSt();
   else if(n==="attend")loadA(document.getElementById("dp").value);
-  else if(n==="reports"){}
   else if(n==="home")loadDash();
 }
+document.querySelectorAll(".nb[data-pg]").forEach(function(b){b.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))})});
+document.querySelectorAll(".module-btn[data-pg]").forEach(function(b){b.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))})});
+document.querySelectorAll(".back-btn[data-pg]").forEach(function(b){b.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))})});
 
-// Header nav
-document.querySelectorAll(".nb[data-pg]").forEach(function(btn){
-  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
+// ── GEAR ──
+document.querySelectorAll(".gear-btn[data-gear]").forEach(function(b){
+  b.addEventListener("click",function(){
+    var id="ep-"+this.getAttribute("data-gear");
+    var el=document.getElementById(id);
+    if(el)el.classList.toggle("open");
+  });
 });
-// Module buttons
-document.querySelectorAll(".module-btn[data-pg]").forEach(function(btn){
-  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
-});
-// Back buttons
-document.querySelectorAll(".back-btn[data-pg]").forEach(function(btn){
-  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
-});
+function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove("open")}
+function saveEp(name){
+  var title=document.getElementById("ep-"+name+"-title");
+  var desc=document.getElementById("ep-"+name+"-desc");
+  if(title)localStorage.setItem("ep_"+name+"_title",title.value);
+  if(desc)localStorage.setItem("ep_"+name+"_desc",desc.value);
+  closeEp("ep-"+name);
+  toast("✅ הטקסטים נשמרו!");
+}
+function loadEpValues(){
+  ["students","attend","reports","sleep","exams","files"].forEach(function(n){
+    var t=localStorage.getItem("ep_"+n+"_title");
+    var d=localStorage.getItem("ep_"+n+"_desc");
+    if(t){var el=document.getElementById("ep-"+n+"-title");if(el)el.value=t}
+    if(d){var el=document.getElementById("ep-"+n+"-desc");if(el)el.value=d}
+  });
+}
+loadEpValues();
 
 // ── DASHBOARD ──
 function loadDash(){
@@ -556,15 +565,15 @@ function loadSt(){
 }
 function renderSt(list){
   var tb=document.getElementById("stb");
-  if(!list.length){tb.innerHTML="<tr><td colspan=\"5\"><div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים רשומים</p></div></td></tr>";return}
+  if(!list.length){tb.innerHTML="<tr><td colspan=\"5\"><div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים</p></div></td></tr>";return}
   var html="";
   list.forEach(function(s){
     html+="<tr><td><strong>"+s.name+"</strong></td><td>"+(s.class_name||"—")+"</td>";
     html+="<td style=\"direction:ltr\">"+(s.parent_phone||"—")+"</td>";
     html+="<td>"+(s.created_at?new Date(s.created_at).toLocaleDateString("he-IL"):"—")+"</td>";
-    html+="<td style=\"display:flex;gap:8px\">";
-    html+="<button class=\"btn-gov outline\" style=\"padding:6px 14px;font-size:.82rem\" data-edit=\""+s.id+"\">✏️ עריכה</button>";
-    html+="<button class=\"btn-gov\" style=\"padding:6px 12px;font-size:.82rem;background:#c0392b;border-color:#c0392b\" data-del=\""+s.id+"\" data-name=\""+s.name+"\">🗑️</button>";
+    html+="<td style=\"display:flex;gap:7px\">";
+    html+="<button class=\"btn-gov outline\" style=\"padding:5px 12px;font-size:.8rem\" data-edit=\""+s.id+"\">✏️ עריכה</button>";
+    html+="<button class=\"btn-gov\" style=\"padding:5px 10px;font-size:.8rem;background:#c0392b;border-color:#c0392b\" data-del=\""+s.id+"\" data-name=\""+s.name+"\">🗑️</button>";
     html+="</td></tr>";
   });
   tb.innerHTML=html;
@@ -574,7 +583,7 @@ function renderSt(list){
 function filt(q){renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||"").includes(q)}))}
 function openAdd(){document.getElementById("mt").textContent="הוסף תלמיד";["sid","sn","sc","sp","snotes"].forEach(function(id){document.getElementById(id).value=""});document.getElementById("ms").classList.add("on")}
 function editS(id){var s=students.find(function(x){return x.id==id});if(!s)return;document.getElementById("mt").textContent="עריכת תלמיד";document.getElementById("sid").value=s.id;document.getElementById("sn").value=s.name;document.getElementById("sc").value=s.class_name||"";document.getElementById("sp").value=s.parent_phone||"";document.getElementById("snotes").value=s.notes||"";document.getElementById("ms").classList.add("on")}
-function saveS(){var name=document.getElementById("sn").value.trim();if(!name){toast("נא להכניס שם");return}var id=document.getElementById("sid").value;var d={name:name,class_name:document.getElementById("sc").value.trim(),parent_phone:document.getElementById("sp").value.trim(),notes:document.getElementById("snotes").value.trim(),active:true};var p=id?SB.from("students").update(d).eq("id",id):SB.from("students").insert(d);p.then(function(){toast(id?"✅ תלמיד עודכן":"✅ תלמיד נוסף");cm("ms");loadSt()})}
+function saveS(){var name=document.getElementById("sn").value.trim();if(!name){toast("נא להכניס שם");return}var id=document.getElementById("sid").value;var d={name:name,class_name:document.getElementById("sc").value.trim(),parent_phone:document.getElementById("sp").value.trim(),notes:document.getElementById("snotes").value.trim(),active:true};var p=id?SB.from("students").update(d).eq("id",id):SB.from("students").insert(d);p.then(function(){toast(id?"✅ עודכן":"✅ נוסף");cm("ms");loadSt()})}
 function delS(id,name){if(!confirm("למחוק את "+name+"?"))return;SB.from("students").update({active:false}).eq("id",id).then(function(){toast("🗑️ הוסר");loadSt()})}
 
 // ── ATTENDANCE ──
@@ -603,11 +612,10 @@ function renderAtt(date){
   el.innerHTML=html+"</div>";
   bindAtt();
 }
-function saveA(){saveAD(document.getElementById("dp").value,curAtt)}
-function saveAD(date,map){
-  var u=Object.entries(map).map(function(e){return{student_id:parseInt(e[0]),date:date,status:e[1]}});
-  if(!u.length){toast("לא נבחרה נוכחות");return Promise.resolve()}
-  return SB.from("attendance").upsert(u,{onConflict:"student_id,date"}).then(function(r){
+function saveA(){
+  var u=Object.entries(curAtt).map(function(e){return{student_id:parseInt(e[0]),date:document.getElementById("dp").value,status:e[1]}});
+  if(!u.length){toast("לא נבחרה נוכחות");return}
+  SB.from("attendance").upsert(u,{onConflict:"student_id,date"}).then(function(r){
     if(r.error)toast("שגיאה: "+r.error.message);else toast("✅ נוכחות נשמרה!");
   });
 }
@@ -629,7 +637,7 @@ function loadR(){
       html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#a07830\">"+totL+"</div><div class=\"l\">איחורים</div></div>";
       html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#c0392b\">"+totA+"</div><div class=\"l\">היעדרויות</div></div>";
       html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:var(--navy)\">"+avg+"%</div><div class=\"l\">ממוצע נוכחות</div></div>";
-      html+="</div><div class=\"tw\"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>% נוכחות</th></tr></thead><tbody>";
+      html+="</div><div class=\"tw\"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>%</th></tr></thead><tbody>";
       rows.forEach(function(r){var cls=r.rate>=80?"badge-p":r.rate>=60?"badge-l":"badge-a";html+="<tr><td><strong>"+r.name+"</strong></td><td>"+(r.class_name||"—")+"</td><td style=\"color:#1a7a4a;font-weight:600\">"+r.p+"</td><td style=\"color:#a07830;font-weight:600\">"+r.l+"</td><td style=\"color:#c0392b;font-weight:600\">"+r.ab+"</td><td>"+r.tot+"</td><td><span class=\"badge "+cls+"\">"+r.rate+"%</span></td></tr>"});
       el.innerHTML=html+"</tbody></table></div>";
     });
