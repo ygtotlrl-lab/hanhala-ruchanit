@@ -6,7 +6,28 @@
 <title>מערכת ניהול | ישיבת תומכי תמימים ראשל"צ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+:root{
+  // ===== NAVIGATION =====
+  window.showPage=function(pg){
+    document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+    document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
+    var pgEl=document.getElementById('pg-'+pg);
+    var nbEl=document.querySelector('[data-pg="'+pg+'"]');
+    if(pgEl) pgEl.classList.add('on');
+    if(nbEl) nbEl.classList.add('on');
+    if(pg==='students'){
+      if(typeof window.renderStudents==='function') window.renderStudents();
+      if(!localStorage.getItem('ys_admin')){
+        var m=document.getElementById('login-modal');
+        if(m){m.style.display='flex';setTimeout(function(){var x=document.getElementById('login-pass');if(x)x.focus();},100);}
+      }
+    }
+  };
+  document.querySelectorAll('[data-pg]').forEach(function(b){
+    b.addEventListener('click',function(){window.showPage(this.dataset.pg);});
+  });
+  window.showPage('home');
+--navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 header{background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px rgba(0,0,0,.22);position:sticky;top:0;z-index:100}
@@ -860,29 +881,7 @@ document.addEventListener('click',function(e){
   }
 
 
-// ===== NAVIGATION =====
-function showPage(pg){
-  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.nb,.back').forEach(b=>b.classList.remove('on'));
-  var pgEl=document.getElementById('pg-'+pg);
-  var nbEl=document.querySelector('[data-pg="'+pg+'"]');
-  if(pgEl) pgEl.classList.add('on');
-  if(nbEl) nbEl.classList.add('on');
-  if(pg==='students'){
-    if(!window.isLoggedIn){
-      document.getElementById('login-modal').style.display='flex';
-      setTimeout(function(){var x=document.getElementById('login-pass');if(x)x.focus();},100);
-    }
-    if(typeof renderStudents==='function') renderStudents();
-  }
-}
 
-document.querySelectorAll('[data-pg]').forEach(function(b){
-  b.addEventListener('click',function(){showPage(this.dataset.pg);});
-});
-
-// Initialize: show home page
-showPage('home');
 
 });
 // ============ END STUDENTS MODULE ============
