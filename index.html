@@ -160,12 +160,134 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   </div>
 </div>
 <div class="pg" id="pg-students">
-  <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="gear" data-gear="students" title="עריכת טקסטים">⚙️</button><button class="btn" id="btn-add">➕ הוסף תלמיד</button></div>
-    <div class="ep" id="ep-students"><h4>⚙️ עריכת כותרות</h4><label>כותרת הדף</label><textarea id="ep-s-title">מצבת התלמידים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-students')">סגור</button><button class="btn" onclick="saveEp('students')">💾 שמור</button></div></div>
-    <div class="sw"><input type="text" id="search-st" placeholder="חיפוש..."></div>
-    <div class="tw"><table><thead><tr><th>שם</th><th>שיעור</th><th>טלפון הורה</th><th>תאריך</th><th>פעולות</th></tr></thead><tbody id="stb"><tr><td colspan="5"><div class="ld">טוען...</div></td></tr></tbody></table></div>
-  </div>
+<div class="inner">
+<div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
+
+<!-- Login Modal -->
+<div id="login-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:340px;text-align:center">
+<div style="font-size:2em;margin-bottom:8px">🔐</div>
+<h3 style="margin:0 0 16px">כניסה למערכת</h3>
+<input type="password" id="login-pass" placeholder="סיסמה" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:1em;margin-bottom:12px;direction:rtl" onkeydown="if(event.key==='Enter')doLogin()">
+<button class="btn" onclick="doLogin()" style="width:100%">כניסה</button>
+<div id="login-err" style="color:red;margin-top:8px;display:none">סיסמה שגויה</div>
+</div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="class-tabs" style="display:flex;gap:8px;margin:12px 0">
+<button class="btn sm on" id="ct-all" onclick="filterClass('all')">הכל (75)</button>
+<button class="btn sm out" id="ct-a" onclick="filterClass('א')">שיעור א'</button>
+<button class="btn sm out" id="ct-b" onclick="filterClass('ב')">שיעור ב'</button>
+<button class="btn sm out" id="ct-c" onclick="filterClass('ג')">שיעור ג'</button>
+</div>
+
+<!-- Search -->
+<div class="sw"><input type="text" id="search-st" placeholder="🔍 חיפוש תלמיד..." oninput="renderStudents()" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:0.95em"></div>
+
+<!-- Summary Bar -->
+<div id="st-summary" style="display:flex;gap:16px;margin:10px 0;font-size:0.9em;background:#f0f4ff;padding:8px 14px;border-radius:8px;flex-wrap:wrap"></div>
+
+<!-- Students Table -->
+<div class="tw" style="overflow-x:auto">
+<table id="students-table" style="width:100%;border-collapse:collapse;font-size:0.9em">
+<thead><tr style="background:#1a3c6e;color:white">
+<th style="padding:10px 8px;text-align:right">מס'</th>
+<th style="padding:10px 8px;text-align:right">שם התלמיד</th>
+<th style="padding:10px 8px;text-align:center">שיעור</th>
+<th style="padding:10px 8px;text-align:center">נוכחות</th>
+<th style="padding:10px 8px;text-align:center">סטטוס</th>
+<th style="padding:10px 8px;text-align:right">סיבה/אישור</th>
+<th style="padding:10px 8px;text-align:center">כניסה</th>
+<th style="padding:10px 8px;text-align:center">יציאה</th>
+<th style="padding:10px 8px;text-align:center">פעולות</th>
+</tr></thead>
+<tbody id="students-tbody"></tbody>
+</table>
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div id="student-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:420px">
+<h3 id="student-modal-title">➕ הוסף תלמיד</h3>
+<label>שם התלמיד (משפחה שם)</label>
+<input type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">
+<label>שיעור</label>
+<select id="st-class" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px">
+<option value="א">שיעור א'</option>
+<option value="ב">שיעור ב'</option>
+<option value="ג">שיעור ג'</option>
+</select>
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+<button class="btn out" onclick="closeStudentModal()">ביטול</button>
+<button class="btn" onclick="saveStudent()">💾 שמור</button>
+</div>
+</div>
+</div>
+
+<!-- Approval Modal -->
+<div id="approval-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:480px">
+<h3>📋 אישור היעדרות</h3>
+<div id="approval-student-name" style="font-weight:bold;margin-bottom:12px;color:#1a3c6e"></div>
+<label>סיבה</label>
+<select id="appr-reason" onchange="checkOther()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0">
+</select>
+<div id="other-text-wrap" style="display:none;margin-top:8px">
+<label>פרט</label>
+<textarea id="appr-other" rows="2" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;direction:rtl"></textarea>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+<div>
+<label>מתאריך עברי</label>
+<input type="text" id="appr-from-heb" placeholder="א׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
+</div>
+<div>
+<label>שעת יציאה</label>
+<input type="time" id="appr-from-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
+</div>
+<div>
+<label>עד תאריך עברי</label>
+<input type="text" id="appr-to-heb" placeholder="ג׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
+</div>
+<div>
+<label>שעת חזרה</label>
+<input type="time" id="appr-to-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
+</div>
+</div>
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+<button class="btn out" onclick="closeApproval()">ביטול</button>
+<button class="btn" onclick="saveApproval()">✅ אשר</button>
+</div>
+</div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div id="confirm-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:360px;text-align:center">
+<div style="font-size:2em">⚠️</div>
+<h3 id="confirm-msg">האם למחוק?</h3>
+<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+<button class="btn out" onclick="closeConfirm()">ביטול</button>
+<button class="btn" style="background:#e53e3e" onclick="confirmAction()">אשר מחיקה</button>
+</div>
+</div>
+</div>
+
+<!-- Edit Reasons Modal -->
+<div id="reasons-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:400px">
+<h3>⚙️ עריכת סיבות אישור</h3>
+<div id="reasons-list" style="margin:10px 0;max-height:300px;overflow-y:auto"></div>
+<input type="text" id="new-reason" placeholder="סיבה חדשה..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:8px 0;direction:rtl">
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+<button class="btn out" onclick="closeReasons()">סגור</button>
+<button class="btn" onclick="addReason()">➕ הוסף</button>
+</div>
+</div>
+</div>
+
+</div>
 </div>
 <div class="pg" id="pg-attend">
   <div class="inner">
@@ -335,6 +457,410 @@ document.getElementById('dp').addEventListener('change',function(){loadA(this.va
 var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
 
 loadDash();
+
+// ============ STUDENTS MODULE ============
+const ADMIN_PASS='yeshiva2024';
+let isLoggedIn=localStorage.getItem('ys_admin')==='1';
+let currentFilter='all';
+let confirmCallback=null;
+let editingStudentId=null;
+let currentApprovalId=null;
+
+const DEFAULT_STUDENTS=[
+  {id:1,name:"אוחנה יוסף",cls:"א"},{id:2,name:"אוחנה דוד",cls:"ג"},
+  {id:3,name:"אזולאי אברהם",cls:"א"},{id:4,name:"אזולאי דוד",cls:"א"},
+  {id:5,name:"אזולאי יעקב",cls:"ג"},{id:6,name:"אהרונוב שניאור",cls:"ג"},
+  {id:7,name:"אטיאס שלמה",cls:"א"},{id:8,name:"אלחרר שמואל",cls:"ב"},
+  {id:9,name:"אבוטבול אברהם",cls:"ב"},{id:10,name:"אדרי יוסף",cls:"ב"},
+  {id:11,name:"בוכריס שלמה",cls:"ג"},{id:12,name:"בוחניק פיליפ לוי",cls:"ב"},
+  {id:13,name:"ביטון מנחם",cls:"א"},{id:14,name:"בן דוד שמואל",cls:"ב"},
+  {id:15,name:"בנימיני ברוך",cls:"ב"},{id:16,name:"ברוך שמעון",cls:"א"},
+  {id:17,name:"ברוך אריה",cls:"ג"},{id:18,name:"גבאי יצחק",cls:"א"},
+  {id:19,name:"גבריאל מנחם",cls:"ג"},{id:20,name:"גולדברג מנחם",cls:"ב"},
+  {id:21,name:"דהן משה",cls:"א"},{id:22,name:"דהן אברהם",cls:"ג"},
+  {id:23,name:"דוברייצר אורי",cls:"ב"},{id:24,name:"דוקטורוביץ מנחם מענדל",cls:"א"},
+  {id:25,name:"דין שניאור זלמן",cls:"א"},{id:26,name:"הלוי נחמן",cls:"ב"},
+  {id:27,name:"הרמתי מנחם מענדל",cls:"א"},{id:28,name:"הרצוג שמואל",cls:"ג"},
+  {id:29,name:"ויינשטיין שניאור",cls:"ב"},{id:30,name:"ויסמן אהרון",cls:"א"},
+  {id:31,name:"ויסמן מנחם",cls:"ג"},{id:32,name:"זוסמן לוי יצחק",cls:"א"},
+  {id:33,name:"זוסמן שניאור זלמן",cls:"ג"},{id:34,name:"זילבר יעקב",cls:"ב"},
+  {id:35,name:"חדד נחמן",cls:"א"},{id:36,name:"חדד שלמה",cls:"ג"},
+  {id:37,name:"חסין אריה",cls:"ב"},{id:38,name:"טל אליהו",cls:"א"},
+  {id:39,name:"טל שמואל",cls:"ג"},{id:40,name:"טננבאום שמואל",cls:"ב"},
+  {id:41,name:"יוסף חיים",cls:"א"},{id:42,name:"יוסף מנחם",cls:"ג"},
+  {id:43,name:"יפרח שלמה",cls:"ב"},{id:44,name:"כהן אריה לייב",cls:"ג"},
+  {id:45,name:"כהן בנימין",cls:"א"},{id:46,name:"כהן בנימין ברוך",cls:"ב"},
+  {id:47,name:"כהן יוסף שמואל",cls:"א"},{id:48,name:"כהן יוסף שמואל צבי",cls:"ב"},
+  {id:49,name:"כהן מנחם",cls:"א"},{id:50,name:"לבקוביץ נחמן",cls:"א"},
+  {id:51,name:"לוי אריה",cls:"ב"},{id:52,name:"לוי נחמן",cls:"ג"},
+  {id:53,name:"לוי שניאור זלמן",cls:"ב"},{id:54,name:"לוין יהודה",cls:"א"},
+  {id:55,name:"מוזס שלמה",cls:"א"},{id:56,name:"מוזס אברהם",cls:"ג"},
+  {id:57,name:"מושקוביץ מנחם",cls:"ב"},{id:58,name:"מושקוביץ שניאור",cls:"ג"},
+  {id:59,name:"מחפוז מנחם מענדל",cls:"א"},{id:60,name:"מחפוז נחמן",cls:"ב"},
+  {id:61,name:"מזרחי יונתן יאיר",cls:"א"},{id:62,name:"מזרחי איתן אהרון",cls:"א"},
+  {id:63,name:"מזרחי שלמה",cls:"ג"},{id:64,name:"נחמיאס יוסף",cls:"ג"},
+  {id:65,name:"נעמת יוסף יצחק",cls:"ב"},{id:66,name:"סבג מנחם",cls:"ג"},
+  {id:67,name:"סגל מנחם מענדל",cls:"ב"},{id:68,name:"סלמה יוסף יצחק",cls:"ב"},
+  {id:69,name:"עוזיאל אריה",cls:"ג"},{id:70,name:"פבזנר שמואל",cls:"ב"},
+  {id:71,name:"פרידמן שמואל",cls:"ג"},{id:72,name:"צדוק יוסף",cls:"ג"},
+  {id:73,name:"קוהן מנחם מענדל",cls:"ג"},{id:74,name:"שלו רז",cls:"ב"},
+  {id:75,name:"שלו רז",cls:"ג"}
+];
+
+function getStudents(){return JSON.parse(localStorage.getItem('ys_students')||'null')||DEFAULT_STUDENTS;}
+function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
+function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
+function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
+function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'null')||['השעיה (שמה"ס)','מצב חירום','חופשה','מחלה','שמחה משפחתית','נסיעה לרב','בית חולים','אחר'];}
+function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));}
+function getApprovals(){return JSON.parse(localStorage.getItem('ys_approvals')||'{}');}
+function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
+
+function todayKey(){return new Date().toISOString().slice(0,10);}
+
+function checkLoginNeeded(){
+  if(!isLoggedIn){document.getElementById('login-modal').style.display='flex';return true;}
+  return false;
+}
+function doLogin(){
+  const p=document.getElementById('login-pass').value;
+  if(p===ADMIN_PASS){
+    isLoggedIn=true;localStorage.setItem('ys_admin','1');
+    document.getElementById('login-modal').style.display='none';
+    document.getElementById('login-pass').value='';
+    renderStudents();
+  } else {
+    document.getElementById('login-err').style.display='block';
+    setTimeout(()=>document.getElementById('login-err').style.display='none',2000);
+  }
+}
+
+function filterClass(cls){
+  currentFilter=cls;
+  ['all','a','b','c'].forEach(x=>document.getElementById('ct-'+x)?.classList.remove('on'));
+  const mp={all:'ct-all',א:'ct-a',ב:'ct-b',ג:'ct-c'};
+  document.getElementById(mp[cls]||'ct-all')?.classList.add('on');
+  renderStudents();
+}
+
+function getStudentStatus(sid){
+  const today=todayKey();
+  const attend=getAttendance();
+  const approvals=getApprovals();
+  const dayA=attend[today]||{};
+  const appr=approvals[sid];
+  
+  // Check active approval
+  if(appr && appr.active){
+    const now=new Date();
+    const from=appr.fromGreg?new Date(appr.fromGreg):null;
+    const to=appr.toGreg?new Date(appr.toGreg):null;
+    if(from && to && now>=from && now<=to){
+      return {status:'approved',label:'באישור',color:'#ed8936',reason:appr.reason};
+    }
+    if(to && now>to){
+      // Auto-return
+      const a2=getApprovals();
+      a2[sid]={...appr,active:false};
+      saveApprovals(a2);
+    }
+  }
+  
+  const rec=dayA[sid];
+  if(!rec) return {status:'unknown',label:'-',color:'#999'};
+  if(rec.present===true) return {status:'present',label:'✅ נוכח',color:'#38a169'};
+  if(rec.present===false) return {status:'absent',label:'❌ נעדר',color:'#e53e3e'};
+  return {status:'unknown',label:'-',color:'#999'};
+}
+
+function renderStudents(){
+  if(document.getElementById('pg-students')?.style.display==='none') return;
+  const students=getStudents();
+  const search=(document.getElementById('search-st')?.value||'').toLowerCase();
+  const today=todayKey();
+  const attend=getAttendance();
+  const dayA=attend[today]||{};
+  
+  let filtered=students.filter(s=>{
+    if(currentFilter!=='all' && s.cls!==currentFilter) return false;
+    if(search && !s.name.includes(search)) return false;
+    return true;
+  });
+  
+  // Count summary
+  let present=0,absent=0,approved=0;
+  students.forEach(s=>{
+    const st=getStudentStatus(s.id);
+    if(st.status==='present') present++;
+    else if(st.status==='approved') approved++;
+    else if(st.status==='absent') absent++;
+  });
+  
+  const sumEl=document.getElementById('st-summary');
+  if(sumEl) sumEl.innerHTML=
+    '<span style="color:#38a169">✅ נוכחים: '+present+'</span>'+
+    '<span style="color:#ed8936">📋 באישור: '+approved+'</span>'+
+    '<span style="color:#e53e3e">❌ נעדרים: '+absent+'</span>'+
+    '<span style="color:#666">סה"כ: '+students.length+'</span>';
+  
+  const tbody=document.getElementById('students-tbody');
+  if(!tbody) return;
+  
+  tbody.innerHTML=filtered.map((s,i)=>{
+    const st=getStudentStatus(s.id);
+    const rec=dayA[s.id]||{};
+    const appr=getApprovals()[s.id];
+    const apprText=appr&&appr.active?(appr.reason+(appr.fromHeb?' ('+appr.fromHeb+'-'+appr.toHeb+')':'')):'';
+    const rowBg=i%2===0?'#fff':'#f9fafb';
+    const statusBg=st.status==='present'?'#f0fff4':st.status==='approved'?'#fffaf0':st.status==='absent'?'#fff5f5':rowBg;
+    return '<tr style="background:'+statusBg+';border-bottom:1px solid #eee">'+
+      '<td style="padding:8px;text-align:right;font-weight:bold;color:#666">'+s.id+'</td>'+
+      '<td style="padding:8px;text-align:right;font-weight:500">'+s.name+'</td>'+
+      '<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.85em">שיעור '+s.cls+''</span></td>'+
+      '<td style="padding:8px;text-align:center">'+
+        '<button onclick="togglePresent('+s.id+',true)" style="background:'+(st.status==='present'?'#38a169':'#eee')+';color:'+(st.status==='present'?'white':'#333')+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:2px" title="נוכח">✅</button>'+
+        '<button onclick="togglePresent('+s.id+',false)" style="background:'+(st.status==='absent'?'#e53e3e':'#eee')+';color:'+(st.status==='absent'?'white':'#333')+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:2px" title="נעדר">❌</button>'+
+      '</td>'+
+      '<td style="padding:8px;text-align:center"><span style="color:'+st.color+';font-weight:600;font-size:0.85em">'+st.label+'</span></td>'+
+      '<td style="padding:8px;text-align:right;font-size:0.8em;color:#666;max-width:140px">'+
+        (apprText||'<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.85em">📋 הוסף אישור</button>')+
+      '</td>'+
+      '<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.entryTime||'—')+'</td>'+
+      '<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.exitTime||'—')+'</td>'+
+      '<td style="padding:8px;text-align:center">'+
+        '<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="עריכה">✏️</button>'+
+        '<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="מחיקה">🗑️</button>'+
+        '<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="רשום זמן">⏱️</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+  
+  // Update class tab counts
+  const cls=getStudents();
+  document.getElementById('ct-all').textContent='הכל ('+cls.length+')';
+  document.getElementById('ct-a').textContent='שיעור א' ('+cls.filter(s=>s.cls==='א').length+')';
+  document.getElementById('ct-b').textContent='שיעור ב' ('+cls.filter(s=>s.cls==='ב').length+')';
+  document.getElementById('ct-c').textContent='שיעור ג' ('+cls.filter(s=>s.cls==='ג').length+')';
+}
+
+function togglePresent(sid,present){
+  if(checkLoginNeeded()) return;
+  const today=todayKey();
+  const attend=getAttendance();
+  if(!attend[today]) attend[today]={};
+  const now=new Date();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const existing=attend[today][sid]||{};
+  if(present){
+    attend[today][sid]={...existing,present:true,entryTime:existing.entryTime||timeStr};
+  } else {
+    attend[today][sid]={...existing,present:false};
+  }
+  saveAttendance(attend);
+  renderStudents();
+}
+
+function recordTime(sid){
+  if(checkLoginNeeded()) return;
+  const today=todayKey();
+  const attend=getAttendance();
+  if(!attend[today]) attend[today]={};
+  const now=new Date();
+  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const existing=attend[today][sid]||{};
+  if(!existing.entryTime){
+    attend[today][sid]={...existing,entryTime:timeStr,present:true};
+  } else {
+    attend[today][sid]={...existing,exitTime:timeStr};
+  }
+  saveAttendance(attend);
+  renderStudents();
+}
+
+function openAddStudent(){
+  if(checkLoginNeeded()) return;
+  editingStudentId=null;
+  document.getElementById('student-modal-title').textContent='➕ הוסף תלמיד';
+  document.getElementById('st-name').value='';
+  document.getElementById('st-class').value='א';
+  document.getElementById('student-modal').style.display='flex';
+}
+
+function editStudent(sid){
+  if(checkLoginNeeded()) return;
+  const s=getStudents().find(x=>x.id===sid);
+  if(!s) return;
+  editingStudentId=sid;
+  document.getElementById('student-modal-title').textContent='✏️ עריכת תלמיד';
+  document.getElementById('st-name').value=s.name;
+  document.getElementById('st-class').value=s.cls;
+  document.getElementById('student-modal').style.display='flex';
+}
+
+function saveStudent(){
+  const name=document.getElementById('st-name').value.trim();
+  const cls=document.getElementById('st-class').value;
+  if(!name){alert('נא להזין שם');return;}
+  const students=getStudents();
+  if(editingStudentId){
+    const idx=students.findIndex(s=>s.id===editingStudentId);
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;}
+  } else {
+    const maxId=students.reduce((m,s)=>Math.max(m,s.id),0);
+    students.push({id:maxId+1,name,cls});
+    students.sort((a,b)=>a.name.localeCompare(b.name,'he'));
+    // Re-number
+    students.forEach((s,i)=>s.id=i+1);
+  }
+  saveStudents(students);
+  closeStudentModal();
+  renderStudents();
+}
+
+function closeStudentModal(){document.getElementById('student-modal').style.display='none';}
+
+function deleteStudent(sid){
+  if(checkLoginNeeded()) return;
+  const s=getStudents().find(x=>x.id===sid);
+  if(!s) return;
+  document.getElementById('confirm-msg').textContent='האם למחוק את '+s.name+'?';
+  confirmCallback=()=>{
+    let students=getStudents().filter(x=>x.id!==sid);
+    students.forEach((s,i)=>s.id=i+1);
+    saveStudents(students);
+    renderStudents();
+  };
+  document.getElementById('confirm-modal').style.display='flex';
+}
+
+function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
+function confirmAction(){if(confirmCallback)confirmCallback();closeConfirm();}
+
+function openApproval(sid){
+  if(checkLoginNeeded()) return;
+  currentApprovalId=sid;
+  const s=getStudents().find(x=>x.id===sid);
+  document.getElementById('approval-student-name').textContent=s?s.name:'';
+  // Populate reasons
+  const reasons=getReasons();
+  const sel=document.getElementById('appr-reason');
+  sel.innerHTML=reasons.map(r=>'<option>'+r+'</option>').join('');
+  // Add edit reasons button
+  document.getElementById('other-text-wrap').style.display='none';
+  document.getElementById('appr-from-heb').value=hebrewDateShort();
+  document.getElementById('appr-to-heb').value='';
+  document.getElementById('appr-from-time').value='';
+  document.getElementById('appr-to-time').value='';
+  document.getElementById('approval-modal').style.display='flex';
+}
+
+function checkOther(){
+  const val=document.getElementById('appr-reason').value;
+  document.getElementById('other-text-wrap').style.display=val==='אחר'?'block':'none';
+}
+
+function saveApproval(){
+  const reason=document.getElementById('appr-reason').value;
+  const other=document.getElementById('appr-other').value;
+  const finalReason=reason==='אחר'?other:reason;
+  const fromHeb=document.getElementById('appr-from-heb').value;
+  const toHeb=document.getElementById('appr-to-heb').value;
+  const fromTime=document.getElementById('appr-from-time').value;
+  const toTime=document.getElementById('appr-to-time').value;
+  const appr=getApprovals();
+  appr[currentApprovalId]={
+    reason:finalReason,fromHeb,toHeb,fromTime,toTime,active:true,
+    fromGreg:new Date().toISOString(),
+    toGreg:toHeb?new Date(Date.now()+7*86400000).toISOString():null
+  };
+  saveApprovals(appr);
+  closeApproval();
+  renderStudents();
+}
+
+function closeApproval(){document.getElementById('approval-modal').style.display='none';}
+
+function openReasonsEditor(){
+  if(checkLoginNeeded()) return;
+  renderReasonsList();
+  document.getElementById('reasons-modal').style.display='flex';
+}
+
+function renderReasonsList(){
+  const reasons=getReasons();
+  document.getElementById('reasons-list').innerHTML=reasons.map((r,i)=>
+    '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #eee">'+
+    '<span style="flex:1;direction:rtl">'+r+'</span>'+
+    (r==='אחר'?'':
+      '<button onclick="deleteReason('+i+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1em">🗑️</button>')+
+    '</div>'
+  ).join('');
+}
+
+function addReason(){
+  const v=document.getElementById('new-reason').value.trim();
+  if(!v) return;
+  const reasons=getReasons();
+  const otherIdx=reasons.indexOf('אחר');
+  if(otherIdx>-1) reasons.splice(otherIdx,0,v);
+  else reasons.push(v);
+  saveReasons(reasons);
+  document.getElementById('new-reason').value='';
+  renderReasonsList();
+}
+
+function deleteReason(i){
+  const reasons=getReasons();
+  reasons.splice(i,1);
+  saveReasons(reasons);
+  renderReasonsList();
+}
+
+function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
+
+function printStudents(){
+  const students=getStudents();
+  const today=hebrewDate();
+  let rows=students.map((s,i)=>{
+    const st=getStudentStatus(s.id);
+    return '<tr><td>'+(i+1)+'</td><td>'+s.name+'</td><td>שיעור '+s.cls+''</td><td style="color:'+st.color+'">'+st.label+'</td><td></td></tr>';
+  }).join('');
+  const w=window.open('','_blank');
+  w.document.write('<html dir="rtl"><head><title>מצבת תלמידים</title><style>body{font-family:Arial;direction:rtl}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 10px;text-align:right}th{background:#1a3c6e;color:white}.date{color:red;font-weight:bold;margin:8px 0}h2{text-align:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center}
+.modal-box{background:white;border-radius:16px;padding:24px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.3);direction:rtl;max-height:90vh;overflow-y:auto}
+.modal-box h3{margin:0 0 16px;color:#1a3c6e}
+.modal-box label{font-size:0.85em;font-weight:600;color:#555;display:block;margin-bottom:3px}
+.modal-box input,.modal-box select,.modal-box textarea{direction:rtl}
+.class-tabs .btn.on{background:#1a3c6e;color:white}
+.btn.sm{padding:5px 12px;font-size:0.85em}
+</style></head><body>'+
+    '<h2>מצבת תלמידים מתעדכנת</h2>'+
+    '<div class="date">חותמת זמן: '+today+' | '+new Date().toLocaleTimeString('he-IL')+'</div>'+
+    '<table><thead><tr><th>מס'</th><th>שם התלמיד</th><th>שיעור</th><th>נוכחות</th><th>הערות</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<p style="text-align:center;margin-top:20px;font-weight:bold">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד!</p>'+
+    '</body></html>');
+  w.document.close();
+  w.print();
+}
+
+// Hook into page navigation
+function onStudentsPageOpen(){
+  if(!isLoggedIn){
+    document.getElementById('login-modal').style.display='flex';
+    setTimeout(()=>document.getElementById('login-pass')?.focus(),100);
+  }
+  renderStudents();
+}
+
+// Expose for modal close on outside click
+document.addEventListener('click',function(e){
+  if(e.target.classList.contains('modal-overlay')){
+    e.target.style.display='none';
+  }
+});
+// ============ END STUDENTS MODULE ============
+
 </script>
 </body>
 </html>
