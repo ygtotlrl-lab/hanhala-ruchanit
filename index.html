@@ -7,16 +7,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
+  
   // ===== NAVIGATION =====
   window.showPage=function(pg){
-    document.querySelectorAll('.pg').forEach(funcdocument.addEventListener('DOMContentLoaded',function(){
-tion(p){p.classList.remove('on');});
+    document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
     document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
-});   var nbEl=document.querySelector('[data-pg="'+pg+'"]');
-    if(pgEl) pgEl.classList.add('on');
-    if(nbEl) nbEl.classList.add('on');
+    var pgEl=document.getElementById('pg-'+pg);
+    var nbEl=document.querySelector('[data-pg="'+pg+'"]');
+    if(pgEl)pgEl.classList.add('on');
+    if(nbEl)nbEl.classList.add('on');
     if(pg==='students'){
-      if(typeof window.renderStudents==='function') window.renderStudents();
+      if(typeof window.renderStudents==='function')window.renderStudents();
       if(!localStorage.getItem('ys_admin')){
         var m=document.getElementById('login-modal');
         if(m){m.style.display='flex';setTimeout(function(){var x=document.getElementById('login-pass');if(x)x.focus();},100);}
@@ -27,6 +28,7 @@ tion(p){p.classList.remove('on');});
     b.addEventListener('click',function(){window.showPage(this.dataset.pg);});
   });
   window.showPage('home');
+
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
@@ -464,12 +466,12 @@ function loadR(){
   });
 }
 
-document.getElementById('btn-add').addEventListener('click',function(){openAdd()});
-document.getElementById('btn-save-a').addEventListener('click',function(){saveA()});
-document.getElementById('btn-rpt').addEventListener('click',function(){loadR()});
-document.getElementById('btn-cm').addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
-document.getElementById('btn-cancel').addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
-document.getElementById('btn-save-st').addEventListener('click',function(){saveS()});
+var _el_btn_add=document.getElementById('btn-add');if(_el_btn_add)_el_btn_add.addEventListener('click',function(){openAdd()});
+var _el_btn_save_a=document.getElementById('btn-save-a');if(_el_btn_save_a)_el_btn_save_a.addEventListener('click',function(){saveA()});
+var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.addEventListener('click',function(){loadR()});
+var _el_btn_cm=document.getElementById('btn-cm');if(_el_btn_cm)_el_btn_cm.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
+var _el_btn_cancel=document.getElementById('btn-cancel');if(_el_btn_cancel)_el_btn_cancel.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
+var _el_btn_save_st=document.getElementById('btn-save-st');if(_el_btn_save_st)_el_btn_save_st.addEventListener('click',function(){saveS()});
 document.getElementById('search-st').addEventListener('input',function(){var q=this.value;renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||'').includes(q)}))});
 document.getElementById('dp').addEventListener('change',function(){loadA(this.value)});
 
