@@ -8,7 +8,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>מערכת ניהול | ישיבת תומכי תמימים ראשל"צ</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+// ============ BACKUP ============
+function backupAll(){
+  var btn=event.currentTarget;
+  btn.disabled=true;
+  var p1=SB.from('students').select('*');
+  var p2=SB.from('attendance').select('*');
+  Promise.all([p1,p2]).then(function(results){
+    var data={backup_date:new Date().toISOString(),students:results[0].data||[],attendance:results[1].data||[]};
+    var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var d=new Date();
+    a.href=url;
+    a.download='yeshiva-backup-'+d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ גיבוי הורד בהצלחה');
+    btn.disabled=false;
+  }).catch(function(){toast('שגיאה בגיבוי');btn.disabled=false;});
+}
+</script>
 <style>
 :root{
   
@@ -259,6 +280,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <button class="mod" data-pg="exams" style="--color:#a07830;--icbg:#fff8e8"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
       <button class="mod" data-pg="files" style="--color:#c0392b;--icbg:#fdf0f0"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
       <button class="mod" data-pg="reports" style="--color:#0a6a8a;--icbg:#e8f5fa"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="mod" onclick="backupAll()" style="--color:#2d7a2d;--icbg:#eafaea"><div class="mod-ic">💾</div><div class="mod-info"><div class="mod-name">גיבוי נתונים</div><div class="mod-desc">הורדת גיבוי מלא של כל הנתונים מהענן</div></div></button>
     </div>
   </div>
 </div>
