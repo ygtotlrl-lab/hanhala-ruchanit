@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}<\/script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>מערכת ניהול | ישיבת תומכי תמימים ראשל"צ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -24,7 +24,7 @@ nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .nb{background:none;border:none;color:rgba(255,255,255,.72);padding:7px 12px;border-radius:6px;cursor:pointer;font-family:Heebo;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:6px;transition:all .18s;white-space:nowrap}
 .nb:hover{background:rgba(255,255,255,.13);color:#fff}
 .nb.on{background:rgba(255,255,255,.20);color:#fff;font-weight:600}
-main{padding:0;max-width:100%}
+main{padding:0;max-width:100%;width:100%}
 .pg{display:none}.pg.on{display:block}
 #pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,#eef2fa,#f8f9ff 50%,#e8f0fb)}
 .hero{background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));color:#fff;padding:36px 40px 46px;position:relative;overflow:hidden}
@@ -50,7 +50,7 @@ main{padding:0;max-width:100%}
 .mod-info{flex:1}
 .mod-name{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .mod-desc{font-size:.78rem;color:var(--text3);line-height:1.4}
-.inner{padding:26px 40px;max-width:1100px;margin:0 auto}
+.inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap}
 .back:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa}
@@ -118,8 +118,10 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ld{text-align:center;padding:44px;color:var(--text3)}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
-@media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:750px){
+@media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){
+  .mods{grid-template-columns:1fr}
   .inner{padding:14px 10px}
   .mods-wrap{padding:14px 10px}
   .hero{padding:18px 14px 24px}
@@ -147,87 +149,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
 }
-/* ===== MOBILE DEFAULT LAYOUT - סגנון יומן עבודה ===== */
-body{background:#F0F4FA}
-.app,.inner{max-width:100%;padding:14px}
-
-/* Header - כמו יומן עבודה */
-header{
-  background:linear-gradient(135deg,#1A3A6B 0%,#1558a0 100%) !important;
-  border-radius:20px !important;
-  margin:0 0 14px 0 !important;
-  height:auto !important;
-  padding:18px 16px !important;
-  box-shadow:0 6px 28px rgba(21,88,160,0.35) !important;
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  text-align:center !important;
-}
-.logo{width:64px;height:64px;border-radius:10px;background:white;padding:4px;margin-bottom:10px}
-.htxt{display:block !important;text-align:center}
-.htxt strong{font-size:1.6rem;font-weight:900;color:#fff;display:block;margin-bottom:4px}
-.htxt span{font-size:.82rem;color:rgba(255,255,255,.7)}
-.hdiv{display:none !important}
-nav{display:none !important}
-.hdr-stat,.hero{display:none}
-
-/* Stats */
-.stats{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
-.stat{
-  background:#fff;border-radius:14px;padding:14px 10px;
-  text-align:center;
-  box-shadow:0 2px 10px rgba(26,58,107,.1);
-  border:1.5px solid #D0DAF0;
-}
-.stat .n{font-size:1.8rem;font-weight:700;color:#1A3A6B}
-.stat .l{font-size:.75rem;color:#4A5A7A}
-
-/* טאבי ניווט - כמו יומן עבודה */
-.bottom-nav{display:none !important}
-body{padding-bottom:0}
-.mob-tabs{display:flex !important;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
-.mob-tabs::-webkit-scrollbar{display:none}
-
-/* מודולים - כרטיסים כמו יומן עבודה */
-.mods{grid-template-columns:1fr;gap:10px}
-.mods-wrap{padding:0 0 20px}
-.mods-lbl{font-size:.8rem;color:#4A5A7A;margin-bottom:12px;font-weight:700}
-.mod{
-  background:#fff;
-  border-radius:16px;
-  padding:16px 16px;
-  gap:14px;
-  box-shadow:0 2px 12px rgba(26,58,107,.1);
-  border:1.5px solid #D0DAF0;
-  flex-direction:row;
-  align-items:center;
-  cursor:pointer;
-  transition:all .2s;
-}
-.mod::before{display:none !important}
-.mod:active{border-color:#1A3A6B;box-shadow:0 4px 18px rgba(26,58,107,.2);transform:translateY(-1px)}
-.mod-ic{
-  width:50px;height:50px;font-size:1.5rem;
-  border-radius:13px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-}
-.mod-info{flex:1;text-align:right}
-.mod-name{font-size:1.05rem;font-weight:700;color:#1A2340;margin-bottom:3px}
-.mod-desc{font-size:.82rem;line-height:1.4;color:#4A5568}
-
-/* כרטיסים פנימיים */
-.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(26,58,107,.1);border:1.5px solid #D0DAF0}
-.ptitle{font-size:1.05rem;margin-bottom:14px}
-table{font-size:.84rem}
-th{padding:9px 10px;font-size:.8rem}
-td{padding:9px 10px}
-.btn{padding:9px 16px;font-size:.86rem}
-.rh{margin-bottom:12px}
-.tw{border-radius:10px}
-/* ====================================================== */
-@media(max-width:480px){
+@media(max-width:400px){
   .nb .nb-lbl{display:none}
   .nb{padding:7px 9px;font-size:1rem}
   header{height:56px}
@@ -236,10 +158,21 @@ td{padding:9px 10px}
 
 /* ===== BOTTOM NAV - MOBILE ONLY ===== */
 .bottom-nav{display:none}
-@media(max-width:750px){
+@media(max-width:640px){
   body{padding-bottom:64px}
   .bottom-nav{
     display:flex;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    height:64px;
+    background:linear-gradient(135deg,#0f2347,#1a3a6b);
+    border-top:1px solid rgba(255,255,255,.15);
+    z-index:200;
+    align-items:center;
+    justify-content:space-around;
+    box-shadow:0 -2px 12px rgba(0,0,0,.25);
+    padding:0 4px;
+    padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .bn{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -255,43 +188,14 @@ td{padding:9px 10px}
   .bn.on{color:#fff}
   .bn.on .bn-ic{transform:scale(1.15)}
   .bn:active{background:rgba(255,255,255,.1)}
+  /* הסתר nav עליון במובייל */
   nav{display:none}
+  /* הסתר את header text במובייל */
   .hdiv,.htxt{display:none}
   header{justify-content:space-between;padding:0 14px}
   .hl{gap:10px}
 }
 
-
-/* ===== DESKTOP OVERRIDE (min-width 1100px) ===== */
-@media(min-width:1100px){
-  .mods{grid-template-columns:repeat(3,1fr) !important}
-  .inner{padding:26px 40px !important}
-  .mods-wrap{padding:28px 40px 40px !important}
-  .hero{padding:36px 40px 46px !important}
-  .stats{grid-template-columns:repeat(4,1fr) !important}
-  .stat{padding:16px 20px !important}
-  header{height:76px !important;padding:0 24px !important}
-  .logo{width:60px !important;height:60px !important}
-  .hdiv{display:block !important}
-  nav{display:flex !important}
-  .bottom-nav{display:none !important}
-  body{padding-bottom:0 !important}
-}
-/* =============================================== */
-
-/* ===== TABS - כמו יומן עבודה ===== */
-.mob-tabs{display:none}
-.mob-tab{
-  flex:1;background:#fff;color:#4A5A7A;
-  border:2px solid #D0DAF0;
-  border-radius:11px;padding:10px 6px;
-  font-family:Heebo,sans-serif;font-size:.82rem;font-weight:700;
-  cursor:pointer;transition:all .2s;
-  box-shadow:0 2px 6px rgba(26,58,107,.08);
-  white-space:nowrap;
-}
-.mob-tab.active{background:#1A3A6B;color:white;border-color:#1A3A6B;box-shadow:0 4px 12px rgba(26,58,107,.3)}
-/* =================================== */
 </style>
 </head>
 <body>
@@ -323,14 +227,6 @@ td{padding:9px 10px}
     <div class="stat"><div class="n" style="color:#1a7a4a" id="s-pre">-</div><div class="l">נוכחים היום</div></div>
     <div class="stat"><div class="n" style="color:#c0392b" id="s-abs">-</div><div class="l">נעדרים היום</div></div>
     <div class="stat"><div class="n" id="s-rate">-</div><div class="l">% נוכחות</div></div>
-  </div>
-  <div class="mob-tabs" id="mob-tabs">
-    <button class="mob-tab active" onclick="switchMobTab('home',this)">🏠 ראשי</button>
-    <button class="mob-tab" onclick="switchMobTab('students',this)">👥 מצבת</button>
-    <button class="mob-tab" onclick="switchMobTab('attend',this)">✅ סדרים</button>
-    <button class="mob-tab" onclick="switchMobTab('sleep',this)">🌙 שינה</button>
-    <button class="mob-tab" onclick="switchMobTab('exams',this)">📝 מבחנים</button>
-    <button class="mob-tab" onclick="switchMobTab('reports',this)">📊 דוחות</button>
   </div>
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
@@ -496,7 +392,6 @@ td{padding:9px 10px}
 <div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
 <div id="toast"></div>
 <script>
-// ===== זיהוי APK מ-URL parameter =====
 window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
 window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
 function hebrewDate(jsDate){jsDate=jsDate||new Date();var y=jsDate.getFullYear(),mo=jsDate.getMonth()+1,dy=jsDate.getDate();var td=new Date(y,mo-1,dy);var ST=[{jd:new Date(2024,9,3),hy:5785,ml:[30,29,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2025,8,22),hy:5786,ml:[30,30,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2026,8,11),hy:5787,ml:[30,29,30,29,30,30,30,29,30,30,29,30]},{jd:new Date(2027,9,2),hy:5788,ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];var base=ST[0];for(var i=ST.length-1;i>=0;i--){if(td>=ST[i].jd){base=ST[i];break;}}var diff=Math.round((td-base.jd)/86400000),cum=0;for(var mi=0;mi<base.ml.length;mi++){if(diff<cum+base.ml[mi]){var d=diff-cum+1;var ymap={5785:"ה׳תשפ״ה",5786:"ה׳תשפ״ו",5787:"ה׳תשפ״ז",5788:"ה׳תשפ״ח"};var wdays=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];return "יום "+wdays[jsDate.getDay()]+", "+window.DAYS_HEB[d]+" "+window.MONTHS_HEB[mi]+" "+(ymap[base.hy]||base.hy);}cum+=base.ml[mi];}return "";}
@@ -518,12 +413,6 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
 
 
-
-function switchMobTab(pg, btn) {
-  document.querySelectorAll('.mob-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  window.showPage(pg);
-}
 function showPage(pg){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
