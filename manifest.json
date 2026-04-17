@@ -1,9 +1,9 @@
 {
-  "name": "ישיבת תומכי תמימים ראשל\"צ",
-  "short_name": "ישיבה",
+  "name": "מערכת ניהול ישיבה",
+  "short_name": "ניהול ישיבה",
   "start_url": "/yeshiva-manager/",
   "scope": "/yeshiva-manager/",
-  "display": "standalone",
+  "display": "fullscreen",
   "background_color": "#1a3c6e",
   "theme_color": "#1a3c6e",
   "lang": "he",
