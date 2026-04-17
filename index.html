@@ -118,9 +118,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ld{text-align:center;padding:44px;color:var(--text3)}
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
-@media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){
+@media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){
   .mods{grid-template-columns:1fr}
   .inner{padding:14px 10px}
   .mods-wrap{padding:14px 10px}
@@ -134,22 +133,22 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .hdiv{display:none}
   .htxt{font-size:.78rem}
   .htxt strong{font-size:.88rem}
-  nav{gap:2px}
-  .nb{padding:6px 8px;font-size:.75rem;gap:4px}
-  .mod{padding:16px 14px;gap:10px}
-  .mod-ic{width:40px;height:40px;font-size:1.25rem;border-radius:8px}
-  .mod-name{font-size:.88rem}
-  .mod-desc{font-size:.74rem}
+  nav{gap:2px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .nb{padding:6px 10px;font-size:.78rem;gap:4px;min-height:44px;flex-shrink:0}
+  .mod{padding:18px 16px;gap:12px;min-height:44px}
+  .mod-ic{width:48px;height:48px;font-size:1.4rem;border-radius:10px}
+  .mod-name{font-size:1rem}
+  .mod-desc{font-size:.82rem}
   .mods-lbl{font-size:.75rem;margin-bottom:12px}
   .ptitle{font-size:1.1rem;margin-bottom:16px}
   table{font-size:.82rem}
   th{padding:9px 10px;font-size:.78rem}
   td{padding:8px 10px}
-  .btn{padding:8px 14px;font-size:.82rem}
+  .btn{padding:10px 16px;font-size:.84rem;min-height:44px}
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
 }
-@media(max-width:400px){
+@media(max-width:480px){
   .nb .nb-lbl{display:none}
   .nb{padding:7px 9px;font-size:1rem}
   header{height:56px}
@@ -158,7 +157,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 /* ===== BOTTOM NAV - MOBILE ONLY ===== */
 .bottom-nav{display:none}
-@media(max-width:640px){
+@media(max-width:800px){
   body{padding-bottom:64px}
   .bottom-nav{
     display:flex;
