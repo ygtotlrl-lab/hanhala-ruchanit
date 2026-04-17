@@ -1,0 +1,28 @@
+name: Setup Supabase KV Table
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  setup-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create KV table via Supabase
+        run: |
+          SUPABASE_URL="https://hdcsqajavhxsbscgnpob.supabase.co"
+          SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8"
+          
+          echo "Testing Supabase connection..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/kv?select=key&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY")
+          echo "KV table check: HTTP $STATUS"
+          
+          if [ "$STATUS" = "200" ]; then
+            echo "KV table already exists!"
+          else
+            echo "KV table missing (HTTP $STATUS) - need service_role to create"
+            echo "Please create manually or add service_role key"
+          fi

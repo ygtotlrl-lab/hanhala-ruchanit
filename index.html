@@ -660,11 +660,26 @@ setInterval(ysAutoSync, 3000);
 // Initial load from cloud on startup - with auto-create kv table if missing
 setTimeout(async function() {
   try {
-    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').single();
-    if (r.error && r.error.message && r.error.message.indexOf('relation') !== -1) {
-      // Table doesn't exist - create it via RPC/SQL
-      await SB.rpc('exec_sql', {sql: 'CREATE TABLE IF NOT EXISTS kv (key text PRIMARY KEY, value text); ALTER TABLE kv ENABLE ROW LEVEL SECURITY; CREATE POLICY IF NOT EXISTS "allow_all" ON kv FOR ALL USING (true) WITH CHECK (true);'});
-      console.log('[ys-sync] kv table created');
+    // Try to read - if table missing, create it via pg REST
+    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle();
+    if (r.error) {
+      var msg = (r.error.message || '') + (r.error.details || '') + (r.error.hint || '');
+      if (msg.toLowerCase().indexOf('kv') !== -1 || msg.indexOf('42P01') !== -1 || msg.indexOf('relation') !== -1) {
+        // Table doesn't exist - create it
+        console.log('[ys-sync] kv table missing, creating...');
+        var createResp = await fetch('https://hdcsqajavhxsbscgnpob.supabase.co/rest/v1/rpc/create_kv_if_missing', {
+          method: 'POST',
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8',
+            'Content-Type': 'application/json'
+          },
+          body: '{}'
+        });
+        console.log('[ys-sync] create result:', createResp.status);
+        return;
+      }
+      console.log('[ys-sync] init error:', r.error.message);
       return;
     }
     if (r.data) {

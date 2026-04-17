@@ -1,0 +1,68 @@
+name: Setup KV Table
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  create-kv:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create kv table in Supabase
+        run: |
+          node << 'EOF'
+          const https = require('https');
+          
+          const PROJECT = 'hdcsqajavhxsbscgnpob';
+          const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8';
+          
+          function request(method, path, body) {
+            return new Promise((resolve, reject) => {
+              const data = body ? JSON.stringify(body) : '';
+              const opts = {
+                hostname: PROJECT + '.supabase.co',
+                port: 443,
+                path: path,
+                method: method,
+                headers: {
+                  'apikey': ANON,
+                  'Authorization': 'Bearer ' + ANON,
+                  'Content-Type': 'application/json',
+                  'Prefer': 'return=minimal'
+                }
+              };
+              if (data) opts.headers['Content-Length'] = Buffer.byteLength(data);
+              
+              const req = https.request(opts, (res) => {
+                let body = '';
+                res.on('data', d => body += d);
+                res.on('end', () => resolve({ status: res.statusCode, body }));
+              });
+              req.on('error', reject);
+              if (data) req.write(data);
+              req.end();
+            });
+          }
+          
+          async function main() {
+            // Check if kv table exists
+            console.log('Checking kv table...');
+            const check = await request('GET', '/rest/v1/kv?select=key&limit=1');
+            console.log('Check status:', check.status, check.body.substring(0, 100));
+            
+            if (check.status === 200) {
+              console.log('KV table already exists!');
+              // Try to insert a test row
+              const ins = await request('POST', '/rest/v1/kv', {key: 'ys_init', value: '"ok"'});
+              console.log('Insert test:', ins.status, ins.body.substring(0, 100));
+              return;
+            }
+            
+            if (check.status === 404 || (check.body && check.body.includes('relation'))) {
+              console.log('KV table does not exist - cannot create with anon key');
+              console.log('Please create manually in Supabase dashboard');
+            }
+          }
+          
+          main().catch(console.error);
+          EOF
