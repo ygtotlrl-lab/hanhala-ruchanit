@@ -147,54 +147,78 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
 }
-/* ===== MOBILE DEFAULT LAYOUT ===== */
-body{background:#f0f4fa}
+/* ===== MOBILE DEFAULT LAYOUT - סגנון יומן עבודה ===== */
+body{background:#F0F4FA}
+.app,.inner{max-width:100%;padding:14px}
+
+/* Header - כמו יומן עבודה */
+header{
+  background:linear-gradient(135deg,#1A3A6B 0%,#1558a0 100%) !important;
+  border-radius:20px !important;
+  margin:0 0 14px 0 !important;
+  height:auto !important;
+  padding:18px 16px !important;
+  box-shadow:0 6px 28px rgba(21,88,160,0.35) !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+}
+.logo{width:64px;height:64px;border-radius:10px;background:white;padding:4px;margin-bottom:10px}
+.htxt{display:block !important;text-align:center}
+.htxt strong{font-size:1.6rem;font-weight:900;color:#fff;display:block;margin-bottom:4px}
+.htxt span{font-size:.82rem;color:rgba(255,255,255,.7)}
+.hdiv{display:none !important}
+nav{display:none !important}
+.hdr-stat,.hero{display:none}
+
+/* Stats */
+.stats{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.stat{
+  background:#fff;border-radius:14px;padding:14px 10px;
+  text-align:center;
+  box-shadow:0 2px 10px rgba(26,58,107,.1);
+  border:1.5px solid #D0DAF0;
+}
+.stat .n{font-size:1.8rem;font-weight:700;color:#1A3A6B}
+.stat .l{font-size:.75rem;color:#4A5A7A}
+
+/* טאבי ניווט - כמו יומן עבודה */
+.bottom-nav{display:none !important}
+body{padding-bottom:0}
+.mob-tabs{display:flex !important;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.mob-tabs::-webkit-scrollbar{display:none}
+
+/* מודולים - כרטיסים כמו יומן עבודה */
 .mods{grid-template-columns:1fr;gap:10px}
-.mods-wrap{padding:14px 14px 20px}
-.mods-lbl{font-size:.8rem;margin-bottom:12px}
-.inner{padding:14px 14px}
-.hero{padding:20px 16px 22px;text-align:center}
-.hero-title{font-size:1.5rem;font-weight:700}
-.hero-sub{font-size:.9rem;opacity:.85}
-.hero-date{font-size:.8rem}
-.stats{grid-template-columns:repeat(2,1fr)}
-.stat{padding:14px 8px;text-align:center}
-.stat .n{font-size:1.7rem;font-weight:700}
-.stat .l{font-size:.75rem}
-header{height:62px;padding:0 14px;background:linear-gradient(135deg,#0f2347,#1a3a6b)}
-.logo{width:46px;height:46px}
-.hdiv{display:none}
-nav{display:none}
-/* מודולים - כמו כרטיסים ביומן עבודה */
+.mods-wrap{padding:0 0 20px}
+.mods-lbl{font-size:.8rem;color:#4A5A7A;margin-bottom:12px;font-weight:700}
 .mod{
   background:#fff;
   border-radius:16px;
-  padding:18px 16px;
+  padding:16px 16px;
   gap:14px;
-  box-shadow:0 2px 10px rgba(26,58,107,.1);
-  border:1.5px solid #d8e2f0;
+  box-shadow:0 2px 12px rgba(26,58,107,.1);
+  border:1.5px solid #D0DAF0;
   flex-direction:row;
   align-items:center;
-  text-align:right;
   cursor:pointer;
   transition:all .2s;
 }
-.mod:hover,.mod:active{
-  border-color:#1a3a6b;
-  box-shadow:0 4px 18px rgba(26,58,107,.2);
-  transform:translateY(-1px);
-}
-.mod::before{display:none}
+.mod::before{display:none !important}
+.mod:active{border-color:#1A3A6B;box-shadow:0 4px 18px rgba(26,58,107,.2);transform:translateY(-1px)}
 .mod-ic{
-  width:52px;height:52px;
-  font-size:1.5rem;
-  border-radius:13px;
-  flex-shrink:0;
+  width:50px;height:50px;font-size:1.5rem;
+  border-radius:13px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
 }
 .mod-info{flex:1;text-align:right}
-.mod-name{font-size:1.05rem;font-weight:700;color:#1a2340;margin-bottom:4px}
-.mod-desc{font-size:.82rem;line-height:1.4;color:#4a5568}
+.mod-name{font-size:1.05rem;font-weight:700;color:#1A2340;margin-bottom:3px}
+.mod-desc{font-size:.82rem;line-height:1.4;color:#4A5568}
+
+/* כרטיסים פנימיים */
+.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:0 2px 12px rgba(26,58,107,.1);border:1.5px solid #D0DAF0}
 .ptitle{font-size:1.05rem;margin-bottom:14px}
 table{font-size:.84rem}
 th{padding:9px 10px;font-size:.8rem}
@@ -202,37 +226,7 @@ td{padding:9px 10px}
 .btn{padding:9px 16px;font-size:.86rem}
 .rh{margin-bottom:12px}
 .tw{border-radius:10px}
-/* ניווט תחתון */
-body{padding-bottom:70px}
-.bottom-nav{
-  display:flex !important;
-  position:fixed;bottom:0;left:0;right:0;
-  height:70px;
-  background:linear-gradient(135deg,#0f2347,#1a3a6b);
-  border-top:1.5px solid rgba(255,255,255,.15);
-  z-index:9999;
-  align-items:center;
-  justify-content:space-around;
-  box-shadow:0 -3px 16px rgba(0,0,0,.3);
-  padding:0 6px;
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-.bn{
-  display:flex !important;
-  flex-direction:column;align-items:center;justify-content:center;
-  flex:1;height:100%;gap:3px;
-  background:none;border:none;
-  color:rgba(255,255,255,.6);
-  font-family:Heebo;font-size:.65rem;font-weight:600;
-  cursor:pointer;transition:all .18s;
-  padding:4px 2px;border-radius:8px;
-  -webkit-tap-highlight-color:transparent;
-}
-.bn .bn-ic{font-size:1.4rem;line-height:1}
-.bn.on{color:#fff}
-.bn.on .bn-ic{transform:scale(1.15)}
-.bn:active{background:rgba(255,255,255,.12)}
-/* ================================== */
+/* ====================================================== */
 @media(max-width:480px){
   .nb .nb-lbl{display:none}
   .nb{padding:7px 9px;font-size:1rem}
@@ -284,6 +278,20 @@ body{padding-bottom:70px}
   body{padding-bottom:0 !important}
 }
 /* =============================================== */
+
+/* ===== TABS - כמו יומן עבודה ===== */
+.mob-tabs{display:none}
+.mob-tab{
+  flex:1;background:#fff;color:#4A5A7A;
+  border:2px solid #D0DAF0;
+  border-radius:11px;padding:10px 6px;
+  font-family:Heebo,sans-serif;font-size:.82rem;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  box-shadow:0 2px 6px rgba(26,58,107,.08);
+  white-space:nowrap;
+}
+.mob-tab.active{background:#1A3A6B;color:white;border-color:#1A3A6B;box-shadow:0 4px 12px rgba(26,58,107,.3)}
+/* =================================== */
 </style>
 </head>
 <body>
@@ -315,6 +323,14 @@ body{padding-bottom:70px}
     <div class="stat"><div class="n" style="color:#1a7a4a" id="s-pre">-</div><div class="l">נוכחים היום</div></div>
     <div class="stat"><div class="n" style="color:#c0392b" id="s-abs">-</div><div class="l">נעדרים היום</div></div>
     <div class="stat"><div class="n" id="s-rate">-</div><div class="l">% נוכחות</div></div>
+  </div>
+  <div class="mob-tabs" id="mob-tabs">
+    <button class="mob-tab active" onclick="switchMobTab('home',this)">🏠 ראשי</button>
+    <button class="mob-tab" onclick="switchMobTab('students',this)">👥 מצבת</button>
+    <button class="mob-tab" onclick="switchMobTab('attend',this)">✅ סדרים</button>
+    <button class="mob-tab" onclick="switchMobTab('sleep',this)">🌙 שינה</button>
+    <button class="mob-tab" onclick="switchMobTab('exams',this)">📝 מבחנים</button>
+    <button class="mob-tab" onclick="switchMobTab('reports',this)">📊 דוחות</button>
   </div>
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
@@ -502,6 +518,12 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
 
 
+
+function switchMobTab(pg, btn) {
+  document.querySelectorAll('.mob-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  window.showPage(pg);
+}
 function showPage(pg){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
