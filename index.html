@@ -119,27 +119,40 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
 @media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+/* === MOBILE - גישת יומן עבודה === */
 @media(max-width:800px){
-  .mods{grid-template-columns:1fr}
-  .inner{padding:14px 10px}
-  .mods-wrap{padding:14px 10px}
+  /* קונטיינר - padding קטן כמו .app ביומן עבודה */
+  .inner{padding:14px}
+  .mods-wrap{padding:14px}
   .hero{padding:18px 14px 24px}
   .hero-title{font-size:1.3rem}
+
+  /* סטטיסטיקות */
   .stats{grid-template-columns:repeat(2,1fr)}
   .stat{padding:12px 8px}
   .stat .n{font-size:1.5rem}
+
+  /* header */
   header{height:60px;padding:0 12px}
   .logo{width:46px;height:46px}
   .hdiv{display:none}
   .htxt{font-size:.78rem}
   .htxt strong{font-size:.88rem}
-  nav{gap:2px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:2px}
-  .nb{padding:6px 10px;font-size:.78rem;gap:4px;min-height:44px;flex-shrink:0}
-  .mod{padding:18px 16px;gap:12px;min-height:44px}
+
+  /* nav - גלילה אופקית כמו יומן עבודה */
+  nav{gap:2px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .nb{padding:8px 10px;font-size:.78rem;gap:4px;min-height:44px;flex-shrink:0;white-space:nowrap}
+
+  /* מודולים - עמודה אחת, רוחב מלא, כמו יומן עבודה */
+  .mods{grid-template-columns:1fr;gap:10px}
+  .mod{padding:16px 14px;gap:12px;width:100%}
   .mod-ic{width:48px;height:48px;font-size:1.4rem;border-radius:10px}
   .mod-name{font-size:1rem}
   .mod-desc{font-size:.82rem}
   .mods-lbl{font-size:.75rem;margin-bottom:12px}
+
+  /* דפים פנימיים */
   .ptitle{font-size:1.1rem;margin-bottom:16px}
   table{font-size:.82rem}
   th{padding:9px 10px;font-size:.78rem}
@@ -147,10 +160,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .btn{padding:10px 16px;font-size:.84rem;min-height:44px}
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
+  .md{padding:20px 16px;max-width:calc(100vw - 28px)}
 }
 @media(max-width:480px){
   .nb .nb-lbl{display:none}
-  .nb{padding:7px 9px;font-size:1rem}
+  .nb{padding:7px 9px}
   header{height:56px}
   .logo{width:40px;height:40px}
 }
