@@ -413,16 +413,15 @@ html.force-mobile .bottom-nav{display:flex !important;position:fixed;bottom:0;le
 <div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
 <div id="toast"></div>
 <script>
-// ===== זיהוי APK (WebView) וכפיית מובייל =====
+// ===== זיהוי APK מ-URL parameter =====
 (function(){
   var ua = navigator.userAgent || '';
-  // WebView של Android מזוהה ע"י "wv" בUA, או APK שלנו
-  var isWebView = /wv|WebView/.test(ua) || (ua.indexOf('Android') !== -1 && ua.indexOf('Version/') === -1 && ua.indexOf('Chrome/') !== -1 && ua.indexOf('Mobile') !== -1);
-  // גם: אם Android + מסך קטן מ-900px - כפה מובייל
   var isAndroid = /Android/.test(ua);
-  var smallScreen = window.screen && window.screen.width < 900;
-  if (isWebView || (isAndroid && smallScreen)) {
-    // הוסף class למובייל על body
+  var isWebView = /wv\b/.test(ua) || /WebView/.test(ua);
+  if (isAndroid && /Chrome\//.test(ua) && !/Version\//.test(ua)) isWebView = true;
+  // הכי בטוח: אם ה-URL מכיל ?apk=1 - זה בוודאות APK שלנו
+  var isAPK = window.location.search.indexOf('apk=1') !== -1;
+  if (isAPK || isWebView || (isAndroid && window.screen.width < 900)) {
     document.documentElement.classList.add('force-mobile');
   }
 })();
