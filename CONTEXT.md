@@ -54,7 +54,7 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 
 ---
 
-## אפליקציה 2 — ניהול ישיבה
+## אפליקציה 2 — הנהלה רוחנית
 
 | פרט | ערך |
 |-----|-----|
@@ -81,7 +81,8 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 - ONLINE_URL = OFFLINE_URL = https://ygtotlrl-lab.github.io/yeshiva-manager/?apk=1
 - setUseWideViewPort(false) | setLoadWithOverviewMode(false)
 
-**keystore:** `/tmp/yeshiva.keystore` | alias=yeshiva | storepass/keypass=yeshiva123
+**keystore:** `/tmp/yeshiva_new.keystore` | alias=yeshiva | storepass/keypass=yeshiva123
+**cert SHA-256:** 71c5e63b616ebb50e3bf0d40ea17437861ed932a9b21ccfc96515f1aa0c067ac
 
 **אייקון APK:** לוגו כחול על רקע לבן — קובץ מקור: `טונקל_בלוי_מיט_ווייסן_הינטערגרונט.png`
 - מוחלף ישירות ב-mipmap בתוך ה-APK באמצעות zipfile (ללא apktool recompile)
@@ -95,6 +96,19 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yeshiva-manager.git main
 ```
 
 ---
+
+
+## ⚠️ שיטת בניית APK — ניהול ישיבה (חשוב!)
+**הדרך שעובדת:**
+1. `apktool d yeshiva-manager.apk -o /tmp/ys_smali -f` — פרוק
+2. ערוך `res/values/strings.xml`, החלף אייקונים, עדכן `assets/`
+3. מחק `/tmp/ys_smali/original/` — חובה!
+4. `apktool b /tmp/ys_smali -o /tmp/ys_built.apk`
+5. החלף resources.arsc ו-AndroidManifest.xml בבינארי-patch (לשמירת alignment)
+6. `zipalign -f 4` → `apksigner sign --ks /tmp/yeshiva_new.keystore ...`
+
+**אסור:** לשנות גודל StringPool בלי padding ל-4 bytes alignment!
+**keystore חדש** (מאפריל 2026): `/tmp/yeshiva_new.keystore` — כל המכשירים צריכים הסרה מלאה + התקנה מחדש.
 
 ## כלי בנייה
 | כלי | נתיב |
@@ -150,7 +164,7 @@ rm -f final.apk.idsig
 
 **keystores:**
 - יומן עבודה: `/tmp/yoman.keystore` | alias=app | pass=pass1234
-- ניהול ישיבה: `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
+- הנהלה רוחנית: `/tmp/yeshiva_new.keystore` | alias=yeshiva | pass=yeshiva123
 
 ---
 
@@ -159,7 +173,7 @@ rm -f final.apk.idsig
 apktool b /tmp/ys_work -o /tmp/ys_built.apk
 zipalign -f 4 /tmp/ys_built.apk /tmp/ys_aligned.apk
 apksigner sign \
-  --ks /tmp/yeshiva.keystore --ks-key-alias yeshiva \
+  --ks /tmp/yeshiva_new.keystore --ks-key-alias yeshiva \
   --ks-pass pass:yeshiva123 --key-pass pass:yeshiva123 \
   --out /mnt/user-data/outputs/yeshiva-manager.apk \
   /tmp/ys_aligned.apk
