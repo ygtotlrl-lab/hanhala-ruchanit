@@ -1143,58 +1143,71 @@ function scheduleYsPush() {
 
 async function ensureFirstAdmin() {
   try {
-    // נסה לקרוא מהטבלה
     var {data, error} = await SB.from('ys_users').select('id').limit(1);
-
-    if (error && error.code === '42P01') {
-      // טבלה לא קיימת - הצג הוראות חד-פעמיות במסך הכניסה
+    var tableError = error && (
+      error.code === '42P01' ||
+      (error.message && error.message.indexOf('ys_users') !== -1)
+    );
+    if (tableError) {
       showSetupScreen();
       return;
     }
-
     if (!error && (!data || data.length === 0)) {
-      // טבלה קיימת אבל ריקה - צור admin ראשוני
-      var hash = simpleHash('123456');
       var {error: insErr} = await SB.from('ys_users').insert({
         username: 'admin',
-        password_hash: hash,
+        password_hash: simpleHash('123456'),
         full_name: 'מנהל ראשי',
         role: 'admin',
         active: true
       });
       if (!insErr) {
-        document.getElementById('auth-err').textContent = 'משתמש נוצר: admin / 123456';
-        document.getElementById('auth-err').style.color = '#38a169';
+        var e = document.getElementById('auth-err');
+        e.textContent = '✅ משתמש נוצר: admin / 123456';
+        e.style.color = '#38a169';
       }
     }
-  } catch(e) {
-    console.error('setup error:', e);
+  } catch(e) { console.error('setup error:', e); }
+}
+
+async function setupWithServiceKey() {
+  var key = document.getElementById('svc-key').value.trim();
+  if (!key) return;
+  var btn = document.getElementById('svc-btn');
+  btn.textContent = 'מגדיר...'; btn.disabled = true;
+  var SB2 = supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co', key);
+  // נסה ליצור טבלה דרך rpc
+  var sql = `create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null check (role in ('admin','senior','junior')), active boolean default true, created_at timestamptz default now()); alter table ys_users enable row level security; drop policy if exists allow_all on ys_users; create policy allow_all on ys_users using (true) with check (true);`;
+  var {error} = await SB2.rpc('exec_sql', {sql: sql});
+  if (error) {
+    // rpc לא קיים - נסה ישירות insert (אם הטבלה כבר נוצרה ידנית)
+    var {error: e2} = await SB2.from('ys_users').select('id').limit(1);
+    if (e2) {
+      document.getElementById('svc-err').textContent = 'שגיאה: ' + (error.message || e2.message);
+      btn.textContent = 'נסה שוב'; btn.disabled = false;
+      return;
+    }
   }
+  // הוסף admin
+  await SB2.from('ys_users').insert({username:'admin',password_hash:simpleHash('123456'),full_name:'מנהל ראשי',role:'admin',active:true});
+  document.getElementById('svc-err').textContent = '✅ הושלם! רענן את הדף';
+  document.getElementById('svc-err').style.color = '#276749';
+  setTimeout(function(){ location.reload(); }, 1500);
 }
 
 function showSetupScreen() {
-  // הצג הוראות SQL חד-פעמיות במסך הכניסה
   var authBox = document.querySelector('.auth-box');
-  authBox.innerHTML = `
-    <div style="font-size:1.5rem;margin-bottom:8px">⚙️</div>
-    <div style="font-size:1rem;font-weight:700;color:#1a3a6b;margin-bottom:8px">הגדרה ראשונית</div>
-    <div style="font-size:.78rem;color:#4a5568;margin-bottom:12px;text-align:right">
-      יש להריץ את ה-SQL הבא פעם אחת ב-<a href="https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql" target="_blank" style="color:#1a3a6b">Supabase SQL Editor</a>:
-    </div>
-    <textarea readonly style="width:100%;height:200px;font-size:.65rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:8px;padding:8px;font-family:monospace;resize:none;background:#f8faff">create table if not exists ys_users (
-  id bigint generated always as identity primary key,
-  username text unique not null,
-  password_hash text not null,
-  full_name text not null,
-  role text not null check (role in ('admin','senior','junior')),
-  active boolean default true,
-  created_at timestamptz default now()
-);
-alter table ys_users enable row level security;
-create policy "allow_all" on ys_users using (true) with check (true);</textarea>
-    <button class="auth-btn" style="margin-top:10px" onclick="location.reload()">🔄 רענן אחרי הרצת ה-SQL</button>
-    <div style="font-size:.75rem;color:#8a97b0;margin-top:8px">לאחר הרצת ה-SQL, הרענן והמערכת תיצור משתמש admin/123456</div>
-  `;
+  authBox.innerHTML = 
+    '<div style="font-size:1.3rem;font-weight:700;color:#1a3a6b;margin-bottom:6px">⚙️ הגדרה ראשונית</div>' +
+    '<div style="font-size:.8rem;color:#4a5568;margin-bottom:14px">יש ליצור את טבלת המשתמשים</div>' +
+    '<div style="font-size:.8rem;font-weight:600;color:#1a3a6b;margin-bottom:6px;text-align:right">Service Role Key מ-Supabase Dashboard:</div>' +
+    '<input id="svc-key" type="password" placeholder="eyJ..." style="width:100%;border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-size:.78rem;direction:ltr;margin-bottom:8px">' +
+    '<div style="font-size:.72rem;color:#8a97b0;margin-bottom:10px;text-align:right">Settings → API → service_role → Reveal → העתק</div>' +
+    '<button id="svc-btn" class="auth-btn" onclick="setupWithServiceKey()">▶️ צור טבלה ומשתמש admin</button>' +
+    '<div id="svc-err" style="font-size:.8rem;color:#e53e3e;margin-top:8px"></div>' +
+    '<hr style="margin:14px 0;border-color:#d8e2f0">' +
+    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a>:</div>' +
+    '<textarea readonly style="width:100%;height:120px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null check (role in ('admin','senior','junior')), active boolean default true, created_at timestamptz default now());\nalter table ys_users enable row level security;\ncreate policy allow_all on ys_users using (true) with check (true);</textarea>' +
+    '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
 }
 
 ensureFirstAdmin();
