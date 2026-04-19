@@ -104,6 +104,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .bl{background:#fff8e8;color:#a07830;border:1px solid #e8d090}
 .mb{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .mb.on{display:flex}
+.hidden{display:none!important}
+.mb:not(.hidden).show-modal{display:flex}
 .md{background:var(--bg2);border-radius:14px;padding:32px;width:100%;max-width:490px;box-shadow:0 20px 60px rgba(0,0,0,.22);position:relative;border-top:4px solid var(--navy)}
 .md-title{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px}
 .md label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
@@ -215,14 +217,91 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .hl{gap:10px}
 }
 
+/* ===== AUTH ===== */
+#auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
+#auth-screen.hidden{display:none}
+.auth-box{background:#fff;border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+.auth-logo{width:72px;height:72px;margin:0 auto 14px;border-radius:12px;overflow:hidden;background:#f0f4fa;display:flex;align-items:center;justify-content:center}
+.auth-logo img{width:100%;height:100%;object-fit:contain}
+.auth-title{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:4px}
+.auth-sub{font-size:.82rem;color:var(--text3);margin-bottom:22px}
+.auth-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;text-align:right}
+.auth-field label{font-size:.8rem;font-weight:600;color:var(--text2)}
+.auth-field input{border:2px solid var(--border);border-radius:10px;padding:11px 14px;font-family:Heebo;font-size:.95rem;outline:none;transition:border .2s;direction:rtl}
+.auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:4px;font-size:1.2rem}
+.auth-field input:focus{border-color:var(--navy)}
+.auth-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px;font-family:Heebo;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
+.auth-btn:active{background:var(--navy2)}
+.auth-err{color:#e53e3e;font-size:.82rem;margin-top:8px;min-height:18px}
+#lock-warn{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;display:flex;align-items:center;justify-content:center}
+#lock-warn.hidden{display:none}
+.lock-box{background:#fff;border-radius:14px;padding:28px 24px;text-align:center;max-width:280px;width:90%}
+.lock-box h3{color:var(--navy);margin:0 0 8px}
+.lock-box p{color:var(--text2);font-size:.88rem;margin:0 0 18px}
+.lock-box .btn{width:100%}
+#pg-settings .ss{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
+#pg-settings .ss-t{font-size:.95rem;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.ur{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f0f4fa}
+.ur:last-child{border-bottom:none}
+.ur-name{flex:1;font-weight:600;font-size:.88rem}
+.ur-role{font-size:.74rem;padding:3px 9px;border-radius:20px;font-weight:600}
+.role-admin{background:#fef3c7;color:#92400e}
+.role-senior{background:#dbeafe;color:#1e40af}
+.role-junior{background:#dcfce7;color:#166534}
+.ua{display:flex;gap:5px}
+.ua button{border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
+.ua button:hover{border-color:var(--navy);color:var(--navy)}
+.ua button.del:hover{border-color:#e53e3e;color:#e53e3e}
+.pt{width:100%;border-collapse:collapse;font-size:.8rem}
+.pt th{background:var(--navy);color:#fff;padding:7px 8px;font-weight:600;text-align:center}
+.pt th:first-child{text-align:right}
+.pt td{padding:7px 8px;border-bottom:1px solid #f0f4fa;text-align:center}
+.pt td:first-child{text-align:right;font-weight:500}
+.pt tr:hover td{background:#f8faff}
+.ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
+.ps:focus{border-color:var(--navy)}
+
 </style>
 </head>
 <body>
+
+<!-- ===== מסך כניסה ===== -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo"><img src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו"></div>
+    <div class="auth-title">הנהלה רוחנית</div>
+    <div class="auth-sub">מערכת ניהול הישיבה</div>
+    <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
+    <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
+    <button class="auth-btn" onclick="doLogin()">כניסה למערכת</button>
+    <div class="auth-err" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- ===== אזהרת נעילה ===== -->
+<div id="lock-warn" class="hidden">
+  <div class="lock-box">
+    <h3>⚠️ האפליקציה תינעל</h3>
+    <p>דקה של חוסר פעילות נותרה.<br>לחץ להמשך.</p>
+    <button class="btn" onclick="resetLockTimer()">אני כאן ✋</button>
+  </div>
+</div>
+
+<!-- ===== חלון חסום ===== -->
+<div class="mb hidden" id="denied-modal">
+  <div class="md" style="text-align:center;max-width:300px">
+    <div style="font-size:2.5rem;margin-bottom:8px">🔒</div>
+    <div class="md-title" style="justify-content:center">גישה מוגבלת</div>
+    <p style="color:var(--text2);font-size:.88rem;margin:10px 0 20px">אין לך הרשאה לאפשרות זו.<br>פנה למנהל המערכת.</p>
+    <button class="btn" onclick="closeDenied()">הבנתי</button>
+  </div>
+</div>
+
 <header>
   <div class="hl">
     <img class="logo" src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו ישיבה" style="height:58px;width:auto">
     <div class="hdiv"></div>
-    <div class="htxt"><strong>מערכת ניהול הישיבה</strong>פורטל הנהלה ומנהל</div>
+    <div class="htxt"><strong id="hdr-username">הנהלה רוחנית</strong><span id="hdr-role" style="font-size:.73rem;opacity:.75;margin-right:4px"></span></div>
   </div>
   <nav>
     <button class="nb on" data-pg="home">🏠 ראשי</button>
@@ -232,6 +311,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <button class="nb" data-pg="exams">📝 מבחנים</button>
     <button class="nb" data-pg="files">📁 תיקים</button>
     <button class="nb" data-pg="reports">📊 דוחות</button>
+    <button class="nb" data-pg="settings" title="הגדרות">⚙️</button>
+    <button class="nb" onclick="doLogout()" title="התנתק">🚪</button>
   </nav>
 </header>
 <main>
@@ -264,16 +345,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="inner">
 <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
 
-<!-- Login Modal -->
-<div id="login-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:340px;text-align:center">
-<div style="font-size:2em;margin-bottom:8px">🔐</div>
-<h3 style="margin:0 0 16px">כניסה למערכת</h3>
-<input type="password" id="login-pass" placeholder="סיסמה" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;font-size:1em;margin-bottom:12px;direction:rtl" onkeydown="if(event.key==='Enter')doLogin()">
-<button class="btn" onclick="doLogin()" style="width:100%">כניסה</button>
-<div id="login-err" style="color:red;margin-top:8px;display:none">סיסמה שגויה</div>
-</div>
-</div>
 
 <!-- Filter Tabs -->
 <div class="class-tabs" style="display:flex;gap:8px;margin:12px 0">
@@ -407,8 +478,78 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="pg" id="pg-sleep"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>🌙 זמן שינה</span><span class="gap"></span><button class="gear" data-gear="sleep">⚙️</button></div><div class="ep" id="ep-sleep"><h4>⚙️ עריכת כותרות</h4><textarea>זמן שינה</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-sleep')">סגור</button><button class="btn" onclick="saveEp('sleep')">💾 שמור</button></div></div><div class="cs"><div class="ci">🌙</div><h3>זמן שינה</h3><p>מודול זה בפיתוח</p></div></div></div>
 <div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea>מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea>תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<!-- ===== דף הגדרות ===== -->
+<div class="pg" id="pg-settings">
+  <div class="inner">
+    <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+
+    <!-- ניהול משתמשים - admin only -->
+    <div class="ss" id="ss-users">
+      <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
+      <div id="users-list"><div class="ld">טוען...</div></div>
+    </div>
+
+    <!-- טבלת הרשאות - admin only -->
+    <div class="ss" id="ss-perms">
+      <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
+      <div style="overflow-x:auto">
+        <table class="pt">
+          <thead><tr>
+            <th>מודול</th>
+            <th>מנהל</th>
+            <th>צוות בכיר</th>
+            <th>צוות זוטר</th>
+          </tr></thead>
+          <tbody id="perm-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px;text-align:left">
+        <button class="btn" onclick="savePerms()">💾 שמור הרשאות</button>
+      </div>
+    </div>
+
+    <!-- שינוי סיסמה אישית - לכולם -->
+    <div class="ss">
+      <div class="ss-t">🔑 שינוי סיסמה</div>
+      <div style="display:flex;flex-direction:column;gap:10px;max-width:280px">
+        <input type="password" id="pw-old" placeholder="סיסמה נוכחית (6 ספרות)" maxlength="6" inputmode="numeric" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1rem;text-align:center;letter-spacing:3px">
+        <input type="password" id="pw-new" placeholder="סיסמה חדשה (6 ספרות)" maxlength="6" inputmode="numeric" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1rem;text-align:center;letter-spacing:3px">
+        <button class="btn" onclick="changeMyPassword()">🔑 עדכן סיסמה</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </main>
 <div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
+
+<!-- מודל ניהול משתמש -->
+<div class="mb hidden" id="user-modal">
+  <div class="md" style="max-width:380px">
+    <button class="mc" onclick="closeUserModal()">✕</button>
+    <div class="md-title"><span>👤</span><span id="um-title">הוסף משתמש</span></div>
+    <input type="hidden" id="um-id">
+    <label>שם מלא *</label>
+    <input type="text" id="um-name" placeholder="ישראל ישראלי">
+    <label>שם משתמש * (לכניסה)</label>
+    <input type="text" id="um-username" placeholder="israel" style="direction:ltr">
+    <label>תפקיד</label>
+    <select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">
+      <option value="admin">מנהל מוחלט</option>
+      <option value="senior">צוות בכיר</option>
+      <option value="junior">צוות זוטר</option>
+    </select>
+    <label id="um-pass-label">סיסמה (6 ספרות)</label>
+    <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
+    <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>
+    <div class="auth-err" id="um-err"></div>
+    <div class="ma" style="margin-top:14px">
+      <button class="btn out" onclick="closeUserModal()">ביטול</button>
+      <button class="btn" onclick="saveUser()">💾 שמור</button>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 <script>
 window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
@@ -421,9 +562,327 @@ var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGc
 var students=[],curAtt={};
 var TODAY=new Date().toISOString().split('T')[0];
 
-document.getElementById('hdate').textContent=hebrewDate();
-document.getElementById('dp').value=TODAY;
-document.getElementById('rm').value=TODAY.substring(0,7);
+// ============================================================
+// ===== AUTH SYSTEM =====
+// ============================================================
+var AUTH = {
+  user: null,          // {id, username, full_name, role}
+  perms: null,         // {students:{admin:'edit',senior:'view',junior:'none'}, ...}
+  lockTimer: null,
+  warnTimer: null,
+  LOCK_MS: 5*60*1000,  // 5 דקות
+  WARN_MS: 4*60*1000,  // אזהרה אחרי 4 דקות (דקה לפני נעילה)
+
+  MODULES: [
+    {id:'students', label:'👥 מצבת תלמידים'},
+    {id:'attend',   label:'✅ שמירת סדרים'},
+    {id:'sleep',    label:'🌙 זמן שינה'},
+    {id:'exams',    label:'📝 מבחנים'},
+    {id:'files',    label:'📁 תיקים אישיים'},
+    {id:'reports',  label:'📊 גיליונות חודשיים'},
+    {id:'settings', label:'⚙️ הגדרות מערכת'}
+  ],
+
+  ROLE_LABELS: {admin:'מנהל מוחלט', senior:'צוות בכיר', junior:'צוות זוטר'},
+
+  DEFAULT_PERMS: {
+    students: {admin:'edit', senior:'edit', junior:'view'},
+    attend:   {admin:'edit', senior:'edit', junior:'view'},
+    sleep:    {admin:'edit', senior:'edit', junior:'view'},
+    exams:    {admin:'edit', senior:'edit', junior:'view'},
+    files:    {admin:'edit', senior:'edit', junior:'none'},
+    reports:  {admin:'edit', senior:'view', junior:'none'},
+    settings: {admin:'edit', senior:'none', junior:'none'}
+  }
+};
+
+// ---- פונקציית hash פשוטה (לא קריפטוגרפית - מספיק לסיסמת 6 ספרות) ----
+function simpleHash(str) {
+  var h = 0;
+  for (var i = 0; i < str.length; i++) {
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h = h & h;
+  }
+  return 'h' + Math.abs(h).toString(36);
+}
+
+// ---- בדוק הרשאה ----
+function canAccess(moduleId) {
+  if (!AUTH.user) return false;
+  var p = AUTH.perms || AUTH.DEFAULT_PERMS;
+  var mp = p[moduleId] || {};
+  var level = mp[AUTH.user.role] || 'none';
+  return level !== 'none';
+}
+function canEdit(moduleId) {
+  if (!AUTH.user) return false;
+  var p = AUTH.perms || AUTH.DEFAULT_PERMS;
+  var mp = p[moduleId] || {};
+  var level = mp[AUTH.user.role] || 'none';
+  return level === 'edit';
+}
+
+// ---- כניסה ----
+async function doLogin() {
+  var username = document.getElementById('auth-user').value.trim();
+  var pass = document.getElementById('auth-pass').value.trim();
+  var errEl = document.getElementById('auth-err');
+  errEl.textContent = '';
+  if (!username || !pass) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
+  var hash = simpleHash(pass);
+  var {data, error} = await SB.from('ys_users')
+    .select('*')
+    .eq('username', username)
+    .eq('password_hash', hash)
+    .eq('active', true)
+    .single();
+  if (error || !data) { errEl.textContent = 'שם משתמש או סיסמה שגויים'; return; }
+  AUTH.user = data;
+  await loadPerms();
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('hdr-username').textContent = data.full_name;
+  document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
+  resetLockTimer();
+  initDateFields();
+  showPage('home');
+  loadDash();
+}
+
+// ---- יציאה ----
+function doLogout() {
+  AUTH.user = null;
+  clearTimeout(AUTH.lockTimer);
+  clearTimeout(AUTH.warnTimer);
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('auth-user').value = '';
+  document.getElementById('auth-pass').value = '';
+  document.getElementById('auth-err').textContent = '';
+  document.getElementById('lock-warn').classList.add('hidden');
+  showPageInternal('home');
+}
+
+// ---- נעילה אוטומטית ----
+function resetLockTimer() {
+  document.getElementById('lock-warn').classList.add('hidden');
+  clearTimeout(AUTH.lockTimer);
+  clearTimeout(AUTH.warnTimer);
+  if (!AUTH.user) return;
+  AUTH.warnTimer = setTimeout(function() {
+    document.getElementById('lock-warn').classList.remove('hidden');
+  }, AUTH.WARN_MS);
+  AUTH.lockTimer = setTimeout(function() {
+    doLogout();
+  }, AUTH.LOCK_MS);
+}
+
+// אירועי פעילות משתמש לאיפוס טיימר
+['touchstart','click','keydown','scroll'].forEach(function(ev) {
+  document.addEventListener(ev, function() { if(AUTH.user) resetLockTimer(); }, {passive:true});
+});
+
+// ---- טעינת הרשאות מ-Supabase ----
+async function loadPerms() {
+  var {data} = await SB.from('kv').select('value').eq('key','ys_perms').single();
+  if (data && data.value) {
+    try { AUTH.perms = JSON.parse(data.value); } catch(e) { AUTH.perms = AUTH.DEFAULT_PERMS; }
+  } else {
+    AUTH.perms = AUTH.DEFAULT_PERMS;
+  }
+}
+
+// ---- showPage עם בדיקת הרשאות ----
+function showPageInternal(pg) {
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
+  var pgEl=document.getElementById('pg-'+pg);
+  var nbEl=document.querySelector('[data-pg="'+pg+'"]');
+  if(pgEl) pgEl.classList.add('on');
+  if(nbEl) nbEl.classList.add('on');
+}
+
+function showPage(pg) {
+  if (pg === 'home') { showPageInternal('home'); return; }
+  if (!AUTH.user) { return; }
+  if (!canAccess(pg)) { showDenied(); return; }
+  showPageInternal(pg);
+  if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
+  if (pg === 'settings') renderSettings();
+}
+
+function showDenied() {
+  var dm=document.getElementById('denied-modal');dm.classList.remove('hidden');dm.classList.add('on');
+}
+function closeDenied() {
+  var dm=document.getElementById('denied-modal');dm.classList.add('hidden');dm.classList.remove('on');
+}
+
+// ---- כפתור Enter בשדה סיסמה ----
+document.getElementById('auth-pass').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+document.getElementById('auth-user').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('auth-pass').focus();
+});
+
+// ============================================================
+// ===== SETTINGS PAGE =====
+// ============================================================
+function renderSettings() {
+  renderUsersList();
+  renderPermsTable();
+  // הסתר ניהול משתמשים ממי שאינו admin
+  var isAdmin = AUTH.user && AUTH.user.role === 'admin';
+  document.getElementById('ss-users').style.display = isAdmin ? '' : 'none';
+  document.getElementById('ss-perms').style.display = isAdmin ? '' : 'none';
+}
+
+// ---- רשימת משתמשים ----
+async function renderUsersList() {
+  var el = document.getElementById('users-list');
+  el.innerHTML = '<div class="ld">טוען...</div>';
+  var {data} = await SB.from('ys_users').select('*').order('full_name');
+  if (!data || !data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
+  el.innerHTML = data.map(function(u) {
+    var roleClass = 'role-'+u.role;
+    var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
+    var activeStyle = u.active ? '' : 'opacity:.5;';
+    return '<div class="ur" style="'+activeStyle+'">' +
+      '<div class="ur-name">'+u.full_name+'<br><small style="color:var(--text3);font-weight:400">@'+u.username+'</small></div>' +
+      '<span class="ur-role '+roleClass+'">'+roleLabel+'</span>' +
+      '<div class="ua">' +
+        '<button onclick="openEditUser('+JSON.stringify(u)+')">✏️</button>' +
+        '<button onclick="toggleUserActive('+u.id+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ---- פתח מודל הוסף/ערוך משתמש ----
+function openAddUser() {
+  document.getElementById('um-id').value = '';
+  document.getElementById('um-name').value = '';
+  document.getElementById('um-username').value = '';
+  document.getElementById('um-role').value = 'junior';
+  document.getElementById('um-pass').value = '';
+  document.getElementById('um-pass-hint').style.display = 'none';
+  document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
+  document.getElementById('um-title').textContent = 'הוסף משתמש';
+  document.getElementById('um-err').textContent = '';
+  var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
+}
+function openEditUser(u) {
+  document.getElementById('um-id').value = u.id;
+  document.getElementById('um-name').value = u.full_name;
+  document.getElementById('um-username').value = u.username;
+  document.getElementById('um-role').value = u.role;
+  document.getElementById('um-pass').value = '';
+  document.getElementById('um-pass-hint').style.display = '';
+  document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
+  document.getElementById('um-title').textContent = 'ערוך משתמש';
+  document.getElementById('um-err').textContent = '';
+  var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
+}
+function closeUserModal() {
+  var um=document.getElementById('user-modal');um.classList.add('hidden');um.classList.remove('on');
+}
+
+async function saveUser() {
+  var id = document.getElementById('um-id').value;
+  var fullName = document.getElementById('um-name').value.trim();
+  var username = document.getElementById('um-username').value.trim();
+  var role = document.getElementById('um-role').value;
+  var pass = document.getElementById('um-pass').value.trim();
+  var errEl = document.getElementById('um-err');
+  errEl.textContent = '';
+  if (!fullName || !username) { errEl.textContent = 'שם מלא ושם משתמש הם שדות חובה'; return; }
+  var obj = {full_name: fullName, username: username, role: role, active: true};
+  if (!id && !pass) { errEl.textContent = 'יש להזין סיסמה עבור משתמש חדש'; return; }
+  if (pass) {
+    if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
+    obj.password_hash = simpleHash(pass);
+  }
+  var res;
+  if (id) {
+    res = await SB.from('ys_users').update(obj).eq('id', id);
+  } else {
+    res = await SB.from('ys_users').insert(obj);
+  }
+  if (res.error) { errEl.textContent = 'שגיאה: ' + res.error.message; return; }
+  closeUserModal();
+  toast('✅ משתמש נשמר!');
+  renderUsersList();
+}
+
+async function toggleUserActive(id, current) {
+  await SB.from('ys_users').update({active: !current}).eq('id', id);
+  renderUsersList();
+  toast(current ? '🔴 משתמש הושבת' : '🟢 משתמש הופעל');
+}
+
+// ---- טבלת הרשאות ----
+function renderPermsTable() {
+  var p = AUTH.perms || AUTH.DEFAULT_PERMS;
+  var opts = [
+    {v:'edit', l:'✏️ עריכה'},
+    {v:'view', l:'👁 צפייה'},
+    {v:'none', l:'🚫 חסום'}
+  ];
+  var html = AUTH.MODULES.map(function(m) {
+    var row = '<tr><td>'+m.label+'</td>';
+    ['admin','senior','junior'].forEach(function(role) {
+      var cur = (p[m.id]||{})[role] || 'none';
+      var sel = '<select class="ps" data-mod="'+m.id+'" data-role="'+role+'">';
+      opts.forEach(function(o) {
+        sel += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
+      });
+      sel += '</select>';
+      // מנהל תמיד edit ב-settings
+      if (m.id === 'settings' && role === 'admin') {
+        row += '<td><span style="color:var(--navy);font-weight:600">✏️ עריכה</span></td>';
+      } else {
+        row += '<td>'+sel+'</td>';
+      }
+    });
+    return row + '</tr>';
+  }).join('');
+  document.getElementById('perm-tbody').innerHTML = html;
+}
+
+async function savePerms() {
+  var p = {};
+  AUTH.MODULES.forEach(function(m) {
+    p[m.id] = {};
+    ['admin','senior','junior'].forEach(function(role) {
+      var sel = document.querySelector('.ps[data-mod="'+m.id+'"][data-role="'+role+'"]');
+      p[m.id][role] = sel ? sel.value : 'none';
+    });
+    p[m.id]['admin'] = (m.id === 'settings') ? 'edit' : p[m.id]['admin'];
+  });
+  AUTH.perms = p;
+  var existing = await SB.from('kv').select('key').eq('key','ys_perms').single();
+  if (existing.data) {
+    await SB.from('kv').update({value: JSON.stringify(p)}).eq('key','ys_perms');
+  } else {
+    await SB.from('kv').insert({key:'ys_perms', value: JSON.stringify(p)});
+  }
+  toast('✅ הרשאות נשמרו!');
+}
+
+// ---- שינוי סיסמה אישית ----
+async function changeMyPassword() {
+  var oldPass = document.getElementById('pw-old').value.trim();
+  var newPass = document.getElementById('pw-new').value.trim();
+  if (!oldPass || !newPass) { toast('❌ נא למלא את שני השדות'); return; }
+  if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות'); return; }
+  var oldHash = simpleHash(oldPass);
+  var {data} = await SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldHash).single();
+  if (!data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  await SB.from('ys_users').update({password_hash: simpleHash(newPass)}).eq('id', AUTH.user.id);
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  toast('✅ סיסמה עודכנה!');
+}
+
 
 
 
@@ -431,23 +890,7 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 
 function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
 
-
-function showPage(pg){
-  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
-  document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
-  var pgEl=document.getElementById('pg-'+pg);
-  var nbEl=document.querySelector('[data-pg="'+pg+'"]');
-  if(pgEl) pgEl.classList.add('on');
-  if(nbEl) nbEl.classList.add('on');
-  if(pg==='students'){
-    var li=localStorage.getItem('ys_admin')==='1';
-    if(!li){
-      var lm=document.getElementById('login-modal');
-      if(lm)lm.style.display='flex';
-    }
-    if(typeof renderStudents==='function') renderStudents();
-  }
-}
+// showPage הישן הוחלף במערכת auth - ראה למעלה
 
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
 function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
@@ -553,8 +996,31 @@ document.getElementById('dp').addEventListener('change',function(){loadA(this.va
 
 var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
 
-loadDash();
+// אתחול - data-pg click handlers
+document.querySelectorAll('[data-pg]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var pg = this.getAttribute('data-pg');
+    showPage(pg);
+  });
+});
+document.querySelectorAll('[data-back],.back').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var pg = this.getAttribute('data-pg') || 'home';
+    showPage(pg);
+  });
+});
 
+// dp ו-rm init יקרה אחרי login
+function initDateFields(){
+  var dpEl=document.getElementById('dp');
+  var rmEl=document.getElementById('rm');
+  if(dpEl) dpEl.value=TODAY;
+  if(rmEl) rmEl.value=TODAY.substring(0,7);
+  var hdEl=document.getElementById('hdate');
+  if(hdEl) hdEl.textContent=hebrewDate();
+}
+
+// לא קוראים loadDash ו-initDateFields ישירות — נקרא אחרי login
 // ============ CLOUD SYNC ============
 var _ysLastTs = 0;
 var _ysSyncing = false;
@@ -672,9 +1138,40 @@ function scheduleYsPush() {
 }
 // ============ END CLOUD SYNC ============
 
+// ============ AUTH SETUP ============
+// יצירת משתמש admin ראשוני אם הטבלה ריקה
+async function ensureFirstAdmin() {
+  try {
+    var {data, error} = await SB.from('ys_users').select('id').limit(1);
+    if (error) {
+      // טבלה לא קיימת - נציג הוראות
+      console.warn('ys_users table missing. Run SQL setup.');
+      document.getElementById('auth-err').textContent = 'נא ליצור את טבלת המשתמשים — ראה הוראות בקונסול';
+      return;
+    }
+    if (!data || data.length === 0) {
+      // טבלה ריקה - צור admin ראשוני
+      var {error: insErr} = await SB.from('ys_users').insert({
+        username: 'admin',
+        password_hash: simpleHash('123456'),
+        full_name: 'מנהל ראשי',
+        role: 'admin',
+        active: true
+      });
+      if (!insErr) {
+        console.log('✅ Admin user created: admin / 123456');
+        document.getElementById('auth-err').textContent = '✅ משתמש ראשוני נוצר: admin / 123456';
+      }
+    }
+  } catch(e) {
+    console.error('ensureFirstAdmin error:', e);
+  }
+}
+ensureFirstAdmin();
+// ============ END AUTH SETUP ============
+
 // ============ STUDENTS MODULE ============
-var ADMIN_PASS='yeshiva2024';
-var isLoggedIn=localStorage.getItem('ys_admin')==='1';
+// ADMIN_PASS ו-isLoggedIn הוסרו - מוחלף במערכת auth
 var currentFilter='all';
 var confirmCallback=null;
 var editingStudentId=null;
@@ -736,20 +1233,8 @@ function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a))
 function todayKey(){return new Date().toISOString().slice(0,10);}
 
 function checkLoginNeeded(){
-  if(!isLoggedIn){document.getElementById('login-modal').style.display='flex';return true;}
-  return false;
-}
-function doLogin(){
-  var p=document.getElementById('login-pass').value;
-  if(p===ADMIN_PASS){
-    isLoggedIn=true;localStorage.setItem('ys_admin','1');
-    document.getElementById('login-modal').style.display='none';
-    document.getElementById('login-pass').value='';
-    renderStudents();
-  } else {
-    var e=document.getElementById('login-err');
-    if(e){e.style.display='block';setTimeout(function(){e.style.display='none';},2000);}
-  }
+  // הוחלף במערכת auth החדשה
+  return !AUTH.user;
 }
 
 function filterClass(cls){
@@ -1092,20 +1577,23 @@ function printStudents(){
   <button class="bn on" data-pg="home" onclick="window.showPage('home');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
     <span class="bn-ic">🏠</span><span>ראשי</span>
   </button>
-  <button class="bn" data-pg="students" onclick="window.showPage('students');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+  <button class="bn" data-pg="students">
     <span class="bn-ic">👥</span><span>מצבת</span>
   </button>
-  <button class="bn" data-pg="attend" onclick="window.showPage('attend');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+  <button class="bn" data-pg="attend">
     <span class="bn-ic">✅</span><span>סדרים</span>
   </button>
-  <button class="bn" data-pg="sleep" onclick="window.showPage('sleep');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+  <button class="bn" data-pg="sleep">
     <span class="bn-ic">🌙</span><span>שינה</span>
   </button>
-  <button class="bn" data-pg="exams" onclick="window.showPage('exams');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+  <button class="bn" data-pg="exams">
     <span class="bn-ic">📝</span><span>מבחנים</span>
   </button>
-  <button class="bn" data-pg="reports" onclick="window.showPage('reports');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+  <button class="bn" data-pg="reports">
     <span class="bn-ic">📊</span><span>דוחות</span>
+  </button>
+  <button class="bn" data-pg="settings">
+    <span class="bn-ic">⚙️</span><span>הגדרות</span>
   </button>
 </nav>
 
