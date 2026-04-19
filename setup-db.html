@@ -3,84 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>הגדרת מסד נתונים - הנהלה רוחנית</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>הגדרת מסד נתונים</title>
 <style>
-body{font-family:Arial,sans-serif;background:#0f2347;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-.box{background:#fff;border-radius:16px;padding:32px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-h2{color:#1a3a6b;margin:0 0 8px}
-p{color:#4a5568;font-size:.9rem;margin:0 0 20px}
-.btn{background:#1a3a6b;color:#fff;border:none;border-radius:10px;padding:14px 28px;font-size:1rem;font-weight:700;cursor:pointer;width:100%;font-family:Arial}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f2347;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.box{background:#fff;border-radius:16px;padding:28px 24px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+h2{color:#1a3a6b;margin-bottom:6px;font-size:1.3rem;text-align:center}
+.sub{color:#4a5568;font-size:.85rem;text-align:center;margin-bottom:20px}
+.step-box{background:#f0f4fa;border-radius:10px;padding:16px;margin-bottom:16px;border-right:4px solid #1a3a6b}
+.step-num{font-weight:700;color:#1a3a6b;font-size:.9rem;margin-bottom:8px}
+.step-txt{color:#4a5568;font-size:.83rem;line-height:1.6}
+pre{background:#1a2340;color:#a8d8a8;border-radius:8px;padding:12px;font-size:.72rem;overflow-x:auto;direction:ltr;text-align:left;margin:10px 0;line-height:1.5;white-space:pre-wrap}
+.btn{display:block;width:100%;background:#1a3a6b;color:#fff;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:Arial;text-align:center;text-decoration:none;margin-bottom:8px}
 .btn:hover{background:#234a8a}
-.btn:disabled{background:#8a97b0;cursor:not-allowed}
-.status{margin-top:16px;padding:12px;border-radius:8px;font-size:.9rem;display:none}
-.ok{background:#c6f6d5;color:#276749}
-.err{background:#fed7d7;color:#9b2335}
-.step{text-align:right;margin:8px 0;font-size:.85rem;color:#4a5568}
-.step.done{color:#276749}
-.step.fail{color:#9b2335}
+.btn.green{background:#276749}
+.btn.green:hover{background:#1e5538}
+.btn.outline{background:#fff;color:#1a3a6b;border:2px solid #1a3a6b}
+.btn.outline:hover{background:#f0f4fa}
+.copied{display:none;color:#276749;font-size:.8rem;text-align:center;margin-bottom:8px}
 </style>
 </head>
 <body>
 <div class="box">
-  <div style="font-size:2rem;margin-bottom:8px">⚙️</div>
-  <h2>הגדרה ראשונית</h2>
-  <p>יצירת טבלת משתמשים ומשתמש מנהל ראשוני</p>
-  <div id="steps"></div>
-  <button class="btn" id="btn" onclick="runSetup()">▶️ התחל הגדרה</button>
-  <div class="status ok" id="ok">
-    ✅ הכל מוכן!<br>
-    <strong>שם משתמש: admin</strong><br>
-    <strong>סיסמה: 123456</strong><br>
-    <small>ניתן לסגור דף זה</small>
-  </div>
-  <div class="status err" id="err"></div>
-</div>
-<script>
-var SB = supabase.createClient(
-  'https://kxbtskqobynewvnckaaz.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'
-);
+  <div style="text-align:center;font-size:2rem;margin-bottom:10px">🗄️</div>
+  <h2>הגדרת מסד נתונים</h2>
+  <p class="sub">צעד אחד פשוט — פעם אחת בלבד</p>
 
-function simpleHash(str) {
-  var h = 0;
-  for (var i = 0; i < str.length; i++) {
-    h = ((h << 5) - h) + str.charCodeAt(i);
-    h = h & h;
-  }
-  return 'h' + Math.abs(h).toString(36);
-}
-
-function addStep(text) {
-  var d = document.getElementById('steps');
-  var el = document.createElement('div');
-  el.className = 'step';
-  el.id = 'step-' + Date.now();
-  el.textContent = '⏳ ' + text;
-  d.appendChild(el);
-  return el;
-}
-
-async function runSetup() {
-  document.getElementById('btn').disabled = true;
-  document.getElementById('btn').textContent = 'מגדיר...';
-
-  // שלב 1: בדוק אם הטבלה כבר קיימת
-  var s1 = addStep('בודק אם הטבלה קיימת...');
-  var {data, error} = await SB.from('ys_users').select('id').limit(1);
-
-  if (error && error.code === '42P01') {
-    s1.textContent = '❌ הטבלה לא קיימת — יש להריץ SQL ידנית';
-    s1.className = 'step fail';
-    document.getElementById('err').textContent =
-      'לא ניתן ליצור טבלאות דרך anon key. אנא הרץ את ה-SQL ב-Supabase Dashboard ידנית.';
-    document.getElementById('err').style.display = 'block';
-    document.getElementById('btn').textContent = 'נסה שוב';
-    document.getElementById('btn').disabled = false;
-
-    // הצג SQL
-    var sqlBox = document.createElement('textarea');
-    sqlBox.value = `create table if not exists ys_users (
+  <div class="step-box">
+    <div class="step-num">שלב 1 — העתק את ה-SQL</div>
+    <div class="step-txt">לחץ על הכפתור הירוק להעתקת ה-SQL:</div>
+    <pre id="sql-code">create table if not exists ys_users (
   id bigint generated always as identity primary key,
   username text unique not null,
   password_hash text not null,
@@ -90,58 +42,46 @@ async function runSetup() {
   created_at timestamptz default now()
 );
 alter table ys_users enable row level security;
-create policy "allow_all" on ys_users using (true) with check (true);`;
-    sqlBox.style = 'width:100%;height:150px;margin-top:12px;font-size:.7rem;direction:ltr;text-align:left;border-radius:6px;padding:8px;font-family:monospace';
-    sqlBox.readOnly = true;
-    document.querySelector('.box').appendChild(sqlBox);
+create policy "allow_all" on ys_users using (true) with check (true);
+insert into ys_users (username,password_hash,full_name,role,active)
+values ('admin','h3j0m76e','מנהל ראשי','admin',true)
+on conflict (username) do nothing;</pre>
+    <button class="btn green" onclick="copySQL()">📋 העתק SQL</button>
+    <div class="copied" id="copied-msg">✅ הועתק! עכשיו לך לשלב 2</div>
+  </div>
 
-    var link = document.createElement('a');
-    link.href = 'https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql';
-    link.target = '_blank';
-    link.textContent = '🔗 פתח Supabase SQL Editor';
-    link.style = 'display:block;margin-top:10px;color:#1a3a6b;font-weight:bold';
-    document.querySelector('.box').appendChild(link);
-    return;
-  }
+  <div class="step-box">
+    <div class="step-num">שלב 2 — פתח Supabase SQL Editor</div>
+    <div class="step-txt">לחץ כאן, הדבק את ה-SQL שהעתקת, ולחץ Run:</div>
+    <a class="btn" href="https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new" target="_blank">
+      🔗 פתח Supabase SQL Editor
+    </a>
+  </div>
 
-  if (!error) {
-    s1.textContent = '✅ הטבלה קיימת';
-    s1.className = 'step done';
-  }
+  <div class="step-box" style="border-color:#276749">
+    <div class="step-num" style="color:#276749">שלב 3 — חזור לאפליקציה</div>
+    <div class="step-txt">
+      לאחר הרצת ה-SQL, פתח את האפליקציה והיכנס עם:<br><br>
+      <strong>שם משתמש: admin</strong><br>
+      <strong>סיסמה: 123456</strong>
+    </div>
+  </div>
+</div>
 
-  // שלב 2: בדוק אם admin קיים
-  var s2 = addStep('בודק משתמש admin...');
-  var {data: users} = await SB.from('ys_users').select('id').eq('username', 'admin');
-
-  if (!users || users.length === 0) {
-    // צור admin
-    var s3 = addStep('יוצר משתמש admin...');
-    var hash = simpleHash('123456');
-    var {error: insErr} = await SB.from('ys_users').insert({
-      username: 'admin',
-      password_hash: hash,
-      full_name: 'מנהל ראשי',
-      role: 'admin',
-      active: true
+<script>
+function copySQL(){
+  var t=document.getElementById('sql-code').textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(t).then(function(){
+      document.getElementById('copied-msg').style.display='block';
     });
-    if (insErr) {
-      s3.textContent = '❌ שגיאה: ' + insErr.message;
-      s3.className = 'step fail';
-      document.getElementById('err').textContent = insErr.message;
-      document.getElementById('err').style.display = 'block';
-      document.getElementById('btn').disabled = false;
-      document.getElementById('btn').textContent = 'נסה שוב';
-      return;
-    }
-    s3.textContent = '✅ משתמש admin נוצר';
-    s3.className = 'step done';
   } else {
-    s2.textContent = '✅ משתמש admin כבר קיים';
-    s2.className = 'step done';
+    var ta=document.createElement('textarea');
+    ta.value=t; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    document.getElementById('copied-msg').style.display='block';
   }
-
-  document.getElementById('ok').style.display = 'block';
-  document.getElementById('btn').style.display = 'none';
 }
 </script>
 </body>
