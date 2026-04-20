@@ -72,8 +72,12 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 **מודולים:** מצבת תלמידים | שמירת סדרים | זמן שינה | מבחנים | תיקים אישיים | גיליונות חודשיים
 
 **Supabase:** אותו project | prefix ys_ | מפתחות: ys_students, ys_attend, ys_approvals, ys_reasons, ys_last_changed
+**ys_users:** טבלת משתמשים | שדות: id, username, password_hash, full_name, role(admin/senior/junior), active
+**ys_perms:** מפתח ב-kv table | הרשאות לפי תפקיד לכל מודול
+**Auth:** מסך כניסה + נעילה אוטומטית 5 דק' + פאנל ניהול ב-⚙️
+**simpleHash():** hash פשוט לסיסמאות 6 ספרות
 
-**Service Worker:** `/tmp/yeshiva-manager/sw.js` | cache נוכחי: yeshiva-v15 ← לעדכן בכל שינוי גדול
+**Service Worker:** `/tmp/yeshiva-manager/sw.js` | cache נוכחי: yeshiva-v19 ← לעדכן בכל שינוי גדול
 
 **APK smali:**
 - `/tmp/ys_work/smali/com/yeshiva/manager/MainActivity.smali`
