@@ -642,6 +642,11 @@ async function fixAdminHash() {
     errEl.textContent = '✅ תוקן! נסה admin / 123456';
   }
 }
+// הרץ תיקון אוטומטי בטעינה
+(async function() {
+  var hash = simpleHash('123456');
+  await SB.from('ys_users').update({password_hash: hash}).eq('username', 'admin');
+})();
 
 // ---- כניסה ----
 async function doLogin() {
