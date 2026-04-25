@@ -275,6 +275,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
     <button class="auth-btn" onclick="doLogin()">כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
+    <div style="margin-top:12px;font-size:.72rem;color:#8a97b0;text-align:center">
+      <button onclick="fixAdminHash()" style="background:none;border:none;color:#8a97b0;font-size:.72rem;cursor:pointer;text-decoration:underline">תיקון חד-פעמי לסיסמת admin</button>
+    </div>
   </div>
 </div>
 
@@ -622,6 +625,24 @@ function canEdit(moduleId) {
   return level === 'edit';
 }
 
+// ---- תיקון hash חד-פעמי ----
+async function fixAdminHash() {
+  var errEl = document.getElementById('auth-err');
+  errEl.style.color = '#8a97b0';
+  errEl.textContent = 'מתקן...';
+  var hash = simpleHash('123456');
+  var {error} = await SB.from('ys_users')
+    .update({password_hash: hash})
+    .eq('username', 'admin');
+  if (error) {
+    errEl.style.color = '#e53e3e';
+    errEl.textContent = 'שגיאה: ' + error.message;
+  } else {
+    errEl.style.color = '#38a169';
+    errEl.textContent = '✅ תוקן! נסה admin / 123456';
+  }
+}
+
 // ---- כניסה ----
 async function doLogin() {
   var username = document.getElementById('auth-user').value.trim();
@@ -630,14 +651,13 @@ async function doLogin() {
   errEl.textContent = '';
   if (!username || !pass) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
   var hash = simpleHash(pass);
-  errEl.textContent = 'מתחבר... hash=' + hash;
   var {data, error} = await SB.from('ys_users')
     .select('*')
     .eq('username', username)
     .eq('password_hash', hash)
     .eq('active', true)
     .single();
-  if (error || !data) { errEl.textContent = 'שגוי | hash=' + hash + ' | err=' + (error ? error.message : 'no data'); return; }
+  if (error || !data) { errEl.textContent = 'שגוי (hash:' + hash + ')'; return; }
   AUTH.user = data;
   await loadPerms();
   document.getElementById('auth-screen').classList.add('hidden');
