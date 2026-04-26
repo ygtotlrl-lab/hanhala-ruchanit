@@ -1560,8 +1560,8 @@ function renderStudents(){
     // נוכחות - תצוגה בלבד
     var isPresent = !!s.present;
     var presIcon = isPresent
-      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fff4;color:#38a169;border:1.5px solid #38a169;padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:700">&#x2714; '+H(1489,1497,1513,1497,1489,1492)+'</span>'
-      : '<span style="display:inline-flex;align-items:center;gap:4px;background:#f7fafc;color:#a0aec0;border:1.5px solid #cbd5e0;padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:700">&#x2715; '+H(1500,1488,32,1504,1502,1510,1488)+'</span>';
+      ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600">&#x2713; '+H(1504,1493,1499,1495)+'</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600">&#x2715; '+H(1488,1497,1504,1493,32,1504,1493,1499,1495)+'</span>';
     // כפתור עריכת סטטוס
     var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center" title="'+H(1506,1512,1497,1499,1514,32,1505,1496,1468,1493,1505)+'">&#x270E;</button>';
     html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
