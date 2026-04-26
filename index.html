@@ -895,6 +895,7 @@ function openStatusForm(type) {
 
   var reasonOptions = reasons.map(function(r){ return '<option value="'+r+'">'+r+'</option>'; }).join('');
 
+  window._currentStatusType = type;
   form.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:95%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid '+typeBorder[type]+'">' +
       '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">'+typeIcons[type]+'</span><span style="font-weight:700;font-size:1rem;color:'+typeColors[type]+'">'+typeLabels[type]+' — <span id="sfm-name"></span></span></div>' +
@@ -915,7 +916,7 @@ function openStatusForm(type) {
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-start">' +
-      '<button onclick="window.saveStudentStatus(this.getAttribute(\'data-type\'))" data-type="'+type+'" style="background:'+typeColors[type]+';color:#fff;border:none;padding:10px 24px;border-radius:10px;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">שמור</button>' +
+      '<button onclick="window.saveStudentStatus(window._currentStatusType)" style="background:'+typeColors[type]+';color:#fff;border:none;padding:10px 24px;border-radius:10px;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">שמור</button>' +
       '<button onclick="window.closeStatusModal()" style="background:none;border:1.5px solid #ddd;color:#666;padding:10px 18px;border-radius:10px;font-family:Heebo;font-size:.92rem;cursor:pointer">ביטול</button>' +
     '</div>' +
   '</div>';
