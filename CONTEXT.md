@@ -141,7 +141,23 @@ rm -f yoman-avoda.apk.idsig
 
 ---
 
-## ⚠️ שיטת בניית APK — הנהלה רוחנית
+## ⚠️ באג ניווט — לקח חשוב
+
+**הבעיה:** כפתורי bottom-nav לא עבדו — לחיצה לא הובילה לשום מקום.
+
+**הסיבה:** ה-`querySelectorAll('[data-pg]')` שמוסיף event listeners רץ **לפני** שה-bottom-nav נוצר ב-DOM (כי הוא בסוף ה-HTML, אחרי ה-script). לכן הכפתורים לא קיבלו listeners.
+
+**הפתרון:** כפתורי bottom-nav חייבים `onclick` ישיר:
+```html
+<button class="bn" data-pg="students" onclick="window.showPage('students');...">
+```
+**לעולם לא** להסתמך על `querySelectorAll` לכפתורי bottom-nav — תמיד `onclick` מפורש.
+
+**איבחון:** הוסף `<div style="font-size:.6rem">vXX</div>` בדף הבית כדי לוודא שה-SW החדש נטען. הסר אחרי האיבחון.
+
+**SW cache:** כל שינוי גדול — חובה לעדכן גרסה ב-sw.js. בלי זה המשתמש מקבל גרסה ישנה.
+
+---
 
 **הדרך שעובדת (zipfile — ללא data descriptor flag):**
 ```python
