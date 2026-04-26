@@ -301,15 +301,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   </div>
 </div>
 
-<div class="mb hidden" id="construction-modal">
-  <div class="md" style="text-align:center;max-width:320px">
-    <div style="font-size:3rem;margin-bottom:10px">🏗️</div>
-    <div class="md-title" style="justify-content:center;margin-bottom:8px">המודול בבנייה</div>
-    <p style="color:var(--text2);font-size:.88rem;margin:8px 0 22px;line-height:1.6">מקום זה נמצא בבנייה ויפתח בקרוב.<br>תודה על הסבלנות!</p>
-    <button class="btn" style="min-width:120px" onclick="closeConstruction()">הבנתי</button>
-  </div>
-</div>
-
 <header>
   <div class="hl">
     <img class="logo" src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו ישיבה" style="height:58px;width:auto">
@@ -759,10 +750,17 @@ function showPage(pg) {
 }
 
 function showConstruction() {
-  document.getElementById('construction-modal').classList.remove('hidden');
+  var existing = document.getElementById('construction-modal');
+  if (existing) { existing.classList.remove('hidden'); return; }
+  var d = document.createElement('div');
+  d.id = 'construction-modal';
+  d.className = 'mb';
+  d.innerHTML = '<div class="md" style="text-align:center;max-width:320px"><div style="font-size:3rem;margin-bottom:10px">\uD83C\uDFD7\uFE0F</div><div class="md-title" style="justify-content:center;margin-bottom:8px">' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492) + '</div><p style="color:var(--text2);font-size:.88rem;margin:8px 0 22px;line-height:1.6">' + H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) + '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p><button class="btn" style="min-width:120px" onclick="closeConstruction()">' + H(1492,1489,1504,1514,1497) + '</button></div>';
+  document.body.appendChild(d);
 }
 function closeConstruction() {
-  document.getElementById('construction-modal').classList.add('hidden');
+  var m = document.getElementById('construction-modal');
+  if (m) m.classList.add('hidden');
 }
 
 function showDenied() {
