@@ -301,6 +301,15 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   </div>
 </div>
 
+<div class="mb hidden" id="construction-modal">
+  <div class="md" style="text-align:center;max-width:320px">
+    <div style="font-size:3rem;margin-bottom:10px">🏗️</div>
+    <div class="md-title" style="justify-content:center;margin-bottom:8px">המודול בבנייה</div>
+    <p style="color:var(--text2);font-size:.88rem;margin:8px 0 22px;line-height:1.6">מקום זה נמצא בבנייה ויפתח בקרוב.<br>תודה על הסבלנות!</p>
+    <button class="btn" style="min-width:120px" onclick="closeConstruction()">הבנתי</button>
+  </div>
+</div>
+
 <header>
   <div class="hl">
     <img class="logo" src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו ישיבה" style="height:58px;width:auto">
@@ -736,13 +745,24 @@ function showPageInternal(pg) {
   if(nbEl) nbEl.classList.add('on');
 }
 
+// דפים בבנייה — רק settings ו-home פתוחים
+var UNDER_CONSTRUCTION = ['students','attend','sleep','exams','files','reports'];
+
 function showPage(pg) {
   if (pg === 'home') { showPageInternal('home'); return; }
   if (!AUTH.user) { return; }
+  if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
   showPageInternal(pg);
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
+}
+
+function showConstruction() {
+  document.getElementById('construction-modal').classList.remove('hidden');
+}
+function closeConstruction() {
+  document.getElementById('construction-modal').classList.add('hidden');
 }
 
 function showDenied() {
