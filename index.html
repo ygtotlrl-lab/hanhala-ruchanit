@@ -516,15 +516,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
 
-    <!-- שינוי סיסמה אישית - לכולם -->
-    <div class="ss">
-      <div class="ss-t">🔑 שינוי סיסמה</div>
-      <div style="display:flex;flex-direction:column;gap:10px;max-width:280px">
-        <input type="password" id="pw-old" placeholder="סיסמה נוכחית (6 ספרות)" maxlength="6" inputmode="numeric" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1rem;text-align:center;letter-spacing:3px">
-        <input type="password" id="pw-new" placeholder="סיסמה חדשה (6 ספרות)" maxlength="6" inputmode="numeric" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1rem;text-align:center;letter-spacing:3px">
-        <button class="btn" onclick="changeMyPassword()">🔑 עדכן סיסמה</button>
-      </div>
-    </div>
+
 
   </div>
 </div>
@@ -550,8 +542,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </select>
     <label id="um-pass-label">סיסמה (6 ספרות)</label>
     <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
-    <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>
-    <div class="auth-err" id="um-err"></div>
+    <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>    <div class="auth-err" id="um-err"></div>
     <div class="ma" style="margin-top:14px">
       <button class="btn out" onclick="closeUserModal()">ביטול</button>
       <button class="btn" onclick="saveUser()">💾 שמור</button>
@@ -805,11 +796,22 @@ async function renderUsersList() {
       '<div class="ur-name">'+u.full_name+'<br><small style="color:var(--text3);font-weight:400">@'+u.username+'</small></div>' +
       '<span class="ur-role '+roleClass+'">'+roleLabel+'</span>' +
       '<div class="ua">' +
-        '<button onclick="openEditUser('+JSON.stringify(u)+')">✏️</button>' +
+        '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
+        '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
         '<button onclick="toggleUserActive('+u.id+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');
+  el.querySelectorAll('[data-uid]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openEditUser({
+        id: this.getAttribute('data-uid'),
+        full_name: this.getAttribute('data-uname'),
+        username: this.getAttribute('data-uusername'),
+        role: this.getAttribute('data-urole')
+      });
+    });
+  });
 }
 
 // ---- פתח מודל הוסף/ערוך משתמש ----
