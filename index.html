@@ -211,8 +211,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .bn:active{background:rgba(255,255,255,.1)}
   /* הסתר nav עליון במובייל */
   nav{display:none}
-  /* הסתר את header text במובייל */
-  .hdiv,.htxt{display:none}
+  /* הסתר מפריד אבל הצג טקסט במובייל */
+  .hdiv{display:none}
+  .htxt{display:flex;font-size:.65rem}
+  .htxt strong{font-size:.75rem}
+  .htxt span{font-size:.52rem}
   header{justify-content:space-between;padding:0 14px}
   .hl{gap:10px}
 }
