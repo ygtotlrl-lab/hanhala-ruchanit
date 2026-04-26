@@ -141,30 +141,62 @@ rm -f yoman-avoda.apk.idsig
 
 ---
 
-## ⚠️ באג ניווט — לקח חשוב
+## ⚠️ באג כפתורים חסומים — פתרון אולטימטיבי
 
-**הבעיה:** כפתורי bottom-nav לא עבדו — לחיצה לא הובילה לשום מקום.
+כפתורים לא מגיבים ללחיצה — זהו הבאג הנפוץ ביותר באפליקציה. **שלוש סיבות אפשריות, כולן קריטיות:**
 
-**הסיבה:** ה-`querySelectorAll('[data-pg]')` שמוסיף event listeners רץ **לפני** שה-bottom-nav נוצר ב-DOM (כי הוא בסוף ה-HTML, אחרי ה-script). לכן הכפתורים לא קיבלו listeners.
+---
 
-**הפתרון:** כפתורי bottom-nav חייבים `onclick` ישיר:
-```html
-<button class="bn" data-pg="students" onclick="window.showPage('students');...">
+### סיבה 1: שגיאת JS שמשתקת את כל הכפתורים
+**זו הסיבה הנפוצה ביותר.** אם יש שגיאת JS בטעינה, כל הכפתורים נחסמים.
+
+**איבחון:** פתח DevTools → Console → חפש שגיאה אדומה.
+
+**הגורם הנפוץ ביותר לשגיאה:** שימוש ב-`H()` בתוך `var X = {...}` ברמה הגלובלית, כשה-`H` עדיין לא מוגדרת:
+```javascript
+// שגוי — H לא קיימת עדיין בשורה 960 כשH מוגדרת בשורה 1571
+var DEFAULT_REASONS = { approved: [H(1495,...)] }; // קורס!
+
+// נכון — function נקראת רק בזמן שימוש, H כבר קיימת
+function getDefaultReasons() {
+  return { approved: ['\u05d7\u05d5\u05e4\u05e9\u05d4', ...] };
+}
 ```
-**לעולם לא** להסתמך על `querySelectorAll` לכפתורי bottom-nav — תמיד `onclick` מפורש.
+**כלל:** לעולם לא לקרוא ל-`H()` ברמה הגלובלית. תמיד עטוף ב-function.
 
-**כלל גלובלי — חובה `window.` בכל onclick בHTML סטטי:**
-כל פונקציה שנקראת מ-`onclick` בתוך HTML סטטי (לא נוצר דינמית ב-JS) **חייבת** להיות `window.functionName()` ולא `functionName()` בלבד. הסיבה: ה-HTML נפרסר לפני שה-JS רץ, ולכן הפונקציה לא מוכרת עדיין בscope הגלובלי. `window.` מבטיח שהקריאה תחפש בscope הגלובלי בזמן הלחיצה ולא בזמן הטעינה.
+---
+
+### סיבה 2: חסר `window.` ב-onclick של HTML סטטי
+כל `onclick` בHTML סטטי (לא נוצר ב-JS) חייב להשתמש ב-`window.`:
 ```html
 <!-- נכון -->
 <button onclick="window.showSettingsModule('students')">...</button>
-<!-- שגוי -->  
+<!-- שגוי — הפונקציה לא מוכרת בזמן הלחיצה -->
 <button onclick="showSettingsModule('students')">...</button>
 ```
 
-**איבחון:** הוסף `<div style="font-size:.6rem">vXX</div>` בדף הבית כדי לוודא שה-SW החדש נטען. הסר אחרי האיבחון.
+---
 
-**SW cache:** כל שינוי גדול — חובה לעדכן גרסה ב-sw.js. בלי זה המשתמש מקבל גרסה ישנה.
+### סיבה 3: event listeners שרצים לפני שה-DOM מוכן
+`querySelectorAll('[data-pg]')` שרץ לפני שכפתורי bottom-nav נוצרו בDOM — הכפתורים לא מקבלים listeners.
+
+**פתרון:** כפתורי bottom-nav חייבים `onclick` ישיר עם `window.`:
+```html
+<button class="bn" onclick="window.showPage('students');...">
+```
+
+---
+
+### איבחון מהיר
+1. פתח DevTools → Console — אם יש שגיאה אדומה, טפל בה קודם
+2. הרץ: `typeof window.FUNCTION_NAME` — אם `undefined`, הפונקציה לא הוגדרה
+3. אם הכל נראה תקין אבל עדיין לא עובד — בעיית SW cache (ראה למטה)
+
+### SW Cache
+מעכשיו ה-SW הוא **network-only** (ללא cache). אם עדיין יש בעיה, הרץ בconsole:
+```javascript
+caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>navigator.serviceWorker.getRegistrations()).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>location.reload(true))
+```
 
 ---
 
