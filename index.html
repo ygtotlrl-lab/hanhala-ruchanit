@@ -328,6 +328,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <div class="hero">
     <div class="hero-date" id="hdate"></div>
     <div class="hero-title">שלום וברכה 👋</div>
+    <div style="font-size:.6rem;opacity:.4;margin-top:2px">v37</div>
     <div class="hero-sub">ברוכים הבאים למערכת ניהול ישיבת תומכי תמימים ראשון לציון</div>
   </div>
   <div class="stats">
@@ -740,8 +741,9 @@ function showPageInternal(pg) {
 var UNDER_CONSTRUCTION = ['students','attend','sleep','exams','files','reports'];
 
 function showPage(pg) {
+  console.log('showPage called:', pg, 'user:', AUTH.user ? 'yes' : 'no');
   if (pg === 'home') { showPageInternal('home'); return; }
-  if (!AUTH.user) { return; }
+  if (!AUTH.user) { console.log('no user, returning'); return; }
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
   showPageInternal(pg);
