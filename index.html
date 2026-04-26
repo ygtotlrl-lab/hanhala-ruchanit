@@ -540,7 +540,12 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <option value="senior">צוות בכיר</option>
       <option value="junior">צוות זוטר</option>
     </select>
-    <label id="um-pass-label">סיסמה (6 ספרות)</label>
+    <label>סיסמה נוכחית</label>
+    <div style="position:relative;display:flex;align-items:center">
+      <input type="password" id="um-curr-pass" readonly style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">
+      <button type="button" onclick="var i=document.getElementById('um-curr-pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>
+    </div>
+    <label id="um-pass-label">סיסמה חדשה (6 ספרות)</label>
     <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
     <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>    <div class="auth-err" id="um-err"></div>
     <div class="ma" style="margin-top:14px">
@@ -783,10 +788,25 @@ function renderSettings() {
 }
 
 // ---- רשימת משתמשים ----
+async function moveUser(id, dir) {
+  var {data} = await SB.from('ys_users').select('id,sort_order').order('sort_order',{ascending:true,nullsFirst:false}).order('full_name');
+  if (!data) return;
+  // תן sort_order לכולם אם אין
+  for (var i=0;i<data.length;i++) if (data[i].sort_order==null) data[i].sort_order=i+1;
+  var idx = data.findIndex(function(u){return String(u.id)===String(id);});
+  if (idx<0) return;
+  var swapIdx = idx+dir;
+  if (swapIdx<0||swapIdx>=data.length) return;
+  var s1=data[idx].sort_order, s2=data[swapIdx].sort_order;
+  await SB.from('ys_users').update({sort_order:s2}).eq('id',data[idx].id);
+  await SB.from('ys_users').update({sort_order:s1}).eq('id',data[swapIdx].id);
+  renderUsersList();
+}
+
 async function renderUsersList() {
   var el = document.getElementById('users-list');
   el.innerHTML = '<div class="ld">טוען...</div>';
-  var {data} = await SB.from('ys_users').select('*').order('full_name');
+  var {data} = await SB.from('ys_users').select('*').order('sort_order', {ascending:true, nullsFirst:false}).order('full_name');
   if (!data || !data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
@@ -798,6 +818,8 @@ async function renderUsersList() {
       '<div class="ua">' +
         '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
+        '<button onclick="moveUser('+u.id+',-1)" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
+        '<button onclick="moveUser('+u.id+',1)" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
         '<button onclick="toggleUserActive('+u.id+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
@@ -827,16 +849,21 @@ function openAddUser() {
   document.getElementById('um-err').textContent = '';
   var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
-function openEditUser(u) {
+async function openEditUser(u) {
   document.getElementById('um-id').value = u.id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
   document.getElementById('um-pass').value = '';
+  document.getElementById('um-curr-pass').value = '';
+  document.getElementById('um-curr-pass').type = 'password';
   document.getElementById('um-pass-hint').style.display = '';
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
   document.getElementById('um-title').textContent = 'ערוך משתמש';
   document.getElementById('um-err').textContent = '';
+  // טען סיסמה נוכחית מה-DB
+  var {data} = await SB.from('ys_users').select('password_hash').eq('id', u.id).single();
+  if (data) document.getElementById('um-curr-pass').value = data.password_hash || '';
   var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
 function closeUserModal() {
