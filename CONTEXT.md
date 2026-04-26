@@ -47,8 +47,8 @@
 - מרכז: ב"ה | ימות המשיח → כותרת → שם ישיבה → "יחי אדוננו..." (font-weight:800)
 - טאבים עגולים: הזנה / יומן / עריכה / ארכיון
 
-**APK:** `/tmp/yoman-avoda/yoman-avoda.apk` | alias=app | storepass/keypass=pass1234
-**keystore:** `/tmp/yoman.keystore` | alias=app | storepass/keypass=pass1234
+**APK שם קובץ:** `yoman-avoda.apk` (ללא עברית — שמות עברית לא עובדים ב-Android)
+**keystore:** `/tmp/yoman.keystore` | alias=yoman | storepass/keypass=yoman123
 **manifest name:** יומן עבודה (תוקן — היה "טאג בוך - יומן עבודה")
 
 **כפתורים מוסתרים במובייל (≤800px):** class `hide-mobile`
@@ -94,7 +94,9 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 **ys_users שדות:** id, username, password_hash, full_name, role(admin/senior/junior), active
 **ys_perms:** מפתח ב-kv | הרשאות לפי תפקיד לכל מודול
 
-**Title fix:** `<title>הנהלה רוחנית</title>` חייב לבוא לפני ה-`<script>` הראשון (charset ב-script גרם ל-title ריק)
+**⚠️ Supabase CDN:** חובה `<script src="..." >` סינכרוני — אסור async/fallback! אחרת `supabase is not defined` בשורת `var SB=supabase.createClient`
+
+**⚠️ Auth הנהלה רוחנית:** password_hash מושווה כ-plaintext (123456). simpleHash() קיים בקוד אבל DB מכיל plaintext.
 
 **keystore:** `/tmp/yeshiva_new.keystore` | alias=yeshiva | storepass/keypass=yeshiva123
 **cert SHA-256:** 71c5e63b616ebb50e3bf0d40ea17437861ed932a9b21ccfc96515f1aa0c067ac
@@ -104,6 +106,38 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 ```
 git push https://TOKEN@github.com/ygtotlrl-lab/yeshiva-manager.git main
 ```
+
+---
+
+## ⚠️ שיטת בניית APK — יומן עבודה
+
+**שיטה: apktool + zipalign + apksigner (עובד ✅)**
+```bash
+# 1. פרק
+apktool d /tmp/yoman-avoda/yoman-avoda.apk -o /tmp/yw_work -f
+
+# 2. תקן URL (חשוב! הקובץ הוא index.html ולא יומן עבודה.html)
+# ב-MainActivity.smali + MainActivity$2.smali:
+# החלף: yoman-avoda/%D7%99%D7%95%D7%9E%D7%9F%20%D7%A2%D7%91%D7%95%D7%93%D7%94.html
+# ל:    yoman-avoda/index.html
+
+# 3. החלף אייקונים — מהריפו icon-512.png לכל הגדלים:
+# res/mipmap-hdpi-v4: 72px | xhdpi: 96px | xxhdpi: 144px | xxxhdpi: 192px
+# assets/icons/: icon-192, icon-512, apple-touch-icon, favicon-32, favicon-16
+# ⚠️ חשוב: החלף גם build/apk/res/ אם קיים!
+
+# 4. בנה + חתום
+apktool b /tmp/yw_work -o /tmp/yw_built.apk
+zipalign -f 4 /tmp/yw_built.apk /tmp/yw_aligned.apk
+apksigner sign --ks /tmp/yoman.keystore --ks-key-alias yoman \
+  --ks-pass pass:yoman123 --key-pass pass:yoman123 \
+  --out yoman-avoda.apk /tmp/yw_aligned.apk
+rm -f yoman-avoda.apk.idsig
+```
+
+**⚠️ אייקון יומן עבודה:** לוגו ירוק של הישיבה על רקע לבן (icon-512.png מהריפו).
+אין להשתמש באייקון הישן — הוא כחול עם מסגרת ירוקה.
+אם יש תיקיית `build/` ב-yw_work — להחליף גם שם!
 
 ---
 
