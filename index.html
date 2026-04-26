@@ -1114,6 +1114,9 @@ document.getElementById('auth-pass').addEventListener('keydown', function(e) {
 document.getElementById('auth-user').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('auth-pass').focus();
 });
+document.getElementById('auth-pass').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
 
 // ============================================================
 // ===== SETTINGS PAGE =====
