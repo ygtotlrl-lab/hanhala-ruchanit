@@ -388,7 +388,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <col style="width:44px">
   <col style="width:auto">
   <col style="width:80px">
-  <col style="width:120px">
+  <col style="width:100px">
+  <col style="width:80px">
   <col style="width:54px">
 </colgroup>
 <thead><tr style="background:#1a3c6e;color:white">
@@ -396,6 +397,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <th style="padding:10px 8px;text-align:right">שם התלמיד</th>
 <th style="padding:10px 8px;text-align:center">שיעור</th>
 <th style="padding:10px 8px;text-align:center">נוכחות</th>
+<th style="padding:10px 8px;text-align:center">סטטוס</th>
 <th style="padding:10px 8px;text-align:center">עריכה</th>
 </tr></thead>
 <tbody id="students-tbody"></tbody>
@@ -1555,18 +1557,19 @@ function renderStudents(){
     else if(st.status==='approved')bg='#fffaf0';
     else if(st.status==='absent')bg='#fff5f5';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
-    // נוכחות - toggle נמצא/לא נמצא
+    // נוכחות - תצוגה בלבד
     var isPresent = !!s.present;
     var presIcon = isPresent
-      ? '<button onclick="openAttendanceEdit('+s.id+')" style="background:#38a169;color:#fff;border:none;padding:5px 14px;border-radius:20px;cursor:pointer;font-family:Heebo;font-size:.82rem;font-weight:700;transition:all .2s">&#x2714; '+H(1489,1497,1513,1497,1489,1492)+'</button>'
-      : '<button onclick="openAttendanceEdit('+s.id+')" style="background:#cbd5e0;color:#4a5568;border:none;padding:5px 14px;border-radius:20px;cursor:pointer;font-family:Heebo;font-size:.82rem;font-weight:700;transition:all .2s">&#x2715; '+H(1500,1488,32,1504,1502,1510,1488)+'</button>';
-    // סטטוס - ריק (נוכחות מחליף)
-    var statusBtn='';
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fff4;color:#38a169;border:1.5px solid #38a169;padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:700">&#x2714; '+H(1489,1497,1513,1497,1489,1492)+'</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;background:#f7fafc;color:#a0aec0;border:1.5px solid #cbd5e0;padding:4px 12px;border-radius:20px;font-size:.82rem;font-weight:700">&#x2715; '+H(1500,1488,32,1504,1502,1510,1488)+'</span>';
+    // כפתור עריכת סטטוס
+    var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center" title="'+H(1506,1512,1497,1499,1514,32,1505,1496,1468,1493,1505)+'">&#x270E;</button>';
     html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
     html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+i+'</td>';
     html+='<td style="padding:8px;text-align:right;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</td>';
     html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em;white-space:nowrap">'+clsLabel+'</span></td>';
     html+='<td style="padding:8px;text-align:center">'+presIcon+'</td>';
+    html+='<td style="padding:8px;text-align:center">'+statusBtn+'</td>';
     html+='<td style="padding:8px;text-align:center">';
     html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1rem" title="'+H(1506,1512,1497,1499,1514,32,1508,1512,1496,1497,1501)+'">&#x270F;&#xFE0F;</button>';
     html+='</td></tr>';
