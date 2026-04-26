@@ -480,7 +480,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <input type="text" id="new-reason" placeholder="סיבה חדשה..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:8px 0;direction:rtl">
 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
 <button class="btn out" onclick="closeReasons()">סגור</button>
-<button class="btn" onclick="addReason()">➕ הוסף</button>
+<button class="btn" onclick="window.addReason()">➕ הוסף</button>
 </div>
 </div>
 </div>
@@ -512,31 +512,31 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div id="settings-home">
       <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin-top:8px">
-        <button onclick="showSettingsModule('students')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('students')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">👥</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מצבת תלמידים</span>
         </button>
-        <button onclick="showSettingsModule('attend')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('attend')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">✅</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">סדרים</span>
         </button>
-        <button onclick="showSettingsModule('sleep')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('sleep')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">🌙</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">זמן שינה</span>
         </button>
-        <button onclick="showSettingsModule('exams')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('exams')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📝</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מבחנים</span>
         </button>
-        <button onclick="showSettingsModule('files')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('files')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📁</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">תיקים אישיים</span>
         </button>
-        <button onclick="showSettingsModule('reports')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('reports')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📊</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">דוחות</span>
         </button>
-        <button onclick="showSettingsModule('system')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button onclick="window.showSettingsModule('system')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">⚙️</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">הגדרות מערכת</span>
         </button>
@@ -545,57 +545,57 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
       <div class="ss">
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:8px">
           <div>
             <div style="font-weight:600;color:#2b7a3e;margin-bottom:8px;font-size:.88rem">✅ אישור</div>
             <div id="reasons-approved" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="addReason('approved')" style="margin-top:8px;background:none;border:1.5px dashed #9ae6b4;color:#276749;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addReason('approved')" style="margin-top:8px;background:none;border:1.5px dashed #9ae6b4;color:#276749;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
           <div>
             <div style="font-weight:600;color:#c05621;margin-bottom:8px;font-size:.88rem">⚠️ השעיה</div>
             <div id="reasons-suspended" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="addReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
           <div>
             <div style="font-weight:600;color:#c53030;margin-bottom:8px;font-size:.88rem">🚪 לא שב / עזב</div>
             <div id="reasons-left" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="addReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
         </div>
         <div style="margin-top:16px;text-align:left">
-          <button class="btn" onclick="saveAbsenceReasons()">💾 שמור</button>
+          <button class="btn" onclick="window.saveAbsenceReasons()">💾 שמור</button>
         </div>
       </div>
     </div>
 
     <!-- הגדרות מודולים אחרים (בנייה) -->
     <div id="settings-attend" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>✅ הגדרות סדרים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>✅ הגדרות סדרים</span></div>
       <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
     </div>
     <div id="settings-sleep" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>🌙 הגדרות שינה</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
     </div>
     <div id="settings-exams" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
       <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
     </div>
     <div id="settings-files" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📁 הגדרות תיקים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📁 הגדרות תיקים</span></div>
       <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
     </div>
     <div id="settings-reports" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📊 הגדרות דוחות</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📊 הגדרות דוחות</span></div>
       <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
     </div>
 
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" style="display:none">
-      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
