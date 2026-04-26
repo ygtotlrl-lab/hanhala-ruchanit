@@ -788,31 +788,47 @@ function renderSettings() {
 }
 
 // ---- רשימת משתמשים ----
-async function moveUser(id, dir) {
-  var {data} = await SB.from('ys_users').select('id,sort_order').order('sort_order',{ascending:true,nullsFirst:false}).order('full_name');
-  if (!data) return;
-  // תן sort_order לכולם אם אין
-  for (var i=0;i<data.length;i++) if (data[i].sort_order==null) data[i].sort_order=i+1;
-  var idx = data.findIndex(function(u){return String(u.id)===String(id);});
-  if (idx<0) return;
-  var swapIdx = idx+dir;
-  if (swapIdx<0||swapIdx>=data.length) return;
-  var s1=data[idx].sort_order, s2=data[swapIdx].sort_order;
-  await SB.from('ys_users').update({sort_order:s2}).eq('id',data[idx].id);
-  await SB.from('ys_users').update({sort_order:s1}).eq('id',data[swapIdx].id);
+function getUserOrder() {
+  try { return JSON.parse(localStorage.getItem('ys_user_order') || '[]'); } catch(e) { return []; }
+}
+function saveUserOrder(ids) {
+  localStorage.setItem('ys_user_order', JSON.stringify(ids));
+}
+function sortUsersByOrder(data) {
+  var order = getUserOrder();
+  if (!order.length) return data;
+  return data.slice().sort(function(a,b) {
+    var ia = order.indexOf(String(a.id));
+    var ib = order.indexOf(String(b.id));
+    if (ia===-1) ia = 9999;
+    if (ib===-1) ib = 9999;
+    return ia - ib;
+  });
+}
+function moveUser(id, dir) {
+  var el = document.getElementById('users-list');
+  var rows = Array.from(el.querySelectorAll('.ur'));
+  var ids = rows.map(function(r){ return r.getAttribute('data-row-id'); });
+  var idx = ids.indexOf(String(id));
+  if (idx < 0) return;
+  var swapIdx = idx + dir;
+  if (swapIdx < 0 || swapIdx >= ids.length) return;
+  var tmp = ids[idx]; ids[idx] = ids[swapIdx]; ids[swapIdx] = tmp;
+  saveUserOrder(ids);
   renderUsersList();
 }
 
 async function renderUsersList() {
   var el = document.getElementById('users-list');
   el.innerHTML = '<div class="ld">טוען...</div>';
-  var {data} = await SB.from('ys_users').select('*').order('sort_order', {ascending:true, nullsFirst:false}).order('full_name');
+  var {data} = await SB.from('ys_users').select('*').order('full_name');
   if (!data || !data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
+  data = sortUsersByOrder(data);
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeStyle = u.active ? '' : 'opacity:.5;';
-    return '<div class="ur" style="'+activeStyle+'">' +
+    return '<div class="ur" style="'+activeStyle+'" data-row-id="'+u.id+'">' +
       '<div class="ur-name">'+u.full_name+'<br><small style="color:var(--text3);font-weight:400">@'+u.username+'</small></div>' +
       '<span class="ur-role '+roleClass+'">'+roleLabel+'</span>' +
       '<div class="ua">' +
