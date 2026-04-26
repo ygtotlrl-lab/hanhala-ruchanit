@@ -30,8 +30,8 @@ nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .nb{background:none;border:none;color:rgba(255,255,255,.72);padding:7px 12px;border-radius:6px;cursor:pointer;font-family:Heebo;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:6px;transition:all .18s;white-space:nowrap}
 .nb:hover{background:rgba(255,255,255,.13);color:#fff}
 .nb.on{background:rgba(255,255,255,.20);color:#fff;font-weight:600}
-main{padding:0;max-width:100%;width:100%}
-.pg{display:none}.pg.on{display:block}
+main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
+.pg{display:none;overflow-x:hidden}.pg.on{display:block}
 #pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,#eef2fa,#f8f9ff 50%,#e8f0fb)}
 .hero{background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));color:#fff;padding:36px 40px 46px;position:relative;overflow:hidden}
 .hero-date{font-size:.83rem;opacity:.72;margin-bottom:6px}
@@ -56,7 +56,7 @@ main{padding:0;max-width:100%;width:100%}
 .mod-info{flex:1}
 .mod-name{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
 .mod-desc{font-size:.78rem;color:var(--text3);line-height:1.4}
-.inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto}
+.inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap}
 .back:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa}
@@ -1565,7 +1565,7 @@ function renderStudents(){
     // כפתור עריכת סטטוס
     var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;display:inline-flex;align-items:center;justify-content:center" title="'+H(1506,1512,1497,1499,1514,32,1505,1496,1468,1493,1505)+'">&#x270E;</button>';
     html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
-    html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+i+'</td>';
+    html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+(i+1)+'</td>';
     html+='<td style="padding:8px;text-align:right;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</td>';
     html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em;white-space:nowrap">'+clsLabel+'</span></td>';
     html+='<td style="padding:8px;text-align:center">'+presIcon+'</td>';

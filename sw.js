@@ -1,4 +1,4 @@
-const CACHE='yeshiva-v55';
+const CACHE='yeshiva-v56';
 const ASSETS=['/yeshiva-manager/','/yeshiva-manager/index.html'];
 self.addEventListener('install',e=>{
   self.skipWaiting();
