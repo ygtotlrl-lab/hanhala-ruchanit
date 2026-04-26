@@ -330,7 +330,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </button>
     <div id="user-menu" style="display:none;position:absolute;left:0;top:50px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);min-width:190px;z-index:300;overflow:hidden;direction:rtl">
       <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:#1a3a6b;border-bottom:1px solid #eee"></div>
-      <div id="user-menu-role" style="padding:6px 16px;font-size:.78rem;color:#888;border-bottom:1px solid #eee"></div>
+      <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:#888;border-bottom:1px solid #eee"></div>
+      <div id="user-menu-others" style="border-bottom:1px solid #eee"></div>
       <button onclick="closeUserMenu();doLogout()" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#e53e3e;font-weight:600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
@@ -770,12 +771,73 @@ function showPage(pg) {
 }
 
 
-function toggleUserMenu() {
+async function toggleUserMenu() {
   var m = document.getElementById('user-menu');
-  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+  if (m.style.display !== 'none') { m.style.display='none'; return; }
+  m.style.display = 'block';
+  var othersEl = document.getElementById('user-menu-others');
+  othersEl.innerHTML = '<div style="padding:8px 16px;font-size:.75rem;color:#aaa">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
+  var res = await SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name');
+  var data = res.data;
+  if (!data) { othersEl.innerHTML=''; return; }
+  var others = data.filter(function(u){return String(u.id)!==String(AUTH.user.id);});
+  if (!others.length) { othersEl.innerHTML=''; return; }
+  var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
+  othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
+    others.map(function(u){
+      var safeName = u.full_name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return '<button onclick="switchUser('+u.id+',\''+safeName+'\');" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">'+String.fromCharCode(128100)+'</span><span>'+u.full_name+'</span></button>';
+    }).join('');
 }
 function closeUserMenu() {
   document.getElementById('user-menu').style.display = 'none';
+}
+function switchUser(id, name) {
+  closeUserMenu();
+  var d = document.getElementById('switch-user-modal');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'switch-user-modal';
+    d.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+    var title = H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513);
+    var subTitle = H(1492,1499,1504,1505,32,1505,1497,1505,1502,1488);
+    var cancelTxt = H(1489,1497,1496,1493,1500);
+    var enterTxt = H(1499,1504,1497,1505,1492);
+    d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:300px;text-align:center;border-top:4px solid #1a3a6b;direction:rtl"><div style="font-size:1.8rem;margin-bottom:8px">'+String.fromCharCode(128100)+'</div><div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px" id="switch-name"></div><div style="font-size:.8rem;color:#888;margin-bottom:16px">'+subTitle+'</div><input type="password" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px"><div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px"></div><div style="display:flex;gap:10px;justify-content:center"><button onclick="closeSwitchModal()" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button><button onclick="confirmSwitch()" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button></div></div>';
+    document.body.appendChild(d);
+    document.getElementById('switch-pass').addEventListener('keydown',function(e){if(e.key==='Enter')confirmSwitch();});
+  }
+  d._switchId = id;
+  document.getElementById('switch-name').textContent = name;
+  document.getElementById('switch-pass').value = '';
+  document.getElementById('switch-err').textContent = '';
+  d.style.display = 'flex';
+  setTimeout(function(){document.getElementById('switch-pass').focus();},100);
+}
+function closeSwitchModal() {
+  var d=document.getElementById('switch-user-modal');
+  if(d) d.style.display='none';
+}
+async function confirmSwitch() {
+  var d=document.getElementById('switch-user-modal');
+  var pass=document.getElementById('switch-pass').value.trim();
+  var errEl=document.getElementById('switch-err');
+  if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
+  var res=await SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single();
+  if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+  var u=res.data;
+  closeSwitchModal();
+  AUTH.user=u;
+  await loadPerms();
+  var hdru=document.getElementById('hdr-username');
+  if(hdru) hdru.textContent=u.full_name;
+  var mn=document.getElementById('user-menu-name');
+  if(mn) mn.textContent=u.full_name;
+  var mr=document.getElementById('user-menu-role');
+  if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
+  resetLockTimer();
+  showPage('home');
+  toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name);
 }
 // סגור בלחיצה מחוץ
 document.addEventListener('click', function(e) {
