@@ -153,6 +153,15 @@ rm -f yoman-avoda.apk.idsig
 ```
 **לעולם לא** להסתמך על `querySelectorAll` לכפתורי bottom-nav — תמיד `onclick` מפורש.
 
+**כלל גלובלי — חובה `window.` בכל onclick בHTML סטטי:**
+כל פונקציה שנקראת מ-`onclick` בתוך HTML סטטי (לא נוצר דינמית ב-JS) **חייבת** להיות `window.functionName()` ולא `functionName()` בלבד. הסיבה: ה-HTML נפרסר לפני שה-JS רץ, ולכן הפונקציה לא מוכרת עדיין בscope הגלובלי. `window.` מבטיח שהקריאה תחפש בscope הגלובלי בזמן הלחיצה ולא בזמן הטעינה.
+```html
+<!-- נכון -->
+<button onclick="window.showSettingsModule('students')">...</button>
+<!-- שגוי -->  
+<button onclick="showSettingsModule('students')">...</button>
+```
+
 **איבחון:** הוסף `<div style="font-size:.6rem">vXX</div>` בדף הבית כדי לוודא שה-SW החדש נטען. הסר אחרי האיבחון.
 
 **SW cache:** כל שינוי גדול — חובה לעדכן גרסה ב-sw.js. בלי זה המשתמש מקבל גרסה ישנה.
