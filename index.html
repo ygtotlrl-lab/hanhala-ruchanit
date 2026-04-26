@@ -941,11 +941,16 @@ function showSettingsHome() {
 function showSettingsModule(mod) {
   document.getElementById('settings-home').style.display = 'none';
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
-    document.getElementById('settings-'+m).style.display = 'none';
+    var el = document.getElementById('settings-'+m);
+    if (el) el.style.display = 'none';
   });
-  document.getElementById('settings-'+mod).style.display = '';
-  if (mod === 'system') { renderUsersList(); renderPerms(); }
-  if (mod === 'students') renderAbsenceReasons();
+  var target = document.getElementById('settings-'+mod);
+  if (target) target.style.display = '';
+  // setTimeout מבטיח שה-DOM עודכן לפני הrender
+  setTimeout(function() {
+    if (mod === 'system') { renderUsersList(); renderPermsTable(); }
+    if (mod === 'students') renderAbsenceReasons();
+  }, 0);
 }
 
 // ברירות מחדל לסיבות היעדרות
