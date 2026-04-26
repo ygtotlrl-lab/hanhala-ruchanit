@@ -751,16 +751,16 @@ function showPage(pg) {
 
 function showConstruction() {
   var existing = document.getElementById('construction-modal');
-  if (existing) { existing.classList.remove('hidden'); return; }
+  if (existing) { existing.style.display='flex'; return; }
   var d = document.createElement('div');
   d.id = 'construction-modal';
-  d.className = 'mb';
-  d.innerHTML = '<div class="md" style="text-align:center;max-width:320px"><div style="font-size:3rem;margin-bottom:10px">\uD83C\uDFD7\uFE0F</div><div class="md-title" style="justify-content:center;margin-bottom:8px">' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492) + '</div><p style="color:var(--text2);font-size:.88rem;margin:8px 0 22px;line-height:1.6">' + H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) + '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p><button class="btn" style="min-width:120px" onclick="closeConstruction()">' + H(1492,1489,1504,1514,1497) + '</button></div>';
+  d.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:32px;width:90%;max-width:320px;text-align:center;border-top:4px solid #1a3a6b"><div style="font-size:3rem;margin-bottom:10px">\uD83C\uDFD7\uFE0F</div><div style="font-size:1.1rem;font-weight:700;color:#1a3a6b;margin-bottom:12px">' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492) + '</div><p style="color:#4a5568;font-size:.88rem;margin:8px 0 22px;line-height:1.6">' + H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) + '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p><button onclick="closeConstruction()" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.95rem;font-family:Heebo;cursor:pointer;min-width:120px">' + H(1492,1489,1504,1514,1497) + '</button></div>';
   document.body.appendChild(d);
 }
 function closeConstruction() {
   var m = document.getElementById('construction-modal');
-  if (m) m.classList.add('hidden');
+  if (m) m.style.display='none';
 }
 
 function showDenied() {
