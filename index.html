@@ -957,14 +957,16 @@ function showSettingsModule(mod) {
 }
 
 // ברירות מחדל לסיבות היעדרות
-var DEFAULT_REASONS = {
-  approved: [H(1495,1493,1508,1513,1492), H(1488,1497,1512,1493,1506,32,1502,1513,1508,1495,1514,1497), H(1512,1508,1493,1488,1497), H(1488,1495,1512)],
-  suspended: [H(1502,1513,1502,1506,1514), H(1488,1495,1512)],
-  left: [H(1500,1488,32,1495,1494,1512,32,1502,1495,1493,1508,1513,1492), H(1506,1494,1489,32,1500,1510,1502,1497,1514,1493,1514), H(1488,1495,1512)]
-};
+function getDefaultReasons() {
+  return {
+    approved: ['\u05d7\u05d5\u05e4\u05e9\u05d4', '\u05d0\u05d9\u05e8\u05d5\u05e2 \u05de\u05e9\u05e4\u05d7\u05ea\u05d9', '\u05e8\u05e4\u05d5\u05d0\u05d9', '\u05d0\u05d7\u05e8'],
+    suspended: ['\u05de\u05e9\u05de\u05e2\u05ea', '\u05d0\u05d7\u05e8'],
+    left: ['\u05dc\u05d0 \u05d7\u05d6\u05e8 \u05de\u05d7\u05d5\u05e4\u05e9\u05d4', '\u05e2\u05d6\u05d1 \u05dc\u05e6\u05de\u05d9\u05ea\u05d5\u05ea', '\u05d0\u05d7\u05e8']
+  };
+}
 
 function getAbsenceReasons() {
-  try { return JSON.parse(localStorage.getItem('ys_absence_reasons') || 'null') || DEFAULT_REASONS; } catch(e) { return DEFAULT_REASONS; }
+  try { return JSON.parse(localStorage.getItem('ys_absence_reasons') || 'null') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 }
 function saveAbsenceReasons() {
   var reasons = {approved:[], suspended:[], left:[]};
