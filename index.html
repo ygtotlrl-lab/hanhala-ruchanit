@@ -383,16 +383,21 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 <!-- Students Table -->
 <div class="tw" style="overflow-x:auto">
-<table id="students-table" style="width:100%;border-collapse:collapse;font-size:0.9em">
+<table id="students-table" style="width:100%;border-collapse:collapse;font-size:0.9em;table-layout:fixed">
+<colgroup>
+  <col style="width:44px">
+  <col style="width:auto">
+  <col style="width:80px">
+  <col style="width:70px">
+  <col style="width:100px">
+  <col style="width:60px">
+</colgroup>
 <thead><tr style="background:#1a3c6e;color:white">
 <th style="padding:10px 8px;text-align:right">מס'</th>
 <th style="padding:10px 8px;text-align:right">שם התלמיד</th>
 <th style="padding:10px 8px;text-align:center">שיעור</th>
 <th style="padding:10px 8px;text-align:center">נוכחות</th>
 <th style="padding:10px 8px;text-align:center">סטטוס</th>
-<th style="padding:10px 8px;text-align:right">סיבה/אישור</th>
-<th style="padding:10px 8px;text-align:center">כניסה</th>
-<th style="padding:10px 8px;text-align:center">יציאה</th>
 <th style="padding:10px 8px;text-align:center">פעולות</th>
 </tr></thead>
 <tbody id="students-tbody"></tbody>
@@ -1547,41 +1552,32 @@ function renderStudents(){
   var html='';
   filtered.forEach(function(s,i){
     var st=getStudentStatus(s.id);
-    var rec=dayA[s.id]||{};
-    var appr=getApprovals()[s.id];
-    var apprText='';
-    if(appr&&appr.active){apprText=appr.reason+(appr.fromHeb?' ('+appr.fromHeb+'-'+(appr.toHeb||'')+')':'');}
     var bg=i%2===0?'#fff':'#f9fafb';
     if(st.status==='present')bg='#f0fff4';
     else if(st.status==='approved')bg='#fffaf0';
     else if(st.status==='absent')bg='#fff5f5';
-    var pb=st.status==='present'?'#38a169':'#eee';
-    var pc=st.status==='present'?'white':'#333';
-    var ab2=st.status==='absent'?'#e53e3e':'#eee';
-    var ac=st.status==='absent'?'white':'#333';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
+    // נוכחות - תוצאה בלבד לפי סטטוס
+    var presIcon=st.status==='present'?'<span style="color:#38a169;font-size:1.1em">&#x2705;</span>':st.status==='approved'?'<span style="color:#ed8936;font-size:1.1em">&#x1F4CB;</span>':'<span style="color:#e53e3e;font-size:1.1em">&#x274C;</span>';
+    // סטטוס - כפתור לעריכת נוכחות
+    var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:'+st.color+';color:#fff;border:none;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:Heebo;font-size:.8rem;font-weight:600;white-space:nowrap">'+st.label+'</button>';
     html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
-    html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+s.id+'</td>';
-    html+='<td style="padding:8px;text-align:right;font-weight:500">'+s.name+'</td>';
-    html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em">'+clsLabel+'</span></td>';
+    html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+i+'</td>';
+    html+='<td style="padding:8px;text-align:right;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.name+'</td>';
+    html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em;white-space:nowrap">'+clsLabel+'</span></td>';
+    html+='<td style="padding:8px;text-align:center">'+presIcon+'</td>';
+    html+='<td style="padding:8px;text-align:center">'+statusBtn+'</td>';
     html+='<td style="padding:8px;text-align:center">';
-    html+='<button onclick="togglePresent('+s.id+',true)" style="background:'+pb+';color:'+pc+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px">&#x2705;</button>';
-    html+='<button onclick="togglePresent('+s.id+',false)" style="background:'+ab2+';color:'+ac+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px">&#x274C;</button>';
-    html+='</td>';
-    html+='<td style="padding:8px;text-align:center"><span style="color:'+st.color+';font-weight:600;font-size:0.85em">'+st.label+'</span></td>';
-    html+='<td style="padding:8px;text-align:right;font-size:0.82em;color:#555;max-width:150px">';
-    if(apprText){html+=apprText+'<button onclick="clearApproval('+s.id+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:0.9em;margin-right:4px">&#x2715;</button>';}
-    else{html+='<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.82em">'+H(1488,1497,1513,1493,1512)+'</button>';}
-    html+='</td>';
-    html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.entryTime||'&#8212;')+'</td>';
-    html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.exitTime||'&#8212;')+'</td>';
-    html+='<td style="padding:8px;text-align:center">';
-    html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer" title="edit">&#x270F;&#xFE0F;</button>';
-    html+='<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer" title="delete">&#x1F5D1;&#xFE0F;</button>';
-    html+='<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer" title="time">&#x23F1;&#xFE0F;</button>';
+    html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1rem" title="'+H(1506,1512,1497,1499,1514,32,1508,1512,1496,1497,1501)+'">&#x270F;&#xFE0F;</button>';
     html+='</td></tr>';
   });
   tbody.innerHTML=html;
+}
+
+
+function openAttendanceEdit(sid) {
+  // יפורט בהמשך
+  toast(H(1489,1511,1512,1493,1489)+' - '+H(1506,1512,1497,1499,1514,32,1504,1493,1499,1495,1493,1514,32,1514,1514,1508,1514,1495,32,1489,1511,1512,1493,1489));
 }
 
 function togglePresent(sid,present){
