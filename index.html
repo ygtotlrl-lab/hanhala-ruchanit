@@ -507,34 +507,114 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <!-- ===== דף הגדרות ===== -->
 <div class="pg" id="pg-settings">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
 
-    <!-- ניהול משתמשים - admin only -->
-    <div class="ss" id="ss-users">
-      <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
-      <div id="users-list"><div class="ld">טוען...</div></div>
+    <!-- דף ראשי הגדרות -->
+    <div id="settings-home">
+      <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin-top:8px">
+        <button onclick="showSettingsModule('students')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">👥</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מצבת תלמידים</span>
+        </button>
+        <button onclick="showSettingsModule('attend')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">✅</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">סדרים</span>
+        </button>
+        <button onclick="showSettingsModule('sleep')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">🌙</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">זמן שינה</span>
+        </button>
+        <button onclick="showSettingsModule('exams')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">📝</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מבחנים</span>
+        </button>
+        <button onclick="showSettingsModule('files')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">📁</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">תיקים אישיים</span>
+        </button>
+        <button onclick="showSettingsModule('reports')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">📊</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">דוחות</span>
+        </button>
+        <button onclick="showSettingsModule('system')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+          <span style="font-size:2rem">⚙️</span>
+          <span style="font-size:.88rem;font-weight:600;color:var(--navy)">הגדרות מערכת</span>
+        </button>
+      </div>
     </div>
 
-    <!-- טבלת הרשאות - admin only -->
-    <div class="ss" id="ss-perms">
-      <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
-      <div style="overflow-x:auto">
-        <table class="pt">
-          <thead><tr>
-            <th>מודול</th>
-            <th>מנהל</th>
-            <th>צוות בכיר</th>
-            <th>צוות זוטר</th>
-          </tr></thead>
-          <tbody id="perm-tbody"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:14px;text-align:left">
-        <button class="btn" onclick="savePerms()">💾 שמור הרשאות</button>
+    <!-- הגדרות מצבת תלמידים -->
+    <div id="settings-students" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
+      <div class="ss">
+        <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:8px">
+          <div>
+            <div style="font-weight:600;color:#2b7a3e;margin-bottom:8px;font-size:.88rem">✅ אישור</div>
+            <div id="reasons-approved" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button onclick="addReason('approved')" style="margin-top:8px;background:none;border:1.5px dashed #9ae6b4;color:#276749;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+          </div>
+          <div>
+            <div style="font-weight:600;color:#c05621;margin-bottom:8px;font-size:.88rem">⚠️ השעיה</div>
+            <div id="reasons-suspended" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button onclick="addReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+          </div>
+          <div>
+            <div style="font-weight:600;color:#c53030;margin-bottom:8px;font-size:.88rem">🚪 לא שב / עזב</div>
+            <div id="reasons-left" style="display:flex;flex-direction:column;gap:6px"></div>
+            <button onclick="addReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+          </div>
+        </div>
+        <div style="margin-top:16px;text-align:left">
+          <button class="btn" onclick="saveAbsenceReasons()">💾 שמור</button>
+        </div>
       </div>
     </div>
 
+    <!-- הגדרות מודולים אחרים (בנייה) -->
+    <div id="settings-attend" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>✅ הגדרות סדרים</span></div>
+      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+    </div>
+    <div id="settings-sleep" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>🌙 הגדרות שינה</span></div>
+      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+    </div>
+    <div id="settings-exams" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
+      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+    </div>
+    <div id="settings-files" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📁 הגדרות תיקים</span></div>
+      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+    </div>
+    <div id="settings-reports" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📊 הגדרות דוחות</span></div>
+      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+    </div>
 
+    <!-- הגדרות מערכת - משתמשים והרשאות -->
+    <div id="settings-system" style="display:none">
+      <div class="ptitle"><button onclick="showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ss" id="ss-users">
+        <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
+        <div id="users-list"><div class="ld">טוען...</div></div>
+      </div>
+      <div class="ss" id="ss-perms">
+        <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
+        <div style="overflow-x:auto">
+          <table class="pt">
+            <thead><tr>
+              <th>מודול</th><th>מנהל</th><th>צוות בכיר</th><th>צוות זוטר</th>
+            </tr></thead>
+            <tbody id="perm-tbody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:14px;text-align:left">
+          <button class="btn" onclick="savePerms()">💾 שמור הרשאות</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -850,6 +930,63 @@ document.addEventListener('click', function(e) {
   if (wrap && !wrap.contains(e.target)) closeUserMenu();
 });
 
+
+function showSettingsHome() {
+  ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
+    document.getElementById('settings-'+m).style.display = 'none';
+  });
+  document.getElementById('settings-home').style.display = '';
+}
+
+function showSettingsModule(mod) {
+  document.getElementById('settings-home').style.display = 'none';
+  ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
+    document.getElementById('settings-'+m).style.display = 'none';
+  });
+  document.getElementById('settings-'+mod).style.display = '';
+  if (mod === 'system') { renderUsersList(); renderPerms(); }
+  if (mod === 'students') renderAbsenceReasons();
+}
+
+// ברירות מחדל לסיבות היעדרות
+var DEFAULT_REASONS = {
+  approved: [H(1495,1493,1508,1513,1492), H(1488,1497,1512,1493,1506,32,1502,1513,1508,1495,1514,1497), H(1512,1508,1493,1488,1497), H(1488,1495,1512)],
+  suspended: [H(1502,1513,1502,1506,1514), H(1488,1495,1512)],
+  left: [H(1500,1488,32,1495,1494,1512,32,1502,1495,1493,1508,1513,1492), H(1506,1494,1489,32,1500,1510,1502,1497,1514,1493,1514), H(1488,1495,1512)]
+};
+
+function getAbsenceReasons() {
+  try { return JSON.parse(localStorage.getItem('ys_absence_reasons') || 'null') || DEFAULT_REASONS; } catch(e) { return DEFAULT_REASONS; }
+}
+function saveAbsenceReasons() {
+  var reasons = {approved:[], suspended:[], left:[]};
+  ['approved','suspended','left'].forEach(function(type) {
+    document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
+      if (inp.value.trim()) reasons[type].push(inp.value.trim());
+    });
+  });
+  localStorage.setItem('ys_absence_reasons', JSON.stringify(reasons));
+  toast(H(1505,1497,1489,1493,1514,32,1492,1505,1497,1489,1493,1514,32,1504,1513,1502,1512,1493));
+}
+function renderAbsenceReasons() {
+  var reasons = getAbsenceReasons();
+  ['approved','suspended','left'].forEach(function(type) {
+    var el = document.getElementById('reasons-'+type);
+    if (!el) return;
+    el.innerHTML = (reasons[type]||[]).map(function(r,i) {
+      return '<div style="display:flex;gap:6px;align-items:center"><input value="'+r+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button></div>';
+    }).join('');
+  });
+}
+function addReason(type) {
+  var el = document.getElementById('reasons-'+type);
+  var div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.innerHTML = '<input placeholder="'+H(1505,1497,1489,1492,32,1495,1491,1513,1492)+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  el.appendChild(div);
+  div.querySelector('input').focus();
+}
+
 function showConstruction() {
   var existing = document.getElementById('construction-modal');
   if (existing) { existing.style.display='flex'; return; }
@@ -883,6 +1020,7 @@ document.getElementById('auth-user').addEventListener('keydown', function(e) {
 // ===== SETTINGS PAGE =====
 // ============================================================
 function renderSettings() {
+  showSettingsHome();
   renderUsersList();
   renderPermsTable();
   // הסתר ניהול משתמשים ממי שאינו admin
