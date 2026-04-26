@@ -1021,12 +1021,12 @@ document.getElementById('auth-user').addEventListener('keydown', function(e) {
 // ============================================================
 function renderSettings() {
   showSettingsHome();
-  renderUsersList();
-  renderPermsTable();
   // הסתר ניהול משתמשים ממי שאינו admin
   var isAdmin = AUTH.user && AUTH.user.role === 'admin';
-  document.getElementById('ss-users').style.display = isAdmin ? '' : 'none';
-  document.getElementById('ss-perms').style.display = isAdmin ? '' : 'none';
+  var su = document.getElementById('ss-users');
+  var sp = document.getElementById('ss-perms');
+  if (su) su.style.display = isAdmin ? '' : 'none';
+  if (sp) sp.style.display = isAdmin ? '' : 'none';
 }
 
 // ---- רשימת משתמשים ----
