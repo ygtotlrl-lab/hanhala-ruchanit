@@ -673,7 +673,20 @@ async function doLogin() {
   AUTH.user = data;
   await loadPerms();
   document.getElementById('auth-screen').classList.add('hidden');
-  document.getElementById('hdr-username').textContent = data.full_name;
+  var hdru = document.getElementById('hdr-username');
+  if (hdru) {
+    hdru.textContent = data.full_name;
+  } else {
+    // fallback - צור element אם לא קיים
+    var htxt = document.querySelector('.htxt');
+    if (htxt) {
+      var sp = document.createElement('span');
+      sp.id = 'hdr-username';
+      sp.style.cssText = 'font-size:.68rem;opacity:.9;font-weight:600;color:#ffd700;margin-top:1px;display:block';
+      sp.textContent = data.full_name;
+      htxt.appendChild(sp);
+    }
+  }
   document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
   initDateFields();
