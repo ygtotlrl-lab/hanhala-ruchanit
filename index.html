@@ -1553,9 +1553,6 @@ function renderStudents(){
   filtered.forEach(function(s,i){
     var st=getStudentStatus(s.id);
     var bg=i%2===0?'#fff':'#f9fafb';
-    if(st.status==='present')bg='#f0fff4';
-    else if(st.status==='approved')bg='#fffaf0';
-    else if(st.status==='absent')bg='#fff5f5';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
     // נוכחות - תצוגה בלבד
     var isPresent = !!s.present;
