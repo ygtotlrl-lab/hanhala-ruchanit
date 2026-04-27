@@ -2055,22 +2055,22 @@ function printStudents() {
 
   var rows_present = present.map(function(s,i){
     return '<tr style="background:'+(i%2===0?'#fff':'#f9fafb')+'">' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(i+1)+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500">'+s.name+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
     '</tr>';
   }).join('');
 
   var rows_absent = absent.map(function(s,i){
     return '<tr style="background:'+(i%2===0?'#fff':'#fff5f5')+'">' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(i+1)+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500">'+s.name+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
     '</tr>';
   }).join('');
 
   var el = document.createElement('div');
-  el.style.cssText = 'font-family:Arial,sans-serif;direction:rtl;padding:20px;color:#1a3a6b;width:700px';
+  el.style.cssText = 'font-family:Arial,Helvetica,sans-serif;direction:rtl;unicode-bidi:embed;padding:20px;color:#1a3a6b;width:700px;word-spacing:normal;letter-spacing:normal';
   el.innerHTML =
     '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px">' +
       '<h1 style="margin:0;font-size:20px">ישיבת תומכי תמימים ראשל״צ</h1>' +
