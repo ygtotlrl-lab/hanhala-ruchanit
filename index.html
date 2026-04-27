@@ -31,7 +31,7 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
 :root{
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
@@ -2053,87 +2053,62 @@ function printStudents() {
   var present = students.filter(function(s){ return !!s.present; });
   var absent = students.filter(function(s){ return !s.present; });
 
-  var doc = new window.jspdf.jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
-  
-  // RTL support
-  doc.setR2L(true);
-  
-  // כותרת
-  doc.setFontSize(18);
-  doc.setFont('helvetica','bold');
-  doc.text('Yeshiva Attendance Report', 105, 20, {align:'center'});
-  
-  doc.setFontSize(12);
-  doc.setFont('helvetica','normal');
-  doc.text('Date: ' + today + '  |  Total: ' + students.length + '  |  Present: ' + present.length + '  |  Absent: ' + absent.length, 105, 30, {align:'center'});
-  
-  var y = 42;
-  
-  // טבלת נוכחים
-  doc.setFontSize(13);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(39, 103, 73);
-  doc.text('Present (' + present.length + ')', 200, y, {align:'right'});
-  y += 6;
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(0,0,0);
-  
-  // header
-  doc.setFillColor(26, 60, 110);
-  doc.setTextColor(255,255,255);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.text('#', 15, y+5);
-  doc.text('Name', 30, y+5);
-  doc.text('Class', 160, y+5);
-  y += 7;
-  
-  doc.setTextColor(0,0,0);
-  present.forEach(function(s, i) {
-    if (y > 270) { doc.addPage(); y = 20; }
-    var bg = i % 2 === 0;
-    if (bg) { doc.setFillColor(249,250,251); doc.rect(10, y, 190, 6, 'F'); }
-    doc.text(String(i+1), 15, y+4.5);
-    doc.text(s.name || '', 30, y+4.5);
-    doc.text(s.cls === 'a' ? 'A' : s.cls === 'b' ? 'B' : 'G', 160, y+4.5);
-    y += 6;
+  var rows_present = present.map(function(s,i){
+    return '<tr style="background:'+(i%2===0?'#fff':'#f9fafb')+'">' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(i+1)+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500">'+s.name+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var rows_absent = absent.map(function(s,i){
+    return '<tr style="background:'+(i%2===0?'#fff':'#fff5f5')+'">' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(i+1)+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500">'+s.name+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+    '</tr>';
+  }).join('');
+
+  var el = document.createElement('div');
+  el.style.cssText = 'font-family:Arial,sans-serif;direction:rtl;padding:20px;color:#1a3a6b;width:700px';
+  el.innerHTML =
+    '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px">' +
+      '<h1 style="margin:0;font-size:20px">ישיבת תומכי תמימים ראשל״צ</h1>' +
+      '<p style="margin:4px 0;color:#555;font-size:13px">דוח נוכחות — '+today+'</p>' +
+      '<p style="margin:0;font-size:13px">סהכ: '+students.length+' | נוכחים: <span style="color:#276749">'+present.length+'</span> | נעדרים: <span style="color:#c53030">'+absent.length+'</span></p>' +
+    '</div>' +
+    '<h2 style="color:#276749;font-size:15px;margin:0 0 8px">✔ נוכחים ('+present.length+')</h2>' +
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">' +
+      '<thead><tr style="background:#1a3a6b;color:#fff">' +
+        '<th style="padding:8px 10px;text-align:right;width:40px">#</th>' +
+        '<th style="padding:8px 10px;text-align:right">שם</th>' +
+        '<th style="padding:8px 10px;text-align:right;width:80px">שיעור</th>' +
+      '</tr></thead>' +
+      '<tbody>'+rows_present+'</tbody>' +
+    '</table>' +
+    '<h2 style="color:#c53030;font-size:15px;margin:0 0 8px">✕ נעדרים ('+absent.length+')</h2>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
+      '<thead><tr style="background:#c53030;color:#fff">' +
+        '<th style="padding:8px 10px;text-align:right;width:40px">#</th>' +
+        '<th style="padding:8px 10px;text-align:right">שם</th>' +
+        '<th style="padding:8px 10px;text-align:right;width:80px">שיעור</th>' +
+      '</tr></thead>' +
+      '<tbody>'+rows_absent+'</tbody>' +
+    '</table>';
+
+  document.body.appendChild(el);
+
+  var opt = {
+    margin: 10,
+    filename: 'נוכחות-' + new Date().toISOString().split('T')[0] + '.pdf',
+    image: {type:'jpeg', quality:0.98},
+    html2canvas: {scale:2, useCORS:true},
+    jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
+  };
+
+  html2pdf().set(opt).from(el).save().then(function(){
+    document.body.removeChild(el);
   });
-  
-  y += 6;
-  if (y > 250) { doc.addPage(); y = 20; }
-  
-  // טבלת נעדרים
-  doc.setFontSize(13);
-  doc.setFont('helvetica','bold');
-  doc.setTextColor(197, 48, 48);
-  doc.text('Absent (' + absent.length + ')', 200, y, {align:'right'});
-  y += 6;
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica','normal');
-  doc.setTextColor(0,0,0);
-  
-  doc.setFillColor(26, 60, 110);
-  doc.setTextColor(255,255,255);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.text('#', 15, y+5);
-  doc.text('Name', 30, y+5);
-  doc.text('Class', 160, y+5);
-  y += 7;
-  
-  doc.setTextColor(0,0,0);
-  absent.forEach(function(s, i) {
-    if (y > 270) { doc.addPage(); y = 20; }
-    var bg = i % 2 === 0;
-    if (bg) { doc.setFillColor(249,250,251); doc.rect(10, y, 190, 6, 'F'); }
-    doc.text(String(i+1), 15, y+4.5);
-    doc.text(s.name || '', 30, y+4.5);
-    doc.text(s.cls === 'a' ? 'A' : s.cls === 'b' ? 'B' : 'G', 160, y+4.5);
-    y += 6;
-  });
-  
-  doc.save('attendance-' + new Date().toISOString().split('T')[0] + '.pdf');
 }
 
 // ============ END STUDENTS MODULE ============
