@@ -290,8 +290,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div class="auth-logo"><img src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
-    <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
-    <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
+    <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
+    <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.doLogin()"></div>
     <button class="auth-btn" onclick="doLogin()">כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
 
@@ -881,9 +881,8 @@ function showPageInternal(pg) {
 var UNDER_CONSTRUCTION = ['attend','sleep','exams','files','reports'];
 
 function showPage(pg) {
-  console.log('showPage called:', pg, 'user:', AUTH.user ? 'yes' : 'no');
   if (pg === 'home') { showPageInternal('home'); return; }
-  if (!AUTH.user) { console.log('no user, returning'); return; }
+  if (!AUTH.user) { return; }
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
   showPageInternal(pg);
@@ -1144,19 +1143,7 @@ function closeDenied() {
   var dm=document.getElementById('denied-modal');dm.classList.add('hidden');dm.classList.remove('on');
 }
 
-// ---- כפתור Enter בשדה סיסמה ----
-// נמתין ל-DOM
-(function waitForDom() {
-  var passEl = document.getElementById('auth-pass');
-  var userEl = document.getElementById('auth-user');
-  if (!passEl || !userEl) { setTimeout(waitForDom, 50); return; }
-  passEl.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') doLogin();
-  });
-  userEl.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('auth-pass').focus();
-  });
-})();
+// Enter handled via onkeydown in HTML
 
 // ============================================================
 // ===== SETTINGS PAGE =====
@@ -1378,19 +1365,21 @@ function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שליש
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
 function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
 
-function loadDash(){
-  SB.from('students').select('*').eq('active',true).then(function(r){
-    students=r.data||[];
-    document.getElementById('s-tot').textContent=students.length;
-    SB.from('attendance').select('*').eq('date',TODAY).then(function(r2){
-      var a=r2.data||[];
-      var p=a.filter(function(x){return x.status==='present'}).length;
-      var ab=a.filter(function(x){return x.status==='absent'}).length;
-      document.getElementById('s-pre').textContent=p;
-      document.getElementById('s-abs').textContent=ab;
-      document.getElementById('s-rate').textContent=(students.length?Math.round(p/students.length*100):0)+'%';
-    });
-  });
+async function loadDash(){
+  // טען נתונים מ-kv (שם נשמרים הנתונים)
+  await ysPullFromCloud();
+  var sts = getStudents();
+  var present = sts.filter(function(s){ return !!s.present; }).length;
+  var absent = sts.length - present;
+  var totEl = document.getElementById('s-tot');
+  var preEl = document.getElementById('s-pre');
+  var absEl = document.getElementById('s-abs');
+  var rateEl = document.getElementById('s-rate');
+  if(totEl) totEl.textContent = sts.length;
+  if(preEl) preEl.textContent = present;
+  if(absEl) absEl.textContent = absent;
+  if(rateEl) rateEl.textContent = (sts.length ? Math.round(present/sts.length*100) : 0)+'%';
+  renderStudents();
 }
 
 function renderSt(list){
