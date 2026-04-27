@@ -577,23 +577,43 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <!-- הגדרות מודולים אחרים (בנייה) -->
     <div id="settings-attend" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>✅ הגדרות סדרים</span></div>
-      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+      <div class="ss" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
+        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
     </div>
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>🌙 הגדרות שינה</span></div>
-      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+      <div class="ss" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
+        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
     </div>
     <div id="settings-exams" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
-      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+      <div class="ss" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
+        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
     </div>
     <div id="settings-files" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📁 הגדרות תיקים</span></div>
-      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+      <div class="ss" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
+        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
     </div>
     <div id="settings-reports" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📊 הגדרות דוחות</span></div>
-      <div class="ss"><p style="color:var(--text2)">בנייה...</p></div>
+      <div class="ss" style="text-align:center;padding:40px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
+        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
+        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
     </div>
 
     <!-- הגדרות מערכת - משתמשים והרשאות -->
@@ -953,11 +973,13 @@ async function toggleUserMenu() {
   if (m.style.display !== 'none') { m.style.display='none'; return; }
   m.style.display = 'block';
   var othersEl = document.getElementById('user-menu-others');
+  if (!othersEl) { m.style.display='block'; return; }
   othersEl.innerHTML = '<div style="padding:8px 16px;font-size:.75rem;color:#aaa">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   var res = await SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name');
   var data = res.data;
   if (!data) { othersEl.innerHTML=''; return; }
-  var others = data.filter(function(u){return String(u.id)!==String(AUTH.user.id);});
+  var currentId = AUTH.user ? String(AUTH.user.id) : '';
+  var others = data.filter(function(u){return String(u.id)!==currentId;});
   if (!others.length) { othersEl.innerHTML=''; return; }
   var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
   othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
@@ -1025,9 +1047,11 @@ document.addEventListener('click', function(e) {
 
 function showSettingsHome() {
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
-    document.getElementById('settings-'+m).style.display = 'none';
+    var el = document.getElementById('settings-'+m);
+    if (el) el.style.display = 'none';
   });
-  document.getElementById('settings-home').style.display = '';
+  var h = document.getElementById('settings-home');
+  if (h) h.style.display = '';
 }
 
 function showSettingsModule(mod) {
@@ -1113,9 +1137,6 @@ document.getElementById('auth-pass').addEventListener('keydown', function(e) {
 });
 document.getElementById('auth-user').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('auth-pass').focus();
-});
-document.getElementById('auth-pass').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') doLogin();
 });
 
 // ============================================================
@@ -1664,7 +1685,7 @@ var editingStudentId=null;
 var currentApprovalId=null;
 var H=String.fromCharCode; // shortcut for Hebrew chars
 
-var DEFAULT_STUDENTS=[
+function getDefaultStudents(){return [
   {id:1,name:H(1488,1493,1495,1504,1492,32,1497,1493,1505,1507),cls:'a'},{id:2,name:H(1488,1493,1495,1504,1492,32,1491,1493,1491),cls:'g'},
   {id:3,name:H(1488,1494,1493,1500,1488,1497,32,1488,1489,1512,1492,1501),cls:'a'},{id:4,name:H(1488,1494,1493,1500,1488,1497,32,1491,1493,1491),cls:'a'},
   {id:5,name:H(1488,1494,1493,1500,1488,1497,32,1497,1506,1511,1489),cls:'g'},{id:6,name:H(1488,1492,1512,1493,1504,1493,1489,32,1513,1504,1497,1488,1493,1512),cls:'g'},
@@ -1703,12 +1724,11 @@ var DEFAULT_STUDENTS=[
   {id:71,name:H(1508,1512,1497,1491,1502,1503,32,1513,1502,1493,1488,1500),cls:'g'},{id:72,name:H(1510,1491,1493,1511,32,1497,1493,1505,1507),cls:'g'},
   {id:73,name:H(1511,1493,1492,1503,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'g'},{id:74,name:H(1513,1500,1493,32,1512,1494),cls:'b'},
   {id:75,name:H(1513,1500,1493,32,1512,1494,32,1489),cls:'g'}
-];
-
+];}
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
 
-function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');return(s&&s.length)?s:DEFAULT_STUDENTS;}catch(e){return DEFAULT_STUDENTS;}}
+function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');return(s&&s.length)?s:getDefaultStudents();}catch(e){return getDefaultStudents();}}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
