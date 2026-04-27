@@ -150,16 +150,18 @@ rm -f yoman-avoda.apk.idsig
 ### סיבה 1: שגיאת JS שמשתקת את כל הכפתורים
 **זו הסיבה הנפוצה ביותר.** אם יש שגיאת JS בטעינה, כל הכפתורים נחסמים.
 
-**איבחון:** פתח DevTools → Console → חפש שגיאה אדומה.
+**איבחון:** הרץ `node --check` על ה-JS לפני כל push (ראה למטה).
 
-**הגורם הנפוץ ביותר לשגיאה:** שימוש ב-`H()` בתוך `var X = {...}` ברמה הגלובלית, כשה-`H` עדיין לא מוגדרת:
+**הגורם הנפוץ ביותר לשגיאה — כלל קריטי:** 
+כל `var X = { ... H(...) ... }` ברמה הגלובלית **קורס** כי `H` מוגדרת בשורה 1571 אבל המשתנה מוגדר לפניה. זה חל על `DEFAULT_STUDENTS`, `DEFAULT_REASONS`, וכל משתנה גלובלי אחר שמשתמש ב-`H()`.
+
 ```javascript
-// שגוי — H לא קיימת עדיין בשורה 960 כשH מוגדרת בשורה 1571
-var DEFAULT_REASONS = { approved: [H(1495,...)] }; // קורס!
+// שגוי — קורס בטעינה
+var DEFAULT_STUDENTS = [{name: H(1488,...)}]; 
 
-// נכון — function נקראת רק בזמן שימוש, H כבר קיימת
-function getDefaultReasons() {
-  return { approved: ['\u05d7\u05d5\u05e4\u05e9\u05d4', ...] };
+// נכון — נקרא רק בזמן שימוש, H כבר קיימת
+function getDefaultStudents() {
+  return [{name: H(1488,...)}];
 }
 ```
 **כלל:** לעולם לא לקרוא ל-`H()` ברמה הגלובלית. תמיד עטוף ב-function.
@@ -186,6 +188,18 @@ function getDefaultReasons() {
 ```
 
 ---
+
+### בדיקת Syntax לפני Push — חובה!
+לפני כל `git push`, הרץ:
+```python
+import re, subprocess
+content = open('/tmp/yeshiva-manager/index.html').read()
+scripts = re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', content, re.DOTALL)
+with open('/tmp/test_syntax.js','w') as f: f.write('\n'.join(scripts))
+r = subprocess.run(['node','--check','/tmp/test_syntax.js'],capture_output=True,text=True)
+print("✅ OK" if r.returncode==0 else "❌ "+r.stderr[:300])
+```
+אם יש שגיאה — **אל תדחוף**. תקן קודם.
 
 ### איבחון מהיר
 1. פתח DevTools → Console — אם יש שגיאה אדומה, טפל בה קודם
