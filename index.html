@@ -328,14 +328,14 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </div>
   </div>
   <nav>
-    <button class="nb on" data-pg="home">🏠 ראשי</button>
-    <button class="nb" data-pg="students">👥 מצבת</button>
-    <button class="nb" data-pg="attend">✅ סדרים</button>
-    <button class="nb" data-pg="sleep">🌙 שינה</button>
-    <button class="nb" data-pg="exams">📝 מבחנים</button>
-    <button class="nb" data-pg="files">📁 תיקים</button>
-    <button class="nb" data-pg="reports">📊 דוחות</button>
-    <button class="nb" data-pg="settings" title="הגדרות">⚙️</button>
+    <button class="nb on" data-pg="home" onclick="window.showPage('home')">🏠 ראשי</button>
+    <button class="nb" data-pg="students" onclick="window.showPage('students')">👥 מצבת</button>
+    <button class="nb" data-pg="attend" onclick="window.showPage('attend')">✅ סדרים</button>
+    <button class="nb" data-pg="sleep" onclick="window.showPage('sleep')">🌙 שינה</button>
+    <button class="nb" data-pg="exams" onclick="window.showPage('exams')">📝 מבחנים</button>
+    <button class="nb" data-pg="files" onclick="window.showPage('files')">📁 תיקים</button>
+    <button class="nb" data-pg="reports" onclick="window.showPage('reports')">📊 דוחות</button>
+    <button class="nb" data-pg="settings" title="הגדרות" onclick="window.showPage('settings')">⚙️</button>
     <button class="nb" onclick="doLogout()" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
@@ -368,19 +368,19 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
-      <button class="mod" data-pg="students" style="--color:#1a3a6b;--icbg:#eef2fa"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
-      <button class="mod" data-pg="attend" style="--color:#1a7a4a;--icbg:#eaf7f0"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
-      <button class="mod" data-pg="sleep" style="--color:#6b3a9a;--icbg:#f3eefa"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
-      <button class="mod" data-pg="exams" style="--color:#a07830;--icbg:#fff8e8"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
-      <button class="mod" data-pg="files" style="--color:#c0392b;--icbg:#fdf0f0"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
-      <button class="mod" data-pg="reports" style="--color:#0a6a8a;--icbg:#e8f5fa"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="mod" data-pg="students" style="--color:#1a3a6b;--icbg:#eef2fa" onclick="window.showPage('students')"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="mod" data-pg="attend" style="--color:#1a7a4a;--icbg:#eaf7f0" onclick="window.showPage('attend')"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
+      <button class="mod" data-pg="sleep" style="--color:#6b3a9a;--icbg:#f3eefa" onclick="window.showPage('sleep')"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
+      <button class="mod" data-pg="exams" style="--color:#a07830;--icbg:#fff8e8" onclick="window.showPage('exams')"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
+      <button class="mod" data-pg="files" style="--color:#c0392b;--icbg:#fdf0f0" onclick="window.showPage('files')"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
+      <button class="mod" data-pg="reports" style="--color:#0a6a8a;--icbg:#e8f5fa" onclick="window.showPage('reports')"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
 
     </div>
   </div>
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
 
 
 <!-- Filter Tabs -->
@@ -505,28 +505,28 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-attend">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>✅ שמירת הסדרים</span><span class="gap"></span><button class="gear" data-gear="attend">⚙️</button><input type="date" id="dp"><button class="btn" id="btn-save-a">💾 שמור</button></div>
+    <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>✅ שמירת הסדרים</span><span class="gap"></span><button class="gear" data-gear="attend">⚙️</button><input type="date" id="dp"><button class="btn" id="btn-save-a">💾 שמור</button></div>
     <div class="ep" id="ep-attend"><h4>⚙️ עריכת כותרות</h4><textarea>שמירת הסדרים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-attend')">סגור</button><button class="btn" onclick="saveEp('attend')">💾 שמור</button></div></div>
     <div id="al"></div>
   </div>
 </div>
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><button class="gear" data-gear="reports">⚙️</button><input type="month" id="rm"><button class="btn" id="btn-rpt">📊 הצג</button></div>
+    <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><button class="gear" data-gear="reports">⚙️</button><input type="month" id="rm"><button class="btn" id="btn-rpt">📊 הצג</button></div>
     <div class="ep" id="ep-reports"><h4>⚙️ עריכת כותרות</h4><textarea>גיליונות חודשיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-reports')">סגור</button><button class="btn" onclick="saveEp('reports')">💾 שמור</button></div></div>
     <div id="rc"></div>
   </div>
 </div>
-<div class="pg" id="pg-sleep"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>🌙 זמן שינה</span><span class="gap"></span><button class="gear" data-gear="sleep">⚙️</button></div><div class="ep" id="ep-sleep"><h4>⚙️ עריכת כותרות</h4><textarea>זמן שינה</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-sleep')">סגור</button><button class="btn" onclick="saveEp('sleep')">💾 שמור</button></div></div><div class="cs"><div class="ci">🌙</div><h3>זמן שינה</h3><p>מודול זה בפיתוח</p></div></div></div>
-<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea>מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
-<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea>תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-sleep"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>🌙 זמן שינה</span><span class="gap"></span><button class="gear" data-gear="sleep">⚙️</button></div><div class="ep" id="ep-sleep"><h4>⚙️ עריכת כותרות</h4><textarea>זמן שינה</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-sleep')">סגור</button><button class="btn" onclick="saveEp('sleep')">💾 שמור</button></div></div><div class="cs"><div class="ci">🌙</div><h3>זמן שינה</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea>מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea>תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <!-- ===== דף הגדרות ===== -->
 <div class="pg" id="pg-settings">
   <div class="inner">
 
     <!-- דף ראשי הגדרות -->
     <div id="settings-home">
-      <div class="ptitle"><button class="back" data-pg="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin-top:8px">
         <button onclick="window.showSettingsModule('students')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">👥</span>
@@ -1471,18 +1471,7 @@ if(_el_dp)_el_dp.addEventListener('change',function(){loadA(this.value)});
 var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
 
 // אתחול - data-pg click handlers
-document.querySelectorAll('[data-pg]').forEach(function(btn){
-  btn.addEventListener('click', function(){
-    var pg = this.getAttribute('data-pg');
-    showPage(pg);
-  });
-});
-document.querySelectorAll('[data-back],.back').forEach(function(btn){
-  btn.addEventListener('click', function(){
-    var pg = this.getAttribute('data-pg') || 'home';
-    showPage(pg);
-  });
-});
+// אין צורך - כל כפתור יש לו onclick ישיר
 
 // dp ו-rm init יקרה אחרי login
 function initDateFields(){
