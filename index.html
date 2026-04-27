@@ -2057,7 +2057,7 @@ function printStudents() {
     return '<tr style="background:'+(i%2===0?'#fff':'#f9fafb')+'">' +
       '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
       '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d0':(s.cls==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d2'))+'</td>' +
     '</tr>';
   }).join('');
 
@@ -2065,17 +2065,17 @@ function printStudents() {
     return '<tr style="background:'+(i%2===0?'#fff':'#fff5f5')+'">' +
       '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
       '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?H(1513,1497,1506,1493,1512,32,1488):(s.cls==='b'?H(1513,1497,1506,1493,1512,32,1489):H(1513,1497,1506,1493,1512,32,1490)))+'</td>' +
+      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d0':(s.cls==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d2'))+'</td>' +
     '</tr>';
   }).join('');
 
   var el = document.createElement('div');
   el.style.cssText = 'font-family:Arial,Helvetica,sans-serif;direction:rtl;unicode-bidi:embed;padding:20px;color:#1a3a6b;width:700px;word-spacing:normal;letter-spacing:normal';
   el.innerHTML =
-    '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px">' +
-      '<h1 style="margin:0;font-size:20px">ישיבת תומכי תמימים ראשל״צ</h1>' +
-      '<p style="margin:4px 0;color:#555;font-size:13px">דוח נוכחות — '+today+'</p>' +
-      '<p style="margin:0;font-size:13px">סהכ: '+students.length+' | נוכחים: <span style="color:#276749">'+present.length+'</span> | נעדרים: <span style="color:#c53030">'+absent.length+'</span></p>' +
+    '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px;direction:rtl">' +
+      '<h1 style="margin:0;font-size:20px;direction:rtl">&#x05d9;&#x05e9;&#x05d9;&#x05d1;&#x05ea;&#x0020;&#x05ea;&#x05d5;&#x05de;&#x05db;&#x05d9;&#x0020;&#x05ea;&#x05de;&#x05d9;&#x05de;&#x05d9;&#x05dd;&#x0020;&#x05e8;&#x05d0;&#x05e9;&#x05dc;&#x05f4;&#x05e6;</h1>' +
+      '<p style="margin:4px 0;color:#555;font-size:13px;direction:rtl">&#x05d3;&#x05d5;&#x05d7;&#x0020;&#x05e0;&#x05d5;&#x05db;&#x05d7;&#x05d5;&#x05ea;&#x0020;&mdash;&#x0020;'+today+'</p>' +
+      '<p style="margin:0;font-size:13px;direction:rtl">&#x05e1;&#x05d4;&#x05db;:&#x0020;'+students.length+'&#x0020;|&#x0020;&#x05e0;&#x05d5;&#x05db;&#x05d7;&#x05d9;&#x05dd;:&#x0020;<span style="color:#276749">'+present.length+'</span>&#x0020;|&#x0020;&#x05e0;&#x05e2;&#x05d3;&#x05e8;&#x05d9;&#x05dd;:&#x0020;<span style="color:#c53030">'+absent.length+'</span></p>' +
     '</div>' +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px">✔ נוכחים ('+present.length+')</h2>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">' +
