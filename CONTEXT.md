@@ -143,6 +143,78 @@ rm -f yoman-avoda.apk.idsig
 
 ## ⚠️ באג כפתורים חסומים — פתרון אולטימטיבי
 
+כפתורים לא מגיבים ללחיצה — זהו הבאג הנפוץ ביותר. **ארבע סיבות אפשריות:**
+
+---
+
+### סיבה 1: שגיאת JS שמשתקת הכל
+בדיקת syntax לפני כל push — **חובה**:
+```python
+import re, subprocess
+content = open('/tmp/yeshiva-manager/index.html').read()
+scripts = re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', content, re.DOTALL)
+with open('/tmp/test_syntax.js','w') as f: f.write('\n'.join(scripts))
+r = subprocess.run(['node','--check','/tmp/test_syntax.js'],capture_output=True,text=True)
+print("✅ OK" if r.returncode==0 else "❌ "+r.stderr[:300])
+```
+
+**גורמי שגיאה נפוצים:**
+- `async \nfunction` — רווח+שורה בין async לfunction (קורס!)
+- `H()` ברמה גלובלית לפני שורה 1571 (קורס!)
+- גרשיים בודדות בתוך onclick: `onclick="f('x')"` (קורס!)
+
+**כלל H():** לעולם לא `var X = [H(...)]` גלובלי. תמיד:
+```javascript
+function getDefaultX() { return [H(...)]; } // נקרא רק בזמן שימוש
+```
+
+---
+
+### סיבה 2: חסר `window.` ב-onclick של HTML סטטי
+```html
+<!-- נכון -->  <button onclick="window.showPage('students')">
+<!-- שגוי -->  <button onclick="showPage('students')">
+```
+
+---
+
+### סיבה 3: `querySelectorAll` גלובלי לפני DOM מוכן
+`querySelectorAll('[data-pg]').forEach(...)` ברמה גלובלית — הכפתורים לא קיימים עדיין!
+
+**הפתרון:** כל כפתור `data-pg` חייב `onclick` ישיר:
+```html
+<button data-pg="students" onclick="window.showPage('students')">
+```
+**לעולם לא** להסתמך על `querySelectorAll` גלובלי.
+
+---
+
+### סיבה 4: `getElementById` גלובלי מחזיר null
+```javascript
+// שגוי — קורס אם האלמנט לא קיים עדיין
+document.getElementById('search-st').addEventListener(...);
+
+// נכון
+var el = document.getElementById('search-st');
+if (el) el.addEventListener(...);
+```
+
+---
+
+### איבחון מהיר
+1. הרץ `node --check` — אם יש שגיאה, תקן קודם
+2. אם syntax תקין — בדוק console בדפדדפן
+3. אם הכל תקין — בדוק שכל data-pg buttons יש להם onclick ישיר
+
+### SW Cache
+ה-SW מוגדר network-only (לא שומר cache). אם יש בעיית cache:
+```javascript
+caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>navigator.serviceWorker.getRegistrations()).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>location.reload(true))
+```
+
+---
+
+
 כפתורים לא מגיבים ללחיצה — זהו הבאג הנפוץ ביותר באפליקציה. **שלוש סיבות אפשריות, כולן קריטיות:**
 
 ---
