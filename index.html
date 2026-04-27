@@ -1145,12 +1145,18 @@ function closeDenied() {
 }
 
 // ---- כפתור Enter בשדה סיסמה ----
-document.getElementById('auth-pass').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') doLogin();
-});
-document.getElementById('auth-user').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter') document.getElementById('auth-pass').focus();
-});
+// נמתין ל-DOM
+(function waitForDom() {
+  var passEl = document.getElementById('auth-pass');
+  var userEl = document.getElementById('auth-user');
+  if (!passEl || !userEl) { setTimeout(waitForDom, 50); return; }
+  passEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+  userEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('auth-pass').focus();
+  });
+})();
 
 // ============================================================
 // ===== SETTINGS PAGE =====
@@ -1468,8 +1474,10 @@ var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.ad
 var _el_btn_cm=document.getElementById('btn-cm');if(_el_btn_cm)_el_btn_cm.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
 var _el_btn_cancel=document.getElementById('btn-cancel');if(_el_btn_cancel)_el_btn_cancel.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
 var _el_btn_save_st=document.getElementById('btn-save-st');if(_el_btn_save_st)_el_btn_save_st.addEventListener('click',function(){saveS()});
-document.getElementById('search-st').addEventListener('input',function(){var q=this.value;renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||'').includes(q)}))});
-document.getElementById('dp').addEventListener('change',function(){loadA(this.value)});
+var _el_search_st=document.getElementById('search-st');
+if(_el_search_st)_el_search_st.addEventListener('input',function(){var q=this.value;renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||'').includes(q)}))});
+var _el_dp=document.getElementById('dp');
+if(_el_dp)_el_dp.addEventListener('change',function(){loadA(this.value)});
 
 var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
 
