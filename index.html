@@ -13,15 +13,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>הנהלה רוחנית</title>
 <script>
-// מחק SW ישן ורשום מחדש
 if('serviceWorker' in navigator){
+  // מחק את כל ה-SW הישנים וה-cache לפני רישום חדש
   navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
+    return Promise.all(regs.map(function(r){ return r.unregister(); }));
+  }).then(function(){
+    return caches.keys();
+  }).then(function(keys){
+    return Promise.all(keys.map(function(k){ return caches.delete(k); }));
+  }).then(function(){
+    navigator.serviceWorker.register('sw.js?v=20260427');
   });
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
-  });
-  navigator.serviceWorker.register('sw.js');
 }
 </script>
 <script>
