@@ -1810,11 +1810,11 @@ function renderStudents(){
     html+='<span style="font-weight:600;font-size:.92rem;flex:1">'+s.name+'</span>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+clsLabel+'</span>';
     html+='</div>';
-    // שורה 2: נוכחות + סטטוס + עריכה עם labels
-    html+='<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:.6rem;color:#aaa">'+H(1504,1493,1499,1495,1493,1514)+'</span>'+presIcon+'</div>';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:.6rem;color:#aaa">'+H(1505,1496,1468,1493,1505)+'</span>'+statusBtn+'</div>';
-    html+='<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:.6rem;color:#aaa">'+H(1508,1512,1496,1497,1501)+'</span><button onclick="window.editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text2)">&#x2630;</button></div>';
+    // שורה 2: נוכחות + סטטוס + עריכה
+    html+='<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end;margin-top:4px">';
+    html+=presIcon;
+    html+=statusBtn;
+    html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="'+H(1508,1512,1496,1497,1500,32,1514,1500,1502,1497,1491)+'">&#x2630;</button>';
     html+='</div>';
     html+='</div>';
   });
@@ -2087,20 +2087,15 @@ function printStudents() {
   html += '</tbody></table>';
   html += '</body></html>';
   
-  // פתח בחלון חדש להדפסה
-  var win = window.open('', '_blank');
-  if (win) {
-    win.document.write(html);
-    win.document.close();
-    setTimeout(function(){ win.print(); }, 500);
-  } else {
-    // fallback - הדפס את הדף הנוכחי עם print CSS
-    var oldBody = document.body.innerHTML;
-    document.body.innerHTML = html;
-    window.print();
-    document.body.innerHTML = oldBody;
-    location.reload();
-  }
+  var blob = new Blob([html], {type: 'text/html'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'נוכחות-' + new Date().toISOString().split('T')[0] + '.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
 }
 
 // ============ END STUDENTS MODULE ============
