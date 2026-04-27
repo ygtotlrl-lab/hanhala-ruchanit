@@ -189,7 +189,19 @@ function getDefaultStudents() {
 
 ---
 
-### בדיקת Syntax לפני Push — חובה!
+### ⚠️ כלל קריטי: לעולם לא getElementById ברמה גלובלית!
+קריאה ל-`document.getElementById(...)` מחוץ לfunction, ברמה גלובלית, **קורסת** אם האלמנט לא קיים עדיין ב-DOM — ועוצרת את **כל ה-JS** שאחריה.
+```javascript
+// שגוי — קורס אם search-st לא קיים עדיין
+document.getElementById('search-st').addEventListener(...);
+
+// נכון — בדוק קיום לפני שימוש
+var el = document.getElementById('search-st');
+if (el) el.addEventListener(...);
+```
+**כלל:** כל `getElementById` ברמה גלובלית חייב להיות מוגן ב-`if (el)`.
+
+
 לפני כל `git push`, הרץ:
 ```python
 import re, subprocess
