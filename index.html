@@ -2075,13 +2075,13 @@ function printStudents() {
     '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding-bottom:12px;margin-bottom:16px">' +
       '<h1 style="margin:0;font-size:20px">ישיבת&nbsp;תומכי&nbsp;תמימים&nbsp;ראשל&quot;צ</h1>' +
       '<p style="margin:4px 0;color:#555;font-size:13px">דוח נוכחות &mdash; '+today+'</p>' +
-      '<p style="margin:0;font-size:13px;direction:ltr;text-align:center">' +
-        '<span>\u05e1\u05d4&quot;\u05db: ' + students.length + '</span>' +
-        '&nbsp;&nbsp;|&nbsp;&nbsp;' +
-        '<span>\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: <span style="color:#276749">' + present.length + '</span></span>' +
-        '&nbsp;&nbsp;|&nbsp;&nbsp;' +
-        '<span>\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: <span style="color:#c53030">' + absent.length + '</span></span>' +
-      '</p>' +
+      '<table style="width:100%;text-align:center;font-size:13px;margin:4px 0"><tr>' +
+        '<td style="padding:0 8px">\u05e1\u05d4&quot;\u05db &nbsp; ' + students.length + '</td>' +
+        '<td style="padding:0 8px;color:#aaa">|</td>' +
+        '<td style="padding:0 8px">\u05e0\u05d5\u05db\u05d7\u05d9\u05dd &nbsp; <span style="color:#276749;font-weight:600">' + present.length + '</span></td>' +
+        '<td style="padding:0 8px;color:#aaa">|</td>' +
+        '<td style="padding:0 8px">\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd &nbsp; <span style="color:#c53030;font-weight:600">' + absent.length + '</span></td>' +
+      '</tr></table>' +
     '</div>' +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">' +
