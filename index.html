@@ -14,7 +14,7 @@
 <title>הנהלה רוחנית</title>
 <script>
 if('serviceWorker' in navigator){
-  // מחק את כל ה-SW הישנים וה-cache לפני רישום חדש
+  // מחק cache ישן ורשום SW חדש עם auto-reload
   navigator.serviceWorker.getRegistrations().then(function(regs){
     return Promise.all(regs.map(function(r){ return r.unregister(); }));
   }).then(function(){
@@ -22,7 +22,19 @@ if('serviceWorker' in navigator){
   }).then(function(keys){
     return Promise.all(keys.map(function(k){ return caches.delete(k); }));
   }).then(function(){
-    navigator.serviceWorker.register('sw.js?v=20260427');
+    navigator.serviceWorker.register('sw.js?v=20260428').then(function(reg){
+      reg.addEventListener('updatefound', function(){
+        var newSW = reg.installing;
+        if(!newSW) return;
+        newSW.addEventListener('statechange', function(){
+          if(newSW.state === 'activated') location.reload();
+        });
+      });
+    });
+  });
+  // אם SW חדש השתלט - רענן
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    location.reload();
   });
 }
 </script>
