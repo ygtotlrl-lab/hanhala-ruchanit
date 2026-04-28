@@ -80,6 +80,14 @@ apksigner sign ... --out /mnt/user-data/outputs/yoman-avoda.apk aligned.apk
 ### כלל זהב
 אם הקובץ שמוצג למשתמש הוא בגודל ישן — **אל תנסה לשנות שם של קובץ קיים, אלא צור output חדש לגמרי עם שם שלא היה בשימוש.**
 
+### פתרון timestamp — מחייב כשכל השמות תפוסים
+אם כל השמות הסבירים תפוסים ב-cache, הוסף timestamp לשם:
+```bash
+TS=$(date +%H%M%S)
+apksigner sign ... --out /mnt/user-data/outputs/yoman-${TS}.apk aligned.apk
+```
+זה מבטיח שם ייחודי שאף פעם לא היה ב-cache.
+
 ---
 
 ## אייקון נכון
