@@ -2150,7 +2150,10 @@ function printStudents() {
       '<tbody>'+rows_absent+'</tbody>' +
     '</table>';
 
-  document.body.appendChild(el);
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'width:100%;display:flex;justify-content:center;direction:ltr';
+  wrapper.appendChild(el);
+  document.body.appendChild(wrapper);
 
   var opt = {
     margin: [5, 0, 10, 0],
@@ -2161,7 +2164,7 @@ function printStudents() {
   };
 
   html2pdf().set(opt).from(el).save().then(function(){
-    document.body.removeChild(el);
+    document.body.removeChild(wrapper);
   });
 }
 
