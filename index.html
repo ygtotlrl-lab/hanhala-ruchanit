@@ -2088,13 +2088,13 @@ function printStudents() {
       '<h1 style="margin:0 0 8px 0;font-size:20px;font-weight:700">ישיבת&nbsp;תומכי&nbsp;תמימים&nbsp;ראשל&quot;צ</h1>' +
       '<p style="margin:4px 0;color:#555;font-size:13px;direction:ltr">'+today+' &mdash; דוח&nbsp;נוכחות</p>' +
       '<div style="height:40px"></div>' +
-    '<table style="margin:0 auto 4px auto;font-size:13px"><tr>' +
-        '<td style="padding:0 8px">\u05e1\u05d4&quot;\u05db &nbsp; <span style="font-weight:600">' + students.length + '</span></td>' +
-        '<td style="padding:0 8px;color:#aaa">|</td>' +
-        '<td style="padding:0 8px">\u05e0\u05d5\u05db\u05d7\u05d9\u05dd &nbsp; <span style="color:#276749;font-weight:600">' + present.length + '</span></td>' +
-        '<td style="padding:0 8px;color:#aaa">|</td>' +
-        '<td style="padding:0 8px">\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd &nbsp; <span style="color:#c53030;font-weight:600">' + absent.length + '</span></td>' +
-      '</tr></table>' +
+    '<p style="text-align:center;font-size:13px;margin:0 0 4px 0">' +
+        'סה&quot;כ: <span style="font-weight:600">' + students.length + '</span>' +
+        '&nbsp;&nbsp;|&nbsp;&nbsp;' +
+        'נוכחים: <span style="color:#276749;font-weight:600">' + present.length + '</span>' +
+        '&nbsp;&nbsp;|&nbsp;&nbsp;' +
+        'נעדרים: <span style="color:#c53030;font-weight:600">' + absent.length + '</span>' +
+      '</p>' +
     '</div>' +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">' +
