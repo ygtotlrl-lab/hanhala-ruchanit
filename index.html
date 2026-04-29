@@ -2089,15 +2089,17 @@ function printStudents() {
       '<p style="margin:4px 0;color:#555;font-size:13px;direction:ltr">'+today+' &mdash; דוח&nbsp;נוכחות</p>' +
     '</div>' +
     '<div style="height:40px"></div>' +
-    '<p style="text-align:center;font-size:13px;margin:0 0 16px 0">' +
-        '<span dir="ltr">' +
-        'סה"כ ' + students.length +
-        '  |  ' +
-        'נוכחים ' + present.length +
-        '  |  ' +
-        'נעדרים ' + absent.length +
-        '</span>' +
-    '</p>' +
+    (function(){
+        var c = document.createElement('canvas');
+        c.width = 700; c.height = 30;
+        var ctx = c.getContext('2d');
+        ctx.font = '13px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1a3a6b';
+        var txt = 'סה"כ: ' + students.length + '   |   נוכחים: ' + present.length + '   |   נעדרים: ' + absent.length;
+        ctx.fillText(txt, 350, 20);
+        return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
+      })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
     '<table style="width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px">' +
       '<thead><tr style="background:#1a3a6b;color:#fff">' +
