@@ -2095,48 +2095,41 @@ function printStudents() {
         var ctx = c.getContext('2d');
         ctx.textAlign = 'left';
         ctx.direction = 'ltr';
-        // צייר מימין לשמאל: נעדרים | נוכחים | סה"כ
-        var x = 530;
-        // נעדרים - מימין
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#c53030';
-        var wAbs = ctx.measureText(String(absent.length)).width;
-        ctx.fillText(String(absent.length), x - wAbs, 20);
-        x -= wAbs + 4;
+        // צייר משמאל לימין בקוד = מימין לשמאל בתצוגה
+        // סה"כ - שמאל (יופיע ימין בתצוגה)
+        var x = 170;
         ctx.font = '13px Arial';
         ctx.fillStyle = '#1a3a6b';
-        var wAbsL = ctx.measureText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ').width;
-        ctx.fillText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', x - wAbsL, 20);
-        x -= wAbsL + 20;
+        ctx.fillText('\u05e1\u05d4"\u05db: ', x, 20);
+        x += ctx.measureText('\u05e1\u05d4"\u05db: ').width;
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(String(students.length), x, 20);
+        x += ctx.measureText(String(students.length)).width + 20;
         // מפריד
+        ctx.font = '13px Arial';
         ctx.fillStyle = '#aaa';
-        var wSep = ctx.measureText('|').width;
-        ctx.fillText('|', x - wSep, 20);
-        x -= wSep + 20;
+        ctx.fillText('|', x, 20);
+        x += ctx.measureText('|').width + 20;
         // נוכחים
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText('\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', x, 20);
+        x += ctx.measureText('\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ').width;
         ctx.font = 'bold 14px Arial';
         ctx.fillStyle = '#276749';
-        var wPres = ctx.measureText(String(present.length)).width;
-        ctx.fillText(String(present.length), x - wPres, 20);
-        x -= wPres + 4;
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        var wPresL = ctx.measureText('\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ').width;
-        ctx.fillText('\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', x - wPresL, 20);
-        x -= wPresL + 20;
+        ctx.fillText(String(present.length), x, 20);
+        x += ctx.measureText(String(present.length)).width + 20;
         // מפריד
-        ctx.fillStyle = '#aaa';
-        ctx.fillText('|', x - wSep, 20);
-        x -= wSep + 20;
-        // סה"כ - משמאל
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        var wTot = ctx.measureText(String(students.length)).width;
-        ctx.fillText(String(students.length), x - wTot, 20);
-        x -= wTot + 4;
         ctx.font = '13px Arial';
-        var wTotL = ctx.measureText('\u05e1\u05d4"\u05db: ').width;
-        ctx.fillText('\u05e1\u05d4"\u05db: ', x - wTotL, 20);
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('|', x, 20);
+        x += ctx.measureText('|').width + 20;
+        // נעדרים - ימין (יופיע שמאל בתצוגה)
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', x, 20);
+        x += ctx.measureText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ').width;
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#c53030';
+        ctx.fillText(String(absent.length), x, 20);
         return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
       })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
