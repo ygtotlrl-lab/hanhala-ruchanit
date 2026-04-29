@@ -2093,34 +2093,33 @@ function printStudents() {
         var c = document.createElement('canvas');
         c.width = 700; c.height = 30;
         var ctx = c.getContext('2d');
+        ctx.textAlign = 'right';
+        // סה"כ - כחול (מימין)
         ctx.font = '13px Arial';
-        ctx.textAlign = 'center';
         ctx.fillStyle = '#1a3a6b';
-        // נעדרים - אדום (ראשון בקוד = ימין בתצוגה RTL)
-        ctx.fillStyle = '#1a3a6b';
-        ctx.fillText('נעדרים: ', 210, 20);
-        ctx.font = 'bold 13px Arial';
-        ctx.fillStyle = '#c53030';
-        ctx.fillText(absent.length, 265, 20);
+        ctx.fillText('סה"כ: ', 230, 20);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(String(students.length), 265, 20);
         // מפריד
         ctx.font = '13px Arial';
         ctx.fillStyle = '#aaa';
-        ctx.fillText('|', 295, 20);
+        ctx.fillText(' | ', 310, 20);
         // נוכחים - ירוק
         ctx.fillStyle = '#1a3a6b';
-        ctx.fillText('נוכחים: ', 325, 20);
-        ctx.font = 'bold 13px Arial';
+        ctx.fillText('נוכחים: ', 380, 20);
+        ctx.font = 'bold 14px Arial';
         ctx.fillStyle = '#276749';
-        ctx.fillText(present.length, 375, 20);
+        ctx.fillText(String(present.length), 415, 20);
         // מפריד
         ctx.font = '13px Arial';
         ctx.fillStyle = '#aaa';
-        ctx.fillText('|', 405, 20);
-        // סה"כ - כחול (אחרון בקוד = שמאל בתצוגה RTL)
+        ctx.fillText(' | ', 455, 20);
+        // נעדרים - אדום
         ctx.fillStyle = '#1a3a6b';
-        ctx.fillText('סה"כ: ', 435, 20);
-        ctx.font = 'bold 13px Arial';
-        ctx.fillText(students.length, 480, 20);
+        ctx.fillText('נעדרים: ', 530, 20);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#c53030';
+        ctx.fillText(String(absent.length), 570, 20);
         return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
       })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
