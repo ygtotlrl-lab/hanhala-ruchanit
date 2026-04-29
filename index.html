@@ -2108,20 +2108,7 @@ function printStudents() {
         ctx.fillStyle = '#aaa';
         ctx.fillText('|', x, 20);
         x += ctx.measureText('|').width + 20;
-        // נוכחים
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#276749';
-        ctx.fillText(String(present.length), x, 20);
-        x += ctx.measureText(String(present.length)).width + 2;
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        ctx.fillText(' :\u05e0\u05d5\u05db\u05d7\u05d9\u05dd', x, 20);
-        x += ctx.measureText(' :\u05e0\u05d5\u05db\u05d7\u05d9\u05dd').width + 20;
-        // מפריד
-        ctx.fillStyle = '#aaa';
-        ctx.fillText('|', x, 20);
-        x += ctx.measureText('|').width + 20;
-        // נעדרים אחרון (יופיע שמאל)
+        // נעדרים
         ctx.font = 'bold 14px Arial';
         ctx.fillStyle = '#c53030';
         ctx.fillText(String(absent.length), x, 20);
@@ -2129,6 +2116,19 @@ function printStudents() {
         ctx.font = '13px Arial';
         ctx.fillStyle = '#1a3a6b';
         ctx.fillText(' :\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd', x, 20);
+        x += ctx.measureText(' :\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd').width + 20;
+        // מפריד
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('|', x, 20);
+        x += ctx.measureText('|').width + 20;
+        // נוכחים אחרון (יופיע שמאל)
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#276749';
+        ctx.fillText(String(present.length), x, 20);
+        x += ctx.measureText(String(present.length)).width + 2;
+        ctx.font = '13px Arial';
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText(' :\u05e0\u05d5\u05db\u05d7\u05d9\u05dd', x, 20);
         return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
       })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
