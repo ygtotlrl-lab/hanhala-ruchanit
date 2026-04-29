@@ -2097,16 +2097,17 @@ function printStudents() {
         ctx.direction = 'ltr';
         // צייר מימין לשמאל: נעדרים | נוכחים | סה"כ
         var x = 530;
-        // סה"כ - משמאל
+        // נעדרים - מימין
         ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        var wTot = ctx.measureText(String(students.length)).width;
-        ctx.fillText(String(students.length), x - wTot, 20);
-        x -= wTot + 4;
+        ctx.fillStyle = '#c53030';
+        var wAbs = ctx.measureText(String(absent.length)).width;
+        ctx.fillText(String(absent.length), x - wAbs, 20);
+        x -= wAbs + 4;
         ctx.font = '13px Arial';
-        var wTotL = ctx.measureText('\u05e1\u05d4"\u05db: ').width;
-        ctx.fillText('\u05e1\u05d4"\u05db: ', x - wTotL, 20);
-        x -= wTotL + 20;
+        ctx.fillStyle = '#1a3a6b';
+        var wAbsL = ctx.measureText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ').width;
+        ctx.fillText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', x - wAbsL, 20);
+        x -= wAbsL + 20;
         // מפריד
         ctx.fillStyle = '#aaa';
         var wSep = ctx.measureText('|').width;
@@ -2127,16 +2128,15 @@ function printStudents() {
         ctx.fillStyle = '#aaa';
         ctx.fillText('|', x - wSep, 20);
         x -= wSep + 20;
-        // נעדרים - מימין
+        // סה"כ - משמאל
         ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#c53030';
-        var wAbs = ctx.measureText(String(absent.length)).width;
-        ctx.fillText(String(absent.length), x - wAbs, 20);
-        x -= wAbs + 4;
-        ctx.font = '13px Arial';
         ctx.fillStyle = '#1a3a6b';
-        var wAbsL = ctx.measureText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ').width;
-        ctx.fillText('\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', x - wAbsL, 20);
+        var wTot = ctx.measureText(String(students.length)).width;
+        ctx.fillText(String(students.length), x - wTot, 20);
+        x -= wTot + 4;
+        ctx.font = '13px Arial';
+        var wTotL = ctx.measureText('\u05e1\u05d4"\u05db: ').width;
+        ctx.fillText('\u05e1\u05d4"\u05db: ', x - wTotL, 20);
         return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
       })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
