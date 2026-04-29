@@ -2096,8 +2096,31 @@ function printStudents() {
         ctx.font = '13px Arial';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#1a3a6b';
-        var txt = 'סה"כ: ' + students.length + '   |   נוכחים: ' + present.length + '   |   נעדרים: ' + absent.length;
-        ctx.fillText(txt, 350, 20);
+        // סה"כ - כחול
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText('סה"כ: ', 230, 20);
+        ctx.font = 'bold 13px Arial';
+        ctx.fillText(students.length, 265, 20);
+        // מפריד
+        ctx.font = '13px Arial';
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('|', 295, 20);
+        // נוכחים - ירוק
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText('נוכחים: ', 325, 20);
+        ctx.font = 'bold 13px Arial';
+        ctx.fillStyle = '#276749';
+        ctx.fillText(present.length, 375, 20);
+        // מפריד
+        ctx.font = '13px Arial';
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('|', 405, 20);
+        // נעדרים - אדום
+        ctx.fillStyle = '#1a3a6b';
+        ctx.fillText('נעדרים: ', 435, 20);
+        ctx.font = 'bold 13px Arial';
+        ctx.fillStyle = '#c53030';
+        ctx.fillText(absent.length, 490, 20);
         return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
       })() +
     '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
