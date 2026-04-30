@@ -1,386 +1,99 @@
-# CONTEXT — פיתוח אפליקציות ישיבה
+# הנהלה רוחנית — קונטקסט פיתוח
 
-> קובץ זה נטען בתחילת כל שיחה חדשה.  
-> לאחר כל שיחה — לבקש מהעוזר לעדכן ולדחוף.
-
----
-
-## סביבה כללית
-- פיתוח PWA + APK לניהול ישיבה
-- עריכה ישירה על קבצים בלינוקס → git push → GitHub Pages
-- יש גישה מלאה ללינוקס
-- תוסף Claude in Chrome מותקן ועובד (לניהול דפדפן ו-Supabase)
+## פרטי ריפו
+- **ריפו:** `ygtotlrl-lab/hanhala-ruchanit` (שונה מ-`yeshiva-manager`)
+- **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
+- **טוקן:** TOKEN_IN_MEMORY
+- **קובץ ראשי:** `index.html`
 
 ---
 
-## Supabase — משותף לשתי האפליקציות
+## APK — שיטה עובדת
 
-| פרט | ערך |
-|-----|-----|
-| Project name | ygtotlrl-apps (שונה מ-yoman-avoda באפריל 2026) |
-| Project ID | kxbtskqobynewvnckaaz |
-| URL | https://kxbtskqobynewvnckaaz.supabase.co |
-| Anon Key | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg |
-| Region | AWS ap-southeast-2 |
+### Keystore
+- `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
 
-**טבלאות:**
-- `kv` — שמירת נתוני שתי האפליקציות | RLS מופעל ✅ | policy: allow_all
-- `ys_users` — משתמשי הנהלה רוחנית | RLS מופעל ✅ | policy: allow_all
-- prefix יומן עבודה: `tb_data`, `tb_last_changed`
-- prefix הנהלה רוחנית: `ys_students`, `ys_attend`, `ys_approvals`, `ys_reasons`, `ys_last_changed`, `ys_perms`
-
----
-
-## אפליקציה 1 — יומן עבודה
-
-| פרט | ערך |
-|-----|-----|
-| Repo | https://github.com/ygtotlrl-lab/yoman-avoda |
-| Token | ← שאל את המשתמש בתחילת שיחה |
-| Pages | https://ygtotlrl-lab.github.io/yoman-avoda/ |
-| קובץ | `/tmp/yoman-avoda/index.html` (שונה מ-"יומן עבודה.html" באפריל 2026) |
-| SW cache | yoman-avoda-v3 |
-
-**עיצוב Header:**
-- רקע כחול gradient עם border-radius:20px
-- שמאל: עמודה flex — לוגו → כפתור סנכרן → מספר גרסה
-- מרכז: ב"ה | ימות המשיח → כותרת → שם ישיבה → "יחי אדוננו..." (font-weight:800)
-- טאבים עגולים: הזנה / יומן / עריכה / ארכיון
-
-**APK שם קובץ:** `yoman-avoda.apk` (ללא עברית — שמות עברית לא עובדים ב-Android)
-**keystore:** `/tmp/yoman.keystore` | alias=yoman | storepass/keypass=yoman123
-**manifest name:** יומן עבודה (תוקן — היה "טאג בוך - יומן עבודה")
-
-**כפתורים מוסתרים במובייל (≤800px):** class `hide-mobile`
-
-**Enter handlers:**
-- `taskInput`, `subInput`, `countInput`, `notesInput` → addEntry()
-- `snewtask-ci` → addTask(ci) ✅ (נוסף אפריל 2026)
-- `snewsub-ci-ti` → addSub(ci, ti)
-
-**git push:**
-```
-git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
-```
-
----
-
-## אפליקציה 2 — הנהלה רוחנית
-
-| פרט | ערך |
-|-----|-----|
-| Repo | https://github.com/ygtotlrl-lab/yeshiva-manager |
-| Token | ← שאל את המשתמש בתחילת שיחה |
-| Pages | https://ygtotlrl-lab.github.io/yeshiva-manager/ |
-| קובץ | `/tmp/yeshiva-manager/index.html` |
-| APK | https://github.com/ygtotlrl-lab/yeshiva-manager/raw/main/yeshiva-manager.apk |
-| SW cache | yeshiva-v21 |
-
-**עיצוב:**
-- דסקטופ (≥1100px): 3 עמודות, nav עליון, ללא bottom-nav
-- מובייל (≤800px): עמודה אחת, nav גלילה אופקית, padding:14px
-- APK: URL מכיל ?apk=1 | WideViewPort=false | LoadWithOverviewMode=false
-
-**מודולים:** מצבת תלמידים | שמירת סדרים | זמן שינה | מבחנים | תיקים אישיים | גיליונות חודשיים
-
-**מערכת Auth (נוספה אפריל 2026):**
-- מסך כניסה: שם משתמש + סיסמה 6 ספרות
-- 3 תפקידים: admin / senior / junior
-- נעילה אוטומטית: 5 דקות + אזהרה דקה לפני
-- פאנל ניהול: ⚙️ → ניהול משתמשים + טבלת הרשאות + שינוי סיסמה
-- simpleHash() — hash פשוט לסיסמאות
-- משתמש ראשוני: admin / 123456
-
-**ys_users שדות:** id, username, password_hash, full_name, role(admin/senior/junior), active
-**ys_perms:** מפתח ב-kv | הרשאות לפי תפקיד לכל מודול
-
-**⚠️ Supabase CDN:** חובה `<script src="..." >` סינכרוני — אסור async/fallback! אחרת `supabase is not defined` בשורת `var SB=supabase.createClient`
-
-**⚠️ Auth הנהלה רוחנית:** password_hash מושווה כ-plaintext (123456). simpleHash() קיים בקוד אבל DB מכיל plaintext.
-
-**keystore:** `/tmp/yeshiva_new.keystore` | alias=yeshiva | storepass/keypass=yeshiva123
-**cert SHA-256:** 71c5e63b616ebb50e3bf0d40ea17437861ed932a9b21ccfc96515f1aa0c067ac
-⚠️ keystore חדש מאפריל 2026 — כל מכשיר צריך הסרה מלאה + התקנה מחדש
-
-**git push:**
-```
-git push https://TOKEN@github.com/ygtotlrl-lab/yeshiva-manager.git main
-```
-
----
-
-## ⚠️ שיטת בניית APK — יומן עבודה
-
-**שיטה: apktool + zipalign + apksigner (עובד ✅)**
+### תהליך
 ```bash
-# 1. פרק
-apktool d /tmp/yoman-avoda/yoman-avoda.apk -o /tmp/yw_work -f
+# 1. פרוק
+apktool d hanhala-ruchanit.apk -o /tmp/hanhala_work -f
 
-# 2. תקן URL (חשוב! הקובץ הוא index.html ולא יומן עבודה.html)
-# ב-MainActivity.smali + MainActivity$2.smali:
-# החלף: yoman-avoda/%D7%99%D7%95%D7%9E%D7%9F%20%D7%A2%D7%91%D7%95%D7%93%D7%94.html
-# ל:    yoman-avoda/index.html
+# 2. תקן URLs ב-smali (לא binary!)
+# קבצים: MainActivity.smali, MainActivity$2.smali
+old = 'https://ygtotlrl-lab.github.io/yeshiva-manager/'
+new = 'https://ygtotlrl-lab.github.io/hanhala-ruchanit/'
 
-# 3. החלף אייקונים — מהריפו icon-512.png לכל הגדלים:
-# res/mipmap-hdpi-v4: 72px | xhdpi: 96px | xxhdpi: 144px | xxxhdpi: 192px
-# assets/icons/: icon-192, icon-512, apple-touch-icon, favicon-32, favicon-16
-# ⚠️ חשוב: החלף גם build/apk/res/ אם קיים!
+# 3. החלף אייקון - הקובץ הנכון: גרין_מיט_ווייסן_הינטערגרונט.png
+# res/mipmap-*/ic_launcher.png + assets/icons/*.png
 
-# 4. בנה + חתום
-apktool b /tmp/yw_work -o /tmp/yw_built.apk
-zipalign -f 4 /tmp/yw_built.apk /tmp/yw_aligned.apk
-apksigner sign --ks /tmp/yoman.keystore --ks-key-alias yoman \
-  --ks-pass pass:yoman123 --key-pass pass:yoman123 \
-  --out yoman-avoda.apk /tmp/yw_aligned.apk
-rm -f yoman-avoda.apk.idsig
-```
+# 4. מחק build לפני בנייה!
+rm -rf /tmp/hanhala_work/build
 
-**⚠️ אייקון יומן עבודה:** לוגו ירוק של הישיבה על רקע לבן (icon-512.png מהריפו).
-אין להשתמש באייקון הישן — הוא כחול עם מסגרת ירוקה.
-אם יש תיקיית `build/` ב-yw_work — להחליף גם שם!
-
----
-
-## ⚠️ באג כפתורים חסומים — פתרון אולטימטיבי
-
-כפתורים לא מגיבים ללחיצה — זהו הבאג הנפוץ ביותר. **ארבע סיבות אפשריות:**
-
----
-
-### סיבה 1: שגיאת JS שמשתקת הכל
-בדיקת syntax לפני כל push — **חובה**:
-```python
-import re, subprocess
-content = open('/tmp/yeshiva-manager/index.html').read()
-scripts = re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', content, re.DOTALL)
-with open('/tmp/test_syntax.js','w') as f: f.write('\n'.join(scripts))
-r = subprocess.run(['node','--check','/tmp/test_syntax.js'],capture_output=True,text=True)
-print("✅ OK" if r.returncode==0 else "❌ "+r.stderr[:300])
-```
-
-**גורמי שגיאה נפוצים:**
-- `async \nfunction` — רווח+שורה בין async לfunction (קורס!)
-- `H()` ברמה גלובלית לפני שורה 1571 (קורס!)
-- גרשיים בודדות בתוך onclick: `onclick="f('x')"` (קורס!)
-
-**כלל H():** לעולם לא `var X = [H(...)]` גלובלי. תמיד:
-```javascript
-function getDefaultX() { return [H(...)]; } // נקרא רק בזמן שימוש
-```
-
----
-
-### סיבה 2: חסר `window.` ב-onclick של HTML סטטי
-```html
-<!-- נכון -->  <button onclick="window.showPage('students')">
-<!-- שגוי -->  <button onclick="showPage('students')">
-```
-
----
-
-### סיבה 3: `querySelectorAll` גלובלי לפני DOM מוכן
-`querySelectorAll('[data-pg]').forEach(...)` ברמה גלובלית — הכפתורים לא קיימים עדיין!
-
-**הפתרון:** כל כפתור `data-pg` חייב `onclick` ישיר:
-```html
-<button data-pg="students" onclick="window.showPage('students')">
-```
-**לעולם לא** להסתמך על `querySelectorAll` גלובלי.
-
----
-
-### סיבה 4: `getElementById` גלובלי מחזיר null
-```javascript
-// שגוי — קורס אם האלמנט לא קיים עדיין
-document.getElementById('search-st').addEventListener(...);
-
-// נכון
-var el = document.getElementById('search-st');
-if (el) el.addEventListener(...);
-```
-
----
-
-### איבחון מהיר
-1. הרץ `node --check` — אם יש שגיאה, תקן קודם
-2. אם syntax תקין — בדוק console בדפדדפן
-3. אם הכל תקין — בדוק שכל data-pg buttons יש להם onclick ישיר
-
-### SW Cache
-ה-SW מוגדר network-only (לא שומר cache). אם יש בעיית cache:
-```javascript
-caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>navigator.serviceWorker.getRegistrations()).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>location.reload(true))
-```
-
----
-
-
-כפתורים לא מגיבים ללחיצה — זהו הבאג הנפוץ ביותר באפליקציה. **שלוש סיבות אפשריות, כולן קריטיות:**
-
----
-
-### סיבה 1: שגיאת JS שמשתקת את כל הכפתורים
-**זו הסיבה הנפוצה ביותר.** אם יש שגיאת JS בטעינה, כל הכפתורים נחסמים.
-
-**איבחון:** הרץ `node --check` על ה-JS לפני כל push (ראה למטה).
-
-**הגורם הנפוץ ביותר לשגיאה — כלל קריטי:** 
-כל `var X = { ... H(...) ... }` ברמה הגלובלית **קורס** כי `H` מוגדרת בשורה 1571 אבל המשתנה מוגדר לפניה. זה חל על `DEFAULT_STUDENTS`, `DEFAULT_REASONS`, וכל משתנה גלובלי אחר שמשתמש ב-`H()`.
-
-```javascript
-// שגוי — קורס בטעינה
-var DEFAULT_STUDENTS = [{name: H(1488,...)}]; 
-
-// נכון — נקרא רק בזמן שימוש, H כבר קיימת
-function getDefaultStudents() {
-  return [{name: H(1488,...)}];
-}
-```
-**כלל:** לעולם לא לקרוא ל-`H()` ברמה הגלובלית. תמיד עטוף ב-function.
-
----
-
-### סיבה 2: חסר `window.` ב-onclick של HTML סטטי
-כל `onclick` בHTML סטטי (לא נוצר ב-JS) חייב להשתמש ב-`window.`:
-```html
-<!-- נכון -->
-<button onclick="window.showSettingsModule('students')">...</button>
-<!-- שגוי — הפונקציה לא מוכרת בזמן הלחיצה -->
-<button onclick="showSettingsModule('students')">...</button>
-```
-
----
-
-### סיבה 3: event listeners שרצים לפני שה-DOM מוכן
-`querySelectorAll('[data-pg]')` שרץ לפני שכפתורי bottom-nav נוצרו בDOM — הכפתורים לא מקבלים listeners.
-
-**פתרון:** כפתורי bottom-nav חייבים `onclick` ישיר עם `window.`:
-```html
-<button class="bn" onclick="window.showPage('students');...">
-```
-
----
-
-### ⚠️ כלל קריטי: לעולם לא getElementById ברמה גלובלית!
-קריאה ל-`document.getElementById(...)` מחוץ לfunction, ברמה גלובלית, **קורסת** אם האלמנט לא קיים עדיין ב-DOM — ועוצרת את **כל ה-JS** שאחריה.
-```javascript
-// שגוי — קורס אם search-st לא קיים עדיין
-document.getElementById('search-st').addEventListener(...);
-
-// נכון — בדוק קיום לפני שימוש
-var el = document.getElementById('search-st');
-if (el) el.addEventListener(...);
-```
-**כלל:** כל `getElementById` ברמה גלובלית חייב להיות מוגן ב-`if (el)`.
-
-
-לפני כל `git push`, הרץ:
-```python
-import re, subprocess
-content = open('/tmp/yeshiva-manager/index.html').read()
-scripts = re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', content, re.DOTALL)
-with open('/tmp/test_syntax.js','w') as f: f.write('\n'.join(scripts))
-r = subprocess.run(['node','--check','/tmp/test_syntax.js'],capture_output=True,text=True)
-print("✅ OK" if r.returncode==0 else "❌ "+r.stderr[:300])
-```
-אם יש שגיאה — **אל תדחוף**. תקן קודם.
-
-### איבחון מהיר
-1. פתח DevTools → Console — אם יש שגיאה אדומה, טפל בה קודם
-2. הרץ: `typeof window.FUNCTION_NAME` — אם `undefined`, הפונקציה לא הוגדרה
-3. אם הכל נראה תקין אבל עדיין לא עובד — בעיית SW cache (ראה למטה)
-
-### SW Cache
-מעכשיו ה-SW הוא **network-only** (ללא cache). אם עדיין יש בעיה, הרץ בconsole:
-```javascript
-caches.keys().then(k=>Promise.all(k.map(c=>caches.delete(c)))).then(()=>navigator.serviceWorker.getRegistrations()).then(r=>Promise.all(r.map(x=>x.unregister()))).then(()=>location.reload(true))
-```
-
----
-
-**הדרך שעובדת (zipfile — ללא data descriptor flag):**
-```python
-import zipfile, io
-out = io.BytesIO()
-with zipfile.ZipFile(src, 'r') as zin, zipfile.ZipFile(out, 'w', compression=zipfile.ZIP_STORED) as zout:
-    for item in zin.infolist():
-        if item.filename.startswith('META-INF/'): continue
-        # החלף קבצים רלוונטיים
-        ni = zipfile.ZipInfo(item.filename)
-        ni.compress_type = zipfile.ZIP_STORED  # לא מכווצים: resources.arsc, PNG
-        # או ZIP_DEFLATED: AndroidManifest.xml, classes.dex, html, js, json
-        zout.writestr(ni, data, compress_type=compress)
-```
-⚠️ **אסור data descriptor flag (0x808)** — גורם לשגיאת "ניתוח חבילה"
-⚠️ **שינוי strings ב-resources.arsc / AndroidManifest.xml** — חייב 4-byte alignment ב-StringPool
-⚠️ מחק `/tmp/ys_smali/original/` לפני apktool build
-
-**smali:** `/tmp/ys_smali/smali/com/yeshiva/manager/MainActivity.smali`
-- setUseWideViewPort(v3=false) | setLoadWithOverviewMode(v3=false)
-
-**zipalign + sign:**
-```bash
-zipalign -f 4 input.apk aligned.apk
-apksigner sign --ks /tmp/yeshiva_new.keystore --ks-key-alias yeshiva \
+# 5. בנה וחתום
+apktool b /tmp/hanhala_work -o built.apk
+zipalign -f 4 built.apk aligned.apk
+apksigner sign --ks /tmp/yeshiva.keystore --ks-key-alias yeshiva \
   --ks-pass pass:yeshiva123 --key-pass pass:yeshiva123 \
-  --out final.apk aligned.apk
-rm -f final.apk.idsig
+  --out output.apk aligned.apk
 ```
 
----
-
-## כלי בנייה
-| כלי | נתיב |
-|-----|------|
-| apktool | /usr/bin/apktool |
-| zipalign | /usr/bin/zipalign |
-| apksigner | /usr/bin/apksigner |
-| jarsigner | /usr/bin/jarsigner |
-| java | OpenJDK 21 |
-| pip | תמיד עם --break-system-packages |
-
----
-
-## מכשירים
-| מכשיר | רוחב | סוג |
-|--------|-------|-----|
-| Samsung Galaxy A9 (טאבלט) | 768px | דסקטופ |
-| Samsung Galaxy F22Pro | 720px | מובייל |
-| Qin (סיני) | ~720px | מובייל |
-
----
-
-## כללים קריטיים
-1. **אסור עברית ישירה ב-JS strings** — חובה `String.fromCharCode()` או `H()`
-2. אחרי apksigner — תמיד למחוק `.idsig`
-3. לעדכן SW cache version בכל שינוי גדול
-4. PDF עברי — pdfplumber לחילוץ, pypdf לפיצול
-5. breakpoint מובייל: ≤800px
-6. `git config user.email "dev@yeshiva.com" / user.name "Dev"`
-7. **APK בנייה — zipfile בלבד, ללא data descriptor (0x808)**
-8. `<title>` חייב לפני כל `<script>` ב-HTML
-
----
-
-## workflow רגיל
-
-**הנהלה רוחנית:**
+### ⚠️ Cache APK
+Claude.ai שומר cache לפי שם קובץ. אם גודל לא תואם — השתמש בשם חדש:
 ```bash
-cd /tmp/yeshiva-manager
-# ערוך index.html + עדכן SW cache אם שינוי גדול
-git add . && git commit -m "תיאור" && \
-git push https://TOKEN_YESHIVA@github.com/ygtotlrl-lab/yeshiva-manager.git main
-```
-
-**יומן עבודה:**
-```bash
-cd /tmp/yoman-avoda
-# ערוך index.html
-git add . && git commit -m "תיאור" && \
-git push https://TOKEN_YOMAN@github.com/ygtotlrl-lab/yoman-avoda.git main
+TS=$(date +%s) && apksigner sign ... --out /mnt/user-data/outputs/hanhala-${TS}.apk
 ```
 
 ---
 
-## הוראה לעוזר בתחילת שיחה
-קרא קובץ זה, אמת שהבנת, ושאל אם משהו לא ברור לפני שמתחילים.
+## כללים קריטיים לפיתוח
+
+1. **node --check לפני כל push** — חובה מוחלטת
+2. **`async\nfunction`** — אסור רווח בין async לfunction
+3. **`H()` גלובלי** — אסור `var X = [H(...)]` גלובלי
+4. **`onclick` בHTML** — חובה `window.functionName()`
+5. **גרשיים בתוך onclick** — השתמש ב-`onclick="f(\"x\")"` 
+
+```python
+import re, subprocess
+content = open('/tmp/yeshiva-manager/index.html').read()
+scripts = re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', content, re.DOTALL)
+with open('/tmp/test_syntax.js','w') as f: f.write('\n'.join(scripts))
+r = subprocess.run(['node','--check','/tmp/test_syntax.js'],capture_output=True,text=True)
+print("✅ OK" if r.returncode==0 else "❌ "+r.stderr[:300])
+```
+
+---
+
+## מודול PDF נוכחות
+
+### ספרייה
+**pdfmake** (הוחלפה מ-html2pdf בגלל בעיות מירכוז RTL)
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+```
+
+### מבנה PDF
+- כותרת: ישיבת תומכי תמימים ראשל"צ
+- תאריך: `DD.M.YYYY — דוח נוכחות` (direction:ltr)
+- קו מפריד כחול
+- שורת סיכום: `סה"כ: X | נוכחים: Y | נעדרים: Z` (canvas image)
+- טבלת נוכחים (כחול) + טבלת נעדרים (אדום)
+
+### שורת סיכום — canvas
+נצוייר כתמונה כדי לעקוף בעיות RTL. סדר ציור: סה"כ → נעדרים → נוכחים (html2pdf הופך).
+עם pdfmake — columns ישירות, אין צורך בcanvas.
+
+---
+
+## מצב נוכחי
+- מודול מצבת תלמידים ✅ (75 תלמידים, 3 שיעורות א/ב/ג)
+- PDF נוכחות ✅ (pdfmake)
+- הגדרות ✅
+- PWA auto-reload ✅
+- APK מעודכן ✅
+
+## פרטי מערכת
+- localStorage: `ys_students`, `ys_admin`
+- סיסמת admin: `yeshiva2024`
+- לוגו: `logo.jpg` בריפו עם `border-radius:14px`
