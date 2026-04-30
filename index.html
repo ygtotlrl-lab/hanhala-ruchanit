@@ -2168,7 +2168,7 @@ function printStudents() {
       windowWidth: el.scrollWidth,
       x: rect.left
     },
-    jsPDF: {unit:'px', format:'a4'}
+    jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
   };
 
   html2pdf().set(opt).from(el).save().then(function(){
