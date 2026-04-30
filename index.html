@@ -2155,19 +2155,11 @@ function printStudents() {
   wrapper.appendChild(el);
   document.body.appendChild(wrapper);
 
-  var rect = el.getBoundingClientRect();
   var opt = {
     margin: [5, 14, 10, 14],
     filename: 'נוכחות-' + new Date().toISOString().split('T')[0] + '.pdf',
     image: {type:'jpeg', quality:0.98},
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      scrollX: 0,
-      scrollY: -window.scrollY,
-      windowWidth: el.scrollWidth,
-      x: rect.left
-    },
+    html2canvas: {scale:2, useCORS:true},
     jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
   };
 
