@@ -2155,24 +2155,24 @@ function printStudents() {
   wrapper.appendChild(el);
   document.body.appendChild(wrapper);
 
-  // נעל את body זמנית ל-794px
-  var origBodyStyle = document.body.style.cssText;
-  var origHtmlStyle = document.documentElement.style.cssText;
-  document.body.style.cssText = 'width:794px!important;margin:0!important;padding:0!important;overflow:hidden!important';
-  document.documentElement.style.cssText = 'width:794px!important;margin:0!important;padding:0!important;overflow:hidden!important';
-
+  var rect = el.getBoundingClientRect();
   var opt = {
-    margin: [5, 0, 10, 0],
+    margin: [5, 14, 10, 14],
     filename: 'נוכחות-' + new Date().toISOString().split('T')[0] + '.pdf',
     image: {type:'jpeg', quality:0.98},
-    html2canvas: {scale:2, useCORS:true, width:794, windowWidth:794, scrollX:0, scrollY:0},
-    jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+      windowWidth: el.scrollWidth,
+      x: rect.left
+    },
+    jsPDF: {unit:'px', format:'a4'}
   };
 
   html2pdf().set(opt).from(el).save().then(function(){
     document.body.removeChild(wrapper);
-    document.body.style.cssText = origBodyStyle;
-    document.documentElement.style.cssText = origHtmlStyle;
   });
 }
 
