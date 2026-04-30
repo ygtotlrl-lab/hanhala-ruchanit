@@ -23,7 +23,7 @@ apktool d hanhala-ruchanit.apk -o /tmp/hanhala_work -f
 old = 'https://ygtotlrl-lab.github.io/yeshiva-manager/'
 new = 'https://ygtotlrl-lab.github.io/hanhala-ruchanit/'
 
-# 3. החלף אייקון - הקובץ הנכון: גרין_מיט_ווייסן_הינטערגרונט.png
+# 3. החלף אייקון - הקובץ הנכון: בלוי_מיט_ווייסן_הינטערגרונט.png
 # res/mipmap-*/ic_launcher.png + assets/icons/*.png
 
 # 4. מחק build לפני בנייה!
