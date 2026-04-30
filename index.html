@@ -2163,7 +2163,7 @@ function printStudents() {
     jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
   };
 
-  html2pdf().set(opt).from(wrapper).save().then(function(){
+  html2pdf().set(opt).from(el).save().then(function(){
     document.body.removeChild(wrapper);
   });
 }
