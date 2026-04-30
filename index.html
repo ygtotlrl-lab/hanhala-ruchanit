@@ -44,6 +44,8 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <style>
 :root{
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
@@ -2063,109 +2065,107 @@ function printStudents() {
   var students = getStudents();
   var today = new Date().toLocaleDateString('he-IL');
   var present = students.filter(function(s){ return !!s.present; });
-  var absent = students.filter(function(s){ return !s.present; });
+  var absent  = students.filter(function(s){ return !s.present; });
 
-  var rows_present = present.map(function(s,i){
-    return '<tr style="background:'+(i%2===0?'#fff':'#f9fafb')+'">' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d0':(s.cls==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d2'))+'</td>' +
-    '</tr>';
-  }).join('');
+  function clsName(c){ return c==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d0':c==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d2'; }
 
-  var rows_absent = absent.map(function(s,i){
-    return '<tr style="background:'+(i%2===0?'#fff':'#fff5f5')+'">' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(i+1)+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">'+s.name.replace(/ /g," ")+'</td>' +
-      '<td style="padding:6px 10px;border-bottom:1px solid #eee;white-space:nowrap">'+(s.cls==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d0':(s.cls==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8\u00a0\u05d2'))+'</td>' +
-    '</tr>';
-  }).join('');
+  var presentRows = present.map(function(s,i){
+    return [
+      {text:String(i+1), alignment:'right'},
+      {text:s.name, alignment:'right'},
+      {text:clsName(s.cls), alignment:'right'}
+    ];
+  });
 
-  var el = document.createElement('div');
-  el.style.cssText = 'font-family:Arial,Helvetica,sans-serif;direction:rtl;unicode-bidi:embed;padding:0 20px 20px 20px;color:#1a3a6b;width:750px;word-spacing:normal;letter-spacing:normal;display:inline-block;text-align:right';
-  el.innerHTML =
-    '<div style="text-align:center;border-bottom:3px solid #1a3a6b;padding:48px 0 16px 0;margin-bottom:16px">' +
-      '<h1 style="margin:0 0 8px 0;font-size:20px;font-weight:700">ישיבת&nbsp;תומכי&nbsp;תמימים&nbsp;ראשל&quot;צ</h1>' +
-      '<p style="margin:4px 0;color:#555;font-size:13px;direction:ltr">'+today+' &mdash; דוח&nbsp;נוכחות</p>' +
-    '</div>' +
-    '<div style="height:40px"></div>' +
-    (function(){
-        var c = document.createElement('canvas');
-        c.width = 700; c.height = 30;
-        var ctx = c.getContext('2d');
-        ctx.textAlign = 'left';
-        ctx.direction = 'ltr';
-        var x = 170;
-        // סה"כ ראשון בקוד (יופיע ימין)
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        ctx.fillText(String(students.length), x, 20);
-        x += ctx.measureText(String(students.length)).width + 2;
-        ctx.font = '13px Arial';
-        ctx.fillText(' :\u05e1\u05d4"\u05db', x, 20);
-        x += ctx.measureText(' :\u05e1\u05d4"\u05db').width + 20;
-        // מפריד
-        ctx.fillStyle = '#aaa';
-        ctx.fillText('|', x, 20);
-        x += ctx.measureText('|').width + 20;
-        // נעדרים (יופיע אחרי סה"כ בתצוגה)
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#c53030';
-        ctx.fillText(String(absent.length), x, 20);
-        x += ctx.measureText(String(absent.length)).width + 2;
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        ctx.fillText(' :\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd', x, 20);
-        x += ctx.measureText(' :\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd').width + 20;
-        // מפריד
-        ctx.fillStyle = '#aaa';
-        ctx.fillText('|', x, 20);
-        x += ctx.measureText('|').width + 20;
-        // נוכחים (יופיע אחרון = שמאל)
-        ctx.font = 'bold 14px Arial';
-        ctx.fillStyle = '#276749';
-        ctx.fillText(String(present.length), x, 20);
-        x += ctx.measureText(String(present.length)).width + 2;
-        ctx.font = '13px Arial';
-        ctx.fillStyle = '#1a3a6b';
-        ctx.fillText(' :\u05e0\u05d5\u05db\u05d7\u05d9\u05dd', x, 20);
-        return '<img src="' + c.toDataURL() + '" style="display:block;margin:0 auto 16px auto">';
-      })() +
-    '<h2 style="color:#276749;font-size:15px;margin:0 0 8px;direction:rtl">✔ נוכחים ('+present.length+')</h2>' +
-    '<table style="width:100%;border-collapse:collapse;margin:0 auto 20px auto;font-size:13px">' +
-      '<thead><tr style="background:#1a3a6b;color:#fff">' +
-        '<th style="padding:8px 10px;text-align:right;width:40px">#</th>' +
-        '<th style="padding:8px 10px;text-align:right">שם</th>' +
-        '<th style="padding:8px 10px;text-align:right;width:80px">שיעור</th>' +
-      '</tr></thead>' +
-      '<tbody>'+rows_present+'</tbody>' +
-    '</table>' +
-    '<h2 style="color:#c53030;font-size:15px;margin:0 0 8px;direction:rtl">✕ נעדרים ('+absent.length+')</h2>' +
-    '<table style="width:100%;border-collapse:collapse;font-size:13px">' +
-      '<thead><tr style="background:#c53030;color:#fff">' +
-        '<th style="padding:8px 10px;text-align:right;width:40px">#</th>' +
-        '<th style="padding:8px 10px;text-align:right">שם</th>' +
-        '<th style="padding:8px 10px;text-align:right;width:80px">שיעור</th>' +
-      '</tr></thead>' +
-      '<tbody>'+rows_absent+'</tbody>' +
-    '</table>';
+  var absentRows = absent.map(function(s,i){
+    return [
+      {text:String(i+1), alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'},
+      {text:s.name, alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'},
+      {text:clsName(s.cls), alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'}
+    ];
+  });
 
-  var wrapper = document.createElement('div');
-  wrapper.style.cssText = 'width:100%;text-align:center;direction:ltr';
-  wrapper.appendChild(el);
-  document.body.appendChild(wrapper);
-
-  var opt = {
-    margin: [5, 14, 10, 14],
-    filename: 'נוכחות-' + new Date().toISOString().split('T')[0] + '.pdf',
-    image: {type:'jpeg', quality:0.98},
-    html2canvas: {scale:2, useCORS:true},
-    jsPDF: {unit:'mm', format:'a4', orientation:'portrait'}
+  var docDef = {
+    pageSize: 'A4',
+    pageMargins: [40, 40, 40, 40],
+    content: [
+      // כותרת
+      {text: '\u05d9\u05e9\u05d9\u05d1\u05ea \u05ea\u05d5\u05de\u05db\u05d9 \u05ea\u05de\u05d9\u05de\u05d9\u05dd \u05e8\u05d0\u05e9\u05dc"\u05e6', style:'title', alignment:'center', margin:[0,30,0,6]},
+      {text: today + ' \u2014 \u05d3\u05d5\u05d7 \u05e0\u05d5\u05db\u05d7\u05d5\u05ea', style:'subtitle', alignment:'center', margin:[0,0,0,16]},
+      {canvas:[{type:'line',x1:0,y1:0,x2:515,y2:0,lineWidth:2,lineColor:'#1a3a6b'}], margin:[0,0,0,24]},
+      // שורת סיכום
+      {
+        columns:[
+          {text:'\u05e1\u05d4"\u05db: ', style:'sumLabel', width:'auto'},
+          {text:String(students.length), style:'sumValBlue', width:'auto'},
+          {text:'  |  ', style:'sumSep', width:'auto'},
+          {text:'\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', style:'sumLabel', width:'auto'},
+          {text:String(present.length), style:'sumValGreen', width:'auto'},
+          {text:'  |  ', style:'sumSep', width:'auto'},
+          {text:'\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', style:'sumLabel', width:'auto'},
+          {text:String(absent.length), style:'sumValRed', width:'auto'},
+        ],
+        columnGap:0,
+        alignment:'center',
+        margin:[0,0,0,24]
+      },
+      // נוכחים
+      {text:'\u2714 \u05e0\u05d5\u05db\u05d7\u05d9\u05dd ('+present.length+')', style:'headerGreen', alignment:'right', margin:[0,0,0,6]},
+      {
+        table:{
+          widths:['auto','*','auto'],
+          body:[
+            [
+              {text:'#', style:'thCell', alignment:'right', fillColor:'#1a3a6b'},
+              {text:'\u05e9\u05dd', style:'thCell', alignment:'right', fillColor:'#1a3a6b'},
+              {text:'\u05e9\u05d9\u05e2\u05d5\u05e8', style:'thCell', alignment:'right', fillColor:'#1a3a6b'}
+            ]
+          ].concat(presentRows.length ? presentRows : [[{text:'-',colSpan:3,alignment:'center'},{},' ']])
+        },
+        layout:{
+          hLineColor:function(){return '#eee';},
+          vLineColor:function(){return '#eee';},
+          fillColor:function(i){return i===0?null:i%2===0?'#ffffff':'#f9fafb';}
+        },
+        margin:[0,0,0,20]
+      },
+      // נעדרים
+      {text:'\u2715 \u05e0\u05e2\u05d3\u05e8\u05d9\u05dd ('+absent.length+')', style:'headerRed', alignment:'right', margin:[0,0,0,6]},
+      {
+        table:{
+          widths:['auto','*','auto'],
+          body:[
+            [
+              {text:'#', style:'thCellRed', alignment:'right', fillColor:'#c53030'},
+              {text:'\u05e9\u05dd', style:'thCellRed', alignment:'right', fillColor:'#c53030'},
+              {text:'\u05e9\u05d9\u05e2\u05d5\u05e8', style:'thCellRed', alignment:'right', fillColor:'#c53030'}
+            ]
+          ].concat(absentRows.length ? absentRows : [[{text:'-',colSpan:3,alignment:'center'},{},' ']])
+        },
+        layout:{
+          hLineColor:function(){return '#eee';},
+          vLineColor:function(){return '#eee';}
+        },
+        margin:[0,0,0,0]
+      }
+    ],
+    styles:{
+      title:{fontSize:18, bold:true, color:'#1a3a6b'},
+      subtitle:{fontSize:12, color:'#555'},
+      sumLabel:{fontSize:12, color:'#1a3a6b'},
+      sumValBlue:{fontSize:13, bold:true, color:'#1a3a6b'},
+      sumValGreen:{fontSize:13, bold:true, color:'#276749'},
+      sumValRed:{fontSize:13, bold:true, color:'#c53030'},
+      sumSep:{fontSize:12, color:'#aaa'},
+      headerGreen:{fontSize:13, bold:true, color:'#276749'},
+      headerRed:{fontSize:13, bold:true, color:'#c53030'},
+      thCell:{fontSize:11, bold:true, color:'#ffffff'},
+      thCellRed:{fontSize:11, bold:true, color:'#ffffff'},
+    },
+    defaultStyle:{font:'Roboto'}
   };
 
-  html2pdf().set(opt).from(el).save().then(function(){
-    document.body.removeChild(wrapper);
-  });
+  pdfMake.createPdf(docDef).download('\u05e0\u05d5\u05db\u05d7\u05d5\u05ea-' + new Date().toISOString().split('T')[0] + '.pdf');
 }
 
 // ============ END STUDENTS MODULE ============
