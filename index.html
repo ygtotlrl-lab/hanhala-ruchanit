@@ -698,6 +698,18 @@ var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGc
 var students=[],curAtt={};
 var TODAY=new Date().toISOString().split('T')[0];
 
+window._alefFontB64=null;
+(function(){
+  fetch('https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf')
+    .then(function(r){return r.arrayBuffer();})
+    .then(function(buf){
+      var b=new Uint8Array(buf),chunks=[];
+      for(var i=0;i<b.length;i+=8192) chunks.push(String.fromCharCode.apply(null,b.subarray(i,i+8192)));
+      window._alefFontB64=btoa(chunks.join(''));
+    })
+    .catch(function(){});
+})();
+
 // ============================================================
 // ===== AUTH SYSTEM =====
 // ============================================================
@@ -2059,21 +2071,26 @@ function deleteReason(i){
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
 
 window.printStudents = function() {
-  console.log('[PDF:1] clicked');
   try {
     if (typeof pdfMake === 'undefined') { alert('pdfMake not loaded'); return; }
-    console.log('[PDF:2] pdfMake ok');
     toast('מייצר PDF...');
     var students = getStudents();
     var present = students.filter(function(s){return !!s.present;});
     var absent  = students.filter(function(s){return !s.present;});
     var today   = new Date().toLocaleDateString('he-IL');
-    console.log('[PDF:3] students='+students.length);
     function cls(c){return c==='a'?'שיעור א':c==='b'?'שיעור ב':'שיעור ג';}
     var pRows = present.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
     var aRows = absent.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
     if (!pRows.length) pRows = [['-','-','-']];
     if (!aRows.length) aRows = [['-','-','-']];
+    var fontName = 'Roboto';
+    if (window._alefFontB64) {
+      pdfMake.vfs = pdfMake.vfs || {};
+      pdfMake.vfs['Alef-Regular.ttf'] = window._alefFontB64;
+      pdfMake.fonts = pdfMake.fonts || {};
+      pdfMake.fonts['Alef'] = {normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
+      fontName = 'Alef';
+    }
     var docDef = {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
@@ -2085,11 +2102,9 @@ window.printStudents = function() {
         {text:'נעדרים ('+absent.length+')', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
       ],
-      defaultStyle:{font:'Roboto', alignment:'right'}
+      defaultStyle:{font:fontName, alignment:'right'}
     };
-    console.log('[PDF:4] calling createPdf');
     pdfMake.createPdf(docDef).download('nochechut-'+new Date().toISOString().split('T')[0]+'.pdf');
-    console.log('[PDF:5] download triggered');
   } catch(e) {
     console.error('[PDF:ERR]', e);
     alert('PDF Error: '+e.message);
