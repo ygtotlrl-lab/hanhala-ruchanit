@@ -2058,134 +2058,43 @@ function deleteReason(i){
 
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
 
-var _pdfFontReady = false;
-(function() {
-  if (typeof fetch === 'undefined') return;
-  fetch('https://fonts.gstatic.com/s/alef/v21/FeVQS0NuomsLykABstRV.ttf')
-    .then(function(r) { return r.arrayBuffer(); })
-    .then(function(ab) {
-      var bytes = new Uint8Array(ab), binary = '', c = 8192;
-      for (var i = 0; i < bytes.length; i += c)
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+c, bytes.length)));
-      pdfMake.vfs['Alef.ttf'] = btoa(binary);
-      pdfMake.fonts = {
-        Roboto: {normal:'Roboto-Regular.ttf',bold:'Roboto-Medium.ttf',italics:'Roboto-Italic.ttf',bolditalics:'Roboto-MediumItalic.ttf'},
-        Alef: {normal:'Alef.ttf', bold:'Alef.ttf'}
-      };
-      _pdfFontReady = true;
-      console.log('[pdf] Alef font ready');
-    }).catch(function(e) { console.warn('[pdf] font load failed, will use Roboto:', e.message); });
-}());
-
 window.printStudents = function() {
-  if (typeof pdfMake === 'undefined') { alert('שגיאה: ספריית PDF לא נטענה'); return; }
-  var pdfFont = _pdfFontReady ? 'Alef' : 'Roboto';
-  toast('מייצר PDF...');
-  var students = getStudents();
-  var today = new Date().toLocaleDateString('he-IL');
-  var present = students.filter(function(s){ return !!s.present; });
-  var absent  = students.filter(function(s){ return !s.present; });
-
-  function clsName(c){ return c==='a'?'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d0':c==='b'?'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d1':'\u05e9\u05d9\u05e2\u05d5\u05e8 \u05d2'; }
-
-  var presentRows = present.map(function(s,i){
-    return [
-      {text:String(i+1), alignment:'right'},
-      {text:s.name, alignment:'right'},
-      {text:clsName(s.cls), alignment:'right'}
-    ];
-  });
-
-  var absentRows = absent.map(function(s,i){
-    return [
-      {text:String(i+1), alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'},
-      {text:s.name, alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'},
-      {text:clsName(s.cls), alignment:'right', fillColor: i%2===0?'#ffffff':'#fff5f5'}
-    ];
-  });
-
-  var docDef = {
-    pageSize: 'A4',
-    pageMargins: [40, 40, 40, 40],
-    content: [
-      // כותרת
-      {text: '\u05d9\u05e9\u05d9\u05d1\u05ea \u05ea\u05d5\u05de\u05db\u05d9 \u05ea\u05de\u05d9\u05de\u05d9\u05dd \u05e8\u05d0\u05e9\u05dc"\u05e6', style:'title', alignment:'center', margin:[0,30,0,6]},
-      {text: today + ' \u2014 \u05d3\u05d5\u05d7 \u05e0\u05d5\u05db\u05d7\u05d5\u05ea', style:'subtitle', alignment:'center', margin:[0,0,0,16]},
-      {canvas:[{type:'line',x1:0,y1:0,x2:515,y2:0,lineWidth:2,lineColor:'#1a3a6b'}], margin:[0,0,0,24]},
-      // שורת סיכום
-      {
-        text:[
-          {text:'\u05e1\u05d4"\u05db: ', style:'sumLabel'},
-          {text:String(students.length), style:'sumValBlue'},
-          {text:'   |   ', style:'sumSep'},
-          {text:'\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', style:'sumLabel'},
-          {text:String(present.length), style:'sumValGreen'},
-          {text:'   |   ', style:'sumSep'},
-          {text:'\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', style:'sumLabel'},
-          {text:String(absent.length), style:'sumValRed'},
-        ],
-        alignment:'center',
-        margin:[0,0,0,24]
-      },
-      // נוכחים
-      {text:'\u2714 \u05e0\u05d5\u05db\u05d7\u05d9\u05dd ('+present.length+')', style:'headerGreen', alignment:'right', margin:[0,0,0,6]},
-      {
-        table:{
-          widths:['auto','*','auto'],
-          body:[
-            [
-              {text:'#', style:'thCell', alignment:'right', fillColor:'#1a3a6b'},
-              {text:'\u05e9\u05dd', style:'thCell', alignment:'right', fillColor:'#1a3a6b'},
-              {text:'\u05e9\u05d9\u05e2\u05d5\u05e8', style:'thCell', alignment:'right', fillColor:'#1a3a6b'}
-            ]
-          ].concat(presentRows.length ? presentRows : [[{text:'-',colSpan:3,alignment:'center'},{},' ']])
-        },
-        layout:{
-          hLineColor:function(){return '#eee';},
-          vLineColor:function(){return '#eee';},
-          fillColor:function(i){return i===0?null:i%2===0?'#ffffff':'#f9fafb';}
-        },
-        margin:[0,0,0,20]
-      },
-      // נעדרים
-      {text:'\u2715 \u05e0\u05e2\u05d3\u05e8\u05d9\u05dd ('+absent.length+')', style:'headerRed', alignment:'right', margin:[0,0,0,6]},
-      {
-        table:{
-          widths:['auto','*','auto'],
-          body:[
-            [
-              {text:'#', style:'thCellRed', alignment:'right', fillColor:'#c53030'},
-              {text:'\u05e9\u05dd', style:'thCellRed', alignment:'right', fillColor:'#c53030'},
-              {text:'\u05e9\u05d9\u05e2\u05d5\u05e8', style:'thCellRed', alignment:'right', fillColor:'#c53030'}
-            ]
-          ].concat(absentRows.length ? absentRows : [[{text:'-',colSpan:3,alignment:'center'},{},' ']])
-        },
-        layout:{
-          hLineColor:function(){return '#eee';},
-          vLineColor:function(){return '#eee';}
-        },
-        margin:[0,0,0,0]
-      }
-    ],
-    styles:{
-      title:{fontSize:18, bold:true, color:'#1a3a6b'},
-      subtitle:{fontSize:12, color:'#555'},
-      sumLabel:{fontSize:12, color:'#1a3a6b'},
-      sumValBlue:{fontSize:13, bold:true, color:'#1a3a6b'},
-      sumValGreen:{fontSize:13, bold:true, color:'#276749'},
-      sumValRed:{fontSize:13, bold:true, color:'#c53030'},
-      sumSep:{fontSize:12, color:'#aaa'},
-      headerGreen:{fontSize:13, bold:true, color:'#276749'},
-      headerRed:{fontSize:13, bold:true, color:'#c53030'},
-      thCell:{fontSize:11, bold:true, color:'#ffffff'},
-      thCellRed:{fontSize:11, bold:true, color:'#ffffff'},
-    },
-    defaultStyle:{font:pdfFont, alignment:'right'}
-  };
-
-  pdfMake.createPdf(docDef).download('\u05e0\u05d5\u05db\u05d7\u05d5\u05ea-' + new Date().toISOString().split('T')[0] + '.pdf');
+  console.log('[PDF:1] clicked');
+  try {
+    if (typeof pdfMake === 'undefined') { alert('pdfMake not loaded'); return; }
+    console.log('[PDF:2] pdfMake ok');
+    toast('מייצר PDF...');
+    var students = getStudents();
+    var present = students.filter(function(s){return !!s.present;});
+    var absent  = students.filter(function(s){return !s.present;});
+    var today   = new Date().toLocaleDateString('he-IL');
+    console.log('[PDF:3] students='+students.length);
+    function cls(c){return c==='a'?'שיעור א':c==='b'?'שיעור ב':'שיעור ג';}
+    var pRows = present.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
+    var aRows = absent.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
+    if (!pRows.length) pRows = [['-','-','-']];
+    if (!aRows.length) aRows = [['-','-','-']];
+    var docDef = {
+      pageSize:'A4', pageMargins:[40,40,40,40],
+      content:[
+        {text:'ישיבת תומכי תמימים ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
+        {text:today+' - דוח נוכחות', fontSize:11, alignment:'center', color:'#555', margin:[0,0,0,14]},
+        {text:'סהכ: '+students.length+'  |  נוכחים: '+present.length+'  |  נעדרים: '+absent.length, fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
+        {text:'נוכחים ('+present.length+')', fontSize:13, bold:true, color:'#276749', margin:[0,0,0,6]},
+        {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
+        {text:'נעדרים ('+absent.length+')', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
+        {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
+      ],
+      defaultStyle:{font:'Roboto', alignment:'right'}
+    };
+    console.log('[PDF:4] calling createPdf');
+    pdfMake.createPdf(docDef).download('nochechut-'+new Date().toISOString().split('T')[0]+'.pdf');
+    console.log('[PDF:5] download triggered');
+  } catch(e) {
+    console.error('[PDF:ERR]', e);
+    alert('PDF Error: '+e.message);
+  }
 }
-
 // ============ END STUDENTS MODULE ============
 
 </script>
