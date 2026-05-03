@@ -1,8 +1,8 @@
 {
   "name": "הנהלה רוחנית",
   "short_name": "הנהלה רוחנית",
-  "start_url": "/yeshiva-manager/",
-  "scope": "/yeshiva-manager/",
+  "start_url": "/hanhala-ruchanit/",
+  "scope": "/hanhala-ruchanit/",
   "display": "fullscreen",
   "background_color": "#1a3c6e",
   "theme_color": "#1a3c6e",

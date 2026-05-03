@@ -43,7 +43,6 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <style>
@@ -2095,17 +2094,16 @@ function printStudents() {
       {canvas:[{type:'line',x1:0,y1:0,x2:515,y2:0,lineWidth:2,lineColor:'#1a3a6b'}], margin:[0,0,0,24]},
       // שורת סיכום
       {
-        columns:[
-          {text:'\u05e1\u05d4"\u05db: ', style:'sumLabel', width:'auto'},
-          {text:String(students.length), style:'sumValBlue', width:'auto'},
-          {text:'  |  ', style:'sumSep', width:'auto'},
-          {text:'\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', style:'sumLabel', width:'auto'},
-          {text:String(present.length), style:'sumValGreen', width:'auto'},
-          {text:'  |  ', style:'sumSep', width:'auto'},
-          {text:'\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', style:'sumLabel', width:'auto'},
-          {text:String(absent.length), style:'sumValRed', width:'auto'},
+        text:[
+          {text:'\u05e1\u05d4"\u05db: ', style:'sumLabel'},
+          {text:String(students.length), style:'sumValBlue'},
+          {text:'   |   ', style:'sumSep'},
+          {text:'\u05e0\u05d5\u05db\u05d7\u05d9\u05dd: ', style:'sumLabel'},
+          {text:String(present.length), style:'sumValGreen'},
+          {text:'   |   ', style:'sumSep'},
+          {text:'\u05e0\u05e2\u05d3\u05e8\u05d9\u05dd: ', style:'sumLabel'},
+          {text:String(absent.length), style:'sumValRed'},
         ],
-        columnGap:0,
         alignment:'center',
         margin:[0,0,0,24]
       },
