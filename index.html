@@ -2078,9 +2078,11 @@ window.printStudents = function() {
     var present = students.filter(function(s){return !!s.present;});
     var absent  = students.filter(function(s){return !s.present;});
     var today   = new Date().toLocaleDateString('he-IL');
-    function cls(c){return c==='a'?'שיעור א':c==='b'?'שיעור ב':'שיעור ג';}
-    var pRows = present.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
-    var aRows = absent.map(function(s,i){return [String(i+1), s.name, cls(s.cls)];});
+    var NB = ' ';
+    function cls(c){return c==='a'?'שיעור'+NB+'א':c==='b'?'שיעור'+NB+'ב':'שיעור'+NB+'ג';}
+    function fixName(n){return (n||'').replace(/ /g,NB);}
+    var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
+    var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     if (!pRows.length) pRows = [['-','-','-']];
     if (!aRows.length) aRows = [['-','-','-']];
     var fontName = 'Roboto';
@@ -2094,12 +2096,18 @@ window.printStudents = function() {
     var docDef = {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
-        {text:'ישיבת תומכי תמימים ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
-        {text:today+' - דוח נוכחות', fontSize:11, alignment:'center', color:'#555', margin:[0,0,0,14]},
-        {text:'סהכ: '+students.length+'  |  נוכחים: '+present.length+'  |  נעדרים: '+absent.length, fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
-        {text:'נוכחים ('+present.length+')', fontSize:13, bold:true, color:'#276749', margin:[0,0,0,6]},
+        {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
+        {text:today+NB+'-'+NB+'דוח'+NB+'נוכחות', fontSize:11, alignment:'center', color:'#555', margin:[0,0,0,14]},
+        {text:[
+          {text:'סהכ:'+NB+String(students.length)},
+          {text:NB+NB+'|'+NB+NB},
+          {text:'נוכחים:'+NB+String(present.length)},
+          {text:NB+NB+'|'+NB+NB},
+          {text:'נעדרים:'+NB+String(absent.length)}
+        ], fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
+        {text:'נוכחים'+NB+'('+present.length+')', fontSize:13, bold:true, color:'#276749', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
-        {text:'נעדרים ('+absent.length+')', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
+        {text:'נעדרים'+NB+'('+absent.length+')', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
       ],
       defaultStyle:{font:fontName, alignment:'right'}
