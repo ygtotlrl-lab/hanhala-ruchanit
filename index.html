@@ -2105,9 +2105,9 @@ window.printStudents = function() {
           {text:NB+NB+'|'+NB+NB},
           {text:'נעדרים:'+NB+String(absent.length)}
         ], fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
-        {text:'נוכחים'+NB+'('+present.length+')', fontSize:13, bold:true, color:'#276749', margin:[0,0,0,6]},
+        {text:'נוכחים'+NB+'‏('+present.length+')‏', fontSize:13, bold:true, color:'#276749', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
-        {text:'נעדרים'+NB+'('+absent.length+')', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
+        {text:'נעדרים'+NB+'‏('+absent.length+')‏', fontSize:13, bold:true, color:'#c53030', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
       ],
       defaultStyle:{font:fontName, alignment:'right'}
