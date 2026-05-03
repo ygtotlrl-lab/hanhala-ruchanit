@@ -1535,7 +1535,6 @@ async function ysPullFromCloud() {
       localStorage.setItem('ys_reasons', JSON.stringify(rs));
     }
     if (typeof renderStudents === 'function') renderStudents();
-    loadDash();
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
 
@@ -2059,8 +2058,27 @@ function deleteReason(i){
 
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
 
+var _pdfHebrewFontLoaded = false;
+async function loadHebrewFont() {
+  if (_pdfHebrewFontLoaded) return;
+  try {
+    var resp = await fetch('https://fonts.gstatic.com/s/alef/v21/FeVQS0NuomsLykABstRV.ttf');
+    var ab = await resp.arrayBuffer();
+    var bytes = new Uint8Array(ab);
+    var binary = '';
+    var chunk = 8192;
+    for (var i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunk, bytes.length)));
+    }
+    pdfMake.vfs['Alef-Regular.ttf'] = btoa(binary);
+    pdfMake.fonts = { Alef: { normal: 'Alef-Regular.ttf', bold: 'Alef-Regular.ttf' } };
+    _pdfHebrewFontLoaded = true;
+  } catch(e) { console.error('[pdf] font load error:', e); }
+}
 
-function printStudents() {
+async function printStudents() {
+  await loadHebrewFont();
+  var pdfFont = _pdfHebrewFontLoaded ? 'Alef' : 'Roboto';
   var students = getStudents();
   var today = new Date().toLocaleDateString('he-IL');
   var present = students.filter(function(s){ return !!s.present; });
@@ -2160,7 +2178,7 @@ function printStudents() {
       thCell:{fontSize:11, bold:true, color:'#ffffff'},
       thCellRed:{fontSize:11, bold:true, color:'#ffffff'},
     },
-    defaultStyle:{font:'Roboto'}
+    defaultStyle:{font:pdfFont, alignment:'right'}
   };
 
   pdfMake.createPdf(docDef).download('\u05e0\u05d5\u05db\u05d7\u05d5\u05ea-' + new Date().toISOString().split('T')[0] + '.pdf');
