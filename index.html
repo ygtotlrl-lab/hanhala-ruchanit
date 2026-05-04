@@ -639,7 +639,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div style="overflow-x:auto">
           <table class="pt">
             <thead><tr>
-              <th>מודול</th><th>מנהל</th><th>צוות בכיר</th><th>צוות זוטר</th>
+              <th>מודול</th><th>מנהל</th><th>צוות בכיר</th><th>צוות</th>
             </tr></thead>
             <tbody id="perm-tbody"></tbody>
           </table>
@@ -668,9 +668,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <input type="text" id="um-username" placeholder="israel" style="direction:ltr">
     <label>תפקיד</label>
     <select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">
-      <option value="admin">מנהל מוחלט</option>
+      <option value="admin">מנהל</option>
       <option value="senior">צוות בכיר</option>
-      <option value="junior">צוות זוטר</option>
+      <option value="junior">צוות</option>
     </select>
     <label>סיסמה נוכחית</label>
     <div style="position:relative;display:flex;align-items:center">
@@ -731,7 +731,7 @@ var AUTH = {
     {id:'settings', label:'⚙️ הגדרות מערכת'}
   ],
 
-  ROLE_LABELS: {admin:'מנהל מוחלט', senior:'צוות בכיר', junior:'צוות זוטר'},
+  ROLE_LABELS: {admin:'מנהל', senior:'צוות בכיר', junior:'צוות'},
 
   DEFAULT_PERMS: {
     students: {admin:'edit', senior:'edit', junior:'view'},
