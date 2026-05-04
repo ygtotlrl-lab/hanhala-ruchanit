@@ -426,9 +426,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <input type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">
 <label>שיעור</label>
 <select id="st-class" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px">
-<option value="א">שיעור א'</option>
-<option value="ב">שיעור ב'</option>
-<option value="ג">שיעור ג'</option>
+<option value="a">שיעור א'</option>
+<option value="b">שיעור ב'</option>
+<option value="g">שיעור ג'</option>
 </select>
 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
 <button class="btn out" onclick="closeStudentModal()">ביטול</button>
@@ -1740,7 +1740,7 @@ function getDefaultStudents(){return [
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
 
-function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');return(s&&s.length)?s:getDefaultStudents();}catch(e){return getDefaultStudents();}}
+function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s&&s.length){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s;}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
