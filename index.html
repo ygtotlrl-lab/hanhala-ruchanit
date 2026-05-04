@@ -696,7 +696,7 @@ function hebrewMonth(d){var s=hebrewDateShort(d||new Date());var p=s.split(" ");
 
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
 var students=[],curAtt={};
-var TODAY=new Date().toISOString().split('T')[0];
+var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
 window._alefFontB64=null;
 (function(){
@@ -1536,7 +1536,12 @@ async function ysPullFromCloud() {
     }
     var a = await ysKvGet('ys_attend');
     if (a && typeof a === 'object') {
-      localStorage.setItem('ys_attend', JSON.stringify(a));
+      var localA = getAttendance();
+      var todayK = todayKey();
+      // מיזוג: cloud גובר על past dates; להיום — מאחדים כדי לא לאבד הזנות מקומיות שטרם נדחפו
+      var merged = Object.assign({}, localA, a);
+      merged[todayK] = Object.assign({}, localA[todayK]||{}, a[todayK]||{});
+      localStorage.setItem('ys_attend', JSON.stringify(merged));
     }
     var ap = await ysKvGet('ys_approvals');
     if (ap && typeof ap === 'object') {
@@ -1743,7 +1748,7 @@ function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'nul
 function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));}
 function getApprovals(){return JSON.parse(localStorage.getItem('ys_approvals')||'{}');}
 function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
-function todayKey(){return new Date().toISOString().slice(0,10);}
+function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function checkLoginNeeded(){
   // הוחלף במערכת auth החדשה
