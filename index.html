@@ -1851,42 +1851,96 @@ function renderStudents(){
 }
 
 
+function _getStatusModal() {
+  var modal = document.getElementById('status-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'status-modal';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);direction:rtl';
+    document.body.appendChild(modal);
+  }
+  return modal;
+}
+
 function openAttendanceEdit(sid) {
   var students = getStudents();
   var s = students.find(function(x){return x.id===sid;});
   if (!s) return;
   window._statusSid = sid;
   window._statusStudentName = s.name;
-
-  // צור/מצא מודל
-  var modal = document.getElementById('status-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'status-modal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);direction:rtl';
-    modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-        '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b" id="status-modal-name"></div>' +
-        '<button onclick="window.closeStatusModal()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
-      '</div>' +
-      '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
-      '<div style="display:flex;flex-direction:column;gap:10px">' +
-        '<button onclick="window.openStatusForm(\'approved\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
-          '<span style="font-size:1.5rem">✅</span><div><div>אישור</div><div style="font-size:.75rem;font-weight:400;opacity:.7">חופשה, רפואי, אירוע וכדומה</div></div>' +
-        '</button>' +
-        '<button onclick="window.openStatusForm(\'suspended\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
-          '<span style="font-size:1.5rem">⚠️</span><div><div>השעיה</div><div style="font-size:.75rem;font-weight:400;opacity:.7">משמעת וכדומה</div></div>' +
-        '</button>' +
-        '<button onclick="window.openStatusForm(\'left\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
-          '<span style="font-size:1.5rem">🚪</span><div><div>לא שב / עזב</div><div style="font-size:.75rem;font-weight:400;opacity:.7">לא חזר מחופשה, עזב לצמיתות</div></div>' +
-        '</button>' +
-      '</div>' +
-    '</div>';
-    document.body.appendChild(modal);
-  }
-  document.getElementById('status-modal-name').textContent = s.name;
-  modal.style.display = 'flex';
+  var active = s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= new Date());
+  if (active) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
 }
+
+window.openStatusPickerModal = function() {
+  var modal = _getStatusModal();
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+      '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b">' + window._statusStudentName + '</div>' +
+      '<button onclick="window.closeStatusModal()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
+    '</div>' +
+    '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<button onclick="window.openStatusForm(\'approved\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
+        '<span style="font-size:1.5rem">✅</span><div><div>אישור</div><div style="font-size:.75rem;font-weight:400;opacity:.7">חופשה, רפואי, אירוע וכדומה</div></div>' +
+      '</button>' +
+      '<button onclick="window.openStatusForm(\'suspended\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
+        '<span style="font-size:1.5rem">⚠️</span><div><div>השעיה</div><div style="font-size:.75rem;font-weight:400;opacity:.7">משמעת וכדומה</div></div>' +
+      '</button>' +
+      '<button onclick="window.openStatusForm(\'left\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
+        '<span style="font-size:1.5rem">🚪</span><div><div>לא שב / עזב</div><div style="font-size:.75rem;font-weight:400;opacity:.7">לא חזר מחופשה, עזב לצמיתות</div></div>' +
+      '</button>' +
+    '</div>' +
+  '</div>';
+  modal.style.display = 'flex';
+};
+
+window.openCurrentStatusModal = function() {
+  var students = getStudents();
+  var s = students.find(function(x){return x.id === window._statusSid;});
+  if (!s) return;
+  var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב / עזב'};
+  var TC = {approved:'#276749', suspended:'#c05621', left:'#c53030'};
+  var TB = {approved:'#f0fff4', suspended:'#fffbeb', left:'#fff5f5'};
+  var TBR = {approved:'#9ae6b4', suspended:'#fbd38d', left:'#feb2b2'};
+  var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
+  var t = s.status;
+  var fmtDt = function(v){ return v ? new Date(v).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'; };
+  var modal = _getStatusModal();
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b">' + s.name + '</div>' +
+      '<button onclick="window.closeStatusModal()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
+    '</div>' +
+    '<div style="background:' + (TB[t]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[t]||'#ddd') + ';border-radius:12px;padding:14px 16px;margin-bottom:20px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
+        '<span style="font-size:1.2rem">' + (TI[t]||'📋') + '</span>' +
+        '<span style="font-weight:700;color:' + (TC[t]||'#333') + ';font-size:.95rem">' + (TL[t]||t) + '</span>' +
+      '</div>' +
+      (s.statusReason ? '<div style="font-size:.85rem;color:#555;margin-bottom:4px">סיבה: ' + s.statusReason + '</div>' : '') +
+      '<div style="font-size:.8rem;color:#888">מ: ' + fmtDt(s.statusFrom) + '</div>' +
+      '<div style="font-size:.8rem;color:#888">עד: ' + (s.statusTo ? fmtDt(s.statusTo) : 'ללא תאריך סיום') + '</div>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<button onclick="window.cancelStudentStatus()" style="padding:12px;border-radius:10px;border:none;background:#e53e3e;color:#fff;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">🔄 בטל סטטוס — החזר לנוכח</button>' +
+      '<button onclick="window.openStatusPickerModal()" style="padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">➕ הוסף סיבה נוספת</button>' +
+    '</div>' +
+  '</div>';
+  modal.style.display = 'flex';
+};
+
+window.cancelStudentStatus = function() {
+  var sid = window._statusSid;
+  var students = getStudents();
+  var s = students.find(function(x){return x.id===sid;});
+  if (!s) return;
+  s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null; s.present = true;
+  saveStudents(students);
+  scheduleYsPush();
+  renderStudents();
+  closeStatusModal();
+  toast('✅ הסטטוס בוטל ל-' + s.name);
+};
 
 function togglePresent(sid,present){
   if(checkLoginNeeded())return;
