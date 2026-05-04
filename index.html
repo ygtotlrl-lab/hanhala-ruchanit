@@ -1798,18 +1798,16 @@ function renderStudents(){
     if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
     return true;
   });
-  var present=0,absent=0,approved=0;
+  var present=0,absent=0;
   students.forEach(function(s){
     var st=getStudentStatus(s.id);
     if(st.status==='present')present++;
-    else if(st.status==='approved')approved++;
-    else if(st.status==='absent')absent++;
+    else if(st.status!=='present')absent++;
   });
   var sumEl=document.getElementById('st-summary');
   if(sumEl)sumEl.innerHTML=
     '<span style="color:#38a169">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#ed8936">&#x1F4CB; '+H(1489,1488,1497,1513,1493,1512)+': '+approved+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#e53e3e">&#x274C; '+H(1504,1506,1491,1512,1497,1501)+': '+absent+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#e53e3e">&#x274C; אינם נוכחים: '+absent+'</span>&nbsp;&nbsp;'+
     '<span style="color:#666">'+H(1505,1492,34,1499)+': '+students.length+'</span>';
   var ea=document.getElementById('ct-all');
   if(ea)ea.textContent=H(1492,1499,1500)+' ('+students.length+')';
@@ -2108,11 +2106,11 @@ window.printStudents = function() {
           {text:NB+NB+'|'+NB+NB},
           {text:'נוכחים:'+NB+String(present.length)},
           {text:NB+NB+'|'+NB+NB},
-          {text:'נעדרים:'+NB+String(absent.length)}
+          {text:'אינם'+NB+'נוכחים:'+NB+String(absent.length)}
         ], fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
         {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',dir:'ltr'}], fontSize:13, bold:true, color:'#276749', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
-        {text:[{text:'נעדרים'},{text:NB+'('+absent.length+')',dir:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
+        {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',dir:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
       ],
       defaultStyle:{font:fontName, alignment:'right'}
