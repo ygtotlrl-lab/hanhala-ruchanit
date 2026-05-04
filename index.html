@@ -1800,9 +1800,8 @@ function renderStudents(){
   });
   var present=0,absent=0;
   students.forEach(function(s){
-    var st=getStudentStatus(s.id);
-    if(st.status==='present')present++;
-    else if(st.status!=='present')absent++;
+    var active=s.status&&['approved','suspended','left'].indexOf(s.status)!==-1&&(!s.statusTo||new Date(s.statusTo)>=new Date());
+    if(active)absent++;else present++;
   });
   var sumEl=document.getElementById('st-summary');
   if(sumEl)sumEl.innerHTML=
@@ -1824,8 +1823,9 @@ function renderStudents(){
     var st=getStudentStatus(s.id);
     var bg=i%2===0?'#fff':'#f9fafb';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
-    // נוכחות - תצוגה בלבד
-    var isPresent = !!s.present;
+    // נוכחות — נגזר מרשומת הסטטוס הפעילה
+    var activeStatus=s.status&&['approved','suspended','left'].indexOf(s.status)!==-1&&(!s.statusTo||new Date(s.statusTo)>=new Date());
+    var isPresent=!activeStatus;
     var presIcon = isPresent
       ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; '+H(1504,1493,1499,1495)+'</span>'
       : '<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; '+H(1488,1497,1504,1493,32,1504,1493,1499,1495)+'</span>';
@@ -1871,13 +1871,13 @@ function openAttendanceEdit(sid) {
       '</div>' +
       '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
       '<div style="display:flex;flex-direction:column;gap:10px">' +
-        '<button onclick="window.openStatusForm("approved")" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
+        '<button onclick="window.openStatusForm(\'approved\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
           '<span style="font-size:1.5rem">✅</span><div><div>אישור</div><div style="font-size:.75rem;font-weight:400;opacity:.7">חופשה, רפואי, אירוע וכדומה</div></div>' +
         '</button>' +
-        '<button onclick="window.openStatusForm("suspended")" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
+        '<button onclick="window.openStatusForm(\'suspended\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
           '<span style="font-size:1.5rem">⚠️</span><div><div>השעיה</div><div style="font-size:.75rem;font-weight:400;opacity:.7">משמעת וכדומה</div></div>' +
         '</button>' +
-        '<button onclick="window.openStatusForm("left")" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
+        '<button onclick="window.openStatusForm(\'left\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
           '<span style="font-size:1.5rem">🚪</span><div><div>לא שב / עזב</div><div style="font-size:.75rem;font-weight:400;opacity:.7">לא חזר מחופשה, עזב לצמיתות</div></div>' +
         '</button>' +
       '</div>' +
