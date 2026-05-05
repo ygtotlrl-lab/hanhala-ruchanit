@@ -976,11 +976,10 @@ function saveStudentStatus(type) {
   var s = students.find(function(x){return x.id===sid;});
   if (!s) return;
 
-  s.status = type;
-  s.statusReason = reason;
-  s.statusFrom = from;
-  s.statusTo = to || null;
-  s.present = false; // לא נמצא בישיבה
+  if (!Array.isArray(s.absences)) s.absences = [];
+  _migrateStudentLegacy(s);
+  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null});
+  s.present = false;
 
   saveStudents(students);
   scheduleYsPush();
@@ -1532,7 +1531,10 @@ async function ysPullFromCloud() {
   try {
     var s = await ysKvGet('ys_students');
     if (s && Array.isArray(s) && s.length) {
+      var pullMigrated = false;
+      s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
       localStorage.setItem('ys_students', JSON.stringify(s));
+      if (pullMigrated) scheduleYsPush();
     }
     var a = await ysKvGet('ys_attend');
     if (a && typeof a === 'object') {
@@ -1602,6 +1604,8 @@ setTimeout(async function() {
       var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
       _ysLastTs = remoteTs;
       await ysPullFromCloud();
+    } else {
+      _runLegacyMigration();
     }
   } catch(e) { console.log('[ys-sync] init:', e.message||e); }
 }, 1500);
@@ -1800,8 +1804,7 @@ function renderStudents(){
   });
   var present=0,absent=0;
   students.forEach(function(s){
-    var active=s.status&&['approved','suspended','left'].indexOf(s.status)!==-1&&(!s.statusTo||new Date(s.statusTo)>=new Date());
-    if(active)absent++;else present++;
+    if(getActiveAbsences(s).length>0)absent++;else present++;
   });
   var sumEl=document.getElementById('st-summary');
   if(sumEl)sumEl.innerHTML=
@@ -1823,9 +1826,8 @@ function renderStudents(){
     var st=getStudentStatus(s.id);
     var bg=i%2===0?'#fff':'#f9fafb';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
-    // נוכחות — נגזר מרשומת הסטטוס הפעילה
-    var activeStatus=s.status&&['approved','suspended','left'].indexOf(s.status)!==-1&&(!s.statusTo||new Date(s.statusTo)>=new Date());
-    var isPresent=!activeStatus;
+    // נוכחות — נגזר מהיעדרויות הפעילות
+    var isPresent=getActiveAbsences(s).length===0;
     var presIcon = isPresent
       ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; '+H(1504,1493,1499,1495)+'</span>'
       : '<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; '+H(1488,1497,1504,1493,32,1504,1493,1499,1495)+'</span>';
@@ -1851,6 +1853,35 @@ function renderStudents(){
 }
 
 
+function getActiveAbsences(s) {
+  var now = new Date();
+  if (Array.isArray(s.absences) && s.absences.length > 0) {
+    return s.absences.filter(function(a){ return !a.to || new Date(a.to) >= now; });
+  }
+  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
+    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
+  }
+  return [];
+}
+
+function _migrateStudentLegacy(s) {
+  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1) {
+    if (!Array.isArray(s.absences)) s.absences = [];
+    var legacyId = s.statusFrom ? new Date(s.statusFrom).getTime() : (Date.now() - 1);
+    s.absences.unshift({id: legacyId, type: s.status, reason: s.statusReason||'', from: s.statusFrom||new Date().toISOString(), to: s.statusTo||null});
+    s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
+    return true;
+  }
+  return false;
+}
+
+function _runLegacyMigration() {
+  var students = getStudents();
+  var changed = false;
+  students.forEach(function(s) { if (_migrateStudentLegacy(s)) changed = true; });
+  if (changed) { saveStudents(students); scheduleYsPush(); }
+}
+
 function _getStatusModal() {
   var modal = document.getElementById('status-modal');
   if (!modal) {
@@ -1868,8 +1899,7 @@ function openAttendanceEdit(sid) {
   if (!s) return;
   window._statusSid = sid;
   window._statusStudentName = s.name;
-  var active = s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= new Date());
-  if (active) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
+  if (getActiveAbsences(s).length > 0) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
 }
 
 window.openStatusPickerModal = function() {
@@ -1904,27 +1934,30 @@ window.openCurrentStatusModal = function() {
   var TB = {approved:'#f0fff4', suspended:'#fffbeb', left:'#fff5f5'};
   var TBR = {approved:'#9ae6b4', suspended:'#fbd38d', left:'#feb2b2'};
   var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
-  var t = s.status;
   var fmtDt = function(v){ return v ? new Date(v).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'; };
+  var activeAbsences = getActiveAbsences(s);
+  var absencesHtml = activeAbsences.map(function(a) {
+    var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + a.id + ')';
+    return '<div style="background:' + (TB[a.type]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[a.type]||'#ddd') + ';border-radius:12px;padding:12px 14px;margin-bottom:12px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+        '<div style="display:flex;align-items:center;gap:8px">' +
+          '<span style="font-size:1.1rem">' + (TI[a.type]||'📋') + '</span>' +
+          '<span style="font-weight:700;color:' + (TC[a.type]||'#333') + ';font-size:.9rem">' + (TL[a.type]||a.type) + '</span>' +
+        '</div>' +
+        '<button onclick="' + cancelCall + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
+      '</div>' +
+      (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + a.reason + '</div>' : '') +
+      '<div style="font-size:.78rem;color:#888">מ: ' + fmtDt(a.from) + '&nbsp;&nbsp;עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
+    '</div>';
+  }).join('');
   var modal = _getStatusModal();
-  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
+  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:360px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
       '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b">' + s.name + '</div>' +
       '<button onclick="window.closeStatusModal()" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
     '</div>' +
-    '<div style="background:' + (TB[t]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[t]||'#ddd') + ';border-radius:12px;padding:14px 16px;margin-bottom:20px">' +
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">' +
-        '<span style="font-size:1.2rem">' + (TI[t]||'📋') + '</span>' +
-        '<span style="font-weight:700;color:' + (TC[t]||'#333') + ';font-size:.95rem">' + (TL[t]||t) + '</span>' +
-      '</div>' +
-      (s.statusReason ? '<div style="font-size:.85rem;color:#555;margin-bottom:4px">סיבה: ' + s.statusReason + '</div>' : '') +
-      '<div style="font-size:.8rem;color:#888">מ: ' + fmtDt(s.statusFrom) + '</div>' +
-      '<div style="font-size:.8rem;color:#888">עד: ' + (s.statusTo ? fmtDt(s.statusTo) : 'ללא תאריך סיום') + '</div>' +
-    '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:10px">' +
-      '<button onclick="window.cancelStudentStatus()" style="padding:12px;border-radius:10px;border:none;background:#e53e3e;color:#fff;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">🔄 בטל סטטוס — החזר לנוכח</button>' +
-      '<button onclick="window.openStatusPickerModal()" style="padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">➕ הוסף סיבה נוספת</button>' +
-    '</div>' +
+    absencesHtml +
+    '<button onclick="window.openStatusPickerModal()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>' +
   '</div>';
   modal.style.display = 'flex';
 };
@@ -1934,12 +1967,35 @@ window.cancelStudentStatus = function() {
   var students = getStudents();
   var s = students.find(function(x){return x.id===sid;});
   if (!s) return;
-  s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null; s.present = true;
+  s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
+  s.absences = [];
+  s.present = true;
   saveStudents(students);
   scheduleYsPush();
   renderStudents();
   closeStatusModal();
   toast('✅ הסטטוס בוטל ל-' + s.name);
+};
+
+window.cancelSingleAbsence = function(absenceId) {
+  var sid = window._statusSid;
+  var students = getStudents();
+  var s = students.find(function(x){return x.id===sid;});
+  if (!s) return;
+  if (Array.isArray(s.absences)) {
+    s.absences = s.absences.filter(function(a){ return a.id !== absenceId; });
+  }
+  var stillActive = getActiveAbsences(s);
+  if (stillActive.length === 0) s.present = true;
+  saveStudents(students);
+  scheduleYsPush();
+  renderStudents();
+  if (stillActive.length > 0) {
+    window.openCurrentStatusModal();
+  } else {
+    closeStatusModal();
+    toast('✅ הסטטוס בוטל ל-' + s.name);
+  }
 };
 
 function togglePresent(sid,present){
