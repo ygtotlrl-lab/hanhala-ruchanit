@@ -123,9 +123,10 @@ tr:hover td{background:#eef2fa}
 .ab.sa{background:#fdf0f0;border-color:#e74c3c;color:#c0392b;font-weight:600}
 .ab.sl{background:#fff8e8;border-color:#c9a84c;color:#a07830;font-weight:600}
 .sw{position:relative;margin-bottom:14px;max-width:320px}
-.sw input{width:100%;padding:9px 16px 9px 36px;background:#fff;border:1.5px solid var(--border);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem}
-.sw input:focus{outline:none;border-color:var(--navy)}
-.sw::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none}
+.sw input{width:100%;padding:9px 16px 9px 36px;background:var(--navy3);border:1.5px solid rgba(255,255,255,.15);border-radius:30px;color:#fff;font-family:Heebo;font-size:.88rem;transition:border-color .2s,background .2s}
+.sw input::placeholder{color:rgba(255,255,255,.45)}
+.sw input:focus{outline:none;border-color:rgba(255,255,255,.4);background:#16305f}
+.sw::before{content:"🔍";position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:.8rem;pointer-events:none;opacity:.7}
 input[type=date],input[type=month]{padding:8px 12px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy)}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:600}
@@ -408,7 +409,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 
 <!-- Search -->
-<div class="sw"><input type="text" id="search-st" placeholder="🔍 חיפוש תלמיד..." oninput="renderStudents()" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #ddd;font-size:0.95em"></div>
+<div class="sw"><input type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="renderStudents()"></div>
 
 <!-- Summary Bar -->
 <div id="st-summary" style="display:flex;gap:16px;margin:10px 0;font-size:0.9em;background:#f0f4ff;padding:8px 14px;border-radius:8px;flex-wrap:wrap"></div>
