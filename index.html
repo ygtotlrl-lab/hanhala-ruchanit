@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -400,16 +400,16 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
 
 
-<!-- Filter Tabs + Search -->
-<div style="display:flex;flex-direction:column;gap:10px;width:fit-content;margin:12px auto 14px">
-<div class="class-tabs" style="display:flex;gap:6px;flex-wrap:wrap">
+<!-- Filter Tabs -->
+<div id="class-tabs-row" style="display:flex;gap:6px;margin:12px 0;flex-wrap:wrap">
 <button class="btn sm on" id="ct-all" onclick="window.filterClass('all')" style="font-size:.78rem;padding:5px 10px">הכל (75)</button>
 <button class="btn sm out" id="ct-a" onclick="window.filterClass('a')" style="font-size:.78rem;padding:5px 10px">שיעור א'</button>
 <button class="btn sm out" id="ct-b" onclick="window.filterClass('b')" style="font-size:.78rem;padding:5px 10px">שיעור ב'</button>
 <button class="btn sm out" id="ct-g" onclick="window.filterClass('g')" style="font-size:.78rem;padding:5px 10px">שיעור ג'</button>
 </div>
-<!-- Search -->
-<div class="sw"><input type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="renderStudents()"></div>
+<!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
+<div style="display:flex;justify-content:center;margin:0 0 14px">
+<div class="sw" id="sw-inner"><input type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="renderStudents()"></div>
 </div>
 
 <!-- Summary Bar -->
@@ -1763,10 +1763,10 @@ function checkLoginNeeded(){
 
 function filterClass(cls){
   currentFilter=cls;
-  ['all','a','b','g'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el)el.classList.remove('on');});
+  ['all','a','b','g'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
   var mp={all:'ct-all',a:'ct-a',b:'ct-b',g:'ct-g'};
   var el=document.getElementById(mp[cls]||'ct-all');
-  if(el)el.classList.add('on');
+  if(el){el.classList.add('on');el.classList.remove('out');}
   renderStudents();
 }
 
@@ -1808,11 +1808,15 @@ function renderStudents(){
   students.forEach(function(s){
     if(getActiveAbsences(s).length>0)absent++;else present++;
   });
+  // סנכרון רוחב החיפוש לרוחב שורת הכפתורים
+  var tabsRow=document.getElementById('class-tabs-row');
+  var swInner=document.getElementById('sw-inner');
+  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
   var sumEl=document.getElementById('st-summary');
-  if(sumEl)sumEl.innerHTML=
-    '<span style="color:#38a169">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#e53e3e">&#x274C; אינם נוכחים: '+absent+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#666">'+H(1505,1492,34,1499)+': '+students.length+'</span>';
+  if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
+    '<span style="color:#38a169;display:inline-flex;align-items:center;gap:4px">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>'+
+    '<span style="color:#e53e3e;display:inline-flex;align-items:center;gap:4px">&#x274C; אינם נוכחים: '+absent+'</span>'+
+    '<span style="color:#666;display:inline-flex;align-items:center">'+H(1505,1492,34,1499)+': '+students.length+'</span>';}
   var ea=document.getElementById('ct-all');
   if(ea)ea.textContent=H(1492,1499,1500)+' ('+students.length+')';
   var ea2=document.getElementById('ct-a');
