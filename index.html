@@ -45,6 +45,7 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
@@ -408,7 +409,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
 
 
 <!-- Filter Tabs -->
@@ -2254,6 +2255,23 @@ function deleteReason(i){
 }
 
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
+
+window.downloadImportTemplate = function() {
+  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
+  var wb = XLSX.utils.book_new();
+  var data = [
+    [H(1513,1501,32,1502,1513,1508,1495,1492), H(1513,1501,32,1508,1512,1496,1497), H(1513,1497,1506,1493,1512)],
+    [H(1499,1492,1503), H(1497,1493,1505,1507), H(1513,1497,1506,1493,1512,32,1488)]
+  ];
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [{wch:18},{wch:14},{wch:12}];
+  // סגנון כותרת — bold לשורה הראשונה
+  ['A1','B1','C1'].forEach(function(cell) {
+    if (ws[cell]) ws[cell].s = {font:{bold:true},alignment:{horizontal:'right'}};
+  });
+  XLSX.utils.book_append_sheet(wb, ws, H(1514,1500,1502,1497,1491,1497,1501));
+  XLSX.writeFile(wb, H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,120,108,115,120));
+};
 
 window.printStudents = function() {
   try {
