@@ -1568,7 +1568,7 @@ async function ysPushToCloud() {
 async function ysPullFromCloud() {
   try {
     var s = await ysKvGet('ys_students');
-    if (s && Array.isArray(s) && s.length) {
+    if (s !== null && Array.isArray(s)) {
       var pullMigrated = false;
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
       localStorage.setItem('ys_students', JSON.stringify(s));
@@ -1836,7 +1836,7 @@ function getDefaultStudents(){return [
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
 
-function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s&&s.length){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s;}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s;}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
