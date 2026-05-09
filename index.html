@@ -2357,23 +2357,19 @@ window.confirmDeleteAll = function() {
 };
 
 window.downloadImportTemplate = function() {
-  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
-  var wb = XLSX.utils.book_new();
-  var data = [
+  // CSV + BOM: Excel פותח UTF-8 עם עברית נכון, RTL ממילא כי זו שפת התוכן
+  var BOM = '﻿';
+  var rows = [
     [H(1513,1501,32,1502,1513,1508,1495,1492), H(1513,1501,32,1508,1512,1496,1497), H(1513,1497,1506,1493,1512)],
     [H(1499,1492,1503), H(1497,1493,1505,1507), H(1513,1497,1506,1493,1512,32,1488)]
   ];
-  var ws = XLSX.utils.aoa_to_sheet(data);
-  ws['!cols'] = [{wch:18},{wch:14},{wch:12}];
-  // RTL: כיוון גיליון מימין לשמאל — עמודות מוצגות מימין לשמאל, עמודה A בצד ימין
-  ws['!views'] = [{rightToLeft: true}];
-  // יישור ימין + readingOrder RTL לכל התאים (דורש xlsx-style / SheetJS Pro לאכיפה מלאה)
-  var rtlStyle = {alignment:{horizontal:'right',readingOrder:2}};
-  var hdrStyle = {font:{bold:true},alignment:{horizontal:'right',readingOrder:2}};
-  ['A1','B1','C1'].forEach(function(c){if(ws[c])ws[c].s=hdrStyle;});
-  ['A2','B2','C2'].forEach(function(c){if(ws[c])ws[c].s=rtlStyle;});
-  XLSX.utils.book_append_sheet(wb, ws, H(1514,1500,1502,1497,1491,1497,1501));
-  XLSX.writeFile(wb, H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,120,108,115,120));
+  var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,99,115,118);
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 };
 
 window.printStudents = function() {
