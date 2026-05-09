@@ -88,7 +88,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .mod-desc{font-size:.78rem;color:var(--text3);line-height:1.4}
 .inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
-.back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap}
+.back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
 .back:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa}
 .gear{background:none;border:1.5px solid var(--border);color:var(--text3);border-radius:50%;width:34px;height:34px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
 .gear:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa;transform:rotate(30deg)}
@@ -561,7 +561,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
       <div class="ss">
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:8px">
@@ -589,7 +589,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
     <!-- הגדרות מודולים אחרים (בנייה) -->
     <div id="settings-attend" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>✅ הגדרות סדרים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>✅ הגדרות סדרים</span></div>
       <div class="ss" style="text-align:center;padding:40px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
         <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
@@ -597,7 +597,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
     <div id="settings-sleep" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>🌙 הגדרות שינה</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss" style="text-align:center;padding:40px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
         <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
@@ -605,7 +605,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
     <div id="settings-exams" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
       <div class="ss" style="text-align:center;padding:40px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
         <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
@@ -613,7 +613,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
     <div id="settings-files" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📁 הגדרות תיקים</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>📁 הגדרות תיקים</span></div>
       <div class="ss" style="text-align:center;padding:40px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
         <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
@@ -621,7 +621,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
     <div id="settings-reports" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>📊 הגדרות דוחות</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>📊 הגדרות דוחות</span></div>
       <div class="ss" style="text-align:center;padding:40px 20px">
         <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
         <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
@@ -631,7 +631,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" style="display:none">
-      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
@@ -1814,9 +1814,9 @@ function renderStudents(){
   if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
   var sumEl=document.getElementById('st-summary');
   if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
-    '<span style="color:#38a169;display:inline-flex;align-items:center;gap:4px">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>'+
-    '<span style="color:#e53e3e;display:inline-flex;align-items:center;gap:4px">&#x274C; אינם נוכחים: '+absent+'</span>'+
-    '<span style="color:#666;display:inline-flex;align-items:center">'+H(1505,1492,34,1499)+': '+students.length+'</span>';}
+    '<span style="color:#38a169;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>'+
+    '<span style="color:#e53e3e;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x274C; אינם נוכחים: '+absent+'</span>'+
+    '<span style="color:#666;display:inline-flex;align-items:center;line-height:1">'+H(1505,1492,34,1499)+': '+students.length+'</span>';}
   var ea=document.getElementById('ct-all');
   if(ea)ea.textContent=H(1492,1499,1500)+' ('+students.length+')';
   var ea2=document.getElementById('ct-a');
