@@ -409,7 +409,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm out" onclick="document.getElementById('import-file-input').click()" title="ייבא תלמידים מקובץ Excel">📤 ייבוא תלמידים</button><button class="btn sm" style="background:#c0392b;border-color:#c0392b" onclick="window.openDeleteAllModal()" title="מחק את כל התלמידים">🗑️ מחק הכל</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button><input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
 
 
 <!-- Filter Tabs -->
@@ -430,6 +430,30 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <!-- Students Table -->
 <div id="students-list-wrap">
   <div id="students-tbody"></div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div id="delete-all-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:400px;text-align:center">
+<div style="font-size:2.4rem;margin-bottom:10px">⚠️</div>
+<h3 style="color:#c0392b;margin-bottom:10px">מחיקת כלל התלמידים</h3>
+<p style="color:var(--text2);margin-bottom:6px">פעולה זו תמחק לצמיתות את <strong>כל</strong> התלמידים מהמערכת.</p>
+<p style="color:#c0392b;font-weight:600;margin-bottom:20px;font-size:.9rem">לא ניתן לשחזר לאחר האישור.</p>
+<div style="display:flex;gap:10px;justify-content:center">
+<button class="btn out" onclick="document.getElementById('delete-all-modal').style.display='none'">ביטול</button>
+<button class="btn" style="background:#c0392b;border-color:#c0392b" onclick="window.confirmDeleteAll()">🗑️ כן, מחק הכל</button>
+</div>
+</div>
+</div>
+
+<!-- Import Summary Modal -->
+<div id="import-summary-modal" class="modal-overlay" style="display:none">
+<div class="modal-box" style="max-width:380px;text-align:center">
+<div id="import-summary-icon" style="font-size:2rem;margin-bottom:10px"></div>
+<h3 id="import-summary-title" style="margin-bottom:14px"></h3>
+<div id="import-summary-body" style="color:var(--text2);font-size:.92rem;margin-bottom:20px;line-height:1.7"></div>
+<button class="btn" onclick="document.getElementById('import-summary-modal').style.display='none'">סגור</button>
+</div>
 </div>
 
 <!-- Add/Edit Student Modal -->
@@ -2255,6 +2279,82 @@ function deleteReason(i){
 }
 
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
+
+// ---- ייבוא תלמידים מ-Excel ----
+window.importStudentsFromFile = function(input) {
+  if (!input.files || !input.files[0]) return;
+  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
+  var file = input.files[0];
+  input.value = ''; // אפשר לייבא את אותו קובץ שוב
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      var existing = getStudents();
+      var maxId = existing.reduce(function(m,s){return Math.max(m,s.id);}, 0);
+      var added = 0, failed = [], skipped = 0;
+      var clsMap = {
+        'א':'a','a':'a','שיעור א':'a',
+        'ב':'b','b':'b','שיעור ב':'b',
+        'ג':'g','g':'g','שיעור ג':'g'
+      };
+      // שורה 0 = כותרת, מתחילים מ-1
+      for (var i = 1; i < rows.length; i++) {
+        var row = rows[i];
+        var family = String(row[0]||'').trim();
+        var first  = String(row[1]||'').trim();
+        var clsRaw = String(row[2]||'').trim();
+        var name = (family && first) ? family+' '+first : (family||first);
+        if (!name) { skipped++; continue; }
+        // מיפוי שיעור — מנסים על הערך הגולמי ועל התו האחרון
+        var cls = clsMap[clsRaw] || clsMap[clsRaw.slice(-1)] || null;
+        if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
+        maxId++;
+        existing.push({id:maxId, name:name, cls:cls});
+        added++;
+      }
+      if (added > 0) {
+        existing.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+        existing.forEach(function(s,i){s.id=i+1;});
+        saveStudents(existing);
+        scheduleYsPush();
+        renderStudents();
+      }
+      // הצגת סיכום
+      var icon = failed.length===0 ? '✅' : '⚠️';
+      var title = added + ' תלמידים נוספו בהצלחה';
+      var body = '';
+      if (skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
+      if (failed.length > 0) {
+        body += '<div style="color:#c0392b;margin-top:6px"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
+        body += '<div style="font-size:.82rem;margin-top:4px;direction:rtl">'+failed.slice(0,10).join(', ')+(failed.length>10?'...':'')+'</div>';
+      }
+      document.getElementById('import-summary-icon').textContent = icon;
+      document.getElementById('import-summary-title').textContent = title;
+      document.getElementById('import-summary-body').innerHTML = body || '<div>הכל תקין!</div>';
+      document.getElementById('import-summary-modal').style.display = 'flex';
+    } catch(err) {
+      toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err));
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+// ---- מחיקת כלל התלמידים ----
+window.openDeleteAllModal = function() {
+  if (checkLoginNeeded()) return;
+  document.getElementById('delete-all-modal').style.display = 'flex';
+};
+
+window.confirmDeleteAll = function() {
+  document.getElementById('delete-all-modal').style.display = 'none';
+  saveStudents([]);
+  scheduleYsPush();
+  renderStudents();
+  toast('🗑️ כל התלמידים נמחקו');
+};
 
 window.downloadImportTemplate = function() {
   if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
