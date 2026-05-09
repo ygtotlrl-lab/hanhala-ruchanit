@@ -2357,17 +2357,28 @@ window.confirmDeleteAll = function() {
 };
 
 window.downloadImportTemplate = function() {
-  // CSV + BOM: Excel פותח UTF-8 עם עברית נכון, RTL ממילא כי זו שפת התוכן
-  var BOM = '﻿';
-  var rows = [
-    [H(1513,1501,32,1502,1513,1508,1495,1492), H(1513,1501,32,1508,1512,1496,1497), H(1513,1497,1506,1493,1512)],
-    [H(1499,1492,1503), H(1497,1493,1505,1507), H(1513,1497,1506,1493,1512,32,1488)]
-  ];
-  var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  // HTML-as-XLS: Excel פותח HTML עם סיומת .xls ומכבד dir="rtl" — RTL מלא ללא ספריות
+  var f = H(1513,1501,32,1502,1513,1508,1495,1492);   // שם משפחה
+  var g = H(1513,1501,32,1508,1512,1496,1497);         // שם פרטי
+  var k = H(1513,1497,1506,1493,1512);                 // שיעור
+  var ex1 = H(1499,1492,1503);                         // כהן
+  var ex2 = H(1497,1493,1505,1507);                    // יוסף
+  var ex3 = H(1513,1497,1506,1493,1512,32,1488);       // שיעור א
+  var html = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<html dir="rtl" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">\n' +
+    '<head><meta charset="UTF-8">\n' +
+    '<style>td{font-family:Arial,sans-serif;font-size:12pt;text-align:right;direction:rtl}' +
+    'th{font-family:Arial,sans-serif;font-size:12pt;font-weight:bold;text-align:right;direction:rtl;background:#dce6f1}</style>\n' +
+    '</head>\n' +
+    '<body><table dir="rtl" border="1" cellpadding="4">\n' +
+    '<tr><th>'+f+'</th><th>'+g+'</th><th>'+k+'</th></tr>\n' +
+    '<tr><td>'+ex1+'</td><td>'+ex2+'</td><td>'+ex3+'</td></tr>\n' +
+    '</table></body></html>';
+  var blob = new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = url; a.download = H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,99,115,118);
+  a.href = url;
+  a.download = H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,120,108,115); // תבנית_תלמידים.xls
   document.body.appendChild(a); a.click();
   setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 };
