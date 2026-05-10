@@ -1834,7 +1834,7 @@ function getDefaultStudents(){return [
   {id:75,name:H(1513,1500,1493,32,1512,1494,32,1489),cls:'g'}
 ];}
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
-var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
+var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
 function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s;}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
@@ -2304,9 +2304,9 @@ window.importStudentsFromFile = function(input) {
       var maxId = existing.reduce(function(m,s){return Math.max(m,s.id);}, 0);
       var added = 0, failed = [], skipped = 0;
       var clsMap = {
-        'א':'a','a':'a','שיעור א':'a',
-        'ב':'b','b':'b','שיעור ב':'b',
-        'ג':'g','g':'g','שיעור ג':'g'
+        'א':'a',"א'":'a','a':'a','שיעור א':'a',"שיעור א'":'a',
+        'ב':'b',"ב'":'b','b':'b','שיעור ב':'b',"שיעור ב'":'b',
+        'ג':'g',"ג'":'g','g':'g','שיעור ג':'g',"שיעור ג'":'g'
       };
       // שורה 0 = כותרת, מתחילים מ-1
       for (var i = 1; i < rows.length; i++) {
@@ -2317,8 +2317,9 @@ window.importStudentsFromFile = function(input) {
         var family = String(row[2]||'').trim();
         var name = (family && first) ? family+' '+first : (family||first);
         if (!name) { skipped++; continue; }
-        // מיפוי שיעור — מנסים על הערך הגולמי ועל התו האחרון
-        var cls = clsMap[clsRaw] || clsMap[clsRaw.slice(-1)] || null;
+        // מיפוי שיעור — מנסים גולמי, ללא גרש, ותו אחרון
+        var clsStripped = clsRaw.replace(/['']/g,'');
+        var cls = clsMap[clsRaw] || clsMap[clsStripped] || clsMap[clsStripped.slice(-1)] || null;
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         maxId++;
         existing.push({id:maxId, name:name, cls:cls});
@@ -2370,7 +2371,7 @@ window.downloadImportTemplate = function() {
   var BOM = '﻿';
   var rows = [
     [H(1513,1497,1506,1493,1512), H(1513,1501,32,1508,1512,1496,1497), H(1513,1501,32,1502,1513,1508,1495,1492)],
-    [H(1513,1497,1506,1493,1512,32,1488), H(1497,1493,1505,1507), H(1499,1492,1503)]
+    [H(1513,1497,1506,1493,1512,32,1488,39), H(1497,1493,1505,1507), H(1499,1492,1503)]
   ];
   var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
   var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
@@ -2391,7 +2392,7 @@ window.printStudents = function() {
     var absent  = students.filter(function(s){return !s.present;});
     var today   = new Date().toLocaleDateString('he-IL');
     var NB = ' ';
-    function cls(c){return c==='a'?'שיעור'+NB+'א':c==='b'?'שיעור'+NB+'ב':'שיעור'+NB+'ג';}
+    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
     function fixName(n){return (n||'').replace(/ /g,NB);}
     var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
