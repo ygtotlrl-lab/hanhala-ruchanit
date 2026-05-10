@@ -409,7 +409,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm out" onclick="document.getElementById('import-file-input').click()" title="ייבא תלמידים מקובץ Excel">📤 ייבוא תלמידים</button><button class="btn sm" style="background:#c0392b;border-color:#c0392b" onclick="window.openDeleteAllModal()" title="מחק את כל התלמידים">🗑️ מחק הכל</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button><input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm out" onclick="document.getElementById('import-file-input').click()" title="ייבא תלמידים מקובץ Excel">📤 ייבוא תלמידים</button><button class="btn sm" style="background:#c0392b;border-color:#c0392b" onclick="window.openDeleteAllModal()" title="מחק את כל התלמידים">🗑️ מחק הכל</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button><input type="file" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
 
 
 <!-- Filter Tabs -->
@@ -2286,12 +2286,20 @@ window.importStudentsFromFile = function(input) {
   if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
   var file = input.files[0];
   input.value = ''; // אפשר לייבא את אותו קובץ שוב
+  var isCsv = file.name.toLowerCase().endsWith('.csv');
   var reader = new FileReader();
   reader.onload = function(e) {
     try {
-      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-      var ws = wb.Sheets[wb.SheetNames[0]];
-      var rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      var rows;
+      if (isCsv) {
+        // CSV: קריאה ישירה כטקסט, פיצול לשורות ועמודות
+        var text = e.target.result.replace(/^﻿/,''); // הסרת BOM אם קיים
+        rows = text.split(/\r?\n/).map(function(line){ return line.split(','); });
+      } else {
+        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      }
       var existing = getStudents();
       var maxId = existing.reduce(function(m,s){return Math.max(m,s.id);}, 0);
       var added = 0, failed = [], skipped = 0;
@@ -2340,7 +2348,7 @@ window.importStudentsFromFile = function(input) {
       toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err));
     }
   };
-  reader.readAsArrayBuffer(file);
+  if (isCsv) { reader.readAsText(file, 'UTF-8'); } else { reader.readAsArrayBuffer(file); }
 };
 
 // ---- מחיקת כלל התלמידים ----
