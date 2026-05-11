@@ -949,7 +949,6 @@ function closeStatusModal() {
 }
 
 function openStatusForm(type) {
-  console.log('openStatusForm v3 - type:', type);
   // סגור מודל בחירה
   var m = document.getElementById('status-modal');
   if (m) m.style.display = 'none';
@@ -991,18 +990,24 @@ function openStatusForm(type) {
         '<label style="'+lbl+'">סיבה</label>' +
         '<select id="sfm-reason" style="'+inp+'">'+reasonOptions+'<option value="אחר">אחר</option></select>' +
       '</div>' +
-      '<div>' +
-        '<label style="'+lbl+'">תאריך התחלה</label>' +
-        '<div style="display:flex;gap:8px">' +
-          '<input type="date" id="sfm-from-d" value="'+todayDate+'" lang="he" style="'+inp+';flex:1">' +
-          '<input type="time" id="sfm-from-t" value="'+defaultTime+'" style="width:110px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div>' +
+          '<label style="'+lbl+'">תאריך התחלה</label>' +
+          '<input type="date" id="sfm-from-d" value="'+todayDate+'" lang="he" style="'+inp+'">' +
+        '</div>' +
+        '<div>' +
+          '<label style="'+lbl+'">שעת התחלה</label>' +
+          '<input type="time" id="sfm-from-t" value="'+defaultTime+'" lang="he" style="'+inp+'">' +
         '</div>' +
       '</div>' +
-      '<div>' +
-        '<label style="'+lbl+'">תאריך סיום <span style="font-weight:400;color:#aaa">(אופציונלי)</span></label>' +
-        '<div style="display:flex;gap:8px">' +
-          '<input type="date" id="sfm-to-d" lang="he" style="'+inp+';flex:1">' +
-          '<input type="time" id="sfm-to-t" style="width:110px;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff">' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+        '<div>' +
+          '<label style="'+lbl+'">תאריך סיום <span style="font-weight:400;color:#aaa">(אופציונלי)</span></label>' +
+          '<input type="date" id="sfm-to-d" lang="he" style="'+inp+'">' +
+        '</div>' +
+        '<div>' +
+          '<label style="'+lbl+'">שעת סיום <span style="font-weight:400;color:#aaa">(אופציונלי)</span></label>' +
+          '<input type="time" id="sfm-to-t" lang="he" style="'+inp+'">' +
         '</div>' +
       '</div>' +
     '</div>' +
@@ -1013,7 +1018,6 @@ function openStatusForm(type) {
   '</div>';
 
   document.getElementById('sfm-name').textContent = window._statusStudentName;
-  console.log('sfm innerHTML:', form.innerHTML.substring(0, 200));
   form.style.display = 'flex';
 }
 
