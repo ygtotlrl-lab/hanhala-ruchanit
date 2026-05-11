@@ -949,6 +949,7 @@ function closeStatusModal() {
 }
 
 function openStatusForm(type) {
+  console.log('openStatusForm v3 - type:', type);
   // סגור מודל בחירה
   var m = document.getElementById('status-modal');
   if (m) m.style.display = 'none';
@@ -1012,6 +1013,7 @@ function openStatusForm(type) {
   '</div>';
 
   document.getElementById('sfm-name').textContent = window._statusStudentName;
+  console.log('sfm innerHTML:', form.innerHTML.substring(0, 200));
   form.style.display = 'flex';
 }
 
