@@ -943,11 +943,14 @@ function showPage(pg) {
 
 // ---- לוח שנה עברי ויזואלי לטופס סטאטוס ----
 window._hcST=[
-  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9,3), ml:[30,29,30,29,30,29,30,30,29,30,29,30]},
-  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,22),ml:[30,30,30,29,30,29,30,30,29,30,29,30]},
-  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,11),ml:[30,29,30,29,30,30,30,29,30,30,29,30]},
-  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9,2), ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];
-window._hcM=['תשרי','חשון','כסלו','טבת','שבט','אדר','ניסן','אייר','סיון','תמוז','אב','אלול'];
+  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9,3), ml:[30,30,30,29,30,29,30,29,30,29,30,29],    leap:false},
+  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29],    leap:false},
+  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29], leap:true},
+  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9,2), ml:[30,30,30,29,30,29,30,29,30,29,30,29],    leap:false}];
+// שמות חודשים — שנה רגילה / שנה מעוברת
+window._hcMstd=['תשרי','חשון','כסלו','טבת','שבט','אדר','ניסן','אייר','סיון','תמוז','אב','אלול'];
+window._hcMlp= ['תשרי','חשון','כסלו','טבת','שבט','אדר א׳','אדר ב׳','ניסן','אייר','סיון','תמוז','אב','אלול'];
+window._hcMN=function(hy){var b=window._hcBase(hy);return(b&&b.leap)?window._hcMlp:window._hcMstd;};
 window._hcD=['','א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ז׳','ח׳','ט׳','י׳','י״א','י״ב','י״ג','י״ד','ט״ו','ט״ז','י״ז','י״ח','י״ט','כ׳','כ״א','כ״ב','כ״ג','כ״ד','כ״ה','כ״ו','כ״ז','כ״ח','כ״ט','ל׳'];
 window._hcVw={};
 // מציאת בסיס שנה
@@ -968,12 +971,13 @@ window._hcH=function(d){
 // תווית שנה
 window._hcYL=function(hy){return({5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[hy]||String(hy);};
 // פורמט תצוגה
-window._hcFmt=function(hy,mi,day){return window._hcD[day]+' ב'+window._hcM[mi]+' '+window._hcYL(hy);};
+window._hcFmt=function(hy,mi,day){return window._hcD[day]+' ב'+window._hcMN(hy)[mi]+' '+window._hcYL(hy);};
 // ניווט חודש
 window._hcNav=function(pfx,dir){
   var v=window._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
-  if(mi<0){hy--;mi=11;}if(mi>11){hy++;mi=0;}
-  if(!window._hcBase(hy))return;
+  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
   window._hcVw[pfx]={hy:hy,mi:mi};window._hcDraw(pfx);};
 // ציור הלוח
 window._hcDraw=function(pfx){
@@ -984,21 +988,25 @@ window._hcDraw=function(pfx){
   var selH=selIso?window._hcH(new Date(selIso)):null;
   var todH=window._hcH(new Date());
   var bs='border:none;background:none;cursor:pointer;font-size:1.15rem;color:#1a3a6b;padding:2px 10px;line-height:1';
-  var hasPrev=v.mi>0||!!window._hcBase(v.hy-1),hasNext=v.mi<11||!!window._hcBase(v.hy+1);
-  var h='<div style="padding:12px 10px;font-family:Heebo;direction:ltr;min-width:252px">';
-  // כותרת ניווט
+  var maxMi=(b.ml.length-1);
+  var hasPrev=v.mi>0||!!window._hcBase(v.hy-1),hasNext=v.mi<maxMi||!!window._hcBase(v.hy+1);
+  // בגריד RTL: עמודה ראשונה (ימנית) = ש׳, אחרונה (שמאלית) = א׳
+  // מספר תאים ריקים = 6 − getDay() (0=ראשון → 6 ריקים, 6=שבת → 0 ריקים)
+  var rtlOffset=6-fdow;
+  var h='<div style="padding:12px 10px;font-family:Heebo;direction:rtl;min-width:252px">';
+  // כותרת ניווט — חץ ימני=חודש הקודם, שמאלי=הבא
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-  h+='<button onclick="window._hcNav(\''+pfx+'\',-1)" style="'+bs+(hasPrev?'':';opacity:.25;cursor:default')+'"'+(hasPrev?'':' disabled')+'>‹</button>';
-  h+='<span style="font-weight:700;font-size:.95rem;color:#1a3a6b;direction:rtl">'+window._hcM[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
-  h+='<button onclick="window._hcNav(\''+pfx+'\',1)" style="'+bs+(hasNext?'':';opacity:.25;cursor:default')+'"'+(hasNext?'':' disabled')+'>›</button>';
+  h+='<button onclick="window._hcNav(\''+pfx+'\',-1)" style="'+bs+(hasPrev?'':';opacity:.25;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>';
+  h+='<span style="font-weight:700;font-size:.95rem;color:#1a3a6b">'+window._hcMN(v.hy)[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
+  h+='<button onclick="window._hcNav(\''+pfx+'\',1)" style="'+bs+(hasNext?'':';opacity:.25;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>';
   h+='</div>';
-  // כותרת ימים א-ש (ראשון-שבת)
+  // כותרת ימים: DOM א→ש, גריד RTL מציג ש ימינה, א שמאלה
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px);text-align:center;margin-bottom:3px">';
   ['א','ב','ג','ד','ה','ו','ש'].forEach(function(x){h+='<div style="font-size:.72rem;font-weight:700;color:#999;padding:2px 0">'+x+'</div>';});
   h+='</div>';
   // תאים
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px)">';
-  for(var i=0;i<fdow;i++)h+='<div></div>';
+  for(var i=0;i<rtlOffset;i++)h+='<div></div>';
   for(var d=1;d<=mlen;d++){
     var isSel=selH&&selH.hy===v.hy&&selH.mi===v.mi&&selH.day===d;
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
