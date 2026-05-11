@@ -1040,8 +1040,21 @@ window._hcGet=function(pfx){
   return iso?(iso+'T'+(t||'00:00')):new Date().toISOString();};
 // הצג/הסתר בורר סיום
 window._hcToggle=function(){
-  var cb=document.getElementById('sfmT_en'),wr=document.getElementById('sfmT_wrap');
-  if(cb&&wr)wr.style.display=cb.checked?'block':'none';};
+  var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
+  if(!btn||!wr)return;
+  var open=wr.style.display==='none'||wr.style.display==='';
+  if(open){
+    wr.style.display='block';
+    btn.textContent='✕ הסר תאריך סיום';
+    btn.style.background='#fff5f5';btn.style.color='#c53030';btn.style.borderColor='#feb2b2';
+  } else {
+    wr.style.display='none';
+    btn.textContent='+ הוסף תאריך סיום';
+    btn.style.background='#f4f8ff';btn.style.color='#1a3a6b';btn.style.borderColor='#d8e2f0';
+    // ניקוי הערכים
+    var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
+    if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
+  }};
 // בניית HTML: כפתור-טריגר + פופאפ + שעה
 window._hcBuild=function(pfx,initH,tv){
   var label=initH?window._hcFmt(initH.hy,initH.mi,initH.day):'בחר תאריך עברי';
@@ -1120,10 +1133,7 @@ function openStatusForm(type) {
         window._hcBuild('sfmF', todayHeb, defaultTime) +
       '</div>' +
       '<div>' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:#666;cursor:pointer;margin-bottom:8px">'+
-          '<input type="checkbox" id="sfmT_en" onchange="window._hcToggle()"> '+
-          'קבע תאריך סיום'+
-        '</label>' +
+        '<button id="sfmT_btn" onclick="window._hcToggle()" type="button" style="padding:7px 14px;border:1.5px solid #d8e2f0;border-radius:8px;background:#f4f8ff;color:#1a3a6b;font-family:Heebo;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px">+ הוסף תאריך סיום</button>' +
         '<div id="sfmT_wrap" style="display:none">' +
           '<label style="'+lbl+'">תאריך סיום</label>' +
           window._hcBuild('sfmT', null, '') +
@@ -1143,8 +1153,8 @@ function openStatusForm(type) {
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
   var from = window._hcGet('sfmF');
-  var toEn = document.getElementById('sfmT_en');
-  var to = (toEn && toEn.checked) ? window._hcGet('sfmT') : null;
+  var toWrap = document.getElementById('sfmT_wrap');
+  var to = (toWrap && toWrap.style.display !== 'none') ? window._hcGet('sfmT') : null;
   var sid = window._statusSid;
 
   var students = getStudents();
