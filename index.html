@@ -1014,6 +1014,16 @@ function showPage(pg) {
 }
 
 
+// ---- בורר תאריך עברי לטופס סטאטוס ----
+var _SFM_D=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
+var _SFM_M=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
+var _SFM_Y=[{hy:5785,lb:"ה׳תשפ״ה",jd:new Date(2024,9,3),ml:[30,29,30,29,30,29,30,30,29,30,29,30]},{hy:5786,lb:"ה׳תשפ״ו",jd:new Date(2025,8,22),ml:[30,30,30,29,30,29,30,30,29,30,29,30]},{hy:5787,lb:"ה׳תשפ״ז",jd:new Date(2026,8,11),ml:[30,29,30,29,30,30,30,29,30,30,29,30]},{hy:5788,lb:"ה׳תשפ״ח",jd:new Date(2027,9,2),ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];
+function _sfmToHeb(d){var td=new Date(d.getFullYear(),d.getMonth(),d.getDate()),base=_SFM_Y[0];for(var i=_SFM_Y.length-1;i>=0;i--){if(td>=_SFM_Y[i].jd){base=_SFM_Y[i];break;}}var diff=Math.round((td-base.jd)/86400000),cum=0;for(var mi=0;mi<base.ml.length;mi++){if(diff<cum+base.ml[mi])return{day:diff-cum+1,mi:mi,hy:base.hy,ml:base.ml};cum+=base.ml[mi];}return{day:1,mi:0,hy:base.hy,ml:base.ml};}
+function _sfmUpdateDays(pfx){var yEl=document.getElementById(pfx+'-y'),mEl=document.getElementById(pfx+'-m'),dEl=document.getElementById(pfx+'-d');if(!yEl||!mEl||!dEl)return;var base=null;for(var i=0;i<_SFM_Y.length;i++){if(_SFM_Y[i].hy===parseInt(yEl.value)){base=_SFM_Y[i];break;}}if(!base)return;var maxD=base.ml[parseInt(mEl.value)]||29,cur=parseInt(dEl.value),h='';for(var d=1;d<=maxD;d++)h+='<option value="'+d+'"'+(d===Math.min(cur,maxD)?' selected':'')+'>'+_SFM_D[d]+'</option>';dEl.innerHTML=h;}
+function _sfmToggle(pfx){var c=document.getElementById(pfx+'-en'),w=document.getElementById(pfx+'-wrap');if(c&&w)w.style.display=c.checked?'flex':'none';}
+function _sfmISO(pfx){var yEl=document.getElementById(pfx+'-y'),mEl=document.getElementById(pfx+'-m'),dEl=document.getElementById(pfx+'-d'),tEl=document.getElementById(pfx+'-t');if(!yEl||!mEl||!dEl)return new Date().toISOString();var base=null;for(var i=0;i<_SFM_Y.length;i++){if(_SFM_Y[i].hy===parseInt(yEl.value)){base=_SFM_Y[i];break;}}if(!base)return new Date().toISOString();var cum=0;for(var m=0;m<parseInt(mEl.value);m++)cum+=base.ml[m];cum+=parseInt(dEl.value)-1;var dt=new Date(base.jd.getTime()+cum*86400000);if(tEl&&tEl.value){var p=tEl.value.split(':');dt.setHours(parseInt(p[0])||0,parseInt(p[1])||0,0,0);}return dt.toISOString();}
+function _sfmBuild(pfx,p,tv,opt){var dO='',mO='',yO='';for(var d=1;d<=(p.ml[p.mi]||29);d++)dO+='<option value="'+d+'"'+(d===p.day?' selected':'')+'>'+_SFM_D[d]+'</option>';_SFM_M.forEach(function(m,i){mO+='<option value="'+i+'"'+(i===p.mi?' selected':'')+'>'+m+'</option>';});_SFM_Y.forEach(function(y){yO+='<option value="'+y.hy+'"'+(y.hy===p.hy?' selected':'')+'>'+(y.lb||y.hy)+'</option>';});var s='padding:6px 8px;border:1.5px solid #d8e2f0;border-radius:8px;font-family:Heebo;font-size:.85rem;background:#fff;cursor:pointer;color:#1a3a6b';var chk=opt?'<label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:#888;cursor:pointer;margin-bottom:8px"><input type="checkbox" id="'+pfx+'-en" onchange="_sfmToggle(\''+pfx+'\')"> קבע תאריך סיום</label>':'';return chk+'<div id="'+pfx+'-wrap" style="display:'+(opt?'none':'flex')+';flex-wrap:wrap;gap:6px;align-items:center"><select id="'+pfx+'-d" style="'+s+'">'+dO+'</select> <select id="'+pfx+'-m" style="'+s+'" onchange="_sfmUpdateDays(\''+pfx+'\')">'+mO+'</select> <select id="'+pfx+'-y" style="'+s+'" onchange="_sfmUpdateDays(\''+pfx+'\')">'+yO+'</select> <input type="time" id="'+pfx+'-t" value="'+(tv||'')+'" style="'+s+'"></div>';}
+
 function closeStatusModal() {
   var m = document.getElementById('status-modal');
   if (m) m.style.display = 'none';
@@ -1038,7 +1048,7 @@ function openStatusForm(type) {
   var now = new Date();
   var mins = now.getMinutes() >= 30 ? 30 : 0;
   var defaultTimeStr = String(now.getHours()).padStart(2,'0')+':'+String(mins).padStart(2,'0');
-  var todayParts = window._gregToHebParts(now);
+  var todayParts = _sfmToHeb(now);
 
   var form = document.getElementById('status-form-modal');
   if (!form) {
@@ -1063,11 +1073,11 @@ function openStatusForm(type) {
       '</div>' +
       '<div>' +
         '<label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px">תאריך התחלה</label>' +
-        window._buildHebPicker('sfm-from', todayParts, defaultTimeStr, false) +
+        _sfmBuild('sfm-from', todayParts, defaultTimeStr, false) +
       '</div>' +
       '<div>' +
         '<label style="font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px">תאריך סיום</label>' +
-        window._buildHebPicker('sfm-to', todayParts, '', true) +
+        _sfmBuild('sfm-to', todayParts, '', true) +
       '</div>' +
     '</div>' +
     '<div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-start">' +
@@ -1082,9 +1092,9 @@ function openStatusForm(type) {
 
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
-  var from = window._hebPickerGet('sfm-from');
+  var from = _sfmISO('sfm-from');
   var toEn = document.getElementById('sfm-to-en');
-  var to = (toEn && toEn.checked) ? window._hebPickerGet('sfm-to') : null;
+  var to = (toEn && toEn.checked) ? _sfmISO('sfm-to') : null;
   var sid = window._statusSid;
 
   var students = getStudents();
