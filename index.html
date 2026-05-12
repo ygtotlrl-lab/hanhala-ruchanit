@@ -562,6 +562,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
             <div style="flex:2;min-width:200px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
               <div id="at-date-wrap"></div>
+              <div id="at_date_dow" style="font-size:.76rem;color:var(--text2);font-weight:600;margin-top:4px;padding-right:2px"></div>
             </div>
             <div style="flex:1;min-width:140px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
@@ -1098,7 +1099,12 @@ window._hcPick=function(pfx,hy,mi,day){
   var iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');
   var el=document.getElementById(pfx+'_iso');if(el)el.value=iso;
   var lb=document.getElementById(pfx+'_lbl');if(lb)lb.textContent=window._hcFmt(hy,mi,day);
-  var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';};
+  var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';
+  // עדכון יום בשבוע אם קיים אלמנט מתאים
+  var dowEl=document.getElementById(pfx+'_dow');
+  if(dowEl){var AT_DOW_L=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];dowEl.textContent='יום '+AT_DOW_L[new Date(iso+'T12:00:00').getDay()];}
+  // רענון רשימת סדרים לתאריך הנבחר
+  if(pfx==='at_date'&&typeof atRenderTodaySessions==='function') atRenderTodaySessions();};
 // קריאת ערך → ISO string
 window._hcGet=function(pfx){
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
@@ -2648,6 +2654,25 @@ window.printStudents = function() {
 // ============ END STUDENTS MODULE ============
 
 // ==================== מודול שמירת סדרים ====================
+// ימי שבוע בעברית
+var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function atDow(isoDate){return AT_DOW[new Date(isoDate+'T12:00:00').getDay()];}
+
+// סיכום סטאטוסים — מוחזר כ-HTML
+// סדר: נוכחים | חיסורים | היעדרויות | איחורים | אישורים | בבית | מנוחה
+function atSummaryHtml(cnts){
+  var parts=[];
+  var add=function(n,lbl,col){if(n)parts.push('<span style="color:'+col+';font-weight:700">'+n+' '+lbl+'</span>');};
+  add(cnts.p||0,  'נוכחים',   '#276749');
+  add(cnts.e||0,  'חיסורים',  '#742a2a');
+  add(cnts.x||0,  'היעדרויות','#742a2a');
+  add(cnts.l||0,  'איחורים',  '#dd6b20');
+  add(cnts.ap||0, 'אישורים',  '#2b4c9f');
+  add(cnts.ak||0, 'בבית',     '#553c9a');
+  add(cnts.a||0,  'מנוחה',    '#0e7490');
+  return parts.join('<span style="color:#ccc;font-weight:400"> | </span>');
+}
+
 window._atCfg = null;
 window._atData = null;
 window._atMarks = {};              // {sid:{s,min}}
@@ -2722,7 +2747,11 @@ window.loadAttend = async function() {
 
   // בורר תאריך לרישום — ללא שעה (tv=undefined)
   var dw=document.getElementById('at-date-wrap');
-  if(dw){ var todH=window._hcH(new Date()); dw.innerHTML=window._hcBuild('at_date',todH); }
+  if(dw){
+    var todH=window._hcH(new Date()); dw.innerHTML=window._hcBuild('at_date',todH);
+    var dowEl=document.getElementById('at_date_dow');
+    if(dowEl){var AT_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];dowEl.textContent='יום '+AT_DOW_I[new Date().getDay()];}
+  }
 
   // בורר תאריך לארכיון — ללא שעה
   var adw=document.getElementById('at-arc-date-wrap');
@@ -2808,23 +2837,21 @@ function atRenderTodaySessions() {
   var el=document.getElementById('at-today-sessions');
   if(!el) return;
   var data=window._atData||[];
+  // תאריך נבחר בבורר (אם לא נבחר — היום)
+  var selIso=(document.getElementById('at_date_iso')||{}).value;
   var todayIso=new Date().toISOString().split('T')[0];
-  var todaySess=data.filter(function(r){return r.date_iso===todayIso;});
-  if(!todaySess.length){el.innerHTML='';return;}
+  var filterIso=selIso||todayIso;
+  var isToday=filterIso===todayIso;
+  var daySess=data.filter(function(r){return r.date_iso===filterIso;});
+  if(!daySess.length){el.innerHTML='';return;}
+  var dowLabel=isToday?'היום':'יום '+atDow(filterIso);
   var html='<div style="margin-top:18px;border-top:1.5px solid var(--border);padding-top:14px">'+
-    '<div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:8px">📋 סדרים שמולאו היום:</div>'+
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:8px">📋 סדרים שמולאו '+dowLabel+':</div>'+
     '<div style="display:flex;flex-direction:column;gap:6px">';
-  todaySess.forEach(function(rec){
+  daySess.forEach(function(rec){
     var cnts={};
     Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-    var nP=cnts.p||0,nL=cnts.l||0,nA=cnts.a||0,nEx=(cnts.ap||0)+(cnts.ak||0)+(cnts.e||0),nHi=cnts.x||0;
-    var sp=[];
-    if(nP) sp.push('<span style="color:#276749;font-weight:700">'+nP+' נוכחים</span>');
-    if(nL) sp.push('<span style="color:#dd6b20;font-weight:700">'+nL+' איחורים</span>');
-    if(nA) sp.push('<span style="color:#0e7490;font-weight:700">'+nA+' מנוחה</span>');
-    if(nEx) sp.push('<span style="color:#553c9a;font-weight:700">'+nEx+' היעדרות</span>');
-    if(nHi) sp.push('<span style="color:#742a2a;font-weight:700">'+nHi+' ח׳</span>');
-    var summary=sp.join('<span style="color:#ccc"> | </span>');
+    var summary=atSummaryHtml(cnts);
     html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -3129,7 +3156,7 @@ window.atRenderArchive = async function(records) {
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
-  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בית',a:'מנוחה'};
+  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
   var ARC_COL={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
 
   // חודש עברי נוכחי
@@ -3193,19 +3220,13 @@ window.atRenderArchive = async function(records) {
           ' <span style="font-size:.76rem;font-weight:400;color:var(--text2)">('+entries.length+' סדרים)</span></span>'+
           '<span style="font-size:.68rem;opacity:.45">▾</span>'+
         '</div>';
-        html+='<div id="'+dId+'" style="display:block;padding-right:8px">';
+        html+='<div id="'+dId+'" style="display:'+(isToday?'block':'none')+';padding-right:8px">';
 
         entries.forEach(function(entry){
           var rec=entry.rec;
           var cnts={};
           Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-          var nP=cnts.p||0,nL=cnts.l||0,nA=cnts.a||0,nEx=(cnts.ap||0)+(cnts.ak||0)+(cnts.e||0);
-          var sp=[];
-          if(nP) sp.push('<span style="color:#276749;font-weight:700">'+nP+' נוכחים</span>');
-          if(nL) sp.push('<span style="color:#dd6b20;font-weight:700">'+nL+' איחורים</span>');
-          if(nA) sp.push('<span style="color:#0e7490;font-weight:700">'+nA+' חיסורים</span>');
-          if(nEx) sp.push('<span style="color:#553c9a;font-weight:700">'+nEx+' היעדרות</span>');
-          var summary=sp.join('<span style="color:#ccc;font-weight:400"> | </span>');
+          var summary=atSummaryHtml(cnts);
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
@@ -3267,7 +3288,7 @@ window.atExportExcel = async function() {
       Object.entries(rec.marks).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
-        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בית':m.s==='a'?'מנוחה':'';
+        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
         rows.push([dLabel,rec.session,sn,lbl,m.s==='l'?(m.min||0):'',rec.filled_by_name]);
       });
     });
@@ -3388,13 +3409,22 @@ window.atRenderSupervision = async function() {
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
+    // תאריך + יום הערה אחרונה
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastLabel='';
+    if(lastTreat){
+      var ltHd=lastTreat.date_heb;
+      var ltIso=lastTreat.date_iso||'';
+      var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
+      lastLabel='<span style="background:#e8f5e9;color:#276749;border-radius:6px;padding:2px 8px;font-size:.74rem;font-weight:700;margin-right:6px">📝 יום '+atDow(ltIso)+' '+ltDateStr+'</span>';
+    }
     var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
-    html+='<div style="flex:1;font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:12px;font-size:.82rem">';
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
