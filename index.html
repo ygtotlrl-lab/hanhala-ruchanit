@@ -574,11 +574,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
       <!-- שלב ב׳: רשימת תלמידים -->
       <div id="at-reg-list" style="display:none">
-        <div id="at-reg-header" style="background:var(--navy);color:#fff;border-radius:var(--r);padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between"></div>
-        <div id="at-students"></div>
-        <div style="margin-top:18px;display:flex;justify-content:flex-start">
-          <button onclick="window.atCloseSession()" style="padding:10px 28px;background:#276749;color:#fff;border:none;border-radius:10px;font-family:Heebo;font-size:.95rem;font-weight:700;cursor:pointer">✅ שמור וסגור</button>
+        <div style="background:var(--navy);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+          <div id="at-reg-header" style="flex:1;display:flex;align-items:center;gap:10px"></div>
+          <button onclick="window.atCloseSession()" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ שמור וסגור</button>
         </div>
+        <div id="at-students"></div>
       </div>
     </div>
     <!-- תצוגת ארכיון -->
@@ -2652,10 +2652,14 @@ window.printStudents = function() {
 // ==================== מודול שמירת סדרים ====================
 window._atCfg = null;
 window._atData = null;
-window._atMarks = {};          // {sid:{s,min}} לסדר הנוכחי הפתוח
-window._atCurrentSessionId = null;  // id של הרשומה הפתוחה כעת
+window._atMarks = {};              // {sid:{s,min}}
+window._atPending = {};            // sid → true: סומן לאחרונה, עדיין לא ירד
+window._atCleared = {};            // sid → true: נוקה ידנית (לא לסמן אוטומטית שוב)
+window._atCurrentSessionId = null;
 window._atSaveTimer = null;
 window._atView = 'reg';
+window._atSupHY = null;            // חודש נצפה בהשגחה
+window._atSupMI = null;
 
 function atDefaultCfg() {
   return {
@@ -2808,6 +2812,8 @@ window.atOpenSession = async function(sessId, sessName) {
   // אתחול סימונים — סימון אוטומטי לפי סטאטוס
   var students=getStudents();
   window._atMarks={};
+  window._atPending={};
+  window._atCleared={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var am=atAutoMark(s);
     if(am) window._atMarks[s.id]={s:am,min:0};
@@ -2857,6 +2863,36 @@ async function atAutoSaveNow() {
   await atSaveData(window._atData);
 }
 
+// דיאלוג ביטול סימון אוטומטי
+function atShowOverrideDialog(sid, newCode, reason) {
+  var d=document.createElement('div');
+  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:340px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
+    '<div style="font-size:1.5rem;margin-bottom:6px">⚠️</div>'+
+    '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px">שינוי סימון</div>'+
+    '<p style="font-size:.85rem;color:var(--text2);margin-bottom:18px;line-height:1.5">תלמיד זה סומן אוטומטית בשל:<br><b>'+reason+'</b><br>האם לסמן ידנית ולבטל את הסימון האוטומטי?</p>'+
+    '<div style="display:flex;gap:10px;justify-content:center">'+
+    '<button onclick="this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+    '<button onclick="window.atApplyMark(\''+sid+'\',\''+newCode+'\');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">אישור</button>'+
+    '</div></div>';
+  d.setAttribute('data-dlg','override');
+  document.body.appendChild(d);
+}
+
+// החלת סימון (אחרי אישור אם נדרש)
+window.atApplyMark = function(sid, code) {
+  window._atMarks[sid]={s:code,min:(window._atMarks[sid]||{}).min||0};
+  window._atPending[sid]=true;  // שהייה — תלמיד נשאר למעלה 600ms
+  window._atCleared[sid]=true;  // נסמן ידנית — לא לאפשר חזרת auto-mark
+  window.atRenderStudents();
+  setTimeout(function(){
+    delete window._atPending[sid];
+    window.atRenderStudents();
+  },600);
+  clearTimeout(window._atSaveTimer);
+  window._atSaveTimer=setTimeout(atAutoSaveNow,700);
+};
+
 window.atRenderStudents = function() {
   var el=document.getElementById('at-students');
   if(!el) return;
@@ -2865,11 +2901,12 @@ window.atRenderStudents = function() {
 
   var active=students.filter(function(s){return s.active!==false;});
 
-  // הפרד: ללא סימון (למעלה) / סומן (למטה)
+  // הפרד: לא סומן / pending (למעלה)  vs.  סומן סופי (למטה)
   var unmarked=[], marked=[];
   active.forEach(function(s){
     var cur=window._atMarks[s.id];
-    if(cur&&cur.s) marked.push(s);
+    var isPending=!!window._atPending[s.id];
+    if(cur&&cur.s&&!isPending) marked.push(s);
     else unmarked.push(s);
   });
 
@@ -2878,35 +2915,43 @@ window.atRenderStudents = function() {
     var cur=(window._atMarks[sid]||{}).s;
     var isOn=(cur===code);
     var col=AT_COLORS[code]||{bg:'#eee',fg:'#333'};
-    var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.05);':
+    var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
       'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
     return '<button onclick="window.atSetMark(\''+sid+'\',\''+code+'\')" style="'+style+'">'+label+'</button>';
+  }
+  function mkClearBtn(sid){
+    return '<button onclick="window.atClearMark(\''+sid+'\')" title="נקה סימון" '+
+      'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
+      'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
+      'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
+      'onmouseout="this.style.borderColor=\'#ccc\';this.style.color=\'#bbb\'">✕</button>';
   }
 
   function renderRow(s, isMark) {
     var marks=window._atMarks[s.id]||{};
     var isLate=marks.s==='l';
+    var hasMark=!!(marks.s);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
     var autoHint='';
     var am=atAutoMark(s);
-    if(am&&isMark){
+    if(am&&isMark&&!window._atCleared[s.id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
       if(aLbl) autoHint='<span style="font-size:.7rem;color:#aaa;margin-right:4px">('+aLbl+')</span>';
     }
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="1" max="120" value="'+(marks.min||10)+'" '+
+        '<input type="number" min="0" max="120" value="'+(marks.min||0)+'" '+
         'onchange="window.atSetLateMin(\''+s.id+'\',this.value)" '+
         'style="width:50px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
       '</div>':'';
     var rowBg=isMark?'#f9fafb':'#fff';
-    // סדר כפתורים מימין לשמאל: [✓][איחור][-][x][א][ב][ג]
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
       '<div style="width:22px;text-align:center;font-weight:700;font-size:.8rem;color:var(--text3)">'+cls+'</div>'+
       '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+s.name+autoHint+'</div>'+
       lateField+
-      '<div style="display:flex;gap:4px;flex-wrap:wrap">'+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'+
+        (hasMark?mkClearBtn(s.id):'')+
         mkBtn(s.id,'p','✓')+
         mkBtn(s.id,'l','איחור')+
         mkBtn(s.id,'e','-')+
@@ -2928,16 +2973,36 @@ window.atRenderStudents = function() {
   el.innerHTML=html||'<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים פעילים</div>';
 };
 
+// לחיצה על כפתור סימון — בדיקת override לאוטו-מארק
 window.atSetMark = function(sid, code) {
-  window._atMarks[sid]={s:code,min:(window._atMarks[sid]||{}).min||10};
+  var student=getStudents().find(function(s){return String(s.id)===String(sid);});
+  var autoM=student?atAutoMark(student):null;
+  var cur=window._atMarks[sid];
+  // אם מסומן אוטומטית ולא נוקה — שאל לפני שינוי
+  if(autoM&&cur&&cur.s===autoM&&!window._atCleared[sid]){
+    var aa=getActiveAbsences(student);
+    var reason=aa&&aa[0]?
+      (aa[0].reason||(aa[0].type==='approved'?'אישור':aa[0].type==='suspended'?'השעיה':'עזיבה')):
+      'סטאטוס קיים';
+    atShowOverrideDialog(sid,code,reason);
+    return;
+  }
+  window.atApplyMark(sid,code);
+};
+
+// ניקוי סימון — מחזיר תלמיד לרשימה העליונה
+window.atClearMark = function(sid) {
+  delete window._atMarks[sid];
+  delete window._atPending[sid];
+  window._atCleared[sid]=true;
   window.atRenderStudents();
-  // שמירה אוטומטית מדוּבֶּנסֶת
   clearTimeout(window._atSaveTimer);
   window._atSaveTimer=setTimeout(atAutoSaveNow,700);
 };
+
 window.atSetLateMin = function(sid, val) {
   var n=parseInt(val)||0;
-  if(n<1)n=1;if(n>120)n=120;
+  if(n<0)n=0;if(n>120)n=120;
   if(!window._atMarks[sid])window._atMarks[sid]={s:'l',min:n};
   else window._atMarks[sid].min=n;
   clearTimeout(window._atSaveTimer);
@@ -2969,21 +3034,29 @@ window.atRenderArchive = async function(records) {
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
 
+  // סדר + תוויות לסיכום
+  var ARC_ORDER=['p','l','e','x','ap','ak','a'];
+  var ARC_ICON ={p:'✓',l:'⏰',e:'-',x:'x',ap:'א',ak:'ב',a:'ג'};
+  var ARC_COL  ={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
+  var ARC_LBL  ={p:'נוכח',l:'איחור',e:'חיסור',x:'לא במסגרת',ap:'יצא באישור',ak:'נעדר ידוע',a:'נעדר'};
+
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   sorted.forEach(function(rec){
     var hd=rec.date_heb;
     var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-    var present=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-    var absent=Object.values(rec.marks).filter(function(m){return ['a','ak'].indexOf(m.s)>=0;}).length;
-    var late=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
+    // ספירה לפי קוד
+    var cnts={};
+    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
-    // כותרת: תאריך עברי + שם סדר בלבד
     html+='<div style="flex:1"><span style="font-weight:700;font-size:.9rem;color:var(--navy)">'+dLabel+'</span>&nbsp;<span style="font-size:.82rem;color:var(--text2)">— '+rec.session+'</span></div>';
-    html+='<div style="display:flex;gap:10px;font-size:.8rem">';
-    html+='<span style="color:#38a169">✓ '+present+'</span>';
-    html+='<span style="color:#e53e3e">נע׳ '+absent+'</span>';
-    if(late) html+='<span style="color:#b7791f">⏰ '+late+'</span>';
+    // סיכום: אייקוני כפתורים עם ספירה
+    html+='<div style="display:flex;gap:8px;font-size:.82rem;font-weight:700;flex-wrap:wrap">';
+    ARC_ORDER.forEach(function(code){
+      var n=cnts[code]||0; if(!n) return;
+      var extra=(code==='l')?('<span style="font-size:.72rem;font-weight:400"> ד׳</span>'):'';
+      html+='<span style="color:'+ARC_COL[code]+'">'+ARC_ICON[code]+'<span style="font-size:.78rem"> '+n+'</span>'+extra+'</span>';
+    });
     html+='</div>';
     html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;padding:2px 6px">✕</button>';
     html+='</div>';
@@ -2992,9 +3065,12 @@ window.atRenderArchive = async function(records) {
     var rows=Object.entries(rec.marks).map(function(e){
       var sid=e[0],m=e[1];
       var sn=nameById(sid);
-      var lbl=m.s==='p'?'נוכח':m.s==='a'?'נעדר':m.s==='ak'?'נעדר ידוע':m.s==='ap'?'יצא באישור':m.s==='x'?'לא במסגרת':m.s==='e'?'פטור':m.s==='l'?('איחור '+(m.min||'')+'ד׳'):'לא סומן';
-      var col=m.s==='p'?'#38a169':m.s==='a'?'#e53e3e':m.s==='ak'?'#c05621':m.s==='ap'?'#276749':m.s==='l'?'#b7791f':'#888';
-      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.83rem"><span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
+      var lbl=m.s==='l'?('איחור — '+(m.min||0)+' ד׳'):(ARC_LBL[m.s]||'לא סומן');
+      var col=ARC_COL[m.s]||'#888';
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.83rem">'+
+        '<span>'+sn+'</span>'+
+        '<span style="color:'+col+';font-weight:600">'+lbl+'</span>'+
+      '</div>';
     });
     html+=rows.join('');
     html+='</div></div>';
@@ -3080,10 +3156,20 @@ window.atExportPdf = async function() {
 };
 
 // -------- השגחה --------
+// ניווט חודשי
+window.atSupNav = function(dir) {
+  var hy=window._atSupHY, mi=window._atSupMI;
+  mi+=dir;
+  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
+  window._atSupHY=hy;window._atSupMI=mi;
+  window.atRenderSupervision();
+};
+
 window.atRenderSupervision = async function() {
   var el=document.getElementById('at-sup-content');
   if(!el) return;
-  // גישה: senior ו-admin בלבד
   if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
@@ -3091,19 +3177,39 @@ window.atRenderSupervision = async function() {
   var data=await atLoadData();
   var students=getStudents();
   var treats=await atLoadTreats();
+
+  // אתחל חודש נצפה אם לא מוגדר
+  if(window._atSupHY===null){
+    var ch=window._hcH(new Date());
+    window._atSupHY=ch.hy;window._atSupMI=ch.mi;
+  }
+  var hy=window._atSupHY,mi=window._atSupMI;
+  var mNames=window._hcMN(hy);
+  var mLabel=mNames[mi]+' '+window._hcYL(hy);
+
+  // בדיקת ניווט
+  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
+  var hasPrev=mi>0||!!window._hcBase(hy-1);
+  var hasNext=mi<curMax||!!window._hcBase(hy+1);
+
+  // כותרת ניווט
+  var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy);';
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+    '<button onclick="window.atSupNav(-1)" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
+    '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
+    '<button onclick="window.atSupNav(1)" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
+  '</div>';
+
   if(!data||!data.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
   }
 
-  // חישוב סיכומים — מאז תשרי של השנה הנוכחית
-  var curHY=window._hcH(new Date()).hy;
-  var tishreiBeg=window._hcBase(curHY);
-  var sinceDate=tishreiBeg?tishreiBeg.jd:new Date(new Date().getFullYear()-1,8,1);
-
+  // חישוב סיכומים לחודש הנוכחי
   var stats={};
   students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0};});
   data.forEach(function(rec){
-    if(new Date(rec.date_iso)<sinceDate) return;
+    var dh=rec.date_heb;
+    if(!dh||dh.hy!==hy||dh.mi!==mi) return;
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
@@ -3112,34 +3218,31 @@ window.atRenderSupervision = async function() {
     });
   });
 
-  // מיין לפי מספר היעדרויות
   var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין היעדרויות רשומות</div>';return;
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין היעדרויות ב'+mLabel+'</div>';return;
   }
 
-  var html='<div style="margin-bottom:10px;font-size:.82rem;color:var(--text2)">סיכום מאז תשרי '+window._hcYL(curHY)+'</div>';
-  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  var html=navHtml+'<div style="display:flex;flex-direction:column;gap:10px">';
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
-    var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 7px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
-    var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 7px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
+    var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
+    var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
-    html+='<div style="flex:1;font-weight:700;font-size:.92rem">'+st.name+''+alert20+alert300+'</div>';
-    html+='<div style="display:flex;gap:14px;font-size:.83rem">';
-    html+='<span style="color:#e53e3e">היעדרויות: <b>'+st.absent+'</b></span>';
-    html+='<span style="color:#b7791f">איחורים: <b>'+st.lateMin+'</b> ד׳</span>';
+    html+='<div style="flex:1;font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>';
+    html+='<div style="display:flex;gap:12px;font-size:.82rem">';
+    html+='<span style="color:#0e7490">ג: <b>'+st.absent+'</b></span>';
+    html+='<span style="color:#dd6b20">⏰: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
     html+='</div></div>';
     // פאנל פרטים
     html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
-    // הוסף טיפול
     html+='<div style="margin-bottom:14px">';
     html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">➕ הוסף טיפול</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
@@ -3149,7 +3252,6 @@ window.atRenderSupervision = async function() {
     html+='<input id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
     html+='<button onclick="window.atAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
-    // רשימת טיפולים
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
       html+=stuTreats.slice().reverse().map(function(t){
