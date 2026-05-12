@@ -571,6 +571,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px">בחר סדר לפתיחה:</div>
           <div id="at-sess-btns" style="display:flex;gap:9px;flex-wrap:wrap"></div>
         </div>
+        <!-- סדרים שמולאו היום -->
+        <div id="at-today-sessions"></div>
       </div>
       <!-- שלב ב׳: רשימת תלמידים -->
       <div id="at-reg-list" style="display:none">
@@ -583,13 +585,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </div>
     <!-- תצוגת ארכיון -->
     <div id="at-view-arc" style="display:none">
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
-        <div id="at-arc-date-wrap" style="flex:2;min-width:200px"></div>
-        <button onclick="window.atArcFilter()" style="padding:8px 18px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">🔍 סנן</button>
-        <button onclick="window.atArcFilter(true)" style="padding:8px 14px;background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">הצג הכול</button>
-        <span class="gap"></span>
-        <button onclick="window.atExportExcel()" style="padding:8px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 Excel</button>
-        <button onclick="window.atExportPdf()" style="padding:8px 14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📄 PDF</button>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+        <button onclick="window.atExportExcel()" style="padding:7px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 Excel</button>
+        <button onclick="window.atExportPdf()" style="padding:7px 14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📄 PDF</button>
       </div>
       <div id="at-arc-list"></div>
     </div>
@@ -2736,6 +2734,7 @@ window.loadAttend = async function() {
 
   // כפתורי סדרים
   atFillSessionBtns();
+  atRenderTodaySessions();
 
   // ודא שלוח הבחירה מוצג, רשימה מוסתרת
   var pk=document.getElementById('at-reg-picker');
@@ -2753,13 +2752,14 @@ function atFillSessionBtns() {
   if(!el) return;
   var cfg=window._atCfg||atDefaultCfg();
   el.innerHTML=cfg.sessions.map(function(s){
+    var timeLabel=s.startTime?'<span style="font-size:.72rem;font-weight:400;color:#6b7fa3;display:block;margin-top:1px">'+s.startTime+'</span>':'';
     return '<button onclick="window.atOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
-      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+      'style="padding:9px 18px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
-      'transition:all .18s" '+
+      'transition:all .18s;text-align:center;line-height:1.2" '+
       'onmouseover="this.style.background=\'#dbe4f7\'" '+
       'onmouseout="this.style.background=\'#eef2fa\'">'+
-      s.name+'</button>';
+      s.name+timeLabel+'</button>';
   }).join('');
 }
 
@@ -2804,10 +2804,80 @@ var AT_COLORS={
   'a': {bg:'#0e7490',fg:'#fff'}     // ג טורקיז
 };
 
+// הצגת סדרים שנרשמו היום
+function atRenderTodaySessions() {
+  var el=document.getElementById('at-today-sessions');
+  if(!el) return;
+  var data=window._atData||[];
+  var todayIso=new Date().toISOString().split('T')[0];
+  var todaySess=data.filter(function(r){return r.date_iso===todayIso;});
+  if(!todaySess.length){el.innerHTML='';return;}
+  var html='<div style="margin-top:18px;border-top:1.5px solid var(--border);padding-top:14px">'+
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:8px">📋 סדרים שמולאו היום:</div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px">';
+  todaySess.forEach(function(rec){
+    var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
+    var tot=Object.keys(rec.marks).filter(function(sid){return rec.marks[sid].s;}).length;
+    html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+      '<span style="font-weight:700;font-size:.88rem;flex:1;color:var(--navy)">'+rec.session+'</span>'+
+      '<span style="font-size:.8rem;color:#38a169">✓ '+p+'</span>'+
+      '<span style="font-size:.8rem;color:var(--text3)">/ '+tot+' סומנו</span>'+
+      '<span style="font-size:.8rem;color:var(--navy);font-weight:600">✏️ ערוך</span>'+
+    '</div>';
+  });
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+// עריכת סדר קיים
+window.atEditSession = async function(recId) {
+  var data=await atLoadData();
+  var rec=data.find(function(r){return r.id===recId;});
+  if(!rec) return;
+  // אתחל סימונים מהרשומה הקיימת
+  window._atMarks={};window._atPending={};window._atCleared={};
+  Object.entries(rec.marks).forEach(function(e){
+    var sid=e[0],m=e[1];
+    if(m.s){window._atMarks[sid]={s:m.s,min:m.min||0};window._atCleared[sid]=true;}
+  });
+  // מלא תאריך
+  var dw=document.getElementById('at-date-wrap');
+  if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('at_date',rec.date_heb);
+  var fl=document.getElementById('at-filler');
+  if(fl) fl.value=rec.filled_by_name||'';
+  window._atCurrentSessionId=recId;
+  var hdr=document.getElementById('at-reg-header');
+  if(hdr) hdr.innerHTML=
+    '<span style="font-weight:700;font-size:1rem">'+rec.session+'</span>'+
+    '<span style="font-size:.87rem;opacity:.85">'+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+  document.getElementById('at-reg-picker').style.display='none';
+  document.getElementById('at-reg-list').style.display='block';
+  window.atRenderStudents();
+};
+
 // פתיחת סדר חדש
 window.atOpenSession = async function(sessId, sessName) {
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
+
+  // בדוק כפילות — אותו סדר ואותו יום
+  var allData=await atLoadData();
+  var existing=allData.find(function(r){return r.session===sessName&&r.date_iso===dateIso;});
+  if(existing){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+    d.setAttribute('data-dlg','dup');
+    d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
+      '<div style="font-size:1.5rem;margin-bottom:6px">📋</div>'+
+      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">סדר כבר מולא</div>'+
+      '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>'+
+      '<div style="display:flex;gap:10px;justify-content:center">'+
+      '<button onclick="this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button onclick="window.atEditSession(\''+existing.id+'\');this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
+      '</div></div>';
+    document.body.appendChild(d);
+    return;
+  }
 
   // אתחול סימונים — סימון אוטומטי לפי סטאטוס
   var students=getStudents();
@@ -2881,14 +2951,31 @@ function atShowOverrideDialog(sid, newCode, reason) {
 
 // החלת סימון (אחרי אישור אם נדרש)
 window.atApplyMark = function(sid, code) {
-  window._atMarks[sid]={s:code,min:(window._atMarks[sid]||{}).min||0};
-  window._atPending[sid]=true;  // שהייה — תלמיד נשאר למעלה 600ms
-  window._atCleared[sid]=true;  // נסמן ידנית — לא לאפשר חזרת auto-mark
+  var s=String(sid);
+  var prevMin=(window._atMarks[s]||{}).min||0;
+  window._atMarks[s]={s:code,min:prevMin};
+  window._atCleared[s]=true;    // מנע חזרת auto-mark
+  window._atPending[s]=true;    // השאר למעלה בינתיים
   window.atRenderStudents();
-  setTimeout(function(){
-    delete window._atPending[sid];
-    window.atRenderStudents();
-  },600);
+  if(code!=='l'){
+    // לא איחור: הורד לרשימה לאחר 600ms
+    setTimeout(function(){
+      delete window._atPending[s];
+      window.atRenderStudents();
+    },600);
+  }
+  // איחור: נשאר pending עד לחיצה על ✓ (atConfirmLate)
+  clearTimeout(window._atSaveTimer);
+  window._atSaveTimer=setTimeout(atAutoSaveNow,700);
+};
+
+// אישור איחור — הורדה לרשימת מסומנים
+window.atConfirmLate = function(sid) {
+  var s=String(sid);
+  var inp=document.getElementById('at-min-'+sid);
+  if(inp) window.atSetLateMin(sid,inp.value);
+  delete window._atPending[s];
+  window.atRenderStudents();
   clearTimeout(window._atSaveTimer);
   window._atSaveTimer=setTimeout(atAutoSaveNow,700);
 };
@@ -2938,12 +3025,15 @@ window.atRenderStudents = function() {
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
       if(aLbl) autoHint='<span style="font-size:.7rem;color:#aaa;margin-right:4px">('+aLbl+')</span>';
     }
+    var isPendingLate=isLate&&!!window._atPending[String(s.id)];
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="0" max="120" value="'+(marks.min||0)+'" '+
+        '<input type="number" min="0" max="120" value="'+(marks.min||0)+'" id="at-min-'+s.id+'" '+
         'onchange="window.atSetLateMin(\''+s.id+'\',this.value)" '+
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate(\''+s.id+'\')}" '+
         'style="width:50px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
+        (isPendingLate?'<button onclick="window.atConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
@@ -3019,6 +3109,7 @@ window.atCloseSession = async function() {
   window._atMarks={};
   document.getElementById('at-reg-list').style.display='none';
   document.getElementById('at-reg-picker').style.display='';
+  atRenderTodaySessions();
   toast(msg);
 };
 
@@ -3030,50 +3121,108 @@ window.atRenderArchive = async function(records) {
   if(!records||!records.length){
     el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
   }
-  var sorted=records.slice().sort(function(a,b){return b.date_iso.localeCompare(a.date_iso);});
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
+  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'לא במסגרת',ap:'יצא באישור',ak:'נעדר ידוע',a:'נעדר'};
+  var ARC_COL={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
 
-  // סדר + תוויות לסיכום
-  var ARC_ORDER=['p','l','e','x','ap','ak','a'];
-  var ARC_ICON ={p:'✓',l:'⏰',e:'-',x:'x',ap:'א',ak:'ב',a:'ג'};
-  var ARC_COL  ={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
-  var ARC_LBL  ={p:'נוכח',l:'איחור',e:'חיסור',x:'לא במסגרת',ap:'יצא באישור',ak:'נעדר ידוע',a:'נעדר'};
+  // חודש עברי נוכחי
+  var todG=new Date();
+  var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
+  var todH=window._hcH(todG);
+  var curHY=todH.hy, curMI=todH.mi;
 
-  var html='<div style="display:flex;flex-direction:column;gap:10px">';
-  sorted.forEach(function(rec){
+  // קיבוץ: hy → mi → date_iso → [rec]
+  var byYear={};
+  records.forEach(function(rec){
     var hd=rec.date_heb;
-    var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-    // ספירה לפי קוד
-    var cnts={};
-    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-    html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
-    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
-    html+='<div style="flex:1"><span style="font-weight:700;font-size:.9rem;color:var(--navy)">'+dLabel+'</span>&nbsp;<span style="font-size:.82rem;color:var(--text2)">— '+rec.session+'</span></div>';
-    // סיכום: אייקוני כפתורים עם ספירה
-    html+='<div style="display:flex;gap:8px;font-size:.82rem;font-weight:700;flex-wrap:wrap">';
-    ARC_ORDER.forEach(function(code){
-      var n=cnts[code]||0; if(!n) return;
-      var extra=(code==='l')?('<span style="font-size:.72rem;font-weight:400"> ד׳</span>'):'';
-      html+='<span style="color:'+ARC_COL[code]+'">'+ARC_ICON[code]+'<span style="font-size:.78rem"> '+n+'</span>'+extra+'</span>';
-    });
-    html+='</div>';
-    html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;padding:2px 6px">✕</button>';
-    html+='</div>';
-    // פרטים (מוסתר)
-    html+='<div style="display:none;padding:12px 16px;border-top:1px solid var(--border);background:#fafbfd">';
-    var rows=Object.entries(rec.marks).map(function(e){
-      var sid=e[0],m=e[1];
-      var sn=nameById(sid);
-      var lbl=m.s==='l'?('איחור — '+(m.min||0)+' ד׳'):(ARC_LBL[m.s]||'לא סומן');
-      var col=ARC_COL[m.s]||'#888';
-      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.83rem">'+
-        '<span>'+sn+'</span>'+
-        '<span style="color:'+col+';font-weight:600">'+lbl+'</span>'+
+    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    var hy=hd.hy,mi=hd.mi,iso=rec.date_iso;
+    if(!byYear[hy]) byYear[hy]={};
+    if(!byYear[hy][mi]) byYear[hy][mi]={};
+    if(!byYear[hy][mi][iso]) byYear[hy][mi][iso]=[];
+    byYear[hy][mi][iso].push({rec:rec,hd:hd});
+  });
+
+  var years=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
+  var idCtr=0; function uid(){return 'arc-col-'+(idCtr++);}
+
+  var html='<div>';
+  years.forEach(function(hy){
+    var yId=uid();
+    var isYearCur=hy===curHY;
+    html+='<div style="margin-bottom:18px">';
+    // כותרת שנה
+    html+='<div onclick="var e=document.getElementById(\''+yId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+      'style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:9px;cursor:pointer;font-weight:700;font-size:.95rem;margin-bottom:10px;user-select:none">'+
+      '<span style="flex:1">📅 '+window._hcYL(hy)+'</span><span style="font-size:.8rem;opacity:.6">▾</span>'+
+    '</div>';
+    html+='<div id="'+yId+'" style="display:'+(isYearCur?'block':'none')+';padding-right:6px">';
+
+    var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
+    months.forEach(function(mi){
+      var mId=uid();
+      var isMonthCur=isYearCur&&mi===curMI;
+      var mName=window._hcMN(hy)[mi];
+      html+='<div style="margin-bottom:12px">';
+      // כותרת חודש
+      html+='<div onclick="var e=document.getElementById(\''+mId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
+        '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
       '</div>';
+      html+='<div id="'+mId+'" style="display:'+(isMonthCur?'block':'none')+';padding-right:8px">';
+
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      days.forEach(function(iso){
+        var dId=uid();
+        var entries=byYear[hy][mi][iso];
+        var hd0=entries[0].hd;
+        var dayLabel=window._hcD[hd0.day]+' '+mName;
+        var isToday=iso===todayIso;
+        html+='<div style="margin-bottom:8px">';
+        // כותרת יום
+        html+='<div onclick="var e=document.getElementById(\''+dId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+          'style="display:flex;align-items:center;gap:8px;padding:6px 11px;background:'+(isToday?'#fef3c7':'#f0f4fa')+';border:1px solid '+(isToday?'#f6d860':'#d8e3f0')+';border-radius:6px;cursor:pointer;font-weight:600;font-size:.83rem;color:var(--navy);margin-bottom:4px;user-select:none">'+
+          '<span style="flex:1">'+dayLabel+(isToday?' — <span style="color:#b7791f">היום</span>':'')+
+          ' <span style="font-size:.76rem;font-weight:400;color:var(--text2)">('+entries.length+' סדרים)</span></span>'+
+          '<span style="font-size:.68rem;opacity:.45">▾</span>'+
+        '</div>';
+        html+='<div id="'+dId+'" style="display:block;padding-right:8px">';
+
+        entries.forEach(function(entry){
+          var rec=entry.rec;
+          var cnts={};
+          Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+          var nP=cnts.p||0,nL=cnts.l||0,nA=cnts.a||0,nEx=(cnts.ap||0)+(cnts.ak||0)+(cnts.e||0);
+          var sp=[];
+          if(nP) sp.push('<span style="color:#276749;font-weight:700">'+nP+' נוכחים</span>');
+          if(nL) sp.push('<span style="color:#dd6b20;font-weight:700">'+nL+' איחורים</span>');
+          if(nA) sp.push('<span style="color:#0e7490;font-weight:700">'+nA+' חיסורים</span>');
+          if(nEx) sp.push('<span style="color:#553c9a;font-weight:700">'+nEx+' היעדרות</span>');
+          var summary=sp.join('<span style="color:#ccc;font-weight:400"> | </span>');
+          var sId=uid();
+          html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
+          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+rec.session+'</span>';
+          html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
+          html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='</div>';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
+          var rows=Object.entries(rec.marks).map(function(e2){
+            var sid2=e2[0],m2=e2[1];
+            var sn=nameById(sid2);
+            var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
+            var col=ARC_COL[m2.s]||'#888';
+            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+              '<span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
+          });
+          html+=rows.join('')+'</div></div>';
+        });
+        html+='</div></div>'; // day content + day wrap
+      });
+      html+='</div></div>'; // month content + month wrap
     });
-    html+=rows.join('');
-    html+='</div></div>';
+    html+='</div></div>'; // year content + year wrap
   });
   html+='</div>';
   el.innerHTML=html;
@@ -3174,6 +3323,8 @@ window.atRenderSupervision = async function() {
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
   el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  // כפה טעינה מחדש מ-KV (לא ממטמון)
+  window._atData=null;
   var data=await atLoadData();
   var students=getStudents();
   var treats=await atLoadTreats();
@@ -3209,6 +3360,7 @@ window.atRenderSupervision = async function() {
   students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0};});
   data.forEach(function(rec){
     var dh=rec.date_heb;
+    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
@@ -3365,9 +3517,10 @@ window.renderAttendSettings = async function() {
   var sc=document.getElementById('at-cfg-sessions');
   var tc=document.getElementById('at-cfg-treats');
   if(sc){
-    sc.innerHTML=cfg.sessions.map(function(s,i){
-      return '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input value="'+s.name+'" id="at-sess-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+    sc.innerHTML=cfg.sessions.map(function(s){
+      return '<div data-sess-row="1" style="display:flex;gap:6px;align-items:center;margin-bottom:2px">'+
+        '<input data-sess-name="1" value="'+s.name+'" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input data-sess-time="1" type="time" value="'+(s.startTime||'')+'" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
@@ -3386,9 +3539,12 @@ window.atAddSession = function() {
   var sc=document.getElementById('at-cfg-sessions');
   if(!sc) return;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
-  div.innerHTML='<input placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
-  sc.appendChild(div);div.querySelector('input').focus();
+  div.setAttribute('data-sess-row','1');
+  div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:2px';
+  div.innerHTML='<input data-sess-name="1" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+    '<input data-sess-time="1" type="time" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
+    '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 };
 window.atAddTreatRow = function() {
   var tc=document.getElementById('at-cfg-treats');
@@ -3406,11 +3562,15 @@ window.atSaveSettingsCfg = async function() {
   var sc=document.getElementById('at-cfg-sessions');
   if(sc){
     var newSess=[];
-    sc.querySelectorAll('input').forEach(function(inp,i){
-      var name=inp.value.trim(); if(!name) return;
-      // שמור id קיים אם השם לא השתנה
+    sc.querySelectorAll('[data-sess-row]').forEach(function(row,i){
+      var nameInp=row.querySelector('[data-sess-name]');
+      var timeInp=row.querySelector('[data-sess-time]');
+      var name=(nameInp?nameInp.value.trim():''); if(!name) return;
+      var startTime=(timeInp?timeInp.value.trim():'');
       var existing=oldSessions.find(function(s){return s.name===name;});
-      newSess.push({id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name});
+      var entry={id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name};
+      if(startTime) entry.startTime=startTime;
+      newSess.push(entry);
     });
     cfg.sessions=newSess;
   }
