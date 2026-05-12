@@ -2822,7 +2822,7 @@ window.atShowTab = function(tab) {
 
 // -------- רישום --------
 // קביעת מצב אוטומטי לפי סטאטוס התלמיד
-// sessDateIso + sessStartTime אופציונליים — אם חסרים, אישורים תמיד פעילים
+// sessDateIso אופציונלי — אם חסר, אישורים תמיד פעילים
 function atAutoMark(student, sessDateIso, sessStartTime) {
   var aa=getActiveAbsences(student);
   if(!aa||!aa.length) return null;
@@ -2830,11 +2830,13 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
     var t=aa[i].type;
     if(t==='suspended'||t==='left') return 'ak';
     if(t==='approved'){
-      if(!sessDateIso||!sessStartTime) return 'ap'; // ללא נתוני זמן — סמן תמיד
-      var sessMs=new Date(sessDateIso+'T'+sessStartTime+':00').getTime();
-      var fromMs=aa[i].from?new Date(aa[i].from).getTime():0;
-      var toMs=aa[i].to?new Date(aa[i].to).getTime():Infinity;
-      if(!isNaN(sessMs)&&sessMs>=fromMs&&sessMs<=toMs) return 'ap';
+      if(!sessDateIso) return 'ap'; // ללא תאריך — סמן תמיד
+      // השוואת תאריכים בלבד (ללא שעות) — אישור מכסה כל תאריך בטווח שלו
+      var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
+      var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
+      if(fromDate&&sessDateIso<fromDate) continue; // הסדר לפני תחילת האישור — דלג
+      if(toDate&&sessDateIso>toDate) continue;     // הסדר אחרי סיום האישור — דלג
+      return 'ap';
     }
   }
   return null;
@@ -3602,7 +3604,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
   ];
   var btns=CODES.map(function(cd){
     var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
-    return '<button onclick="window.atEditMark(\''+recId+'\',\''+sid+'\',\''+cd.c+'\');this.closest(\'[data-dlg=supedmark]\').remove();this.closest(\'[data-dlg=supdetail]\').remove()" '+
+    return '<button onclick="window.atEditMark(\''+recId+'\',\''+sid+'\',\''+cd.c+'\')" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
   var dlg=document.createElement('div');
@@ -3624,6 +3626,11 @@ window.atEditMark = async function(recId, sid, newCode) {
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
   await atSaveData(data);
+  // סגור דיאלוגי ההשגחה לפני רינדור מחדש
+  ['supedmark','supdetail'].forEach(function(n){
+    var d=document.querySelector('[data-dlg="'+n+'"]');
+    if(d) d.remove();
+  });
   // רענן את כל הלשוניות
   atRenderTodaySessions();
   window.atRenderArchive();
