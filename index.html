@@ -2752,14 +2752,13 @@ function atFillSessionBtns() {
   if(!el) return;
   var cfg=window._atCfg||atDefaultCfg();
   el.innerHTML=cfg.sessions.map(function(s){
-    var timeLabel=s.startTime?'<span style="font-size:.72rem;font-weight:400;color:#6b7fa3;display:block;margin-top:1px">'+s.startTime+'</span>':'';
     return '<button onclick="window.atOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
-      'style="padding:9px 18px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
-      'transition:all .18s;text-align:center;line-height:1.2" '+
+      'transition:all .18s" '+
       'onmouseover="this.style.background=\'#dbe4f7\'" '+
       'onmouseout="this.style.background=\'#eef2fa\'">'+
-      s.name+timeLabel+'</button>';
+      s.name+'</button>';
   }).join('');
 }
 
@@ -2816,13 +2815,20 @@ function atRenderTodaySessions() {
     '<div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:8px">📋 סדרים שמולאו היום:</div>'+
     '<div style="display:flex;flex-direction:column;gap:6px">';
   todaySess.forEach(function(rec){
-    var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-    var tot=Object.keys(rec.marks).filter(function(sid){return rec.marks[sid].s;}).length;
+    var cnts={};
+    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    var nP=cnts.p||0,nL=cnts.l||0,nA=cnts.a||0,nEx=(cnts.ap||0)+(cnts.ak||0)+(cnts.e||0),nHi=cnts.x||0;
+    var sp=[];
+    if(nP) sp.push('<span style="color:#276749;font-weight:700">'+nP+' נוכחים</span>');
+    if(nL) sp.push('<span style="color:#dd6b20;font-weight:700">'+nL+' איחורים</span>');
+    if(nA) sp.push('<span style="color:#0e7490;font-weight:700">'+nA+' מנוחה</span>');
+    if(nEx) sp.push('<span style="color:#553c9a;font-weight:700">'+nEx+' היעדרות</span>');
+    if(nHi) sp.push('<span style="color:#742a2a;font-weight:700">'+nHi+' ח׳</span>');
+    var summary=sp.join('<span style="color:#ccc"> | </span>');
     html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
-      '<span style="font-weight:700;font-size:.88rem;flex:1;color:var(--navy)">'+rec.session+'</span>'+
-      '<span style="font-size:.8rem;color:#38a169">✓ '+p+'</span>'+
-      '<span style="font-size:.8rem;color:var(--text3)">/ '+tot+' סומנו</span>'+
-      '<span style="font-size:.8rem;color:var(--navy);font-weight:600">✏️ ערוך</span>'+
+      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
+      '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
+      '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
     '</div>';
   });
   html+='</div></div>';
@@ -3123,7 +3129,7 @@ window.atRenderArchive = async function(records) {
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
-  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'לא במסגרת',ap:'יצא באישור',ak:'נעדר ידוע',a:'נעדר'};
+  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בית',a:'מנוחה'};
   var ARC_COL={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
 
   // חודש עברי נוכחי
@@ -3261,7 +3267,7 @@ window.atExportExcel = async function() {
       Object.entries(rec.marks).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
-        var lbl=m.s==='p'?'נוכח':m.s==='a'?'נעדר':m.s==='ak'?'נעדר ידוע':m.s==='ap'?'יצא באישור':m.s==='x'?'לא במסגרת':m.s==='e'?'פטור':m.s==='l'?'איחור':'';
+        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בית':m.s==='a'?'מנוחה':'';
         rows.push([dLabel,rec.session,sn,lbl,m.s==='l'?(m.min||0):'',rec.filled_by_name]);
       });
     });
@@ -3365,7 +3371,8 @@ window.atRenderSupervision = async function() {
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
-      if(m.s==='a'||m.s==='ak') stats[sid].absent++;
+      // ספור כל סימון שאינו נוכח (p) ואינו איחור (l) כחיסור
+      if(m.s && m.s!=='p' && m.s!=='l') stats[sid].absent++;
       if(m.s==='l') stats[sid].lateMin+=m.min||0;
     });
   });
@@ -3389,8 +3396,8 @@ window.atRenderSupervision = async function() {
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
     html+='<div style="flex:1;font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>';
     html+='<div style="display:flex;gap:12px;font-size:.82rem">';
-    html+='<span style="color:#0e7490">ג: <b>'+st.absent+'</b></span>';
-    html+='<span style="color:#dd6b20">⏰: <b>'+st.lateMin+'</b>ד׳</span>';
+    html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
+    html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
     html+='</div></div>';
     // פאנל פרטים
