@@ -541,9 +541,55 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-attend">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>✅ שמירת הסדרים</span><span class="gap"></span><button class="gear" data-gear="attend">⚙️</button><input type="date" id="dp"><button class="btn" id="btn-save-a">💾 שמור</button></div>
-    <div class="ep" id="ep-attend"><h4>⚙️ עריכת כותרות</h4><textarea>שמירת הסדרים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-attend')">סגור</button><button class="btn" onclick="saveEp('attend')">💾 שמור</button></div></div>
-    <div id="al"></div>
+    <div class="ptitle">
+      <button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button>
+      <span>✅ שמירת הסדרים</span>
+      <span class="gap"></span>
+      <button class="gear" onclick="window.showPage('settings');setTimeout(function(){window.showSettingsModule('attend');},120)" title="הגדרות סדרים">⚙️</button>
+    </div>
+    <!-- לשוניות -->
+    <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button id="at-tab-reg" onclick="window.atShowTab('reg')" style="padding:8px 18px;border:none;border-bottom:3px solid var(--navy);background:none;font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;margin-bottom:-2px">📝 רישום</button>
+      <button id="at-tab-arc" onclick="window.atShowTab('arc')" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
+      <button id="at-tab-sup" onclick="window.atShowTab('sup')" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
+    </div>
+    <!-- אזור טעינה -->
+    <div id="at-loading" style="text-align:center;padding:40px;color:var(--text2)">⏳ טוען...</div>
+    <!-- תצוגת רישום -->
+    <div id="at-view-reg" style="display:none">
+      <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end">
+        <div style="flex:1;min-width:130px">
+          <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">סדר</label>
+          <select id="at-sess" onchange="window.atRenderStudents()" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff"></select>
+        </div>
+        <div style="flex:2;min-width:200px">
+          <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
+          <div id="at-date-wrap"></div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
+          <input id="at-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
+        </div>
+        <button onclick="window.atSaveSession()" style="padding:9px 22px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;white-space:nowrap">💾 שמור סדר</button>
+      </div>
+      <div id="at-students"></div>
+    </div>
+    <!-- תצוגת ארכיון -->
+    <div id="at-view-arc" style="display:none">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+        <div id="at-arc-date-wrap" style="flex:2;min-width:200px"></div>
+        <button onclick="window.atArcFilter()" style="padding:8px 18px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">🔍 סנן</button>
+        <button onclick="window.atArcFilter(true)" style="padding:8px 14px;background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">הצג הכול</button>
+        <span class="gap"></span>
+        <button onclick="window.atExportExcel()" style="padding:8px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 Excel</button>
+        <button onclick="window.atExportPdf()" style="padding:8px 14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📄 PDF</button>
+      </div>
+      <div id="at-arc-list"></div>
+    </div>
+    <!-- תצוגת השגחה -->
+    <div id="at-view-sup" style="display:none">
+      <div id="at-sup-content"></div>
+    </div>
   </div>
 </div>
 <div class="pg" id="pg-reports">
@@ -623,13 +669,27 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </div>
     </div>
 
-    <!-- הגדרות מודולים אחרים (בנייה) -->
+    <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>✅ הגדרות סדרים</span></div>
-      <div class="ss" style="text-align:center;padding:40px 20px">
-        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
-        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
-        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      <div class="ss">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;flex-wrap:wrap">
+          <!-- סדרים -->
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+            <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">📋 רשימת סדרים</div>
+            <div id="at-cfg-sessions" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+            <button onclick="window.atAddSession()" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף סדר</button>
+          </div>
+          <!-- טיפולים -->
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+            <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
+            <div id="at-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+            <button onclick="window.atAddTreatRow()" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end">
+          <button onclick="window.atSaveSettingsCfg()" class="btn">💾 שמור הגדרות</button>
+        </div>
       </div>
     </div>
     <div id="settings-sleep" style="display:none">
@@ -927,7 +987,7 @@ function showPageInternal(pg) {
 }
 
 // דפים בבנייה — רק settings ו-home פתוחים
-var UNDER_CONSTRUCTION = ['attend','sleep','exams','files','reports'];
+var UNDER_CONSTRUCTION = ['sleep','exams','files','reports'];
 
 function showPage(pg) {
   if (pg === 'home') { showPageInternal('home'); return; }
@@ -937,6 +997,7 @@ function showPage(pg) {
   showPageInternal(pg);
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
+  if (pg === 'attend') window.loadAttend();
 }
 
 
@@ -1271,6 +1332,7 @@ function showSettingsModule(mod) {
   setTimeout(function() {
     if (mod === 'system') { renderUsersList(); renderPermsTable(); }
     if (mod === 'students') renderAbsenceReasons();
+    if (mod === 'attend') window.renderAttendSettings();
   }, 0);
 }
 
@@ -2579,6 +2641,636 @@ window.printStudents = function() {
   }
 }
 // ============ END STUDENTS MODULE ============
+
+// ==================== מודול שמירת סדרים ====================
+window._atCfg = null;
+window._atData = null;
+window._atMarks = {};   // {sid:{s,min}} לסדר הנוכחי הפתוח
+window._atView = 'reg';
+
+function atDefaultCfg() {
+  return {
+    sessions:[
+      {id:'sh',name:'שחרית'},
+      {id:'s1',name:'סדר א׳'},
+      {id:'s2',name:'סדר ב׳'},
+      {id:'s3',name:'סדר ג׳'},
+      {id:'ev',name:'ערבית'},
+      {id:'nl',name:'סדר לילה'}
+    ],
+    treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
+  };
+}
+
+async function atLoadCfg() {
+  if (window._atCfg) return window._atCfg;
+  try { var v=await ysKvGet('ys_attend_cfg'); if(v){window._atCfg=v;return v;} } catch(e){}
+  try { var lc=localStorage.getItem('ys_attend_cfg'); if(lc){window._atCfg=JSON.parse(lc);return window._atCfg;} } catch(e){}
+  window._atCfg = atDefaultCfg(); return window._atCfg;
+}
+async function atSaveCfg(cfg) {
+  window._atCfg=cfg;
+  localStorage.setItem('ys_attend_cfg',JSON.stringify(cfg));
+  try { await ysKvSet('ys_attend_cfg',cfg); } catch(e){}
+}
+async function atLoadData() {
+  if (window._atData) return window._atData;
+  try { var v=await ysKvGet('ys_attend_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
+  try { var lc=localStorage.getItem('ys_attend_sessions'); if(lc){window._atData=JSON.parse(lc);return window._atData;} } catch(e){}
+  window._atData=[]; return window._atData;
+}
+async function atSaveData(data) {
+  window._atData=data;
+  localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+  try { await ysKvSet('ys_attend_sessions',data); } catch(e){}
+}
+async function atLoadTreats() {
+  try { var v=await ysKvGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
+  try { var lc=localStorage.getItem('ys_attend_treats'); if(lc)return JSON.parse(lc); } catch(e){}
+  return [];
+}
+async function atSaveTreats(data) {
+  localStorage.setItem('ys_attend_treats',JSON.stringify(data));
+  try { await ysKvSet('ys_attend_treats',data); } catch(e){}
+}
+
+// טעינה ראשית של המודול
+window.loadAttend = async function() {
+  var el = document.getElementById('at-loading');
+  var reg = document.getElementById('at-view-reg');
+  var arc = document.getElementById('at-view-arc');
+  var sup = document.getElementById('at-view-sup');
+  if(!el) return;
+  el.style.display='block';
+  if(reg) reg.style.display='none';
+  if(arc) arc.style.display='none';
+  if(sup) sup.style.display='none';
+
+  await atLoadCfg();
+  await atLoadData();
+  window._atMarks={};
+
+  // הכנת בורר תאריך לרישום
+  var dw=document.getElementById('at-date-wrap');
+  if(dw){
+    var todH=window._hcH(new Date());
+    dw.innerHTML=window._hcBuild('at_date',todH,null);
+  }
+  // הכנת בורר תאריך לארכיון
+  var adw=document.getElementById('at-arc-date-wrap');
+  if(adw) adw.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:.82rem;color:var(--text2);white-space:nowrap">סינון לפי תאריך:</span>'+window._hcBuild('at_arc_date',null,null)+'</div>';
+
+  // מלא שם ממלא
+  var fl=document.getElementById('at-filler');
+  if(fl && AUTH.user) fl.value=AUTH.user.full_name||'';
+
+  // מלא סדרים
+  atFillSessionSelect();
+
+  el.style.display='none';
+  window.atShowTab('reg');
+
+  // אזהרת כניסה
+  atCheckAlert();
+};
+
+function atFillSessionSelect() {
+  var sel=document.getElementById('at-sess');
+  if(!sel) return;
+  var cfg=window._atCfg||atDefaultCfg();
+  sel.innerHTML=cfg.sessions.map(function(s){return '<option value="'+s.id+'">'+s.name+'</option>';}).join('');
+}
+
+// מעבר לשונית
+window.atShowTab = function(tab) {
+  window._atView=tab;
+  ['reg','arc','sup'].forEach(function(t){
+    var v=document.getElementById('at-view-'+t);
+    var b=document.getElementById('at-tab-'+t);
+    if(v) v.style.display=(t===tab)?'block':'none';
+    if(b){
+      b.style.borderBottomColor=(t===tab)?'var(--navy)':'transparent';
+      b.style.color=(t===tab)?'var(--navy)':'var(--text2)';
+      b.style.fontWeight=(t===tab)?'700':'600';
+    }
+  });
+  if(tab==='reg') window.atRenderStudents();
+  if(tab==='arc') window.atRenderArchive();
+  if(tab==='sup') window.atRenderSupervision();
+};
+
+// -------- רישום --------
+// קביעת מצב אוטומטי לפי סטאטוס התלמיד
+function atAutoMark(student) {
+  var aa=getActiveAbsences(student);
+  if(!aa||!aa.length) return null;
+  var t=aa[0].type;
+  if(t==='approved') return 'ap'; // א - יצא באישור
+  if(t==='suspended'||t==='left') return 'ak'; // ב - נעדר ידוע
+  return null;
+}
+
+window.atRenderStudents = function() {
+  var el=document.getElementById('at-students');
+  if(!el) return;
+  var students=getStudents();
+  if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
+
+  // סנן רק "במסגרת" (לא x)
+  var active=students.filter(function(s){return s.active!==false;});
+
+  // קטגוריות
+  var manual=[], auto=[];
+  active.forEach(function(s){
+    var am=atAutoMark(s);
+    if(am && !window._atMarks[s.id]) window._atMarks[s.id]={s:am,min:0};
+    var cur=window._atMarks[s.id];
+    if(am && cur && cur.s===am) auto.push(s);
+    else manual.push(s);
+  });
+
+  var btnStyle='padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.78rem;cursor:pointer;font-weight:600;transition:all .15s;';
+  function mkBtn(sid,code,label,bg,fg,brd){
+    var cur=(window._atMarks[sid]||{}).s;
+    var active=(cur===code);
+    var style=btnStyle+(active?'background:'+bg+';color:'+fg+';border-color:'+brd+';':
+      'background:#f8fafd;color:var(--text2);border-color:var(--border);');
+    return '<button onclick="window.atSetMark(\''+sid+'\',\''+code+'\')" style="'+style+'">'+label+'</button>';
+  }
+
+  function renderRow(s) {
+    var marks=window._atMarks[s.id]||{};
+    var isLate=marks.s==='l';
+    var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
+    var autoHint='';
+    var am=atAutoMark(s);
+    if(am){ var aLbl=am==='ap'?'(באישור)':am==='ak'?'(נעדר ידוע)':''; autoHint='<span style="font-size:.72rem;color:#888;margin-right:4px">'+aLbl+'</span>'; }
+    var statusDot='';
+    var sc=marks.s;
+    if(sc==='p') statusDot='<span style="color:#38a169">✓</span>';
+    else if(sc==='a') statusDot='<span style="color:#e53e3e">ג</span>';
+    else if(sc==='ak') statusDot='<span style="color:#c05621">ב</span>';
+    else if(sc==='ap') statusDot='<span style="color:#276749">א</span>';
+    else if(sc==='x') statusDot='<span style="color:#888">x</span>';
+    else if(sc==='e') statusDot='<span style="color:#888">-</span>';
+    else if(sc==='l') statusDot='<span style="color:#b7791f">⏰</span>';
+
+    var lateField=isLate?
+      '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
+        '<input type="number" min="1" max="120" value="'+(marks.min||10)+'" id="at-min-'+s.id+'" '+
+        'onchange="window.atSetLateMin(\''+s.id+'\',this.value)" '+
+        'style="width:52px;padding:4px 6px;border:1.5px solid #f6ad55;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
+        '<span style="font-size:.75rem;color:#888">דק׳</span>'+
+      '</div>':'';
+
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px 12px;background:#fff;border:1.5px solid var(--border);border-radius:9px;margin-bottom:7px;flex-wrap:wrap">'+
+      '<div style="width:22px;text-align:center;font-weight:700;font-size:.82rem;color:var(--text3)">'+cls+'</div>'+
+      '<div style="flex:1;font-weight:600;font-size:.9rem;min-width:80px">'+s.name+autoHint+'</div>'+
+      '<div style="font-size:.95rem;width:20px;text-align:center">'+statusDot+'</div>'+
+      lateField+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap">'+
+        mkBtn(s.id,'a','ג','#fff5f5','#c53030','#feb2b2')+
+        mkBtn(s.id,'ak','ב','#fffbeb','#c05621','#fbd38d')+
+        mkBtn(s.id,'ap','א','#f0fff4','#276749','#9ae6b4')+
+        mkBtn(s.id,'x','x','#f7fafc','#718096','#cbd5e0')+
+        mkBtn(s.id,'e','-','#f7fafc','#718096','#cbd5e0')+
+        mkBtn(s.id,'l','איחור','#fffaf0','#b7791f','#f6ad55')+
+        mkBtn(s.id,'p','✓','#f0fff4','#276749','#68d391')+
+      '</div>'+
+    '</div>';
+  }
+
+  var html='';
+  if(manual.length){
+    html+=manual.map(renderRow).join('');
+  }
+  if(auto.length){
+    html+='<div style="font-size:.78rem;font-weight:600;color:var(--text3);margin:14px 0 8px;display:flex;align-items:center;gap:8px"><span style="flex:1;height:1px;background:var(--border)"></span>סומנו אוטומטית<span style="flex:1;height:1px;background:var(--border)"></span></div>';
+    html+=auto.map(renderRow).join('');
+  }
+  el.innerHTML=html;
+};
+
+window.atSetMark = function(sid, code) {
+  window._atMarks[sid]={s:code, min: (window._atMarks[sid]||{}).min||10};
+  window.atRenderStudents();
+};
+window.atSetLateMin = function(sid, val) {
+  var n=parseInt(val)||0;
+  if(n<1) n=1; if(n>120) n=120;
+  if(!window._atMarks[sid]) window._atMarks[sid]={s:'l',min:n};
+  else window._atMarks[sid].min=n;
+};
+
+window.atSaveSession = async function() {
+  var sessEl=document.getElementById('at-sess');
+  var filler=document.getElementById('at-filler');
+  var dateIso=(document.getElementById('at_date_iso')||{}).value;
+  if(!dateIso){toast('⚠️ יש לבחור תאריך');return;}
+
+  var cfg=window._atCfg||atDefaultCfg();
+  var sess=cfg.sessions.find(function(s){return s.id===(sessEl?sessEl.value:'');});
+  var sessName=sess?sess.name:(sessEl?sessEl.value:'');
+  var dateHeb=window._hcH(new Date(dateIso));
+  var marks={};
+  var students=getStudents();
+  students.forEach(function(s){
+    if(s.active===false) return;
+    var m=window._atMarks[s.id];
+    if(m) marks[s.id]={s:m.s,min:m.s==='l'?(m.min||10):0};
+    else marks[s.id]={s:'',min:0};
+  });
+
+  var rec={
+    id: Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    session: sessName,
+    date_iso: dateIso,
+    date_heb: dateHeb,
+    filled_by: AUTH.user?AUTH.user.id:'',
+    filled_by_name: filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
+    marks: marks,
+    created_at: new Date().toISOString()
+  };
+
+  var data=await atLoadData();
+  data.push(rec);
+  await atSaveData(data);
+  window._atMarks={};
+  window.atRenderStudents();
+  toast('✅ הסדר נשמר — '+sessName+' '+window._hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day));
+};
+
+// -------- ארכיון --------
+window.atRenderArchive = async function(records) {
+  var el=document.getElementById('at-arc-list');
+  if(!el) return;
+  if(!records) records=await atLoadData();
+  if(!records||!records.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
+  }
+  var sorted=records.slice().sort(function(a,b){return b.date_iso.localeCompare(a.date_iso);});
+  var students=getStudents();
+  function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
+
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  sorted.forEach(function(rec){
+    var hd=rec.date_heb;
+    var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+    var total=Object.keys(rec.marks).length;
+    var present=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
+    var absent=Object.values(rec.marks).filter(function(m){return ['a','ak'].indexOf(m.s)>=0;}).length;
+    var late=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
+    html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
+    html+='<div style="flex:1"><span style="font-weight:700;font-size:.92rem">'+rec.session+'</span>&nbsp;<span style="font-size:.82rem;color:var(--text2)">'+dLabel+'</span></div>';
+    html+='<div style="display:flex;gap:10px;font-size:.8rem">';
+    html+='<span style="color:#38a169">✓ '+present+'</span>';
+    html+='<span style="color:#e53e3e">נע׳ '+absent+'</span>';
+    if(late) html+='<span style="color:#b7791f">⏰ '+late+'</span>';
+    html+='</div>';
+    html+='<span style="color:var(--text3);font-size:.8rem">'+rec.filled_by_name+'</span>';
+    html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.85rem;padding:2px 6px">✕</button>';
+    html+='</div>';
+    // פרטים (מוסתר)
+    html+='<div style="display:none;padding:12px 16px;border-top:1px solid var(--border);background:#fafbfd">';
+    var rows=Object.entries(rec.marks).map(function(e){
+      var sid=e[0],m=e[1];
+      var sn=nameById(sid);
+      var lbl=m.s==='p'?'נוכח':m.s==='a'?'נעדר':m.s==='ak'?'נעדר ידוע':m.s==='ap'?'יצא באישור':m.s==='x'?'לא במסגרת':m.s==='e'?'פטור':m.s==='l'?('איחור '+(m.min||'')+'ד׳'):'לא סומן';
+      var col=m.s==='p'?'#38a169':m.s==='a'?'#e53e3e':m.s==='ak'?'#c05621':m.s==='ap'?'#276749':m.s==='l'?'#b7791f':'#888';
+      return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.83rem"><span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
+    });
+    html+=rows.join('');
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+};
+
+window.atArcFilter = async function(all) {
+  var data=await atLoadData();
+  if(all){window.atRenderArchive(data);return;}
+  var dateIso=(document.getElementById('at_arc_date_iso')||{}).value;
+  if(!dateIso){window.atRenderArchive(data);return;}
+  var filtered=data.filter(function(r){return r.date_iso===dateIso;});
+  window.atRenderArchive(filtered);
+};
+
+window.atDeleteSession = async function(id) {
+  if(!confirm('למחוק את הרשומה?')) return;
+  var data=await atLoadData();
+  data=data.filter(function(r){return r.id!==id;});
+  await atSaveData(data);
+  window.atRenderArchive();
+  toast('🗑️ רשומה נמחקה');
+};
+
+// -------- ייצוא --------
+window.atExportExcel = async function() {
+  try {
+    var data=await atLoadData();
+    var students=getStudents();
+    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var wb=XLSX.utils.book_new();
+    var rows=[['תאריך','סדר','שם תלמיד','סטאטוס','דקות איחור','ממלא']];
+    sorted.forEach(function(rec){
+      var hd=rec.date_heb;
+      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      Object.entries(rec.marks).forEach(function(e){
+        var sid=e[0],m=e[1];
+        var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
+        var lbl=m.s==='p'?'נוכח':m.s==='a'?'נעדר':m.s==='ak'?'נעדר ידוע':m.s==='ap'?'יצא באישור':m.s==='x'?'לא במסגרת':m.s==='e'?'פטור':m.s==='l'?'איחור':'';
+        rows.push([dLabel,rec.session,sn,lbl,m.s==='l'?(m.min||0):'',rec.filled_by_name]);
+      });
+    });
+    var ws=XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb,ws,'סדרים');
+    XLSX.writeFile(wb,'sdariim-'+new Date().toISOString().split('T')[0]+'.xlsx');
+  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+};
+
+window.atExportPdf = async function() {
+  try {
+    var data=await atLoadData();
+    var students=getStudents();
+    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var NB=' ';
+    var fontName='Helvetica';
+    if(typeof pdfMake!=='undefined'&&window._alefFontB64){
+      pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
+      pdfMake.fonts=pdfMake.fonts||{};
+      pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
+      fontName='Alef';
+    }
+    var body=[['#','תאריך','סדר','נוכחים','נעדרים','מאחרים']];
+    sorted.forEach(function(rec,i){
+      var hd=rec.date_heb;
+      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
+      var a=Object.values(rec.marks).filter(function(m){return ['a','ak'].indexOf(m.s)>=0;}).length;
+      var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
+      body.push([String(i+1),dLabel,rec.session,String(p),String(a),String(l)]);
+    });
+    var dd={pageSize:'A4',pageMargins:[40,40,40,40],
+      content:[
+        {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ',fontSize:18,bold:true,alignment:'center',margin:[0,0,0,4],color:'#1a3a6b'},
+        {text:'ארכיון'+NB+'שמירת'+NB+'סדרים',fontSize:11,alignment:'center',color:'#555',margin:[0,0,0,14]},
+        {table:{widths:['auto','*','auto','auto','auto','auto'],body:body},margin:[0,0,0,10]}
+      ],defaultStyle:{font:fontName,alignment:'right'}};
+    pdfMake.createPdf(dd).download('sdariim-'+new Date().toISOString().split('T')[0]+'.pdf');
+  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+};
+
+// -------- השגחה --------
+window.atRenderSupervision = async function() {
+  var el=document.getElementById('at-sup-content');
+  if(!el) return;
+  // גישה: senior ו-admin בלבד
+  if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  var data=await atLoadData();
+  var students=getStudents();
+  var treats=await atLoadTreats();
+  if(!data||!data.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
+  }
+
+  // חישוב סיכומים — מאז תשרי של השנה הנוכחית
+  var curHY=window._hcH(new Date()).hy;
+  var tishreiBeg=window._hcBase(curHY);
+  var sinceDate=tishreiBeg?tishreiBeg.jd:new Date(new Date().getFullYear()-1,8,1);
+
+  var stats={};
+  students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0};});
+  data.forEach(function(rec){
+    if(new Date(rec.date_iso)<sinceDate) return;
+    Object.entries(rec.marks).forEach(function(e){
+      var sid=e[0],m=e[1];
+      if(!stats[sid]) return;
+      if(m.s==='a'||m.s==='ak') stats[sid].absent++;
+      if(m.s==='l') stats[sid].lateMin+=m.min||0;
+    });
+  });
+
+  // מיין לפי מספר היעדרויות
+  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+    .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
+
+  if(!rows.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין היעדרויות רשומות</div>';return;
+  }
+
+  var html='<div style="margin-bottom:10px;font-size:.82rem;color:var(--text2)">סיכום מאז תשרי '+window._hcYL(curHY)+'</div>';
+  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  rows.forEach(function(e){
+    var sid=e[0],st=e[1];
+    var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
+    var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 7px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
+    var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 7px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
+    var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
+    html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
+    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
+    html+='<div style="flex:1;font-weight:700;font-size:.92rem">'+st.name+''+alert20+alert300+'</div>';
+    html+='<div style="display:flex;gap:14px;font-size:.83rem">';
+    html+='<span style="color:#e53e3e">היעדרויות: <b>'+st.absent+'</b></span>';
+    html+='<span style="color:#b7791f">איחורים: <b>'+st.lateMin+'</b> ד׳</span>';
+    html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    html+='</div></div>';
+    // פאנל פרטים
+    html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
+    // הוסף טיפול
+    html+='<div style="margin-bottom:14px">';
+    html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">➕ הוסף טיפול</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    var cfg=window._atCfg||atDefaultCfg();
+    html+='<select id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
+      cfg.treats.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>';
+    html+='<input id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
+    html+='<button onclick="window.atAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='</div></div>';
+    // רשימת טיפולים
+    if(stuTreats.length){
+      html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
+      html+=stuTreats.slice().reverse().map(function(t){
+        var hd=t.date_heb;
+        var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
+        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+          '<span style="color:var(--text2)">'+dl+'</span>'+
+          '<span style="font-weight:600">'+t.type+'</span>'+
+          (t.note?'<span style="color:var(--text2)">— '+t.note+'</span>':'')+
+          '<span class="gap"></span>'+
+          '<span style="color:var(--text3);font-size:.76rem">'+t.by_name+'</span>'+
+          '<button onclick="window.atDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+        '</div>';
+      }).join('');
+    }
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+};
+
+window.atAddTreat = async function(sid) {
+  var typeEl=document.getElementById('at-treat-type-'+sid);
+  var noteEl=document.getElementById('at-treat-note-'+sid);
+  if(!typeEl) return;
+  var now=new Date();
+  var rec={
+    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    sid:sid,
+    date_iso:now.toISOString().split('T')[0],
+    date_heb:window._hcH(now),
+    type:typeEl.value,
+    note:noteEl?noteEl.value:'',
+    by:AUTH.user?AUTH.user.id:'',
+    by_name:AUTH.user?AUTH.user.full_name:'',
+    created_at:now.toISOString()
+  };
+  var treats=await atLoadTreats();
+  treats.push(rec);
+  await atSaveTreats(treats);
+  if(noteEl) noteEl.value='';
+  window.atRenderSupervision();
+  toast('✅ טיפול נשמר');
+};
+
+window.atDeleteTreat = async function(id) {
+  if(!confirm('למחוק טיפול זה?')) return;
+  var treats=await atLoadTreats();
+  treats=treats.filter(function(t){return t.id!==id;});
+  await atSaveTreats(treats);
+  window.atRenderSupervision();
+  toast('🗑️ נמחק');
+};
+
+// -------- התראת כניסה --------
+function atCheckAlert() {
+  var todayKey=new Date().toISOString().split('T')[0];
+  var lastShown=localStorage.getItem('ys_attend_alert_date');
+  if(lastShown===todayKey) return;
+
+  var data=window._atData||[];
+  var students=getStudents();
+  if(!data.length) return;
+
+  var curHY=window._hcH(new Date()).hy;
+  var tishreiBeg=(window._hcBase(curHY)||{jd:new Date(new Date().getFullYear()-1,8,1)}).jd;
+
+  var alerts=[];
+  var stats={};
+  students.forEach(function(s){stats[s.id]={name:s.name,absent:0,lateMin:0};});
+  data.forEach(function(rec){
+    if(new Date(rec.date_iso)<tishreiBeg) return;
+    Object.entries(rec.marks).forEach(function(e){
+      var sid=e[0],m=e[1];
+      if(!stats[sid]) return;
+      if(m.s==='a'||m.s==='ak') stats[sid].absent++;
+      if(m.s==='l') stats[sid].lateMin+=m.min||0;
+    });
+  });
+  Object.values(stats).forEach(function(s){
+    if(s.absent>=20||s.lateMin>=300) alerts.push(s);
+  });
+  if(!alerts.length) return;
+
+  localStorage.setItem('ys_attend_alert_date',todayKey);
+
+  // הצג מודל התראה
+  var d=document.createElement('div');
+  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.6);z-index:700;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  var list=alerts.slice(0,10).map(function(s){
+    return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+s.name+
+      (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' היעדרויות</span>':'')+
+      (s.lateMin>=300?'<span style="color:#b7791f;margin-right:6px"> — '+s.lateMin+' דק׳ איחור</span>':'')+
+      '</div>';
+  }).join('');
+  d.innerHTML='<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:420px;border-top:4px solid #e53e3e">'+
+    '<div style="font-size:1.5rem;margin-bottom:8px;text-align:center">⚠️</div>'+
+    '<div style="font-weight:700;font-size:1.05rem;color:#c53030;margin-bottom:6px;text-align:center">התראת היעדרויות</div>'+
+    '<p style="font-size:.85rem;color:var(--text2);margin-bottom:14px;text-align:center">התלמידים הבאים חרגו מהסף מתחילת השנה:</p>'+
+    '<div style="max-height:220px;overflow-y:auto;margin-bottom:16px">'+list+'</div>'+
+    '<div style="text-align:center">'+
+    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:#1a3a6b;color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>'+
+    '</div></div>';
+  document.body.appendChild(d);
+}
+
+// -------- הגדרות מודול --------
+window.renderAttendSettings = async function() {
+  await atLoadCfg();
+  var cfg=window._atCfg||atDefaultCfg();
+  var sc=document.getElementById('at-cfg-sessions');
+  var tc=document.getElementById('at-cfg-treats');
+  if(sc){
+    sc.innerHTML=cfg.sessions.map(function(s,i){
+      return '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input value="'+s.name+'" id="at-sess-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
+      '</div>';
+    }).join('');
+  }
+  if(tc){
+    tc.innerHTML=cfg.treats.map(function(t,i){
+      return '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input value="'+t+'" id="at-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
+      '</div>';
+    }).join('');
+  }
+};
+
+window.atAddSession = function() {
+  var sc=document.getElementById('at-cfg-sessions');
+  if(!sc) return;
+  var div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.innerHTML='<input placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  sc.appendChild(div);div.querySelector('input').focus();
+};
+window.atAddTreatRow = function() {
+  var tc=document.getElementById('at-cfg-treats');
+  if(!tc) return;
+  var div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.innerHTML='<input placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  tc.appendChild(div);div.querySelector('input').focus();
+};
+
+window.atSaveSettingsCfg = async function() {
+  var cfg=window._atCfg||atDefaultCfg();
+  var oldSessions=(cfg.sessions||[]).slice();
+  // קרא סדרים
+  var sc=document.getElementById('at-cfg-sessions');
+  if(sc){
+    var newSess=[];
+    sc.querySelectorAll('input').forEach(function(inp,i){
+      var name=inp.value.trim(); if(!name) return;
+      // שמור id קיים אם השם לא השתנה
+      var existing=oldSessions.find(function(s){return s.name===name;});
+      newSess.push({id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name});
+    });
+    cfg.sessions=newSess;
+  }
+  // קרא טיפולים
+  var tc=document.getElementById('at-cfg-treats');
+  if(tc){
+    var newTreats=[];
+    tc.querySelectorAll('input').forEach(function(inp){
+      if(inp.value.trim()) newTreats.push(inp.value.trim());
+    });
+    cfg.treats=newTreats;
+  }
+  window._atCfg=null; // force reload
+  await atSaveCfg(cfg);
+  window._atCfg=cfg;
+  toast('✅ הגדרות נשמרו');
+};
+// ==================== סוף מודול שמירת סדרים ====================
 
 </script>
 
