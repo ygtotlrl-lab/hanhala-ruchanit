@@ -4,7 +4,25 @@
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit` (שונה מ-`yeshiva-manager`)
 - **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
 - **טוקן:** TOKEN_IN_MEMORY
+
+## GitHub Token
+- **hanhala-ruchanit:** TOKEN_IN_MEMORY
 - **קובץ ראשי:** `index.html`
+
+---
+
+## ⚠️ Supabase — GRANT חובה לטבלאות חדשות (החל מ-30.5.2026)
+
+כל טבלה חדשה שנוצרת ב-`public` schema חייבת לכלול GRANT מפורש — אחרת supabase-js לא יוכל לגשת אליה:
+
+```sql
+grant select, insert, update, delete on public.TABLE_NAME to anon;
+grant select, insert, update, delete on public.TABLE_NAME to authenticated;
+grant select, insert, update, delete on public.TABLE_NAME to service_role;
+alter table public.TABLE_NAME enable row level security;
+```
+
+יש ליישם זאת על כל טבלה חדשה מעתה ואילך.
 
 ---
 
