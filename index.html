@@ -3097,11 +3097,21 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
     if(t==='suspended'||t==='left') return 'ak';
     if(t==='approved'){
       if(!sessDateIso) return 'ap'; // ללא תאריך — סמן תמיד
-      // השוואת תאריכים בלבד (ללא שעות) — אישור מכסה כל תאריך בטווח שלו
       var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
       var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
       if(fromDate&&sessDateIso<fromDate) continue; // הסדר לפני תחילת האישור — דלג
       if(toDate&&sessDateIso>toDate) continue;     // הסדר אחרי סיום האישור — דלג
+      // בדיקת שעה ביום הגבול — למנוע סימון סדרים לפני/אחרי שעת האישור
+      if(sessStartTime){
+        if(fromDate&&sessDateIso===fromDate){
+          var fromTime=aa[i].from&&aa[i].from.indexOf('T')>=0?aa[i].from.split('T')[1].substr(0,5):'00:00';
+          if(sessStartTime<fromTime) continue; // הסדר לפני שעת תחילת האישור — דלג
+        }
+        if(toDate&&sessDateIso===toDate){
+          var toTime=aa[i].to&&aa[i].to.indexOf('T')>=0?aa[i].to.split('T')[1].substr(0,5):'23:59';
+          if(sessStartTime>toTime) continue;   // הסדר אחרי שעת סיום האישור — דלג
+        }
+      }
       return 'ap';
     }
   }
