@@ -1694,7 +1694,7 @@ async function loadDash(){
     if(!document.getElementById('s-tot')) { clearInterval(_dashStatsTimer); return; }
     await ysPullFromCloud();
     await refreshDashStats();
-  }, 30000);
+  }, 3000);
 }
 
 function renderSt(list){
