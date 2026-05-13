@@ -2524,7 +2524,7 @@ window.openCurrentStatusModal = function() {
         '<button onclick="' + cancelCall + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
       '</div>' +
       (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + a.reason + '</div>' : '') +
-      '<div style="font-size:.78rem;color:#888">מ: ' + fmtDt(a.from) + '&nbsp;&nbsp;עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
+      '<div style="font-size:.78rem;color:#888;line-height:1.7">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
   var modal = _getStatusModal();
