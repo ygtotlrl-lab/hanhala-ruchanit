@@ -994,10 +994,6 @@ function showPageInternal(pg) {
 var UNDER_CONSTRUCTION = ['sleep','exams','files','reports'];
 
 function showPage(pg) {
-  // עצור פולינג דשבורד אם יוצאים מהבית
-  if (pg !== 'home' && typeof _dashStatsTimer !== 'undefined') {
-    clearInterval(_dashStatsTimer); _dashStatsTimer = null;
-  }
   if (pg === 'home') { showPageInternal('home'); loadDash(); return; }
   if (!AUTH.user) { return; }
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
@@ -1636,7 +1632,6 @@ function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remov
 function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
 
 // רענון נתוני כרטיסי הסיכום בדף הבית
-var _dashStatsTimer = null;
 async function refreshDashStats() {
   var todayIso = new Date().toISOString().split('T')[0];
 
@@ -1650,8 +1645,7 @@ async function refreshDashStats() {
     return !aa || aa.length === 0;
   }).length;
 
-  // נתוני נוכחות — טעינה טרייה מ-KV
-  window._atData = null;
+  // נתוני נוכחות — משתמש ב-cache (window._atData), ysPullFromCloud מרענן אותו
   var atData = (typeof atLoadData === 'function') ? await atLoadData() : [];
   var todaySess = atData.filter(function(r){ return r.date_iso === todayIso; });
   var sessCount = todaySess.length;
@@ -1685,16 +1679,10 @@ async function refreshDashStats() {
 }
 
 async function loadDash(){
-  await ysPullFromCloud();
-  await refreshDashStats();
+  await ysPullFromCloud(); // טוען נתונים + refreshDashStats נקרא בתוכה
   renderStudents();
-  // פולינג זמן אמת — עדכון כל 30 שניות
-  clearInterval(_dashStatsTimer);
-  _dashStatsTimer = setInterval(async function(){
-    if(!document.getElementById('s-tot')) { clearInterval(_dashStatsTimer); return; }
-    await ysPullFromCloud();
-    await refreshDashStats();
-  }, 3000);
+  // עדכון בזמן אמת: ysAutoSync רץ גלובלית כל 3 שניות על timestamp בלבד
+  // ומפעיל ysPullFromCloud → refreshDashStats רק בעת שינוי אמיתי
 }
 
 function renderSt(list){
@@ -1860,7 +1848,14 @@ async function ysPullFromCloud() {
     if (rs && Array.isArray(rs)) {
       localStorage.setItem('ys_reasons', JSON.stringify(rs));
     }
+    // טען נתוני סדרים (מודול נוכחות)
+    var atSess = await ysKvGet('ys_attend_sessions');
+    if (atSess && Array.isArray(atSess)) {
+      localStorage.setItem('ys_attend_sessions', JSON.stringify(atSess));
+      window._atData = atSess; // עדכן cache בלי null-reset כדי לא להפריע לסדר פתוח
+    }
     if (typeof renderStudents === 'function') renderStudents();
+    if (typeof refreshDashStats === 'function') refreshDashStats();
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
 
@@ -2767,7 +2762,13 @@ async function atLoadData() {
 async function atSaveData(data) {
   window._atData=data;
   localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
-  try { await ysKvSet('ys_attend_sessions',data); } catch(e){}
+  try {
+    await ysKvSet('ys_attend_sessions',data);
+    // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
+    var _ats=Date.now();
+    await ysKvSet('ys_last_changed',_ats);
+    _ysLastTs=_ats; // THIS device לא יחזור ויטען את מה שזה עתה שמר
+  } catch(e){}
 }
 async function atLoadTreats() {
   try { var v=await ysKvGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
