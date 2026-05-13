@@ -3282,21 +3282,66 @@ async function atAutoSaveNow() {
   await atSaveData(window._atData);
 }
 
-// דיאלוג ביטול סימון אוטומטי
-function atShowOverrideDialog(sid, newCode, reason) {
+// דיאלוג ביטול סטטוס מתוך לשונית הרישום
+function atShowOverrideDialog(sid, student) {
+  var aa=getActiveAbsences(student);
+  var a=aa&&aa[0];
+  if(!a) return;
+  var TL={approved:'אישור',suspended:'השעיה',left:'לא שב'};
+  var TC={approved:'#276749',suspended:'#c05621',left:'#c53030'};
+  var TI={approved:'✅',suspended:'⚠️',left:'🚪'};
+  var _dow=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  var fmtDt=function(v){
+    if(!v)return '—';
+    var d=new Date(v),hd=window._hcH(d);
+    var hh=d.getHours(),mm=d.getMinutes();
+    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+  };
+  var typeLbl=TL[a.type]||a.type;
+  var typeClr=TC[a.type]||'#1a3a6b';
+  var typeIcon=TI[a.type]||'📋';
+  var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
+  var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
   var d=document.createElement('div');
   d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-  d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:340px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-    '<div style="font-size:1.5rem;margin-bottom:6px">⚠️</div>'+
-    '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px">שינוי סימון</div>'+
-    '<p style="font-size:.85rem;color:var(--text2);margin-bottom:18px;line-height:1.5">תלמיד זה סומן אוטומטית בשל:<br><b>'+reason+'</b><br>האם לסמן ידנית ולבטל את הסימון האוטומטי?</p>'+
-    '<div style="display:flex;gap:10px;justify-content:center">'+
-    '<button onclick="this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-    '<button onclick="window.atApplyMark(\''+sid+'\',\''+newCode+'\');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">אישור</button>'+
-    '</div></div>';
   d.setAttribute('data-dlg','override');
+  d.innerHTML=
+    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #eee">'+
+        '<span style="font-size:1.2rem">'+typeIcon+'</span>'+
+        '<span style="font-weight:700;font-size:.95rem;color:'+typeClr+'">'+typeLbl+'</span>'+
+        '<span style="font-size:.85rem;color:#aaa;margin-right:auto">'+student.name+'</span>'+
+      '</div>'+
+      reasonHtml+
+      datesHtml+
+      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?</div>'+
+      '<div style="display:flex;gap:10px">'+
+        '<button onclick="this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
+        '<button onclick="window.atCancelStudentStatusFromReg(\''+sid+'\');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
+      '</div>'+
+    '</div>';
   document.body.appendChild(d);
 }
+
+// ביטול סטטוס תלמיד מתוך לשונית הרישום
+window.atCancelStudentStatusFromReg = function(sid) {
+  var students=getStudents();
+  var s=students.find(function(x){return String(x.id)===String(sid);});
+  if(!s) return;
+  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
+  s.absences=[]; s.present=true;
+  saveStudents(students);
+  scheduleYsPush();
+  // הסר auto-mark מהרישום הנוכחי, החזר ל"לא סומן"
+  delete window._atMarks[sid];
+  delete window._atCleared[sid];
+  delete window._atPending[sid];
+  clearTimeout(window._atSaveTimer);
+  window._atSaveTimer=setTimeout(atAutoSaveNow,300);
+  window.atRenderStudents();
+  renderStudents();
+  toast('✅ הסטטוס בוטל ל-'+s.name);
+};
 
 // החלת סימון (אחרי אישור אם נדרש)
 window.atApplyMark = function(sid, code) {
@@ -3424,13 +3469,9 @@ window.atSetMark = function(sid, code) {
   var sessTime=sessObj&&sessObj.startTime?sessObj.startTime:'';
   var autoM=student?atAutoMark(student,sessDateIso,sessTime):null;
   var cur=window._atMarks[sid];
-  // אם מסומן אוטומטית ולא נוקה — שאל לפני שינוי
+  // אם מסומן אוטומטית ולא נוקה — פתח דיאלוג ביטול סטטוס
   if(autoM&&cur&&cur.s===autoM&&!window._atCleared[sid]){
-    var aa=getActiveAbsences(student);
-    var reason=aa&&aa[0]?
-      (aa[0].reason||(aa[0].type==='approved'?'אישור':aa[0].type==='suspended'?'השעיה':'עזיבה')):
-      'סטאטוס קיים';
-    atShowOverrideDialog(sid,code,reason);
+    atShowOverrideDialog(sid,student);
     return;
   }
   window.atApplyMark(sid,code);
