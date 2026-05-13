@@ -1114,7 +1114,16 @@ window._hcOpen=function(pfx){
   document.querySelectorAll('.hc-pop').forEach(function(p){p.style.display='none';});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
   var vh=iso?window._hcH(new Date(iso)):window._hcH(new Date());
-  window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};window._hcDraw(pfx);pop.style.display='block';};
+  window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};window._hcDraw(pfx);
+  // מיקום fixed — מחושב מהטריגר, חסין לכל overflow:hidden בהורים
+  var trg=document.getElementById(pfx+'_trg');
+  if(trg){
+    var r=trg.getBoundingClientRect();
+    pop.style.top=(r.bottom+4)+'px';
+    pop.style.right=(window.innerWidth-r.right)+'px';
+    pop.style.left='auto';
+  }
+  pop.style.display='block';};
 // בחירת יום
 window._hcPick=function(pfx,hy,mi,day){
   var g=window._hcG(hy,mi,day);
@@ -1167,7 +1176,7 @@ window._hcBuild=function(pfx,initH,tv){
       '<span style="font-size:.8rem;opacity:.5;margin-right:4px">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:999;background:#fff;border:1.5px solid #d8e2f0;border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
+    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:#fff;border:1.5px solid #d8e2f0;border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
     (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:#888;white-space:nowrap">שעה:</span><input type="time" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid #d8e2f0;border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
