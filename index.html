@@ -3314,7 +3314,7 @@ function atShowOverrideDialog(sid, student) {
       '</div>'+
       reasonHtml+
       datesHtml+
-      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?</div>'+
+      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
       '<div style="display:flex;gap:10px">'+
         '<button onclick="this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
         '<button onclick="window.atCancelStudentStatusFromReg(\''+sid+'\');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
