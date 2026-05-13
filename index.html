@@ -664,7 +664,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
             <button onclick="window.addReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
           <div>
-            <div style="font-weight:600;color:#c53030;margin-bottom:8px;font-size:.88rem">🚪 לא שב / עזב</div>
+            <div style="font-weight:600;color:#c53030;margin-bottom:8px;font-size:.88rem">🚪 לא שב</div>
             <div id="reasons-left" style="display:flex;flex-direction:column;gap:6px"></div>
             <button onclick="window.addReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
@@ -1090,7 +1090,7 @@ window._hcDraw=function(pfx){
   h+='</div>';
   // כותרת ימים: DOM א→ש, גריד RTL מציג ש ימינה, א שמאלה
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px);text-align:center;margin-bottom:3px">';
-  ['א','ב','ג','ד','ה','ו','ש'].forEach(function(x){h+='<div style="font-size:.72rem;font-weight:700;color:#999;padding:2px 0">'+x+'</div>';});
+  ['ש','ו','ה','ד','ג','ב','א'].forEach(function(x){h+='<div style="font-size:.72rem;font-weight:700;color:#999;padding:2px 0">'+x+'</div>';});
   h+='</div>';
   // תאים
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px)">';
@@ -1186,7 +1186,7 @@ function openStatusForm(type) {
   var m = document.getElementById('status-modal');
   if (m) m.style.display = 'none';
 
-  var typeLabels = {approved: 'אישור', suspended: 'השעיה', left: 'לא שב / עזב'};
+  var typeLabels = {approved: 'אישור', suspended: 'השעיה', left: 'לא שב'};
   var typeColors = {approved: '#276749', suspended: '#c05621', left: '#c53030'};
   var typeBg = {approved: '#f0fff4', suspended: '#fffbeb', left: '#fff5f5'};
   var typeBorder = {approved: '#9ae6b4', suspended: '#fbd38d', left: '#feb2b2'};
@@ -2476,13 +2476,13 @@ window.openStatusPickerModal = function() {
     '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' +
       '<button onclick="window.openStatusForm(\'approved\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
-        '<span style="font-size:1.5rem">✅</span><div><div>אישור</div><div style="font-size:.75rem;font-weight:400;opacity:.7">חופשה, רפואי, אירוע וכדומה</div></div>' +
+        '<span style="font-size:1.5rem">✅</span><div>אישור</div>' +
       '</button>' +
       '<button onclick="window.openStatusForm(\'suspended\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
-        '<span style="font-size:1.5rem">⚠️</span><div><div>השעיה</div><div style="font-size:.75rem;font-weight:400;opacity:.7">משמעת וכדומה</div></div>' +
+        '<span style="font-size:1.5rem">⚠️</span><div>השעיה</div>' +
       '</button>' +
       '<button onclick="window.openStatusForm(\'left\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
-        '<span style="font-size:1.5rem">🚪</span><div><div>לא שב / עזב</div><div style="font-size:.75rem;font-weight:400;opacity:.7">לא חזר מחופשה, עזב לצמיתות</div></div>' +
+        '<span style="font-size:1.5rem">🚪</span><div>לא שב</div>' +
       '</button>' +
     '</div>' +
   '</div>';
@@ -2493,12 +2493,20 @@ window.openCurrentStatusModal = function() {
   var students = getStudents();
   var s = students.find(function(x){return x.id === window._statusSid;});
   if (!s) return;
-  var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב / עזב'};
+  var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב'};
   var TC = {approved:'#276749', suspended:'#c05621', left:'#c53030'};
   var TB = {approved:'#f0fff4', suspended:'#fffbeb', left:'#fff5f5'};
   var TBR = {approved:'#9ae6b4', suspended:'#fbd38d', left:'#feb2b2'};
   var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
-  var fmtDt = function(v){ return v ? new Date(v).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—'; };
+  var _dow = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  var fmtDt = function(v){
+    if(!v) return '—';
+    var d = new Date(v);
+    var hd = window._hcH(d);
+    var hh = d.getHours(), mm = d.getMinutes();
+    var timeStr = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
+  };
   var activeAbsences = getActiveAbsences(s);
   var absencesHtml = activeAbsences.map(function(a) {
     var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + a.id + ')';
