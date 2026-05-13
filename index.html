@@ -1122,7 +1122,7 @@ window._hcPick=function(pfx,hy,mi,day){
   var lb=document.getElementById(pfx+'_lbl');
   if(lb){
     var lbTxt=window._hcFmt(hy,mi,day);
-    if(pfx==='at_date'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[new Date(iso+'T12:00:00').getDay()]+' '+lbTxt;}
+    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[new Date(iso+'T12:00:00').getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
   var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';
@@ -1152,7 +1152,11 @@ window._hcToggle=function(){
   }};
 // בניית HTML: כפתור-טריגר + פופאפ + שעה
 window._hcBuild=function(pfx,initH,tv){
-  var label=initH?window._hcFmt(initH.hy,initH.mi,initH.day):'בחר תאריך עברי';
+  var label;
+  if(initH){
+    label=window._hcFmt(initH.hy,initH.mi,initH.day);
+    if(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'){var _BD_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];var _bdG=window._hcG(initH.hy,initH.mi,initH.day);label='יום '+_BD_DOW[_bdG.getDay()]+' '+label;}
+  }else{label='בחר תאריך עברי';}
   var iso='';
   if(initH){var g=window._hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
   var trg='display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;border:1.5px solid #d8e2f0;border-radius:10px;background:#f4f8ff;font-family:Heebo;font-size:.92rem;color:#1a3a6b;font-weight:600;box-sizing:border-box;transition:border-color .15s';
