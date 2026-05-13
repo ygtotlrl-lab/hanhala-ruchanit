@@ -3234,6 +3234,12 @@ window.atOpenSession = async function(sessId, sessName) {
 
   var filler=document.getElementById('at-filler');
   var dateHeb=window._hcH(new Date(dateIso));
+  // שמור auto-marks ישירות ב-rec.marks כדי שלא יאבדו ביציאה ללא שמירה
+  var initMarks={};
+  students.filter(function(s){return s.active!==false;}).forEach(function(s){
+    var m=window._atMarks[s.id];
+    initMarks[String(s.id)]={s:m?m.s:'',min:0};
+  });
   var rec={
     id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
     session:sessName,
@@ -3241,7 +3247,7 @@ window.atOpenSession = async function(sessId, sessName) {
     date_heb:dateHeb,
     filled_by:AUTH.user?AUTH.user.id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
-    marks:{},
+    marks:initMarks,
     created_at:new Date().toISOString()
   };
 
@@ -3409,7 +3415,14 @@ window.atRenderStudents = function() {
 // לחיצה על כפתור סימון — בדיקת override לאוטו-מארק
 window.atSetMark = function(sid, code) {
   var student=getStudents().find(function(s){return String(s.id)===String(sid);});
-  var autoM=student?atAutoMark(student):null;
+  // חשב auto-mark עם תאריך ושעת הסדר הנוכחי — זהה לחישוב בפתיחת הסדר
+  var curRec=window._atData&&window._atCurrentSessionId?
+    window._atData.find(function(r){return r.id===window._atCurrentSessionId;}):null;
+  var sessDateIso=curRec?curRec.date_iso:null;
+  var _cfg=window._atCfg||atDefaultCfg();
+  var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
+  var sessTime=sessObj&&sessObj.startTime?sessObj.startTime:'';
+  var autoM=student?atAutoMark(student,sessDateIso,sessTime):null;
   var cur=window._atMarks[sid];
   // אם מסומן אוטומטית ולא נוקה — שאל לפני שינוי
   if(autoM&&cur&&cur.s===autoM&&!window._atCleared[sid]){
