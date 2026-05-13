@@ -409,15 +409,16 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button class="btn sm out" onclick="window.downloadImportTemplate()" title="הורד תבנית Excel לייבוא תלמידים">📥 תבנית ייבוא</button><button class="btn sm out" onclick="document.getElementById('import-file-input').click()" title="ייבא תלמידים מקובץ Excel">📤 ייבוא תלמידים</button><button class="btn sm" style="background:#c0392b;border-color:#c0392b" onclick="window.openDeleteAllModal()" title="מחק את כל התלמידים">🗑️ מחק הכל</button><button class="btn sm" onclick="openAddStudent()">➕ הוסף תלמיד</button><input type="file" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button id="btn-manage-list" class="btn sm out" onclick="window.openManageListDlg()" style="display:none">⚙️ ניהול רשימה</button><input type="file" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
 
 
 <!-- Filter Tabs -->
 <div id="class-tabs-row" style="display:flex;gap:6px;margin:12px 0;flex-wrap:wrap">
-<button class="btn sm on" id="ct-all" onclick="window.filterClass('all')" style="font-size:.78rem;padding:5px 10px">הכל (75)</button>
+<button class="btn sm on" id="ct-all" onclick="window.filterClass('all')" style="font-size:.78rem;padding:5px 10px">הכל</button>
 <button class="btn sm out" id="ct-a" onclick="window.filterClass('a')" style="font-size:.78rem;padding:5px 10px">שיעור א'</button>
 <button class="btn sm out" id="ct-b" onclick="window.filterClass('b')" style="font-size:.78rem;padding:5px 10px">שיעור ב'</button>
 <button class="btn sm out" id="ct-g" onclick="window.filterClass('g')" style="font-size:.78rem;padding:5px 10px">שיעור ג'</button>
+<button class="btn sm out" id="ct-inactive" onclick="window.filterClass('inactive')" style="font-size:.78rem;padding:5px 10px;color:#888">לא פעילים</button>
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div style="display:flex;justify-content:center;margin:0 0 14px">
@@ -670,6 +671,28 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         </div>
         <div style="margin-top:16px;text-align:left">
           <button class="btn" onclick="window.saveAbsenceReasons()">💾 שמור</button>
+        </div>
+      </div>
+      <!-- שנות מחזור לכל שיעור -->
+      <div class="ss" style="margin-top:14px">
+        <div class="ss-t">🎓 שנות מחזור לכל שיעור</div>
+        <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px">שנת המחזור נשמרת לצמיתות עם כל תלמיד ומוצגת בתצוגת "לא פעילים"</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור א'</label>
+            <input id="cy-a" type="text" placeholder='למשל: תשפ"ח' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ב'</label>
+            <input id="cy-b" type="text" placeholder='למשל: תשפ"ז' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ג'</label>
+            <input id="cy-g" type="text" placeholder='למשל: תשפ"ו' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+          </div>
+        </div>
+        <div style="margin-top:14px;text-align:left">
+          <button class="btn" onclick="window.saveClsYearsSettings()">💾 שמור</button>
         </div>
       </div>
     </div>
@@ -1342,7 +1365,7 @@ function showSettingsModule(mod) {
   // setTimeout מבטיח שה-DOM עודכן לפני הrender
   setTimeout(function() {
     if (mod === 'system') { renderUsersList(); renderPermsTable(); }
-    if (mod === 'students') renderAbsenceReasons();
+    if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
     if (mod === 'attend') window.renderAttendSettings();
   }, 0);
 }
@@ -2117,9 +2140,8 @@ function checkLoginNeeded(){
 
 function filterClass(cls){
   currentFilter=cls;
-  ['all','a','b','g'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
-  var mp={all:'ct-all',a:'ct-a',b:'ct-b',g:'ct-g'};
-  var el=document.getElementById(mp[cls]||'ct-all');
+  ['all','a','b','g','inactive'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
+  var el=document.getElementById('ct-'+cls)||document.getElementById('ct-all');
   if(el){el.classList.add('on');el.classList.remove('out');}
   renderStudents();
 }
@@ -2147,62 +2169,93 @@ function getStudentStatus(sid){
 }
 
 function renderStudents(){
-  var students=getStudents();
+  var allSts=getStudents();
+  var activeSts=allSts.filter(function(s){return s.active!==false;});
+  var inactiveSts=allSts.filter(function(s){return s.active===false;});
   var searchEl=document.getElementById('search-st');
   var search=searchEl?searchEl.value.toLowerCase():'';
-  var today=todayKey();
-  var attend=getAttendance();
-  var dayA=attend[today]||{};
-  var filtered=students.filter(function(s){
+  var isInactiveView=(currentFilter==='inactive');
+
+  // כפתור "ניהול רשימה" — admin only
+  var btnML=document.getElementById('btn-manage-list');
+  if(btnML) btnML.style.display=(AUTH.user&&AUTH.user.role==='admin')?'':'none';
+
+  // מונה כפתורי סינון — רק תלמידים פעילים
+  var tabsRow=document.getElementById('class-tabs-row');
+  var swInner=document.getElementById('sw-inner');
+  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
+  var ea=document.getElementById('ct-all');
+  if(ea)ea.textContent='הכל ('+activeSts.length+')';
+  var ea2=document.getElementById('ct-a');
+  if(ea2)ea2.textContent=CLS_NAME.a+' ('+activeSts.filter(function(s){return s.cls==='a';}).length+')';
+  var eb=document.getElementById('ct-b');
+  if(eb)eb.textContent=CLS_NAME.b+' ('+activeSts.filter(function(s){return s.cls==='b';}).length+')';
+  var eg=document.getElementById('ct-g');
+  if(eg)eg.textContent=CLS_NAME.g+' ('+activeSts.filter(function(s){return s.cls==='g';}).length+')';
+  var ei=document.getElementById('ct-inactive');
+  if(ei)ei.textContent='לא פעילים ('+inactiveSts.length+')';
+
+  var sumEl=document.getElementById('st-summary');
+
+  if(isInactiveView){
+    // תצוגת לא פעילים
+    var filtInactive=inactiveSts.filter(function(s){
+      return !search||s.name.toLowerCase().indexOf(search)>=0;
+    });
+    if(sumEl){sumEl.innerHTML='<span style="color:#888;font-size:.85rem">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
+    var tbody=document.getElementById('students-tbody');
+    if(!tbody)return;
+    if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
+    tbody.innerHTML=filtInactive.map(function(s,i){
+      var bg=i%2===0?'#fff':'#f9fafb';
+      var yr=s.cohortYear||'';
+      var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+yr+'</span>':'';
+      return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
+        '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
+          '<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'+
+          '<div style="display:flex;align-items:center;gap:6px">'+badge+'</div>'+
+        '</div>'+
+        '<div style="flex-shrink:0">'+
+          '<button onclick="window.setStudentActive('+s.id+')" style="padding:5px 12px;background:#eaf7f0;color:#276749;border:1.5px solid #9ae6b4;border-radius:20px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">↩ החזר לפעיל</button>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    return;
+  }
+
+  // תצוגה רגילה — רק תלמידים פעילים
+  var filtered=activeSts.filter(function(s){
     if(currentFilter!=='all'&&s.cls!==currentFilter)return false;
     if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
     return true;
   });
   var present=0,absent=0;
-  students.forEach(function(s){
+  activeSts.forEach(function(s){
     if(getActiveAbsences(s).length>0)absent++;else present++;
   });
-  // סנכרון רוחב החיפוש לרוחב שורת הכפתורים
-  var tabsRow=document.getElementById('class-tabs-row');
-  var swInner=document.getElementById('sw-inner');
-  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
-  var sumEl=document.getElementById('st-summary');
   if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
-    '<span style="color:#38a169;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>'+
+    '<span style="color:#38a169;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x2705; נוכחים: '+present+'</span>'+
     '<span style="color:#e53e3e;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x274C; אינם נוכחים: '+absent+'</span>'+
-    '<span style="color:#666;display:inline-flex;align-items:center;line-height:1">'+H(1505,1492,34,1499)+': '+students.length+'</span>';}
-  var ea=document.getElementById('ct-all');
-  if(ea)ea.textContent=H(1492,1499,1500)+' ('+students.length+')';
-  var ea2=document.getElementById('ct-a');
-  if(ea2)ea2.textContent=CLS_NAME.a+' ('+students.filter(function(s){return s.cls==='a';}).length+')';
-  var eb=document.getElementById('ct-b');
-  if(eb)eb.textContent=CLS_NAME.b+' ('+students.filter(function(s){return s.cls==='b';}).length+')';
-  var eg=document.getElementById('ct-g');
-  if(eg)eg.textContent=CLS_NAME.g+' ('+students.filter(function(s){return s.cls==='g';}).length+')';
+    '<span style="color:#666;display:inline-flex;align-items:center;line-height:1">סה"כ: '+activeSts.length+'</span>';}
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var st=getStudentStatus(s.id);
     var bg=i%2===0?'#fff':'#f9fafb';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
-    // נוכחות — נגזר מהיעדרויות הפעילות
     var isPresent=getActiveAbsences(s).length===0;
-    var presIcon = isPresent
-      ? '<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; '+H(1504,1493,1499,1495)+'</span>'
-      : '<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; '+H(1488,1497,1504,1493,32,1504,1493,1499,1495)+'</span>';
-    // כפתור עריכת סטטוס
-    var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="'+H(1506,1512,1497,1499,1514,32,1505,1496,1468,1493,1505)+'">+</button>';
+    var presIcon=isPresent
+      ?'<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; נוכח</span>'
+      :'<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; אינו נוכח</span>';
+    var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
-    // צד ימין: שם + שיעור/המבורגר
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
     html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
-    html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="'+H(1508,1512,1496,1497,1500,32,1514,1500,1502,1497,1491)+'">&#x2630;</button>';
+    html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+clsLabel+'</span>';
     html+='</div>';
     html+='</div>';
-    // צד שמאל: נוכחות וכפתור +
     html+='<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">';
     html+=presIcon;
     html+=statusBtn;
@@ -2212,6 +2265,157 @@ function renderStudents(){
   tbody.innerHTML=html;
 }
 
+
+// -------- ניהול שנות מחזור --------
+function getClsYears(){try{return JSON.parse(localStorage.getItem('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
+function saveClsYears(y){localStorage.setItem('ys_cls_years',JSON.stringify(y));}
+
+window.saveClsYearsSettings = function(){
+  var a=(document.getElementById('cy-a')||{}).value||'';
+  var b=(document.getElementById('cy-b')||{}).value||'';
+  var g=(document.getElementById('cy-g')||{}).value||'';
+  saveClsYears({a:a.trim(),b:b.trim(),g:g.trim()});
+  toast('✅ שנות המחזור נשמרו');
+};
+
+// מילוי ערכים קיימים בפתיחת הגדרות מצבת
+function _initClsYearsInputs(){
+  var y=getClsYears();
+  var ea=document.getElementById('cy-a');if(ea)ea.value=y.a||'';
+  var eb=document.getElementById('cy-b');if(eb)eb.value=y.b||'';
+  var eg=document.getElementById('cy-g');if(eg)eg.value=y.g||'';
+}
+
+// -------- הפעלה/השבתה של תלמיד --------
+window.setStudentInactive = function(sid){
+  var students=getStudents();
+  var s=students.find(function(x){return x.id===sid;});
+  if(!s){toast('⚠️ תלמיד לא נמצא');return;}
+  var years=getClsYears();
+  s.active=false;
+  if(!s.cohortYear) s.cohortYear=years[s.cls]||'';
+  saveStudents(students);
+  scheduleYsPush();
+  renderStudents();
+  toast('✅ '+s.name+' סומן כלא פעיל');
+};
+
+window.setStudentActive = function(sid){
+  var students=getStudents();
+  var s=students.find(function(x){return x.id===sid;});
+  if(!s){toast('⚠️ תלמיד לא נמצא');return;}
+  s.active=true;
+  saveStudents(students);
+  scheduleYsPush();
+  renderStudents();
+  toast('✅ '+s.name+' הוחזר לפעיל');
+};
+
+// -------- דיאלוג ניהול רשימה --------
+window.openManageListDlg = function(){
+  var prev=document.querySelector('[data-dlg="manage-list"]');if(prev)prev.remove();
+  var isAdmin=AUTH.user&&AUTH.user.role==='admin';
+  if(!isAdmin){toast('⚠️ גישה למנהלים בלבד');return;}
+  var ITEMS=[
+    {icon:'➕',label:'הוסף תלמיד',fn:'openAddStudent()'},
+    {icon:'📥',label:'תבנית ייבוא',fn:"window.downloadImportTemplate()"},
+    {icon:'📤',label:'ייבוא תלמידים',fn:"document.getElementById('import-file-input').click()"},
+    {icon:'🗑️',label:'מחק הכל',fn:'window.openDeleteAllModal()',col:'#c0392b'},
+    {icon:'😴',label:'סמן תלמיד כלא פעיל',fn:'window.openDeactivateStudentDlg()'},
+    {icon:'🔄',label:'מעבר שנתי',fn:'window.openYearTransitionDlg()',col:'#c05621'}
+  ];
+  var rows=ITEMS.map(function(item){
+    return '<button onclick="'+item.fn+';document.querySelector(\'[data-dlg=manage-list]\').remove()" '+
+      'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:#fff;border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy)')+';cursor:pointer;text-align:right;direction:rtl">'+
+      '<span style="font-size:1.25rem;width:28px;text-align:center">'+item.icon+'</span>'+item.label+
+    '</button>';
+  }).join('');
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','manage-list');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.45);z-index:800;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;overflow:hidden;padding-bottom:env(safe-area-inset-bottom,0)">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)">'+
+      '<span style="font-weight:700;font-size:.97rem;color:var(--navy)">⚙️ ניהול רשימת תלמידים</span>'+
+      '<button onclick="this.closest(\'[data-dlg=manage-list]\').remove()" style="background:none;border:none;font-size:1.3rem;color:#aaa;cursor:pointer">✕</button>'+
+    '</div>'+
+    rows+
+  '</div>';
+  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.remove();});
+  document.body.appendChild(dlg);
+};
+
+// -------- דיאלוג: סמן תלמיד כלא פעיל --------
+window.openDeactivateStudentDlg = function(){
+  var students=getStudents().filter(function(s){return s.active!==false;});
+  var opts=students.map(function(s){
+    return '<option value="'+s.id+'">'+s.name+' ('+( CLS_NAME[s.cls]||s.cls)+')</option>';
+  }).join('');
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','deactivate-st');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:810;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;max-width:360px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
+    '<div style="font-weight:700;font-size:.97rem;color:var(--navy);margin-bottom:14px">😴 סמן תלמיד כלא פעיל</div>'+
+    '<select id="deact-st-sel" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;margin-bottom:16px;direction:rtl">'+
+      '<option value="">-- בחר תלמיד --</option>'+opts+
+    '</select>'+
+    '<div style="font-size:.82rem;color:#c05621;background:#fffbeb;border-radius:8px;padding:8px 12px;margin-bottom:16px">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button onclick="this.closest(\'[data-dlg=deactivate-st]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button onclick="var v=document.getElementById(\'deact-st-sel\').value;if(!v){toast(\'⚠️ יש לבחור תלמיד\');return;}window.setStudentInactive(parseInt(v));this.closest(\'[data-dlg=deactivate-st]\').remove()" '+
+        'style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">✅ אשר</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(dlg);
+};
+
+// -------- דיאלוג: מעבר שנתי --------
+window.openYearTransitionDlg = function(){
+  var years=getClsYears();
+  var gYr=years.g?(' (מחזור '+years.g+')'):'';
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','year-transition');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:810;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;max-width:400px;width:100%;direction:rtl;border-top:4px solid #c05621">'+
+    '<div style="font-size:2rem;text-align:center;margin-bottom:8px">🔄</div>'+
+    '<div style="font-weight:700;font-size:1rem;color:#c05621;text-align:center;margin-bottom:6px">מעבר שנתי</div>'+
+    '<div style="font-size:.84rem;color:var(--text2);margin-bottom:14px;line-height:1.6">'+
+      '<strong style="color:#c53030">⚠️ פעולה בלתי הפיכה!</strong><br>'+
+      '• שיעור ג\''+gYr+' → יועברו ל<strong>לא פעילים</strong><br>'+
+      '• שיעור ב\' → שיעור ג\'<br>'+
+      '• שיעור א\' → שיעור ב\'<br>'+
+      '• שיעור א\' יישאר ריק לתלמידים חדשים'+
+    '</div>'+
+    '<div style="font-size:.82rem;background:#fff5f5;border-radius:8px;padding:8px 12px;margin-bottom:18px;color:#c53030">לא ניתן לבטל פעולה זו לאחר האישור.</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<button onclick="this.closest(\'[data-dlg=year-transition]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button onclick="window.doYearTransition();this.closest(\'[data-dlg=year-transition]\').remove()" '+
+        'style="flex:1;padding:9px;background:#c05621;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:700;cursor:pointer">🔄 בצע מעבר שנתי</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(dlg);
+};
+
+window.doYearTransition = function(){
+  var students=getStudents();
+  var years=getClsYears();
+  var changed=0;
+  students.forEach(function(s){
+    if(s.active===false) return;
+    if(s.cls==='g'){
+      s.active=false;
+      if(!s.cohortYear) s.cohortYear=years.g||'';
+      changed++;
+    } else if(s.cls==='b'){
+      s.cls='g'; changed++;
+    } else if(s.cls==='a'){
+      s.cls='b'; changed++;
+    }
+  });
+  saveStudents(students);
+  scheduleYsPush();
+  filterClass('all');
+  toast('✅ מעבר שנתי הושלם — '+changed+' תלמידים עודכנו');
+};
 
 function getActiveAbsences(s) {
   var now = new Date();
