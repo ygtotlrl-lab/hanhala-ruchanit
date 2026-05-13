@@ -3806,7 +3806,7 @@ window.atRenderSupervision = async function() {
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
-    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין היעדרויות ב'+mLabel+'</div>';return;
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין חיסורים ב'+mLabel+'</div>';return;
   }
 
   // שמור רשומות לכל תלמיד (לכפתור 🔍)
@@ -3830,8 +3830,9 @@ window.atRenderSupervision = async function() {
     var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
-    html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden">';
-    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">';
+    var cardId='sup-card-'+sid;
+    html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
@@ -3839,6 +3840,8 @@ window.atRenderSupervision = async function() {
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
     html+='<button onclick="event.stopPropagation();window.atSupDetail(\''+sid+'\')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='</div>';
+    html+='<span class="sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div></div>';
     // פאנל פרטים
     html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
@@ -3896,8 +3899,24 @@ window.atAddTreat = async function(sid) {
   toast('✅ טיפול נשמר');
 };
 
-window.atDeleteTreat = async function(id) {
-  if(!confirm('למחוק טיפול זה?')) return;
+window.atDeleteTreat = function(id) {
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','del-treat');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:28px 24px;text-align:center;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'
+    +'<div style="font-size:2rem;margin-bottom:10px">🗑️</div>'
+    +'<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'
+    +'<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'
+    +'<div style="display:flex;gap:10px;justify-content:center">'
+    +'<button onclick="window.atDeleteTreatConfirmed(\''+id+'\')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'
+    +'<button onclick="this.closest(\'[data-dlg=del-treat]\').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(dlg);
+};
+
+window.atDeleteTreatConfirmed = async function(id) {
+  document.querySelectorAll('[data-dlg=del-treat]').forEach(function(d){d.remove();});
   var treats=await atLoadTreats();
   treats=treats.filter(function(t){return t.id!==id;});
   await atSaveTreats(treats);
@@ -3916,7 +3935,7 @@ window.atSupDetail = function(sid) {
   var records=(window._atSupRecords&&window._atSupRecords[sid])||[];
 
   var rows='';
-  if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין היעדרויות בחודש זה</div>';}
+  if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין חיסורים בחודש זה</div>';}
   else{
     records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
       var hd=r.date_heb;
