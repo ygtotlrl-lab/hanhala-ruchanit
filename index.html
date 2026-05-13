@@ -3285,7 +3285,7 @@ async function atAutoSaveNow() {
   getStudents().forEach(function(s){
     if(s.active===false) return;
     var m=window._atMarks[s.id];
-    marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||10):0}:{s:'',min:0};
+    marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0}:{s:'',min:0};
   });
   rec.marks=marks;
   await atSaveData(window._atData);
@@ -3355,8 +3355,8 @@ window.atCancelStudentStatusFromReg = function(sid) {
 // החלת סימון (אחרי אישור אם נדרש)
 window.atApplyMark = function(sid, code) {
   var s=String(sid);
-  var prevMin=(window._atMarks[s]||{}).min||0;
-  window._atMarks[s]={s:code,min:prevMin};
+  // איחור: min=null → שדה ריק עד שהמשתמש יזין ערך
+  window._atMarks[s]={s:code,min:code==='l'?null:0};
   window._atCleared[s]=true;    // מנע חזרת auto-mark
   window._atPending[s]=true;    // השאר למעלה בינתיים
   window.atRenderStudents();
@@ -3376,7 +3376,9 @@ window.atApplyMark = function(sid, code) {
 window.atConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('at-min-'+sid);
-  if(inp) window.atSetLateMin(sid,inp.value);
+  var val=inp?parseInt(inp.value):0;
+  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
+  window.atSetLateMin(sid,val);
   delete window._atPending[s];
   window.atRenderStudents();
   clearTimeout(window._atSaveTimer);
@@ -3431,10 +3433,10 @@ window.atRenderStudents = function() {
     var isPendingLate=isLate&&!!window._atPending[String(s.id)];
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="0" max="120" value="'+(marks.min||0)+'" id="at-min-'+s.id+'" '+
-        'onchange="window.atSetLateMin(\''+s.id+'\',this.value)" '+
+        '<input type="number" min="1" max="120" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
+        'oninput="window.atSetLateMin(\''+s.id+'\',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate(\''+s.id+'\')}" '+
-        'style="width:50px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
+        'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
         (isPendingLate?'<button onclick="window.atConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
