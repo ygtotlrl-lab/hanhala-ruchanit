@@ -391,7 +391,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <div class="stats">
     <div class="stat"><div class="n" id="s-tot">-</div><div class="l">תלמידים רשומים</div></div>
     <div class="stat"><div class="n" style="color:#1a7a4a" id="s-pre">-</div><div class="l">נוכחים היום</div></div>
-    <div class="stat"><div class="n" style="color:#c0392b" id="s-abs">-</div><div class="l">נעדרים היום</div></div>
+    <div class="stat"><div class="n" style="color:#c0392b" id="s-abs">-</div><div class="l">חיסורים היום</div></div>
     <div class="stat"><div class="n" id="s-rate">-</div><div class="l">% נוכחות</div></div>
   </div>
   <div class="mods-wrap">
@@ -933,8 +933,7 @@ async function doLogin() {
   document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
   initDateFields();
-  showPage('home');
-  loadDash();
+  showPage('home'); // loadDash נקרא בתוך showPage('home')
 }
 
 // ---- יציאה ----
@@ -995,7 +994,11 @@ function showPageInternal(pg) {
 var UNDER_CONSTRUCTION = ['sleep','exams','files','reports'];
 
 function showPage(pg) {
-  if (pg === 'home') { showPageInternal('home'); return; }
+  // עצור פולינג דשבורד אם יוצאים מהבית
+  if (pg !== 'home' && typeof _dashStatsTimer !== 'undefined') {
+    clearInterval(_dashStatsTimer); _dashStatsTimer = null;
+  }
+  if (pg === 'home') { showPageInternal('home'); loadDash(); return; }
   if (!AUTH.user) { return; }
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
@@ -1632,21 +1635,66 @@ function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שליש
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
 function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
 
-async function loadDash(){
-  // טען נתונים מ-kv (שם נשמרים הנתונים)
-  await ysPullFromCloud();
-  var sts = getStudents();
-  var present = sts.filter(function(s){ return !!s.present; }).length;
-  var absent = sts.length - present;
+// רענון נתוני כרטיסי הסיכום בדף הבית
+var _dashStatsTimer = null;
+async function refreshDashStats() {
+  var todayIso = new Date().toISOString().split('T')[0];
+
+  // תלמידים פעילים (active !== false)
+  var allSts = getStudents();
+  var activeSts = allSts.filter(function(s){ return s.active !== false; });
+
+  // נוכחים היום — פעילים ללא כל סטטוס פעיל
+  var presentCount = activeSts.filter(function(s){
+    var aa = (typeof getActiveAbsences === 'function') ? getActiveAbsences(s) : [];
+    return !aa || aa.length === 0;
+  }).length;
+
+  // נתוני נוכחות — טעינה טרייה מ-KV
+  window._atData = null;
+  var atData = (typeof atLoadData === 'function') ? await atLoadData() : [];
+  var todaySess = atData.filter(function(r){ return r.date_iso === todayIso; });
+  var sessCount = todaySess.length;
+
+  // חיסורים היום (e + x) וסה"כ נוכחות (p + l) — כל סדר נספר בנפרד
+  var absCount = 0, presMarks = 0;
+  todaySess.forEach(function(rec){
+    Object.values(rec.marks).forEach(function(m){
+      if(m.s === 'e' || m.s === 'x') absCount++;
+      if(m.s === 'p' || m.s === 'l') presMarks++;
+    });
+  });
+
+  // % נוכחות: מונה = p+l, מכנה = תלמידים פעילים × מספר סדרים
+  var rateStr;
+  if(sessCount === 0){
+    rateStr = '—';
+  } else {
+    var denom = activeSts.length * sessCount;
+    rateStr = denom > 0 ? Math.round(presMarks / denom * 100) + '%' : '0%';
+  }
+
   var totEl = document.getElementById('s-tot');
   var preEl = document.getElementById('s-pre');
   var absEl = document.getElementById('s-abs');
   var rateEl = document.getElementById('s-rate');
-  if(totEl) totEl.textContent = sts.length;
-  if(preEl) preEl.textContent = present;
-  if(absEl) absEl.textContent = absent;
-  if(rateEl) rateEl.textContent = (sts.length ? Math.round(present/sts.length*100) : 0)+'%';
+  if(totEl) totEl.textContent = activeSts.length;
+  if(preEl) preEl.textContent = presentCount;
+  if(absEl) absEl.textContent = absCount;
+  if(rateEl) rateEl.textContent = rateStr;
+}
+
+async function loadDash(){
+  await ysPullFromCloud();
+  await refreshDashStats();
   renderStudents();
+  // פולינג זמן אמת — עדכון כל 30 שניות
+  clearInterval(_dashStatsTimer);
+  _dashStatsTimer = setInterval(async function(){
+    if(!document.getElementById('s-tot')) { clearInterval(_dashStatsTimer); return; }
+    await ysPullFromCloud();
+    await refreshDashStats();
+  }, 30000);
 }
 
 function renderSt(list){
