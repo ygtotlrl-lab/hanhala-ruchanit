@@ -2318,10 +2318,10 @@ window.openManageListDlg = function(){
   if(!isAdmin){toast('⚠️ גישה למנהלים בלבד');return;}
   var ITEMS=[
     {icon:'➕',label:'הוסף תלמיד',fn:'openAddStudent()'},
+    {icon:'➖',label:'סמן תלמיד כלא פעיל',fn:'window.openDeactivateStudentDlg()'},
     {icon:'📥',label:'תבנית ייבוא',fn:"window.downloadImportTemplate()"},
     {icon:'📤',label:'ייבוא תלמידים',fn:"document.getElementById('import-file-input').click()"},
     {icon:'🗑️',label:'מחק הכל',fn:'window.openDeleteAllModal()',col:'#c0392b'},
-    {icon:'😴',label:'סמן תלמיד כלא פעיל',fn:'window.openDeactivateStudentDlg()'},
     {icon:'🔄',label:'מעבר שנתי',fn:'window.openYearTransitionDlg()',col:'#c05621'}
   ];
   var rows=ITEMS.map(function(item){
