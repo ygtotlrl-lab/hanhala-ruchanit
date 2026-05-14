@@ -588,8 +588,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <!-- תצוגת ארכיון -->
     <div id="at-view-arc" style="display:none">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
-        <button onclick="window.atExportExcel()" style="padding:7px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 Excel</button>
-        <button onclick="window.atExportPdf()" style="padding:7px 14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📄 PDF</button>
+        <button onclick="window.atShowExportDialog('excel')" style="padding:7px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 Excel</button>
+        <button onclick="window.atShowExportDialog('pdf')" style="padding:7px 14px;background:#c0392b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📄 PDF</button>
       </div>
       <div id="at-arc-list"></div>
     </div>
@@ -2877,10 +2877,11 @@ window.printStudents = function() {
   try {
     if (typeof pdfMake === 'undefined') { alert('pdfMake not loaded'); return; }
     toast('מייצר PDF...');
-    var students = getStudents();
-    var present = students.filter(function(s){return !!s.present;});
-    var absent  = students.filter(function(s){return !s.present;});
-    var today   = new Date().toLocaleDateString('he-IL');
+    var students = getStudents().filter(function(s){return s.active!==false;});
+    var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
+    var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
+    var _todG=new Date(),_todH=window._hcH(_todG);
+    var today=window._hcFmt(_todH.hy,_todH.mi,_todH.day);
     var NB = ' ';
     function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
     function fixName(n){return (n||'').replace(/ /g,NB);}
@@ -3671,12 +3672,42 @@ window.atDeleteSessionConfirmed = async function(id) {
   toast('🗑️ רשומה נמחקה');
 };
 
-// -------- ייצוא --------
-window.atExportExcel = async function() {
+// -------- ייצוא — דיאלוג סינון --------
+window.atShowExportDialog = function(type) {
+  document.querySelectorAll('[data-dlg=at-export]').forEach(function(d){d.remove();});
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','at-export');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML=
+    '<div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'
+    +'<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:18px">'+(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel')+'</div>'
+    +'<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">מתאריך</div>'+window._hcBuild('expF',null)+'</div>'
+    +'<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
+    +'<div style="font-size:.8rem;color:var(--text3);margin-bottom:18px;text-align:center">השאר ריק לייצוא כל הנתונים</div>'
+    +'<div style="display:flex;gap:10px;justify-content:center">'
+    +'<button onclick="window.atExportConfirm(''+type+'')" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
+    +'<button onclick="this.closest('[data-dlg=at-export]').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
+    +'</div>'
+    +'</div>';
+  document.body.appendChild(dlg);
+};
+
+window.atExportConfirm = async function(type) {
+  var fromIso=(document.getElementById('expF_iso')||{}).value||null;
+  var toIso=(document.getElementById('expT_iso')||{}).value||null;
+  document.querySelectorAll('[data-dlg=at-export]').forEach(function(d){d.remove();});
+  if(type==='excel') await window.atExportExcel(fromIso,toIso);
+  else await window.atExportPdf(fromIso,toIso);
+};
+
+window.atExportExcel = async function(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
+    if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
     var wb=XLSX.utils.book_new();
     var rows=[['תאריך','סדר','שם תלמיד','סטאטוס','דקות איחור','ממלא']];
@@ -3691,44 +3722,56 @@ window.atExportExcel = async function() {
       });
     });
     var ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!views']=[{rightToLeft:true}];
+    ws['!cols']=[{wch:14},{wch:12},{wch:22},{wch:10},{wch:10},{wch:16}];
     XLSX.utils.book_append_sheet(wb,ws,'סדרים');
     XLSX.writeFile(wb,'sdariim-'+new Date().toISOString().split('T')[0]+'.xlsx');
   } catch(e){toast('שגיאה בייצוא: '+e.message);}
 };
 
-window.atExportPdf = async function() {
+window.atExportPdf = async function(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
+    if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
     var NB=' ';
-    var fontName='Helvetica';
+    var fontName='Roboto';
     if(typeof pdfMake!=='undefined'&&window._alefFontB64){
       pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
       pdfMake.fonts=pdfMake.fonts||{};
       pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
       fontName='Alef';
     }
-    var body=[['#','תאריך','סדר','נוכחים','נעדרים','מאחרים']];
+    function nb(s){return (s||'').replace(/ /g,NB);}
+    function cell(s,opts){return Object.assign({text:nb(String(s)),alignment:'right'},opts||{});}
+    var hdrRow=[
+      cell('#',{bold:true}),cell('תאריך',{bold:true}),cell('סדר',{bold:true}),
+      cell('נוכחים',{bold:true,color:'#276749'}),cell('נעדרים',{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
+    ];
+    var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-      var a=Object.values(rec.marks).filter(function(m){return ['a','ak'].indexOf(m.s)>=0;}).length;
+      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x'||m.s==='ap'||m.s==='ak'||m.s==='a';}).length;
       var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
-      body.push([String(i+1),dLabel,rec.session,String(p),String(a),String(l)]);
+      body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
+    var rangeNote='';
+    if(fromIso||toIso) rangeNote=NB+'('+nb(fromIso||'תחילה')+NB+'—'+NB+nb(toIso||'סוף')+')';
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:[
-        {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ',fontSize:18,bold:true,alignment:'center',margin:[0,0,0,4],color:'#1a3a6b'},
-        {text:'ארכיון'+NB+'שמירת'+NB+'סדרים',fontSize:11,alignment:'center',color:'#555',margin:[0,0,0,14]},
-        {table:{widths:['auto','*','auto','auto','auto','auto'],body:body},margin:[0,0,0,10]}
+        {text:nb('ישיבת תומכי תמימים ראשל"צ'),fontSize:18,bold:true,alignment:'center',margin:[0,0,0,4],color:'#1a3a6b'},
+        {text:nb('ארכיון שמירת סדרים')+rangeNote,fontSize:11,alignment:'center',color:'#555',margin:[0,0,0,14]},
+        {table:{widths:['auto','auto','*','auto','auto','auto'],body:body},margin:[0,0,0,10]}
       ],defaultStyle:{font:fontName,alignment:'right'}};
     pdfMake.createPdf(dd).download('sdariim-'+new Date().toISOString().split('T')[0]+'.pdf');
   } catch(e){toast('שגיאה בייצוא: '+e.message);}
 };
-
 // -------- השגחה --------
 // ניווט חודשי
 window.atSupNav = function(dir) {
