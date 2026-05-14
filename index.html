@@ -932,10 +932,10 @@ async function doLogin() {
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl = document.getElementById('auth-err');
-  errEl.textContent = '';
-  console.log('[login] start, user='+username);
-  if (!username || !pass) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
-  errEl.textContent = '⏳ מתחבר...';
+  function dbg(msg,col){errEl.style.color=col||'#8a97b0';errEl.textContent=msg;console.log('[login] '+msg);}
+  dbg('');
+  if (!username || !pass) { dbg('נא למלא שם משתמש וסיסמה','#e53e3e'); return; }
+  dbg('⏳ [1/4] שולח בקשה לשרת...');
   var res;
   try {
     res = await SB.from('ys_users')
@@ -943,22 +943,21 @@ async function doLogin() {
       .eq('username', username)
       .eq('password_hash', pass)
       .eq('active', true)
-      .single();
+      .maybeSingle();
   } catch(e) {
-    console.error('[login] SB query threw:', e);
-    errEl.textContent = 'שגיאת חיבור — נסה שוב';
-    return;
+    console.error('[login] SB threw:', e);
+    dbg('❌ שגיאת רשת: '+e.message,'#e53e3e'); return;
   }
   var data = res.data, error = res.error;
-  console.log('[login] SB result: data='+!!data+' error='+(error?error.message:'none'));
-  if (error || !data) { errEl.textContent = 'שם משתמש או סיסמה שגויים'; return; }
+  console.log('[login] SB result: data='+!!data+' error='+JSON.stringify(error));
+  if (error) { dbg('❌ שגיאת שרת: '+(error.message||error.code),'#e53e3e'); return; }
+  if (!data) { dbg('❌ שם משתמש או סיסמה שגויים','#e53e3e'); return; }
+  dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
   AUTH.user = data;
-  console.log('[login] loadPerms...');
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
-  console.log('[login] navigating to home');
-  errEl.textContent = '';
+  dbg('⏳ [3/4] מנווט לדף הבית...');
   document.getElementById('auth-screen').classList.add('hidden');
-  // עדכן avatar
+  errEl.style.color='#8a97b0'; errEl.textContent='';
   var wrap = document.getElementById('user-avatar-wrap');
   var hdru = document.getElementById('hdr-username');
   if (hdru) hdru.textContent = data.full_name;
@@ -969,8 +968,9 @@ async function doLogin() {
   if (mr) mr.textContent = AUTH.ROLE_LABELS[data.role] || data.role;
   document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
-  try { initDateFields(); } catch(e) { console.warn('[login] initDateFields failed:', e); }
-  showPage('home'); // loadDash נקרא בתוך showPage('home')
+  try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
+  dbg('⏳ [4/4] טוען נתונים...');
+  showPage('home');
 }
 
 // ---- יציאה ----
