@@ -933,19 +933,32 @@ async function doLogin() {
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl = document.getElementById('auth-err');
   errEl.textContent = '';
+  console.log('[login] start, user='+username);
   if (!username || !pass) { errEl.textContent = 'נא למלא שם משתמש וסיסמה'; return; }
-  var {data, error} = await SB.from('ys_users')
-    .select('*')
-    .eq('username', username)
-    .eq('password_hash', pass)
-    .eq('active', true)
-    .single();
+  errEl.textContent = '⏳ מתחבר...';
+  var res;
+  try {
+    res = await SB.from('ys_users')
+      .select('*')
+      .eq('username', username)
+      .eq('password_hash', pass)
+      .eq('active', true)
+      .single();
+  } catch(e) {
+    console.error('[login] SB query threw:', e);
+    errEl.textContent = 'שגיאת חיבור — נסה שוב';
+    return;
+  }
+  var data = res.data, error = res.error;
+  console.log('[login] SB result: data='+!!data+' error='+(error?error.message:'none'));
   if (error || !data) { errEl.textContent = 'שם משתמש או סיסמה שגויים'; return; }
   AUTH.user = data;
-  await loadPerms();
+  console.log('[login] loadPerms...');
+  try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
+  console.log('[login] navigating to home');
+  errEl.textContent = '';
   document.getElementById('auth-screen').classList.add('hidden');
   // עדכן avatar
-  var btn = document.getElementById('user-avatar-btn');
   var wrap = document.getElementById('user-avatar-wrap');
   var hdru = document.getElementById('hdr-username');
   if (hdru) hdru.textContent = data.full_name;
@@ -956,7 +969,7 @@ async function doLogin() {
   if (mr) mr.textContent = AUTH.ROLE_LABELS[data.role] || data.role;
   document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
-  initDateFields();
+  try { initDateFields(); } catch(e) { console.warn('[login] initDateFields failed:', e); }
   showPage('home'); // loadDash נקרא בתוך showPage('home')
 }
 
@@ -3685,11 +3698,13 @@ window.atShowExportDialog = function(type) {
     +'<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
     +'<div style="font-size:.8rem;color:var(--text3);margin-bottom:18px;text-align:center">השאר ריק לייצוא כל הנתונים</div>'
     +'<div style="display:flex;gap:10px;justify-content:center">'
-    +'<button onclick="window.atExportConfirm(''+type+'')" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
-    +'<button onclick="this.closest('[data-dlg=at-export]').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
+    +'<button class="exp-ok" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
+    +'<button class="exp-cancel" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
     +'</div>'
     +'</div>';
   document.body.appendChild(dlg);
+  dlg.querySelector('.exp-ok').onclick=function(){window.atExportConfirm(type);};
+  dlg.querySelector('.exp-cancel').onclick=function(){dlg.remove();};
 };
 
 window.atExportConfirm = async function(type) {
