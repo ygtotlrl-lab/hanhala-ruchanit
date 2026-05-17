@@ -3718,12 +3718,16 @@ window.atExportExcel = async function(fromIso,toIso) {
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
-    if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
-    var wb=XLSX.utils.book_new();
-    var R='‏'; // RLM — forces RTL rendering per cell in Excel
-    var rows=[[R+'תאריך',R+'סדר',R+'שם תלמיד',R+'סטאטוס',R+'דקות איחור',R+'ממלא']];
+    // SpreadsheetML (Excel 2003 XML) with ss:RightToLeft=1
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function cell(v){return '<Cell><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    function numCell(v){return '<Cell><Data ss:Type="Number">'+esc(v)+'</Data></Cell>';}
+    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    var HDR=['תאריך','סדר','שם תלמיד','סטאטוס','דקות איחור','ממלא'];
+    var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
@@ -3731,15 +3735,31 @@ window.atExportExcel = async function(fromIso,toIso) {
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
         var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
-        rows.push([R+dLabel,R+rec.session,R+sn,R+lbl,m.s==='l'?(m.min||0):'',R+(rec.filled_by_name||'')]);
+        var mins=m.s==='l'?(m.min||0):'';
+        xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(rec.filled_by_name||'')+'</Row>';
       });
     });
-    var ws=XLSX.utils.aoa_to_sheet(rows);
-    ws['!views']=[{RTL:true}];
-    ws['!cols']=[{wch:14},{wch:12},{wch:22},{wch:10},{wch:10},{wch:16}];
-    XLSX.utils.book_append_sheet(wb,ws,'סדרים');
-    console.log('[Excel RTL] ws[!views]=', JSON.stringify(ws['!views']));
-    XLSX.writeFile(wb,'sdariim-'+new Date().toISOString().split('T')[0]+'.xlsx');
+    var xml='<?xml version="1.0" encoding="UTF-8"?>';
+    xml+='<?mso-application progid="Excel.Sheet"?>';
+    xml+='<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+    xml+=' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"';
+    xml+=' xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    xml+='<Styles>';
+    xml+='<Style ss:ID="hdr"><Font ss:Bold="1"/><Alignment ss:Horizontal="Right"/></Style>';
+    xml+='<Style ss:ID="def"><Alignment ss:Horizontal="Right"/></Style>';
+    xml+='</Styles>';
+    xml+='<Worksheet ss:Name="סדרים" ss:RightToLeft="1">';
+    xml+='<Table ss:DefaultColumnWidth="80">';
+    xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="110"/>';
+    xml+=xmlRows;
+    xml+='</Table></Worksheet></Workbook>';
+    var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='sdariim-'+new Date().toISOString().split('T')[0]+'.xls';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+    toast('הייצוא הצליח');
   } catch(e){toast('שגיאה בייצוא: '+e.message);}
 };
 
