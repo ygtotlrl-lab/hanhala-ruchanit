@@ -966,7 +966,7 @@ async function doLogin() {
   if (mn) mn.textContent = data.full_name;
   var mr = document.getElementById('user-menu-role');
   if (mr) mr.textContent = AUTH.ROLE_LABELS[data.role] || data.role;
-  document.getElementById('hdr-role').textContent = AUTH.ROLE_LABELS[data.role] || '';
+  var hr=document.getElementById('hdr-role'); if(hr) hr.textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('⏳ [4/4] טוען נתונים...');
