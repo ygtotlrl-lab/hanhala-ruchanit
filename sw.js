@@ -12,12 +12,29 @@ var urlsToCache = [
   'https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf'
 ];
 
-// Install - cache core assets + all CDN resources
+// Install - cache each URL individually with logging
 self.addEventListener('install', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      console.log('[SW] Caching core assets and CDN resources');
-      return cache.addAll(urlsToCache);
+      console.log('[SW] Starting install cache...');
+      var promises = urlsToCache.map(function(url) {
+        return fetch(url, {mode: 'cors', credentials: 'omit'})
+          .then(function(response) {
+            if (!response.ok && response.type !== 'opaque') {
+              console.warn('[SW] Bad response for', url, response.status);
+              return;
+            }
+            return cache.put(url, response).then(function() {
+              console.log('[SW] Cached OK:', url);
+            });
+          })
+          .catch(function(err) {
+            console.error('[SW] FAILED to cache:', url, err.message);
+          });
+      });
+      return Promise.all(promises).then(function() {
+        console.log('[SW] Install complete');
+      });
     })
   );
   self.skipWaiting();
@@ -31,6 +48,7 @@ self.addEventListener('activate', function(event) {
         cacheNames.filter(function(name) {
           return name !== CACHE_NAME;
         }).map(function(name) {
+          console.log('[SW] Deleting old cache:', name);
           return caches.delete(name);
         })
       );
@@ -41,14 +59,11 @@ self.addEventListener('activate', function(event) {
 
 // Fetch - GET only, network first, fallback to cache
 self.addEventListener('fetch', function(event) {
-  // Skip non-GET (Supabase POST/PATCH API calls etc.)
   if (event.request.method !== 'GET') return;
-  // Skip non-http(s)
   if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
     fetch(event.request).then(function(response) {
-      // Only cache successful responses
       if (response && response.status === 200) {
         var responseClone = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
@@ -57,7 +72,14 @@ self.addEventListener('fetch', function(event) {
       }
       return response;
     }).catch(function() {
-      return caches.match(event.request);
+      return caches.match(event.request).then(function(cached) {
+        if (cached) {
+          console.log('[SW] Serving from cache:', event.request.url);
+          return cached;
+        }
+        console.warn('[SW] No cache for:', event.request.url);
+        return new Response('Offline', {status: 503});
+      });
     })
   );
 });
