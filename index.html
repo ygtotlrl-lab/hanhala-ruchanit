@@ -2915,8 +2915,8 @@ window.printStudents = function() {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
         {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
-        {text:'דוח נוכחות — '+today, direction:'rtl', fontSize:11, alignment:'center', color:'#555', margin:[0,0,0,14]},
-        {text:[{text:'סהכ: '},{text:String(students.length),direction:'ltr'},{text:' | '},{text:'נוכחים: '},{text:String(present.length),direction:'ltr'},{text:' | '},{text:'אינם נוכחים: '},{text:String(absent.length),direction:'ltr'}], fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
+        {text:[{text:'דוח'},{text:NB+'נוכחות'},{text:' — '},{text:today.replace(/ /g,NB)}], fontSize:11, alignment:'center', color:'#555', margin:[0,0,0,14]},
+        {text:[{text:'סהכ:'},{text:NB+String(students.length),direction:'ltr'},{text:NB+'|'+NB},{text:'נוכחים:'},{text:NB+String(present.length),direction:'ltr'},{text:NB+'|'+NB},{text:'אינם'+NB+'נוכחים:'},{text:NB+String(absent.length),direction:'ltr'}], fontSize:12, alignment:'center', bold:true, margin:[0,0,0,20]},
         {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#276749', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
         {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
