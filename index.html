@@ -13,28 +13,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>הנהלה רוחנית</title>
 <script>
-if('serviceWorker' in navigator){
-  // מחק cache ישן ורשום SW חדש עם auto-reload
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    return Promise.all(regs.map(function(r){ return r.unregister(); }));
-  }).then(function(){
-    return caches.keys();
-  }).then(function(keys){
-    return Promise.all(keys.map(function(k){ return caches.delete(k); }));
-  }).then(function(){
-    navigator.serviceWorker.register('sw.js?v=20260428').then(function(reg){
-      reg.addEventListener('updatefound', function(){
-        var newSW = reg.installing;
-        if(!newSW) return;
-        newSW.addEventListener('statechange', function(){
-          if(newSW.state === 'activated') location.reload();
-        });
-      });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('SW registered:', reg.scope);
+    }).catch(function(err) {
+      console.log('SW registration failed:', err);
     });
-  });
-  // אם SW חדש השתלט - רענן
-  navigator.serviceWorker.addEventListener('controllerchange', function(){
-    location.reload();
   });
 }
 </script>
