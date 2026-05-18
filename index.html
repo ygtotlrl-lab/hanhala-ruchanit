@@ -1305,6 +1305,7 @@ async function toggleUserMenu() {
   var res = await SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name');
   var data = res.data;
   if (!data) { othersEl.innerHTML=''; return; }
+  data = sortUsersByOrder(data);
   var currentId = AUTH.user ? String(AUTH.user.id) : '';
   var others = data.filter(function(u){return String(u.id)!==currentId;});
   if (!others.length) { othersEl.innerHTML=''; return; }
@@ -1312,7 +1313,7 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
     others.map(function(u){
       var safeName = u.full_name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      return '<button onclick="switchUser('+u.id+',\''+safeName+'\');" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">'+String.fromCharCode(128100)+'</span><span>'+u.full_name+'</span></button>';
+      return '<button onclick="switchUser('+u.id+',\''+safeName+'\');" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">'+👤+'</span><span>'+u.full_name+'</span></button>';
     }).join('');
 }
 function closeUserMenu() {
