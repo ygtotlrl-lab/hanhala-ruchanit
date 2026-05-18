@@ -2921,12 +2921,14 @@ window.printStudents = function() {
       ctx.clearRect(0,0,W,H);
       ctx.direction='rtl'; ctx.textBaseline='middle'; ctx.textAlign='center';
       ctx.fillStyle=opts.color||'#333';
-      ctx.font=(opts.bold?'bold ':'')+String(opts.fs||12)+'px Arial,sans-serif';
+      ctx.font=(opts.bold?'bold ':'')+String(opts.fs||12)+'px '+(opts.fontName||'Arial')+',Arial,sans-serif';
       ctx.fillText(text, W/2, H/2);
       return {image:c.toDataURL('image/png'),width:W,alignment:'center',margin:opts.margin||[0,0,0,0]};
     }
-    var subtitleImg = rtlImg('דוח נוכחות — '+today, {fs:11,color:'#555',h:22,margin:[0,0,0,14]});
-    var summaryImg = rtlImg('סהכ: '+students.length+' | נוכחים: '+present.length+' | אינם נוכחים: '+absent.length, {fs:13,bold:true,color:'#333',h:28,margin:[0,0,0,20]});
+    // Register document font for canvas use
+    if(window._alefFontB64&&typeof FontFace!=='undefined'){try{var _hf=false;document.fonts.forEach(function(f){if(f.family==='Alef')_hf=true;});if(!_hf){var _b=atob(window._alefFontB64),_ab=new ArrayBuffer(_b.length),_v=new Uint8Array(_ab);for(var _i=0;_i<_b.length;_i++)_v[_i]=_b.charCodeAt(_i);document.fonts.add(new FontFace('Alef',_ab));}}catch(_e){}}
+    var subtitleImg = rtlImg('דוח נוכחות — '+today, {fs:11,color:'#555',h:22,fontName:fontName,margin:[0,0,0,14]});
+    var summaryImg = rtlImg('סהכ: '+students.length+' | נוכחים: '+present.length+' | אינם נוכחים: '+absent.length, {fs:13,bold:true,color:'#333',h:28,fontName:fontName,margin:[0,0,0,20]});
     var docDef = {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
