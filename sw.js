@@ -1,63 +1,53 @@
-var CACHE_NAME = 'hanhala-ruchanit-v2';
-var urlsToCache = [
+var CACHE_NAME = 'hanhala-ruchanit-v3';
+var CORE = [
   './',
   './index.html',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
-  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-  'https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf'
+  './icon-512.png'
 ];
 
-// Install - cache each URL individually with logging
 self.addEventListener('install', function(event) {
+  console.log('[SW v3] install start');
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      console.log('[SW] Starting install cache...');
-      var promises = urlsToCache.map(function(url) {
-        return fetch(url, {mode: 'cors', credentials: 'omit'})
-          .then(function(response) {
-            if (!response.ok && response.type !== 'opaque') {
-              console.warn('[SW] Bad response for', url, response.status);
-              return;
-            }
-            return cache.put(url, response).then(function() {
-              console.log('[SW] Cached OK:', url);
-            });
-          })
-          .catch(function(err) {
-            console.error('[SW] FAILED to cache:', url, err.message);
+      console.log('[SW v3] caching', CORE.length, 'core files');
+      return Promise.all(
+        CORE.map(function(url) {
+          return fetch(url).then(function(resp) {
+            console.log('[SW v3] cached:', url, resp.status);
+            return cache.put(url, resp);
+          }).catch(function(err) {
+            console.error('[SW v3] FAIL core:', url, err.message);
           });
-      });
-      return Promise.all(promises).then(function() {
-        console.log('[SW] Install complete');
-      });
+        })
+      );
+    }).then(function() {
+      console.log('[SW v3] install complete');
+    }).catch(function(err) {
+      console.error('[SW v3] install ERROR:', err);
     })
   );
   self.skipWaiting();
 });
 
-// Activate - clean old caches
 self.addEventListener('activate', function(event) {
+  console.log('[SW v3] activate');
   event.waitUntil(
-    caches.keys().then(function(cacheNames) {
+    caches.keys().then(function(names) {
+      console.log('[SW v3] existing caches:', names);
       return Promise.all(
-        cacheNames.filter(function(name) {
-          return name !== CACHE_NAME;
-        }).map(function(name) {
-          console.log('[SW] Deleting old cache:', name);
-          return caches.delete(name);
-        })
+        names.filter(function(n) { return n !== CACHE_NAME; })
+             .map(function(n) {
+               console.log('[SW v3] deleting old cache:', n);
+               return caches.delete(n);
+             })
       );
     })
   );
   self.clients.claim();
 });
 
-// Fetch - GET only, network first, fallback to cache
 self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
@@ -65,19 +55,21 @@ self.addEventListener('fetch', function(event) {
   event.respondWith(
     fetch(event.request).then(function(response) {
       if (response && response.status === 200) {
-        var responseClone = response.clone();
+        var clone = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, responseClone);
+          cache.put(event.request, clone).catch(function(err) {
+            console.warn('[SW v3] put failed:', event.request.url.slice(0,80), err.message);
+          });
         });
       }
       return response;
     }).catch(function() {
-      return caches.match(event.request).then(function(cached) {
+      return caches.match(event.request, {ignoreVary: true}).then(function(cached) {
         if (cached) {
-          console.log('[SW] Serving from cache:', event.request.url);
+          console.log('[SW v3] offline hit:', event.request.url.slice(0,80));
           return cached;
         }
-        console.warn('[SW] No cache for:', event.request.url);
+        console.warn('[SW v3] offline miss:', event.request.url.slice(0,80));
         return new Response('Offline', {status: 503});
       });
     })
