@@ -3409,6 +3409,7 @@ window.atConfirmLate = function(sid) {
   var inp=document.getElementById('at-min-'+sid);
   var val=inp?parseInt(inp.value):0;
   if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
+  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
   window.atSetLateMin(sid,val);
   delete window._atPending[s];
   window.atRenderStudents();
@@ -3464,7 +3465,7 @@ window.atRenderStudents = function() {
     var isPendingLate=isLate&&!!window._atPending[String(s.id)];
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="1" max="120" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
+        '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
         'oninput="window.atSetLateMin(\''+s.id+'\',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate(\''+s.id+'\')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
@@ -3531,7 +3532,7 @@ window.atClearMark = function(sid) {
 
 window.atSetLateMin = function(sid, val) {
   var n=parseInt(val)||0;
-  if(n<0)n=0;if(n>120)n=120;
+  if(n<0)n=0;if(n>30)n=30;
   if(!window._atMarks[sid])window._atMarks[sid]={s:'l',min:n};
   else window._atMarks[sid].min=n;
   clearTimeout(window._atSaveTimer);
