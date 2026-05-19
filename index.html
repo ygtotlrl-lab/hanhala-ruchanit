@@ -3904,8 +3904,8 @@ window.atRenderSupervision = async function() {
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
-      // ספור כל סימון שאינו נוכח (p) ואינו איחור (l) כחיסור
-      if(m.s && m.s!=='p' && m.s!=='l'){
+      // ספור רק חיסור (e/-) והיעדרות (x) — לא אישור/בבית/מנוחה
+      if(m.s==='e' || m.s==='x'){
         stats[sid].absent++;
         stats[sid].records.push({recId:rec.id,session:rec.session,date_iso:rec.date_iso,date_heb:dh,mark:m.s,min:m.min||0});
       }
@@ -4150,7 +4150,7 @@ function atCheckAlert() {
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
-      if(m.s==='a'||m.s==='ak') stats[sid].absent++;
+      if(m.s==='e'||m.s==='x') stats[sid].absent++;
       if(m.s==='l') stats[sid].lateMin+=m.min||0;
     });
   });
