@@ -591,7 +591,55 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div id="rc"></div>
   </div>
 </div>
-<div class="pg" id="pg-sleep"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>🌙 זמן שינה</span><span class="gap"></span><button class="gear" data-gear="sleep">⚙️</button></div><div class="ep" id="ep-sleep"><h4>⚙️ עריכת כותרות</h4><textarea>זמן שינה</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-sleep')">סגור</button><button class="btn" onclick="saveEp('sleep')">💾 שמור</button></div></div><div class="cs"><div class="ci">🌙</div><h3>זמן שינה</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-sleep">
+  <div class="inner">
+    <div class="ptitle">
+      <button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button>
+      <span>🌙 זמן שינה</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0">
+      <button id="sl-tab-reg" onclick="window.slShowTab('reg')" style="padding:8px 18px;border:none;border-bottom:3px solid var(--navy);background:none;font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;margin-bottom:-2px">📝 רישום</button>
+      <button id="sl-tab-arc" onclick="window.slShowTab('arc')" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
+      <button id="sl-tab-sup" onclick="window.slShowTab('sup')" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
+    </div>
+    <div id="sl-loading" style="text-align:center;padding:40px;color:var(--text2)">⏳ טוען...</div>
+    <div id="sl-view-reg" style="display:none">
+      <div id="sl-reg-picker">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+          <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
+            <div style="flex:2;min-width:200px">
+              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
+              <div id="sl-date-wrap"></div>
+            </div>
+            <div style="flex:1;min-width:140px">
+              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
+              <input id="sl-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
+            </div>
+          </div>
+          <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px">בחר בדיקה לפתיחה:</div>
+          <div id="sl-sess-btns" style="display:flex;gap:9px;flex-wrap:wrap"></div>
+        </div>
+        <div id="sl-today-sessions"></div>
+      </div>
+      <div id="sl-reg-list" style="display:none">
+        <div style="background:var(--navy);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+          <div id="sl-reg-header" style="flex:1;display:flex;align-items:center;gap:10px"></div>
+          <button onclick="window.slCloseSession()" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ שמור וסגור</button>
+        </div>
+        <div id="sl-students"></div>
+      </div>
+    </div>
+    <div id="sl-view-arc" style="display:none">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+        <button onclick="window.slShowExportDialog()" style="padding:7px 14px;background:#217346;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.82rem;cursor:pointer">📊 רישום דו"ח</button>
+      </div>
+      <div id="sl-arc-list"></div>
+    </div>
+    <div id="sl-view-sup" style="display:none">
+      <div id="sl-sup-content"></div>
+    </div>
+  </div>
+</div>
 <div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea>מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea>תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <!-- ===== דף הגדרות ===== -->
@@ -708,10 +756,15 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </div>
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button onclick="window.showSettingsHome()" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
-      <div class="ss" style="text-align:center;padding:40px 20px">
-        <div style="font-size:3rem;margin-bottom:12px">🏗️</div>
-        <div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">המודול בבנייה</div>
-        <p style="color:var(--text2);font-size:.88rem">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      <div class="ss">
+        <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;max-width:400px">
+          <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
+          <div id="sl-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+          <button onclick="window.slAddTreatRow()" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end">
+          <button onclick="window.slSaveSettingsCfg()" class="btn">💾 שמור הגדרות</button>
+        </div>
       </div>
     </div>
     <div id="settings-exams" style="display:none">
@@ -1024,6 +1077,7 @@ function showPage(pg) {
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
   if (pg === 'attend') window.loadAttend();
+  if (pg === 'sleep') window.loadSleep();
 }
 
 
@@ -1380,6 +1434,7 @@ function showSettingsModule(mod) {
     if (mod === 'system') { renderUsersList(); renderPermsTable(); }
     if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
     if (mod === 'attend') window.renderAttendSettings();
+    if (mod === 'sleep') window.renderSleepSettings();
   }, 0);
 }
 
@@ -4259,6 +4314,1126 @@ window.atSaveSettingsCfg = async function() {
   window._atCfg=cfg;
   toast('✅ הגדרות נשמרו');
 };
+
+// ==================== מודול זמן שינה ====================
+var SL_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+function slDow(isoDate){return SL_DOW[new Date(isoDate+'T12:00:00').getDay()];}
+
+function slSummaryHtml(cnts){
+  var parts=[];
+  var add=function(n,lbl,col){if(n)parts.push('<span style="color:'+col+';font-weight:700">'+n+' '+lbl+'</span>');};
+  add(cnts.p||0,  'נוכחים',   '#276749');
+  add(cnts.e||0,  'חיסורים',  '#742a2a');
+  add(cnts.x||0,  'היעדרויות','#742a2a');
+  add(cnts.l||0,  'איחורים',  '#dd6b20');
+  add(cnts.ap||0, 'אישורים',  '#2b4c9f');
+  add(cnts.ak||0, 'בבית',     '#553c9a');
+  add(cnts.a||0,  'מנוחה',    '#0e7490');
+  return parts.join('<span style="color:#ccc;font-weight:400"> | </span>');
+}
+
+// תאריך לוגי — לפני 12:00 = לילה הקודם
+function slGetLogicalDate() {
+  var now=new Date();
+  if(now.getHours()<12){
+    var prev=new Date(now);
+    prev.setDate(prev.getDate()-1);
+    return prev.toISOString().split('T')[0];
+  }
+  return now.toISOString().split('T')[0];
+}
+
+window._slCfg = null;
+window._slData = null;
+window._slMarks = {};
+window._slPending = {};
+window._slCleared = {};
+window._slCurrentSessionId = null;
+window._slSaveTimer = null;
+window._slView = 'reg';
+window._slSupHY = null;
+window._slSupMI = null;
+
+function slDefaultCfg() {
+  return {
+    sessions:[
+      {id:'n1',name:'בדיקה א׳'},
+      {id:'n2',name:'בדיקה ב׳'}
+    ],
+    treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
+  };
+}
+
+async function slLoadCfg() {
+  if (window._slCfg) return window._slCfg;
+  try { var v=await ysKvGet('ys_sleep_cfg'); if(v){window._slCfg=v;return v;} } catch(e){}
+  try { var lc=localStorage.getItem('ys_sleep_cfg'); if(lc){window._slCfg=JSON.parse(lc);return window._slCfg;} } catch(e){}
+  window._slCfg = slDefaultCfg(); return window._slCfg;
+}
+async function slSaveCfg(cfg) {
+  window._slCfg=cfg;
+  localStorage.setItem('ys_sleep_cfg',JSON.stringify(cfg));
+  try { await ysKvSet('ys_sleep_cfg',cfg); } catch(e){}
+}
+async function slLoadData() {
+  if (window._slData) return window._slData;
+  try { var v=await ysKvGet('ys_sleep_sessions'); if(Array.isArray(v)){window._slData=v;return v;} } catch(e){}
+  try { var lc=localStorage.getItem('ys_sleep_sessions'); if(lc){window._slData=JSON.parse(lc);return window._slData;} } catch(e){}
+  window._slData=[]; return window._slData;
+}
+async function slSaveData(data) {
+  window._slData=data;
+  localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+  try {
+    await ysKvSet('ys_sleep_sessions',data);
+    var _sts=Date.now();
+    await ysKvSet('ys_last_changed',_sts);
+    _ysLastTs=_sts;
+  } catch(e){}
+}
+async function slLoadTreats() {
+  try { var v=await ysKvGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
+  try { var lc=localStorage.getItem('ys_sleep_treats'); if(lc)return JSON.parse(lc); } catch(e){}
+  return [];
+}
+async function slSaveTreats(data) {
+  localStorage.setItem('ys_sleep_treats',JSON.stringify(data));
+  try { await ysKvSet('ys_sleep_treats',data); } catch(e){}
+}
+
+// טעינה ראשית של מודול שינה
+window.loadSleep = async function() {
+  var el = document.getElementById('sl-loading');
+  if(!el) return;
+  el.style.display='block';
+  ['reg','arc','sup'].forEach(function(t){
+    var v=document.getElementById('sl-view-'+t);
+    if(v) v.style.display='none';
+  });
+
+  await slLoadCfg();
+  await slLoadData();
+  window._slMarks={};
+  window._slCurrentSessionId=null;
+
+  // בורר תאריך — תאריך לוגי (לפני 12:00 = אמש)
+  var dw=document.getElementById('sl-date-wrap');
+  if(dw){
+    var logIso=slGetLogicalDate();
+    var logDate=new Date(logIso+'T12:00:00');
+    var todH=window._hcH(logDate);
+    dw.innerHTML=window._hcBuild('sl_date',todH);
+    var _SL_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+    var lbEl=document.getElementById('sl_date_lbl');
+    if(lbEl) lbEl.textContent='יום '+_SL_DOW_I[logDate.getDay()]+' '+window._hcFmt(todH.hy,todH.mi,todH.day);
+  }
+
+  // בורר תאריך לארכיון
+  var adw=document.getElementById('sl-arc-date-wrap');
+  if(adw) adw.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:.82rem;color:var(--text2);white-space:nowrap">סינון לפי תאריך:</span>'+window._hcBuild('sl_arc_date')+'</div>';
+
+  // ממלא
+  var fl=document.getElementById('sl-filler');
+  if(fl && AUTH.user) fl.value=AUTH.user.full_name||'';
+
+  // כפתורי בדיקות
+  slFillSessionBtns();
+  slRenderTodaySessions();
+
+  var pk=document.getElementById('sl-reg-picker');
+  var rl=document.getElementById('sl-reg-list');
+  if(pk) pk.style.display='';
+  if(rl) rl.style.display='none';
+
+  el.style.display='none';
+  window.slShowTab('reg');
+  // אין התראת כניסה במודול שינה
+};
+
+function slSortedSessions(cfg) {
+  if(!cfg) cfg=window._slCfg||slDefaultCfg();
+  return (cfg.sessions||[]).slice().sort(function(a,b){
+    return (a.startTime||'').localeCompare(b.startTime||'');
+  });
+}
+
+function slFillSessionBtns() {
+  var el=document.getElementById('sl-sess-btns');
+  if(!el) return;
+  var cfg=window._slCfg||slDefaultCfg();
+  el.innerHTML=slSortedSessions(cfg).map(function(s){
+    return '<button onclick="window.slOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
+      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
+      'transition:all .18s" '+
+      'onmouseover="this.style.background=\'#dbe4f7\'" '+
+      'onmouseout="this.style.background=\'#eef2fa\'">'+
+      s.name+'</button>';
+  }).join('');
+}
+
+window.slShowTab = function(tab) {
+  window._slView=tab;
+  ['reg','arc','sup'].forEach(function(t){
+    var v=document.getElementById('sl-view-'+t);
+    var b=document.getElementById('sl-tab-'+t);
+    if(v) v.style.display=(t===tab)?'block':'none';
+    if(b){
+      b.style.borderBottomColor=(t===tab)?'var(--navy)':'transparent';
+      b.style.color=(t===tab)?'var(--navy)':'var(--text2)';
+      b.style.fontWeight=(t===tab)?'700':'600';
+    }
+  });
+  if(tab==='reg' && window._slCurrentSessionId) window.slRenderStudents();
+  if(tab==='arc') window.slRenderArchive();
+  if(tab==='sup') window.slRenderSupervision();
+};
+
+function slAutoMark(student, sessDateIso, sessStartTime) {
+  var aa=getActiveAbsences(student);
+  if(!aa||!aa.length) return null;
+  for(var i=0;i<aa.length;i++){
+    var t=aa[i].type;
+    if(t==='suspended'||t==='left') return 'ak';
+    if(t==='approved'){
+      if(!sessDateIso) return 'ap';
+      var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
+      var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
+      if(fromDate&&sessDateIso<fromDate) continue;
+      if(toDate&&sessDateIso>toDate) continue;
+      if(sessStartTime){
+        if(fromDate&&sessDateIso===fromDate){
+          var fromTime=aa[i].from&&aa[i].from.indexOf('T')>=0?aa[i].from.split('T')[1].substr(0,5):'00:00';
+          if(sessStartTime<fromTime) continue;
+        }
+        if(toDate&&sessDateIso===toDate){
+          var toTime=aa[i].to&&aa[i].to.indexOf('T')>=0?aa[i].to.split('T')[1].substr(0,5):'23:59';
+          if(sessStartTime>toTime) continue;
+        }
+      }
+      return 'ap';
+    }
+  }
+  return null;
+}
+
+var SL_COLORS={
+  'p': {bg:'#276749',fg:'#fff'},
+  'l': {bg:'#dd6b20',fg:'#fff'},
+  'e': {bg:'#742a2a',fg:'#fff'},
+  'x': {bg:'#742a2a',fg:'#fff'},
+  'ap':{bg:'#2b4c9f',fg:'#fff'},
+  'ak':{bg:'#553c9a',fg:'#fff'},
+  'a': {bg:'#0e7490',fg:'#fff'}
+};
+
+function slRenderTodaySessions() {
+  var el=document.getElementById('sl-today-sessions');
+  if(!el) return;
+  var data=window._slData||[];
+  var selIso=(document.getElementById('sl_date_iso')||{}).value;
+  var logIso=slGetLogicalDate();
+  var filterIso=selIso||logIso;
+  var isToday=filterIso===new Date().toISOString().split('T')[0];
+  var isLogical=filterIso===logIso;
+  var cfg=window._slCfg||slDefaultCfg();
+  var sessOrder={};
+  slSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
+  var daySess=data.filter(function(r){return r.date_iso===filterIso;})
+    .slice().sort(function(a,b){
+      var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
+      var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
+      return ia-ib;
+    });
+  if(!daySess.length){el.innerHTML='';return;}
+  var dowLabel=isToday?'היום':(isLogical&&!isToday?'אמש':'יום '+slDow(filterIso));
+  var html='<div style="margin-top:18px;border-top:1.5px solid var(--border);padding-top:14px">'+
+    '<div style="font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:8px">📋 בדיקות שמולאו '+dowLabel+':</div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px">';
+  daySess.forEach(function(rec){
+    var cnts={};
+    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    var summary=slSummaryHtml(cnts);
+    html+='<div onclick="window.slEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
+      '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
+      '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
+    '</div>';
+  });
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+window.slEditSession = async function(recId) {
+  var data=await slLoadData();
+  var rec=data.find(function(r){return r.id===recId;});
+  if(!rec) return;
+  window._slMarks={};window._slPending={};window._slCleared={};
+  Object.entries(rec.marks).forEach(function(e){
+    var sid=e[0],m=e[1];
+    if(m.s){window._slMarks[sid]={s:m.s,min:m.min||0,note:m.note||''};window._slCleared[sid]=true;}
+  });
+  var dw=document.getElementById('sl-date-wrap');
+  if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('sl_date',rec.date_heb);
+  var fl=document.getElementById('sl-filler');
+  if(fl) fl.value=rec.filled_by_name||'';
+  window._slCurrentSessionId=recId;
+  var hdr=document.getElementById('sl-reg-header');
+  if(hdr) hdr.innerHTML=
+    '<span style="font-weight:700;font-size:1rem">'+rec.session+'</span>'+
+    '<span style="font-size:.87rem;opacity:.85">'+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+  document.getElementById('sl-reg-picker').style.display='none';
+  document.getElementById('sl-reg-list').style.display='block';
+  window.slRenderStudents();
+};
+
+window.slOpenSession = async function(sessId, sessName) {
+  if(window._slCurrentSessionId){toast('⚠️ סגור את הבדיקה הנוכחית תחילה');return;}
+  var dateIso=(document.getElementById('sl_date_iso')||{}).value;
+  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
+
+  var allData=await slLoadData();
+  var existing=allData.find(function(r){return r.session===sessName&&r.date_iso===dateIso;});
+  if(existing){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+    d.setAttribute('data-dlg','sl-dup');
+    d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
+      '<div style="font-size:1.5rem;margin-bottom:6px">📋</div>'+
+      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">בדיקה כבר מולאה</div>'+
+      '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולאה היום.<br>האם לפתוח לעריכה?</p>'+
+      '<div style="display:flex;gap:10px;justify-content:center">'+
+      '<button onclick="this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button onclick="window.slEditSession(\''+existing.id+'\');this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
+      '</div></div>';
+    document.body.appendChild(d);
+    return;
+  }
+
+  var _oCfg=window._slCfg||slDefaultCfg();
+  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
+  var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
+  var students=getStudents();
+  window._slMarks={};window._slPending={};window._slCleared={};
+  students.filter(function(s){return s.active!==false;}).forEach(function(s){
+    var am=slAutoMark(s,dateIso,_oSessTime);
+    if(am) window._slMarks[s.id]={s:am,min:0,note:''};
+  });
+
+  var filler=document.getElementById('sl-filler');
+  var dateHeb=window._hcH(new Date(dateIso));
+  var initMarks={};
+  students.filter(function(s){return s.active!==false;}).forEach(function(s){
+    var m=window._slMarks[s.id];
+    initMarks[String(s.id)]={s:m?m.s:'',min:0,note:''};
+  });
+  var rec={
+    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    session:sessName,
+    date_iso:dateIso,
+    date_heb:dateHeb,
+    filled_by:AUTH.user?AUTH.user.id:'',
+    filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
+    marks:initMarks,
+    created_at:new Date().toISOString()
+  };
+
+  var data=await slLoadData();
+  data.push(rec);
+  window._slCurrentSessionId=rec.id;
+  await slSaveData(data);
+
+  var hdr=document.getElementById('sl-reg-header');
+  if(hdr) hdr.innerHTML=
+    '<span style="font-weight:700;font-size:1rem">'+sessName+'</span>'+
+    '<span style="font-size:.87rem;opacity:.85">'+window._hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
+
+  document.getElementById('sl-reg-picker').style.display='none';
+  document.getElementById('sl-reg-list').style.display='block';
+  window.slRenderStudents();
+};
+
+async function slAutoSaveNow() {
+  if(!window._slCurrentSessionId||!window._slData) return;
+  var rec=window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
+  if(!rec) return;
+  var marks={};
+  getStudents().forEach(function(s){
+    if(s.active===false) return;
+    var m=window._slMarks[s.id];
+    marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0,note:m.note||''}:{s:'',min:0,note:''};
+  });
+  rec.marks=marks;
+  await slSaveData(window._slData);
+}
+
+function slShowOverrideDialog(sid, student) {
+  var aa=getActiveAbsences(student);
+  var a=aa&&aa[0];
+  if(!a) return;
+  var TL={approved:'אישור',suspended:'השעיה',left:'לא שב'};
+  var TC={approved:'#276749',suspended:'#c05621',left:'#c53030'};
+  var TI={approved:'✅',suspended:'⚠️',left:'🚪'};
+  var _dow=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  var fmtDt=function(v){
+    if(!v)return '—';
+    var d=new Date(v),hd=window._hcH(d);
+    var hh=d.getHours(),mm=d.getMinutes();
+    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+  };
+  var typeLbl=TL[a.type]||a.type;
+  var typeClr=TC[a.type]||'#1a3a6b';
+  var typeIcon=TI[a.type]||'📋';
+  var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
+  var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var d=document.createElement('div');
+  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  d.setAttribute('data-dlg','sl-override');
+  d.innerHTML=
+    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #eee">'+
+        '<span style="font-size:1.2rem">'+typeIcon+'</span>'+
+        '<span style="font-weight:700;font-size:.95rem;color:'+typeClr+'">'+typeLbl+'</span>'+
+        '<span style="font-size:.85rem;color:#aaa;margin-right:auto">'+student.name+'</span>'+
+      '</div>'+
+      reasonHtml+datesHtml+
+      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
+      '<div style="display:flex;gap:10px">'+
+        '<button onclick="this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
+        '<button onclick="window.slCancelStudentStatusFromReg(\''+sid+'\');this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(d);
+}
+
+window.slCancelStudentStatusFromReg = function(sid) {
+  var students=getStudents();
+  var s=students.find(function(x){return String(x.id)===String(sid);});
+  if(!s) return;
+  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
+  s.absences=[]; s.present=true;
+  saveStudents(students);
+  scheduleYsPush();
+  delete window._slMarks[sid];
+  delete window._slCleared[sid];
+  delete window._slPending[sid];
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,300);
+  window.slRenderStudents();
+  renderStudents();
+  toast('✅ הסטטוס בוטל ל-'+s.name);
+};
+
+window.slApplyMark = function(sid, code) {
+  var s=String(sid);
+  var existNote=(window._slMarks[s]||{}).note||'';
+  window._slMarks[s]={s:code,min:code==='l'?null:0,note:existNote};
+  window._slCleared[s]=true;
+  window._slPending[s]=true;
+  window.slRenderStudents();
+  if(code!=='l'){
+    setTimeout(function(){
+      delete window._slPending[s];
+      window.slRenderStudents();
+    },600);
+  }
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,700);
+};
+
+window.slConfirmLate = function(sid) {
+  var s=String(sid);
+  var inp=document.getElementById('sl-min-'+sid);
+  var val=inp?parseInt(inp.value):0;
+  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
+  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
+  window.slSetLateMin(sid,val);
+  delete window._slPending[s];
+  window.slRenderStudents();
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,700);
+};
+
+window.slRenderStudents = function() {
+  var el=document.getElementById('sl-students');
+  if(!el) return;
+  var students=getStudents();
+  if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
+
+  var active=students.filter(function(s){return s.active!==false;});
+  var unmarked=[], marked=[];
+  active.forEach(function(s){
+    var cur=window._slMarks[s.id];
+    var isPending=!!window._slPending[s.id];
+    if(cur&&cur.s&&!isPending) marked.push(s);
+    else unmarked.push(s);
+  });
+
+  var bs='padding:6px 11px;border:2px solid #d8e2f0;border-radius:7px;font-family:Heebo;font-size:.8rem;cursor:pointer;font-weight:700;transition:all .15s;';
+  function mkBtn(sid,code,label){
+    var cur=(window._slMarks[sid]||{}).s;
+    var isOn=(cur===code);
+    var col=SL_COLORS[code]||{bg:'#eee',fg:'#333'};
+    var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
+      'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
+    return '<button onclick="window.slSetMark(\''+sid+'\',\''+code+'\')" style="'+style+'">'+label+'</button>';
+  }
+  function mkClearBtn(sid){
+    return '<button onclick="window.slClearMark(\''+sid+'\')" title="נקה סימון" '+
+      'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
+      'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
+      'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
+      'onmouseout="this.style.borderColor=\'#ccc\';this.style.color=\'#bbb\'">✕</button>';
+  }
+
+  function renderRow(s, isMark) {
+    var marks=window._slMarks[s.id]||{};
+    var isLate=marks.s==='l';
+    var hasMark=!!(marks.s);
+    var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
+    var autoHint='';
+    var am=slAutoMark(s);
+    if(am&&isMark&&!window._slCleared[s.id]){
+      var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
+      if(aLbl) autoHint='<span style="font-size:.7rem;color:#aaa;margin-right:4px">('+aLbl+')</span>';
+    }
+    var isPendingLate=isLate&&!!window._slPending[String(s.id)];
+    var lateField=isLate?
+      '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
+        '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
+        'oninput="window.slSetLateMin(\''+s.id+'\',this.value)" '+
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate(\''+s.id+'\')}" '+
+        'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
+        '<span style="font-size:.74rem;color:#888">דק׳</span>'+
+        (isPendingLate?'<button onclick="window.slConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
+      '</div>':'';
+    var noteVal=(marks.note||'').replace(/"/g,'&quot;');
+    var noteField='<input type="text" placeholder="הערה" value="'+noteVal+'" '+
+      'id="sl-note-'+s.id+'" '+
+      'oninput="window.slSetNote(\''+s.id+'\',this.value)" '+
+      'style="width:80px;padding:3px 7px;border:1.5px solid #ccc;border-radius:6px;font-family:Heebo;font-size:.78rem">';
+    var rowBg=isMark?'#f9fafb':'#fff';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
+      '<div style="width:22px;text-align:center;font-weight:700;font-size:.8rem;color:var(--text3)">'+cls+'</div>'+
+      '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+s.name+autoHint+'</div>'+
+      lateField+
+      noteField+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'+
+        (hasMark?mkClearBtn(s.id):'')+
+        mkBtn(s.id,'p','✓')+
+        mkBtn(s.id,'l','איחור')+
+        mkBtn(s.id,'e','-')+
+        mkBtn(s.id,'x','x')+
+        mkBtn(s.id,'ap','א')+
+        mkBtn(s.id,'ak','ב')+
+        mkBtn(s.id,'a','ג')+
+      '</div>'+
+    '</div>';
+  }
+
+  var html='';
+  if(unmarked.length) html+=unmarked.map(function(s){return renderRow(s,false);}).join('');
+  if(marked.length){
+    html+='<div style="font-size:.76rem;font-weight:600;color:var(--text3);margin:12px 0 7px;display:flex;align-items:center;gap:8px">'+
+      '<span style="flex:1;height:1px;background:var(--border)"></span>סומנו<span style="flex:1;height:1px;background:var(--border)"></span></div>';
+    html+=marked.map(function(s){return renderRow(s,true);}).join('');
+  }
+  el.innerHTML=html||'<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים פעילים</div>';
+};
+
+window.slSetMark = function(sid, code) {
+  var student=getStudents().find(function(s){return String(s.id)===String(sid);});
+  var curRec=window._slData&&window._slCurrentSessionId?
+    window._slData.find(function(r){return r.id===window._slCurrentSessionId;}):null;
+  var sessDateIso=curRec?curRec.date_iso:null;
+  var _cfg=window._slCfg||slDefaultCfg();
+  var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
+  var sessTime=sessObj&&sessObj.startTime?sessObj.startTime:'';
+  var autoM=student?slAutoMark(student,sessDateIso,sessTime):null;
+  var cur=window._slMarks[sid];
+  if(autoM&&cur&&cur.s===autoM&&!window._slCleared[sid]){
+    slShowOverrideDialog(sid,student);
+    return;
+  }
+  window.slApplyMark(sid,code);
+};
+
+window.slClearMark = function(sid) {
+  var existNote=(window._slMarks[sid]||{}).note||'';
+  delete window._slMarks[sid];
+  if(existNote) window._slMarks[sid]={s:'',min:0,note:existNote};
+  delete window._slPending[sid];
+  window._slCleared[sid]=true;
+  window.slRenderStudents();
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,700);
+};
+
+window.slSetLateMin = function(sid, val) {
+  var n=parseInt(val)||0;
+  if(n<0)n=0;if(n>30)n=30;
+  if(!window._slMarks[sid])window._slMarks[sid]={s:'l',min:n,note:''};
+  else window._slMarks[sid].min=n;
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,700);
+};
+
+window.slSetNote = function(sid, val) {
+  var s=String(sid);
+  if(!window._slMarks[s]) window._slMarks[s]={s:'',min:0,note:''};
+  window._slMarks[s].note=val;
+  clearTimeout(window._slSaveTimer);
+  window._slSaveTimer=setTimeout(slAutoSaveNow,700);
+};
+
+window.slCloseSession = async function() {
+  clearTimeout(window._slSaveTimer);
+  await slAutoSaveNow();
+  var rec=window._slData&&window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
+  var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
+  window._slCurrentSessionId=null;
+  window._slMarks={};
+  document.getElementById('sl-reg-list').style.display='none';
+  document.getElementById('sl-reg-picker').style.display='';
+  slRenderTodaySessions();
+  toast(msg);
+};
+
+// -------- ארכיון --------
+window.slRenderArchive = async function(records) {
+  var el=document.getElementById('sl-arc-list');
+  if(!el) return;
+  if(!records) records=await slLoadData();
+  if(!records||!records.length){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
+  }
+  var students=getStudents();
+  function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
+  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
+  var ARC_COL={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
+
+  var todG=new Date();
+  var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
+  var todH=window._hcH(todG);
+  var curHY=todH.hy, curMI=todH.mi;
+
+  var byYear={};
+  records.forEach(function(rec){
+    var hd=rec.date_heb;
+    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    var hy=hd.hy,mi=hd.mi,iso=rec.date_iso;
+    if(!byYear[hy]) byYear[hy]={};
+    if(!byYear[hy][mi]) byYear[hy][mi]={};
+    if(!byYear[hy][mi][iso]) byYear[hy][mi][iso]=[];
+    byYear[hy][mi][iso].push({rec:rec,hd:hd});
+  });
+
+  var years=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
+  var idCtr=0; function uid(){return 'sl-arc-col-'+(idCtr++);}
+
+  var html='<div>';
+  years.forEach(function(hy){
+    var yId=uid();
+    var isYearCur=hy===curHY;
+    html+='<div style="margin-bottom:18px">';
+    html+='<div onclick="var e=document.getElementById(\''+yId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+      'style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:9px;cursor:pointer;font-weight:700;font-size:.95rem;margin-bottom:10px;user-select:none">'+
+      '<span style="flex:1">📅 '+window._hcYL(hy)+'</span><span style="font-size:.8rem;opacity:.6">▾</span>'+
+    '</div>';
+    html+='<div id="'+yId+'" style="display:'+(isYearCur?'block':'none')+';padding-right:6px">';
+
+    var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
+    months.forEach(function(mi){
+      var mId=uid();
+      var isMonthCur=isYearCur&&mi===curMI;
+      var mName=window._hcMN(hy)[mi];
+      html+='<div style="margin-bottom:12px">';
+      html+='<div onclick="var e=document.getElementById(\''+mId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
+        '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
+      '</div>';
+      html+='<div id="'+mId+'" style="display:'+(isMonthCur?'block':'none')+';padding-right:8px">';
+
+      var _arcSessOrder={};
+      slSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      days.forEach(function(iso){
+        var dId=uid();
+        var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
+          var ia=_arcSessOrder[a.rec.session]!=null?_arcSessOrder[a.rec.session]:999;
+          var ib=_arcSessOrder[b.rec.session]!=null?_arcSessOrder[b.rec.session]:999;
+          return ia-ib;
+        });
+        var hd0=entries[0].hd;
+        var dayLabel=window._hcD[hd0.day]+' '+mName;
+        var isToday=iso===todayIso;
+        html+='<div style="margin-bottom:8px">';
+        html+='<div onclick="var e=document.getElementById(\''+dId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+          'style="display:flex;align-items:center;gap:8px;padding:6px 11px;background:'+(isToday?'#fef3c7':'#f0f4fa')+';border:1px solid '+(isToday?'#f6d860':'#d8e3f0')+';border-radius:6px;cursor:pointer;font-weight:600;font-size:.83rem;color:var(--navy);margin-bottom:4px;user-select:none">'+
+          '<span style="flex:1">'+dayLabel+(isToday?' — <span style="color:#b7791f">היום</span>':'')+
+          ' <span style="font-size:.76rem;font-weight:400;color:var(--text2)">('+entries.length+' בדיקות)</span></span>'+
+          '<span style="font-size:.68rem;opacity:.45">▾</span>'+
+        '</div>';
+        html+='<div id="'+dId+'" style="display:'+(isToday?'block':'none')+';padding-right:8px">';
+
+        entries.forEach(function(entry){
+          var rec=entry.rec;
+          var cnts={};
+          Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+          var summary=slSummaryHtml(cnts);
+          var sId=uid();
+          html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
+          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+rec.session+'</span>';
+          html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
+          html+='<button onclick="event.stopPropagation();window.slDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='</div>';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
+          var rows=Object.entries(rec.marks).map(function(e2){
+            var sid2=e2[0],m2=e2[1];
+            var sn=nameById(sid2);
+            var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
+            var noteStr=m2.note?(' — '+m2.note):'';
+            var col=ARC_COL[m2.s]||'#888';
+            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+              '<span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+noteStr+'</span></div>';
+          });
+          html+=rows.join('')+'</div></div>';
+        });
+        html+='</div></div>';
+      });
+      html+='</div></div>';
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+};
+
+window.slArcFilter = async function(all) {
+  var data=await slLoadData();
+  if(all){window.slRenderArchive(data);return;}
+  var dateIso=(document.getElementById('sl_arc_date_iso')||{}).value;
+  if(!dateIso){window.slRenderArchive(data);return;}
+  var filtered=data.filter(function(r){return r.date_iso===dateIso;});
+  window.slRenderArchive(filtered);
+};
+
+window.slDeleteSession = function(id) {
+  var dlg=document.createElement('div');
+  dlg.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  dlg.setAttribute('data-dlg','sl-del');
+  dlg.innerHTML=
+    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">'+
+      '<div style="font-size:1.5rem;margin-bottom:8px">🗑️</div>'+
+      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px">מחיקת רשומה</div>'+
+      '<p style="font-size:.85rem;color:var(--text2);margin-bottom:20px">הרשומה תימחק לצמיתות מהארכיון.<br>לא ניתן לשחזר פעולה זו.</p>'+
+      '<div style="display:flex;gap:10px">'+
+        '<button onclick="this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">ביטול</button>'+
+        '<button onclick="window.slDeleteSessionConfirmed(\''+id+'\');this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(dlg);
+};
+
+window.slDeleteSessionConfirmed = async function(id) {
+  var data=await slLoadData();
+  data=data.filter(function(r){return r.id!==id;});
+  await slSaveData(data);
+  window.slRenderArchive();
+  slRenderTodaySessions();
+  toast('🗑️ רשומה נמחקה');
+};
+
+// -------- ייצוא --------
+window.slShowExportDialog = function() {
+  document.querySelectorAll('[data-dlg=sl-export]').forEach(function(d){d.remove();});
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','sl-export');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML=
+    '<div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'+
+    '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:18px">📊 רישום דו"ח שינה</div>'+
+    '<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">מתאריך</div>'+window._hcBuild('slExpF',null)+'</div>'+
+    '<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('slExpT',null)+'</div>'+
+    '<div style="font-size:.8rem;color:var(--text3);margin-bottom:18px;text-align:center">השאר ריק לייצוא כל הנתונים</div>'+
+    '<div style="display:flex;gap:10px;justify-content:center">'+
+    '<button class="exp-ok" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'+
+    '<button class="exp-cancel" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'+
+    '</div></div>';
+  document.body.appendChild(dlg);
+  dlg.querySelector('.exp-ok').onclick=function(){
+    var fromIso=(document.getElementById('slExpF_iso')||{}).value||null;
+    var toIso=(document.getElementById('slExpT_iso')||{}).value||null;
+    dlg.remove();
+    window.slExportExcel(fromIso,toIso);
+  };
+  dlg.querySelector('.exp-cancel').onclick=function(){dlg.remove();};
+};
+
+window.slExportExcel = async function(fromIso,toIso) {
+  try {
+    var data=await slLoadData();
+    var students=getStudents();
+    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
+    if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
+    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function cell(v){return '<Cell><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    function numCell(v){return '<Cell><Data ss:Type="Number">'+esc(v)+'</Data></Cell>';}
+    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    var HDR=['תאריך','בדיקה','שם תלמיד','סטאטוס','דקות איחור','הערה','ממלא'];
+    var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
+    sorted.forEach(function(rec){
+      var hd=rec.date_heb;
+      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      Object.entries(rec.marks).forEach(function(e){
+        var sid=e[0],m=e[1];
+        var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
+        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
+        var mins=m.s==='l'?(m.min||0):'';
+        xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(m.note||'')+cell(rec.filled_by_name||'')+'</Row>';
+      });
+    });
+    var xml='<?xml version="1.0" encoding="UTF-8"?>';
+    xml+='<?mso-application progid="Excel.Sheet"?>';
+    xml+='<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
+    xml+=' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"';
+    xml+=' xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    xml+='<Styles>';
+    xml+='<Style ss:ID="hdr"><Font ss:Bold="1"/><Alignment ss:Horizontal="Right"/></Style>';
+    xml+='<Style ss:ID="def"><Alignment ss:Horizontal="Right"/></Style>';
+    xml+='</Styles>';
+    xml+='<Worksheet ss:Name="שינה" ss:RightToLeft="1">';
+    xml+='<Table ss:DefaultColumnWidth="80">';
+    xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="120"/><Column ss:Width="110"/>';
+    xml+=xmlRows;
+    xml+='</Table></Worksheet></Workbook>';
+    var blob=new Blob(['﻿'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='shinah-'+new Date().toISOString().split('T')[0]+'.xls';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+    toast('הייצוא הצליח');
+  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+};
+
+// -------- השגחה --------
+window.slSupNav = function(dir) {
+  var hy=window._slSupHY, mi=window._slSupMI;
+  mi+=dir;
+  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
+  window._slSupHY=hy;window._slSupMI=mi;
+  window.slRenderSupervision();
+};
+
+window.slRenderSupervision = async function() {
+  var el=document.getElementById('sl-sup-content');
+  if(!el) return;
+  if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
+  }
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  window._slData=null;
+  var data=await slLoadData();
+  var students=getStudents();
+  var treats=await slLoadTreats();
+
+  if(window._slSupHY===null){
+    var ch=window._hcH(new Date());
+    window._slSupHY=ch.hy;window._slSupMI=ch.mi;
+  }
+  var hy=window._slSupHY,mi=window._slSupMI;
+  var mNames=window._hcMN(hy);
+  var mLabel=mNames[mi]+' '+window._hcYL(hy);
+
+  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
+  var hasPrev=mi>0||!!window._hcBase(hy-1);
+  var hasNext=mi<curMax||!!window._hcBase(hy+1);
+
+  var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy);';
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+    '<button onclick="window.slSupNav(-1)" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
+    '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
+    '<button onclick="window.slSupNav(1)" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
+  '</div>';
+
+  if(!data||!data.length){
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
+  }
+
+  var stats={};
+  students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
+  data.forEach(function(rec){
+    var dh=rec.date_heb;
+    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    if(!dh||dh.hy!==hy||dh.mi!==mi) return;
+    Object.entries(rec.marks).forEach(function(e){
+      var sid=e[0],m=e[1];
+      if(!stats[sid]) return;
+      if(m.s==='e'||m.s==='x'){
+        stats[sid].absent++;
+        stats[sid].records.push({recId:rec.id,session:rec.session,date_iso:rec.date_iso,date_heb:dh,mark:m.s,min:m.min||0,note:m.note||''});
+      }
+      if(m.s==='l'){
+        stats[sid].lateMin+=m.min||0;
+        stats[sid].records.push({recId:rec.id,session:rec.session,date_iso:rec.date_iso,date_heb:dh,mark:m.s,min:m.min||0,note:m.note||''});
+      }
+    });
+  });
+
+  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+    .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
+
+  if(!rows.length){
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין חיסורים ב'+mLabel+'</div>';return;
+  }
+
+  window._slSupRecords={};
+  rows.forEach(function(e){window._slSupRecords[e[0]]=e[1].records||[];});
+
+  var html=navHtml+'<div style="display:flex;flex-direction:column;gap:10px">';
+  rows.forEach(function(e){
+    var sid=e[0],st=e[1];
+    var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastLabel='';
+    if(lastTreat){
+      var ltHd=lastTreat.date_heb;
+      var ltIso=lastTreat.date_iso||'';
+      var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
+      lastLabel='<span style="background:#e8f5e9;color:#276749;border-radius:6px;padding:2px 8px;font-size:.74rem;font-weight:700;margin-right:6px">📝 יום '+slDow(ltIso)+' '+ltDateStr+'</span>';
+    }
+    var alert20=st.absent>=20?'<span style="background:#fed7d7;color:#c53030;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⚠️ 20+</span>':'';
+    var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
+    var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
+    var cardId='sl-sup-card-'+sid;
+    html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sl-sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
+    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
+    html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
+    html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
+    html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
+    html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    html+='<button onclick="event.stopPropagation();window.slSupDetail(\''+sid+'\')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='</div>';
+    html+='<span class="sl-sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
+    html+='</div>';
+    html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
+    html+='<div style="margin-bottom:14px">';
+    html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">➕ הוסף טיפול</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    var slCfg=window._slCfg||slDefaultCfg();
+    html+='<select id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
+      slCfg.treats.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>';
+    html+='<input id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
+    html+='<button onclick="window.slAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='</div></div>';
+    if(stuTreats.length){
+      html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
+      html+=stuTreats.slice().reverse().map(function(t){
+        var hd=t.date_heb;
+        var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
+        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+          '<span style="color:var(--text2)">'+dl+'</span>'+
+          '<span style="font-weight:600">'+t.type+'</span>'+
+          (t.note?'<span style="color:var(--text2)">— '+t.note+'</span>':'')+
+          '<span class="gap"></span>'+
+          '<span style="color:var(--text3);font-size:.76rem">'+t.by_name+'</span>'+
+          '<button onclick="window.slDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+        '</div>';
+      }).join('');
+    }
+    html+='</div></div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+};
+
+window.slAddTreat = async function(sid) {
+  var typeEl=document.getElementById('sl-treat-type-'+sid);
+  var noteEl=document.getElementById('sl-treat-note-'+sid);
+  if(!typeEl) return;
+  var now=new Date();
+  var rec={
+    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    sid:sid,
+    date_iso:now.toISOString().split('T')[0],
+    date_heb:window._hcH(now),
+    type:typeEl.value,
+    note:noteEl?noteEl.value:'',
+    by:AUTH.user?AUTH.user.id:'',
+    by_name:AUTH.user?AUTH.user.full_name:'',
+    created_at:now.toISOString()
+  };
+  var treats=await slLoadTreats();
+  treats.push(rec);
+  await slSaveTreats(treats);
+  if(noteEl) noteEl.value='';
+  window.slRenderSupervision();
+  toast('✅ טיפול נשמר');
+};
+
+window.slDeleteTreat = function(id) {
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','sl-del-treat');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:28px 24px;text-align:center;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'+
+    '<div style="font-size:2rem;margin-bottom:10px">🗑️</div>'+
+    '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'+
+    '<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'+
+    '<div style="display:flex;gap:10px;justify-content:center">'+
+    '<button onclick="window.slDeleteTreatConfirmed(\''+id+'\')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'+
+    '<button onclick="this.closest(\'[data-dlg=sl-del-treat]\').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'+
+    '</div></div>';
+  document.body.appendChild(dlg);
+};
+
+window.slDeleteTreatConfirmed = async function(id) {
+  document.querySelectorAll('[data-dlg=sl-del-treat]').forEach(function(d){d.remove();});
+  var treats=await slLoadTreats();
+  treats=treats.filter(function(t){return t.id!==id;});
+  await slSaveTreats(treats);
+  window.slRenderSupervision();
+  toast('🗑️ נמחק');
+};
+
+// -------- פירוט חודשי לתלמיד --------
+var SL_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
+var SL_COL_DET={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
+
+window.slSupDetail = function(sid) {
+  var students=getStudents();
+  var st=students.find(function(s){return String(s.id)===String(sid);});
+  var name=st?st.name:'תלמיד';
+  var records=(window._slSupRecords&&window._slSupRecords[sid])||[];
+
+  var rows='';
+  if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין חיסורים בחודש זה</div>';}
+  else{
+    records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
+      var hd=r.date_heb;
+      var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
+      var dowStr='יום '+slDow(r.date_iso);
+      var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(SL_LBL_DET[r.mark]||r.mark);
+      var noteStr=r.note?(' — '+r.note):'';
+      var col=SL_COL_DET[r.mark]||'#888';
+      rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:.83rem;direction:rtl">';
+      rows+='<span style="min-width:54px;color:var(--text2)">'+dowStr+'</span>';
+      rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
+      rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+r.session+'</span>';
+      rows+='<span style="color:'+col+';font-weight:700;flex:1">'+lbl+noteStr+'</span>';
+      rows+='<button onclick="window.slSupEditMarkDlg(\''+r.recId+'\',\''+sid+'\',\''+r.mark+'\')" '+
+        'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
+      rows+='</div>';
+    });
+  }
+
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','sl-supdetail');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:820;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:82vh;display:flex;flex-direction:column;direction:rtl;overflow:hidden">'+
+    '<div style="display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--navy);color:#fff;border-radius:14px 14px 0 0">'+
+      '<span style="font-weight:700;font-size:.97rem;flex:1">📋 פירוט חודשי — '+name+'</span>'+
+      '<button onclick="this.closest(\'[data-dlg=sl-supdetail]\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:4px 10px;font-family:Heebo;cursor:pointer;font-size:.88rem">✕ סגור</button>'+
+    '</div>'+
+    '<div style="flex:1;overflow-y:auto;padding:14px 18px">'+rows+'</div>'+
+  '</div>';
+  document.body.appendChild(dlg);
+};
+
+window.slSupEditMarkDlg = function(recId, sid, curMark) {
+  var prev=document.querySelector('[data-dlg="sl-supedmark"]');if(prev)prev.remove();
+  var CODES=[
+    {c:'p',  lbl:'✓ נוכח',   col:'#276749'},
+    {c:'l',  lbl:'⏰ איחור',  col:'#dd6b20'},
+    {c:'e',  lbl:'− חיסור',  col:'#742a2a'},
+    {c:'x',  lbl:'✕ היעדרות',col:'#742a2a'},
+    {c:'ap', lbl:'א אישור',  col:'#2b4c9f'},
+    {c:'ak', lbl:'ב בבית',   col:'#553c9a'},
+    {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
+  ];
+  var btns=CODES.map(function(cd){
+    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
+    return '<button onclick="window.slEditMark(\''+recId+'\',\''+sid+'\',\''+cd.c+'\')" '+
+      'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
+  }).join('');
+  var dlg=document.createElement('div');
+  dlg.setAttribute('data-dlg','sl-supedmark');
+  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.4);z-index:830;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)';
+  dlg.innerHTML='<div style="background:#fff;border-radius:13px;padding:22px;max-width:340px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
+    '<div style="font-weight:700;font-size:.94rem;color:var(--navy);margin-bottom:14px">✏️ עדכן סימון</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+btns+'</div>'+
+    '<button onclick="this.closest(\'[data-dlg=sl-supedmark]\').remove()" style="width:100%;padding:8px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+  '</div>';
+  document.body.appendChild(dlg);
+};
+
+window.slEditMark = async function(recId, sid, newCode) {
+  var data=await slLoadData();
+  var rec=data.find(function(r){return r.id===recId;});
+  if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
+  if(!rec.marks[sid]) rec.marks[sid]={};
+  rec.marks[sid].s=newCode;
+  if(newCode!=='l') rec.marks[sid].min=0;
+  await slSaveData(data);
+  ['sl-supedmark','sl-supdetail'].forEach(function(n){
+    var d=document.querySelector('[data-dlg="'+n+'"]');
+    if(d) d.remove();
+  });
+  slRenderTodaySessions();
+  window.slRenderArchive();
+  window.slRenderSupervision();
+  toast('✅ סימון עודכן');
+};
+
+// -------- הגדרות מודול שינה (טיפולים בלבד) --------
+window.renderSleepSettings = async function() {
+  await slLoadCfg();
+  var cfg=window._slCfg||slDefaultCfg();
+  var tc=document.getElementById('sl-cfg-treats');
+  if(tc){
+    tc.innerHTML=cfg.treats.map(function(t,i){
+      return '<div style="display:flex;gap:6px;align-items:center">'+
+        '<input value="'+t+'" id="sl-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
+      '</div>';
+    }).join('');
+  }
+};
+
+window.slAddTreatRow = function() {
+  var tc=document.getElementById('sl-cfg-treats');
+  if(!tc) return;
+  var div=document.createElement('div');
+  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.innerHTML='<input placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  tc.appendChild(div);div.querySelector('input').focus();
+};
+
+window.slSaveSettingsCfg = async function() {
+  var cfg=window._slCfg||slDefaultCfg();
+  var tc=document.getElementById('sl-cfg-treats');
+  if(tc){
+    var newTreats=[];
+    tc.querySelectorAll('input').forEach(function(inp){
+      if(inp.value.trim()) newTreats.push(inp.value.trim());
+    });
+    cfg.treats=newTreats;
+  }
+  window._slCfg=null;
+  await slSaveCfg(cfg);
+  window._slCfg=cfg;
+  toast('✅ הגדרות נשמרו');
+};
+// ==================== סוף מודול זמן שינה ====================
+
 // ==================== סוף מודול שמירת סדרים ====================
 
 </script>
