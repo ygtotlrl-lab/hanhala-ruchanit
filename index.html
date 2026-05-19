@@ -2433,9 +2433,9 @@ window.doYearTransition = function(){
 function getActiveAbsences(s) {
   var now = new Date();
   if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.to || new Date(a.to) >= now; });
+    return s.absences.filter(function(a){ return (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
   }
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
+  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusFrom || new Date(s.statusFrom) <= now) && (!s.statusTo || new Date(s.statusTo) >= now)) {
     return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
   }
   return [];
