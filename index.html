@@ -354,6 +354,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <button class="nb" onclick="doLogout()" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
+  <div id="ys-sync-badge" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#c05621;color:#fff;border-radius:999px;padding:5px 16px;font-family:Heebo;font-size:.78rem;font-weight:700;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,.25);pointer-events:none;white-space:nowrap"></div>
   <div id="user-avatar-wrap" style="position:relative;display:none;align-items:center">
     <button id="user-avatar-btn" onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;cursor:pointer;font-family:Heebo;font-size:.88rem;font-weight:600;color:#fff;white-space:nowrap;backdrop-filter:blur(4px);transition:all .2s">
       <span style="font-size:.95rem">👤</span>
@@ -1882,9 +1883,110 @@ function initDateFields(){
 var _ysLastTs = 0;
 var _ysSyncing = false;
 
-function ysKvSet(key, value) {
+// ===== Offline Queue =====
+var _YS_Q_KEY = 'ys_offline_queue';
+
+function _ysKvSetRaw(key, value) {
   return SB.from('kv').upsert({key: key, value: JSON.stringify(value)}, {onConflict: 'key'});
 }
+
+// ysKvSet with auto-queue fallback — transparent drop-in replacement
+async function ysKvSet(key, value) {
+  // Never queue the timestamp key (it's always derived)
+  if (key === 'ys_last_changed') {
+    try { return await _ysKvSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
+  }
+  try {
+    var r = await _ysKvSetRaw(key, value);
+    if (r && r.error) {
+      _ysQueueAdd(key, value);
+    } else {
+      _ysQueueRemove(key);
+    }
+    ysUpdateQueueBadge();
+    return r;
+  } catch(e) {
+    _ysQueueAdd(key, value);
+    ysUpdateQueueBadge();
+    return {error: {message: e.message || 'offline'}};
+  }
+}
+
+function _ysQueueAdd(key, value) {
+  try {
+    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    q = q.filter(function(x){return x.key !== key;});
+    q.push({key: key, value: value, ts: Date.now()});
+    localStorage.setItem(_YS_Q_KEY, JSON.stringify(q));
+  } catch(e) { console.error('[ys-queue] add error:', e); }
+}
+function _ysQueueRemove(key) {
+  try {
+    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    q = q.filter(function(x){return x.key !== key;});
+    localStorage.setItem(_YS_Q_KEY, JSON.stringify(q));
+  } catch(e) {}
+}
+function _ysQueueGet(key) {
+  try {
+    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var item = q.find(function(x){return x.key === key;});
+    return item ? item.value : null;
+  } catch(e) { return null; }
+}
+function ysUpdateQueueBadge() {
+  try {
+    var badge = document.getElementById('ys-sync-badge');
+    if (!badge) return;
+    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var n = q.length;
+    if (n > 0) {
+      badge.textContent = '⏳ ' + n + ' רשומות ממתינות לסנכרון';
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch(e) {}
+}
+// Merge two session arrays by record id (local-only items appended)
+function _ysSessionsMerge(cloudArr, localArr) {
+  if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
+  if (!Array.isArray(localArr)) return cloudArr;
+  var cloudIds = {};
+  cloudArr.forEach(function(r){if(r&&r.id)cloudIds[r.id]=true;});
+  var extra = localArr.filter(function(r){return r&&r.id&&!cloudIds[r.id];});
+  return cloudArr.concat(extra);
+}
+async function ysFlushQueue() {
+  var q;
+  try { q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]'); } catch(e) { return; }
+  if (!q.length) return;
+  console.log('[ys-queue] flushing', q.length, 'items');
+  var failed = [];
+  var nOk = 0;
+  for (var i = 0; i < q.length; i++) {
+    var item = q[i];
+    try {
+      var r = await _ysKvSetRaw(item.key, item.value);
+      if (r && r.error) {
+        failed.push(item);
+      } else {
+        nOk++;
+        if (item.key === 'ys_attend_sessions' && window._atData === null) window._atData = item.value;
+        if (item.key === 'ys_sleep_sessions'  && window._slData === null) window._slData  = item.value;
+        console.log('[ys-queue] flushed', item.key);
+      }
+    } catch(e) { failed.push(item); }
+  }
+  if (nOk > 0) {
+    var ts = Date.now();
+    try { await _ysKvSetRaw('ys_last_changed', ts); _ysLastTs = ts; } catch(e){}
+    toast('☁️ ' + nOk + ' רשומות סונכרנו בהצלחה');
+  }
+  localStorage.setItem(_YS_Q_KEY, JSON.stringify(failed));
+  ysUpdateQueueBadge();
+}
+// ===== End Offline Queue =====
 function ysKvGet(key) {
   return SB.from('kv').select('value').eq('key', key).single().then(function(r){
     if (r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
@@ -1939,11 +2041,32 @@ async function ysPullFromCloud() {
     if (rs && Array.isArray(rs)) {
       localStorage.setItem('ys_reasons', JSON.stringify(rs));
     }
-    // טען נתוני סדרים (מודול נוכחות)
+    // טען נתוני סדרים (מודול נוכחות) — מזג עם נתונים מקומיים שטרם סונכרנו
     var atSess = await ysKvGet('ys_attend_sessions');
     if (atSess && Array.isArray(atSess)) {
-      localStorage.setItem('ys_attend_sessions', JSON.stringify(atSess));
-      window._atData = atSess; // עדכן cache בלי null-reset כדי לא להפריע לסדר פתוח
+      var _atLocal = JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]');
+      var _atPending = _ysQueueGet('ys_attend_sessions');
+      var _atMerge = _ysSessionsMerge(atSess, _atPending || _atLocal);
+      localStorage.setItem('ys_attend_sessions', JSON.stringify(_atMerge));
+      window._atData = _atMerge;
+      // אם יש רשומות מקומיות שלא היו בענן — עדכן את הענן
+      if (_atPending || _atMerge.length > atSess.length) {
+        _ysQueueAdd('ys_attend_sessions', _atMerge);
+        ysUpdateQueueBadge();
+      }
+    }
+    // טען נתוני שינה — מזג עם נתונים מקומיים
+    var slSess = await ysKvGet('ys_sleep_sessions');
+    if (slSess && Array.isArray(slSess)) {
+      var _slLocal = JSON.parse(localStorage.getItem('ys_sleep_sessions') || '[]');
+      var _slPending = _ysQueueGet('ys_sleep_sessions');
+      var _slMerge = _ysSessionsMerge(slSess, _slPending || _slLocal);
+      localStorage.setItem('ys_sleep_sessions', JSON.stringify(_slMerge));
+      window._slData = _slMerge;
+      if (_slPending || _slMerge.length > slSess.length) {
+        _ysQueueAdd('ys_sleep_sessions', _slMerge);
+        ysUpdateQueueBadge();
+      }
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
@@ -1997,11 +2120,23 @@ setTimeout(async function() {
       var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
       _ysLastTs = remoteTs;
       await ysPullFromCloud();
+      await ysFlushQueue(); // שלח פעולות שניצרו אופליין
     } else {
       _runLegacyMigration();
     }
   } catch(e) { console.log('[ys-sync] init:', e.message||e); }
+  ysUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
 }, 1500);
+
+// Online event: flush offline queue when network returns
+window.addEventListener('online', function() {
+  console.log('[ys-queue] network online — flushing queue');
+  ysUpdateQueueBadge();
+  ysFlushQueue();
+});
+window.addEventListener('offline', function() {
+  ysUpdateQueueBadge();
+});
 
 // Debounced push
 var _ysPushTimer = null;
