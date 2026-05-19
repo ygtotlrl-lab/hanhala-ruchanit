@@ -3,10 +3,10 @@
 ## פרטי ריפו
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit` (שונה מ-`yeshiva-manager`)
 - **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
-- **טוקן:** TOKEN_IN_MEMORY
+- **טוקן:** [REDACTED]
 
 ## GitHub Token
-- **hanhala-ruchanit:** TOKEN_IN_MEMORY
+- **hanhala-ruchanit:** [REDACTED]
 - **קובץ ראשי:** `index.html`
 
 ---

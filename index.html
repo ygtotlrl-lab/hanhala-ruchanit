@@ -2441,6 +2441,18 @@ function getActiveAbsences(s) {
   return [];
 }
 
+// Returns all non-expired absences including future ones (for display in dialog)
+function getAllRelevantAbsences(s) {
+  var now = new Date();
+  if (Array.isArray(s.absences) && s.absences.length > 0) {
+    return s.absences.filter(function(a){ return !a.to || new Date(a.to) >= now; });
+  }
+  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
+    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
+  }
+  return [];
+}
+
 function _migrateStudentLegacy(s) {
   if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1) {
     if (!Array.isArray(s.absences)) s.absences = [];
@@ -2476,7 +2488,7 @@ function openAttendanceEdit(sid) {
   if (!s) return;
   window._statusSid = sid;
   window._statusStudentName = s.name;
-  if (getActiveAbsences(s).length > 0) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
+  if (getAllRelevantAbsences(s).length > 0) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
 }
 
 window.openStatusPickerModal = function() {
@@ -2520,14 +2532,20 @@ window.openCurrentStatusModal = function() {
     var timeStr = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
     return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
   };
-  var activeAbsences = getActiveAbsences(s);
+  var activeAbsences = getAllRelevantAbsences(s);
+  var _now = new Date();
   var absencesHtml = activeAbsences.map(function(a) {
+    var isFuture = a.from && new Date(a.from) > _now;
+    var badge = isFuture
+      ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#EBF4FF;color:#2B6CB0">⏳ עתידי</span>'
+      : '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:'+(TBR[a.type]||'#ddd')+';color:'+(TC[a.type]||'#333')+'">● פעיל</span>';
     var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + a.id + ')';
     return '<div style="background:' + (TB[a.type]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[a.type]||'#ddd') + ';border-radius:12px;padding:12px 14px;margin-bottom:12px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<div style="display:flex;align-items:center;gap:8px">' +
           '<span style="font-size:1.1rem">' + (TI[a.type]||'📋') + '</span>' +
           '<span style="font-weight:700;color:' + (TC[a.type]||'#333') + ';font-size:.9rem">' + (TL[a.type]||a.type) + '</span>' +
+          badge +
         '</div>' +
         '<button onclick="' + cancelCall + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
       '</div>' +
