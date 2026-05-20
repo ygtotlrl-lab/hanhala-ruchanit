@@ -605,30 +605,12 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </div>
     <div id="sl-loading" style="text-align:center;padding:40px;color:var(--text2)">⏳ טוען...</div>
     <div id="sl-view-reg" style="display:none">
-      <div id="sl-reg-picker">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
-          <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
-            <div style="flex:2;min-width:200px">
-              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
-              <div id="sl-date-wrap"></div>
-            </div>
-            <div style="flex:1;min-width:140px">
-              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
-              <input id="sl-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
-            </div>
-          </div>
-          <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px">בחר בדיקה לפתיחה:</div>
-          <div id="sl-sess-btns" style="display:flex;gap:9px;flex-wrap:wrap"></div>
-        </div>
-        <div id="sl-today-sessions"></div>
+      <div style="background:var(--navy);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div id="sl-reg-header" style="flex:1;display:flex;align-items:center;gap:10px;min-width:160px"></div>
+        <input id="sl-filler" placeholder="שם הממלא" style="padding:6px 10px;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.85rem;background:rgba(255,255,255,.1);color:#fff;width:110px">
+        <button onclick="window.slSaveSession()" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">💾 שמור</button>
       </div>
-      <div id="sl-reg-list" style="display:none">
-        <div style="background:var(--navy);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
-          <div id="sl-reg-header" style="flex:1;display:flex;align-items:center;gap:10px"></div>
-          <button onclick="window.slCloseSession()" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ שמור וסגור</button>
-        </div>
-        <div id="sl-students"></div>
-      </div>
+      <div id="sl-students"></div>
     </div>
     <div id="sl-view-arc" style="display:none">
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
@@ -4491,10 +4473,6 @@ window._slSupMI = null;
 
 function slDefaultCfg() {
   return {
-    sessions:[
-      {id:'n1',name:'בדיקה א׳'},
-      {id:'n2',name:'בדיקה ב׳'}
-    ],
     treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
   };
 }
@@ -4551,38 +4529,16 @@ window.loadSleep = async function() {
   window._slMarks={};
   window._slCurrentSessionId=null;
 
-  // בורר תאריך — תאריך לוגי (לפני 12:00 = אמש)
-  var dw=document.getElementById('sl-date-wrap');
-  if(dw){
-    var logIso=slGetLogicalDate();
-    var logDate=new Date(logIso+'T12:00:00');
-    var todH=window._hcH(logDate);
-    dw.innerHTML=window._hcBuild('sl_date',todH);
-    var _SL_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-    var lbEl=document.getElementById('sl_date_lbl');
-    if(lbEl) lbEl.textContent='יום '+_SL_DOW_I[logDate.getDay()]+' '+window._hcFmt(todH.hy,todH.mi,todH.day);
-  }
+  // ממלא
+  var fl=document.getElementById('sl-filler');
+  if(fl && AUTH.user) fl.value=AUTH.user.full_name||'';
 
   // בורר תאריך לארכיון
   var adw=document.getElementById('sl-arc-date-wrap');
   if(adw) adw.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span style="font-size:.82rem;color:var(--text2);white-space:nowrap">סינון לפי תאריך:</span>'+window._hcBuild('sl_arc_date')+'</div>';
 
-  // ממלא
-  var fl=document.getElementById('sl-filler');
-  if(fl && AUTH.user) fl.value=AUTH.user.full_name||'';
-
-  // כפתורי בדיקות
-  slFillSessionBtns();
-  slRenderTodaySessions();
-
-  var pk=document.getElementById('sl-reg-picker');
-  var rl=document.getElementById('sl-reg-list');
-  if(pk) pk.style.display='';
-  if(rl) rl.style.display='none';
-
   el.style.display='none';
   window.slShowTab('reg');
-  // אין התראת כניסה במודול שינה
 };
 
 function slSortedSessions(cfg) {
@@ -4592,20 +4548,7 @@ function slSortedSessions(cfg) {
   });
 }
 
-function slFillSessionBtns() {
-  var el=document.getElementById('sl-sess-btns');
-  if(!el) return;
-  var cfg=window._slCfg||slDefaultCfg();
-  el.innerHTML=slSortedSessions(cfg).map(function(s){
-    return '<button onclick="window.slOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
-      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
-      'transition:all .18s" '+
-      'onmouseover="this.style.background=\'#dbe4f7\'" '+
-      'onmouseout="this.style.background=\'#eef2fa\'">'+
-      s.name+'</button>';
-  }).join('');
-}
+function slFillSessionBtns() {}
 
 window.slShowTab = function(tab) {
   window._slView=tab;
@@ -4619,7 +4562,10 @@ window.slShowTab = function(tab) {
       b.style.fontWeight=(t===tab)?'700':'600';
     }
   });
-  if(tab==='reg' && window._slCurrentSessionId) window.slRenderStudents();
+  if(tab==='reg') {
+    if(window._slCurrentSessionId) window.slRenderStudents();
+    else window.slAutoOpenSession();
+  }
   if(tab==='arc') window.slRenderArchive();
   if(tab==='sup') window.slRenderSupervision();
 };
@@ -4662,7 +4608,7 @@ var SL_COLORS={
   'a': {bg:'#0e7490',fg:'#fff'}
 };
 
-function slRenderTodaySessions() {
+function _slRenderTodaySessions_REMOVED() {
   var el=document.getElementById('sl-today-sessions');
   if(!el) return;
   var data=window._slData||[];
@@ -4708,8 +4654,6 @@ window.slEditSession = async function(recId) {
     var sid=e[0],m=e[1];
     if(m.s){window._slMarks[sid]={s:m.s,min:m.min||0,note:m.note||''};window._slCleared[sid]=true;}
   });
-  var dw=document.getElementById('sl-date-wrap');
-  if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('sl_date',rec.date_heb);
   var fl=document.getElementById('sl-filler');
   if(fl) fl.value=rec.filled_by_name||'';
   window._slCurrentSessionId=recId;
@@ -4717,76 +4661,11 @@ window.slEditSession = async function(recId) {
   if(hdr) hdr.innerHTML=
     '<span style="font-weight:700;font-size:1rem">'+rec.session+'</span>'+
     '<span style="font-size:.87rem;opacity:.85">'+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
+  window.slShowTab('reg');
   window.slRenderStudents();
 };
 
-window.slOpenSession = async function(sessId, sessName) {
-  if(window._slCurrentSessionId){toast('⚠️ סגור את הבדיקה הנוכחית תחילה');return;}
-  var dateIso=(document.getElementById('sl_date_iso')||{}).value;
-  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
-
-  var allData=await slLoadData();
-  var existing=allData.find(function(r){return r.session===sessName&&r.date_iso===dateIso;});
-  if(existing){
-    var d=document.createElement('div');
-    d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-    d.setAttribute('data-dlg','sl-dup');
-    d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-      '<div style="font-size:1.5rem;margin-bottom:6px">📋</div>'+
-      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">בדיקה כבר מולאה</div>'+
-      '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולאה היום.<br>האם לפתוח לעריכה?</p>'+
-      '<div style="display:flex;gap:10px;justify-content:center">'+
-      '<button onclick="this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.slEditSession(\''+existing.id+'\');this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
-      '</div></div>';
-    document.body.appendChild(d);
-    return;
-  }
-
-  var _oCfg=window._slCfg||slDefaultCfg();
-  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
-  var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
-  var students=getStudents();
-  window._slMarks={};window._slPending={};window._slCleared={};
-  students.filter(function(s){return s.active!==false;}).forEach(function(s){
-    var am=slAutoMark(s,dateIso,_oSessTime);
-    if(am) window._slMarks[s.id]={s:am,min:0,note:''};
-  });
-
-  var filler=document.getElementById('sl-filler');
-  var dateHeb=window._hcH(new Date(dateIso));
-  var initMarks={};
-  students.filter(function(s){return s.active!==false;}).forEach(function(s){
-    var m=window._slMarks[s.id];
-    initMarks[String(s.id)]={s:m?m.s:'',min:0,note:''};
-  });
-  var rec={
-    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
-    session:sessName,
-    date_iso:dateIso,
-    date_heb:dateHeb,
-    filled_by:AUTH.user?AUTH.user.id:'',
-    filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
-    marks:initMarks,
-    created_at:new Date().toISOString()
-  };
-
-  var data=await slLoadData();
-  data.push(rec);
-  window._slCurrentSessionId=rec.id;
-  await slSaveData(data);
-
-  var hdr=document.getElementById('sl-reg-header');
-  if(hdr) hdr.innerHTML=
-    '<span style="font-weight:700;font-size:1rem">'+sessName+'</span>'+
-    '<span style="font-size:.87rem;opacity:.85">'+window._hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
-
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
-  window.slRenderStudents();
-};
+window.slOpenSession = function() {}; // removed - no session picker in sleep module
 
 async function slAutoSaveNow() {
   if(!window._slCurrentSessionId||!window._slData) return;
@@ -5021,19 +4900,14 @@ window.slSetNote = function(sid, val) {
   window._slSaveTimer=setTimeout(slAutoSaveNow,700);
 };
 
-window.slCloseSession = async function() {
+window.slSaveSession = async function() {
   clearTimeout(window._slSaveTimer);
   await slAutoSaveNow();
   var rec=window._slData&&window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
-  var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
-  window._slCurrentSessionId=null;
-  window._slMarks={};
-  document.getElementById('sl-reg-list').style.display='none';
-  document.getElementById('sl-reg-picker').style.display='';
-  slRenderTodaySessions();
+  var msg=rec?('✅ זמן שינה — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):('✅ נשמר');
   toast(msg);
 };
-
+window.slCloseSession = window.slSaveSession; // backward compat alias
 // -------- ארכיון --------
 window.slRenderArchive = async function(records) {
   var el=document.getElementById('sl-arc-list');
@@ -5176,7 +5050,6 @@ window.slDeleteSessionConfirmed = async function(id) {
   data=data.filter(function(r){return r.id!==id;});
   await slSaveData(data);
   window.slRenderArchive();
-  slRenderTodaySessions();
   toast('🗑️ רשומה נמחקה');
 };
 
@@ -5522,7 +5395,6 @@ window.slEditMark = async function(recId, sid, newCode) {
     var d=document.querySelector('[data-dlg="'+n+'"]');
     if(d) d.remove();
   });
-  slRenderTodaySessions();
   window.slRenderArchive();
   window.slRenderSupervision();
   toast('✅ סימון עודכן');
