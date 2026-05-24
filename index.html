@@ -4499,15 +4499,13 @@ function slDefaultCfg() {
 }
 
 function _slCleanCfg(cfg) {
-  // הסר 'בדיקה ב׳' מה-DB אם קיים מהגדרות ישנות
+  // אכוף שמות sessions: הסר ערכים ישנים ועדכן ל-"דו"ח יומי"
   if (cfg && Array.isArray(cfg.sessions)) {
-    var before = cfg.sessions.length;
-    cfg.sessions = cfg.sessions.filter(function(s){ return s.name !== 'בדיקה ב׳'; });
-    if (cfg.sessions.length < before) {
-      try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
-      try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
-    }
+    cfg.sessions = cfg.sessions.filter(function(s){ return s.name !== 'בדיקה ב׳' && s.name !== 'בדיקה א׳'; });
   }
+  // כתוב תמיד בחזרה ל-DB כדי לאכוף את ה-config הנוכחי
+  try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
+  try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
   return cfg;
 }
 async function slLoadCfg() {
