@@ -2037,6 +2037,8 @@ async function ysPushToCloud() {
     await ysKvSet('ys_attend', attend);
     await ysKvSet('ys_approvals', approvals);
     await ysKvSet('ys_reasons', reasons);
+    await ysKvSet('ys_absence_reasons', window.getAbsenceReasons());
+    await ysKvSet('ys_cls_years', getClsYears());
     await ysKvSet('ys_last_changed', ts);
     _ysLastTs = ts;
     console.log('[ys-sync] pushed ts=' + ts);
@@ -2095,6 +2097,14 @@ async function ysPullFromCloud() {
         _ysQueueAdd('ys_sleep_sessions', _slMerge);
         ysUpdateQueueBadge();
       }
+    }
+    var abR = await ysKvGet('ys_absence_reasons');
+    if (abR && typeof abR === 'object' && !Array.isArray(abR)) {
+      localStorage.setItem('ys_absence_reasons', JSON.stringify(abR));
+    }
+    var clsY = await ysKvGet('ys_cls_years');
+    if (clsY && typeof clsY === 'object') {
+      localStorage.setItem('ys_cls_years', JSON.stringify(clsY));
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
@@ -2505,7 +2515,9 @@ window.saveClsYearsSettings = function(){
   var a=(document.getElementById('cy-a')||{}).value||'';
   var b=(document.getElementById('cy-b')||{}).value||'';
   var g=(document.getElementById('cy-g')||{}).value||'';
-  saveClsYears({a:a.trim(),b:b.trim(),g:g.trim()});
+  var y={a:a.trim(),b:b.trim(),g:g.trim()};
+  saveClsYears(y);
+  try { ysKvSet('ys_cls_years', y); } catch(e) {}
   toast('✅ שנות המחזור נשמרו');
 };
 
