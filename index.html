@@ -1455,7 +1455,7 @@ window.getAbsenceReasons = function() {
 };
 function getAbsenceReasons() { return window.getAbsenceReasons(); }
 
-window.saveAbsenceReasons = function() {
+window.saveAbsenceReasons = async function() {
   var reasons = {approved:[], suspended:[], left:[]};
   ['approved','suspended','left'].forEach(function(type) {
     document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
@@ -1463,7 +1463,14 @@ window.saveAbsenceReasons = function() {
     });
   });
   localStorage.setItem('ys_absence_reasons', JSON.stringify(reasons));
-  try { ysKvSet('ys_absence_reasons', reasons); } catch(e) {}
+  console.log('[absence-reasons] saving:', reasons);
+  try {
+    var r = await ysKvSet('ys_absence_reasons', reasons);
+    console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
+    var ts = Date.now();
+    await ysKvSet('ys_last_changed', ts);
+    console.log('[absence-reasons] ys_last_changed updated:', ts);
+  } catch(e) { console.error('[absence-reasons] save error:', e); }
   toast('הסיבות נשמרו');
 };
 function saveAbsenceReasons() { window.saveAbsenceReasons(); }
@@ -2104,8 +2111,10 @@ async function ysPullFromCloud() {
       localStorage.setItem('ys_absence_reasons', JSON.stringify(abR));
     }
     var clsY = await ysKvGet('ys_cls_years');
+    console.log('[pull] ys_cls_years from KV:', clsY);
     if (clsY && typeof clsY === 'object') {
       localStorage.setItem('ys_cls_years', JSON.stringify(clsY));
+      console.log('[pull] ys_cls_years saved to localStorage');
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
@@ -2512,13 +2521,20 @@ function renderStudents(){
 function getClsYears(){try{return JSON.parse(localStorage.getItem('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
 function saveClsYears(y){localStorage.setItem('ys_cls_years',JSON.stringify(y));}
 
-window.saveClsYearsSettings = function(){
+window.saveClsYearsSettings = async function(){
   var a=(document.getElementById('cy-a')||{}).value||'';
   var b=(document.getElementById('cy-b')||{}).value||'';
   var g=(document.getElementById('cy-g')||{}).value||'';
   var y={a:a.trim(),b:b.trim(),g:g.trim()};
   saveClsYears(y);
-  try { ysKvSet('ys_cls_years', y); } catch(e) {}
+  console.log('[cls-years] saving:', y);
+  try {
+    var r = await ysKvSet('ys_cls_years', y);
+    console.log('[cls-years] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
+    var ts = Date.now();
+    await ysKvSet('ys_last_changed', ts);
+    console.log('[cls-years] ys_last_changed updated:', ts);
+  } catch(e) { console.error('[cls-years] save error:', e); }
   toast('✅ שנות המחזור נשמרו');
 };
 
