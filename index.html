@@ -692,17 +692,17 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <div>
             <div style="font-weight:600;color:#2b7a3e;margin-bottom:8px;font-size:.88rem">✅ אישור</div>
             <div id="reasons-approved" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="window.addReason('approved')" style="margin-top:8px;background:none;border:1.5px dashed #9ae6b4;color:#276749;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addAbsenceReason('approved')" style="margin-top:8px;background:none;border:1.5px dashed #9ae6b4;color:#276749;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
           <div>
             <div style="font-weight:600;color:#c05621;margin-bottom:8px;font-size:.88rem">⚠️ השעיה</div>
             <div id="reasons-suspended" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="window.addReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addAbsenceReason('suspended')" style="margin-top:8px;background:none;border:1.5px dashed #fbd38d;color:#c05621;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
           <div>
             <div style="font-weight:600;color:#c53030;margin-bottom:8px;font-size:.88rem">🚪 לא שב</div>
             <div id="reasons-left" style="display:flex;flex-direction:column;gap:6px"></div>
-            <button onclick="window.addReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
+            <button onclick="window.addAbsenceReason('left')" style="margin-top:8px;background:none;border:1.5px dashed #feb2b2;color:#c53030;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Heebo;font-size:.82rem;width:100%">+ הוסף סיבה</button>
           </div>
         </div>
         <div style="margin-top:16px;text-align:left">
@@ -1449,10 +1449,12 @@ function getDefaultReasons() {
   };
 }
 
-function getAbsenceReasons() {
+window.getAbsenceReasons = function() {
   try { return JSON.parse(localStorage.getItem('ys_absence_reasons') || 'null') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
-}
-function saveAbsenceReasons() {
+};
+function getAbsenceReasons() { return window.getAbsenceReasons(); }
+
+window.saveAbsenceReasons = function() {
   var reasons = {approved:[], suspended:[], left:[]};
   ['approved','suspended','left'].forEach(function(type) {
     document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
@@ -1460,26 +1462,51 @@ function saveAbsenceReasons() {
     });
   });
   localStorage.setItem('ys_absence_reasons', JSON.stringify(reasons));
-  toast(H(1505,1497,1489,1493,1514,32,1492,1505,1497,1489,1493,1514,32,1504,1513,1502,1512,1493));
-}
-function renderAbsenceReasons() {
-  var reasons = getAbsenceReasons();
+  try { ysKvSet('ys_absence_reasons', reasons); } catch(e) {}
+  toast('הסיבות נשמרו');
+};
+function saveAbsenceReasons() { window.saveAbsenceReasons(); }
+
+window.renderAbsenceReasons = function() {
+  var reasons = window.getAbsenceReasons();
   ['approved','suspended','left'].forEach(function(type) {
     var el = document.getElementById('reasons-'+type);
     if (!el) return;
-    el.innerHTML = (reasons[type]||[]).map(function(r,i) {
-      return '<div style="display:flex;gap:6px;align-items:center"><input value="'+r+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button></div>';
-    }).join('');
+    el.innerHTML = '';
+    (reasons[type]||[]).forEach(function(r) {
+      var row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center';
+      var inp = document.createElement('input');
+      inp.value = r;
+      inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+      var btn = document.createElement('button');
+      btn.textContent = '✕';
+      btn.style.cssText = 'background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem';
+      btn.onclick = function() { row.remove(); };
+      row.appendChild(inp);
+      row.appendChild(btn);
+      el.appendChild(row);
+    });
   });
-}
-function addReason(type) {
+};
+function renderAbsenceReasons() { window.renderAbsenceReasons(); }
+window.addAbsenceReason = function(type) {
   var el = document.getElementById('reasons-'+type);
+  if (!el) return;
   var div = document.createElement('div');
   div.style.cssText = 'display:flex;gap:6px;align-items:center';
-  div.innerHTML = '<input placeholder="'+H(1505,1497,1489,1492,32,1495,1491,1513,1492)+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  var inp = document.createElement('input');
+  inp.placeholder = 'סיבה חדשה...';
+  inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+  var btn = document.createElement('button');
+  btn.textContent = '✕';
+  btn.style.cssText = 'background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem';
+  btn.onclick = function() { div.remove(); };
+  div.appendChild(inp);
+  div.appendChild(btn);
   el.appendChild(div);
-  div.querySelector('input').focus();
-}
+  inp.focus();
+};
 
 function showConstruction() {
   var existing = document.getElementById('construction-modal');
