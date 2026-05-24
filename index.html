@@ -716,15 +716,15 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;gap:10px">
             <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור א'</label>
-            <input id="cy-a" type="text" placeholder='למשל: תשפ"ח' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+            <select id="cy-a" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ב'</label>
-            <input id="cy-b" type="text" placeholder='למשל: תשפ"ז' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+            <select id="cy-b" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
             <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ג'</label>
-            <input id="cy-g" type="text" placeholder='למשל: תשפ"ו' style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl">
+            <select id="cy-g" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
         </div>
         <div style="margin-top:14px;text-align:left">
@@ -1289,7 +1289,7 @@ function openStatusForm(type) {
     '<div style="display:flex;flex-direction:column;gap:16px">' +
       '<div>' +
         '<label style="'+lbl+'">סיבה</label>' +
-        '<select id="sfm-reason" style="'+inp+'">'+reasonOptions+'<option value="אחר">אחר</option></select>' +
+        '<select id="sfm-reason" style="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptions+'<option value="אחר">אחר</option></select>' +
       '</div>' +
       '<div>' +
         '<label style="'+lbl+'">תאריך התחלה</label>' +
@@ -1315,6 +1315,7 @@ function openStatusForm(type) {
 
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
+  if (!reason) { toast('⚠️ יש לבחור סיבה'); return; }
   var from = window._hcGet('sfmF');
   var toWrap = document.getElementById('sfmT_wrap');
   var to = (toWrap && toWrap.style.display !== 'none') ? window._hcGet('sfmT') : null;
@@ -2521,12 +2522,23 @@ window.saveClsYearsSettings = function(){
   toast('✅ שנות המחזור נשמרו');
 };
 
+// רשימת שנים עבריות תשפ"ד–תשצ"ה
+var _CLS_HEB_YEARS = [
+  'תשפ"ד','תשפ"ה','תשפ"ו','תשפ"ז','תשפ"ח','תשפ"ט',
+  'תש"ץ','תשצ"א','תשצ"ב','תשצ"ג','תשצ"ד','תשצ"ה'
+];
+function _clsYearOptions(sel, curVal) {
+  sel.innerHTML = '<option value="">בחר שנה...</option>' +
+    _CLS_HEB_YEARS.map(function(y){
+      return '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'</option>';
+    }).join('');
+}
 // מילוי ערכים קיימים בפתיחת הגדרות מצבת
 function _initClsYearsInputs(){
   var y=getClsYears();
-  var ea=document.getElementById('cy-a');if(ea)ea.value=y.a||'';
-  var eb=document.getElementById('cy-b');if(eb)eb.value=y.b||'';
-  var eg=document.getElementById('cy-g');if(eg)eg.value=y.g||'';
+  var ea=document.getElementById('cy-a');if(ea)_clsYearOptions(ea,y.a||'');
+  var eb=document.getElementById('cy-b');if(eb)_clsYearOptions(eb,y.b||'');
+  var eg=document.getElementById('cy-g');if(eg)_clsYearOptions(eg,y.g||'');
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
