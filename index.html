@@ -4460,7 +4460,7 @@ function slSummaryHtml(cnts){
   var add=function(n,lbl,col){if(n)parts.push('<span style="color:'+col+';font-weight:700">'+n+' '+lbl+'</span>');};
   add(cnts.p||0,  'נוכחים',   '#276749');
   add(cnts.e||0,  'חיסורים',  '#742a2a');
-  add(cnts.x||0,  'היעדרויות','#742a2a');
+  add(cnts.x||0,  'אירועים',  '#742a2a');
   add(cnts.l||0,  'איחורים',  '#dd6b20');
   add(cnts.ap||0, 'אישורים',  '#2b4c9f');
   add(cnts.ak||0, 'בבית',     '#553c9a');
@@ -5057,7 +5057,7 @@ window.slRenderArchive = async function(records) {
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
-  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
+  var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'אירוע',ap:'אישור',ak:'בבית',a:'מנוחה'};
   var ARC_COL={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
 
   var todG=new Date();
@@ -5241,7 +5241,7 @@ window.slExportExcel = async function(fromIso,toIso) {
       Object.entries(rec.marks).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
-        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
+        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'אירוע':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
         var mins=m.s==='l'?(m.min||0):'';
         xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(m.note||'')+cell(rec.filled_by_name||'')+'</Row>';
       });
@@ -5393,7 +5393,7 @@ window.slRenderSupervision = async function() {
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
-    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין חיסורים ב'+mLabel+'</div>';return;
+    el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין אירועים ב'+mLabel+'</div>';return;
   }
 
   window._slSupRecords={};
@@ -5420,7 +5420,7 @@ window.slRenderSupervision = async function() {
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
-    html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
+    html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
     html+='<button onclick="event.stopPropagation();window.slSupDetail(\''+sid+'\')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
@@ -5507,7 +5507,7 @@ window.slDeleteTreatConfirmed = async function(id) {
 };
 
 // -------- פירוט חודשי לתלמיד --------
-var SL_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
+var SL_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'אירוע',ap:'אישור',ak:'בבית',a:'מנוחה'};
 var SL_COL_DET={p:'#276749',l:'#dd6b20',e:'#742a2a',x:'#742a2a',ap:'#2b4c9f',ak:'#553c9a',a:'#0e7490'};
 
 window.slSupDetail = function(sid) {
@@ -5517,7 +5517,7 @@ window.slSupDetail = function(sid) {
   var records=(window._slSupRecords&&window._slSupRecords[sid])||[];
 
   var rows='';
-  if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין חיסורים בחודש זה</div>';}
+  if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין אירועים בחודש זה</div>';}
   else{
     records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
       var hd=r.date_heb;
@@ -5556,7 +5556,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
     {c:'p',  lbl:'✓ נוכח',   col:'#276749'},
     {c:'l',  lbl:'⏰ איחור',  col:'#dd6b20'},
     {c:'e',  lbl:'− חיסור',  col:'#742a2a'},
-    {c:'x',  lbl:'✕ היעדרות',col:'#742a2a'},
+    {c:'x',  lbl:'✕ אירוע',  col:'#742a2a'},
     {c:'ap', lbl:'א אישור',  col:'#2b4c9f'},
     {c:'ak', lbl:'ב בבית',   col:'#553c9a'},
     {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
