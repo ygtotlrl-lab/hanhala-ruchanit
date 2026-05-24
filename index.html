@@ -4498,10 +4498,22 @@ function slDefaultCfg() {
   };
 }
 
+function _slCleanCfg(cfg) {
+  // הסר 'בדיקה ב׳' מה-DB אם קיים מהגדרות ישנות
+  if (cfg && Array.isArray(cfg.sessions)) {
+    var before = cfg.sessions.length;
+    cfg.sessions = cfg.sessions.filter(function(s){ return s.name !== 'בדיקה ב׳'; });
+    if (cfg.sessions.length < before) {
+      try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
+      try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
+    }
+  }
+  return cfg;
+}
 async function slLoadCfg() {
   if (window._slCfg) return window._slCfg;
-  try { var v=await ysKvGet('ys_sleep_cfg'); if(v){window._slCfg=v;return v;} } catch(e){}
-  try { var lc=localStorage.getItem('ys_sleep_cfg'); if(lc){window._slCfg=JSON.parse(lc);return window._slCfg;} } catch(e){}
+  try { var v=await ysKvGet('ys_sleep_cfg'); if(v){window._slCfg=_slCleanCfg(v);return window._slCfg;} } catch(e){}
+  try { var lc=localStorage.getItem('ys_sleep_cfg'); if(lc){window._slCfg=_slCleanCfg(JSON.parse(lc));return window._slCfg;} } catch(e){}
   window._slCfg = slDefaultCfg(); return window._slCfg;
 }
 async function slSaveCfg(cfg) {
