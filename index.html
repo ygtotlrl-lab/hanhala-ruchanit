@@ -4499,13 +4499,13 @@ function slDefaultCfg() {
 }
 
 function _slCleanCfg(cfg) {
-  // אכוף שמות sessions: הסר ערכים ישנים ועדכן ל-"דו"ח יומי"
-  if (cfg && Array.isArray(cfg.sessions)) {
-    cfg.sessions = cfg.sessions.filter(function(s){ return s.name !== 'בדיקה ב׳' && s.name !== 'בדיקה א׳'; });
+  // אם ה-cfg ריק מ-sessions — השתמש בברירת המחדל וכתוב ל-DB
+  if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
+    var def = slDefaultCfg();
+    if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
+    try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
+    try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
   }
-  // כתוב תמיד בחזרה ל-DB כדי לאכוף את ה-config הנוכחי
-  try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
-  try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
   return cfg;
 }
 async function slLoadCfg() {
