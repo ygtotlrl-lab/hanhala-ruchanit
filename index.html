@@ -4004,14 +4004,14 @@ window.atExportPdf = async function(fromIso,toIso) {
     function cell(s,opts){return Object.assign({text:nb(String(s)),alignment:'right'},opts||{});}
     var hdrRow=[
       cell('#',{bold:true}),cell('תאריך',{bold:true}),cell('סדר',{bold:true}),
-      cell('נוכחים',{bold:true,color:'#276749'}),cell('נעדרים',{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
+      cell('נוכחים',{bold:true,color:'#276749'}),cell('חיסורים',{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
     ];
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x'||m.s==='ap'||m.s==='ak'||m.s==='a';}).length;
+      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x';}).length;
       var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
       body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
@@ -5291,14 +5291,14 @@ window.slExportPdf = async function(fromIso,toIso) {
     function cell(s,opts){return Object.assign({text:nb(String(s==null?'':s)),alignment:'right'},opts||{});}
     var hdrRow=[
       cell('#',{bold:true}),cell('תאריך',{bold:true}),cell('דו"ח',{bold:true}),
-      cell('נוכחים',{bold:true,color:'#276749'}),cell('נעדרים',{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
+      cell('נוכחים',{bold:true,color:'#276749'}),cell('אירועים',{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
     ];
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x'||m.s==='ap'||m.s==='ak'||m.s==='a';}).length;
+      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x';}).length;
       var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
       body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
