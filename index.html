@@ -4605,15 +4605,17 @@ function slFillSessionBtns() {
   var el=document.getElementById('sl-sess-btns');
   if(!el) return;
   var cfg=window._slCfg||slDefaultCfg();
-  el.innerHTML=slSortedSessions(cfg).map(function(s){
-    return '<button onclick="window.slOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
-      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
-      'transition:all .18s" '+
-      'onmouseover="this.style.background=\'#dbe4f7\'" '+
-      'onmouseout="this.style.background=\'#eef2fa\'">'+
-      s.name+'</button>';
-  }).join('');
+  el.innerHTML='';
+  slSortedSessions(cfg).forEach(function(s){
+    var btn=document.createElement('button');
+    btn.textContent=s.name;
+    btn.style.cssText='padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
+    btn.onmouseover=function(){this.style.background='#dbe4f7';};
+    btn.onmouseout=function(){this.style.background='#eef2fa';};
+    btn.addEventListener('click',function(){window.slOpenSession(s.id,s.name);});
+    el.appendChild(btn);
+  });
 }
 
 window.slShowTab = function(tab) {
@@ -4732,8 +4734,9 @@ window.slEditSession = async function(recId) {
 };
 
 window.slOpenSession = async function(sessId, sessName) {
+  console.log('[slOpenSession] called', sessId, sessName);
   if(window._slCurrentSessionId){toast('⚠️ סגור את הבדיקה הנוכחית תחילה');return;}
-  var dateIso=(document.getElementById('sl_date_iso')||{}).value;
+  var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
   var allData=await slLoadData();
