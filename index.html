@@ -2079,29 +2079,28 @@ async function ysPullFromCloud() {
     if (rs && Array.isArray(rs)) {
       localStorage.setItem('ys_reasons', JSON.stringify(rs));
     }
-    // טען נתוני סדרים (מודול נוכחות) — מזג עם נתונים מקומיים שטרם סונכרנו
+    // טען נתוני סדרים (מודול נוכחות)
+    // מיזוג רק עם pending queue (כתיבות אופליין) — לא עם localStorage כולו.
+    // שימוש ב-_slLocal כ-fallback גרם לרשומות שנמחקו מ-Supabase לחזור (resurrection bug).
     var atSess = await ysKvGet('ys_attend_sessions');
     if (atSess && Array.isArray(atSess)) {
-      var _atLocal = JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]');
       var _atPending = _ysQueueGet('ys_attend_sessions');
-      var _atMerge = _ysSessionsMerge(atSess, _atPending || _atLocal);
+      var _atMerge = _atPending ? _ysSessionsMerge(atSess, _atPending) : atSess;
       localStorage.setItem('ys_attend_sessions', JSON.stringify(_atMerge));
       window._atData = _atMerge;
-      // אם יש רשומות מקומיות שלא היו בענן — עדכן את הענן
-      if (_atPending || _atMerge.length > atSess.length) {
+      if (_atPending && _atMerge.length > atSess.length) {
         _ysQueueAdd('ys_attend_sessions', _atMerge);
         ysUpdateQueueBadge();
       }
     }
-    // טען נתוני שינה — מזג עם נתונים מקומיים
+    // טען נתוני שינה
     var slSess = await ysKvGet('ys_sleep_sessions');
     if (slSess && Array.isArray(slSess)) {
-      var _slLocal = JSON.parse(localStorage.getItem('ys_sleep_sessions') || '[]');
       var _slPending = _ysQueueGet('ys_sleep_sessions');
-      var _slMerge = _ysSessionsMerge(slSess, _slPending || _slLocal);
+      var _slMerge = _slPending ? _ysSessionsMerge(slSess, _slPending) : slSess;
       localStorage.setItem('ys_sleep_sessions', JSON.stringify(_slMerge));
       window._slData = _slMerge;
-      if (_slPending || _slMerge.length > slSess.length) {
+      if (_slPending && _slMerge.length > slSess.length) {
         _ysQueueAdd('ys_sleep_sessions', _slMerge);
         ysUpdateQueueBadge();
       }
@@ -4608,6 +4607,42 @@ async function slLoadData() {
   try { var lc=localStorage.getItem('ys_sleep_sessions'); if(lc){window._slData=JSON.parse(lc);return window._slData;} } catch(e){}
   window._slData=[]; return window._slData;
 }
+
+// ניקוי חד-פעמי של רשומות בדיקה ישנות מכל המקורות
+// רשומות שנמחקו חזרו בגלל resurrection bug בסנכרון — תוקן. פונקציה זו מבטיחה
+// מחיקה גם מ-Supabase, localStorage ותור הסנכרון.
+window._slCleanupDone = false;
+async function slCleanupTestRecords() {
+  if (window._slCleanupDone) return;
+  window._slCleanupDone = true;
+  var TEST_SESSIONS = ['בדיקות','בדיקה'];
+  try {
+    // קרא ישירות מ-Supabase (לא ממטמון)
+    var raw = await ysKvGet('ys_sleep_sessions');
+    if (!Array.isArray(raw)) return;
+    var before = raw.length;
+    var clean = raw.filter(function(r){
+      return !TEST_SESSIONS.includes(r.session);
+    });
+    if (clean.length === before) {
+      console.log('[sl-cleanup] אין רשומות בדיקה ב-Supabase');
+      // נקה גם localStorage ותור למקרה שיש שם
+      var lc = JSON.parse(localStorage.getItem('ys_sleep_sessions')||'[]');
+      var lcClean = lc.filter(function(r){return !TEST_SESSIONS.includes(r.session);});
+      if (lcClean.length < lc.length) {
+        console.log('[sl-cleanup] נמחקו', lc.length-lcClean.length, 'רשומות בדיקה מ-localStorage');
+        localStorage.setItem('ys_sleep_sessions', JSON.stringify(lcClean));
+        window._slData = lcClean;
+      }
+      _ysQueueRemove('ys_sleep_sessions');
+      return;
+    }
+    console.log('[sl-cleanup] מוחק', before-clean.length, 'רשומות בדיקה מ-Supabase+localStorage+queue');
+    await slSaveData(clean);
+    _ysQueueRemove('ys_sleep_sessions'); // הסר תור ישן שעלול להחזיר רשומות
+    console.log('[sl-cleanup] ✅ ניקוי הושלם. נותרו', clean.length, 'רשומות');
+  } catch(e) { console.error('[sl-cleanup] שגיאה:', e); }
+}
 async function slSaveData(data) {
   window._slData=data;
   localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
@@ -4640,6 +4675,7 @@ window.loadSleep = async function() {
 
   await slLoadCfg();
   await slLoadData();
+  slCleanupTestRecords(); // ניקוי חד-פעמי של רשומות בדיקה
   window._slMarks={};
   window._slCurrentSessionId=null;
 
