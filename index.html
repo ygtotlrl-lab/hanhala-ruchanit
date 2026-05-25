@@ -2115,6 +2115,15 @@ async function ysPullFromCloud() {
     if (clsY && typeof clsY === 'object') {
       localStorage.setItem('ys_cls_years', JSON.stringify(clsY));
       console.log('[pull] ys_cls_years saved to localStorage');
+    } else {
+      // מפתח לא קיים ב-DB — אם יש ערכים מקומיים, דחוף אותם (bootstrap חד-פעמי)
+      var _localCY = getClsYears();
+      console.log('[pull] ys_cls_years missing in KV, local:', _localCY);
+      if (_localCY.a || _localCY.b || _localCY.g) {
+        console.log('[pull] bootstrapping ys_cls_years to KV:', _localCY);
+        ysKvSet('ys_cls_years', _localCY);
+        ysKvSet('ys_last_changed', Date.now());
+      }
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
