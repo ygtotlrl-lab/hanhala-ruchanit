@@ -4406,14 +4406,15 @@ function atCheckAlert() {
   var students=getStudents();
   if(!data.length) return;
 
-  var curHY=window._hcH(new Date()).hy;
-  var tishreiBeg=(window._hcBase(curHY)||{jd:new Date(new Date().getFullYear()-1,8,1)}).jd;
+  var todH=window._hcH(new Date());
+  var curHY=todH.hy, curMI=todH.mi;
+  var monthBeg=window._hcG(curHY,curMI,1); // תחילת החודש העברי הנוכחי
 
   var alerts=[];
   var stats={};
   students.forEach(function(s){stats[s.id]={name:s.name,absent:0,lateMin:0};});
   data.forEach(function(rec){
-    if(new Date(rec.date_iso)<tishreiBeg) return;
+    if(new Date(rec.date_iso)<monthBeg) return;
     Object.entries(rec.marks).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
@@ -4433,14 +4434,14 @@ function atCheckAlert() {
   d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.6);z-index:700;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   var list=alerts.slice(0,10).map(function(s){
     return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+s.name+
-      (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' היעדרויות</span>':'')+
+      (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span style="color:#b7791f;margin-right:6px"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
   }).join('');
   d.innerHTML='<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:420px;border-top:4px solid #e53e3e">'+
     '<div style="font-size:1.5rem;margin-bottom:8px;text-align:center">⚠️</div>'+
-    '<div style="font-weight:700;font-size:1.05rem;color:#c53030;margin-bottom:6px;text-align:center">התראת היעדרויות</div>'+
-    '<p style="font-size:.85rem;color:var(--text2);margin-bottom:14px;text-align:center">התלמידים הבאים חרגו מהסף מתחילת השנה:</p>'+
+    '<div style="font-weight:700;font-size:1.05rem;color:#c53030;margin-bottom:6px;text-align:center">התראת חיסורים</div>'+
+    '<p style="font-size:.85rem;color:var(--text2);margin-bottom:14px;text-align:center">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
     '<div style="max-height:220px;overflow-y:auto;margin-bottom:16px">'+list+'</div>'+
     '<div style="text-align:center">'+
     '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:#1a3a6b;color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>'+
