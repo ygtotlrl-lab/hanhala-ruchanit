@@ -4398,10 +4398,6 @@ window.atEditMark = async function(recId, sid, newCode) {
 
 // -------- התראת כניסה --------
 function atCheckAlert() {
-  var todayKey=new Date().toISOString().split('T')[0];
-  var lastShown=localStorage.getItem('ys_attend_alert_date');
-  if(lastShown===todayKey) return;
-
   var data=window._atData||[];
   var students=getStudents();
   if(!data.length) return;
@@ -4426,8 +4422,6 @@ function atCheckAlert() {
     if(s.absent>=20||s.lateMin>=300) alerts.push(s);
   });
   if(!alerts.length) return;
-
-  localStorage.setItem('ys_attend_alert_date',todayKey);
 
   // הצג מודל התראה
   var d=document.createElement('div');
