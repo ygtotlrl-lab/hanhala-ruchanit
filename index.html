@@ -4404,7 +4404,13 @@ function atCheckAlert() {
 
   var todH=window._hcH(new Date());
   var curHY=todH.hy, curMI=todH.mi;
-  var monthBeg=window._hcG(curHY,curMI,1); // תחילת החודש העברי הנוכחי
+  // חישוב תחילת חודש — חצות מקומית (לא צהריים) כדי לא לפסול רשומות מה-1 בחודש
+  // new Date("2026-04-28") = UTC midnight = 03:00 Israel, קטן מ-12:00 מקומי
+  var _mG=window._hcG(curHY,curMI,1);
+  var monthBeg=new Date(_mG.getFullYear(),_mG.getMonth(),_mG.getDate(),0,0,0);
+  console.log('[atCheckAlert] חודש עברי:', window._hcMN(curHY)[curMI], curHY,
+    '| תחילת חודש גרגוריאנית:', monthBeg.toISOString(),
+    '| רשומות סה"כ:', data.length);
 
   var alerts=[];
   var stats={};
@@ -4417,6 +4423,11 @@ function atCheckAlert() {
       if(m.s==='e'||m.s==='x') stats[sid].absent++;
       if(m.s==='l') stats[sid].lateMin+=m.min||0;
     });
+  });
+  // לוג לאבחון: כל התלמידים ומספר החיסורים שלהם לפני סינון הסף
+  console.log('[atCheckAlert] חיסורים לפי תלמיד (לפני סינון):');
+  Object.values(stats).forEach(function(s){
+    if(s.absent>0||s.lateMin>0) console.log(' •', s.name, '— חיסורים:', s.absent, '| איחור:', s.lateMin, 'דק׳');
   });
   Object.values(stats).forEach(function(s){
     if(s.absent>=20||s.lateMin>=300) alerts.push(s);
