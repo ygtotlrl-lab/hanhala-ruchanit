@@ -266,6 +266,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .auth-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px;font-family:Heebo;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
 .auth-btn:active{background:var(--navy2)}
 .auth-err{color:#e53e3e;font-size:.82rem;margin-top:8px;min-height:18px}
+.auth-spinner{display:none;margin:10px auto 0;width:28px;height:28px;border:3px solid #dde3ef;border-top-color:var(--navy);border-radius:50%;animation:auth-spin .7s linear infinite}
+@keyframes auth-spin{to{transform:rotate(360deg)}}
 #lock-warn{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;display:flex;align-items:center;justify-content:center}
 #lock-warn.hidden{display:none}
 .lock-box{background:#fff;border-radius:14px;padding:28px 24px;text-align:center;max-width:280px;width:90%}
@@ -306,8 +308,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
     <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.doLogin()"></div>
-    <button class="auth-btn" onclick="doLogin()">כניסה למערכת</button>
+    <button class="auth-btn" id="auth-btn" onclick="doLogin()">כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
+    <div class="auth-spinner" id="auth-spinner"></div>
 
   </div>
 </div>
@@ -971,10 +974,16 @@ async function fixAdminHash() {
 async function doLogin() {
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
-  var errEl = document.getElementById('auth-err');
-  function dbg(msg,col){errEl.style.color=col||'#8a97b0';errEl.textContent=msg;console.log('[login] '+msg);}
-  dbg('');
-  if (!username || !pass) { dbg('נא למלא שם משתמש וסיסמה','#e53e3e'); return; }
+  var errEl   = document.getElementById('auth-err');
+  var spinner = document.getElementById('auth-spinner');
+  var btn     = document.getElementById('auth-btn');
+  function showErr(msg){ errEl.style.color='#e53e3e'; errEl.textContent=msg; spinner.style.display='none'; btn.disabled=false; }
+  function startLoad(){ errEl.textContent=''; spinner.style.display='block'; btn.disabled=true; }
+  function stopLoad(){ spinner.style.display='none'; btn.disabled=false; }
+  function dbg(msg){ console.log('[login] '+msg); }
+  errEl.textContent='';
+  if (!username || !pass) { showErr('נא למלא שם משתמש וסיסמה'); return; }
+  startLoad();
   dbg('⏳ [1/4] שולח בקשה לשרת...');
   var res;
   try {
@@ -986,18 +995,18 @@ async function doLogin() {
       .maybeSingle();
   } catch(e) {
     console.error('[login] SB threw:', e);
-    dbg('❌ שגיאת רשת: '+e.message,'#e53e3e'); return;
+    showErr('❌ שגיאת רשת: '+e.message); return;
   }
   var data = res.data, error = res.error;
   console.log('[login] SB result: data='+!!data+' error='+JSON.stringify(error));
-  if (error) { dbg('❌ שגיאת שרת: '+(error.message||error.code),'#e53e3e'); return; }
-  if (!data) { dbg('❌ שם משתמש או סיסמה שגויים','#e53e3e'); return; }
+  if (error) { showErr('❌ שגיאת שרת: '+(error.message||error.code)); return; }
+  if (!data) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
   AUTH.user = data;
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('⏳ [3/4] מנווט לדף הבית...');
+  stopLoad();
   document.getElementById('auth-screen').classList.add('hidden');
-  errEl.style.color='#8a97b0'; errEl.textContent='';
   var wrap = document.getElementById('user-avatar-wrap');
   var hdru = document.getElementById('hdr-username');
   if (hdru) hdru.textContent = data.full_name;
