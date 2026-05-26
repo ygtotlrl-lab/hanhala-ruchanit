@@ -2696,8 +2696,9 @@ window.doYearTransition = function(){
   toast('✅ מעבר שנתי הושלם — '+changed+' תלמידים עודכנו');
 };
 
-function getActiveAbsences(s) {
-  var now = new Date();
+function getActiveAbsences(s, refDate) {
+  var now = refDate || new Date();
+  console.log('[getActiveAbsences] תלמיד:', s.name, '| תאריך בדיקה:', now.toISOString(), refDate ? '(זמן סדר)' : '⚠️ (עכשיו — לא זמן הסדר!)');
   if (Array.isArray(s.absences) && s.absences.length > 0) {
     return s.absences.filter(function(a){ return (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
   }
@@ -3396,7 +3397,16 @@ window.atShowTab = function(tab) {
 // קביעת מצב אוטומטי לפי סטאטוס התלמיד
 // sessDateIso אופציונלי — אם חסר, אישורים תמיד פעילים
 function atAutoMark(student, sessDateIso, sessStartTime) {
-  var aa=getActiveAbsences(student);
+  // בנה תאריך עזר מזמן הסדר (אם סופק) כדי לבדוק סטטוסים נכון ברישום רטרואקטיבי
+  var sessRef = null;
+  if (sessDateIso) {
+    sessRef = new Date(sessDateIso + 'T' + (sessStartTime || '12:00') + ':00');
+  }
+  console.log('[atAutoMark] תלמיד:', student.name,
+    '| תאריך סדר:', sessDateIso || '(לא סופק)',
+    '| שעת סדר:', sessStartTime || '(לא סופקה)',
+    '| תאריך בדיקת סטטוס:', sessRef ? sessRef.toISOString() : '⚠️ יבדק לפי Date.now()');
+  var aa=getActiveAbsences(student, sessRef);
   if(!aa||!aa.length) return null;
   for(var i=0;i<aa.length;i++){
     var t=aa[i].type;
