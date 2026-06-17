@@ -40,6 +40,7 @@ git push https://TOKEN_IN_MEMORY@github.com/ygtotlrl-lab/hanhala-ruchanit.git ma
 3. **`H()` גלובלי** — אסור `var X = [H(...)]` גלובלי
 4. **`onclick`** — חובה `window.functionName()`
 5. **גרשיים בתוך onclick** — `onclick="f(\"x\")"` בלבד
+6. **מקור אמת יחיד לאפליקציה = `index.html`** — זה הקובץ ש-Pages מגיש, שאליו מצביע `start_url`, ושה-APK טוען. כל עדכון קוד נכנס לכאן בלבד; אסור ליצור קובץ HTML כפול של האפליקציה. (`setup-db.html` הוא כלי עזר חד-פעמי נפרד להגדרת מסד הנתונים — לא עותק של האפליקציה. אין כאן אוטו-אפדייט מבוסס raw.githubusercontent — הרענון הוא דרך ה-Service Worker.)
 
 ## APK
 - Keystore: `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
