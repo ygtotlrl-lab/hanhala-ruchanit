@@ -3,7 +3,7 @@
 ## סביבת עבודה
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit`
 - **Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
-- **טוקן:** `[REDACTED]`
+- **טוקן:** `TOKEN_IN_MEMORY`
 - **קובץ ראשי:** `index.html`
 - **Supabase:** `kxbtskqobynewvnckaaz`
 
