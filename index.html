@@ -2039,6 +2039,61 @@ function ysKvGet(key) {
   });
 }
 
+// ============================================================
+// ===== SYNC DIAGNOSTICS + DAILY BACKUP (Phase 1 — additive only) =====
+// ============================================================
+// Stable per-device id (8 chars), created once and kept in localStorage.
+function getDeviceId() {
+  var id = localStorage.getItem('ys_device_id');
+  if (!id) {
+    var c = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    id = '';
+    for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
+    localStorage.setItem('ys_device_id', id);
+  }
+  return id;
+}
+
+// Fire-and-forget diagnostic log. NEVER blocks or breaks sync — if the table is
+// missing or the device is offline, the failure is swallowed silently.
+function ysSyncLog(action, key, recordCount, details) {
+  try {
+    SB.from('sync_log').insert({
+      device_id: getDeviceId(),
+      user_name: (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null,
+      action: action,
+      key: key || null,
+      record_count: (recordCount === undefined || recordCount === null) ? null : recordCount,
+      details: details || null
+    }).then(function(){}, function(){});
+  } catch (e) { /* logging must never block sync */ }
+}
+
+// record_count helper: array length, object key-count, else 0/1
+function ysCount(v) {
+  return Array.isArray(v) ? v.length
+       : (v && typeof v === 'object' ? Object.keys(v).length
+       : (v == null ? 0 : 1));
+}
+
+// Daily automatic backup: at most once per calendar day, copy the CURRENT cloud
+// values of the core keys into kv_backup. Non-blocking; never breaks sync.
+async function ysMaybeDailyBackup() {
+  try {
+    var today = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('ys_last_backup') === today) return;
+    localStorage.setItem('ys_last_backup', today); // set first → runs at most once/day
+    var keys = ['ys_students', 'ys_approvals', 'ys_attend', 'ys_attend_sessions'];
+    for (var i = 0; i < keys.length; i++) {
+      var res = await SB.from('kv').select('value').eq('key', keys[i]).maybeSingle();
+      if (res && res.data && res.data.value != null) {
+        await SB.from('kv_backup').insert({ key: keys[i], value: res.data.value });
+      }
+    }
+    ysSyncLog('backup', null, keys.length, { date: today });
+  } catch (e) { /* backup must never block sync */ }
+}
+
 async function ysPushToCloud() {
   try {
     var students = getStudents();
@@ -2046,6 +2101,12 @@ async function ysPushToCloud() {
     var approvals = getApprovals();
     var reasons = getReasons();
     var ts = Date.now();
+    // Phase-1 diagnostics + daily backup — additive, non-blocking (run before the push)
+    ysMaybeDailyBackup();
+    ysSyncLog('push', 'ys_students', ysCount(students));
+    ysSyncLog('push', 'ys_attend', ysCount(attend));
+    ysSyncLog('push', 'ys_approvals', ysCount(approvals));
+    ysSyncLog('push', 'ys_reasons', ysCount(reasons));
     var r = await ysKvSet('ys_students', students);
     if (r.error && r.error.message && r.error.message.indexOf('kv') !== -1) {
       console.log('[ys-sync] kv table missing, skipping push');
@@ -2135,6 +2196,7 @@ async function ysPullFromCloud() {
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
+    ysSyncLog('pull', null, null); // Phase-1 diagnostic: successful pull
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
 
