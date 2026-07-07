@@ -3559,8 +3559,8 @@ window.loadAttend = async function() {
         '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">סדר פתוח מהיום</div>'+
         '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRec.session+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>'+
         '<div style="display:flex;gap:10px;justify-content:center">'+
-        '<button onclick="this.closest('[data-dlg=at-resume]').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.atEditSession(''+_openRec.id+'');this.closest('[data-dlg=at-resume]').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
+        '<button onclick="this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button onclick="window.atEditSession(\''+_openRec.id+'\');this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
         '</div></div>';
       document.body.appendChild(_rd);
     }
@@ -4977,8 +4977,8 @@ window.loadSleep = async function() {
         '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">בדיקת שינה פתוחה</div>'+
         '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRecSl.session+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>'+
         '<div style="display:flex;gap:10px;justify-content:center">'+
-        '<button onclick="this.closest('[data-dlg=sl-resume]').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.slEditSession(''+_openRecSl.id+'');this.closest('[data-dlg=sl-resume]').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
+        '<button onclick="this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button onclick="window.slEditSession(\''+_openRecSl.id+'\');this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
         '</div></div>';
       document.body.appendChild(_rd);
     }
