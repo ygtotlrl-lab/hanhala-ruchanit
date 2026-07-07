@@ -1338,6 +1338,7 @@ function saveStudentStatus(type) {
   _migrateStudentLegacy(s);
   s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null});
   s.present = false;
+  s.updatedAt = Date.now();
 
   saveStudents(students);
   scheduleYsPush();
@@ -1472,6 +1473,7 @@ window.saveAbsenceReasons = async function() {
     });
   });
   localStorage.setItem('ys_absence_reasons', JSON.stringify(reasons));
+  ysSettingsTouch('ys_absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   try {
     var r = await ysKvSet('ys_absence_reasons', reasons);
@@ -1995,12 +1997,11 @@ function ysUpdateQueueBadge() {
 }
 // Merge two session arrays by record id (local-only items appended)
 function _ysSessionsMerge(cloudArr, localArr) {
+  // משודרג: מיזוג ברמת רשומה עם updatedAt + tombstones (היה: הוספה-בלבד לפי id).
+  // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection).
   if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
   if (!Array.isArray(localArr)) return cloudArr;
-  var cloudIds = {};
-  cloudArr.forEach(function(r){if(r&&r.id)cloudIds[r.id]=true;});
-  var extra = localArr.filter(function(r){return r&&r.id&&!cloudIds[r.id];});
-  return cloudArr.concat(extra);
+  return ysMergeRecords(localArr, cloudArr, function(r){ return r && r.id; }, false);
 }
 async function ysFlushQueue() {
   var q;
@@ -2094,68 +2095,173 @@ async function ysMaybeDailyBackup() {
   } catch (e) { /* backup must never block sync */ }
 }
 
+// ============================================================
+// ===== PHASE 2: RECORD-LEVEL MERGE ENGINE =====
+// ============================================================
+// העיקרון: היעדר רשומה אצל מכשיר אינו מחיקה. מחיקה היא רק tombstone מפורש
+// (deleted=true + updatedAt). מכשיר לעולם לא מוחק מה שהוא לא מכיר.
+function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.updatedAt : 0; }
+
+// מיזוג גנרי ברמת רשומה — עובד על מערכים (getKey) ועל אובייקטים (מפתח = שם המאפיין).
+// keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt (נתוני legacy) שורדת
+// כשהענן קיים. false = מניעת "תחיית מתים" של רשומות שנמחקו פיזית בקוד הישן;
+// true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend, approvals).
+function ysMergeRecords(local, remote, getKey, keepUnversionedLocal) {
+  if (remote == null && local == null) return local;
+  if (Array.isArray(remote) || Array.isArray(local)) {
+    var L = Array.isArray(local) ? local : [];
+    var R = Array.isArray(remote) ? remote : [];
+    var map = {}, order = [];
+    R.forEach(function(r){ if (!r) return; var k = getKey(r); if (k == null) return; k = String(k); if (!(k in map)) order.push(k); map[k] = r; });
+    L.forEach(function(r){
+      if (!r) return; var k = getKey(r); if (k == null) return; k = String(k);
+      if (!(k in map)) {
+        if (ysRecTs(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
+      } else if (ysRecTs(r) > ysRecTs(map[k])) { map[k] = r; } // שוויון → הענן מנצח (דטרמיניסטי)
+    });
+    return order.map(function(k){ return map[k]; });
+  }
+  var Lo = (local && typeof local === 'object') ? local : {};
+  var Ro = (remote && typeof remote === 'object') ? remote : {};
+  var out = {};
+  Object.keys(Ro).forEach(function(k){ out[k] = Ro[k]; });
+  Object.keys(Lo).forEach(function(k){
+    if (!(k in out)) {
+      if (ysRecTs(Lo[k]) > 0 || keepUnversionedLocal || remote == null) out[k] = Lo[k];
+    } else if (ysRecTs(Lo[k]) > ysRecTs(out[k])) out[k] = Lo[k];
+  });
+  return out;
+}
+
+// מיזוג ys_attend המקונן {date:{sid:rec}} — ברמת הרשומה הפנימית (תאריך+תלמיד).
+// נוכחות לעולם לא נמחקת מפורשות → keepUnversionedLocal=true.
+function ysMergeAttend(local, remote) {
+  var Lo = (local && typeof local === 'object') ? local : {};
+  var Ro = (remote && typeof remote === 'object') ? remote : {};
+  var out = {}, seen = {};
+  Object.keys(Ro).concat(Object.keys(Lo)).forEach(function(d){
+    if (seen[d]) return; seen[d] = 1;
+    if (Ro[d] == null) { out[d] = Lo[d]; return; }
+    if (Lo[d] == null) { out[d] = Ro[d]; return; }
+    out[d] = ysMergeRecords(Lo[d], Ro[d], null, true);
+  });
+  return out;
+}
+
+// גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
+function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
+function _ysStudentsSaveRaw(s) { localStorage.setItem('ys_students', JSON.stringify(s)); }
+
+// updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
+function ysSettingsMeta() { try { return JSON.parse(localStorage.getItem('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
+function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); localStorage.setItem('ys_settings_meta', JSON.stringify(m)); }
+
 async function ysPushToCloud() {
   try {
-    var students = getStudents();
-    var attend = getAttendance();
-    var approvals = getApprovals();
-    var reasons = getReasons();
-    var ts = Date.now();
-    // Phase-1 diagnostics + daily backup — additive, non-blocking (run before the push)
     ysMaybeDailyBackup();
-    ysSyncLog('push', 'ys_students', ysCount(students));
-    ysSyncLog('push', 'ys_attend', ysCount(attend));
-    ysSyncLog('push', 'ys_approvals', ysCount(approvals));
-    ysSyncLog('push', 'ys_reasons', ysCount(reasons));
-    var r = await ysKvSet('ys_students', students);
+    var ts = Date.now();
+
+    // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
+    var localSt = _ysStudentsRaw();
+    if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
+    var remoteSt = null; try { remoteSt = await ysKvGet('ys_students'); } catch(e1) {}
+    var mergedSt = ysMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false);
+    _ysStudentsSaveRaw(mergedSt);
+    var r = await ysKvSet('ys_students', mergedSt);
     if (r.error && r.error.message && r.error.message.indexOf('kv') !== -1) {
       console.log('[ys-sync] kv table missing, skipping push');
       return;
     }
-    await ysKvSet('ys_attend', attend);
-    await ysKvSet('ys_approvals', approvals);
-    await ysKvSet('ys_reasons', reasons);
-    await ysKvSet('ys_absence_reasons', window.getAbsenceReasons());
-    await ysKvSet('ys_cls_years', getClsYears());
+    ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
+
+    // ---- attend: מיזוג מקונן (תאריך+תלמיד) ----
+    var localAt = getAttendance();
+    var remoteAt = null; try { remoteAt = await ysKvGet('ys_attend'); } catch(e2) {}
+    var mergedAt = ysMergeAttend(localAt, remoteAt);
+    localStorage.setItem('ys_attend', JSON.stringify(mergedAt));
+    await ysKvSet('ys_attend', mergedAt);
+    ysSyncLog('push', 'ys_attend', ysCount(mergedAt), {local_count: ysCount(localAt), remote_count: ysCount(remoteAt), result_count: ysCount(mergedAt)});
+
+    // ---- approvals: מיזוג אובייקט לפי sid ----
+    var localAp = getApprovals();
+    var remoteAp = null; try { remoteAp = await ysKvGet('ys_approvals'); } catch(e3) {}
+    var mergedAp = ysMergeRecords(localAp, remoteAp, null, true);
+    localStorage.setItem('ys_approvals', JSON.stringify(mergedAp));
+    await ysKvSet('ys_approvals', mergedAp);
+    ysSyncLog('push', 'ys_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
+
+    // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
+    var meta = ysSettingsMeta();
+    var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(e4) {}
+    remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
+    var settingsKeys = [
+      { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ localStorage.setItem('ys_reasons', JSON.stringify(v)); } },
+      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ localStorage.setItem('ys_absence_reasons', JSON.stringify(v)); } },
+      { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ localStorage.setItem('ys_cls_years', JSON.stringify(v)); } }
+    ];
+    for (var i = 0; i < settingsKeys.length; i++) {
+      var sk = settingsKeys[i];
+      var lts = meta[sk.key] || 0, rts = remoteMeta[sk.key] || 0;
+      if (rts > lts) {
+        // הענן חדש יותר — אמץ מקומית במקום לדרוס
+        var rv = null; try { rv = await ysKvGet(sk.key); } catch(e5) {}
+        if (rv != null) { sk.set(rv); meta[sk.key] = rts; }
+      } else {
+        await ysKvSet(sk.key, sk.get());
+      }
+    }
+    var mm = {};
+    [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
+    localStorage.setItem('ys_settings_meta', JSON.stringify(mm));
+    await ysKvSet('ys_settings_meta', mm);
+
     await ysKvSet('ys_last_changed', ts);
     _ysLastTs = ts;
-    console.log('[ys-sync] pushed ts=' + ts);
+    console.log('[ys-sync] pushed (merged) ts=' + ts);
   } catch(e) { console.error('[ys-sync] push error:', e); }
 }
 
 async function ysPullFromCloud() {
   try {
+    // מטא הגדרות מהענן — משמש להחלטות LWW על מפתחות ההגדרות הקטנים
+    var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(eM) {}
+    remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
+    var meta = ysSettingsMeta();
+
+    // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר
     var s = await ysKvGet('ys_students');
     if (s !== null && Array.isArray(s)) {
       var pullMigrated = false;
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
-      localStorage.setItem('ys_students', JSON.stringify(s));
+      var mergedS = ysMergeRecords(_ysStudentsRaw(), s, function(r){ return r.id; }, false);
+      _ysStudentsSaveRaw(mergedS);
       if (pullMigrated) scheduleYsPush();
     }
+    // attend: מיזוג מקונן ברמת תאריך+תלמיד (מחליף את מיזוג-היום הידני הישן)
     var a = await ysKvGet('ys_attend');
     if (a && typeof a === 'object') {
-      var localA = getAttendance();
-      var todayK = todayKey();
-      // מיזוג: cloud גובר על past dates; להיום — מאחדים כדי לא לאבד הזנות מקומיות שטרם נדחפו
-      var merged = Object.assign({}, localA, a);
-      merged[todayK] = Object.assign({}, localA[todayK]||{}, a[todayK]||{});
-      localStorage.setItem('ys_attend', JSON.stringify(merged));
+      localStorage.setItem('ys_attend', JSON.stringify(ysMergeAttend(getAttendance(), a)));
     }
+    // approvals: מיזוג לפי sid עם updatedAt
     var ap = await ysKvGet('ys_approvals');
     if (ap && typeof ap === 'object') {
-      localStorage.setItem('ys_approvals', JSON.stringify(ap));
+      localStorage.setItem('ys_approvals', JSON.stringify(ysMergeRecords(getApprovals(), ap, null, true)));
     }
+    // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
     var rs = await ysKvGet('ys_reasons');
-    if (rs && Array.isArray(rs)) {
+    if (rs && Array.isArray(rs) && (remoteMeta['ys_reasons'] || 0) >= (meta['ys_reasons'] || 0)) {
       localStorage.setItem('ys_reasons', JSON.stringify(rs));
+      if (remoteMeta['ys_reasons']) { meta['ys_reasons'] = remoteMeta['ys_reasons']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
     }
     // טען נתוני סדרים (מודול נוכחות)
-    // מיזוג רק עם pending queue (כתיבות אופליין) — לא עם localStorage כולו.
-    // שימוש ב-_slLocal כ-fallback גרם לרשומות שנמחקו מ-Supabase לחזור (resurrection bug).
+    // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
+    // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
     var atSess = await ysKvGet('ys_attend_sessions');
     if (atSess && Array.isArray(atSess)) {
+      var _atLocal = []; try { _atLocal = JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]'); } catch(eAt) {}
+      var _atMerge = _ysSessionsMerge(atSess, _atLocal);
       var _atPending = _ysQueueGet('ys_attend_sessions');
-      var _atMerge = _atPending ? _ysSessionsMerge(atSess, _atPending) : atSess;
+      if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending);
       localStorage.setItem('ys_attend_sessions', JSON.stringify(_atMerge));
       window._atData = _atMerge;
       if (_atPending && _atMerge.length > atSess.length) {
@@ -2166,8 +2272,10 @@ async function ysPullFromCloud() {
     // טען נתוני שינה
     var slSess = await ysKvGet('ys_sleep_sessions');
     if (slSess && Array.isArray(slSess)) {
+      var _slLocal2 = []; try { _slLocal2 = JSON.parse(localStorage.getItem('ys_sleep_sessions') || '[]'); } catch(eSl) {}
+      var _slMerge = _ysSessionsMerge(slSess, _slLocal2);
       var _slPending = _ysQueueGet('ys_sleep_sessions');
-      var _slMerge = _slPending ? _ysSessionsMerge(slSess, _slPending) : slSess;
+      if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending);
       localStorage.setItem('ys_sleep_sessions', JSON.stringify(_slMerge));
       window._slData = _slMerge;
       if (_slPending && _slMerge.length > slSess.length) {
@@ -2176,15 +2284,17 @@ async function ysPullFromCloud() {
       }
     }
     var abR = await ysKvGet('ys_absence_reasons');
-    if (abR && typeof abR === 'object' && !Array.isArray(abR)) {
+    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['ys_absence_reasons'] || 0) >= (meta['ys_absence_reasons'] || 0)) {
       localStorage.setItem('ys_absence_reasons', JSON.stringify(abR));
+      if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
     }
     var clsY = await ysKvGet('ys_cls_years');
     console.log('[pull] ys_cls_years from KV:', clsY);
-    if (clsY && typeof clsY === 'object') {
+    if (clsY && typeof clsY === 'object' && (remoteMeta['ys_cls_years'] || 0) >= (meta['ys_cls_years'] || 0)) {
       localStorage.setItem('ys_cls_years', JSON.stringify(clsY));
+      if (remoteMeta['ys_cls_years']) { meta['ys_cls_years'] = remoteMeta['ys_cls_years']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
       console.log('[pull] ys_cls_years saved to localStorage');
-    } else {
+    } else if (clsY == null) {
       // מפתח לא קיים ב-DB — אם יש ערכים מקומיים, דחוף אותם (bootstrap חד-פעמי)
       var _localCY = getClsYears();
       console.log('[pull] ys_cls_years missing in KV, local:', _localCY);
@@ -2453,12 +2563,23 @@ function getDefaultStudents(){return [
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
-function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s;}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
-function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
+function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+// saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
+// מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
+// ו-tombstones שורדים כל מחזור קריאה-שמירה.
+function saveStudents(s){
+  try {
+    var raw=_ysStudentsRaw();
+    var have={}; s.forEach(function(x){ if(x&&x.id!=null) have[String(x.id)]=1; });
+    var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
+    if (tombs.length) s=s.concat(tombs);
+  } catch(e){}
+  localStorage.setItem('ys_students',JSON.stringify(s));
+}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
 function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'null')||[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];}
-function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));}
+function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
 function getApprovals(){return JSON.parse(localStorage.getItem('ys_approvals')||'{}');}
 function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
 function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -2489,7 +2610,7 @@ function getStudentStatus(sid){
     if(from&&to&&now>=from&&now<=to){
       return {status:'approved',label:H(1489,1488,1497,1513,1493,1512),color:'#ed8936',reason:appr.reason};
     }
-    if(to&&now>to){var a2=getApprovals();a2[sid]={active:false};saveApprovals(a2);}
+    if(to&&now>to){var a2=getApprovals();a2[sid]={active:false,updatedAt:Date.now()};saveApprovals(a2);}
   }
   var rec=dayA[sid];
   if(!rec)return {status:'unknown',label:'-',color:'#999'};
@@ -2598,7 +2719,7 @@ function renderStudents(){
 
 // -------- ניהול שנות מחזור --------
 function getClsYears(){try{return JSON.parse(localStorage.getItem('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
-function saveClsYears(y){localStorage.setItem('ys_cls_years',JSON.stringify(y));}
+function saveClsYears(y){localStorage.setItem('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
 
 window.saveClsYearsSettings = async function(){
   var a=(document.getElementById('cy-a')||{}).value||'';
@@ -2644,6 +2765,7 @@ window.setStudentInactive = function(sid){
   var years=getClsYears();
   s.active=false;
   if(!s.cohortYear) s.cohortYear=years[s.cls]||'';
+  s.updatedAt=Date.now();
   saveStudents(students);
   scheduleYsPush();
   renderStudents();
@@ -2754,11 +2876,11 @@ window.doYearTransition = function(){
     if(s.cls==='g'){
       s.active=false;
       if(!s.cohortYear) s.cohortYear=years.g||'';
-      changed++;
+      s.updatedAt=Date.now(); changed++;
     } else if(s.cls==='b'){
-      s.cls='g'; changed++;
+      s.cls='g'; s.updatedAt=Date.now(); changed++;
     } else if(s.cls==='a'){
-      s.cls='b'; changed++;
+      s.cls='b'; s.updatedAt=Date.now(); changed++;
     }
   });
   saveStudents(students);
@@ -2911,6 +3033,7 @@ window.cancelStudentStatus = function() {
   s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
   s.absences = [];
   s.present = true;
+  s.updatedAt = Date.now();
   saveStudents(students);
   scheduleYsPush();
   renderStudents();
@@ -2928,6 +3051,7 @@ window.cancelSingleAbsence = function(absenceId) {
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
+  s.updatedAt = Date.now();
   saveStudents(students);
   scheduleYsPush();
   renderStudents();
@@ -2947,8 +3071,8 @@ function togglePresent(sid,present){
   var now=new Date();
   var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   var ex=attend[today][sid]||{};
-  if(present){attend[today][sid]={present:true,entryTime:ex.entryTime||t,exitTime:ex.exitTime};}
-  else{attend[today][sid]={present:false,entryTime:ex.entryTime,exitTime:ex.exitTime};}
+  if(present){attend[today][sid]={present:true,entryTime:ex.entryTime||t,exitTime:ex.exitTime,updatedAt:Date.now()};}
+  else{attend[today][sid]={present:false,entryTime:ex.entryTime,exitTime:ex.exitTime,updatedAt:Date.now()};}
   saveAttendance(attend);
   scheduleYsPush();
   renderStudents();
@@ -2962,8 +3086,8 @@ function recordTime(sid){
   var now=new Date();
   var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   var ex=attend[today][sid]||{};
-  if(!ex.entryTime){attend[today][sid]={present:true,entryTime:t};}
-  else{attend[today][sid]={present:ex.present,entryTime:ex.entryTime,exitTime:t};}
+  if(!ex.entryTime){attend[today][sid]={present:true,entryTime:t,updatedAt:Date.now()};}
+  else{attend[today][sid]={present:ex.present,entryTime:ex.entryTime,exitTime:t,updatedAt:Date.now()};}
   saveAttendance(attend);
   scheduleYsPush();
   renderStudents();
@@ -2998,12 +3122,14 @@ function saveStudent(){
   var students=getStudents();
   if(editingStudentId){
     var idx=students.findIndex(function(s){return s.id===editingStudentId;});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;}
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].updatedAt=Date.now();}
   } else {
-    var maxId=students.reduce(function(m,s){return Math.max(m,s.id);},0);
-    students.push({id:maxId+1,name:name,cls:cls});
+    // maxId מהאחסון הגולמי (כולל tombstones) — לא לעשות שימוש חוזר ב-id של תלמיד מחוק
+    var _raw=_ysStudentsRaw();
+    var maxId=(_raw.length?_raw:students).reduce(function(m,s){return Math.max(m,s.id||0);},0);
+    students.push({id:maxId+1,name:name,cls:cls,updatedAt:Date.now()});
     students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
-    students.forEach(function(s,i){s.id=i+1;});
+    // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
   scheduleYsPush();
@@ -3020,9 +3146,14 @@ function deleteStudent(sid){
   var msg=document.getElementById('confirm-msg');
   if(msg)msg.textContent=H(1492,1488,1501,32,1500,1502,1495,1493,1511,32,1488,1514,32)+s.name+'?';
   confirmCallback=function(){
-    var students=getStudents().filter(function(x){return x.id!==sid;});
-    students.forEach(function(s,i){s.id=i+1;});
-    saveStudents(students);
+    // מחיקה = tombstone (deleted=true + updatedAt), לא הסרה פיזית — כדי שהמחיקה
+    // תסתנכרן לכל המכשירים ולא "תקום לתחייה" ממכשיר שעוד מחזיק את הרשומה
+    var all=_ysStudentsRaw();
+    if(!all.length) all=getStudents(); // ריצה על ברירות מחדל שטרם נשמרו
+    var rec=null;
+    for(var i=0;i<all.length;i++){ if(all[i]&&all[i].id===sid){rec=all[i];break;} }
+    if(rec){ rec.deleted=true; rec.updatedAt=Date.now(); }
+    _ysStudentsSaveRaw(all);
     scheduleYsPush();
     renderStudents();
   };
@@ -3067,7 +3198,7 @@ function saveApproval(){
   var appr=getApprovals();
   var now=new Date();
   var returnDate=new Date(now.getTime()+7*86400000);
-  appr[currentApprovalId]={reason:finalReason,fromHeb:fromHeb,toHeb:toHeb,fromTime:fromTime,toTime:toTime,active:true,fromGreg:now.toISOString(),toGreg:returnDate.toISOString()};
+  appr[currentApprovalId]={reason:finalReason,fromHeb:fromHeb,toHeb:toHeb,fromTime:fromTime,toTime:toTime,active:true,fromGreg:now.toISOString(),toGreg:returnDate.toISOString(),updatedAt:Date.now()};
   saveApprovals(appr);
   scheduleYsPush();
   closeApproval();
@@ -3077,7 +3208,7 @@ function saveApproval(){
 function clearApproval(sid){
   if(checkLoginNeeded())return;
   var appr=getApprovals();
-  if(appr[sid])appr[sid].active=false;
+  if(appr[sid]){appr[sid].active=false;appr[sid].updatedAt=Date.now();}
   saveApprovals(appr);
   scheduleYsPush();
   renderStudents();
@@ -3146,7 +3277,9 @@ window.importStudentsFromFile = function(input) {
         rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       }
       var existing = getStudents();
-      var maxId = existing.reduce(function(m,s){return Math.max(m,s.id);}, 0);
+      // maxId מהאחסון הגולמי (כולל tombstones) — לא לעשות שימוש חוזר ב-id של תלמיד מחוק
+      var _rawAll = _ysStudentsRaw();
+      var maxId = (_rawAll.length ? _rawAll : existing).reduce(function(m,s){return Math.max(m,s.id||0);}, 0);
       var added = 0, failed = [], skipped = 0;
       var clsMap = {
         'א':'a',"א'":'a','a':'a','שיעור א':'a',"שיעור א'":'a',
@@ -3167,12 +3300,12 @@ window.importStudentsFromFile = function(input) {
         var cls = clsMap[clsRaw] || clsMap[clsStripped] || clsMap[clsStripped.slice(-1)] || null;
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         maxId++;
-        existing.push({id:maxId, name:name, cls:cls});
+        existing.push({id:maxId, name:name, cls:cls, updatedAt:Date.now()});
         added++;
       }
       if (added > 0) {
         existing.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
-        existing.forEach(function(s,i){s.id=i+1;});
+        // אין מיספור-מחדש — id חייב להישאר יציב למיזוג בין מכשירים
         saveStudents(existing);
         scheduleYsPush();
         renderStudents();
@@ -3358,7 +3491,16 @@ async function atSaveData(data) {
   window._atData=data;
   localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
   try {
+    // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
+    var _atLocalN=ysCount(data);
+    var _atRemote=null; try { _atRemote=await ysKvGet('ys_attend_sessions'); } catch(eR){}
+    if (Array.isArray(_atRemote)) {
+      data=_ysSessionsMerge(_atRemote, data);
+      window._atData=data;
+      localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+    }
     await ysKvSet('ys_attend_sessions',data);
+    ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     var _ats=Date.now();
     await ysKvSet('ys_last_changed',_ats);
@@ -3529,7 +3671,7 @@ function atRenderTodaySessions() {
   var cfg=window._atCfg||atDefaultCfg();
   var sessOrder={};
   atSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return r.date_iso===filterIso;})
+  var daySess=data.filter(function(r){return !r.deleted&&r.date_iso===filterIso;})
     .slice().sort(function(a,b){
       var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
       var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
@@ -3635,7 +3777,8 @@ window.atOpenSession = async function(sessId, sessName) {
     filled_by:AUTH.user?AUTH.user.id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
-    created_at:new Date().toISOString()
+    created_at:new Date().toISOString(),
+    updatedAt:Date.now()
   };
 
   var data=await atLoadData();
@@ -3666,6 +3809,7 @@ async function atAutoSaveNow() {
     marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0}:{s:'',min:0};
   });
   rec.marks=marks;
+  rec.updatedAt=Date.now();
   await atSaveData(window._atData);
 }
 
@@ -3905,6 +4049,7 @@ window.atRenderArchive = async function(records) {
   var el=document.getElementById('at-arc-list');
   if(!el) return;
   if(!records) records=await atLoadData();
+  if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
   }
@@ -4020,7 +4165,7 @@ window.atArcFilter = async function(all) {
   if(all){window.atRenderArchive(data);return;}
   var dateIso=(document.getElementById('at_arc_date_iso')||{}).value;
   if(!dateIso){window.atRenderArchive(data);return;}
-  var filtered=data.filter(function(r){return r.date_iso===dateIso;});
+  var filtered=data.filter(function(r){return !r.deleted&&r.date_iso===dateIso;});
   window.atRenderArchive(filtered);
 };
 
@@ -4043,7 +4188,9 @@ window.atDeleteSession = function(id) {
 
 window.atDeleteSessionConfirmed = async function(id) {
   var data=await atLoadData();
-  data=data.filter(function(r){return r.id!==id;});
+  // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
+  var _dRec=data.find(function(r){return r.id===id;});
+  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();}
   await atSaveData(data);
   window.atRenderArchive();
   atRenderTodaySessions();   // רענן גם את רשימת הסדרים בלשונית רישום
@@ -4090,6 +4237,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     var students=getStudents();
     console.log('[Excel] 3 students=', students&&students.length);
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
@@ -4144,6 +4292,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     var data=await atLoadData();
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
@@ -4463,6 +4612,7 @@ window.atEditMark = async function(recId, sid, newCode) {
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
+  rec.updatedAt=Date.now();
   await atSaveData(data);
   // סגור דיאלוגי ההשגחה לפני רינדור מחדש
   ['supedmark','supdetail'].forEach(function(n){
@@ -4728,7 +4878,16 @@ async function slSaveData(data) {
   window._slData=data;
   localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
   try {
+    // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
+    var _slLocalN=ysCount(data);
+    var _slRemote=null; try { _slRemote=await ysKvGet('ys_sleep_sessions'); } catch(eR){}
+    if (Array.isArray(_slRemote)) {
+      data=_ysSessionsMerge(_slRemote, data);
+      window._slData=data;
+      localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+    }
     await ysKvSet('ys_sleep_sessions',data);
+    ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     var _sts=Date.now();
     await ysKvSet('ys_last_changed',_sts);
     _ysLastTs=_sts;
@@ -4885,7 +5044,7 @@ function slRenderTodaySessions() {
   var cfg=window._slCfg||slDefaultCfg();
   var sessOrder={};
   slSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return r.date_iso===filterIso;})
+  var daySess=data.filter(function(r){return !r.deleted&&r.date_iso===filterIso;})
     .slice().sort(function(a,b){
       var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
       var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
@@ -4982,7 +5141,8 @@ window.slOpenSession = async function(sessId, sessName) {
     filled_by:AUTH.user?AUTH.user.id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
-    created_at:new Date().toISOString()
+    created_at:new Date().toISOString(),
+    updatedAt:Date.now()
   };
 
   var data=await slLoadData();
@@ -5011,6 +5171,7 @@ async function slAutoSaveNow() {
     marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0,note:m.note||''}:{s:'',min:0,note:''};
   });
   rec.marks=marks;
+  rec.updatedAt=Date.now();
   await slSaveData(window._slData);
 }
 
@@ -5251,6 +5412,7 @@ window.slRenderArchive = async function(records) {
   var el=document.getElementById('sl-arc-list');
   if(!el) return;
   if(!records) records=await slLoadData();
+  if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
   }
@@ -5362,7 +5524,7 @@ window.slArcFilter = async function(all) {
   if(all){window.slRenderArchive(data);return;}
   var dateIso=(document.getElementById('sl_arc_date_iso')||{}).value;
   if(!dateIso){window.slRenderArchive(data);return;}
-  var filtered=data.filter(function(r){return r.date_iso===dateIso;});
+  var filtered=data.filter(function(r){return !r.deleted&&r.date_iso===dateIso;});
   window.slRenderArchive(filtered);
 };
 
@@ -5385,7 +5547,9 @@ window.slDeleteSession = function(id) {
 
 window.slDeleteSessionConfirmed = async function(id) {
   var data=await slLoadData();
-  data=data.filter(function(r){return r.id!==id;});
+  // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
+  var _dRec=data.find(function(r){return r.id===id;});
+  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();}
   await slSaveData(data);
   window.slRenderArchive();
   slRenderTodaySessions();
@@ -5424,6 +5588,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     var data=await slLoadData();
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
@@ -5474,6 +5639,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     var data=await slLoadData();
     var students=getStudents();
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
@@ -5783,6 +5949,7 @@ window.slEditMark = async function(recId, sid, newCode) {
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
+  rec.updatedAt=Date.now();
   await slSaveData(data);
   ['sl-supedmark','sl-supdetail'].forEach(function(n){
     var d=document.querySelector('[data-dlg="'+n+'"]');
