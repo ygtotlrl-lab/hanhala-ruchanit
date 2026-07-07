@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v6';
+var CACHE_NAME = 'hanhala-ruchanit-v7';
 var CORE = [
   './',
   './index.html',

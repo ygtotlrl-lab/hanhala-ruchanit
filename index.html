@@ -886,6 +886,7 @@ window._alefFontB64=null;
 // ============================================================
 var AUTH = {
   user: null,          // {id, username, full_name, role}
+  offlineLogin: false, // true = אומת מול עותק מקומי (ללא רשת); מאומת מחדש כשהרשת חוזרת
   perms: null,         // {students:{admin:'edit',senior:'view',junior:'none'}, ...}
   lockTimer: null,
   warnTimer: null,
@@ -971,6 +972,46 @@ async function fixAdminHash() {
 })();
 
 // ---- כניסה ----
+// ===== OFFLINE LOGIN: עותק משתמשים מקומי לאימות ללא רשת =====
+function ysUsersCacheSave(users) {
+  try {
+    var slim = (users || []).filter(function(u){ return u && u.active === true; }).map(function(u){
+      return { id: u.id, username: u.username, password_hash: u.password_hash, full_name: u.full_name, role: u.role, active: u.active };
+    });
+    localStorage.setItem('ys_users_cache', JSON.stringify(slim));
+  } catch(e) {}
+}
+function ysUsersCacheGet() {
+  try { return JSON.parse(localStorage.getItem('ys_users_cache') || 'null'); } catch(e) { return null; }
+}
+// רענון העותק המקומי מהענן — בכל הזדמנות מקוונת (fire-and-forget, לא חוסם)
+async function ysRefreshUsersCache() {
+  try {
+    var res = await SB.from('ys_users').select('id,username,password_hash,full_name,role,active').eq('active', true);
+    if (!res.error && Array.isArray(res.data)) ysUsersCacheSave(res.data);
+  } catch(e) {}
+}
+// זיהוי כשל רשת (להבדיל משגיאת שרת/אימות)
+function ysIsNetErr(e) {
+  if (!navigator.onLine) return true;
+  var m = ((e && (e.message || e.details || '')) + '').toLowerCase();
+  return m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1 || m.indexOf('timeout') !== -1;
+}
+// אימות מחדש שקט אחרי כניסה אופליין — כשהרשת חוזרת
+async function ysRevalidateOfflineLogin() {
+  if (!AUTH.user || !AUTH.offlineLogin) return;
+  try {
+    var res = await SB.from('ys_users').select('*').eq('id', AUTH.user.id).eq('active', true).maybeSingle();
+    if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
+    if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק'); doLogout(); return; }
+    AUTH.user = res.data;
+    AUTH.offlineLogin = false;
+    ysRefreshUsersCache();
+    try { loadPerms(); } catch(e2) {}
+    console.log('[login] אימות אופליין אושרר מול הענן');
+  } catch(e) {}
+}
+
 async function doLogin() {
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
@@ -985,7 +1026,7 @@ async function doLogin() {
   if (!username || !pass) { showErr('נא למלא שם משתמש וסיסמה'); return; }
   startLoad();
   dbg('⏳ [1/4] שולח בקשה לשרת...');
-  var res;
+  var res = null, netFail = false;
   try {
     res = await SB.from('ys_users')
       .select('*')
@@ -995,26 +1036,42 @@ async function doLogin() {
       .maybeSingle();
   } catch(e) {
     console.error('[login] SB threw:', e);
-    showErr('❌ שגיאת רשת: '+e.message); return;
+    netFail = true;
   }
-  var data = res.data, error = res.error;
-  console.log('[login] SB result: data='+!!data+' error='+JSON.stringify(error));
-  if (error) { showErr('❌ שגיאת שרת: '+(error.message||error.code)); return; }
-  if (!data) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
+  if (!netFail && res && res.error && ysIsNetErr(res.error)) netFail = true;
+  if (netFail) {
+    // אין רשת — נפילה-חזרה לאימות מול העותק המקומי
+    dbg('אין רשת — מנסה אימות מקומי (ys_users_cache)');
+    var cache = ysUsersCacheGet();
+    if (!cache || !cache.length) { showErr('❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט'); return; }
+    var lu = cache.find(function(u){ return u.username === username && u.password_hash === pass && u.active === true; });
+    if (!lu) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
+    AUTH.user = lu;
+    AUTH.offlineLogin = true;
+    toast('📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור');
+  } else {
+    var data = res.data, error = res.error;
+    console.log('[login] SB result: data='+!!data+' error='+JSON.stringify(error));
+    if (error) { showErr('❌ שגיאת שרת: '+(error.message||error.code)); return; }
+    if (!data) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
+    AUTH.user = data;
+    AUTH.offlineLogin = false;
+    ysRefreshUsersCache(); // עדכון העותק המקומי אחרי כניסה מקוונת מוצלחת
+  }
+  var u = AUTH.user;
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
-  AUTH.user = data;
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('⏳ [3/4] מנווט לדף הבית...');
   stopLoad();
   document.getElementById('auth-screen').classList.add('hidden');
   var wrap = document.getElementById('user-avatar-wrap');
   var hdru = document.getElementById('hdr-username');
-  if (hdru) hdru.textContent = data.full_name;
+  if (hdru) hdru.textContent = u.full_name;
   if (wrap) wrap.style.display = 'flex';
   var mn = document.getElementById('user-menu-name');
-  if (mn) mn.textContent = data.full_name;
+  if (mn) mn.textContent = u.full_name;
   var mr = document.getElementById('user-menu-role');
-  if (mr) mr.textContent = AUTH.ROLE_LABELS[data.role] || data.role;
+  if (mr) mr.textContent = AUTH.ROLE_LABELS[u.role] || u.role;
   var hr=document.getElementById('hdr-role'); if(hr) hr.textContent = AUTH.ROLE_LABELS[data.role] || '';
   resetLockTimer();
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
@@ -1056,12 +1113,22 @@ function resetLockTimer() {
   document.addEventListener(ev, function() { if(AUTH.user) resetLockTimer(); }, {passive:true});
 });
 
-// ---- טעינת הרשאות מ-Supabase ----
+// ---- טעינת הרשאות מ-Supabase (עם נפילה-חזרה לעותק מקומי באופליין) ----
 async function loadPerms() {
-  var {data} = await SB.from('kv').select('value').eq('key','ys_perms').single();
-  if (data && data.value) {
-    try { AUTH.perms = JSON.parse(data.value); } catch(e) { AUTH.perms = AUTH.DEFAULT_PERMS; }
-  } else {
+  try {
+    var {data} = await SB.from('kv').select('value').eq('key','ys_perms').single();
+    if (data && data.value) {
+      try {
+        AUTH.perms = JSON.parse(data.value);
+        localStorage.setItem('ys_perms_cache', data.value); // עותק מקומי אחרי כל טעינה מוצלחת
+      } catch(e) { AUTH.perms = AUTH.DEFAULT_PERMS; }
+    } else {
+      AUTH.perms = AUTH.DEFAULT_PERMS;
+    }
+  } catch(eNet) {
+    // אין רשת — עותק מקומי, ואם אין: ברירות מחדל
+    var c = localStorage.getItem('ys_perms_cache');
+    if (c) { try { AUTH.perms = JSON.parse(c); console.log('[perms] נטען מעותק מקומי (אופליין)'); return; } catch(e2) {} }
     AUTH.perms = AUTH.DEFAULT_PERMS;
   }
 }
@@ -1402,9 +1469,25 @@ async function confirmSwitch() {
   var pass=document.getElementById('switch-pass').value.trim();
   var errEl=document.getElementById('switch-err');
   if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
-  var res=await SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single();
-  if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
-  var u=res.data;
+  var res=null, netFail=false;
+  try {
+    res=await SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single();
+  } catch(eSw){ netFail=true; }
+  if(!netFail&&res&&res.error&&ysIsNetErr(res.error)) netFail=true;
+  var u=null;
+  if(netFail){
+    // אין רשת — אימות מול העותק המקומי
+    var cache=ysUsersCacheGet();
+    if(!cache||!cache.length){errEl.textContent='אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור';return;}
+    u=cache.find(function(x){return String(x.id)===String(d._switchId)&&x.password_hash===pass&&x.active===true;});
+    if(!u){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    AUTH.offlineLogin=true;
+  } else {
+    if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    u=res.data;
+    AUTH.offlineLogin=false;
+    ysRefreshUsersCache();
+  }
   closeSwitchModal();
   AUTH.user=u;
   await loadPerms();
@@ -2321,6 +2404,7 @@ async function ysPullFromCloud() {
     }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
+    ysRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
     ysSyncLog('pull', null, null); // Phase-1 diagnostic: successful pull
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
@@ -2385,6 +2469,8 @@ window.addEventListener('online', function() {
   console.log('[ys-queue] network online — flushing queue');
   ysUpdateQueueBadge();
   ysFlushQueue();
+  // אימות מחדש שקט של כניסה אופליין — מתנתק אם המשתמש הושבת בינתיים
+  ysRevalidateOfflineLogin();
 });
 window.addEventListener('offline', function() {
   ysUpdateQueueBadge();
