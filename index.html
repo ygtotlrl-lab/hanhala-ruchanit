@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v9'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v10'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2462,6 +2462,19 @@ async function ysPullFromCloud() {
         ysKvSet('ys_last_changed', Date.now());
       }
     }
+    // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
+    try {
+      var _atCfgV = await ysKvGet('ys_attend_cfg');
+      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; localStorage.setItem('ys_attend_cfg', JSON.stringify(_atCfgV)); }
+      var _slCfgV = await ysKvGet('ys_sleep_cfg');
+      if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; localStorage.setItem('ys_sleep_cfg', JSON.stringify(_slCfgV)); }
+    } catch(eCfg) {}
+    // רענון רכיבים תלויי-הגדרות שמוצגים כרגע (בוררי סוג סדר, רשימות)
+    try {
+      if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
+      if (typeof slFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { slFillSessionBtns(); if (typeof slRenderTodaySessions === 'function') slRenderTodaySessions(); }
+      if (typeof renderReasonsList === 'function') { try { renderReasonsList(); } catch(eRL) {} }
+    } catch(eRf) {}
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
     ysRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
@@ -3696,6 +3709,7 @@ window.loadAttend = async function() {
   await atLoadData();
   window._atMarks={};
   window._atCurrentSessionId=null;
+  window._atPendingRec=null;
   var _todayIsoR=new Date().toISOString().split('T')[0];
   var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
@@ -3945,6 +3959,9 @@ window.atEditSession = async function(recId) {
   try {
     var _nowT=new Date();
     var _hhmm=('0'+_nowT.getHours()).slice(-2)+':'+('0'+_nowT.getMinutes()).slice(-2);
+    // עדיפות ל-startTime של הסדר מההגדרות (עקבי עם ysRefreshApprovalMarks); שעה נוכחית רק כנפילה-חזרה
+    var _cfgS=(window._atCfg&&Array.isArray(window._atCfg.sessions))?window._atCfg.sessions:[];
+    for(var _ci=0;_ci<_cfgS.length;_ci++){ if(_cfgS[_ci].name===rec.session&&_cfgS[_ci].startTime){_hhmm=_cfgS[_ci].startTime;break;} }
     var _apChanged=false;
     getStudents().forEach(function(st){
       if(st.active===false) return;
@@ -3971,6 +3988,7 @@ window.atEditSession = async function(recId) {
   if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('at_date',rec.date_heb);
   var fl=document.getElementById('at-filler');
   if(fl) fl.value=rec.filled_by_name||'';
+  window._atPendingRec=null;
   window._atCurrentSessionId=recId;
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
@@ -4041,10 +4059,10 @@ window.atOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  var data=await atLoadData();
-  data.push(rec);
+  await atLoadData(); // ודא ש-window._atData טעון
+  // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (atMarkDirty)
+  window._atPendingRec=rec;
   window._atCurrentSessionId=rec.id;
-  await atSaveData(data);
 
   // כותרת הסדר הפתוח
   var hdr=document.getElementById('at-reg-header');
@@ -4080,6 +4098,12 @@ async function atAutoSaveNow() {
 }
 // כל סימון: שמירה מקומית מיידית + דחיפה מרוכזת לענן (debounce)
 function atMarkDirty() {
+  // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
+  if(window._atPendingRec && window._atCurrentSessionId===window._atPendingRec.id){
+    if(!window._atData) window._atData=[];
+    if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) window._atData.push(window._atPendingRec);
+    window._atPendingRec=null;
+  }
   atSaveLocalNow();
   clearTimeout(window._atSaveTimer);
   window._atSaveTimer=setTimeout(atAutoSaveNow,3000);
@@ -4308,6 +4332,7 @@ window.atCloseSession = async function() {
   var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הסדר נשמר';
   window._atCurrentSessionId=null;
   window._atMarks={};
+  window._atPendingRec=null;
   document.getElementById('at-reg-list').style.display='none';
   document.getElementById('at-reg-picker').style.display='';
   atRenderTodaySessions();
@@ -5188,6 +5213,7 @@ window.loadSleep = async function() {
   slCleanupTestRecords(); // ניקוי חד-פעמי של רשומות בדיקה
   window._slMarks={};
   window._slCurrentSessionId=null;
+  window._slPendingRec=null;
   var _logIsoR=slGetLogicalDate();
   var _openRecSl=(window._slData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
@@ -5372,6 +5398,9 @@ window.slEditSession = async function(recId) {
   try {
     var _nowT2=new Date();
     var _hhmm2=('0'+_nowT2.getHours()).slice(-2)+':'+('0'+_nowT2.getMinutes()).slice(-2);
+    // עדיפות ל-startTime של הסדר מההגדרות; שעה נוכחית רק כנפילה-חזרה
+    var _cfgS2=(window._slCfg&&Array.isArray(window._slCfg.sessions))?window._slCfg.sessions:[];
+    for(var _ci2=0;_ci2<_cfgS2.length;_ci2++){ if(_cfgS2[_ci2].name===rec.session&&_cfgS2[_ci2].startTime){_hhmm2=_cfgS2[_ci2].startTime;break;} }
     var _apChanged2=false;
     getStudents().forEach(function(st){
       if(st.active===false) return;
@@ -5397,6 +5426,7 @@ window.slEditSession = async function(recId) {
   if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('sl_date',rec.date_heb);
   var fl=document.getElementById('sl-filler');
   if(fl) fl.value=rec.filled_by_name||'';
+  window._slPendingRec=null;
   window._slCurrentSessionId=recId;
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
@@ -5461,10 +5491,10 @@ window.slOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  var data=await slLoadData();
-  data.push(rec);
+  await slLoadData(); // ודא ש-window._slData טעון
+  // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (slMarkDirty)
+  window._slPendingRec=rec;
   window._slCurrentSessionId=rec.id;
-  await slSaveData(data);
 
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
@@ -5498,6 +5528,12 @@ async function slAutoSaveNow() {
 }
 // כל סימון: שמירה מקומית מיידית + דחיפה מרוכזת לענן (debounce)
 function slMarkDirty() {
+  // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
+  if(window._slPendingRec && window._slCurrentSessionId===window._slPendingRec.id){
+    if(!window._slData) window._slData=[];
+    if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) window._slData.push(window._slPendingRec);
+    window._slPendingRec=null;
+  }
   slSaveLocalNow();
   clearTimeout(window._slSaveTimer);
   window._slSaveTimer=setTimeout(slAutoSaveNow,3000);
@@ -5726,6 +5762,7 @@ window.slCloseSession = async function() {
   var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
   window._slCurrentSessionId=null;
   window._slMarks={};
+  window._slPendingRec=null;
   document.getElementById('sl-reg-list').style.display='none';
   document.getElementById('sl-reg-picker').style.display='';
   slRenderTodaySessions();
