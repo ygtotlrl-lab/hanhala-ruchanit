@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v8'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v9'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1468,6 +1468,7 @@ function saveStudentStatus(type) {
 
   saveStudents(students);
   scheduleYsPush();
+  ysRefreshApprovalMarks(sid); // רענון סדרים פתוחים של היום
   renderStudents();
   closeStatusModal();
   toast('✅ סטאטוס נשמר ל-' + s.name);
@@ -3198,6 +3199,7 @@ window.cancelStudentStatus = function() {
   s.updatedAt = Date.now();
   saveStudents(students);
   scheduleYsPush();
+  ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
   closeStatusModal();
   toast('✅ הסטטוס בוטל ל-' + s.name);
@@ -3216,6 +3218,7 @@ window.cancelSingleAbsence = function(absenceId) {
   s.updatedAt = Date.now();
   saveStudents(students);
   scheduleYsPush();
+  ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
   if (stillActive.length > 0) {
     window.openCurrentStatusModal();
@@ -3841,6 +3844,55 @@ var AT_COLORS={
 };
 
 // הצגת סדרים שנרשמו היום
+// רענון סימוני אישור בסדרים פתוחים של היום — נקרא אחרי הוספה/עריכה/מחיקה של
+// אישור/היעדרות לתלמיד. מעדכן רק סימון ריק או 'ap' (לעולם לא דורס סימון ידני).
+async function ysRefreshApprovalMarks(sid) {
+  try {
+    var student = getStudents().find(function(x){ return x.id === sid; });
+    if (!student) return;
+    var sidKey = String(sid);
+    var todayIso = new Date().toISOString().split('T')[0];
+
+    function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
+      var data = null;
+      try { data = JSON.parse(localStorage.getItem(lsKey) || 'null'); } catch(e0) {}
+      if (!Array.isArray(data)) return;
+      var changed = false;
+      data.forEach(function(rec){
+        if (!rec || rec.deleted || !rec.open || rec.date_iso !== dateIso) return;
+        var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].s || '') : '';
+        if (cur !== '' && cur !== 'ap') return; // לא דורסים סימון ידני (נוכח/מאחר וכו')
+        var sessTime = '';
+        for (var i = 0; i < cfgSessions.length; i++) { if (cfgSessions[i].name === rec.session) { sessTime = cfgSessions[i].startTime || ''; break; } }
+        var am = atAutoMark(student, rec.date_iso, sessTime);
+        var next = (am === 'ap') ? 'ap' : '';
+        if (next === cur) return;
+        if (!rec.marks) rec.marks = {};
+        rec.marks[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
+        rec.updatedAt = Date.now();
+        changed = true;
+        // אם הסדר הזה פתוח כרגע על המסך במכשיר הזה — עדכן גם את ה-buffer והתצוגה
+        if (curId === rec.id && marksBuf) {
+          if (next) marksBuf[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
+          else delete marksBuf[sidKey];
+          if (typeof renderFn === 'function') { try { renderFn(); } catch(eR) {} }
+        }
+      });
+      if (changed) {
+        localStorage.setItem(lsKey, JSON.stringify(data));
+        try { saveFn(data); } catch(eS) {}
+      }
+    }
+
+    var atCfg = (window._atCfg && Array.isArray(window._atCfg.sessions)) ? window._atCfg.sessions : [];
+    refreshSet('ys_attend_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, window.atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
+
+    var slCfg = (window._slCfg && Array.isArray(window._slCfg.sessions)) ? window._slCfg.sessions : [];
+    var slIso = (typeof slGetLogicalDate === 'function') ? slGetLogicalDate() : todayIso;
+    refreshSet('ys_sleep_sessions', slCfg, slIso, window._slCurrentSessionId, window._slMarks, window.slRenderStudents, function(d){ window._slData = d; slSaveData(d); }, true);
+  } catch(e) { console.warn('[approval-refresh]', e); }
+}
+
 function atRenderTodaySessions() {
   var el=document.getElementById('at-today-sessions');
   if(!el) return;
@@ -3889,6 +3941,31 @@ window.atEditSession = async function(recId) {
     var sid=e[0],m=e[1];
     if(m.s){window._atMarks[sid]={s:m.s,min:m.min||0};window._atCleared[sid]=true;}
   });
+  // רענון אישורים לתלמידים ללא סימון — לפי השעה הנוכחית (אישור שהוזן אחרי פתיחת הסדר)
+  try {
+    var _nowT=new Date();
+    var _hhmm=('0'+_nowT.getHours()).slice(-2)+':'+('0'+_nowT.getMinutes()).slice(-2);
+    var _apChanged=false;
+    getStudents().forEach(function(st){
+      if(st.active===false) return;
+      var k=String(st.id);
+      if(window._atMarks[k]&&window._atMarks[k].s) return; // יש סימון — לא נוגעים
+      var am=atAutoMark(st, rec.date_iso, _hhmm);
+      if(am){
+        window._atMarks[k]={s:am,min:0};
+        window._atCleared[k]=true;
+        if(!rec.marks) rec.marks={};
+        rec.marks[k]={s:am,min:0};
+        _apChanged=true;
+      }
+    });
+    if(_apChanged){
+      rec.updatedAt=Date.now();
+      localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+      window._atData=data;
+      atSaveData(data); // דחיפה ממוזגת לענן (fire-and-forget)
+    }
+  } catch(eAp){ console.warn('[approval-refresh:edit]', eAp); }
   // מלא תאריך
   var dw=document.getElementById('at-date-wrap');
   if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('at_date',rec.date_heb);
@@ -5291,6 +5368,31 @@ window.slEditSession = async function(recId) {
     var sid=e[0],m=e[1];
     if(m.s){window._slMarks[sid]={s:m.s,min:m.min||0,note:m.note||''};window._slCleared[sid]=true;}
   });
+  // רענון אישורים לתלמידים ללא סימון — לפי השעה הנוכחית
+  try {
+    var _nowT2=new Date();
+    var _hhmm2=('0'+_nowT2.getHours()).slice(-2)+':'+('0'+_nowT2.getMinutes()).slice(-2);
+    var _apChanged2=false;
+    getStudents().forEach(function(st){
+      if(st.active===false) return;
+      var k=String(st.id);
+      if(window._slMarks[k]&&window._slMarks[k].s) return;
+      var am=atAutoMark(st, rec.date_iso, _hhmm2);
+      if(am){
+        window._slMarks[k]={s:am,min:0,note:''};
+        window._slCleared[k]=true;
+        if(!rec.marks) rec.marks={};
+        rec.marks[k]={s:am,min:0,note:''};
+        _apChanged2=true;
+      }
+    });
+    if(_apChanged2){
+      rec.updatedAt=Date.now();
+      localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+      window._slData=data;
+      slSaveData(data);
+    }
+  } catch(eAp2){ console.warn('[approval-refresh:sl-edit]', eAp2); }
   var dw=document.getElementById('sl-date-wrap');
   if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('sl_date',rec.date_heb);
   var fl=document.getElementById('sl-filler');
