@@ -1012,6 +1012,49 @@ async function ysRevalidateOfflineLogin() {
   } catch(e) {}
 }
 
+// ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
+var YS_APP_VER = 'hanhala-ruchanit-v8'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+function ysLoginDetails(username) {
+  // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
+  return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
+}
+function ysLoginLogQueue(row) {
+  try {
+    var q = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]');
+    q.push(row);
+    if (q.length > 50) q = q.slice(-50);
+    localStorage.setItem('ys_login_log_queue', JSON.stringify(q));
+  } catch(e) {}
+}
+function ysLoginLog(action, branch, details) {
+  var row = { device_id: getDeviceId(), user_name: null, action: action, key: branch, record_count: 0, details: details || null };
+  try {
+    SB.from('sync_log').insert(row).then(function(r){
+      if (r && r.error) ysLoginLogQueue(row);
+    }, function(){ ysLoginLogQueue(row); });
+  } catch(e) { ysLoginLogQueue(row); }
+}
+// שליחת רשומות שהצטברו באופליין — כשהרשת חוזרת / אחרי כניסה מקוונת
+async function ysLoginLogFlush() {
+  var q;
+  try { q = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]'); } catch(e) { return; }
+  if (!q.length) return;
+  localStorage.setItem('ys_login_log_queue', '[]');
+  var failed = [];
+  for (var i = 0; i < q.length; i++) {
+    try {
+      var r = await SB.from('sync_log').insert(q[i]);
+      if (r && r.error) failed.push(q[i]);
+    } catch(e2) { failed.push(q[i]); }
+  }
+  if (failed.length) {
+    try {
+      var q2 = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]');
+      localStorage.setItem('ys_login_log_queue', JSON.stringify(q2.concat(failed).slice(-50)));
+    } catch(e3) {}
+  }
+}
+
 async function doLogin() {
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
@@ -1042,21 +1085,37 @@ async function doLogin() {
   if (netFail) {
     // אין רשת — נפילה-חזרה לאימות מול העותק המקומי
     dbg('אין רשת — מנסה אימות מקומי (ys_users_cache)');
+    ysLoginLog('login_fail', 'net_error', ysLoginDetails(username)); // אבחון: הבקשה המקוונת נכשלה ברשת
     var cache = ysUsersCacheGet();
-    if (!cache || !cache.length) { showErr('❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט'); return; }
+    if (!cache || !cache.length) {
+      ysLoginLog('login_fail', 'no_cache_offline', ysLoginDetails(username));
+      showErr('❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט'); return;
+    }
     var lu = cache.find(function(u){ return u.username === username && u.password_hash === pass && u.active === true; });
-    if (!lu) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
+    if (!lu) {
+      ysLoginLog('login_fail', 'wrong_credentials_offline', ysLoginDetails(username));
+      showErr('❌ שם משתמש או סיסמה שגויים'); return;
+    }
     AUTH.user = lu;
     AUTH.offlineLogin = true;
+    ysLoginLog('login_ok', 'offline', ysLoginDetails(username));
     toast('📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור');
   } else {
     var data = res.data, error = res.error;
     console.log('[login] SB result: data='+!!data+' error='+JSON.stringify(error));
-    if (error) { showErr('❌ שגיאת שרת: '+(error.message||error.code)); return; }
-    if (!data) { showErr('❌ שם משתמש או סיסמה שגויים'); return; }
+    if (error) {
+      ysLoginLog('login_fail', 'server_error', ysLoginDetails(username));
+      showErr('❌ שגיאת שרת: '+(error.message||error.code)); return;
+    }
+    if (!data) {
+      ysLoginLog('login_fail', 'wrong_credentials_online', ysLoginDetails(username));
+      showErr('❌ שם משתמש או סיסמה שגויים'); return;
+    }
     AUTH.user = data;
     AUTH.offlineLogin = false;
+    ysLoginLog('login_ok', 'online', ysLoginDetails(username));
     ysRefreshUsersCache(); // עדכון העותק המקומי אחרי כניסה מקוונת מוצלחת
+    ysLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   }
   var u = AUTH.user;
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
@@ -2471,6 +2530,8 @@ window.addEventListener('online', function() {
   ysFlushQueue();
   // אימות מחדש שקט של כניסה אופליין — מתנתק אם המשתמש הושבת בינתיים
   ysRevalidateOfflineLogin();
+  // שליחת רשומות login-log שהצטברו באופליין
+  ysLoginLogFlush();
 });
 window.addEventListener('offline', function() {
   ysUpdateQueueBadge();
