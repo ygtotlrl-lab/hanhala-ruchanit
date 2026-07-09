@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v12'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v13'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -4174,7 +4174,10 @@ window.atCancelStudentStatusFromReg = function(sid) {
   var s=students.find(function(x){return String(x.id)===String(sid);});
   if(!s) return;
   s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
-  s.absences=[]; s.present=true;
+  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); });
+  s.present=true;
+  s.updatedAt=Date.now();
   saveStudents(students);
   scheduleYsPush();
   // הסר auto-mark מהרישום הנוכחי, החזר ל"לא סומן"
@@ -5604,7 +5607,10 @@ window.slCancelStudentStatusFromReg = function(sid) {
   var s=students.find(function(x){return String(x.id)===String(sid);});
   if(!s) return;
   s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
-  s.absences=[]; s.present=true;
+  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); });
+  s.present=true;
+  s.updatedAt=Date.now();
   saveStudents(students);
   scheduleYsPush();
   delete window._slMarks[sid];
