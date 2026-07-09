@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v10'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v11'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1122,17 +1122,22 @@ async function doLogin() {
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('⏳ [3/4] מנווט לדף הבית...');
   stopLoad();
+  // הסתרת מסך הכניסה + מעבר לדף הבית חייבים לרוץ תמיד — לא תלויים בעדכוני תצוגה
+  // משניים (שם משתמש/תפקיד). כל אחד מהם עטוף כך ששגיאה בודדת לא תעצור את האתחול
+  // (הבאג: data.role — data מוגדר רק בענף האונליין — הפיל את כל הזנב באופליין).
   document.getElementById('auth-screen').classList.add('hidden');
-  var wrap = document.getElementById('user-avatar-wrap');
-  var hdru = document.getElementById('hdr-username');
-  if (hdru) hdru.textContent = u.full_name;
-  if (wrap) wrap.style.display = 'flex';
-  var mn = document.getElementById('user-menu-name');
-  if (mn) mn.textContent = u.full_name;
-  var mr = document.getElementById('user-menu-role');
-  if (mr) mr.textContent = AUTH.ROLE_LABELS[u.role] || u.role;
-  var hr=document.getElementById('hdr-role'); if(hr) hr.textContent = AUTH.ROLE_LABELS[data.role] || '';
-  resetLockTimer();
+  try {
+    var wrap = document.getElementById('user-avatar-wrap');
+    var hdru = document.getElementById('hdr-username');
+    if (hdru) hdru.textContent = u.full_name;
+    if (wrap) wrap.style.display = 'flex';
+    var mn = document.getElementById('user-menu-name');
+    if (mn) mn.textContent = u.full_name;
+    var mr = document.getElementById('user-menu-role');
+    if (mr) mr.textContent = AUTH.ROLE_LABELS[u.role] || u.role;
+    var hr = document.getElementById('hdr-role'); if (hr) hr.textContent = AUTH.ROLE_LABELS[u.role] || '';
+  } catch(e) { console.warn('[login] header update failed:', e); }
+  try { resetLockTimer(); } catch(e) { console.warn('[login] resetLockTimer:', e); }
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('⏳ [4/4] טוען נתונים...');
   showPage('home');
