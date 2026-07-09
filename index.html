@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v11'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v12'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3074,7 +3074,7 @@ function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
   console.log('[getActiveAbsences] תלמיד:', s.name, '| תאריך בדיקה:', now.toISOString(), refDate ? '(זמן סדר)' : '⚠️ (עכשיו — לא זמן הסדר!)');
   if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
+    return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
   }
   if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusFrom || new Date(s.statusFrom) <= now) && (!s.statusTo || new Date(s.statusTo) >= now)) {
     return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
@@ -3086,7 +3086,7 @@ function getActiveAbsences(s, refDate) {
 function getAllRelevantAbsences(s) {
   var now = new Date();
   if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.to || new Date(a.to) >= now; });
+    return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
   }
   if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
     return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
@@ -3206,19 +3206,30 @@ window.openCurrentStatusModal = function() {
   modal.style.display = 'flex';
 };
 
+// רענון לשונית ההשגחה הפעילה (נוכחות/שינה) — כדי שתלמיד שחזר לנוכח ירד מהרשימה מיד
+function ysRefreshSupervisionViews() {
+  try {
+    var av = document.getElementById('at-view-sup');
+    if (av && av.style.display !== 'none' && typeof window.atRenderSupervision === 'function') window.atRenderSupervision();
+    var sv = document.getElementById('sl-view-sup');
+    if (sv && sv.style.display !== 'none' && typeof window.slRenderSupervision === 'function') window.slRenderSupervision();
+  } catch(e) { console.warn('[sup-refresh]', e); }
+}
 window.cancelStudentStatus = function() {
   var sid = window._statusSid;
   var students = getStudents();
   var s = students.find(function(x){return x.id===sid;});
   if (!s) return;
   s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
-  s.absences = [];
+  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
+  if (Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted = true; a.updatedAt = Date.now(); });
   s.present = true;
   s.updatedAt = Date.now();
   saveStudents(students);
   scheduleYsPush();
   ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
+  ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
   closeStatusModal();
   toast('✅ הסטטוס בוטל ל-' + s.name);
 };
@@ -3229,7 +3240,8 @@ window.cancelSingleAbsence = function(absenceId) {
   var s = students.find(function(x){return x.id===sid;});
   if (!s) return;
   if (Array.isArray(s.absences)) {
-    s.absences = s.absences.filter(function(a){ return a.id !== absenceId; });
+    // tombstone לפי id — לא הסרה פיזית (מונע חזרת ההיעדרות אחרי מיזוג בין מכשירים)
+    s.absences.forEach(function(a){ if (a.id === absenceId) { a.deleted = true; a.updatedAt = Date.now(); } });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
@@ -3238,6 +3250,7 @@ window.cancelSingleAbsence = function(absenceId) {
   scheduleYsPush();
   ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
+  ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
   if (stillActive.length > 0) {
     window.openCurrentStatusModal();
   } else {
@@ -5316,7 +5329,10 @@ window.slShowTab = function(tab) {
 };
 
 function slAutoMark(student, sessDateIso, sessStartTime) {
-  var aa=getActiveAbsences(student);
+  // בנה תאריך עזר מזמן הסדר (כמו atAutoMark) — כדי לבדוק סטטוסים לפי זמן הסדר ולא שעון-קיר
+  var sessRef = null;
+  if (sessDateIso) { sessRef = new Date(sessDateIso + 'T' + (sessStartTime || '12:00') + ':00'); }
+  var aa=getActiveAbsences(student, sessRef);
   if(!aa||!aa.length) return null;
   for(var i=0;i<aa.length;i++){
     var t=aa[i].type;
