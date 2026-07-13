@@ -1013,7 +1013,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v13'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v14'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1467,7 +1467,7 @@ function saveStudentStatus(type) {
 
   if (!Array.isArray(s.absences)) s.absences = [];
   _migrateStudentLegacy(s);
-  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null});
+  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null, createdBy: ysWho()});
   s.present = false;
   s.updatedAt = Date.now();
 
@@ -2249,6 +2249,8 @@ async function ysMaybeDailyBackup() {
 // העיקרון: היעדר רשומה אצל מכשיר אינו מחיקה. מחיקה היא רק tombstone מפורש
 // (deleted=true + updatedAt). מכשיר לעולם לא מוחק מה שהוא לא מכיר.
 function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.updatedAt : 0; }
+// audit passivi: שם המשתמש המחובר (או null) — לא משפיע על מיזוג/סינון/חישוב
+function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
 // מיזוג גנרי ברמת רשומה — עובד על מערכים (getKey) ועל אובייקטים (מפתח = שם המאפיין).
 // keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt (נתוני legacy) שורדת
@@ -3222,7 +3224,7 @@ window.cancelStudentStatus = function() {
   if (!s) return;
   s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if (Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted = true; a.updatedAt = Date.now(); });
+  if (Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = ysWho(); });
   s.present = true;
   s.updatedAt = Date.now();
   saveStudents(students);
@@ -3241,7 +3243,7 @@ window.cancelSingleAbsence = function(absenceId) {
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone לפי id — לא הסרה פיזית (מונע חזרת ההיעדרות אחרי מיזוג בין מכשירים)
-    s.absences.forEach(function(a){ if (a.id === absenceId) { a.deleted = true; a.updatedAt = Date.now(); } });
+    s.absences.forEach(function(a){ if (a.id === absenceId) { a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = ysWho(); } });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
@@ -3323,7 +3325,7 @@ function saveStudent(){
     // maxId מהאחסון הגולמי (כולל tombstones) — לא לעשות שימוש חוזר ב-id של תלמיד מחוק
     var _raw=_ysStudentsRaw();
     var maxId=(_raw.length?_raw:students).reduce(function(m,s){return Math.max(m,s.id||0);},0);
-    students.push({id:maxId+1,name:name,cls:cls,updatedAt:Date.now()});
+    students.push({id:maxId+1,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
     students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
@@ -3348,7 +3350,7 @@ function deleteStudent(sid){
     if(!all.length) all=getStudents(); // ריצה על ברירות מחדל שטרם נשמרו
     var rec=null;
     for(var i=0;i<all.length;i++){ if(all[i]&&all[i].id===sid){rec=all[i];break;} }
-    if(rec){ rec.deleted=true; rec.updatedAt=Date.now(); }
+    if(rec){ rec.deleted=true; rec.updatedAt=Date.now(); rec.deletedBy=ysWho(); }
     _ysStudentsSaveRaw(all);
     scheduleYsPush();
     renderStudents();
@@ -3496,7 +3498,7 @@ window.importStudentsFromFile = function(input) {
         var cls = clsMap[clsRaw] || clsMap[clsStripped] || clsMap[clsStripped.slice(-1)] || null;
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         maxId++;
-        existing.push({id:maxId, name:name, cls:cls, updatedAt:Date.now()});
+        existing.push({id:maxId, name:name, cls:cls, updatedAt:Date.now(), createdBy:ysWho()});
         added++;
       }
       if (added > 0) {
@@ -4074,6 +4076,7 @@ window.atOpenSession = async function(sessId, sessName) {
     marks:initMarks,
     created_at:new Date().toISOString(),
     updatedAt:Date.now(),
+    createdBy:ysWho(),
     open:true
   };
 
@@ -4175,7 +4178,7 @@ window.atCancelStudentStatusFromReg = function(sid) {
   if(!s) return;
   s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=ysWho(); });
   s.present=true;
   s.updatedAt=Date.now();
   saveStudents(students);
@@ -4506,7 +4509,7 @@ window.atDeleteSessionConfirmed = async function(id) {
   var data=await atLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
   var _dRec=data.find(function(r){return r.id===id;});
-  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();}
+  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await atSaveData(data);
   window.atRenderArchive();
   atRenderTodaySessions();   // רענן גם את רשימת הסדרים בלשונית רישום
@@ -5512,6 +5515,7 @@ window.slOpenSession = async function(sessId, sessName) {
     marks:initMarks,
     created_at:new Date().toISOString(),
     updatedAt:Date.now(),
+    createdBy:ysWho(),
     open:true
   };
 
@@ -5608,7 +5612,7 @@ window.slCancelStudentStatusFromReg = function(sid) {
   if(!s) return;
   s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=ysWho(); });
   s.present=true;
   s.updatedAt=Date.now();
   saveStudents(students);
@@ -5938,7 +5942,7 @@ window.slDeleteSessionConfirmed = async function(id) {
   var data=await slLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
   var _dRec=data.find(function(r){return r.id===id;});
-  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();}
+  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await slSaveData(data);
   window.slRenderArchive();
   slRenderTodaySessions();
