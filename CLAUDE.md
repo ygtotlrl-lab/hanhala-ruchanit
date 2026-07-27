@@ -6,6 +6,7 @@
 - **טוקן:** מאוחסן ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ. `git push`/`clone` מושכים אותו אוטומטית דרך GCM.
 - **קובץ ראשי:** `index.html`
 - **Supabase:** `kxbtskqobynewvnckaaz`
+- **שכפולים מקומיים:** רק לתיקייה יציבה כמו `C:\Users\F\Documents\repos\` — **לעולם לא ל-Temp** (מנקה Windows / Storage Sense מוחק משם קבצים באמצע עבודה; זה גרם ל"מחיקות רפאים" חוזרות). נכון להיום (יולי 2026) אין עותקים מקומיים — העבודה מתנהלת מול הענן: שכפל טרי בתחילת סשן, דחוף בסופו.
 
 ## גישת Supabase
 כשזמין ה-Supabase MCP, נהג לפי הכללים הבאים — ללא יוצאים מן הכלל:
