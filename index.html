@@ -15,8 +15,69 @@
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
+    var userAccepted = false;
+    var reloaded = false;
+
+    navigator.serviceWorker.addEventListener('controllerchange', function() {
+      if (!userAccepted || reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
+
+    function showUpdateBanner(reg) {
+      if (document.getElementById('sw-update-banner')) return;
+      var bar = document.createElement('div');
+      bar.id = 'sw-update-banner';
+      bar.setAttribute('dir', 'rtl');
+      bar.style.cssText = 'position:fixed;bottom:112px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#1a3a6b,#234a8a);color:#fff;padding:10px 18px;border-radius:30px;font-family:Heebo,sans-serif;font-size:.88rem;font-weight:500;z-index:9999;box-shadow:0 4px 20px rgba(26,58,107,.16);direction:rtl;white-space:nowrap;max-width:calc(100vw - 24px)';
+      var txt = document.createElement('span');
+      txt.textContent = '🔄 גרסה חדשה זמינה';
+      var btn = document.createElement('button');
+      btn.textContent = 'עדכן עכשיו';
+      btn.style.cssText = 'background:#c9a84c;color:#1a2340;border:none;border-radius:20px;padding:7px 16px;font-family:Heebo,sans-serif;font-size:.84rem;font-weight:700;cursor:pointer';
+      btn.onclick = function() {
+        userAccepted = true;
+        btn.disabled = true;
+        btn.textContent = 'מעדכן...';
+        if (reg.waiting) {
+          reg.waiting.postMessage({type: 'SKIP_WAITING'});
+          setTimeout(function() {
+            if (!reloaded) { reloaded = true; location.reload(); }
+          }, 1500);
+        } else {
+          reloaded = true;
+          location.reload();
+        }
+      };
+      var close = document.createElement('button');
+      close.textContent = '✕';
+      close.setAttribute('aria-label', 'סגור');
+      close.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.7);font-size:1rem;cursor:pointer;padding:0 2px;font-family:Heebo,sans-serif;line-height:1';
+      close.onclick = function() { if (bar.parentNode) bar.parentNode.removeChild(bar); };
+      bar.appendChild(txt); bar.appendChild(btn); bar.appendChild(close);
+      document.body.appendChild(bar);
+    }
+
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('SW registered:', reg.scope);
+
+      if (reg.waiting && navigator.serviceWorker.controller) { showUpdateBanner(reg); }
+
+      reg.addEventListener('updatefound', function() {
+        var nw = reg.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', function() {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showUpdateBanner(reg);
+          }
+        });
+      });
+
+      function checkForUpdate() {
+        try { reg.update().catch(function() {}); } catch (e) {}
+      }
+      checkForUpdate();
+      setInterval(checkForUpdate, 30 * 60 * 1000);
     }).catch(function(err) {
       console.log('SW registration failed:', err);
     });

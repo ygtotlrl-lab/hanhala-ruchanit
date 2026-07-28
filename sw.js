@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v14';
+var CACHE_NAME = 'hanhala-ruchanit-v15';
 var CORE = [
   './',
   './index.html',
@@ -77,4 +77,11 @@ self.addEventListener('fetch', function(event) {
       });
     })
   );
+});
+
+// Message - page asks the waiting worker to activate immediately
+self.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
