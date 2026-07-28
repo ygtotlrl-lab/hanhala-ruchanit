@@ -3,10 +3,10 @@
 ## סביבת עבודה
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit`
 - **Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
-- **טוקן:** מאוחסן ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ. `git push`/`clone` מושכים אותו אוטומטית דרך GCM.
 - **קובץ ראשי:** `index.html`
 - **Supabase:** `kxbtskqobynewvnckaaz`
-- **שכפולים מקומיים:** רק לתיקייה יציבה כמו `C:\Users\F\Documents\repos\` — **לעולם לא ל-Temp** (מנקה Windows / Storage Sense מוחק משם קבצים באמצע עבודה; זה גרם ל"מחיקות רפאים" חוזרות). נכון להיום (יולי 2026) אין עותקים מקומיים — העבודה מתנהלת מול הענן: שכפל טרי בתחילת סשן, דחוף בסופו.
+- **אופן העבודה (נכון ליולי 2026):** העבודה מתנהלת בסשני ענן (Claude Code cloud) — הריפו משוכפל טרי בתחילת כל סשן, העבודה נעשית על ענף ייעודי, והדחיפה בסוף הסשן. **אין עותקים מקומיים קבועים.**
+- **עבודה מקומית במחשב (אם בכל זאת):** שכפול **אך ורק** לתיקייה יציבה כמו `C:\Users\F\Documents\repos\` — **לעולם לא ל-Temp** (מנקה Windows / Storage Sense מוחק משם קבצים באמצע עבודה; זה גרם ל"מחיקות רפאים" חוזרות). טוקן: מאוחסן ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ; `git push`/`clone` מושכים אותו אוטומטית דרך GCM.
 
 ## גישת Supabase
 כשזמין ה-Supabase MCP, נהג לפי הכללים הבאים — ללא יוצאים מן הכלל:
@@ -14,57 +14,50 @@
 - **שאילתות אבחון וקריאה** (SELECT, בדיקת מבנה, ספירות, `list_tables` וכו') — **חופשיות**, ללא אישור.
 - **עדכון או מחיקת נתונים בטבלאות `kv`** (וכל טבלת נתונים אחרת: `sync_log`, `kv_backup`, `ys_users` וכו') — **מחייבים אישור מפורש מהמשתמש לפני הרצה**. אין להריץ `UPDATE`/`DELETE`/`upsert` על נתונים בלי אישור.
 
-## התחלת סשן — חובה
-```bash
-# שכפל את הריפו
-git clone https://github.com/ygtotlrl-lab/hanhala-ruchanit.git /tmp/yeshiva-manager
-cd /tmp/yeshiva-manager
-git config user.email "dev@yeshiva.com" && git config user.name "Dev"
-```
+## כללי ענפים
+- כל עבודה נעשית על **ענף ייעודי** — לא ישירות על `main`.
+- **מיזוג ל-`main` רק לאחר אישור מפורש מהמשתמש**, אחרי שבדק את השינוי בבדיקה חיצונית.
+- **מחיקת ענפים מרוחקים חסומה בסביבת הענן** — אין לנסות למחוק; לדלג ולדווח למשתמש שהענף נותר.
 
-## לפני כל push — חובה: בדיקת V8-parse של ה-JS המוטבע
-**כל שינוי ב-`index.html` חייב לעבור את הבדיקה הזו לפני דחיפה. דחיפה ללא הבדיקה — אסורה.**
-בדיקת איזון-סוגריים בלבד אינה מספיקה (עיוורת לשגיאות בתוך מחרוזות — כך נפלה שגיאת ה-onclick שהשביתה את כל האפליקציה). `new Function` ב-V8 = parse מלא אמיתי.
+## לפני כל push — חובה: בדיקת תחביר עם node
+**כל שינוי בקוד (`index.html` או `sw.js`) חייב לעבור את הבדיקה הזו לפני דחיפה. דחיפה ללא הבדיקה — אסורה.**
+בדיקת איזון-סוגריים בלבד אינה מספיקה (עיוורת לשגיאות בתוך מחרוזות — כך נפלה שגיאת ה-onclick שהשביתה את כל האפליקציה). `node --check` = parse מלא אמיתי ב-V8. (node זמין בסביבת הענן; הנוהל הישן עם Chrome headless היה נכון לסביבה המקומית שבה node לא היה מותקן.)
 ```bash
-# 1) חלץ את כל ה-JS המוטבע לקובץ
+# 1) חלץ את כל ה-JS המוטבע מ-index.html לקובץ
 python3 -c "
 import io, re
 s = io.open('index.html', encoding='utf-8').read()
 js = chr(10).join(re.findall(r'<script(?![^>]*src)[^>]*>(.*?)</script>', s, re.DOTALL))
 io.open('_app.js', 'w', encoding='utf-8').write(js)
 "
-# 2) harness שמריץ new Function (parse בלבד, ללא הרצה)
-cat > _harness.html <<'EOF'
-<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><div id="out">PENDING</div>
-<script>
-fetch('_app.js').then(function(r){return r.text();}).then(function(code){
-  try { new Function(code); document.getElementById('out').textContent = 'SYNTAX-OK'; }
-  catch(e) { document.getElementById('out').textContent = 'SYNTAX-ERR: ' + e.message; }
-}).catch(function(e){ document.getElementById('out').textContent = 'FETCH-ERR: ' + e.message; });
-</script></body></html>
-EOF
-# 3) הרץ ב-Chrome headless ובדוק את התוצאה — חובה לראות SYNTAX-OK
-"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new --disable-gpu \
-  --allow-file-access-from-files --virtual-time-budget=8000 \
-  --dump-dom "file:///$(cygpath -m "$PWD")/_harness.html" 2>/dev/null | grep -o '<div id="out">[^<]*</div>'
-rm -f _app.js _harness.html
+# 2) בדיקת parse — חובה ששתי הפקודות יעברו בלי שגיאה
+node --check _app.js
+node --check sw.js
+rm -f _app.js
 ```
-אם התוצאה אינה `SYNTAX-OK` — אסור לדחוף. (node אינו מותקן במכונה זו; Chrome headless הוא מנוע הבדיקה.)
+אם `node --check` מדווח שגיאה — אסור לדחוף עד שהיא מתוקנת.
+
+## עדכוני Service Worker
+- **כל שינוי בקוד מחייב קידום `CACHE_NAME` ב-`sw.js` לגרסה הבאה** — בלי זה המשתמשים לא יקבלו את העדכון.
+- מנגנון באנר "גרסה חדשה זמינה" קיים באפליקציה — המשתמשים מקבלים את העדכון בלחיצה על הבאנר.
 
 ## Push
 ```bash
-cd /tmp/yeshiva-manager
 git add . && git commit -m "תיאור השינוי"
-git push origin main   # GCM מספק את הטוקן אוטומטית — אין טוקן בפקודה
+git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא ל-main
 ```
 
+## סיום משימה
+בסיום כל משימה משמעותית — **עדכן קובץ זה בתמצית** לפני סיום הסשן: מה שונה, מה הוחלט. כך הסשן הבא מתחיל עם תמונת מצב עדכנית.
+
 ## כללים קריטיים
-1. **בדיקת V8-parse לפני כל push** (הסעיף למעלה) — חובה מוחלטת. כל שינוי ב-`index.html` חייב לעבור חילוץ-JS + `new Function` ב-V8 (Chrome headless) ולהחזיר `SYNTAX-OK`. דחיפה בלי זה — אסורה.
+1. **בדיקת תחביר עם `node --check` לפני כל push** (הסעיף למעלה) — חובה מוחלטת. כל שינוי ב-`index.html` חייב לעבור חילוץ-JS + `node --check` (וגם `sw.js`). דחיפה בלי זה — אסורה.
 2. **אסור `async\nfunction`** — אסור רווח/שורה בין async לfunction
 3. **`H()` גלובלי** — אסור `var X = [H(...)]` גלובלי
 4. **`onclick`** — חובה `window.functionName()`
 5. **גרשיים בתוך onclick** — `onclick="f(\"x\")"` בלבד
 6. **מקור אמת יחיד לאפליקציה = `index.html`** — זה הקובץ ש-Pages מגיש, שאליו מצביע `start_url`, ושה-APK טוען. כל עדכון קוד נכנס לכאן בלבד; אסור ליצור קובץ HTML כפול של האפליקציה. (`setup-db.html` הוא כלי עזר חד-פעמי נפרד להגדרת מסד הנתונים — לא עותק של האפליקציה. אין כאן אוטו-אפדייט מבוסס raw.githubusercontent — הרענון הוא דרך ה-Service Worker.)
+7. **קידום `CACHE_NAME` בכל שינוי קוד** (הסעיף למעלה) — בלי זה העדכון לא מגיע למשתמשים.
 
 ## APK
 - Keystore: `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
