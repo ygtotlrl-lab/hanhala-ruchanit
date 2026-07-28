@@ -919,12 +919,131 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div id="toast"></div>
 <script>
+// ============================================================
+// ===== תאריך עברי — מקור אמת יחיד =====
+// מנוע החישוב: הלוח העברי המובנה בדפדפן (Intl 'he-u-ca-hebrew').
+// שכבת התצוגה (גימטריה / שמות חודשים / תווית שנה) נשארת שלנו, כדי
+// שהפורמט בכל המסכים יישאר זהה. אם Intl חסר או מחזיר תוצאה לא צפויה —
+// נפילה-חזרה למנוע הטבלאי הפנימי (_hcHTable, מוגדר בהמשך הקובץ).
+// ============================================================
 window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
-window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
-function hebrewDate(jsDate){jsDate=jsDate||new Date();var y=jsDate.getFullYear(),mo=jsDate.getMonth()+1,dy=jsDate.getDate();var td=new Date(y,mo-1,dy);var ST=[{jd:new Date(2024,9,3),hy:5785,ml:[30,29,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2025,8,22),hy:5786,ml:[30,30,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2026,8,11),hy:5787,ml:[30,29,30,29,30,30,30,29,30,30,29,30]},{jd:new Date(2027,9,2),hy:5788,ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];var base=ST[0];for(var i=ST.length-1;i>=0;i--){if(td>=ST[i].jd){base=ST[i];break;}}var diff=Math.round((td-base.jd)/86400000),cum=0;for(var mi=0;mi<base.ml.length;mi++){if(diff<cum+base.ml[mi]){var d=diff-cum+1;var ymap={5785:"ה׳תשפ״ה",5786:"ה׳תשפ״ו",5787:"ה׳תשפ״ז",5788:"ה׳תשפ״ח"};var wdays=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];return "יום "+wdays[jsDate.getDay()]+", "+window.DAYS_HEB[d]+" "+window.MONTHS_HEB[mi]+" "+(ymap[base.hy]||base.hy);}cum+=base.ml[mi];}return "";}
-function hebrewDateShort(d){var s=hebrewDate(d||new Date());var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
+window.MONTHS_HEB     =["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
+window.MONTHS_HEB_LEAP=["תשרי","חשון","כסלו","טבת","שבט","אדר א׳","אדר ב׳","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
+window.YS_DOW_HEB=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 
-function hebrewMonth(d){var s=hebrewDateShort(d||new Date());var p=s.split(" ");return p.length>=2?p[p.length-2]+" "+p[p.length-1]:s;}
+// שנה מעוברת — מחזור 19 השנים (7 שנים מעוברות)
+window.ysHebIsLeap=function(hy){return ((7*(+hy)+1)%19)<7;};
+window.ysHebMonthNames=function(hy){return window.ysHebIsLeap(hy)?window.MONTHS_HEB_LEAP:window.MONTHS_HEB;};
+
+// גימטריה — מספר → אותיות (כולל ט״ו/ט״ז). sep = התו שלפני האות האחרונה
+window.ysGematria=function(n,sep){
+  n=Math.floor(Math.abs(+n))||0;
+  if(!n) return '';
+  if(n>=1000) n=n%1000;
+  var HUN=['','ק','ר','ש','ת'],TENS=['','י','כ','ל','מ','נ','ס','ע','פ','צ'],ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  var s='',h=Math.floor(n/100),r=n%100;
+  while(h>4){s+='ת';h-=4;}
+  s+=HUN[h]||'';
+  if(r===15) s+='טו';
+  else if(r===16) s+='טז';
+  else s+=TENS[Math.floor(r/10)]+ONES[r%10];
+  if(sep===undefined) sep='״';
+  if(!sep||!s) return s;
+  if(s.length===1) return s+'׳';
+  return s.slice(0,-1)+sep+s.slice(-1);
+};
+window.ysHebDayLabel=function(day){var T=window.DAYS_HEB;return (T&&T[day])||window.ysGematria(day)||String(day);};
+// תווית שנה קצרה — תשפ"ו (גרשיים ישרים, כפי שהוצג עד היום בלוח)
+window.ysHebYearLabel=function(hy){return window.ysGematria((+hy)%1000,'"');};
+// תווית שנה מלאה — ה׳תשפ״ו
+window.ysHebYearLabelFull=function(hy){
+  var ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],th=Math.floor((+hy)/1000);
+  return ((th>0&&th<10)?ONES[th]+'׳':'')+window.ysGematria((+hy)%1000,'״');
+};
+
+// ---- קריאת הלוח העברי של הדפדפן ----
+// שמות החודשים נקראים באנגלית ('en-u-ca-hebrew') כי הם יציבים בין גרסאות ICU,
+// וממופים לאינדקס בטבלאות התצוגה שלנו.
+window._ysMICodeLeap={tishri:0,heshvan:1,kislev:2,tevet:3,shevat:4,adar1:5,adar2:6,nisan:7,iyar:8,sivan:9,tamuz:10,av:11,elul:12};
+window._ysMICodeStd ={tishri:0,heshvan:1,kislev:2,tevet:3,shevat:4,adar:5,nisan:6,iyar:7,sivan:8,tamuz:9,av:10,elul:11};
+window._ysMonthCode=function(name){
+  var s=(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  if(s.indexOf('adar')===0){
+    var t=s.slice(4);
+    if(t==='i'||t==='1'||t==='a') return 'adar1';
+    if(t==='ii'||t==='2'||t==='b') return 'adar2';
+    return 'adar';
+  }
+  if(s.indexOf('tishr')===0) return 'tishri';
+  if(s.indexOf('hesh')!==-1||s.indexOf('chesh')!==-1) return 'heshvan';
+  if(s.indexOf('kislev')===0||s.indexOf('chislev')===0) return 'kislev';
+  if(s.indexOf('tevet')===0||s.indexOf('teveth')===0) return 'tevet';
+  if(s.indexOf('shevat')===0||s.indexOf('shvat')===0||s.indexOf('shebat')===0) return 'shevat';
+  if(s.indexOf('nisan')===0||s.indexOf('nissan')===0) return 'nisan';
+  if(s.indexOf('iyar')===0||s.indexOf('iyyar')===0) return 'iyar';
+  if(s.indexOf('sivan')===0) return 'sivan';
+  if(s.indexOf('tamuz')===0||s.indexOf('tammuz')===0) return 'tamuz';
+  if(s==='av'||s==='ab') return 'av';
+  if(s.indexOf('elul')===0) return 'elul';
+  return null;
+};
+window._ysIntlFmt=null;window._ysIntlOK=null;
+// גרגוריאני → {hy,mi,day,leap} דרך Intl. מחזיר null אם לא זמין / תוצאה לא צפויה
+window.ysIntlHeb=function(d){
+  try{
+    if(window._ysIntlOK===false) return null;
+    if(!window._ysIntlFmt){
+      if(typeof Intl==='undefined'||!Intl.DateTimeFormat){window._ysIntlOK=false;return null;}
+      var f=new Intl.DateTimeFormat('en-u-ca-hebrew',{year:'numeric',month:'long',day:'numeric'});
+      var ro=f.resolvedOptions?f.resolvedOptions():null;
+      if(!ro||ro.calendar!=='hebrew'||!f.formatToParts){window._ysIntlOK=false;return null;}
+      window._ysIntlFmt=f;window._ysIntlOK=true;
+    }
+    var o={};
+    window._ysIntlFmt.formatToParts(d).forEach(function(p){o[p.type]=p.value;});
+    var hy=parseInt(String(o.year||'').replace(/[^0-9]/g,''),10);
+    var day=parseInt(String(o.day||'').replace(/[^0-9]/g,''),10);
+    var code=window._ysMonthCode(o.month);
+    if(!(hy>=4000&&hy<=7000)||!(day>=1&&day<=30)||!code) return null;
+    var leap=window.ysHebIsLeap(hy);
+    var mi=leap?window._ysMICodeLeap[code]:window._ysMICodeStd[code];
+    if(mi===undefined){
+      // אי-התאמה בין חישוב העיבור לשם החודש — סימן שמשהו לא צפוי; לא מנחשים
+      return null;
+    }
+    return {hy:hy,mi:mi,day:day,leap:leap};
+  }catch(e){ window._ysIntlOK=false; return null; }
+};
+
+// ---- הפונקציה המרכזית ----
+// מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
+window.ysHebDate=function(d){
+  d=(d instanceof Date&&!isNaN(d.getTime()))?d:new Date();
+  // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
+  var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
+  var r=window.ysIntlHeb(nd),src='intl';
+  if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
+  if(!r||!r.hy){ return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',yearLabel:'',yearLabelFull:'',leap:false,ok:false,src:'none'}; }
+  var names=window.ysHebMonthNames(r.hy);
+  return {
+    year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
+    dayLabel:window.ysHebDayLabel(r.day),
+    yearLabel:window.ysHebYearLabel(r.hy),
+    yearLabelFull:window.ysHebYearLabelFull(r.hy),
+    leap:window.ysHebIsLeap(r.hy), ok:true, src:src
+  };
+};
+
+// ---- צרכני התצוגה — כולם יושבים על ysHebDate ----
+function hebrewDate(jsDate){
+  jsDate=(jsDate instanceof Date&&!isNaN(jsDate.getTime()))?jsDate:new Date();
+  var h=window.ysHebDate(jsDate);
+  if(!h.ok) return '';
+  return 'יום '+window.YS_DOW_HEB[jsDate.getDay()]+', '+h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
+}
+function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
+
+function hebrewMonth(d){var h=window.ysHebDate(d);return h.ok?(h.monthName+' '+h.yearLabelFull):'';}
 
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
 var students=[],curAtt={};
@@ -1074,7 +1193,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v14'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v16'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1291,31 +1410,71 @@ window._hcST=[
   {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29],    leap:false},
   {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29], leap:true},
   {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9,2), ml:[30,30,30,29,30,29,30,29,30,29,30,29],    leap:false}];
-// שמות חודשים — שנה רגילה / שנה מעוברת
-window._hcMstd=['תשרי','חשון','כסלו','טבת','שבט','אדר','ניסן','אייר','סיון','תמוז','אב','אלול'];
-window._hcMlp= ['תשרי','חשון','כסלו','טבת','שבט','אדר א׳','אדר ב׳','ניסן','אייר','סיון','תמוז','אב','אלול'];
-window._hcMN=function(hy){var b=window._hcBase(hy);return(b&&b.leap)?window._hcMlp:window._hcMstd;};
-window._hcD=['','א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ז׳','ח׳','ט׳','י׳','י״א','י״ב','י״ג','י״ד','ט״ו','ט״ז','י״ז','י״ח','י״ט','כ׳','כ״א','כ״ב','כ״ג','כ״ד','כ״ה','כ״ו','כ״ז','כ״ח','כ״ט','ל׳'];
+// שמות חודשים / ימים — אותן טבלאות תצוגה של ysHebDate (מקור אמת יחיד)
+window._hcMstd=window.MONTHS_HEB;
+window._hcMlp= window.MONTHS_HEB_LEAP;
+window._hcMN=function(hy){return window.ysHebMonthNames(hy);};
+window._hcD=window.DAYS_HEB;
 window._hcVw={};
-// מציאת בסיס שנה
-window._hcBase=function(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
+// בניית נתוני שנה עברית מלוח הדפדפן: {hy,lb,jd (א׳ תשרי),ml[],leap}
+window._ysYearCache={};
+window.ysHebYearInfo=function(hy){
+  hy=+hy;
+  if(window._ysYearCache[hy]!==undefined) return window._ysYearCache[hy];
+  var info=null;
+  try{
+    var leap=window.ysHebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
+    // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
+    for(k=0;k<45;k++){
+      d=new Date(hy-3761,8,1+k,12,0,0);
+      r=window.ysIntlHeb(d);
+      if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
+    }
+    if(start){
+      var ml=[],cur=start,total=0,ok=true;
+      for(var m=0;m<nM;m++){
+        var p=new Date(cur.getTime()+29*86400000);
+        var pr=window.ysIntlHeb(new Date(p.getFullYear(),p.getMonth(),p.getDate(),12,0,0));
+        if(!pr){ok=false;break;}
+        var len=(pr.day===1)?29:30;
+        ml.push(len);total+=len;
+        var nx=new Date(cur.getTime()+len*86400000);
+        cur=new Date(nx.getFullYear(),nx.getMonth(),nx.getDate(),12,0,0);
+      }
+      if(ok&&ml.length===nM&&total>=353&&total<=385)
+        info={hy:hy,lb:window.ysHebYearLabel(hy),jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
+    }
+  }catch(e){info=null;}
+  window._ysYearCache[hy]=info;
+  return info;
+};
+// מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה הטבלה הפנימית
+window._hcBaseST=function(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
+window._hcBase=function(hy){return window.ysHebYearInfo(hy)||window._hcBaseST(hy);};
 // עברי → גרגוריאני Date
+// העוגן הוא צהריים ולא חצות: הוספת מכפלות של 24 שעות מחצות "נופלת" ליום הקודם
+// במעבר לשעון חורף (24 שעות = 23 שעות שעון) — זה החזיר תאריך מוקדם ביום.
 window._hcG=function(hy,mi,day){
   var b=window._hcBase(hy);if(!b)return new Date();
   var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
-  var d=new Date(b.jd.getTime()+c*86400000);
+  var anchor=new Date(b.jd.getFullYear(),b.jd.getMonth(),b.jd.getDate(),12,0,0);
+  var d=new Date(anchor.getTime()+c*86400000);
   return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);};
-// גרגוריאני → עברי {hy,mi,day}
-window._hcH=function(d){
+// גרגוריאני → עברי, מנוע טבלאי פנימי — משמש כנפילה-חזרה ל-Intl בלבד
+window._hcHTable=function(d){
   var td=new Date(d.getFullYear(),d.getMonth(),d.getDate()),b=window._hcST[0];
   for(var i=window._hcST.length-1;i>=0;i--){if(td>=window._hcST[i].jd){b=window._hcST[i];break;}}
   var df=Math.round((td-b.jd)/86400000),c=0;
   for(var mi=0;mi<b.ml.length;mi++){if(df<c+b.ml[mi])return{hy:b.hy,mi:mi,day:df-c+1};c+=b.ml[mi];}
   return{hy:b.hy,mi:0,day:1};};
+// גרגוריאני → עברי {hy,mi,day} — עובר דרך המקור היחיד
+window._hcH=function(d){
+  var h=window.ysHebDate(d);
+  return {hy:h.year,mi:h.monthIndex,day:h.day};};
 // תווית שנה
-window._hcYL=function(hy){return({5785:'תשפ"ה',5786:'תשפ"ו',5787:'תשפ"ז',5788:'תשפ"ח'})[hy]||String(hy);};
+window._hcYL=function(hy){return window.ysHebYearLabel(hy)||String(hy);};
 // פורמט תצוגה
-window._hcFmt=function(hy,mi,day){return window._hcD[day]+' ב'+window._hcMN(hy)[mi]+' '+window._hcYL(hy);};
+window._hcFmt=function(hy,mi,day){return (window._hcD[day]||window.ysGematria(day))+' ב'+(window._hcMN(hy)[mi]||'')+' '+window._hcYL(hy);};
 // ניווט חודש
 window._hcNav=function(pfx,dir){
   var v=window._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
@@ -1972,7 +2131,8 @@ async function changeMyPassword() {
 
 
 
-function hebrewDateFull(d){d=d||new Date();var days=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
+// hebrewDate כבר כולל את שם היום — כאן רק שם נרדף (בעבר שוכפל "יום X, יום X,")
+function hebrewDateFull(d){return hebrewDate(d);}
 
 // showPage הישן הוחלף במערכת auth - ראה למעלה
 
