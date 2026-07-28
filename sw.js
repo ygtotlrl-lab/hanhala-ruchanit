@@ -1,4 +1,6 @@
 var CACHE_NAME = 'hanhala-ruchanit-v16';
+
+// קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
   './',
   './index.html',
@@ -7,73 +9,151 @@ var CORE = [
   './icon-512.png'
 ];
 
-// Install - cache only core local files (fast, no CDN timeout risk)
+// סקריפטי CDN — האפליקציה לא רצה בלי supabase (var SB=supabase.createClient זורק
+// וכל הסקריפט המוטבע מת). נמשכים ב-mode:'cors' דווקא, כי תגובת no-cors היא opaque
+// עם status 0 ו-cache.put דוחה אותה — לכן עד היום הם מעולם לא נכנסו למטמון.
+var CDN = [
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
+];
+
+// ignoreSearch — ה-APK טוען את האפליקציה עם '?apk=1', ובלי זה בקשת הניווט
+// לא מוצאת את './' שבמטמון ונופלת לדף שגיאה.
+var MATCH_OPTS = {ignoreVary: true, ignoreSearch: true};
+
+// דף אופליין — HTML אמיתי עם Content-Type, לא מחרוזת 'Offline' שנראית
+// כמסך שחור עם טקסט זעיר בפינה.
+function offlinePage() {
+  var html =
+    '<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>אין חיבור — הנהלה רוחנית</title><style>' +
+    'html,body{margin:0;height:100%}' +
+    'body{display:flex;align-items:center;justify-content:center;' +
+    'font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;' +
+    'background:linear-gradient(160deg,#0f2347,#1a3a6b,#234a8a);color:#fff;padding:24px}' +
+    '.box{max-width:340px;text-align:center;background:rgba(255,255,255,.07);' +
+    'border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:28px 22px}' +
+    'h1{font-size:1.15rem;margin:0 0 10px}' +
+    'p{font-size:.92rem;line-height:1.6;opacity:.85;margin:0 0 20px}' +
+    'button{background:#c9a84c;color:#1a2340;border:none;border-radius:22px;' +
+    'padding:11px 26px;font-size:.95rem;font-weight:700;font-family:inherit;cursor:pointer}' +
+    '</style></head><body><div class="box">' +
+    '<div style="font-size:2.4rem;margin-bottom:10px">📴</div>' +
+    '<h1>אין חיבור לאינטרנט</h1>' +
+    '<p>האפליקציה עדיין לא נשמרה במלואה במכשיר.<br>' +
+    'התחבר לרשת פעם אחת, ומאז היא תיפתח גם ללא חיבור.</p>' +
+    '<button onclick="location.reload()">נסה שוב</button>' +
+    '</div></body></html>';
+  return new Response(html, {
+    status: 503,
+    statusText: 'Offline',
+    headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'}
+  });
+}
+
+// כשל רשת אמיתי לתת-משאב (סקריפט/תמונה) — עדיף מלהזריק HTML לתוך תג script,
+// שזו בדיוק הסיבה שהאפליקציה מתה כשה-CDN לא נמצא במטמון.
+function networkError() {
+  try { return Response.error(); }
+  catch (e) { return new Response('', {status: 504, statusText: 'Offline'}); }
+}
+
+function cachePut(cache, url, opts) {
+  return fetch(url, opts).then(function(resp) {
+    if (!resp || !resp.ok) throw new Error('HTTP ' + (resp ? resp.status : '?'));
+    if (resp.type === 'opaque') throw new Error('opaque response');
+    return cache.put(url, resp);
+  });
+}
+
+// Install — קבצים מקומיים + סקריפטי CDN. כשל בודד לא מפיל את ההתקנה.
 self.addEventListener('install', function(event) {
-  console.log('[SW v4] install start');
+  console.log('[SW] install start', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      console.log('[SW v4] caching', CORE.length, 'core files');
-      return Promise.all(
-        CORE.map(function(url) {
-          return fetch(url).then(function(resp) {
-            console.log('[SW v4] cached:', url, resp.status);
-            return cache.put(url, resp);
-          }).catch(function(err) {
-            console.error('[SW v4] FAIL core:', url, err.message);
-          });
-        })
-      );
+      var jobs = CORE.map(function(url) {
+        // cache:'reload' — לוודא שמגיע index.html טרי ולא עותק מה-HTTP cache
+        return cachePut(cache, url, {cache: 'reload'})
+          .catch(function() { return cachePut(cache, url, {}); })
+          .then(function() { console.log('[SW] cached core:', url); })
+          .catch(function(err) { console.error('[SW] FAIL core:', url, err.message); });
+      }).concat(CDN.map(function(url) {
+        return cachePut(cache, url, {mode: 'cors', credentials: 'omit'})
+          .then(function() { console.log('[SW] cached cdn:', url.slice(0, 60)); })
+          .catch(function(err) { console.warn('[SW] FAIL cdn:', url.slice(0, 60), err.message); });
+      }));
+      return Promise.all(jobs);
     }).then(function() {
-      console.log('[SW v4] install complete');
+      console.log('[SW] install complete');
     }).catch(function(err) {
-      console.error('[SW v4] install ERROR:', err);
+      console.error('[SW] install ERROR:', err);
     })
   );
   self.skipWaiting();
 });
 
-// Activate - clean old caches
+// Activate — מוחקים מטמון ישן רק אחרי שאומת ש-index.html נכנס לחדש.
+// אחרת התקנה שנכשלה באמצע משאירה את המשתמש בלי אפליקציה כלל.
 self.addEventListener('activate', function(event) {
-  console.log('[SW v4] activate');
   event.waitUntil(
-    caches.keys().then(function(names) {
-      console.log('[SW v4] existing caches:', names);
-      return Promise.all(
-        names.filter(function(n) { return n !== CACHE_NAME; })
-             .map(function(n) {
-               console.log('[SW v4] deleting old cache:', n);
-               return caches.delete(n);
-             })
-      );
+    caches.open(CACHE_NAME).then(function(cache) {
+      return cache.match('./index.html', MATCH_OPTS);
+    }).then(function(hit) {
+      if (!hit) {
+        console.warn('[SW] index.html חסר במטמון החדש — משאירים את הישן כרשת ביטחון');
+        return;
+      }
+      return caches.keys().then(function(names) {
+        return Promise.all(
+          names.filter(function(n) { return n !== CACHE_NAME; })
+               .map(function(n) {
+                 console.log('[SW] deleting old cache:', n);
+                 return caches.delete(n);
+               })
+        );
+      });
+    }).catch(function(err) {
+      console.warn('[SW] activate cleanup skipped:', err.message);
+    }).then(function() {
+      return self.clients.claim();
     })
   );
-  self.clients.claim();
 });
 
-// Fetch - GET only, network first, fallback to cache
+// Fetch — רשת קודם, ובנפילה מטמון.
 self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
 
   event.respondWith(
     fetch(event.request).then(function(response) {
-      if (response && response.status === 200) {
+      if (response && response.status === 200 && response.type !== 'opaque') {
         var clone = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
           cache.put(event.request, clone).catch(function(err) {
-            console.warn('[SW v4] put failed:', event.request.url.slice(0,80), err.message);
+            console.warn('[SW] put failed:', event.request.url.slice(0, 80), err.message);
           });
         });
       }
       return response;
     }).catch(function() {
-      return caches.match(event.request, {ignoreVary: true}).then(function(cached) {
-        if (cached) {
-          console.log('[SW v4] offline hit:', event.request.url.slice(0,80));
-          return cached;
+      // caches.match הגלובלי סורק את כל המטמונים — גם ישן ששרד ב-activate
+      return caches.match(event.request, MATCH_OPTS).then(function(cached) {
+        if (cached) return cached;
+        if (event.request.mode === 'navigate') {
+          // ניווט תמיד מקבל את האפליקציה, בכל וריאציה של query string
+          return caches.match('./index.html', MATCH_OPTS).then(function(idx) {
+            if (idx) return idx;
+            return caches.match('./', MATCH_OPTS).then(function(root) {
+              return root || offlinePage();
+            });
+          });
         }
-        console.warn('[SW v4] offline miss:', event.request.url.slice(0,80));
-        return new Response('Offline', {status: 503});
+        console.warn('[SW] offline miss:', event.request.url.slice(0, 80));
+        return networkError();
       });
     })
   );
