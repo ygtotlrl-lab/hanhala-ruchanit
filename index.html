@@ -1199,7 +1199,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v18'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v19'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1599,10 +1599,15 @@ window._hcPick=function(pfx,hy,mi,day){
   // רענון רשימת סדרים לתאריך הנבחר
   if(pfx==='at_date'&&typeof atRenderTodaySessions==='function') atRenderTodaySessions();};
 // קריאת ערך → ISO string
+// שדה ריק = "לא נבחר תאריך" → null. הנפילה-חזרה הישנה ל-new Date() הפכה
+// "בלי תאריך סיום" ל"מסתיים עכשיו": הסטטוס פג באותו רגע, התלמיד הוצג כנוכח
+// ולא הופיע באף רשימת השגחה — בזמן שהוצג "✅ סטאטוס נשמר".
+// כל צרכני a.to כבר מפרשים null כ"ללא תאריך סיום".
 window._hcGet=function(pfx){
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
+  if(!iso) return null;
   var t=(document.getElementById(pfx+'_t')||{}).value;
-  return iso?(iso+'T'+(t||'00:00')):new Date().toISOString();};
+  return iso+'T'+(t||'00:00');};
 // הצג/הסתר בורר סיום
 window._hcToggle=function(){
   var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
@@ -1723,8 +1728,12 @@ function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
   if (!reason) { toast('⚠️ יש לבחור סיבה'); return; }
   var from = window._hcGet('sfmF');
+  if (!from) { toast('⚠️ יש לבחור תאריך התחלה'); return; }
   var toWrap = document.getElementById('sfmT_wrap');
-  var to = (toWrap && toWrap.style.display !== 'none') ? window._hcGet('sfmT') : null;
+  var toOpen = !!(toWrap && toWrap.style.display !== 'none');
+  var to = toOpen ? window._hcGet('sfmT') : null;
+  // שורת סיום פתוחה בלי תאריך נבחר — לא לשמור בשקט כאילו הכול תקין
+  if (toOpen && !to) { toast('⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום'); return; }
   var sid = window._statusSid;
 
   var students = getStudents();
@@ -1742,7 +1751,7 @@ function saveStudentStatus(type) {
   ysRefreshApprovalMarks(sid); // רענון סדרים פתוחים של היום
   renderStudents();
   closeStatusModal();
-  toast('✅ סטאטוס נשמר ל-' + s.name);
+  toast('✅ סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום'));
 }
 
 async function toggleUserMenu() {
@@ -1752,9 +1761,11 @@ async function toggleUserMenu() {
   var othersEl = document.getElementById('user-menu-others');
   if (!othersEl) { m.style.display='block'; return; }
   othersEl.innerHTML = '<div style="padding:8px 16px;font-size:.75rem;color:#aaa">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
-  var res = await SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name');
-  var data = res.data;
-  if (!data) { othersEl.innerHTML=''; return; }
+  // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
+  var res = null;
+  try { res = await ysWithTimeout(SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  var data = (res && !res.error) ? res.data : null;
+  if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = sortUsersByOrder(data);
   var currentId = AUTH.user ? String(AUTH.user.id) : '';
   var others = data.filter(function(u){return String(u.id)!==currentId;});
@@ -2014,9 +2025,22 @@ function moveUser(id, dir) {
 
 async function renderUsersList() {
   var el = document.getElementById('users-list');
+  if (!el) return;
   el.innerHTML = '<div class="ld">טוען...</div>';
-  var {data} = await SB.from('ys_users').select('*').order('full_name');
-  if (!data || !data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
+  // הפירוק הישן `var {data} = await ...` בלע את res.error (supabase-js לא זורק),
+  // וכשל רשת הוצג כ"אין משתמשים" — מנהל קורא את זה כאילו הטבלה נמחקה.
+  var res;
+  try { res = await ysWithTimeout(SB.from('ys_users').select('*').order('full_name')); }
+  catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
+  if (!res || res.error || !Array.isArray(res.data)) {
+    var em = (res && res.error && (res.error.message || res.error.code)) || 'אין חיבור';
+    el.innerHTML = '<div class="ld" style="color:#c53030">❌ לא ניתן לטעון את רשימת המשתמשים' +
+      '<div style="font-size:.78rem;color:var(--text3);margin-top:4px">' + ysEsc(em) + '</div>' +
+      '<button onclick="window.renderUsersList()" style="margin-top:10px;padding:7px 18px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">נסה שוב</button></div>';
+    return;
+  }
+  var data = res.data;
+  if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
   data = sortUsersByOrder(data);
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
@@ -2072,8 +2096,10 @@ async function openEditUser(u) {
   document.getElementById('um-title').textContent = 'ערוך משתמש';
   document.getElementById('um-err').textContent = '';
   // טען סיסמה נוכחית מה-DB
-  var {data} = await SB.from('ys_users').select('password_hash').eq('id', u.id).single();
-  if (data) document.getElementById('um-curr-pass').value = data.password_hash || '';
+  var pwRes = null;
+  try { pwRes = await ysWithTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
+  if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
+  else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
   var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
 function closeUserModal() {
@@ -2096,12 +2122,12 @@ async function saveUser() {
     obj.password_hash = pass;
   }
   var res;
-  if (id) {
-    res = await SB.from('ys_users').update(obj).eq('id', id);
-  } else {
-    res = await SB.from('ys_users').insert(obj);
-  }
-  if (res.error) { errEl.textContent = 'שגיאה: ' + res.error.message; return; }
+  try {
+    res = await ysWithTimeout(id
+      ? SB.from('ys_users').update(obj).eq('id', id)
+      : SB.from('ys_users').insert(obj));
+  } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
+  if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
   closeUserModal();
   toast('✅ משתמש נשמר!');
   renderUsersList();
@@ -2109,7 +2135,9 @@ async function saveUser() {
 
 async function toggleUserActive(id, current) {
   // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
-  var res = await SB.from('ys_users').update({active: !current}).eq('id', id);
+  var res;
+  try { res = await ysWithTimeout(SB.from('ys_users').update({active: !current}).eq('id', id)); }
+  catch (e) { toast('❌ אין חיבור — הפעולה לא בוצעה'); return; }
   if (res && res.error) {
     toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
     return;
@@ -2179,9 +2207,17 @@ async function changeMyPassword() {
   var newPass = document.getElementById('pw-new').value.trim();
   if (!oldPass || !newPass) { toast('❌ נא למלא את שני השדות'); return; }
   if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות'); return; }
-  var {data} = await SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldPass).single();
-  if (!data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
-  await SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id);
+  // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
+  // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
+  var chk;
+  try { chk = await ysWithTimeout(SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldPass).maybeSingle()); }
+  catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
+  if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
+  if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  var upd;
+  try { upd = await ysWithTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id)); }
+  catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
+  if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   document.getElementById('pw-old').value = '';
   document.getElementById('pw-new').value = '';
   toast('✅ סיסמה עודכנה!');
@@ -2224,7 +2260,7 @@ async function refreshDashStats() {
   // חיסורים היום (e + x) וסה"כ נוכחות (p + l) — כל סדר נספר בנפרד
   var absCount = 0, presMarks = 0;
   todaySess.forEach(function(rec){
-    Object.values(rec.marks).forEach(function(m){
+    Object.values(ysMarks(rec)).forEach(function(m){
       if(m.s === 'e' || m.s === 'x') absCount++;
       if(m.s === 'p' || m.s === 'l') presMarks++;
     });
@@ -2369,6 +2405,16 @@ function _ysKvSetRaw(key, value) {
   return SB.from('kv').upsert({key: key, value: JSON.stringify(value)}, {onConflict: 'key'});
 }
 
+// קידום חותמת השינוי הגלובלית. ysAutoSync במכשירים האחרים משווה **רק** מול
+// ys_last_changed — כתיבה ל-kv בלי הקידום הזה נשארת בלתי-נראית להם לנצח.
+// כל כותב ענן (נתונים *והגדרות*) חייב לקרוא לזה אחרי כתיבה מוצלחת.
+// _ysLastTs מתעדכן כאן כדי שהמכשיר הכותב לא ימשוך בחזרה את מה שזה עתה שמר.
+async function ysTouchLastChanged() {
+  var ts = Date.now();
+  try { await ysKvSet('ys_last_changed', ts); _ysLastTs = ts; } catch(e) {}
+  return ts;
+}
+
 // ysKvSet with auto-queue fallback — transparent drop-in replacement
 async function ysKvSet(key, value) {
   // Never queue the timestamp key (it's always derived)
@@ -2465,9 +2511,12 @@ async function ysFlushQueue() {
   ysUpdateQueueBadge();
 }
 // ===== End Offline Queue =====
+// מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-ysPullFromCloud עוברים
+// כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
+// שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
 function ysKvGet(key) {
-  return SB.from('kv').select('value').eq('key', key).single().then(function(r){
-    if (r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
+  return ysWithTimeout(SB.from('kv').select('value').eq('key', key).single()).then(function(r){
+    if (r && r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
     return null;
   });
 }
@@ -2545,6 +2594,12 @@ async function ysMaybeDailyBackup() {
 // העיקרון: היעדר רשומה אצל מכשיר אינו מחיקה. מחיקה היא רק tombstone מפורש
 // (deleted=true + updatedAt). מכשיר לעולם לא מוחק מה שהוא לא מכיר.
 function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.updatedAt : 0; }
+// גישה בטוחה ל-rec.marks. רשומת סדר אחת בלי marks (נוצרה בגרסה ישנה, הגיעה
+// חלקית מהענן, או נכתבה בכשל) הפילה `Object.values(undefined)` באמצע הלולאה
+// ורוקנה מסך שלם — לוח מחוונים, ארכיון או השגחה. כל אתר קריאה עובר דרך כאן.
+function ysMarks(rec) { return (rec && rec.marks && typeof rec.marks === 'object') ? rec.marks : {}; }
+// בריחת HTML להודעות שגיאה שמגיעות מהשרת ומוזרקות ל-innerHTML
+function ysEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 // audit passivi: שם המשתמש המחובר (או null) — לא משפיע על מיזוג/סינון/חישוב
 function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
@@ -2842,8 +2897,9 @@ async function ysAutoSync() {
   if (_ysSyncing) return;
   _ysSyncing = true;
   try {
-    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').single();
-    if (!r.data) { _ysSyncing = false; return; }
+    // בלי timeout שאילתה תקועה משאירה את _ysSyncing=true לנצח — הפולינג מת בשקט
+    var r = await ysWithTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').single());
+    if (!r || !r.data) { _ysSyncing = false; return; }
     var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
     if (remoteTs > _ysLastTs) {
       _ysLastTs = remoteTs;
@@ -2860,24 +2916,12 @@ setInterval(ysAutoSync, 3000);
 setTimeout(async function() {
   try {
     // Try to read - if table missing, create it via pg REST
-    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle();
+    var r = await ysWithTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle());
     if (r.error) {
-      var msg = (r.error.message || '') + (r.error.details || '') + (r.error.hint || '');
-      if (msg.toLowerCase().indexOf('kv') !== -1 || msg.indexOf('42P01') !== -1 || msg.indexOf('relation') !== -1) {
-        // Table doesn't exist - create it
-        console.log('[ys-sync] kv table missing, creating...');
-        var createResp = await fetch('https://hdcsqajavhxsbscgnpob.supabase.co/rest/v1/rpc/create_kv_if_missing', {
-          method: 'POST',
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8',
-            'Content-Type': 'application/json'
-          },
-          body: '{}'
-        });
-        console.log('[ys-sync] create result:', createResp.status);
-        return;
-      }
+      // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
+      // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
+      // החסרה היא של הפרויקט **שלנו** — והוא הדליף מפתח anon של פרויקט אחר.
+      // הוסר. טבלה חסרה = תקלת תשתית שמדווחת בקונסול, לא משהו שהלקוח מתקן.
       console.log('[ys-sync] init error:', r.error.message);
       return;
     }
@@ -4043,7 +4087,9 @@ async function atLoadCfg() {
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
   localStorage.setItem('ys_attend_cfg',JSON.stringify(cfg));
-  try { await ysKvSet('ys_attend_cfg',cfg); } catch(e){}
+  // בלי קידום ys_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
+  // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
+  try { var r=await ysKvSet('ys_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
@@ -4066,19 +4112,30 @@ async function atSaveData(data) {
     await ysKvSet('ys_attend_sessions',data);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
-    var _ats=Date.now();
-    await ysKvSet('ys_last_changed',_ats);
-    _ysLastTs=_ats; // THIS device לא יחזור ויטען את מה שזה עתה שמר
+    await ysTouchLastChanged();
   } catch(e){}
 }
 async function atLoadTreats() {
   try { var v=await ysKvGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=localStorage.getItem('ys_attend_treats'); if(lc)return JSON.parse(lc); } catch(e){}
+  try { var lc=localStorage.getItem('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
   return [];
 }
+// טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
+function atLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function atSaveTreats(data) {
   localStorage.setItem('ys_attend_treats',JSON.stringify(data));
-  try { await ysKvSet('ys_attend_treats',data); } catch(e){}
+  try {
+    // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
+    // מדריכים שרשמו טיפול במקביל מחקו זה את זה. אותה סמנטיקה כמו הסדרים.
+    var _tRemote=null; try { _tRemote=await ysKvGet('ys_attend_treats'); } catch(eR){}
+    if (Array.isArray(_tRemote)) {
+      data=_ysSessionsMerge(_tRemote, data, 'ys_attend_treats');
+      localStorage.setItem('ys_attend_treats',JSON.stringify(data));
+    }
+    var r=await ysKvSet('ys_attend_treats',data);
+    if(!(r&&r.error)) await ysTouchLastChanged();
+  } catch(e){}
+  return data;
 }
 
 // טעינה ראשית של המודול
@@ -4318,7 +4375,7 @@ function atRenderTodaySessions() {
     '<div style="display:flex;flex-direction:column;gap:6px">';
   daySess.forEach(function(rec){
     var cnts={};
-    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=atSummaryHtml(cnts);
     html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
@@ -4337,7 +4394,7 @@ window.atEditSession = async function(recId) {
   if(!rec) return;
   // אתחל סימונים מהרשומה הקיימת
   window._atMarks={};window._atPending={};window._atCleared={};
-  Object.entries(rec.marks).forEach(function(e){
+  Object.entries(ysMarks(rec)).forEach(function(e){
     var sid=e[0],m=e[1];
     if(m.s){window._atMarks[sid]={s:m.s,min:m.min||0};window._atCleared[sid]=true;}
   });
@@ -4815,7 +4872,7 @@ window.atRenderArchive = async function(records) {
         entries.forEach(function(entry){
           var rec=entry.rec;
           var cnts={};
-          Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+          Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=atSummaryHtml(cnts);
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
@@ -4825,7 +4882,7 @@ window.atRenderArchive = async function(records) {
           html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(rec.marks).map(function(e2){
+          var rows=Object.entries(ysMarks(rec)).map(function(e2){
             var sid2=e2[0],m2=e2[1];
             var sn=nameById(sid2);
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
@@ -4938,7 +4995,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     sorted.forEach(function(rec){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-      Object.entries(rec.marks).forEach(function(e){
+      Object.entries(ysMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
         var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
@@ -5000,9 +5057,9 @@ window.atExportPdf = async function(fromIso,toIso) {
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-      var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x';}).length;
-      var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
+      var p=Object.values(ysMarks(rec)).filter(function(m){return m.s==='p';}).length;
+      var ab=Object.values(ysMarks(rec)).filter(function(m){return m.s==='e'||m.s==='x';}).length;
+      var l=Object.values(ysMarks(rec)).filter(function(m){return m.s==='l';}).length;
       body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
     var contentArr=[
@@ -5048,7 +5105,8 @@ window.atRenderSupervision = async function() {
   // סדרים מחוקים לא נספרים בהשגחה
   var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
   var students=getStudents();
-  var treats=await atLoadTreats();
+  // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
+  var treats=atLiveTreats(await atLoadTreats());
 
   // אתחל חודש נצפה אם לא מוגדר
   if(window._atSupHY===null){
@@ -5083,7 +5141,7 @@ window.atRenderSupervision = async function() {
     var dh=rec.date_heb;
     if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
-    Object.entries(rec.marks).forEach(function(e){
+    Object.entries(ysMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
       // ספור רק חיסור (e/-) והיעדרות (x) — לא אישור/בבית/מנוחה
@@ -5185,7 +5243,8 @@ window.atAddTreat = async function(sid) {
     note:noteEl?noteEl.value:'',
     by:AUTH.user?AUTH.user.id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
-    created_at:now.toISOString()
+    created_at:now.toISOString(),
+    updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נחשבת legacy ונופלת
   };
   var treats=await atLoadTreats();
   treats.push(rec);
@@ -5214,7 +5273,14 @@ window.atDeleteTreat = function(id) {
 window.atDeleteTreatConfirmed = async function(id) {
   document.querySelectorAll('[data-dlg=del-treat]').forEach(function(d){d.remove();});
   var treats=await atLoadTreats();
-  treats=treats.filter(function(t){return t.id!==id;});
+  // tombstone ולא filter פיזי: רשומה שנעלמת מהמערך בלי סימון חוזרת מהענן
+  // במיזוג הבא (ysMergeRecords מחזיר כל רשומה מרוחקת שאין לה מקבילה מקומית).
+  var ts=Date.now(), by=ysWho(), found=false;
+  treats.forEach(function(t){
+    if(!t||String(t.id)!==String(id)||t.deleted) return;
+    t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
+  });
+  if(!found){ toast('⚠️ הטיפול לא נמצא'); window.atRenderSupervision(); return; }
   await atSaveTreats(treats);
   window.atRenderSupervision();
   toast('🗑️ נמחק');
@@ -5295,6 +5361,7 @@ window.atEditMark = async function(recId, sid, newCode) {
   var data=await atLoadData();
   var rec=data.find(function(r){return r.id===recId;});
   if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
+  if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
@@ -5334,7 +5401,7 @@ function atCheckAlert() {
   students.forEach(function(s){stats[s.id]={name:s.name,absent:0,lateMin:0};});
   data.forEach(function(rec){
     if(new Date(rec.date_iso)<monthBeg) return;
-    Object.entries(rec.marks).forEach(function(e){
+    Object.entries(ysMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
       if(m.s==='e'||m.s==='x') stats[sid].absent++;
@@ -5504,7 +5571,7 @@ function _slCleanCfg(cfg) {
     var def = slDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
     try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
-    try { ysKvSet('ys_sleep_cfg', cfg); } catch(e){}
+    try { ysKvSet('ys_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch(e){}
   }
   return cfg;
 }
@@ -5517,7 +5584,8 @@ async function slLoadCfg() {
 async function slSaveCfg(cfg) {
   window._slCfg=cfg;
   localStorage.setItem('ys_sleep_cfg',JSON.stringify(cfg));
-  try { await ysKvSet('ys_sleep_cfg',cfg); } catch(e){}
+  // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
+  try { var r=await ysKvSet('ys_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
 }
 async function slLoadData() {
   if (window._slData) return window._slData;
@@ -5526,41 +5594,11 @@ async function slLoadData() {
   window._slData=[]; return window._slData;
 }
 
-// ניקוי חד-פעמי של רשומות בדיקה ישנות מכל המקורות
-// רשומות שנמחקו חזרו בגלל resurrection bug בסנכרון — תוקן. פונקציה זו מבטיחה
-// מחיקה גם מ-Supabase, localStorage ותור הסנכרון.
-window._slCleanupDone = false;
-async function slCleanupTestRecords() {
-  if (window._slCleanupDone) return;
-  window._slCleanupDone = true;
-  var TEST_SESSIONS = ['בדיקות','בדיקה'];
-  try {
-    // קרא ישירות מ-Supabase (לא ממטמון)
-    var raw = await ysKvGet('ys_sleep_sessions');
-    if (!Array.isArray(raw)) return;
-    var before = raw.length;
-    var clean = raw.filter(function(r){
-      return !TEST_SESSIONS.includes(r.session);
-    });
-    if (clean.length === before) {
-      console.log('[sl-cleanup] אין רשומות בדיקה ב-Supabase');
-      // נקה גם localStorage ותור למקרה שיש שם
-      var lc = JSON.parse(localStorage.getItem('ys_sleep_sessions')||'[]');
-      var lcClean = lc.filter(function(r){return !TEST_SESSIONS.includes(r.session);});
-      if (lcClean.length < lc.length) {
-        console.log('[sl-cleanup] נמחקו', lc.length-lcClean.length, 'רשומות בדיקה מ-localStorage');
-        localStorage.setItem('ys_sleep_sessions', JSON.stringify(lcClean));
-        window._slData = lcClean;
-      }
-      _ysQueueRemove('ys_sleep_sessions');
-      return;
-    }
-    console.log('[sl-cleanup] מוחק', before-clean.length, 'רשומות בדיקה מ-Supabase+localStorage+queue');
-    await slSaveData(clean);
-    _ysQueueRemove('ys_sleep_sessions'); // הסר תור ישן שעלול להחזיר רשומות
-    console.log('[sl-cleanup] ✅ ניקוי הושלם. נותרו', clean.length, 'רשומות');
-  } catch(e) { console.error('[sl-cleanup] שגיאה:', e); }
-}
+// הוסר: slCleanupTestRecords (יולי 2026). "ניקוי חד-פעמי" שרץ בכל פתיחת מודול
+// השינה והתאים רשומות **לפי שם הסדר** ('בדיקה'/'בדיקות') — כלומר סדר לגיטימי
+// בשם כזה סומן למחיקה. בפועל הוא גם לא מחק כלום: slSaveData ממזג עם הענן,
+// והרשומות שהוא "ניקה" חזרו מיד — אבל הוא כן כתב מחדש את כל מערך השינה
+// ודיווח "✅ ניקוי הושלם". אין להחזיר אותו; מחיקה = tombstone מפורש בלבד.
 async function slSaveData(data) {
   window._slData=data;
   localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
@@ -5575,19 +5613,29 @@ async function slSaveData(data) {
     }
     await ysKvSet('ys_sleep_sessions',data);
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
-    var _sts=Date.now();
-    await ysKvSet('ys_last_changed',_sts);
-    _ysLastTs=_sts;
+    await ysTouchLastChanged();
   } catch(e){}
 }
 async function slLoadTreats() {
   try { var v=await ysKvGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=localStorage.getItem('ys_sleep_treats'); if(lc)return JSON.parse(lc); } catch(e){}
+  try { var lc=localStorage.getItem('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
   return [];
 }
+// תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
+function slLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function slSaveTreats(data) {
   localStorage.setItem('ys_sleep_treats',JSON.stringify(data));
-  try { await ysKvSet('ys_sleep_treats',data); } catch(e){}
+  try {
+    // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
+    var _tRemoteS=null; try { _tRemoteS=await ysKvGet('ys_sleep_treats'); } catch(eR){}
+    if (Array.isArray(_tRemoteS)) {
+      data=_ysSessionsMerge(_tRemoteS, data, 'ys_sleep_treats');
+      localStorage.setItem('ys_sleep_treats',JSON.stringify(data));
+    }
+    var r=await ysKvSet('ys_sleep_treats',data);
+    if(!(r&&r.error)) await ysTouchLastChanged();
+  } catch(e){}
+  return data;
 }
 
 // טעינה ראשית של מודול שינה
@@ -5602,7 +5650,6 @@ window.loadSleep = async function() {
 
   await slLoadCfg();
   await slLoadData();
-  slCleanupTestRecords(); // ניקוי חד-פעמי של רשומות בדיקה
   window._slMarks={};
   window._slCurrentSessionId=null;
   window._slPendingRec=null;
@@ -5768,7 +5815,7 @@ function slRenderTodaySessions() {
     '<div style="display:flex;flex-direction:column;gap:6px">';
   daySess.forEach(function(rec){
     var cnts={};
-    Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=slSummaryHtml(cnts);
     html+='<div onclick="window.slEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
@@ -5785,7 +5832,7 @@ window.slEditSession = async function(recId) {
   var rec=data.find(function(r){return r.id===recId;});
   if(!rec) return;
   window._slMarks={};window._slPending={};window._slCleared={};
-  Object.entries(rec.marks).forEach(function(e){
+  Object.entries(ysMarks(rec)).forEach(function(e){
     var sid=e[0],m=e[1];
     if(m.s){window._slMarks[sid]={s:m.s,min:m.min||0,note:m.note||''};window._slCleared[sid]=true;}
   });
@@ -6249,7 +6296,7 @@ window.slRenderArchive = async function(records) {
         entries.forEach(function(entry){
           var rec=entry.rec;
           var cnts={};
-          Object.values(rec.marks).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+          Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=slSummaryHtml(cnts);
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
@@ -6259,7 +6306,7 @@ window.slRenderArchive = async function(records) {
           html+='<button onclick="event.stopPropagation();window.slDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(rec.marks).map(function(e2){
+          var rows=Object.entries(ysMarks(rec)).map(function(e2){
             var sid2=e2[0],m2=e2[1];
             var sn=nameById(sid2);
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
@@ -6363,7 +6410,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     sorted.forEach(function(rec){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-      Object.entries(rec.marks).forEach(function(e){
+      Object.entries(ysMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
         var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'אירוע':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
@@ -6423,9 +6470,9 @@ window.slExportPdf = async function(fromIso,toIso) {
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
       var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-      var p=Object.values(rec.marks).filter(function(m){return m.s==='p';}).length;
-      var ab=Object.values(rec.marks).filter(function(m){return m.s==='e'||m.s==='x';}).length;
-      var l=Object.values(rec.marks).filter(function(m){return m.s==='l';}).length;
+      var p=Object.values(ysMarks(rec)).filter(function(m){return m.s==='p';}).length;
+      var ab=Object.values(ysMarks(rec)).filter(function(m){return m.s==='e'||m.s==='x';}).length;
+      var l=Object.values(ysMarks(rec)).filter(function(m){return m.s==='l';}).length;
       body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
     var contentArr=[
@@ -6471,7 +6518,8 @@ window.slRenderSupervision = async function() {
   // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
   var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
   var students=getStudents();
-  var treats=await slLoadTreats();
+  // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
+  var treats=slLiveTreats(await slLoadTreats());
 
   if(window._slSupHY===null){
     var ch=window._hcH(new Date());
@@ -6502,7 +6550,7 @@ window.slRenderSupervision = async function() {
     var dh=rec.date_heb;
     if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
-    Object.entries(rec.marks).forEach(function(e){
+    Object.entries(ysMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
       if(m.s==='e'||m.s==='x'){
@@ -6599,7 +6647,8 @@ window.slAddTreat = async function(sid) {
     note:noteEl?noteEl.value:'',
     by:AUTH.user?AUTH.user.id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
-    created_at:now.toISOString()
+    created_at:now.toISOString(),
+    updatedAt:now.getTime() // ראה atAddTreat
   };
   var treats=await slLoadTreats();
   treats.push(rec);
@@ -6627,7 +6676,13 @@ window.slDeleteTreat = function(id) {
 window.slDeleteTreatConfirmed = async function(id) {
   document.querySelectorAll('[data-dlg=sl-del-treat]').forEach(function(d){d.remove();});
   var treats=await slLoadTreats();
-  treats=treats.filter(function(t){return t.id!==id;});
+  // ראה atDeleteTreatConfirmed — tombstone, לא הסרה פיזית.
+  var ts=Date.now(), by=ysWho(), found=false;
+  treats.forEach(function(t){
+    if(!t||String(t.id)!==String(id)||t.deleted) return;
+    t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
+  });
+  if(!found){ toast('⚠️ הטיפול לא נמצא'); window.slRenderSupervision(); return; }
   await slSaveTreats(treats);
   window.slRenderSupervision();
   toast('🗑️ נמחק');
@@ -6708,6 +6763,7 @@ window.slEditMark = async function(recId, sid, newCode) {
   var data=await slLoadData();
   var rec=data.find(function(r){return r.id===recId;});
   if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
+  if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
