@@ -1139,17 +1139,11 @@ async function fixAdminHash() {
     errEl.textContent = '✅ תוקן! נסה admin / 123456';
   }
 }
-// ---- מעבר מ-hash ל-plaintext (חד-פעמי) ----
-(async function migrateToPlaintext() {
-  try {
-    // נסה להתחבר עם plaintext - אם עובד לא צריך מיגרציה
-    var test = await SB.from('ys_users').select('id').eq('username','admin').eq('password_hash','123456').single();
-    if (!test.data) {
-      // עדכן לplaintext
-      await SB.from('ys_users').update({password_hash: '123456'}).eq('username','admin');
-    }
-  } catch(e) {}
-})();
+// ---- מעבר מ-hash ל-plaintext: הוסר (יולי 2026) ----
+// ה-IIFE שהיה כאן רץ בכל טעינת דף, אצל כל מבקר, עוד לפני הכניסה: הוא בדק אם
+// ל-admin יש את הסיסמה '123456' ואם לא — כתב אותה. `.single()` מחזיר data:null
+// גם כשאין התאמה, ולכן כל סיסמה אחרת הפעילה את ה-update והמנהל לא היה יכול
+// להחליף סיסמה כלל. המיגרציה סיימה את תפקידה מזמן — אין להחזיר אותה.
 
 // ---- כניסה ----
 // ===== OFFLINE LOGIN: עותק משתמשים מקומי לאימות ללא רשת =====
@@ -1205,7 +1199,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v16'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v17'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
