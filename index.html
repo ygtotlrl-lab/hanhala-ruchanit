@@ -1199,7 +1199,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v17'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v18'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2108,7 +2108,12 @@ async function saveUser() {
 }
 
 async function toggleUserActive(id, current) {
-  await SB.from('ys_users').update({active: !current}).eq('id', id);
+  // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
+  var res = await SB.from('ys_users').update({active: !current}).eq('id', id);
+  if (res && res.error) {
+    toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
+    return;
+  }
   renderUsersList();
   toast(current ? '🔴 משתמש הושבת' : '🟢 משתמש הופעל');
 }
@@ -2152,13 +2157,19 @@ async function savePerms() {
     });
     p[m.id]['admin'] = (m.id === 'settings') ? 'edit' : p[m.id]['admin'];
   });
-  AUTH.perms = p;
-  var existing = await SB.from('kv').select('key').eq('key','ys_perms').single();
-  if (existing.data) {
-    await SB.from('kv').update({value: JSON.stringify(p)}).eq('key','ys_perms');
-  } else {
-    await SB.from('kv').insert({key:'ys_perms', value: JSON.stringify(p)});
+  // upsert דרך ysKvSet במקום select-ואז-update/insert: ל-`.single()` יש error
+  // גם כשהשורה חסרה וגם בכשל רשת, ולכן כשל זמני נפל לענף ה-insert → שגיאת
+  // מפתח כפול → נבלעה → "✅ הרשאות נשמרו!" בזמן שהענן לא השתנה.
+  var res = await ysKvSet('ys_perms', p);
+  if (res && res.error) {
+    // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
+    toast('❌ שמירת ההרשאות נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור') +
+          ' — הן יישלחו שוב כשהרשת תחזור');
+    return;
   }
+  AUTH.perms = p;
+  // גם העותק המקומי — בלעדיו כניסה אופליין אחרי עריכת הרשאות שחזרה מטריצה ישנה
+  try { localStorage.setItem('ys_perms_cache', JSON.stringify(p)); } catch(e) {}
   toast('✅ הרשאות נשמרו!');
 }
 
@@ -2204,7 +2215,9 @@ async function refreshDashStats() {
   }).length;
 
   // נתוני נוכחות — משתמש ב-cache (window._atData), ysPullFromCloud מרענן אותו
-  var atData = (typeof atLoadData === 'function') ? await atLoadData() : [];
+  // סדר שנמחק (tombstone) לא נספר — כמו ב-atRenderTodaySessions/atRenderArchive
+  var atData = ((typeof atLoadData === 'function') ? await atLoadData() : [])
+    .filter(function(r){ return !(r && r.deleted); });
   var todaySess = atData.filter(function(r){ return r.date_iso === todayIso; });
   var sessCount = todaySess.length;
 
@@ -2604,41 +2617,72 @@ function _ysStudentsSaveRaw(s) { localStorage.setItem('ys_students', JSON.string
 function ysSettingsMeta() { try { return JSON.parse(localStorage.getItem('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
 function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); localStorage.setItem('ys_settings_meta', JSON.stringify(m)); }
 
-async function ysPushToCloud() {
-  try {
-    ysMaybeDailyBackup();
-    var ts = Date.now();
+// זוכר אם כבר הזהרנו על כשל סנכרון, כדי לא להציף בטוסטים בכל דחיפה
+var _ysPushWarned = false;
 
-    // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
+async function ysPushToCloud() {
+  var ts = Date.now();
+  var failed = [], pushed = 0, kvMissing = false;
+
+  // כל קטגוריה עומדת בפני עצמה. קודם היה try אחד גדול סביב הכול, ולכן ערך
+  // localStorage פגום אחד (getAttendance) זרק ועצר את הדחיפה לפני שנכתב *שום*
+  // מפתח — תלמידים, נוכחות, אישורים והגדרות הפסיקו להסתנכרן בשקט.
+  async function step(label, fn) {
+    try {
+      var r = await fn();
+      if (r && r.error) {
+        failed.push(label);
+        var m = r.error.message || r.error.code || '';
+        if (String(m).indexOf('kv') !== -1) kvMissing = true;
+        console.error('[ys-sync] ' + label + ' נכשל:', m);
+      } else { pushed++; }
+    } catch (e) {
+      failed.push(label);
+      console.error('[ys-sync] ' + label + ' זרק:', e && e.message);
+    }
+  }
+
+  try { ysMaybeDailyBackup(); } catch (eB) { console.warn('[ys-sync] backup skipped:', eB && eB.message); }
+
+  // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
+  await step('ys_students', async function() {
     var localSt = _ysStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await ysKvGet('ys_students'); } catch(e1) {}
     var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students');
     _ysStudentsSaveRaw(mergedSt);
     var r = await ysKvSet('ys_students', mergedSt);
-    if (r.error && r.error.message && r.error.message.indexOf('kv') !== -1) {
-      console.log('[ys-sync] kv table missing, skipping push');
-      return;
-    }
     ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
+    return r;
+  });
 
-    // ---- attend: מיזוג מקונן (תאריך+תלמיד) ----
+  // טבלת kv חסרה — אין טעם להמשיך, בדיוק כמו קודם
+  if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
+
+  // ---- attend: מיזוג מקונן (תאריך+תלמיד) ----
+  await step('ys_attend', async function() {
     var localAt = getAttendance();
     var remoteAt = null; try { remoteAt = await ysKvGet('ys_attend'); } catch(e2) {}
     var mergedAt = ysMergeAttend(localAt, remoteAt);
     localStorage.setItem('ys_attend', JSON.stringify(mergedAt));
-    await ysKvSet('ys_attend', mergedAt);
+    var r = await ysKvSet('ys_attend', mergedAt);
     ysSyncLog('push', 'ys_attend', ysCount(mergedAt), {local_count: ysCount(localAt), remote_count: ysCount(remoteAt), result_count: ysCount(mergedAt)});
+    return r;
+  });
 
-    // ---- approvals: מיזוג אובייקט לפי sid ----
+  // ---- approvals: מיזוג אובייקט לפי sid ----
+  await step('ys_approvals', async function() {
     var localAp = getApprovals();
     var remoteAp = null; try { remoteAp = await ysKvGet('ys_approvals'); } catch(e3) {}
     var mergedAp = ysMergeRecords(localAp, remoteAp, null, true);
     localStorage.setItem('ys_approvals', JSON.stringify(mergedAp));
-    await ysKvSet('ys_approvals', mergedAp);
+    var r = await ysKvSet('ys_approvals', mergedAp);
     ysSyncLog('push', 'ys_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
+    return r;
+  });
 
-    // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
+  // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
+  await step('ys_settings', async function() {
     var meta = ysSettingsMeta();
     var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(e4) {}
     remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
@@ -2647,6 +2691,7 @@ async function ysPushToCloud() {
       { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ localStorage.setItem('ys_absence_reasons', JSON.stringify(v)); } },
       { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ localStorage.setItem('ys_cls_years', JSON.stringify(v)); } }
     ];
+    var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
       var sk = settingsKeys[i];
       var lts = meta[sk.key] || 0, rts = remoteMeta[sk.key] || 0;
@@ -2655,18 +2700,39 @@ async function ysPushToCloud() {
         var rv = null; try { rv = await ysKvGet(sk.key); } catch(e5) {}
         if (rv != null) { sk.set(rv); meta[sk.key] = rts; }
       } else {
-        await ysKvSet(sk.key, sk.get());
+        // מפתח הגדרות אחד שנכשל לא מפיל את השאר
+        try { var rr = await ysKvSet(sk.key, sk.get()); if (rr && rr.error) lastErr = rr.error; }
+        catch (e6) { lastErr = {message: e6 && e6.message}; }
       }
     }
     var mm = {};
     [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
     localStorage.setItem('ys_settings_meta', JSON.stringify(mm));
-    await ysKvSet('ys_settings_meta', mm);
+    var r = await ysKvSet('ys_settings_meta', mm);
+    return (r && r.error) ? r : (lastErr ? {error: lastErr} : r);
+  });
 
+  // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
+  // "שינוי" שלא קיים בענן
+  if (pushed > 0) {
     await ysKvSet('ys_last_changed', ts);
     _ysLastTs = ts;
-    console.log('[ys-sync] pushed (merged) ts=' + ts);
-  } catch(e) { console.error('[ys-sync] push error:', e); }
+    console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
+  }
+
+  // אינדיקציה אמיתית למשתמש. ysKvSet כבר הכניס כל כתיבה שנכשלה לתור הלא-מקוון
+  // (ומעדכן את תג התור), ולכן ההודעה מבטיחה שליחה חוזרת — וזה נכון.
+  if (failed.length) {
+    if (!_ysPushWarned) {
+      _ysPushWarned = true;
+      toast(pushed === 0
+        ? '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור'
+        : '⚠️ חלק מהנתונים לא סונכרנו (' + failed.join(', ') + ') — יישלחו שוב אוטומטית');
+    }
+  } else if (_ysPushWarned) {
+    _ysPushWarned = false;
+    toast('☁️ הסנכרון חזר לפעול');
+  }
 }
 
 async function ysPullFromCloud() {
@@ -3042,11 +3108,14 @@ function saveStudents(s){
   } catch(e){}
   localStorage.setItem('ys_students',JSON.stringify(s));
 }
-function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
+// שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
+// באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
+// המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
+function getAttendance(){try{var v=JSON.parse(localStorage.getItem('ys_attend')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_attend פגום — נטען ריק:',e.message);return {};}}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
-function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'null')||[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(localStorage.getItem('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
 function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
-function getApprovals(){return JSON.parse(localStorage.getItem('ys_approvals')||'{}');}
+function getApprovals(){try{var v=JSON.parse(localStorage.getItem('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
 function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
 function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
@@ -3620,6 +3689,25 @@ function saveStudent(){
 
 function closeStudentModal(){document.getElementById('student-modal').style.display='none';}
 
+// ליבת המחיקה — משותפת למחיקת תלמיד בודד ולמחיקה ההמונית, כדי שלא יהיו שתי
+// מימושים שנפרדים אחד מהשני. מחיקה = tombstone (deleted=true + updatedAt),
+// לא הסרה פיזית: רשומה שנעלמת מהמערך בלי סימון חוזרת מהענן במיזוג הבא —
+// ysMergeRecords מחזיר כל רשומה מרוחקת שאין לה מקבילה מקומית.
+// מחזיר את מספר הרשומות שסומנו בפועל.
+function ysTombstoneStudents(ids){
+  var all=_ysStudentsRaw();
+  if(!all.length) all=getStudents(); // ריצה על ברירות מחדל שטרם נשמרו
+  var want={};
+  (ids||[]).forEach(function(id){ if(id!=null) want[String(id)]=1; });
+  var ts=Date.now(), by=ysWho(), n=0;
+  all.forEach(function(rec){
+    if(!rec||rec.id==null||!want[String(rec.id)]||rec.deleted) return;
+    rec.deleted=true; rec.updatedAt=ts; rec.deletedBy=by; n++;
+  });
+  _ysStudentsSaveRaw(all);
+  return n;
+}
+
 function deleteStudent(sid){
   if(checkLoginNeeded())return;
   var s=getStudents().find(function(x){return x.id===sid;});
@@ -3627,14 +3715,7 @@ function deleteStudent(sid){
   var msg=document.getElementById('confirm-msg');
   if(msg)msg.textContent=H(1492,1488,1501,32,1500,1502,1495,1493,1511,32,1488,1514,32)+s.name+'?';
   confirmCallback=function(){
-    // מחיקה = tombstone (deleted=true + updatedAt), לא הסרה פיזית — כדי שהמחיקה
-    // תסתנכרן לכל המכשירים ולא "תקום לתחייה" ממכשיר שעוד מחזיק את הרשומה
-    var all=_ysStudentsRaw();
-    if(!all.length) all=getStudents(); // ריצה על ברירות מחדל שטרם נשמרו
-    var rec=null;
-    for(var i=0;i<all.length;i++){ if(all[i]&&all[i].id===sid){rec=all[i];break;} }
-    if(rec){ rec.deleted=true; rec.updatedAt=Date.now(); rec.deletedBy=ysWho(); }
-    _ysStudentsSaveRaw(all);
+    ysTombstoneStudents([sid]);
     scheduleYsPush();
     renderStudents();
   };
@@ -3819,10 +3900,12 @@ window.openDeleteAllModal = function() {
 
 window.confirmDeleteAll = function() {
   document.getElementById('delete-all-modal').style.display = 'none';
-  saveStudents([]);
+  // saveStudents([]) הפיל את התלמידים החיים בלי tombstone, ולכן המיזוג הבא
+  // החזיר את כולם מהענן תוך פחות משנייה. אותה ליבה כמו מחיקת תלמיד בודד.
+  var n = ysTombstoneStudents(getStudents().map(function(s){ return s.id; }));
   scheduleYsPush();
   renderStudents();
-  toast('🗑️ כל התלמידים נמחקו');
+  toast(n ? ('🗑️ ' + n + ' תלמידים נמחקו') : 'אין תלמידים למחיקה');
 };
 
 window.downloadImportTemplate = function() {
@@ -4962,7 +5045,8 @@ window.atRenderSupervision = async function() {
   el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
   // כפה טעינה מחדש מ-KV (לא ממטמון)
   window._atData=null;
-  var data=await atLoadData();
+  // סדרים מחוקים לא נספרים בהשגחה
+  var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
   var students=getStudents();
   var treats=await atLoadTreats();
 
@@ -5230,7 +5314,8 @@ window.atEditMark = async function(recId, sid, newCode) {
 
 // -------- התראת כניסה --------
 function atCheckAlert() {
-  var data=window._atData||[];
+  // סדרים מחוקים לא מפעילים את התראת הסף
+  var data=(window._atData||[]).filter(function(r){ return !(r && r.deleted); });
   var students=getStudents();
   if(!data.length) return;
 
@@ -6383,7 +6468,8 @@ window.slRenderSupervision = async function() {
   }
   el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
   window._slData=null;
-  var data=await slLoadData();
+  // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
+  var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
   var students=getStudents();
   var treats=await slLoadTreats();
 
