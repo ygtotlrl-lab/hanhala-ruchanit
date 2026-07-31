@@ -1122,22 +1122,15 @@ function canEdit(moduleId) {
   return level === 'edit';
 }
 
-// ---- החלת מטריצת ההרשאות על התצוגה (רענון חי, בלי יציאה וכניסה) ----
-// ys_perms נמשך עכשיו גם ב-ysPullFromCloud, ולכן המטריצה משתנה תוך כדי עבודה.
-// כאן מסתירים/מציגים את כפתורי הניווט (עליון + תחתון) וכרטיסי המודולים בדף
-// הבית לפי canAccess. 'home' תמיד פתוח — הוא מסך הנחיתה שאליו מוציאים משתמש
-// שהרשאתו נשללה. הסלקטורים מכוונים ל-.nb/.bn/.mod בלבד; כפתורי "← חזרה"
-// (.back) נושאים גם הם data-pg="home" ואסור לגעת בהם.
-function ysApplyPermsToUI() {
-  if (!AUTH.user) return;
-  ['.nb[data-pg]', '.bn[data-pg]', '.mod[data-pg]'].forEach(function(sel) {
-    document.querySelectorAll(sel).forEach(function(btn) {
-      var pg = btn.getAttribute('data-pg');
-      var ok = (pg === 'home') || canAccess(pg);
-      btn.style.display = ok ? '' : 'none';
-    });
-  });
-}
+// ---- החלטת מדיניות: כפתורי מסכים חסומים נשארים גלויים ----
+// **אין להסתיר כפתורי ניווט או כרטיסי מודולים לפי canAccess.** בסבב 6 הייתה כאן
+// `ysApplyPermsToUI()` שעשתה בדיוק את זה, והיא הוסרה בכוונה: כפתור שנעלם משאיר את
+// איש הצוות בלי לדעת שהמסך בכלל קיים, ולכן גם בלי לדעת שאפשר לבקש גישה. כפתור
+// גלוי שמחזיר "אין הרשאה" מוסר את המידע הזה.
+// האכיפה לא נחלשת — היא פשוט יושבת בנקודה אחת: `showPage` בודק `canAccess(pg)`
+// ומציג `showDenied()`. זו נקודת האכיפה היחידה לניווט.
+// (מה שכן נשאר מהרענון החי: אם ההרשאה למסך שכבר **פתוח** נשללה תוך כדי עבודה,
+//  `ysApplyPerms` מוציא הביתה עם טוסט — ראה למטה.)
 
 // המסך הפתוח כרגע — showPageInternal מסמן אותו ב-class 'on' על אלמנט ‎.pg
 function ysCurrentPage() {
@@ -1146,7 +1139,7 @@ function ysCurrentPage() {
 }
 
 // מקור יחיד לקליטת מטריצת הרשאות חדשה (כניסה או משיכה מהענן):
-// AUTH.perms + ys_perms_cache + רענון התצוגה. מחזיר true אם המטריצה השתנתה.
+// AUTH.perms + ys_perms_cache. מחזיר true אם המטריצה השתנתה.
 function ysApplyPerms(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
   var next = JSON.stringify(p);
@@ -1154,8 +1147,10 @@ function ysApplyPerms(p) {
   AUTH.perms = p;
   // בלי העותק המקומי כניסה אופליין אחרי עדכון הרשאות מחזירה מטריצה ישנה
   try { localStorage.setItem('ys_perms_cache', next); } catch (e) {}
-  if (!AUTH.user) return changed; // עוד לא נכנס — אין תצוגה לרענן
-  ysApplyPermsToUI();
+  // ⚠️ הבדיקה הזו נחוצה גם בלי רענון התצוגה: canAccess מחזירה false כשאין
+  // משתמש, ולכן בלעדיה משיכה שרצה **לפני הכניסה** (ysPullFromCloud באתחול)
+  // הייתה מפעילה showPage('home') + טוסט מעל מסך הכניסה. אין להסיר.
+  if (!AUTH.user) return changed;
   // מסך פתוח שעדיין מותר נשאר כמו שהוא — לא שוברים עבודה באמצע. רק אם
   // ההרשאה למסך הנוכחי נשללה מוציאים הביתה עם הודעה, ולא משאירים מסך ריק.
   if (changed) {
@@ -1250,7 +1245,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v20'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v21'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1474,7 +1469,6 @@ async function loadPerms() {
   // ברירות המחדל לא נכתבות ל-ys_perms_cache: היעדר עותק מקומי הוא מידע אמיתי
   // ("מעולם לא נטענה מטריצה"), ואין להסוות אותו כמטריצה שנשמרה.
   AUTH.perms = AUTH.DEFAULT_PERMS;
-  try { ysApplyPermsToUI(); } catch(e3) {}
 }
 
 // ---- showPage עם בדיקת הרשאות ----
