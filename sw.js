@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v21';
+var CACHE_NAME = 'hanhala-ruchanit-v22';
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [

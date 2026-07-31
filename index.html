@@ -885,7 +885,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 
 </main>
-<div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
 
 <!-- מודל ניהול משתמש -->
 <div class="mb hidden" id="user-modal">
@@ -1046,7 +1045,6 @@ function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=
 function hebrewMonth(d){var h=window.ysHebDate(d);return h.ok?(h.monthName+' '+h.yearLabelFull):'';}
 
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
-var students=[],curAtt={};
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
 window._alefFontB64=null;
@@ -1146,7 +1144,7 @@ function ysApplyPerms(p) {
   var changed = (next !== JSON.stringify(AUTH.perms || {}));
   AUTH.perms = p;
   // בלי העותק המקומי כניסה אופליין אחרי עדכון הרשאות מחזירה מטריצה ישנה
-  try { localStorage.setItem('ys_perms_cache', next); } catch (e) {}
+  try { ysLsSet('ys_perms_cache', next); } catch (e) {}
   // ⚠️ הבדיקה הזו נחוצה גם בלי רענון התצוגה: canAccess מחזירה false כשאין
   // משתמש, ולכן בלעדיה משיכה שרצה **לפני הכניסה** (ysPullFromCloud באתחול)
   // הייתה מפעילה showPage('home') + טוסט מעל מסך הכניסה. אין להסיר.
@@ -1198,7 +1196,7 @@ function ysUsersCacheSave(users) {
     var slim = (users || []).filter(function(u){ return u && u.active === true; }).map(function(u){
       return { id: u.id, username: u.username, password_hash: u.password_hash, full_name: u.full_name, role: u.role, active: u.active };
     });
-    localStorage.setItem('ys_users_cache', JSON.stringify(slim));
+    ysLsSet('ys_users_cache', JSON.stringify(slim));
   } catch(e) {}
 }
 function ysUsersCacheGet() {
@@ -1255,7 +1253,7 @@ function ysLoginLogQueue(row) {
     var q = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]');
     q.push(row);
     if (q.length > 50) q = q.slice(-50);
-    localStorage.setItem('ys_login_log_queue', JSON.stringify(q));
+    ysLsSet('ys_login_log_queue', JSON.stringify(q));
   } catch(e) {}
 }
 function ysLoginLog(action, branch, details) {
@@ -1273,7 +1271,7 @@ async function ysLoginLogFlush() {
   var q;
   try { q = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]'); } catch(e) { return; }
   if (!q.length) return;
-  localStorage.setItem('ys_login_log_queue', '[]');
+  ysLsSet('ys_login_log_queue', '[]');
   var failed = [];
   for (var i = 0; i < q.length; i++) {
     try {
@@ -1284,7 +1282,7 @@ async function ysLoginLogFlush() {
   if (failed.length) {
     try {
       var q2 = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]');
-      localStorage.setItem('ys_login_log_queue', JSON.stringify(q2.concat(failed).slice(-50)));
+      ysLsSet('ys_login_log_queue', JSON.stringify(q2.concat(failed).slice(-50)));
     } catch(e3) {}
   }
 }
@@ -1499,11 +1497,39 @@ function showPage(pg) {
 
 
 // ---- לוח שנה עברי ויזואלי לטופס סטאטוס ----
+// טבלת גיבוי לחישוב התאריך העברי — **נפילה-חזרה בלבד**. המנוע הראשי הוא Intl
+// (ysHebYearInfo), והוא בונה את השנה דינמית; הטבלה נכנסת לפעולה רק אם Intl חסר
+// או מחזיר תוצאה לא צפויה. ארבע השורות הראשונות אומתו ידנית מול הלוח האמיתי;
+// כל השאר נוצרו מאותו לוח Intl ואומתו מול הארבע (שחזור מדויק), כולל בדיקה
+// שכל שנה נסגרת בדיוק לא׳ תשרי של הבאה ושאורכה חוקי (353-355 / 383-385).
+// **אין למחוק** — זו רשת הביטחון. הטווח מגיע עד תת"י (2049).
 window._hcST=[
-  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9,3), ml:[30,30,30,29,30,29,30,29,30,29,30,29],    leap:false},
-  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29],    leap:false},
-  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29], leap:true},
-  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9,2), ml:[30,30,30,29,30,29,30,29,30,29,30,29],    leap:false}];
+  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9, 3),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9, 2),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5789,lb:'תשפ"ט',jd:new Date(2028,8,21),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5790,lb:'תש"צ',jd:new Date(2029,8,10),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5791,lb:'תשצ"א',jd:new Date(2030,8,28),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5792,lb:'תשצ"ב',jd:new Date(2031,8,18),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5793,lb:'תשצ"ג',jd:new Date(2032,8, 6),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5794,lb:'תשצ"ד',jd:new Date(2033,8,24),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5795,lb:'תשצ"ה',jd:new Date(2034,8,14),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5796,lb:'תשצ"ו',jd:new Date(2035,9, 4),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5797,lb:'תשצ"ז',jd:new Date(2036,8,22),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5798,lb:'תשצ"ח',jd:new Date(2037,8,10),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5799,lb:'תשצ"ט',jd:new Date(2038,8,30),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5800,lb:'ת"ת',jd:new Date(2039,8,19),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5801,lb:'תת"א',jd:new Date(2040,8, 8),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5802,lb:'תת"ב',jd:new Date(2041,8,26),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5803,lb:'תת"ג',jd:new Date(2042,8,15),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5804,lb:'תת"ד',jd:new Date(2043,9, 5),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5805,lb:'תת"ה',jd:new Date(2044,8,22),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5806,lb:'תת"ו',jd:new Date(2045,8,12),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5807,lb:'תת"ז',jd:new Date(2046,9, 1),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5808,lb:'תת"ח',jd:new Date(2047,8,21),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5809,lb:'תת"ט',jd:new Date(2048,8, 8),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5810,lb:'תת"י',jd:new Date(2049,8,27),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false}];
 // שמות חודשים / ימים — אותן טבלאות תצוגה של ysHebDate (מקור אמת יחיד)
 window._hcMstd=window.MONTHS_HEB;
 window._hcMlp= window.MONTHS_HEB_LEAP;
@@ -1949,7 +1975,7 @@ window.saveAbsenceReasons = async function() {
       if (inp.value.trim()) reasons[type].push(inp.value.trim());
     });
   });
-  localStorage.setItem('ys_absence_reasons', JSON.stringify(reasons));
+  ysLsSet('ys_absence_reasons', JSON.stringify(reasons));
   ysSettingsTouch('ys_absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   try {
@@ -2045,7 +2071,7 @@ function getUserOrder() {
   try { return JSON.parse(localStorage.getItem('ys_user_order') || '[]'); } catch(e) { return []; }
 }
 function saveUserOrder(ids) {
-  localStorage.setItem('ys_user_order', JSON.stringify(ids));
+  ysLsSet('ys_user_order', JSON.stringify(ids));
 }
 function sortUsersByOrder(data) {
   var order = getUserOrder();
@@ -2343,62 +2369,6 @@ async function loadDash(){
   // ומפעיל ysPullFromCloud → refreshDashStats רק בעת שינוי אמיתי
 }
 
-function renderSt(list){
-  var tb=document.getElementById('stb');
-  if(!list.length){tb.innerHTML='<tr><td colspan="5"><div class="empty">אין תלמידים</div></td></tr>';return}
-  var h='';
-  list.forEach(function(s){
-    h+='<tr><td><strong>'+s.name+'</strong></td><td>'+(s.class_name||'-')+'</td><td style="direction:ltr">'+(s.parent_phone||'-')+'</td><td>'+(s.created_at?hebrewDateShort(new Date(s.created_at)):'-')+'</td><td style="display:flex;gap:6px">';
-    h+='<button class="btn out" style="padding:5px 10px;font-size:.8rem" data-edit="'+s.id+'">✏️</button>';
-    h+='<button class="btn" style="padding:5px 10px;font-size:.8rem;background:#c0392b;border-color:#c0392b" data-del="'+s.id+'" data-name="'+s.name+'">🗑️</button>';
-    h+='</td></tr>';
-  });
-  tb.innerHTML=h;
-  tb.querySelectorAll('[data-edit]').forEach(function(b){b.addEventListener('click',function(){editS(this.getAttribute('data-edit'))})});
-  tb.querySelectorAll('[data-del]').forEach(function(b){b.addEventListener('click',function(){delS(this.getAttribute('data-del'),this.getAttribute('data-name'))})});
-}
-function openAdd(){document.getElementById('mt').textContent='הוסף תלמיד';['sid','sn','sc','sp','snotes'].forEach(function(id){document.getElementById(id).value=''});document.getElementById('ms').classList.add('on')}
-function editS(id){var s=students.find(function(x){return x.id==id});if(!s)return;document.getElementById('mt').textContent='עריכת תלמיד';document.getElementById('sid').value=s.id;document.getElementById('sn').value=s.name;document.getElementById('sc').value=s.class_name||'';document.getElementById('sp').value=s.parent_phone||'';document.getElementById('snotes').value=s.notes||'';document.getElementById('ms').classList.add('on')}
-function saveS(){var name=document.getElementById('sn').value.trim();if(!name){toast('נא הכנס שם');return}var id=document.getElementById('sid').value;var d={name:name,class_name:document.getElementById('sc').value.trim(),parent_phone:document.getElementById('sp').value.trim(),notes:document.getElementById('snotes').value.trim(),active:true};var p=id?SB.from('students').update(d).eq('id',id):SB.from('students').insert(d);p.then(function(){toast(id?'✅ עודכן':'✅ נוסף');document.getElementById('ms').classList.remove('on');loadSt()})}
-function delS(id,name){if(!confirm('למחוק את '+name+'?'))return;SB.from('students').update({active:false}).eq('id',id).then(function(){toast('🗑️ הוסר');loadSt()})}
-
-function loadA(date){
-  var el=document.getElementById('al');el.innerHTML='<div class="ld">טוען...</div>';
-  var p1=students.length?Promise.resolve({data:students}):SB.from('students').select('*').eq('active',true).order('name');
-  p1.then(function(r){
-    if(!students.length)students=r.data||[];
-    SB.from('attendance').select('*').eq('date',date).then(function(r2){
-      curAtt={};(r2.data||[]).forEach(function(x){curAtt[x.student_id]=x.status});
-      renderA(date);
-    });
-  });
-}
-function renderA(date){
-  var el=document.getElementById('al');
-  if(!students.length){el.innerHTML='<div class="empty">אין תלמידים</div>';return}
-  var h='<div class="abox"><div class="abox-h">'+hebrewDateShort(new Date(date+'T12:00:00'))+'</div>';
-  students.forEach(function(s){
-    h+='<div class="ar"><span>'+s.name+(s.class_name?'<small style="color:var(--text3);font-size:.78rem;margin-right:6px"> '+s.class_name+'</small>':'')+'</span><div class="abtns">';
-    h+='<button class="ab'+(curAtt[s.id]==='present'?' sp':'')+'" data-id="'+s.id+'" data-st="present">✓ נוכח</button>';
-    h+='<button class="ab'+(curAtt[s.id]==='late'?' sl':'')+'" data-id="'+s.id+'" data-st="late">⏰ איחור</button>';
-    h+='<button class="ab'+(curAtt[s.id]==='absent'?' sa':'')+'" data-id="'+s.id+'" data-st="absent">✗ נעדר</button>';
-    h+='</div></div>';
-  });
-  el.innerHTML=h+'</div>';
-  el.querySelectorAll('.ab[data-id]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var id=this.getAttribute('data-id'),st=this.getAttribute('data-st');
-      curAtt[id]=st;
-      this.closest('.abtns').querySelectorAll('.ab').forEach(function(b){b.classList.remove('sp','sl','sa')});
-      if(st==='present')this.classList.add('sp');else if(st==='late')this.classList.add('sl');else this.classList.add('sa');
-    });
-  });
-}
-function saveA(){
-  var u=Object.entries(curAtt).map(function(e){return{student_id:parseInt(e[0]),date:document.getElementById('dp').value,status:e[1]}});
-  if(!u.length){toast('לא נבחרה נוכחות');return}
-  SB.from('attendance').upsert(u,{onConflict:'student_id,date'}).then(function(r){toast(r.error?'שגיאה':'✅ נשמר!')});
-}
 function loadR(){
   var month=document.getElementById('rm').value;if(!month)return;
   var y=month.split('-')[0],m=month.split('-')[1];
@@ -2418,18 +2388,33 @@ function loadR(){
   });
 }
 
-var _el_btn_add=document.getElementById('btn-add');if(_el_btn_add)_el_btn_add.addEventListener('click',function(){openAdd()});
-var _el_btn_save_a=document.getElementById('btn-save-a');if(_el_btn_save_a)_el_btn_save_a.addEventListener('click',function(){saveA()});
 var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.addEventListener('click',function(){loadR()});
-var _el_btn_cm=document.getElementById('btn-cm');if(_el_btn_cm)_el_btn_cm.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
-var _el_btn_cancel=document.getElementById('btn-cancel');if(_el_btn_cancel)_el_btn_cancel.addEventListener('click',function(){document.getElementById('ms').classList.remove('on')});
-var _el_btn_save_st=document.getElementById('btn-save-st');if(_el_btn_save_st)_el_btn_save_st.addEventListener('click',function(){saveS()});
-var _el_search_st=document.getElementById('search-st');
-if(_el_search_st)_el_search_st.addEventListener('input',function(){var q=this.value;renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||'').includes(q)}))});
-var _el_dp=document.getElementById('dp');
-if(_el_dp)_el_dp.addEventListener('change',function(){loadA(this.value)});
 
 var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
+
+// ── כתיבה בטוחה ל-localStorage ─────────────────────────────────────────
+// באחסון חסום (WebView מוקשח, גלישה פרטית, מכסה מלאה) `setItem` **זורק**, וכל
+// נתיב כתיבה לא-מוגן מת באמצע: הסימון כבר עודכן בזיכרון, המסך מתרענן כאילו
+// הכול תקין, ושום דבר לא נשמר — בלי שהמשתמש יודע. `getDeviceId` כבר הוקשח כך;
+// זה אותו טיפול לכל שאר הכותבים.
+// מחזירה true/false, ומתריעה **פעם אחת בלבד** — טוסט בכל לחיצת סימון הוא רעש
+// שמסתיר את ההודעה עצמה (אותה תבנית כמו `_syncWarned`).
+var _ysLsWarned = false;
+function ysLsSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (e) {
+    if (!_ysLsWarned) {
+      _ysLsWarned = true;
+      try { toast('⚠️ האחסון במכשיר חסום או מלא — השינויים לא נשמרים מקומית'); } catch (e2) {}
+    }
+    try { console.warn('[ls] setItem נכשל עבור ' + key + ':', e && e.message); } catch (e3) {}
+    return false;
+  }
+}
+window.ysLsSet = ysLsSet;
+
 
 // אתחול - data-pg click handlers
 // אין צורך - כל כפתור יש לו onclick ישיר
@@ -2493,14 +2478,14 @@ function _ysQueueAdd(key, value) {
     var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
     q = q.filter(function(x){return x.key !== key;});
     q.push({key: key, value: value, ts: Date.now()});
-    localStorage.setItem(_YS_Q_KEY, JSON.stringify(q));
+    ysLsSet(_YS_Q_KEY, JSON.stringify(q));
   } catch(e) { console.error('[ys-queue] add error:', e); }
 }
 function _ysQueueRemove(key) {
   try {
     var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
     q = q.filter(function(x){return x.key !== key;});
-    localStorage.setItem(_YS_Q_KEY, JSON.stringify(q));
+    ysLsSet(_YS_Q_KEY, JSON.stringify(q));
   } catch(e) {}
 }
 function _ysQueueGet(key) {
@@ -2558,7 +2543,7 @@ async function ysFlushQueue() {
     try { await _ysKvSetRaw('ys_last_changed', ts); _ysLastTs = ts; } catch(e){}
     toast('☁️ ' + nOk + ' רשומות סונכרנו בהצלחה');
   }
-  localStorage.setItem(_YS_Q_KEY, JSON.stringify(failed));
+  ysLsSet(_YS_Q_KEY, JSON.stringify(failed));
   ysUpdateQueueBadge();
 }
 // ===== End Offline Queue =====
@@ -2646,7 +2631,7 @@ async function ysMaybeDailyBackup() {
       }
     }
     if (ok) {
-      try { localStorage.setItem('ys_last_backup', today); } catch (eS) {}
+      try { ysLsSet('ys_last_backup', today); } catch (eS) {}
       ysSyncLog('backup', null, keys.length, { date: today });
     } else {
       // בלי כתיבת הדגל — הדחיפה הבאה תנסה שוב באותו יום
@@ -2734,11 +2719,11 @@ function ysMergeAttend(local, remote) {
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
-function _ysStudentsSaveRaw(s) { localStorage.setItem('ys_students', JSON.stringify(s)); }
+function _ysStudentsSaveRaw(s) { ysLsSet('ys_students', JSON.stringify(s)); }
 
 // updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
 function ysSettingsMeta() { try { return JSON.parse(localStorage.getItem('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
-function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); localStorage.setItem('ys_settings_meta', JSON.stringify(m)); }
+function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); ysLsSet('ys_settings_meta', JSON.stringify(m)); }
 
 // זוכר אם כבר הזהרנו על כשל סנכרון, כדי לא להציף בטוסטים בכל דחיפה
 var _ysPushWarned = false;
@@ -2787,7 +2772,7 @@ async function ysPushToCloud() {
     var localAt = getAttendance();
     var remoteAt = null; try { remoteAt = await ysKvGet('ys_attend'); } catch(e2) {}
     var mergedAt = ysMergeAttend(localAt, remoteAt);
-    localStorage.setItem('ys_attend', JSON.stringify(mergedAt));
+    ysLsSet('ys_attend', JSON.stringify(mergedAt));
     var r = await ysKvSet('ys_attend', mergedAt);
     ysSyncLog('push', 'ys_attend', ysCount(mergedAt), {local_count: ysCount(localAt), remote_count: ysCount(remoteAt), result_count: ysCount(mergedAt)});
     return r;
@@ -2798,7 +2783,7 @@ async function ysPushToCloud() {
     var localAp = getApprovals();
     var remoteAp = null; try { remoteAp = await ysKvGet('ys_approvals'); } catch(e3) {}
     var mergedAp = ysMergeRecords(localAp, remoteAp, null, true);
-    localStorage.setItem('ys_approvals', JSON.stringify(mergedAp));
+    ysLsSet('ys_approvals', JSON.stringify(mergedAp));
     var r = await ysKvSet('ys_approvals', mergedAp);
     ysSyncLog('push', 'ys_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
     return r;
@@ -2810,9 +2795,9 @@ async function ysPushToCloud() {
     var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(e4) {}
     remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
     var settingsKeys = [
-      { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ localStorage.setItem('ys_reasons', JSON.stringify(v)); } },
-      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ localStorage.setItem('ys_absence_reasons', JSON.stringify(v)); } },
-      { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ localStorage.setItem('ys_cls_years', JSON.stringify(v)); } }
+      { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ ysLsSet('ys_reasons', JSON.stringify(v)); } },
+      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ ysLsSet('ys_absence_reasons', JSON.stringify(v)); } },
+      { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ ysLsSet('ys_cls_years', JSON.stringify(v)); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -2830,7 +2815,7 @@ async function ysPushToCloud() {
     }
     var mm = {};
     [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
-    localStorage.setItem('ys_settings_meta', JSON.stringify(mm));
+    ysLsSet('ys_settings_meta', JSON.stringify(mm));
     var r = await ysKvSet('ys_settings_meta', mm);
     return (r && r.error) ? r : (lastErr ? {error: lastErr} : r);
   });
@@ -2877,18 +2862,18 @@ async function ysPullFromCloud() {
     // attend: מיזוג מקונן ברמת תאריך+תלמיד (מחליף את מיזוג-היום הידני הישן)
     var a = await ysKvGet('ys_attend');
     if (a && typeof a === 'object') {
-      localStorage.setItem('ys_attend', JSON.stringify(ysMergeAttend(getAttendance(), a)));
+      ysLsSet('ys_attend', JSON.stringify(ysMergeAttend(getAttendance(), a)));
     }
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await ysKvGet('ys_approvals');
     if (ap && typeof ap === 'object') {
-      localStorage.setItem('ys_approvals', JSON.stringify(ysMergeRecords(getApprovals(), ap, null, true)));
+      ysLsSet('ys_approvals', JSON.stringify(ysMergeRecords(getApprovals(), ap, null, true)));
     }
     // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
     var rs = await ysKvGet('ys_reasons');
     if (rs && Array.isArray(rs) && (remoteMeta['ys_reasons'] || 0) >= (meta['ys_reasons'] || 0)) {
-      localStorage.setItem('ys_reasons', JSON.stringify(rs));
-      if (remoteMeta['ys_reasons']) { meta['ys_reasons'] = remoteMeta['ys_reasons']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
+      ysLsSet('ys_reasons', JSON.stringify(rs));
+      if (remoteMeta['ys_reasons']) { meta['ys_reasons'] = remoteMeta['ys_reasons']; ysLsSet('ys_settings_meta', JSON.stringify(meta)); }
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
@@ -2899,7 +2884,7 @@ async function ysPullFromCloud() {
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
       var _atPending = _ysQueueGet('ys_attend_sessions');
       if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'ys_attend_sessions');
-      localStorage.setItem('ys_attend_sessions', JSON.stringify(_atMerge));
+      ysLsSet('ys_attend_sessions', JSON.stringify(_atMerge));
       window._atData = _atMerge;
       if (_atPending && _atMerge.length > atSess.length) {
         _ysQueueAdd('ys_attend_sessions', _atMerge);
@@ -2913,7 +2898,7 @@ async function ysPullFromCloud() {
       var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
       var _slPending = _ysQueueGet('ys_sleep_sessions');
       if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'ys_sleep_sessions');
-      localStorage.setItem('ys_sleep_sessions', JSON.stringify(_slMerge));
+      ysLsSet('ys_sleep_sessions', JSON.stringify(_slMerge));
       window._slData = _slMerge;
       if (_slPending && _slMerge.length > slSess.length) {
         _ysQueueAdd('ys_sleep_sessions', _slMerge);
@@ -2922,14 +2907,14 @@ async function ysPullFromCloud() {
     }
     var abR = await ysKvGet('ys_absence_reasons');
     if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['ys_absence_reasons'] || 0) >= (meta['ys_absence_reasons'] || 0)) {
-      localStorage.setItem('ys_absence_reasons', JSON.stringify(abR));
-      if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
+      ysLsSet('ys_absence_reasons', JSON.stringify(abR));
+      if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; ysLsSet('ys_settings_meta', JSON.stringify(meta)); }
     }
     var clsY = await ysKvGet('ys_cls_years');
     console.log('[pull] ys_cls_years from KV:', clsY);
     if (clsY && typeof clsY === 'object' && (remoteMeta['ys_cls_years'] || 0) >= (meta['ys_cls_years'] || 0)) {
-      localStorage.setItem('ys_cls_years', JSON.stringify(clsY));
-      if (remoteMeta['ys_cls_years']) { meta['ys_cls_years'] = remoteMeta['ys_cls_years']; localStorage.setItem('ys_settings_meta', JSON.stringify(meta)); }
+      ysLsSet('ys_cls_years', JSON.stringify(clsY));
+      if (remoteMeta['ys_cls_years']) { meta['ys_cls_years'] = remoteMeta['ys_cls_years']; ysLsSet('ys_settings_meta', JSON.stringify(meta)); }
       console.log('[pull] ys_cls_years saved to localStorage');
     } else if (clsY == null) {
       // מפתח לא קיים ב-DB — אם יש ערכים מקומיים, דחוף אותם (bootstrap חד-פעמי)
@@ -2944,9 +2929,9 @@ async function ysPullFromCloud() {
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
       var _atCfgV = await ysKvGet('ys_attend_cfg');
-      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; localStorage.setItem('ys_attend_cfg', JSON.stringify(_atCfgV)); }
+      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; ysLsSet('ys_attend_cfg', JSON.stringify(_atCfgV)); }
       var _slCfgV = await ysKvGet('ys_sleep_cfg');
-      if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; localStorage.setItem('ys_sleep_cfg', JSON.stringify(_slCfgV)); }
+      if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; ysLsSet('ys_sleep_cfg', JSON.stringify(_slCfgV)); }
     } catch(eCfg) {}
     // ---- הרשאות: משיכה שוטפת ----
     // עד היום ys_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
@@ -3229,17 +3214,17 @@ function saveStudents(s){
     var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
     if (tombs.length) s=s.concat(tombs);
   } catch(e){}
-  localStorage.setItem('ys_students',JSON.stringify(s));
+  ysLsSet('ys_students',JSON.stringify(s));
 }
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
 function getAttendance(){try{var v=JSON.parse(localStorage.getItem('ys_attend')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_attend פגום — נטען ריק:',e.message);return {};}}
-function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
+function saveAttendance(a){ysLsSet('ys_attend',JSON.stringify(a));}
 function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(localStorage.getItem('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
+function saveReasons(r){ysLsSet('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
 function getApprovals(){try{var v=JSON.parse(localStorage.getItem('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
-function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
+function saveApprovals(a){ysLsSet('ys_approvals',JSON.stringify(a));}
 function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
 function checkLoginNeeded(){
@@ -3255,27 +3240,6 @@ function filterClass(cls){
   renderStudents();
 }
 
-function getStudentStatus(sid){
-  var today=todayKey();
-  var attend=getAttendance();
-  var approvals=getApprovals();
-  var dayA=attend[today]||{};
-  var appr=approvals[sid];
-  if(appr&&appr.active){
-    var now=new Date();
-    var from=appr.fromGreg?new Date(appr.fromGreg):null;
-    var to=appr.toGreg?new Date(appr.toGreg):null;
-    if(from&&to&&now>=from&&now<=to){
-      return {status:'approved',label:H(1489,1488,1497,1513,1493,1512),color:'#ed8936',reason:appr.reason};
-    }
-    if(to&&now>to){var a2=getApprovals();a2[sid]={active:false,updatedAt:Date.now()};saveApprovals(a2);}
-  }
-  var rec=dayA[sid];
-  if(!rec)return {status:'unknown',label:'-',color:'#999'};
-  if(rec.present===true)return {status:'present',label:H(1504,1493,1499,1495),color:'#38a169'};
-  if(rec.present===false)return {status:'absent',label:H(1504,1506,1491,1512),color:'#e53e3e'};
-  return {status:'unknown',label:'-',color:'#999'};
-}
 
 function renderStudents(){
   var allSts=getStudents();
@@ -3377,7 +3341,7 @@ function renderStudents(){
 
 // -------- ניהול שנות מחזור --------
 function getClsYears(){try{return JSON.parse(localStorage.getItem('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
-function saveClsYears(y){localStorage.setItem('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
+function saveClsYears(y){ysLsSet('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
 
 window.saveClsYearsSettings = async function(){
   var a=(document.getElementById('cy-a')||{}).value||'';
@@ -3549,7 +3513,6 @@ window.doYearTransition = function(){
 
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
-  console.log('[getActiveAbsences] תלמיד:', s.name, '| תאריך בדיקה:', now.toISOString(), refDate ? '(זמן סדר)' : '⚠️ (עכשיו — לא זמן הסדר!)');
   if (Array.isArray(s.absences) && s.absences.length > 0) {
     return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
   }
@@ -4165,7 +4128,7 @@ async function atLoadCfg() {
 }
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
-  localStorage.setItem('ys_attend_cfg',JSON.stringify(cfg));
+  ysLsSet('ys_attend_cfg',JSON.stringify(cfg));
   // בלי קידום ys_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
   // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
   try { var r=await ysKvSet('ys_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
@@ -4178,7 +4141,7 @@ async function atLoadData() {
 }
 async function atSaveData(data) {
   window._atData=data;
-  localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+  ysLsSet('ys_attend_sessions',JSON.stringify(data));
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _atLocalN=ysCount(data);
@@ -4186,7 +4149,7 @@ async function atSaveData(data) {
     if (Array.isArray(_atRemote)) {
       data=_ysSessionsMerge(_atRemote, data, 'ys_attend_sessions');
       window._atData=data;
-      localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+      ysLsSet('ys_attend_sessions',JSON.stringify(data));
     }
     await ysKvSet('ys_attend_sessions',data);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
@@ -4202,14 +4165,14 @@ async function atLoadTreats() {
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
 function atLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function atSaveTreats(data) {
-  localStorage.setItem('ys_attend_treats',JSON.stringify(data));
+  ysLsSet('ys_attend_treats',JSON.stringify(data));
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
     // מדריכים שרשמו טיפול במקביל מחקו זה את זה. אותה סמנטיקה כמו הסדרים.
     var _tRemote=null; try { _tRemote=await ysKvGet('ys_attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
       data=_ysSessionsMerge(_tRemote, data, 'ys_attend_treats');
-      localStorage.setItem('ys_attend_treats',JSON.stringify(data));
+      ysLsSet('ys_attend_treats',JSON.stringify(data));
     }
     var r=await ysKvSet('ys_attend_treats',data);
     if(!(r&&r.error)) await ysTouchLastChanged();
@@ -4336,10 +4299,6 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
   if (sessDateIso) {
     sessRef = new Date(sessDateIso + 'T' + (sessStartTime || '12:00') + ':00');
   }
-  console.log('[atAutoMark] תלמיד:', student.name,
-    '| תאריך סדר:', sessDateIso || '(לא סופק)',
-    '| שעת סדר:', sessStartTime || '(לא סופקה)',
-    '| תאריך בדיקת סטטוס:', sessRef ? sessRef.toISOString() : '⚠️ יבדק לפי Date.now()');
   var aa=getActiveAbsences(student, sessRef);
   if(!aa||!aa.length) return null;
   for(var i=0;i<aa.length;i++){
@@ -4415,7 +4374,7 @@ async function ysRefreshApprovalMarks(sid) {
         }
       });
       if (changed) {
-        localStorage.setItem(lsKey, JSON.stringify(data));
+        ysLsSet(lsKey, JSON.stringify(data));
         try { saveFn(data); } catch(eS) {}
       }
     }
@@ -4500,7 +4459,7 @@ window.atEditSession = async function(recId) {
     });
     if(_apChanged){
       rec.updatedAt=Date.now();
-      localStorage.setItem('ys_attend_sessions',JSON.stringify(data));
+      ysLsSet('ys_attend_sessions',JSON.stringify(data));
       window._atData=data;
       atSaveData(data); // דחיפה ממוזגת לענן (fire-and-forget)
     }
@@ -4611,7 +4570,7 @@ function atSaveLocalNow() {
   });
   rec.marks=marks;
   rec.updatedAt=Date.now();
-  localStorage.setItem('ys_attend_sessions',JSON.stringify(window._atData));
+  ysLsSet('ys_attend_sessions',JSON.stringify(window._atData));
   return rec;
 }
 // שמירה אוטומטית לKV (מקומי + ענן ממוזג)
@@ -5487,11 +5446,6 @@ function atCheckAlert() {
       if(m.s==='l') stats[sid].lateMin+=m.min||0;
     });
   });
-  // לוג לאבחון: כל התלמידים ומספר החיסורים שלהם לפני סינון הסף
-  console.log('[atCheckAlert] חיסורים לפי תלמיד (לפני סינון):');
-  Object.values(stats).forEach(function(s){
-    if(s.absent>0||s.lateMin>0) console.log(' •', s.name, '— חיסורים:', s.absent, '| איחור:', s.lateMin, 'דק׳');
-  });
   Object.values(stats).forEach(function(s){
     if(s.absent>=20||s.lateMin>=300) alerts.push(s);
   });
@@ -5649,7 +5603,7 @@ function _slCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = slDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { localStorage.setItem('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
+    try { ysLsSet('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
     try { ysKvSet('ys_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch(e){}
   }
   return cfg;
@@ -5662,7 +5616,7 @@ async function slLoadCfg() {
 }
 async function slSaveCfg(cfg) {
   window._slCfg=cfg;
-  localStorage.setItem('ys_sleep_cfg',JSON.stringify(cfg));
+  ysLsSet('ys_sleep_cfg',JSON.stringify(cfg));
   // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
   try { var r=await ysKvSet('ys_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
 }
@@ -5680,7 +5634,7 @@ async function slLoadData() {
 // ודיווח "✅ ניקוי הושלם". אין להחזיר אותו; מחיקה = tombstone מפורש בלבד.
 async function slSaveData(data) {
   window._slData=data;
-  localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+  ysLsSet('ys_sleep_sessions',JSON.stringify(data));
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _slLocalN=ysCount(data);
@@ -5688,7 +5642,7 @@ async function slSaveData(data) {
     if (Array.isArray(_slRemote)) {
       data=_ysSessionsMerge(_slRemote, data, 'ys_sleep_sessions');
       window._slData=data;
-      localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+      ysLsSet('ys_sleep_sessions',JSON.stringify(data));
     }
     await ysKvSet('ys_sleep_sessions',data);
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
@@ -5703,13 +5657,13 @@ async function slLoadTreats() {
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
 function slLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function slSaveTreats(data) {
-  localStorage.setItem('ys_sleep_treats',JSON.stringify(data));
+  ysLsSet('ys_sleep_treats',JSON.stringify(data));
   try {
     // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
     var _tRemoteS=null; try { _tRemoteS=await ysKvGet('ys_sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
       data=_ysSessionsMerge(_tRemoteS, data, 'ys_sleep_treats');
-      localStorage.setItem('ys_sleep_treats',JSON.stringify(data));
+      ysLsSet('ys_sleep_treats',JSON.stringify(data));
     }
     var r=await ysKvSet('ys_sleep_treats',data);
     if(!(r&&r.error)) await ysTouchLastChanged();
@@ -5938,7 +5892,7 @@ window.slEditSession = async function(recId) {
     });
     if(_apChanged2){
       rec.updatedAt=Date.now();
-      localStorage.setItem('ys_sleep_sessions',JSON.stringify(data));
+      ysLsSet('ys_sleep_sessions',JSON.stringify(data));
       window._slData=data;
       slSaveData(data);
     }
@@ -6041,7 +5995,7 @@ function slSaveLocalNow() {
   });
   rec.marks=marks;
   rec.updatedAt=Date.now();
-  localStorage.setItem('ys_sleep_sessions',JSON.stringify(window._slData));
+  ysLsSet('ys_sleep_sessions',JSON.stringify(window._slData));
   return rec;
 }
 async function slAutoSaveNow() {
