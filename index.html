@@ -1122,6 +1122,57 @@ function canEdit(moduleId) {
   return level === 'edit';
 }
 
+// ---- החלת מטריצת ההרשאות על התצוגה (רענון חי, בלי יציאה וכניסה) ----
+// ys_perms נמשך עכשיו גם ב-ysPullFromCloud, ולכן המטריצה משתנה תוך כדי עבודה.
+// כאן מסתירים/מציגים את כפתורי הניווט (עליון + תחתון) וכרטיסי המודולים בדף
+// הבית לפי canAccess. 'home' תמיד פתוח — הוא מסך הנחיתה שאליו מוציאים משתמש
+// שהרשאתו נשללה. הסלקטורים מכוונים ל-.nb/.bn/.mod בלבד; כפתורי "← חזרה"
+// (.back) נושאים גם הם data-pg="home" ואסור לגעת בהם.
+function ysApplyPermsToUI() {
+  if (!AUTH.user) return;
+  ['.nb[data-pg]', '.bn[data-pg]', '.mod[data-pg]'].forEach(function(sel) {
+    document.querySelectorAll(sel).forEach(function(btn) {
+      var pg = btn.getAttribute('data-pg');
+      var ok = (pg === 'home') || canAccess(pg);
+      btn.style.display = ok ? '' : 'none';
+    });
+  });
+}
+
+// המסך הפתוח כרגע — showPageInternal מסמן אותו ב-class 'on' על אלמנט ‎.pg
+function ysCurrentPage() {
+  var el = document.querySelector('.pg.on');
+  return (el && el.id.indexOf('pg-') === 0) ? el.id.slice(3) : null;
+}
+
+// מקור יחיד לקליטת מטריצת הרשאות חדשה (כניסה או משיכה מהענן):
+// AUTH.perms + ys_perms_cache + רענון התצוגה. מחזיר true אם המטריצה השתנתה.
+function ysApplyPerms(p) {
+  if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
+  var next = JSON.stringify(p);
+  var changed = (next !== JSON.stringify(AUTH.perms || {}));
+  AUTH.perms = p;
+  // בלי העותק המקומי כניסה אופליין אחרי עדכון הרשאות מחזירה מטריצה ישנה
+  try { localStorage.setItem('ys_perms_cache', next); } catch (e) {}
+  if (!AUTH.user) return changed; // עוד לא נכנס — אין תצוגה לרענן
+  ysApplyPermsToUI();
+  // מסך פתוח שעדיין מותר נשאר כמו שהוא — לא שוברים עבודה באמצע. רק אם
+  // ההרשאה למסך הנוכחי נשללה מוציאים הביתה עם הודעה, ולא משאירים מסך ריק.
+  if (changed) {
+    var cur = ysCurrentPage();
+    if (cur && cur !== 'home' && !canAccess(cur)) {
+      var lbl = cur;
+      for (var i = 0; i < AUTH.MODULES.length; i++) {
+        if (AUTH.MODULES[i].id === cur) { lbl = AUTH.MODULES[i].label; break; }
+      }
+      try { closeDenied(); } catch (e2) {}
+      showPage('home');
+      try { toast('🔒 ההרשאות שלך עודכנו — ' + lbl + ' אינו זמין עוד'); } catch (e3) {}
+    }
+  }
+  return changed;
+}
+
 // ---- תיקון hash חד-פעמי ----
 async function fixAdminHash() {
   var errEl = document.getElementById('auth-err');
@@ -1199,7 +1250,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v19'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v20'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1405,8 +1456,8 @@ async function loadPerms() {
   }
   if (res && !res.error && res.data && res.data.value) {
     try {
-      AUTH.perms = JSON.parse(res.data.value);
-      try { localStorage.setItem('ys_perms_cache', res.data.value); } catch(eS) {} // עותק מקומי אחרי כל טעינה מוצלחת
+      // ysApplyPerms שומר גם את העותק המקומי ומחיל על התצוגה — מימוש אחד
+      ysApplyPerms(JSON.parse(res.data.value));
       return;
     } catch(eP) { console.warn('[perms] ערך פגום בענן:', eP); }
   }
@@ -1414,13 +1465,16 @@ async function loadPerms() {
   try {
     var c = localStorage.getItem('ys_perms_cache');
     if (c) {
-      AUTH.perms = JSON.parse(c);
+      ysApplyPerms(JSON.parse(c));
       console.log('[perms] נטען מעותק מקומי', res && res.error ? '('+(res.error.message||res.error.code)+')' : '(אין רשת)');
       return;
     }
   } catch(e2) { console.warn('[perms] עותק מקומי פגום:', e2); }
   console.log('[perms] נטענו ברירות מחדל');
+  // ברירות המחדל לא נכתבות ל-ys_perms_cache: היעדר עותק מקומי הוא מידע אמיתי
+  // ("מעולם לא נטענה מטריצה"), ואין להסוות אותו כמטריצה שנשמרה.
   AUTH.perms = AUTH.DEFAULT_PERMS;
+  try { ysApplyPermsToUI(); } catch(e3) {}
 }
 
 // ---- showPage עם בדיקת הרשאות ----
@@ -2195,9 +2249,12 @@ async function savePerms() {
           ' — הן יישלחו שוב כשהרשת תחזור');
     return;
   }
-  AUTH.perms = p;
-  // גם העותק המקומי — בלעדיו כניסה אופליין אחרי עריכת הרשאות שחזרה מטריצה ישנה
-  try { localStorage.setItem('ys_perms_cache', JSON.stringify(p)); } catch(e) {}
+  // AUTH.perms + ys_perms_cache + רענון התצוגה — הכל דרך ysApplyPerms
+  ysApplyPerms(p);
+  // ys_perms נמשך עכשיו ב-ysPullFromCloud, ו-ysAutoSync במכשירים האחרים משווה
+  // **רק** מול ys_last_changed. בלי הקידום הזה עדכון הרשאות היה נשאר בלתי-נראה
+  // להם עד היציאה-והכניסה הבאה — בדיוק מה שהמעבר לרענון החי בא לפתור.
+  await ysTouchLastChanged();
   toast('✅ הרשאות נשמרו!');
 }
 
@@ -2572,20 +2629,37 @@ function ysCount(v) {
 
 // Daily automatic backup: at most once per calendar day, copy the CURRENT cloud
 // values of the core keys into kv_backup. Non-blocking; never breaks sync.
+// הדגל נכתב **אחרי** הצלחה, לא לפניה. עד היום הוא נכתב ראשון ("runs at most
+// once/day"), ולכן גיבוי שנכשל — רשת, הרשאה, kv_backup חסרה — דילג בשקט על
+// יממה שלמה בלי שאיש ידע. הכתיבה-מראש שימשה גם כנעילת ריצה (ysPushToCloud
+// קורא לכאן בכל דחיפה), ולכן היא מוחלפת ב-_ysBackupRunning ולא רק נמחקת.
+var _ysBackupRunning = false;
 async function ysMaybeDailyBackup() {
+  if (_ysBackupRunning) return;
+  var today = new Date().toISOString().slice(0, 10);
+  try { if (localStorage.getItem('ys_last_backup') === today) return; } catch (eL) {}
+  _ysBackupRunning = true;
   try {
-    var today = new Date().toISOString().slice(0, 10);
-    if (localStorage.getItem('ys_last_backup') === today) return;
-    localStorage.setItem('ys_last_backup', today); // set first → runs at most once/day
     var keys = ['ys_students', 'ys_approvals', 'ys_attend', 'ys_attend_sessions'];
+    var ok = true;
     for (var i = 0; i < keys.length; i++) {
+      // supabase-js לא זורק — חובה לבדוק error במפורש, כאן ובכתיבה גם יחד
       var res = await SB.from('kv').select('value').eq('key', keys[i]).maybeSingle();
-      if (res && res.data && res.data.value != null) {
-        await SB.from('kv_backup').insert({ key: keys[i], value: res.data.value });
+      if (!res || res.error) { ok = false; continue; }
+      if (res.data && res.data.value != null) {
+        var ins = await SB.from('kv_backup').insert({ key: keys[i], value: res.data.value });
+        if (!ins || ins.error) ok = false;
       }
     }
-    ysSyncLog('backup', null, keys.length, { date: today });
+    if (ok) {
+      try { localStorage.setItem('ys_last_backup', today); } catch (eS) {}
+      ysSyncLog('backup', null, keys.length, { date: today });
+    } else {
+      // בלי כתיבת הדגל — הדחיפה הבאה תנסה שוב באותו יום
+      console.warn('[backup] הגיבוי היומי נכשל — יינסה שוב בדחיפה הבאה');
+    }
   } catch (e) { /* backup must never block sync */ }
+  _ysBackupRunning = false;
 }
 
 // ============================================================
@@ -2880,6 +2954,17 @@ async function ysPullFromCloud() {
       var _slCfgV = await ysKvGet('ys_sleep_cfg');
       if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; localStorage.setItem('ys_sleep_cfg', JSON.stringify(_slCfgV)); }
     } catch(eCfg) {}
+    // ---- הרשאות: משיכה שוטפת ----
+    // עד היום ys_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
+    // למשתמש רק אחרי יציאה וכניסה מחדש. עכשיו הוא מגיע תוך שניות (הפולינג של
+    // ysAutoSync). עטוף בנפרד: כשל כאן לא מפיל את שאר המשיכה, ומטריצה פגומה
+    // או ריקה נדחית ב-ysApplyPerms במקום לנעול את המשתמש מחוץ לכל המודולים.
+    try {
+      var pmV = await ysKvGet('ys_perms');
+      if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
+        if (ysApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
+      }
+    } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
     // רענון רכיבים תלויי-הגדרות שמוצגים כרגע (בוררי סוג סדר, רשימות)
     try {
       if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
