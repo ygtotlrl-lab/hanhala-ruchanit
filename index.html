@@ -2369,23 +2369,40 @@ async function loadDash(){
   // ומפעיל ysPullFromCloud → refreshDashStats רק בעת שינוי אמיתי
 }
 
+// ── דוחות חודשיים — מסך ממתין לאפיון ────────────────────────────────────
+// ⚠️ המסך חסום: 'reports' נמצא ב-UNDER_CONSTRUCTION, ולכן showPage מציג את
+//    דיאלוג "המודול בבנייה" ו**חוזר לפני** showPageInternal. כלומר pg-reports
+//    לעולם אינו מוצג, וכפתור "📊 הצג" (btn-rpt) שבתוכו אינו ניתן ללחיצה.
+//    loadR נשארת מחוברת אליו רק כדי שהתשתית תהיה שלמה כשהמסך ייפתח.
+//
+// מה היה כאן: שאילתות ל-`SB.from('attendance')` ו-`SB.from('students')` —
+// **טבלאות Supabase נטושות**. האפליקציה עברה מזמן לאחסון `kv`, הטבלאות האלה
+// אינן מתעדכנות מאף מסלול כתיבה בקוד, והדוח שנבנה מהן היה תמיד ריק. הן הוסרו
+// כאן (סבב 7ב) כדי שלא יישאר קוד שמצביע על מקור נתונים לא אמיתי.
+//
+// 🚫 **אין להחזיר שאילתות ל-`students` / `attendance`.** הן אינן מקור אמת.
+//
+// ✅ **מקור הנתונים הנכון הוא `kv` בלבד**, דרך הגישונים הקיימים:
+//    • `ys_attend_sessions` — רשומות הסדרים (`window._atData` / `atSaveData`).
+//      כל רשומה: `{id, date_iso, session, open, deleted, updatedAt, marks:{sid:{s,min}}}`.
+//      הסימונים ב-`marks`: `p` נוכח, `e`/`x` חיסור, `l` איחור (`min` דקות),
+//      `ap` אישור, `ak` בבית, `a` מנוחה. **חובה לקרוא דרך `ysMarks(rec)`**
+//      (רשומה בלי `marks` זרקה ורוקנה מסך שלם) ו**לסנן `!r.deleted`**
+//      (סדר מחוק שנספר ניפח את לוח המחוונים ואת התראת ה-20+).
+//    • `ys_attend` — מפת נוכחות יומית (`getAttendance()`).
+//    • `ys_students` — מצבת התלמידים (`getStudents()`, כבר מסננת מחוקים).
+//      סטטוסים/היעדרויות פעילות: `getActiveAbsences(s, refDate)` — תמיד להעביר
+//      את זמן הסדר כ-`refDate`, אחרת החישוב נעשה מול "עכשיו".
+//    דוגמה חיה לצבירה נכונה מעל אותם נתונים: `atCheckAlert` (חיסורים/איחורים
+//    לחודש עברי) — שווה להתחיל ממנה כשכותבים את הדוח.
+//
+// מה חסר כדי לכתוב את המסך: אפיון. לא הוגדרו עדיין טווח הדוח (חודש לועזי מול
+// חודש עברי — שאר האפליקציה עובדת עברי), אילו עמודות ומדדים מוצגים, האם הוא
+// פר-שיעור או פר-תלמיד, ומה קורה עם תלמידים לא-פעילים ועם אישורים.
+// **עד לאפיון — לא לחבר כאן לוגיקת דוח.**
 function loadR(){
-  var month=document.getElementById('rm').value;if(!month)return;
-  var y=month.split('-')[0],m=month.split('-')[1];
-  var el=document.getElementById('rc');el.innerHTML='<div class="ld">מחשב...</div>';
-  SB.from('attendance').select('*').gte('date',y+'-'+m+'-01').lte('date',y+'-'+m+'-31').then(function(ra){
-    SB.from('students').select('*').eq('active',true).order('name').then(function(rs){
-      var s=rs.data||[],a=ra.data||[];
-      if(!s.length){el.innerHTML='<div class="empty">אין נתונים</div>';return}
-      var tp=0,tl=0,ta=0,td=0;
-      var rows=s.map(function(x){var mine=a.filter(function(r){return r.student_id==x.id});var p=mine.filter(function(r){return r.status==='present'}).length,l=mine.filter(function(r){return r.status==='late'}).length,ab=mine.filter(function(r){return r.status==='absent'}).length,tot=p+l+ab,rate=tot?Math.round((p+l)/tot*100):0;tp+=p;tl+=l;ta+=ab;td+=tot;return Object.assign({},x,{p:p,l:l,ab:ab,tot:tot,rate:rate})});
-      var avg=td?Math.round((tp+tl)/td*100):0;
-      var h='<div class="rs"><div class="rc"><div class="n" style="color:#1a7a4a">'+tp+'</div><div class="l">נוכחויות</div></div><div class="rc"><div class="n" style="color:#a07830">'+tl+'</div><div class="l">איחורים</div></div><div class="rc"><div class="n" style="color:#c0392b">'+ta+'</div><div class="l">היעדרויות</div></div><div class="rc"><div class="n">'+avg+'%</div><div class="l">ממוצע</div></div></div>';
-      h+='<div class="tw"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>%</th></tr></thead><tbody>';
-      rows.forEach(function(r){var cls=r.rate>=80?'bp':r.rate>=60?'bl':'ba';h+='<tr><td><strong>'+r.name+'</strong></td><td>'+(r.class_name||'-')+'</td><td style="color:#1a7a4a;font-weight:600">'+r.p+'</td><td style="color:#a07830;font-weight:600">'+r.l+'</td><td style="color:#c0392b;font-weight:600">'+r.ab+'</td><td>'+r.tot+'</td><td><span class="badge '+cls+'">'+r.rate+'%</span></td></tr>'});
-      el.innerHTML=h+'</tbody></table></div>';
-    });
-  });
+  var el = document.getElementById('rc');
+  if (el) el.innerHTML = '<div class="empty">הדוח בבנייה — טרם אופיין</div>';
 }
 
 var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.addEventListener('click',function(){loadR()});
