@@ -88,7 +88,7 @@ if ('serviceWorker' in navigator) {
 if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProperty('--force-mobile','1');var s=document.createElement('style');s.textContent='@media all{'+['.inner{padding:14px!important}','.mods-wrap{padding:14px!important}','.hero{padding:18px 14px 24px!important}','.hero-title{font-size:1.3rem!important}','.stats{grid-template-columns:repeat(2,1fr)!important}','.stat{padding:12px 8px!important}','.stat .n{font-size:1.5rem!important}','header{height:60px!important;padding:0 12px!important}','.logo{width:46px!important;height:46px!important}','.hdiv{display:none!important}','.htxt{font-size:.78rem!important}','.htxt strong{font-size:.88rem!important}','nav{gap:2px!important;overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}','nav::-webkit-scrollbar{display:none!important}','.nb{padding:8px 10px!important;font-size:.78rem!important;gap:4px!important;min-height:44px!important;flex-shrink:0!important;white-space:nowrap!important}','.mods{grid-template-columns:1fr!important;gap:10px!important}','.mod{padding:16px 14px!important;gap:12px!important;width:100%!important}','.mod-ic{width:48px!important;height:48px!important;font-size:1.4rem!important;border-radius:10px!important}','.mod-name{font-size:1rem!important}','.mod-desc{font-size:.82rem!important}','.mods-lbl{font-size:.75rem!important;margin-bottom:12px!important}','.ptitle{font-size:1.1rem!important;margin-bottom:16px!important}','table{font-size:.82rem!important}','th{padding:9px 10px!important;font-size:.78rem!important}','td{padding:8px 10px!important}','.btn{padding:10px 16px!important;font-size:.84rem!important;min-height:44px!important}','.rh{margin-bottom:12px!important}','.tw{border-radius:8px!important}','.md{padding:20px 16px!important;max-width:calc(100vw - 28px)!important}','body{padding-bottom:64px!important}','.bottom-nav{display:flex!important;position:fixed!important;bottom:0!important;left:0!important;right:0!important;height:64px!important}','.hide-mobile{display:none!important}'].join('')+'}';document.head.appendChild(s);}
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -1209,23 +1209,42 @@ async function ysRefreshUsersCache() {
     if (!res.error && Array.isArray(res.data)) ysUsersCacheSave(res.data);
   } catch(e) {}
 }
+// ===== ניסוח הודעות אחיד לשלושת הפרויקטים (סבב 8) =====
+// **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
+// להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. שלוש ההודעות שלמטה חייבות להיות
+// **מילה במילה זהות** בשלושת הפרויקטים; אין לנסח וריאציה מקומית.
+var MSG_OFFLINE   = 'אין חיבור לאינטרנט — הפעולה לא בוצעה';
+var MSG_SAVED     = '✅ נשמר בהצלחה';
+var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
+
 // ---- מגבלת זמן לשאילתות אימות ----
 // supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
 // ה-fetch לא מצליח ולא נכשל — והספינר היה מסתובב לנצח בלי שום הודעה.
-var YS_AUTH_TIMEOUT_MS = 8000;
-function ysWithTimeout(p, ms) {
+var NET_TIMEOUT_MS = 8000;
+function withTimeout(p, ms) {
   return Promise.race([
     Promise.resolve(p),
     new Promise(function(_, reject) {
-      setTimeout(function(){ reject(new Error('timeout')); }, ms || YS_AUTH_TIMEOUT_MS);
+      setTimeout(function(){ reject(new Error('timeout')); }, ms || NET_TIMEOUT_MS);
     })
   ]);
 }
 // זיהוי כשל רשת (להבדיל משגיאת שרת/אימות)
-function ysIsNetErr(e) {
+function isNetErr(e) {
   if (!navigator.onLine) return true;
   var m = ((e && (e.message || e.details || '')) + '').toLowerCase();
-  return m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1 || m.indexOf('timeout') !== -1;
+  return m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1 ||
+         m.indexOf('failed to') !== -1 || m.indexOf('timeout') !== -1;
+}
+// ---- עוזרי רשת משותפים לשלושת הפרויקטים (סבב 8) ----
+// אותם שמות ואותה התנהגות ב-hanhala-ruchanit, schar-limud ו-yoman-avoda:
+// isNetErr / withTimeout / guardOnline / errMsg. אין לתת להם קידומת פרויקט.
+function guardOnline() {
+  if (!navigator.onLine) { toast(MSG_OFFLINE, 3000); return false; }
+  return true;
+}
+function errMsg(e) {
+  return isNetErr(e) ? MSG_OFFLINE : ('שגיאה: ' + ((e && (e.message || e.code)) || e));
 }
 // אימות מחדש שקט אחרי כניסה אופליין — כשהרשת חוזרת
 async function ysRevalidateOfflineLogin() {
@@ -1320,7 +1339,7 @@ async function _doLoginInner() {
   dbg('⏳ [1/4] שולח בקשה לשרת...');
   var res = null, netFail = false;
   try {
-    res = await ysWithTimeout(SB.from('ys_users')
+    res = await withTimeout(SB.from('ys_users')
       .select('*')
       .eq('username', username)
       .eq('password_hash', pass)
@@ -1331,7 +1350,7 @@ async function _doLoginInner() {
     console.error('[login] SB threw:', e && e.message);
     netFail = true;
   }
-  if (!netFail && res && res.error && ysIsNetErr(res.error)) netFail = true;
+  if (!netFail && res && res.error && isNetErr(res.error)) netFail = true;
 
   var serverErr = (!netFail && res && res.error) ? res.error : null;
   // תשובה סמכותית של השרת "אין משתמש כזה" — אסור ליפול לעותק מקומי אחריה,
@@ -1347,7 +1366,7 @@ async function _doLoginInner() {
     ysLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
     ysLoginLog('login_fail', 'wrong_credentials_online', ysLoginDetails(username));
-    showErr('❌ שם משתמש או סיסמה שגויים'); return;
+    showErr('❌ ' + MSG_BAD_LOGIN); return;
   } else {
     // אין רשת / פסק זמן / שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) —
     // בכל אלה השרת לא ענה תשובה סמכותית, ולכן מנסים את העותק המקומי.
@@ -1369,7 +1388,7 @@ async function _doLoginInner() {
     } catch(eF) { console.warn('[login] cache.find failed:', eF); }
     if (!lu) {
       ysLoginLog('login_fail', 'wrong_credentials_offline', ysLoginDetails(username));
-      showErr('❌ שם משתמש או סיסמה שגויים'); return;
+      showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
     AUTH.user = lu;
     AUTH.offlineLogin = true;
@@ -1443,7 +1462,7 @@ async function loadPerms() {
   // הישן היה קוד מת, והעותק המקומי מעולם לא נטען. חובה לבדוק error במפורש.
   var res = null;
   try {
-    res = await ysWithTimeout(SB.from('kv').select('value').eq('key','ys_perms').single());
+    res = await withTimeout(SB.from('kv').select('value').eq('key','ys_perms').single());
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
@@ -1761,7 +1780,7 @@ function openStatusForm(type) {
     document.body.appendChild(form);
   }
 
-  var reasonOptions = reasons.map(function(r){ return '<option value="'+r+'">'+r+'</option>'; }).join('');
+  var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px';
   var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff;box-sizing:border-box';
 
@@ -1837,7 +1856,7 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div style="padding:8px 16px;font-size:.75rem;color:#aaa">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
-  try { res = await ysWithTimeout(SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  try { res = await withTimeout(SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = sortUsersByOrder(data);
@@ -1847,13 +1866,18 @@ async function toggleUserMenu() {
   var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
   othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
     others.map(function(u){
-      var safeName = u.full_name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-      return '<button onclick="switchUser('+u.id+',\''+safeName+'\');" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+u.full_name+'</span></button>';
+      return '<button data-uid="'+esc(u.id)+'" data-uname="'+esc(u.full_name)+'" onclick="window.switchUserEl(this)" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
 }
 function closeUserMenu() {
   document.getElementById('user-menu').style.display = 'none';
 }
+// קורא ה-data-attributes של כפתור החלפת המשתמש. אין להחזיר קוד JS מורכב
+// לתוך מאפיין onclick — שם עם מרכאה או גרש שובר את המאפיין (סבב 8).
+window.switchUserEl = function(el) {
+  if (!el) return;
+  switchUser(Number(el.getAttribute('data-uid')), el.getAttribute('data-uname') || '');
+};
 function switchUser(id, name) {
   closeUserMenu();
   var d = document.getElementById('switch-user-modal');
@@ -1887,9 +1911,9 @@ async function confirmSwitch() {
   if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
   var res=null, netFail=false;
   try {
-    res=await ysWithTimeout(SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single());
+    res=await withTimeout(SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
-  if(!netFail&&res&&res.error&&ysIsNetErr(res.error)) netFail=true;
+  if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
   // ‎.single() מחזיר error גם כשאין שורה, ולכן אין כאן תשובה סמכותית להבחין בה:
   // כל כישלון מנסה את העותק המקומי, ורק אם גם הוא לא מתאים מוצגת שגיאה.
@@ -1985,7 +2009,7 @@ window.saveAbsenceReasons = async function() {
     await ysKvSet('ys_last_changed', ts);
     console.log('[absence-reasons] ys_last_changed updated:', ts);
   } catch(e) { console.error('[absence-reasons] save error:', e); }
-  toast('הסיבות נשמרו');
+  toast('✅ הסיבות נשמרו');
 };
 function saveAbsenceReasons() { window.saveAbsenceReasons(); }
 
@@ -2104,12 +2128,12 @@ async function renderUsersList() {
   // הפירוק הישן `var {data} = await ...` בלע את res.error (supabase-js לא זורק),
   // וכשל רשת הוצג כ"אין משתמשים" — מנהל קורא את זה כאילו הטבלה נמחקה.
   var res;
-  try { res = await ysWithTimeout(SB.from('ys_users').select('*').order('full_name')); }
+  try { res = await withTimeout(SB.from('ys_users').select('*').order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || 'אין חיבור';
     el.innerHTML = '<div class="ld" style="color:#c53030">❌ לא ניתן לטעון את רשימת המשתמשים' +
-      '<div style="font-size:.78rem;color:var(--text3);margin-top:4px">' + ysEsc(em) + '</div>' +
+      '<div style="font-size:.78rem;color:var(--text3);margin-top:4px">' + esc(em) + '</div>' +
       '<button onclick="window.renderUsersList()" style="margin-top:10px;padding:7px 18px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.85rem;cursor:pointer">נסה שוב</button></div>';
     return;
   }
@@ -2121,8 +2145,8 @@ async function renderUsersList() {
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeStyle = u.active ? '' : 'opacity:.5;';
     return '<div class="ur" style="'+activeStyle+'" data-row-id="'+u.id+'">' +
-      '<div class="ur-name">'+u.full_name+'<br><small style="color:var(--text3);font-weight:400">@'+u.username+'</small></div>' +
-      '<span class="ur-role '+roleClass+'">'+roleLabel+'</span>' +
+      '<div class="ur-name">'+esc(u.full_name)+'<br><small style="color:var(--text3);font-weight:400">@'+esc(u.username)+'</small></div>' +
+      '<span class="ur-role '+roleClass+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
         '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
@@ -2171,7 +2195,7 @@ async function openEditUser(u) {
   document.getElementById('um-err').textContent = '';
   // טען סיסמה נוכחית מה-DB
   var pwRes = null;
-  try { pwRes = await ysWithTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
+  try { pwRes = await withTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
   if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
   else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
   var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
@@ -2197,7 +2221,7 @@ async function saveUser() {
   }
   var res;
   try {
-    res = await ysWithTimeout(id
+    res = await withTimeout(id
       ? SB.from('ys_users').update(obj).eq('id', id)
       : SB.from('ys_users').insert(obj));
   } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
@@ -2210,8 +2234,8 @@ async function saveUser() {
 async function toggleUserActive(id, current) {
   // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
   var res;
-  try { res = await ysWithTimeout(SB.from('ys_users').update({active: !current}).eq('id', id)); }
-  catch (e) { toast('❌ אין חיבור — הפעולה לא בוצעה'); return; }
+  try { res = await withTimeout(SB.from('ys_users').update({active: !current}).eq('id', id)); }
+  catch (e) { toast(MSG_OFFLINE); return; }
   if (res && res.error) {
     toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
     return;
@@ -2287,12 +2311,12 @@ async function changeMyPassword() {
   // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   var chk;
-  try { chk = await ysWithTimeout(SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldPass).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldPass).maybeSingle()); }
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
   var upd;
-  try { upd = await ysWithTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id)); }
+  try { upd = await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id)); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   document.getElementById('pw-old').value = '';
@@ -2311,7 +2335,7 @@ function hebrewDateFull(d){return hebrewDate(d);}
 // showPage הישן הוחלף במערכת auth - ראה למעלה
 
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
-function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
+function saveEp(n){closeEp('ep-'+n);toast(MSG_SAVED)}
 
 // רענון נתוני כרטיסי הסיכום בדף הבית
 async function refreshDashStats() {
@@ -2407,7 +2431,9 @@ function loadR(){
 
 var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.addEventListener('click',function(){loadR()});
 
-var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2800)}
+// חתימה משותפת לשלושת הפרויקטים (סבב 8): toast(msg, dur) — dur באלפיות שנייה,
+// אופציונלי. ברירת המחדל נשארת של כל אפליקציה (כאן 2800) כדי לא לשנות התנהגות.
+var tt;function toast(msg,dur){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},dur||2800)}
 
 // ── כתיבה בטוחה ל-localStorage ─────────────────────────────────────────
 // באחסון חסום (WebView מוקשח, גלישה פרטית, מכסה מלאה) `setItem` **זורק**, וכל
@@ -2568,7 +2594,7 @@ async function ysFlushQueue() {
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
 // שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
 function ysKvGet(key) {
-  return ysWithTimeout(SB.from('kv').select('value').eq('key', key).single()).then(function(r){
+  return withTimeout(SB.from('kv').select('value').eq('key', key).single()).then(function(r){
     if (r && r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
     return null;
   });
@@ -2578,24 +2604,24 @@ function ysKvGet(key) {
 // ===== SYNC DIAGNOSTICS + DAILY BACKUP (Phase 1 — additive only) =====
 // ============================================================
 // Stable per-device id (8 chars), created once and kept in localStorage.
-var _ysDeviceIdMem = null;
+var _deviceIdMem = null;
 function getDeviceId() {
   // localStorage זורק כשהאחסון חסום (WebView מוקשח / גלישה פרטית). בלי העטיפה
   // הזו כל קורא של getDeviceId מפיל את הפונקציה שקראה לו — כולל doLogin.
   try {
     var id = localStorage.getItem('ys_device_id');
     if (!id) {
-      id = _ysDeviceIdMem || _ysRandId();
+      id = _deviceIdMem || _randDeviceId();
       localStorage.setItem('ys_device_id', id);
     }
-    _ysDeviceIdMem = id;
+    _deviceIdMem = id;
     return id;
   } catch (e) {
-    if (!_ysDeviceIdMem) _ysDeviceIdMem = _ysRandId();
-    return _ysDeviceIdMem;
+    if (!_deviceIdMem) _deviceIdMem = _randDeviceId();
+    return _deviceIdMem;
   }
 }
-function _ysRandId() {
+function _randDeviceId() {
   var c = 'abcdefghijklmnopqrstuvwxyz0123456789', id = '';
   for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
   return id;
@@ -2669,7 +2695,12 @@ function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.upd
 // ורוקנה מסך שלם — לוח מחוונים, ארכיון או השגחה. כל אתר קריאה עובר דרך כאן.
 function ysMarks(rec) { return (rec && rec.marks && typeof rec.marks === 'object') ? rec.marks : {}; }
 // בריחת HTML להודעות שגיאה שמגיעות מהשרת ומוזרקות ל-innerHTML
-function ysEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// בריחת HTML — מימוש זהה לשלושת הפרויקטים (סבב 8), כולל גרש בודד.
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
 // audit passivi: שם המשתמש המחובר (או null) — לא משפיע על מיזוג/סינון/חישוב
 function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
@@ -2979,7 +3010,7 @@ async function ysAutoSync() {
   _ysSyncing = true;
   try {
     // בלי timeout שאילתה תקועה משאירה את _ysSyncing=true לנצח — הפולינג מת בשקט
-    var r = await ysWithTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').single());
+    var r = await withTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').single());
     if (!r || !r.data) { _ysSyncing = false; return; }
     var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
     if (remoteTs > _ysLastTs) {
@@ -2997,7 +3028,7 @@ setInterval(ysAutoSync, 3000);
 setTimeout(async function() {
   try {
     // Try to read - if table missing, create it via pg REST
-    var r = await ysWithTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle());
+    var r = await withTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
       // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
@@ -3058,14 +3089,16 @@ function updateSearchDropdown() {
     return s.name.toLowerCase().indexOf(ql) >= 0;
   }).slice(0, 8);
   if (!matches.length) { dd.classList.remove('open'); return; }
-  var escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // בורחים קודם ל-HTML ורק אז בונים את הביטוי הרגולרי, אחרת ההדגשה לא
+  // מוצאת שם שעבר בריחה (וגם: שם עם תגית היה נכנס גולמי ל-innerHTML).
+  var escaped = esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   var re = new RegExp('(' + escaped + ')', 'gi');
   dd.innerHTML = matches.map(function(s) {
     var clsLabel = CLS_NAME[s.cls] || s.cls || '';
-    var nameHl = s.name.replace(re, '<mark>$1</mark>');
+    var nameHl = esc(s.name).replace(re, '<mark>$1</mark>');
     return '<div class="sd-item" tabindex="0" onclick="window.selectSearchStudent(' + s.id + ')">' +
       '<span class="sd-name">' + nameHl + '</span>' +
-      '<span class="sd-cls">' + clsLabel + '</span>' +
+      '<span class="sd-cls">' + esc(clsLabel) + '</span>' +
       '</div>';
   }).join('');
   dd.classList.add('open');
@@ -3299,7 +3332,7 @@ function renderStudents(){
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'#fff':'#f9fafb';
       var yr=s.cohortYear||'';
-      var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+yr+'</span>':'';
+      var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
       return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
           '<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'+
@@ -3340,10 +3373,10 @@ function renderStudents(){
     var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
-    html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>';
+    html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
     html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
-    html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+clsLabel+'</span>';
+    html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">';
@@ -3459,7 +3492,7 @@ window.openManageListDlg = function(){
 window.openDeactivateStudentDlg = function(){
   var students=getStudents().filter(function(s){return s.active!==false;});
   var opts=students.map(function(s){
-    return '<option value="'+s.id+'">'+s.name+' ('+( CLS_NAME[s.cls]||s.cls)+')</option>';
+    return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
   var dlg=document.createElement('div');
   dlg.setAttribute('data-dlg','deactivate-st');
@@ -3836,7 +3869,7 @@ function openApproval(sid){
   if(nameEl)nameEl.textContent=s?s.name:'';
   var reasons=getReasons();
   var sel=document.getElementById('appr-reason');
-  if(sel)sel.innerHTML=reasons.map(function(r){return '<option>'+r+'</option>';}).join('');
+  if(sel)sel.innerHTML=reasons.map(function(r){return '<option>'+esc(r)+'</option>';}).join('');
   var ow=document.getElementById('other-text-wrap');if(ow)ow.style.display='none';
   var fh=document.getElementById('appr-from-heb');
   try{if(fh&&typeof hebrewDateShort==='function')fh.value=hebrewDateShort();}catch(e){}
@@ -3982,7 +4015,7 @@ window.importStudentsFromFile = function(input) {
       if (skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
       if (failed.length > 0) {
         body += '<div style="color:#c0392b;margin-top:6px"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
-        body += '<div style="font-size:.82rem;margin-top:4px;direction:rtl">'+failed.slice(0,10).join(', ')+(failed.length>10?'...':'')+'</div>';
+        body += '<div style="font-size:.82rem;margin-top:4px;direction:rtl">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       document.getElementById('import-summary-icon').textContent = icon;
       document.getElementById('import-summary-title').textContent = title;
@@ -4277,15 +4310,17 @@ function atFillSessionBtns() {
   var el=document.getElementById('at-sess-btns');
   if(!el) return;
   var cfg=window._atCfg||atDefaultCfg();
-  el.innerHTML=atSortedSessions(cfg).map(function(s){
-    return '<button onclick="window.atOpenSession(\''+s.id+'\',\''+s.name.replace(/'/g,'\\\'')+'\')" '+
-      'style="padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;'+
-      'transition:all .18s" '+
-      'onmouseover="this.style.background=\'#dbe4f7\'" '+
-      'onmouseout="this.style.background=\'#eef2fa\'">'+
-      s.name+'</button>';
-  }).join('');
+  el.innerHTML='';
+  atSortedSessions(cfg).forEach(function(s){
+    var btn=document.createElement('button');
+    btn.textContent=s.name;
+    btn.style.cssText='padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
+    btn.onmouseover=function(){this.style.background='#dbe4f7';};
+    btn.onmouseout=function(){this.style.background='#eef2fa';};
+    btn.addEventListener('click',function(){window.atOpenSession(s.id,s.name);});
+    el.appendChild(btn);
+  });
 }
 
 // מעבר לשונית
@@ -4433,7 +4468,7 @@ function atRenderTodaySessions() {
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=atSummaryHtml(cnts);
     html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
-      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
+      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
       '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
     '</div>';
@@ -4761,7 +4796,7 @@ window.atRenderStudents = function() {
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
       '<div style="width:22px;text-align:center;font-weight:700;font-size:.8rem;color:var(--text3)">'+cls+'</div>'+
-      '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+s.name+autoHint+'</div>'+
+      '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+esc(s.name)+autoHint+'</div>'+
       lateField+
       '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'+
         (hasMark?mkClearBtn(s.id):'')+
@@ -4932,7 +4967,7 @@ window.atRenderArchive = async function(records) {
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
-          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+rec.session+'</span>';
+          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
@@ -5041,10 +5076,10 @@ window.atExportExcel = async function(fromIso,toIso) {
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
     console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
     // SpreadsheetML (Excel 2003 XML) with ss:RightToLeft=1
-    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-    function cell(v){return '<Cell><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
-    function numCell(v){return '<Cell><Data ss:Type="Number">'+esc(v)+'</Data></Cell>';}
-    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
+    function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
+    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     var HDR=['תאריך','סדר','שם תלמיד','סטאטוס','דקות איחור','ממלא'];
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
@@ -5242,8 +5277,8 @@ window.atRenderSupervision = async function() {
     var cardId='sup-card-'+sid;
     html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
-    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
-    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
+    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -5259,7 +5294,7 @@ window.atRenderSupervision = async function() {
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     var cfg=window._atCfg||atDefaultCfg();
     html+='<select id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
-      cfg.treats.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>';
+      cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
     html+='<button onclick="window.atAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
@@ -5270,10 +5305,10 @@ window.atRenderSupervision = async function() {
         var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
           '<span style="color:var(--text2)">'+dl+'</span>'+
-          '<span style="font-weight:600">'+t.type+'</span>'+
-          (t.note?'<span style="color:var(--text2)">— '+t.note+'</span>':'')+
+          '<span style="font-weight:600">'+esc(t.type)+'</span>'+
+          (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
-          '<span style="color:var(--text3);font-size:.76rem">'+t.by_name+'</span>'+
+          '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
           '<button onclick="window.atDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
@@ -5363,8 +5398,8 @@ window.atSupDetail = function(sid) {
       rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:.83rem;direction:rtl">';
       rows+='<span style="min-width:54px;color:var(--text2)">'+(dowStr)+'</span>';
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
-      rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+r.session+'</span>';
-      rows+='<span style="color:'+col+';font-weight:700;flex:1">'+lbl+'</span>';
+      rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
+      rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+'</span>';
       rows+='<button onclick="window.atSupEditMarkDlg(\''+r.recId+'\',\''+sid+'\',\''+r.mark+'\')" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
@@ -5472,7 +5507,7 @@ function atCheckAlert() {
   var d=document.createElement('div');
   d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.6);z-index:700;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   var list=alerts.slice(0,10).map(function(s){
-    return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+s.name+
+    return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+esc(s.name)+
       (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span style="color:#b7791f;margin-right:6px"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
@@ -5497,7 +5532,7 @@ window.renderAttendSettings = async function() {
   if(sc){
     sc.innerHTML=cfg.sessions.map(function(s){
       return '<div data-sess-row="1" style="display:flex;gap:6px;align-items:center;margin-bottom:2px">'+
-        '<input data-sess-name="1" value="'+s.name+'" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
         '<input data-sess-time="1" type="time" value="'+(s.startTime||'')+'" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
@@ -5506,7 +5541,7 @@ window.renderAttendSettings = async function() {
   if(tc){
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input value="'+t+'" id="at-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input value="'+esc(t)+'" id="at-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
@@ -5868,7 +5903,7 @@ function slRenderTodaySessions() {
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=slSummaryHtml(cnts);
     html+='<div onclick="window.slEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
-      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+rec.session+'</span>'+
+      '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
       '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
     '</div>';
@@ -6172,7 +6207,7 @@ window.slRenderStudents = function() {
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
         (isPendingLate?'<button onclick="window.slConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
-    var noteVal=(marks.note||'').replace(/"/g,'&quot;');
+    var noteVal=esc(marks.note||'');
     var noteField='<input type="text" placeholder="הערה" value="'+noteVal+'" '+
       'id="sl-note-'+s.id+'" '+
       'oninput="window.slSetNote(\''+s.id+'\',this.value)" '+
@@ -6180,7 +6215,7 @@ window.slRenderStudents = function() {
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
       '<div style="width:22px;text-align:center;font-weight:700;font-size:.8rem;color:var(--text3)">'+cls+'</div>'+
-      '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+s.name+autoHint+'</div>'+
+      '<div style="flex:1;font-weight:600;font-size:.88rem;min-width:80px">'+esc(s.name)+autoHint+'</div>'+
       lateField+
       noteField+
       '<div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">'+
@@ -6351,7 +6386,7 @@ window.slRenderArchive = async function(records) {
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
-          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+rec.session+'</span>';
+          html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button onclick="event.stopPropagation();window.slDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
@@ -6451,10 +6486,10 @@ window.slExportExcel = async function(fromIso,toIso) {
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
-    function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-    function cell(v){return '<Cell><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
-    function numCell(v){return '<Cell><Data ss:Type="Number">'+esc(v)+'</Data></Cell>';}
-    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+esc(v)+'</Data></Cell>';}
+    function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
+    function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
+    function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     var HDR=['תאריך','דו"ח','שם תלמיד','סטאטוס','דקות איחור','הערה','ממלא'];
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
@@ -6642,8 +6677,8 @@ window.slRenderSupervision = async function() {
     var cardId='sl-sup-card-'+sid;
     html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sl-sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
-    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+clsLabel+'</div>';
-    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+st.name+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
+    html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
+    html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -6658,7 +6693,7 @@ window.slRenderSupervision = async function() {
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     var slCfg=window._slCfg||slDefaultCfg();
     html+='<select id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
-      slCfg.treats.map(function(t){return '<option>'+t+'</option>';}).join('')+'</select>';
+      slCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
     html+='<button onclick="window.slAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
@@ -6669,10 +6704,10 @@ window.slRenderSupervision = async function() {
         var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
           '<span style="color:var(--text2)">'+dl+'</span>'+
-          '<span style="font-weight:600">'+t.type+'</span>'+
-          (t.note?'<span style="color:var(--text2)">— '+t.note+'</span>':'')+
+          '<span style="font-weight:600">'+esc(t.type)+'</span>'+
+          (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
-          '<span style="color:var(--text3);font-size:.76rem">'+t.by_name+'</span>'+
+          '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
           '<button onclick="window.slDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
@@ -6761,8 +6796,8 @@ window.slSupDetail = function(sid) {
       rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:.83rem;direction:rtl">';
       rows+='<span style="min-width:54px;color:var(--text2)">'+dowStr+'</span>';
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
-      rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+r.session+'</span>';
-      rows+='<span style="color:'+col+';font-weight:700;flex:1">'+lbl+noteStr+'</span>';
+      rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
+      rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+esc(noteStr)+'</span>';
       rows+='<button onclick="window.slSupEditMarkDlg(\''+r.recId+'\',\''+sid+'\',\''+r.mark+'\')" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
@@ -6837,7 +6872,7 @@ window.renderSleepSettings = async function() {
   if(tc){
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input value="'+t+'" id="sl-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input value="'+esc(t)+'" id="sl-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
