@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v24';
+var CACHE_NAME = 'hanhala-ruchanit-v25';
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -83,6 +83,24 @@ function cachePut(cache, url, opts) {
   });
 }
 
+// ריפוי עצמי של מטמון ה-CDN — סקריפט CDN שחסר במטמון (נמחק ע"י אפליקציה
+// אחות לפני תיקון הקידומת ב-activate, או כשל רשת רגעי בהתקנה) לא היה מושלם
+// לעולם: בזמן-ריצה הוא מגיע מהדף כבקשת no-cors ⇒ opaque ⇒ לא נשמר. הפונקציה
+// רצה ב-activate וגם פעם אחת בכל עליית SW, משלימה רק את מה שחסר, וכשל בה
+// שקט — לא מפיל כלום. כך מכשירים שנפגעו מתרפאים לבד, בלי לחכות לגרסה חדשה.
+function ensureCdnCached() {
+  return caches.open(CACHE_NAME).then(function(cache) {
+    return Promise.all(CDN.map(function(url) {
+      return cache.match(url, SUB_OPTS).then(function(hit) {
+        if (hit) return;
+        return cachePut(cache, url, {mode: 'cors', credentials: 'omit'})
+          .then(function() { console.log('[SW] healed cdn:', url.slice(0, 60)); });
+      }).catch(function() {});
+    }));
+  }).catch(function() {});
+}
+ensureCdnCached(); // קוד עליון = רץ פעם אחת בכל עליית SW
+
 // Install — קבצים מקומיים + סקריפטי CDN. כשל בודד לא מפיל את ההתקנה.
 self.addEventListener('install', function(event) {
   console.log('[SW] install start', CACHE_NAME);
@@ -120,9 +138,13 @@ self.addEventListener('activate', function(event) {
         console.warn('[SW] index.html חסר במטמון החדש — משאירים את הישן כרשת ביטחון');
         return;
       }
+      // ⚠️ שלוש האפליקציות חיות על אותו origin (ygtotlrl-lab.github.io) וחולקות
+      // CacheStorage אחד. מוחקים אך ורק מטמונים של האפליקציה הזו (קידומת
+      // 'hanhala-ruchanit-') — מחיקת "כל מה שאינו CACHE_NAME" השמידה את המטמונים
+      // של schar-limud ו-yoman-avoda ושברה להן את האופליין. אין להסיר את הסינון.
       return caches.keys().then(function(names) {
         return Promise.all(
-          names.filter(function(n) { return n !== CACHE_NAME; })
+          names.filter(function(n) { return n.startsWith('hanhala-ruchanit-') && n !== CACHE_NAME; })
                .map(function(n) {
                  console.log('[SW] deleting old cache:', n);
                  return caches.delete(n);
@@ -131,6 +153,8 @@ self.addEventListener('activate', function(event) {
       });
     }).catch(function(err) {
       console.warn('[SW] activate cleanup skipped:', err.message);
+    }).then(function() {
+      return ensureCdnCached();
     }).then(function() {
       return self.clients.claim();
     })
