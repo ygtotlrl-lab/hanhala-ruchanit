@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v16';
+var CACHE_NAME = 'hanhala-ruchanit-v24';
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -13,15 +13,29 @@ var CORE = [
 // וכל הסקריפט המוטבע מת). נמשכים ב-mode:'cors' דווקא, כי תגובת no-cors היא opaque
 // עם status 0 ו-cache.put דוחה אותה — לכן עד היום הם מעולם לא נכנסו למטמון.
 var CDN = [
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
 ];
 
 // ignoreSearch — ה-APK טוען את האפליקציה עם '?apk=1', ובלי זה בקשת הניווט
-// לא מוצאת את './' שבמטמון ונופלת לדף שגיאה.
-var MATCH_OPTS = {ignoreVary: true, ignoreSearch: true};
+// לא מוצאת את './' שבמטמון ונופלת לדף שגיאה. לכן הוא נחוץ — אבל **רק לניווט**.
+//
+// ⚠️ אסור להשתמש ב-ignoreSearch לחיפוש כללי של תת-משאבים: הוא מתעלם מה-query
+// string, וב-PostgREST כל הפילטרים נמצאים דווקא שם. חיפוש כללי עם ignoreSearch
+// גרם לכך שבקשת כניסה עבור משתמש אחד התאימה לתשובה שנשמרה עבור משתמש אחר —
+// כניסה עם כל סיסמה, בזהות זרה. אותה קריסה חלה על כל קריאות טבלת kv, שנבדלות
+// זו מזו רק ב-query. השארנו שתי מפות נפרדות כדי שזה לא יחזור.
+var NAV_OPTS = {ignoreVary: true, ignoreSearch: true};  // ניווט בלבד
+var SUB_OPTS = {ignoreVary: true};                      // תת-משאבים — ה-query הוא חלק מהזהות
+
+// בקשות ל-Supabase לא נכנסות למטמון כלל ולא עוברות דרך ה-SW: תשובת API שנשמרת
+// היא נתון ישן שמוגש כאילו הוא טרי. באופליין עדיף שהבקשה תיכשל באמת — כך
+// ysWithTimeout/ysIsNetErr מזהים netFail ונופלים למסלול הכניסה המקומי הנכון.
+function isSupabaseRequest(url) {
+  return url.indexOf('.supabase.co') !== -1;
+}
 
 // דף אופליין — HTML אמיתי עם Content-Type, לא מחרוזת 'Offline' שנראית
 // כמסך שחור עם טקסט זעיר בפינה.
@@ -100,7 +114,7 @@ self.addEventListener('install', function(event) {
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      return cache.match('./index.html', MATCH_OPTS);
+      return cache.match('./index.html', NAV_OPTS);
     }).then(function(hit) {
       if (!hit) {
         console.warn('[SW] index.html חסר במטמון החדש — משאירים את הישן כרשת ביטחון');
@@ -127,6 +141,10 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   if (event.request.method !== 'GET') return;
   if (!event.request.url.startsWith('http')) return;
+  // Supabase — לא נוגעים בכלל: לא מיירטים, לא שומרים, לא מגישים מהמטמון.
+  if (isSupabaseRequest(event.request.url)) return;
+
+  var isNav = event.request.mode === 'navigate';
 
   event.respondWith(
     fetch(event.request).then(function(response) {
@@ -140,14 +158,15 @@ self.addEventListener('fetch', function(event) {
       }
       return response;
     }).catch(function() {
-      // caches.match הגלובלי סורק את כל המטמונים — גם ישן ששרד ב-activate
-      return caches.match(event.request, MATCH_OPTS).then(function(cached) {
+      // caches.match הגלובלי סורק את כל המטמונים — גם ישן ששרד ב-activate.
+      // ניווט מחפש עם NAV_OPTS (כדי ש-'?apk=1' ימצא את './'), תת-משאב עם SUB_OPTS.
+      return caches.match(event.request, isNav ? NAV_OPTS : SUB_OPTS).then(function(cached) {
         if (cached) return cached;
-        if (event.request.mode === 'navigate') {
+        if (isNav) {
           // ניווט תמיד מקבל את האפליקציה, בכל וריאציה של query string
-          return caches.match('./index.html', MATCH_OPTS).then(function(idx) {
+          return caches.match('./index.html', NAV_OPTS).then(function(idx) {
             if (idx) return idx;
-            return caches.match('./', MATCH_OPTS).then(function(root) {
+            return caches.match('./', NAV_OPTS).then(function(root) {
               return root || offlinePage();
             });
           });
