@@ -865,6 +865,10 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
+      <div class="ss" id="ss-sync">
+        <div class="ss-t">⏳ ממתין לסנכרון</div>
+        <div id="pend-status-box"><div class="ld">טוען...</div></div>
+      </div>
       <div class="ss" id="ss-storage">
         <div class="ss-t">💾 אחסון מקומי</div>
         <div id="ls-status-box"><div class="ld">טוען...</div></div>
@@ -1975,7 +1979,7 @@ function showSettingsModule(mod) {
   if (target) target.style.display = '';
   // setTimeout מבטיח שה-DOM עודכן לפני הrender
   setTimeout(function() {
-    if (mod === 'system') { renderUsersList(); renderPermsTable(); lsRenderStatus(); }
+    if (mod === 'system') { renderUsersList(); renderPermsTable(); pendRenderStatus(); lsRenderStatus(); }
     if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
     if (mod === 'attend') window.renderAttendSettings();
     if (mod === 'sleep') window.renderSleepSettings();
@@ -2394,6 +2398,9 @@ async function loadDash(){
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של ysPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
+  // סימוני "ממתין לסנכרון" (סבב 12) — נטענים לפני המשיכה, כך שרשומה שלא
+  // אושרה בסשן הקודם מוצגת כממתינה כבר בשנייה הראשונה.
+  try { pendBoot(); } catch (e) { console.warn('[pend] pendBoot', e); }
   await ysPullFromCloud(); // טוען נתונים + refreshDashStats נקרא בתוכה
   renderStudents();
   // עדכון בזמן אמת: ysAutoSync רץ גלובלית כל 3 שניות על timestamp בלבד
@@ -2969,6 +2976,311 @@ window.lsFails = lsFails;
 window.lsOkSince = lsOkSince;
 window.lsGuardToast = lsGuardToast;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
+/* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+// `extra` — התור הישן של hanhala הוא **פר-מפתח kv** ולא פר-רשומה, ולכן הוא
+// לא נכנס למפת הסימונים. הוא כן חייב להופיע במונה, אחרת המשתמש רואה "0
+// ממתינות" בזמן שארבעה מפתחות תקועים בתור.
+var PEND_CFG = {
+  app: 'hanhala-ruchanit', key: 'ys_pending',
+  extra: function () {
+    try {
+      var q = JSON.parse(localStorage.getItem('ys_offline_queue') || '[]');
+      return (Array.isArray(q) && q.length) ? (q.length + ' מפתחות בתור') : '';
+    } catch (e) { return ''; }
+  }
+};
+
+/* ═══ ממתין לסנכרון — מודול משותף (סבב 12) ═══════════════════════════════
+   הבעיה שהמודול הזה פותר: אחרי שמירה מקומית המסך נראה **בדיוק** כמו אחרי
+   שמירה בענן. המשתמש רושם תשלום ברכבת התחתית, רואה אותו ברשימה, וסוגר את
+   האפליקציה בהנחה שהוא שמור — בזמן שהוא יושב רק על המכשיר הזה. סימון גלוי
+   הוא ההבדל בין "שמור" ל"שמור אצלך בלבד".
+
+   שלוש רמות תצוגה, כולן מהמפה אחת:
+     • **תגית ⏳ על הרשומה עצמה** — `pendTag(key)`, נכנסת לשורה ברשימה.
+     • **מונה גלוי** — סרגל תחתון, מוצג רק כשיש משהו ממתין.
+     • **התרעה** — משהו ממתין מעל 24 שעות ⇐ באנר אדום קבוע שנשאר עד סגירה.
+
+   ⚠️ **ההגדרה של "ממתין" היא ראייתית, לא אופטימית.** רשומה מסומנת ממתינה
+   ברגע שנכתבה במכשיר, ויורדת מהסימון **רק כשיש ראיה שהענן קיבל אותה**:
+   תשובת הצלחה, או דחיפת-מצב מוצלחת שכללה אותה. כשל רשת אינו ראיה לכלום
+   ולכן **אינו מוריד סימון** — תשובה שאבדה ברשת היא בדיוק המקרה שבו הרשומה
+   אולי כן נכנסה, ואולי לא. ספק ⇐ נשאר מסומן.
+
+   ⚠️ **כשל סמכותי כן מוריד את הסימון** (`pendFailed`) — שגיאת ולידציה או
+   הרשאה אומרת שהשורה **לא** נכתבה, וסימון "ממתין" עליה היה שקר מהכיוון
+   השני: הוא מבטיח שליחה חוזרת שלא תקרה לעולם.
+
+   ⚠️ **הכלל לדחיפת-מצב מלא** (`pendConfirmPush`): דחיפה מוצלחת מאשרת כל מה
+   שסומן **לפני שצילום המצב נלקח** — לא לפני שהיא הסתיימה. רשומה שנכתבה
+   באמצע הדחיפה אינה בתוכה, והורדת הסימון ממנה הייתה מאבדת אותה בשקט.
+   לכן `t0` נלקח לפני קריאת המצב המקומי, ומועבר לכאן.
+
+   התלויות: `lsSet`/`lsGet` (מודול האחסון) ו-`esc`. `PEND_CFG` מוגדרת מעליו
+   והיא **הדבר היחיד שנבדל בין האפליקציות**.
+   ═══════════════════════════════════════════════════════════════════════ */
+var PEND_LATE_MS = 24 * 60 * 60 * 1000;   // סף ההתרעה
+var PEND_MAX = 800;                       // תקרת המפה — הגנה מפני צמיחה בלי גבול
+var _pendMap = null;
+var _pendAlertDismissed = 0;
+
+// `PEND_CFG.key` יכולה להיות מחרוזת או פונקציה. yoman-avoda מחזיקה שני
+// מוסדות באותו דומיין, וסימוני האחד אינם תקפים לשני — שם היא פונקציה.
+function pendKeyName() {
+  var k = (typeof PEND_CFG === 'object') ? PEND_CFG.key : null;
+  if (typeof k === 'function') { try { k = k(); } catch (e) { k = null; } }
+  return k || 'pending_sync';
+}
+// החלפת הקשר (מוסד/משתמש) — המפה נטענת מחדש מהמפתח החדש.
+function pendReload() { _pendMap = null; pendAll(); pendRender(); }
+
+function pendAll() {
+  if (_pendMap) return _pendMap;
+  var v = null;
+  try { var raw = lsGet(pendKeyName(), null); v = raw == null ? null : JSON.parse(raw); }
+  catch (e) { v = null; }
+  _pendMap = (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+  // ניקוי ערכים פגומים — חותמת שאינה מספר חיובי אינה ראיה לכלום
+  Object.keys(_pendMap).forEach(function (k) {
+    var t = Number(_pendMap[k]);
+    if (!isFinite(t) || t <= 0) delete _pendMap[k];
+  });
+  return _pendMap;
+}
+
+// הכתיבה עוברת דרך lsSet (כלל ברזל 1). כישלון כאן אינו שקט: lsSet מרימה
+// באנר ורושמת ליומן, ו-lsGuardToast יבלע כל "✅" בשתי השניות הבאות.
+function pendSave() {
+  var m = pendAll();
+  var keys = Object.keys(m);
+  if (keys.length > PEND_MAX) {
+    // גריעה של הישנים ביותר. זו לא "מחיקת נתון שטרם הסתנכרן" — הרשומה עצמה
+    // נשארת במקומה; רק הסימון שלה יורד. עדיין נרשם ליומן, כי סימון שנעלם
+    // בלי אישור הוא בדיוק מה שהמודול בא למנוע.
+    keys.sort(function (a, b) { return m[a] - m[b]; });
+    var drop = keys.slice(0, keys.length - PEND_MAX);
+    drop.forEach(function (k) { delete m[k]; });
+    try { lsLog('pend-overflow', drop.length + ' סימונים נגרעו (תקרה ' + PEND_MAX + ')', 0); } catch (e) { }
+  }
+  return lsSet(pendKeyName(), JSON.stringify(m));
+}
+
+// סימון. חותמת קיימת **אינה נדרסת** — הגיל נמדד מהכתיבה הראשונה שלא אושרה,
+// אחרת עריכה חוזרת של אותה רשומה הייתה מאפסת את שעון ההתרעה לנצח.
+function pendMark(key) {
+  if (!key) return 0;
+  var m = pendAll();
+  if (!m[key]) { m[key] = Date.now(); pendSave(); pendRender(); }
+  return m[key];
+}
+function pendMarkMany(keys) {
+  if (!keys || !keys.length) return;
+  var m = pendAll(), now = Date.now(), ch = false;
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i] && !m[keys[i]]) { m[keys[i]] = now; ch = true; }
+  }
+  if (ch) { pendSave(); pendRender(); }
+}
+
+// אישור — יש ראיה שהענן קיבל.
+function pendClear(key) {
+  if (!key) return;
+  var m = pendAll();
+  if (m[key]) { delete m[key]; pendSave(); pendRender(); }
+}
+function pendClearMany(keys) {
+  if (!keys || !keys.length) return;
+  var m = pendAll(), ch = false;
+  for (var i = 0; i < keys.length; i++) if (m[keys[i]]) { delete m[keys[i]]; ch = true; }
+  if (ch) { pendSave(); pendRender(); }
+}
+
+// כשל סמכותי — הכתיבה **לא** נכנסה, ולכן הסימון יורד. ראה ההערה בראש המודול.
+function pendFailed(key) { pendClear(key); }
+
+// אישור דחיפת-מצב מלא: כל מה שסומן לפני `t0` נכלל בצילום שנדחף בהצלחה.
+// `prefix` מגביל לקטגוריה אחת — דחיפה של מפתח אחד אינה מאשרת את השאר.
+function pendConfirmPush(prefix, t0) {
+  var m = pendAll(), ch = false;
+  t0 = Number(t0) || 0;
+  if (!t0) return;
+  Object.keys(m).forEach(function (k) {
+    if (prefix && k.indexOf(prefix) !== 0) return;
+    if (m[k] < t0) { delete m[k]; ch = true; }
+  });
+  if (ch) { pendSave(); pendRender(); }
+}
+
+function pendHas(key) { return !!pendAll()[key]; }
+function pendSince(key) { return pendAll()[key] || 0; }
+function pendCount() { return Object.keys(pendAll()).length; }
+function pendOldest() {
+  var m = pendAll(), keys = Object.keys(m), t = 0;
+  for (var i = 0; i < keys.length; i++) if (!t || m[keys[i]] < t) t = m[keys[i]];
+  return t;
+}
+function pendLateCount() {
+  var m = pendAll(), keys = Object.keys(m), n = 0, cut = Date.now() - PEND_LATE_MS;
+  for (var i = 0; i < keys.length; i++) if (m[keys[i]] < cut) n++;
+  return n;
+}
+function pendReset() { _pendMap = {}; pendSave(); pendRender(); }
+
+function pendFmtAge(ms) {
+  if (!isFinite(ms) || ms < 0) ms = 0;
+  var mi = Math.floor(ms / 60000);
+  if (mi < 1) return 'פחות מדקה';
+  if (mi < 60) return mi + ' דק׳';
+  var h = Math.floor(mi / 60);
+  if (h < 24) return h + ' שע׳';
+  return Math.floor(h / 24) + ' ימים';
+}
+
+/* --------------------------------------------------------------- תצוגה */
+function pendEnsureStyle() {
+  if (document.getElementById('pend-style')) return;
+  var s = document.createElement('style');
+  s.id = 'pend-style';
+  s.textContent =
+    '.pend-tag{display:inline-block;background:#fde68a;color:#78350f;border:1px solid #f59e0b;' +
+    'border-radius:999px;padding:0 7px;font-size:.68rem;font-weight:700;line-height:1.6;' +
+    'white-space:nowrap;vertical-align:middle;margin:0 4px}' +
+    '.pend-tag.late{background:#fecaca;color:#7f1d1d;border-color:#dc2626}' +
+    '#pend-bar{position:fixed;z-index:2147482000;left:0;right:0;bottom:0;padding:8px 12px;' +
+    'text-align:center;direction:rtl;font:600 13px/1.5 inherit;color:#3d2c00;background:#ffd88a;' +
+    'box-shadow:0 -2px 10px rgba(0,0,0,.18)}' +
+    '#pend-bar.late{background:#ffb4ab;color:#5c1a12}' +
+    '#pend-alert{position:fixed;z-index:2147483000;left:0;right:0;top:0;padding:10px 14px;' +
+    'direction:rtl;font:700 13px/1.6 inherit;color:#fff;background:#b91c1c;' +
+    'box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;justify-content:center}' +
+    '#pend-alert button{background:rgba(255,255,255,.25);color:#fff;border:1px solid #fff;' +
+    'border-radius:6px;padding:2px 10px;font:inherit;cursor:pointer}';
+  (document.head || document.documentElement).appendChild(s);
+}
+
+// התגית שנכנסת לשורת הרשומה. מחזירה מחרוזת ריקה כשאין מה להציג, כדי
+// שאפשר יהיה לשרשר אותה ללא תנאי בכל תבנית.
+function pendTag(key) {
+  var t = pendSince(key);
+  if (!t) return '';
+  pendEnsureStyle();
+  var age = Date.now() - t, late = age > PEND_LATE_MS;
+  var title = 'ממתין לסנכרון מאז ' + new Date(t).toLocaleString('he-IL') +
+              ' (' + pendFmtAge(age) + ') — שמור במכשיר, טרם אושר בענן';
+  return '<span class="pend-tag' + (late ? ' late' : '') + '" title="' + esc(title) + '">' +
+         (late ? '⚠️' : '⏳') + ' ממתין</span>';
+}
+
+function pendCounterText() {
+  var n = pendCount(), off = (typeof navigator !== 'undefined' && navigator && navigator.onLine === false);
+  if (!n) return off ? '⚠️ אין רשת' : '';
+  var late = pendLateCount();
+  var s = (late ? '⚠️ ' : (off ? '⚠️ אין רשת · ' : '⏳ ')) + n + ' פעולות ממתינות לסנכרון';
+  var old = pendOldest();
+  if (old) s += ' · הישנה ביותר לפני ' + pendFmtAge(Date.now() - old);
+  return s;
+}
+
+function pendRender() {
+  if (typeof document === 'undefined' || !document.body) return;
+  pendEnsureStyle();
+  var txt = pendCounterText(), bar = document.getElementById('pend-bar');
+  if (!txt) { if (bar) bar.style.display = 'none'; }
+  else {
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'pend-bar';
+      document.body.appendChild(bar);
+    }
+    var extra = '';
+    try { if (typeof PEND_CFG === 'object' && PEND_CFG.extra) extra = PEND_CFG.extra() || ''; } catch (e) { }
+    bar.textContent = txt + (extra ? ' · ' + extra : '');
+    bar.className = pendLateCount() ? 'late' : '';
+    bar.style.display = '';
+  }
+  pendRenderAlert();
+}
+
+// ההתרעה נפרדת מהמונה בכוונה: מונה הוא מידע, וסרגל תחתון נבלע ברעש המסך.
+// משהו שממתין מעל יממה כבר אינו "מסתנכרן ברקע" — זו תקלה שדורשת פעולה.
+function pendRenderAlert() {
+  var late = pendLateCount(), el = document.getElementById('pend-alert');
+  if (!late || (_pendAlertDismissed && (Date.now() - _pendAlertDismissed) < 6 * 60 * 60 * 1000)) {
+    if (el) el.remove();
+    return;
+  }
+  var msg = '⚠️ ' + late + ' פעולות ממתינות לסנכרון מעל 24 שעות — בדוק חיבור לאינטרנט. הנתונים שמורים במכשיר בלבד.';
+  if (el) { var sp = el.firstChild; if (sp) sp.textContent = msg; return; }
+  el = document.createElement('div');
+  el.id = 'pend-alert';
+  var span = document.createElement('span');
+  span.textContent = msg;
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = 'הבנתי';
+  btn.onclick = function () { _pendAlertDismissed = Date.now(); pendRenderAlert(); };
+  el.appendChild(span);
+  el.appendChild(btn);
+  document.body.appendChild(el);
+}
+
+// פאנל להגדרות — מה בדיוק ממתין, ומאיזה גיל.
+function pendStatusHTML() {
+  var m = pendAll(), keys = Object.keys(m);
+  keys.sort(function (a, b) { return m[a] - m[b]; });
+  var h = '<div style="font-size:13px;line-height:1.8">';
+  h += '<div>מצב רשת: <b>' + (navigator.onLine ? 'מקוון' : 'לא מקוון') + '</b></div>';
+  h += '<div>פעולות ממתינות לסנכרון: <b>' + keys.length + '</b></div>';
+  if (!keys.length) { h += '<div style="color:#16a34a">✅ הכול מסונכרן</div></div>'; return h; }
+  h += '<div style="margin-top:6px;max-height:220px;overflow:auto">';
+  keys.slice(0, 60).forEach(function (k) {
+    var age = Date.now() - m[k], late = age > PEND_LATE_MS;
+    h += '<div style="display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,.08);padding:3px 0">' +
+         '<span>' + esc(k) + '</span><span style="' + (late ? 'color:#b91c1c;font-weight:700' : 'opacity:.7') + '">' +
+         esc(pendFmtAge(age)) + '</span></div>';
+  });
+  if (keys.length > 60) h += '<div style="opacity:.7">…ועוד ' + (keys.length - 60) + '</div>';
+  h += '</div></div>';
+  return h;
+}
+
+// רענון תקופתי — הגיל מוצג בתגיות ובמונה, וסף ה-24 שעות חייב להיחצות
+// גם כשהמשתמש לא נגע בכלום.
+var _pendTick = null;
+function pendBoot() {
+  pendAll();
+  pendRender();
+  if (!_pendTick) _pendTick = setInterval(pendRender, 60000);
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    window.addEventListener('online', pendRender);
+    window.addEventListener('offline', pendRender);
+  }
+}
+/* ═══════════════ סוף מודול "ממתין לסנכרון" ═════════════════════════════ */
+
+/* ── חיבור hanhala-ruchanit למודול ────────────────────────────────────────
+   כאן הכתיבה היא **מקומית-תחילה**: הרשומה נשמרת ב-localStorage מיד, והדחיפה
+   לענן היא דחיפת-מצב מלא של המפתח כולו. לכן האישור אינו פר-רשומה אלא
+   `pendConfirmPush(prefix, t0)` — דחיפה מוצלחת של `ys_attend_sessions`
+   מאשרת כל סימון סדר שנרשם **לפני שהצילום נלקח**.
+   ───────────────────────────────────────────────────────────────────────── */
+var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:',
+    PK_AT_TREAT = 'at-treat:', PK_SL_TREAT = 'sl-treat:', PK_STUDENT = 'student:';
+// מיפוי מפתח kv → קידומת הסימונים שהוא נושא. משמש גם את ריקון התור.
+var PEND_KV_PREFIX = {
+  'ys_attend_sessions': PK_AT_SESS, 'ys_sleep_sessions': PK_SL_SESS,
+  'ys_attend_treats': PK_AT_TREAT, 'ys_sleep_treats': PK_SL_TREAT,
+  'ys_students': PK_STUDENT
+};
+function pendRenderStatus() {
+  var el = document.getElementById('pend-status-box');
+  if (el) el.innerHTML = pendStatusHTML();
+}
+function pendConfirmKv(kvKey, t0) {
+  var pfx = PEND_KV_PREFIX[kvKey];
+  if (pfx) pendConfirmPush(pfx, t0);
+}
+
 
 
 
@@ -3088,6 +3400,9 @@ async function ysFlushQueue() {
         failed.push(item);
       } else {
         nOk++;
+        // ה-t0 של פריט בתור הוא **הרגע שבו הוא נכנס אליו** — הערך שנשלח עכשיו
+        // הוא הצילום מאותו רגע, ולכן הוא מאשר רק סימונים שקדמו לו.
+        pendConfirmKv(item.key, item.ts);
         if (item.key === 'ys_attend_sessions' && window._atData === null) window._atData = item.value;
         if (item.key === 'ys_sleep_sessions'  && window._slData === null) window._slData  = item.value;
         console.log('[ys-queue] flushed', item.key);
@@ -3316,12 +3631,14 @@ async function ysPushToCloud() {
 
   // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
   await step('ys_students', async function() {
+    var _t0 = Date.now();   // לפני קריאת המצב המקומי — ראה atSaveData
     var localSt = _ysStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await ysKvGet('ys_students'); } catch(e1) {}
     var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students');
     _ysStudentsSaveRaw(mergedSt);
     var r = await ysKvSet('ys_students', mergedSt);
+    if (!(r && r.error)) pendConfirmPush(PK_STUDENT, _t0);
     ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
     return r;
   });
@@ -3849,7 +4166,7 @@ function renderStudents(){
       var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
       return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
-          '<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</span>'+
+          '<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>'+
           '<div style="display:flex;align-items:center;gap:6px">'+badge+'</div>'+
         '</div>'+
         '<div style="flex-shrink:0">'+
@@ -3887,7 +4204,7 @@ function renderStudents(){
     var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
-    html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+'</span>';
+    html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
     html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+esc(clsLabel)+'</span>';
@@ -4332,6 +4649,8 @@ function saveStudent(){
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
+  // ⏳ התלמיד נשמר במכשיר; האישור יגיע מדחיפת ys_students המוצלחת הבאה.
+  pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : students[students.length-1] && students[students.length-1].id));
   scheduleYsPush();
   closeStudentModal();
   renderStudents();
@@ -4355,6 +4674,8 @@ function ysTombstoneStudents(ids){
     rec.deleted=true; rec.updatedAt=ts; rec.deletedBy=by; n++;
   });
   _ysStudentsSaveRaw(all);
+  // מחיקה היא כתיבה לכל דבר — גם היא ממתינה לאישור מהענן.
+  (ids||[]).forEach(function(id){ if(id!=null) pendMark(PK_STUDENT+id); });
   return n;
 }
 
@@ -4704,6 +5025,9 @@ async function atLoadData() {
   window._atData=[]; return window._atData;
 }
 async function atSaveData(data) {
+  // t0 נלקח **לפני** קריאת המצב המקומי. רשומה שתסומן אחרי הרגע הזה אינה
+  // בתוך הצילום שנדחף, ואישור שלה היה מוריד סימון מרשומה שלא עלתה.
+  var _t0=Date.now();
   window._atData=data;
   lsSetArray('ys_attend_sessions', data, _ysRecTs);
   try {
@@ -4715,7 +5039,10 @@ async function atSaveData(data) {
       window._atData=data;
       lsSetArray('ys_attend_sessions', data, _ysRecTs);
     }
-    await ysKvSet('ys_attend_sessions',data);
+    var _rAt=await ysKvSet('ys_attend_sessions',data);
+    // רק כתיבה שהצליחה היא ראיה. ysKvSet מחזירה {error} בכשל ומכניסה לתור,
+    // ואז הסימון נשאר עד שהריקון יאשר.
+    if(!(_rAt&&_rAt.error)) pendConfirmPush(PK_AT_SESS,_t0);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
@@ -4729,6 +5056,7 @@ async function atLoadTreats() {
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
 function atLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function atSaveTreats(data) {
+  var _t0=Date.now();
   lsSetArray('ys_attend_treats', data, _ysRecTs);
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
@@ -4739,7 +5067,7 @@ async function atSaveTreats(data) {
       lsSetArray('ys_attend_treats', data, _ysRecTs);
     }
     var r=await ysKvSet('ys_attend_treats',data);
-    if(!(r&&r.error)) await ysTouchLastChanged();
+    if(!(r&&r.error)) { pendConfirmPush(PK_AT_TREAT,_t0); await ysTouchLastChanged(); }
   } catch(e){}
   return data;
 }
@@ -4983,6 +5311,7 @@ function atRenderTodaySessions() {
     var summary=atSummaryHtml(cnts);
     html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
+      pendTag(PK_AT_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
       '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
     '</div>';
@@ -5139,6 +5468,8 @@ function atSaveLocalNow() {
   // מסלול קריטי — רישום נוכחות. כישלון כאן חייב לעצור את השרשרת: הסימון
   // כבר על המסך, ובלי העצירה המשתמש היה ממשיך כאילו נשמר.
   if(!lsSetArray('ys_attend_sessions', window._atData, _ysRecTs)) return null;
+  // ⏳ נשמר במכשיר — טרם אושר בענן. הסימון יורד רק בדחיפת-מצב מוצלחת.
+  pendMark(PK_AT_SESS + rec.id);
   return rec;
 }
 // שמירה אוטומטית לKV (מקומי + ענן ממוזג)
@@ -5854,6 +6185,8 @@ window.atAddTreat = async function(sid) {
   };
   var treats=await atLoadTreats();
   treats.push(rec);
+  // ⏳ הסימון נרשם לפני הדחיפה; atSaveTreats מאשרת אותו רק אם הכתיבה לענן הצליחה.
+  pendMark(PK_AT_TREAT+rec.id);
   await atSaveTreats(treats);
   if(noteEl) noteEl.value='';
   window.atRenderSupervision();
@@ -5887,6 +6220,7 @@ window.atDeleteTreatConfirmed = async function(id) {
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
   if(!found){ toast('⚠️ הטיפול לא נמצא'); window.atRenderSupervision(); return; }
+  pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
   window.atRenderSupervision();
   toast('🗑️ נמחק');
@@ -6201,6 +6535,7 @@ async function slLoadData() {
 // והרשומות שהוא "ניקה" חזרו מיד — אבל הוא כן כתב מחדש את כל מערך השינה
 // ודיווח "✅ ניקוי הושלם". אין להחזיר אותו; מחיקה = tombstone מפורש בלבד.
 async function slSaveData(data) {
+  var _t0=Date.now();   // ראה ההערה ב-atSaveData
   window._slData=data;
   lsSetArray('ys_sleep_sessions', data, _ysRecTs);
   try {
@@ -6212,7 +6547,8 @@ async function slSaveData(data) {
       window._slData=data;
       lsSetArray('ys_sleep_sessions', data, _ysRecTs);
     }
-    await ysKvSet('ys_sleep_sessions',data);
+    var _rSl=await ysKvSet('ys_sleep_sessions',data);
+    if(!(_rSl&&_rSl.error)) pendConfirmPush(PK_SL_SESS,_t0);
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
   } catch(e){}
@@ -6225,6 +6561,7 @@ async function slLoadTreats() {
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
 function slLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function slSaveTreats(data) {
+  var _t0=Date.now();
   lsSetArray('ys_sleep_treats', data, _ysRecTs);
   try {
     // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
@@ -6234,7 +6571,7 @@ async function slSaveTreats(data) {
       lsSetArray('ys_sleep_treats', data, _ysRecTs);
     }
     var r=await ysKvSet('ys_sleep_treats',data);
-    if(!(r&&r.error)) await ysTouchLastChanged();
+    if(!(r&&r.error)) { pendConfirmPush(PK_SL_TREAT,_t0); await ysTouchLastChanged(); }
   } catch(e){}
   return data;
 }
@@ -6420,6 +6757,7 @@ function slRenderTodaySessions() {
     var summary=slSummaryHtml(cnts);
     html+='<div onclick="window.slEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
+      pendTag(PK_SL_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
       '<span style="font-size:.8rem;color:var(--navy);font-weight:600;flex-shrink:0">✏️ ערוך</span>'+
     '</div>';
@@ -6565,6 +6903,7 @@ function slSaveLocalNow() {
   rec.updatedAt=Date.now();
   // מסלול קריטי — רישום זמן שינה. אותה סמנטיקה כמו atSaveLocalNow.
   if(!lsSetArray('ys_sleep_sessions', window._slData, _ysRecTs)) return null;
+  pendMark(PK_SL_SESS + rec.id);
   return rec;
 }
 async function slAutoSaveNow() {
@@ -7254,6 +7593,8 @@ window.slAddTreat = async function(sid) {
   };
   var treats=await slLoadTreats();
   treats.push(rec);
+  // ⏳ הסימון נרשם לפני הדחיפה; slSaveTreats מאשרת אותו רק אם הכתיבה לענן הצליחה.
+  pendMark(PK_SL_TREAT+rec.id);
   await slSaveTreats(treats);
   if(noteEl) noteEl.value='';
   window.slRenderSupervision();
@@ -7285,6 +7626,7 @@ window.slDeleteTreatConfirmed = async function(id) {
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
   if(!found){ toast('⚠️ הטיפול לא נמצא'); window.slRenderSupervision(); return; }
+  pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await slSaveTreats(treats);
   window.slRenderSupervision();
   toast('🗑️ נמחק');
