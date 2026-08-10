@@ -61,11 +61,66 @@ git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא
 7. **קידום `CACHE_NAME` בכל שינוי קוד** (הסעיף למעלה) — בלי זה העדכון לא מגיע למשתמשים.
 8. **כתיבה ל-localStorage אך ורק דרך `ysLsSet`** (סבב 7) — `setItem` ישיר זורק באחסון חסום והורג את נתיב הכתיבה באמצע, בלי הודעה.
 
-## APK
-- Keystore: `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
-- אייקון: `בלוי_מיט_ווייסן_הינטערגרונט.png` (כחול על לבן)
-- URLs ב-smali: `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
-- cache APK: תמיד `TS=$(date +%s)` בשם הקובץ
+## APK — מעטפת WebView מקורית שטוענת מהרשת (⛔ לא TWA) — אוגוסט 2026, סבב תאומים
+תיקיית **`android/`** מכילה מעטפת WebView בתבנית המדויקת של yoman-avoda סבב 13
+(זהה למעטפת של schar-limud, פרט לזהות): טוענת את
+`https://ygtotlrl-lab.github.io/hanhala-ruchanit/` **מהרשת** — לא מנכסים מוטבעים.
+פרטים מלאים ב-`android/README.md`. עיקרי הדברים:
+- **package `com.hanhala.ruchanit`, versionCode 1**, minSdk 21 / targetSdk 34,
+  `usesCleartextTraffic=false`.
+- **לעולם לא TWA ולא PWABuilder** — סינון התוכן במכשירים חוסם את כרום (נמדד ב-gius).
+- ⛔ **אין נכסים מוטבעים** (עותק `file://` = origin אחסון נפרד = אובדן נתונים שקט)
+  **ואין גשר שיתוף** (אין `navigator.share` בקוד — אומת ב-grep; אם יידרש, הדפוס
+  הכפול-נעילה של יומן בלבד, לעולם לא `addJavascriptInterface`).
+- **`http`/`https` נשארים בתוך המעטפת**; `tel:`/`mailto:` וכו' נמסרים למערכת.
+- **עדכוני קוד web לא מצריכים APK חדש** — מגיעים דרך ה-service worker.
+- **צנרת בנייה:** `.github/workflows/build-apk.yml` — Actions → **Build Signed APK**
+  → Run workflow. ה-artifact: **`hanhala-ruchanit-signed-apk`**.
+- ⚠️ **ה-APK הישן (`yeshiva-manager.apk` שבשורש הריפו) נבנה מחוץ לריפו במפתח זמני
+  שישב ב-`/tmp` ואבד.** המעטפת החדשה חתומה במפתח הקבוע שלמטה — חתימה שונה, ולכן
+  מעבר מה-APK הישן הוא **הסרה + התקנה** (חד-פעמי). לפני המעבר לוודא בדפדפן/באפליקציה
+  הישנה ש«⏳ ממתין לסנכרון» מציג 0.
+
+## חתימת APK — מפתח קבוע (לעולם לא משתנה!)
+
+| | |
+|---|---|
+| **קובץ** | `signing/hanhala.keystore` (PKCS12, RSA 2048) |
+| **alias** | `hanhala` |
+| **storepass** | `hanhala123` |
+| **keypass** | `hanhala123` (זהה ל-storepass) |
+| **תוקף** | 10,000 יום — 10.08.2026 עד 26.12.2053 |
+| **SHA256** | `9F:68:B5:A0:0E:FA:D1:2F:19:C6:FF:E7:05:8E:D0:61:79:92:E6:99:9F:34:74:12:66:B0:93:93:E4:E1:6D:BF` |
+| **SHA1** | `D7:E5:DC:42:32:EC:4A:04:B0:64:40:3F:48:EA:2B:2F:C8:67:1E:59` |
+| **DN** | `CN=hanhala, OU=Yeshiva, O=Yeshiva, L=Rishon LeZion, ST=Israel, C=IL` |
+
+### ⛔ אזהרה — אין להחליף את המפתח לעולם
+אנדרואיד מזהה אפליקציה מותקנת לפי **חתימת המפתח**. APK שנחתם במפתח אחר נחשב
+אפליקציה זרה וההתקנה מעל הקיימת נכשלת (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`) —
+כל משתמש יצטרך להסיר ולהתקין מחדש, ואין דרך לעקוף. לכן:
+1. **לעולם לא להריץ `keytool -genkeypair` שוב** לפרויקט הזה — הריצה הראשונה בוצעה
+   (אוגוסט 2026) והקובץ בריפו הוא התוצאה שלה.
+2. **לעולם לא למחוק, לדרוס או "לרענן" את `signing/hanhala.keystore`** — הוא בריפו
+   בדיוק כדי שלא יאבד כמו המפתח הישן שישב ב-`/tmp`.
+3. **כל APK חדש נחתם אך ורק במפתח הזה**, בכל כלי בנייה.
+4. אחרי חתימה — לאמת שה-SHA256 תואם לטבלה.
+
+חתימה: `./signing/sign-apk.sh app-unsigned.apk hanhala.apk` (zipalign + apksigner +
+verify). אימות: `keytool -list -v -keystore signing/hanhala.keystore -storepass hanhala123`.
+
+## אייקונים (סבב תאומים, אוגוסט 2026)
+- **המקור הגרפי היחיד = קובץ המאסטר `טונקל בלוי מיט ווייסן הינטערגרונט.png`**
+  (1024×1024, דיו `#18335c` על לבן). כל הסט נגזר ממנו ב-LANCZOS:
+  `icon-512` / `icon-192` / `apple-touch-icon` (180) / `favicon-32` / `favicon-16`,
+  וכן **`icon-maskable-512.png`** — הלוגו מוקטן ל-72% במרכז קנבס לבן.
+- **ב-manifest האייקונים המלאים הם `purpose:"any"` בלבד וה-maskable הוא
+  `purpose:"maskable"` נפרד.** אין לחזור ל-`"any maskable"` על האייקון המלא —
+  זה מה שגרם לקרניים להיחתך בעיגול הלאנצ'ר.
+- **mipmap במעטפת:** `ic_launcher` (מלא על לבן) + `ic_launcher_foreground`
+  (דיו שטוח על שקוף, הלוגו ב-66% מהקנבס — כמו ביומן) בכל חמש הרזולוציות,
+  ואדפטיבי ב-`mipmap-anydpi-v26` עם רקע לבן.
+- **אותה גיאומטריה בדיוק משמשת את הסט הירוק של schar-limud** (נגזר מאותו מאסטר
+  באלפא-דיו, דיו `#307535`; אומת התאמה מבנית ≥99.9% בין הסטים בכל גודל).
 
 ## PDF
 - ספרייה: **pdfmake** (לא html2pdf — בעיות RTL)
@@ -750,3 +805,15 @@ schar **v19** · gius **gius-v6**.
   וזורקת בכשל רשת או ב-timeout (`withTimeout`), ובשניהם אין `rows`.
 - `LS_CFG.tier1` **נשאר ריק** — `ys_users_cache`/`ys_perms_cache` הם מסלול
   הכניסה האופליין ולא מטמון. **אין להוסיף אותם.**
+
+---
+
+## סבב תאומים (אוגוסט 2026, `sw.js` v30) — מעטפת להנהלה + ירוק לשכר
+נבנה בענף `claude/twin-round-hanhala-schar-green-4lujzd`, בשני הריפו יחד:
+- **כאן:** מעטפת `android/` (הפרק למעלה), מפתח חתימה קבוע `signing/hanhala.keystore`,
+  workflow `build-apk.yml`, וסט אייקונים שנגזר מחדש מהמאסטר כולל maskable
+  (הפרקים למעלה). `sw.js` קודם v29→v30 כדי שה-PWA ירענן את האייקונים
+  (אין כאן מנגנון `app-version` נפרד — הוא של yoman בלבד; הרענון הוא דרך
+  `CACHE_NAME`).
+- **ב-schar-limud:** אותו מאסטר נצבע ירוק (`#307535`) באלפא-דיו ונשמר שם
+  כ-`icons/master-green-1024.png`; ממנו נגזר סט זהה-גיאומטריה (אומת ≥99.9%).
