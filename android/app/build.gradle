@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.hanhala.ruchanit'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.hanhala.ruchanit"
+        minSdk 21
+        targetSdk 34
+        // 1 = the first shell in this repo, loading the live site
+        // (https://ygtotlrl-lab.github.io/hanhala-ruchanit/) from day one.
+        // The old yeshiva-manager.apk predates this android/ project and was
+        // built elsewhere with a throwaway key — it is not an ancestor of this
+        // versionCode line.
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// No dependencies, on purpose: yoman's shell needs androidx.webkit + androidx.core for
+// its origin-restricted share bridge (navigator.share → FileProvider). hanhala-ruchanit's
+// page has no navigator.share, the bridge is omitted entirely, and nothing androidx
+// is used. See MainActivity.java.
