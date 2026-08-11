@@ -357,6 +357,13 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy)}
 
+/* מידע טכני — קיפול מסכי האחסון (תצוגה בלבד): שורה צנועה בתחתית ההגדרות */
+.tech-info{margin-top:22px;font-size:12px;opacity:.7}
+.tech-info>summary{cursor:pointer;list-style:none;display:inline-block;padding:4px 2px}
+.tech-info>summary::-webkit-details-marker{display:none}
+.tech-info[open]{opacity:1}
+.tech-info .ls-status button{display:none!important}
+.ls-crit-line{margin-top:18px;font-size:12px;font-weight:600;color:#b3261e}
 </style>
 </head>
 <body>
@@ -869,10 +876,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div class="ss-t">⏳ ממתין לסנכרון</div>
         <div id="pend-status-box"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss" id="ss-storage">
-        <div class="ss-t">💾 אחסון מקומי</div>
-        <div id="ls-status-box"><div class="ld">טוען...</div></div>
-      </div>
       <div class="ss" id="ss-perms">
         <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
         <div style="overflow-x:auto">
@@ -887,6 +890,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <button class="btn" onclick="savePerms()">💾 שמור הרשאות</button>
         </div>
       </div>
+      <div id="tech-info-box"></div>
     </div>
 
   </div>
@@ -1983,7 +1987,7 @@ function showSettingsModule(mod) {
   if (target) target.style.display = '';
   // setTimeout מבטיח שה-DOM עודכן לפני הrender
   setTimeout(function() {
-    if (mod === 'system') { renderUsersList(); renderPermsTable(); pendRenderStatus(); lsRenderStatus(); }
+    if (mod === 'system') { renderUsersList(); renderPermsTable(); pendRenderStatus(); techInfoMount(); }
     if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
     if (mod === 'attend') window.renderAttendSettings();
     if (mod === 'sleep') window.renderSleepSettings();
@@ -3232,6 +3236,46 @@ window.lsGuardToast = lsGuardToast;
 window.lsBootDeferred = lsBootDeferred;
 window.lsSweepVerified = lsSweepVerified;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
+
+/* ═══ "מידע טכני" — קיפול מסכי האחסון (תצוגה בלבד, סבב 15) ═══════════════
+   המודול המשותף של סבב 14 לא נגוע: הרכיב הזה רק עוטף את lsStatusHTML
+   בשורה מקופלת אחת בתחתית ההגדרות, סגורה כברירת מחדל. כפתורי הפינוי
+   הידני אינם מוצגים (מוסתרים ב-CSS — .tech-info .ls-status button);
+   המנגנון האוטומטי (lsBoot/lsSweep) הוא הדרך היחידה לפינוי.
+   חריג יחיד ומכוון: מעל LS_CRIT_BYTES מוצגת שורת מצב עדינה גם מחוץ
+   לרכיב — רשת הביטחון היחידה שמוצגת ביוזמת המערכת. */
+function techInfoHTML() {
+  var crit = '';
+  try {
+    var u = lsUsage();
+    if (u.total >= LS_CRIT_BYTES) {
+      crit = '<div class="ls-crit-line">⚠️ האחסון המקומי כמעט מלא (' + esc(lsFmtBytes(u.total)) +
+             ' מתוך ' + esc(lsFmtBytes(u.quota)) + ') — פרטים ב"מידע טכני"</div>';
+    }
+  } catch (e) { }
+  return crit +
+    '<details class="tech-info" ontoggle="window.techInfoToggle&&window.techInfoToggle(this)">' +
+    '<summary>מידע טכני &rsaquo;</summary>' +
+    '<div id="ls-status-box"></div>' +
+    '</details>';
+}
+function techInfoToggle(el) {
+  if (el && el.open) { try { lsRenderStatus(); } catch (e) { } }
+}
+function techInfoMount() {
+  var box = document.getElementById('tech-info-box');
+  if (!box) return;
+  var prev = box.querySelector('details.tech-info');
+  var wasOpen = !!(prev && prev.open);
+  box.innerHTML = techInfoHTML();
+  if (wasOpen) {
+    var d = box.querySelector('details.tech-info');
+    if (d) d.open = true;
+  }
+}
+window.techInfoToggle = techInfoToggle;
+window.techInfoMount = techInfoMount;
+/* ═══ סוף רכיב "מידע טכני" ═══════════════════════════════════════════════ */
 /* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 // `extra` — התור הישן של hanhala הוא **פר-מפתח kv** ולא פר-רשומה, ולכן הוא
 // לא נכנס למפת הסימונים. הוא כן חייב להופיע במונה, אחרת המשתמש רואה "0
