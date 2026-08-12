@@ -1114,15 +1114,14 @@ var AUTH = {
   }
 };
 
-// ---- פונקציית hash פשוטה (לא קריפטוגרפית - מספיק לסיסמת 6 ספרות) ----
-function simpleHash(str) {
-  var h = 0;
-  for (var i = 0; i < str.length; i++) {
-    h = ((h << 5) - h) + str.charCodeAt(i);
-    h = h & h;
-  }
-  return 'h' + Math.abs(h).toString(36);
-}
+// ---- `simpleHash`: הוסרה (סבב 21) ----
+// hash לא-קריפטוגרפי (Java string hash) ששימש לפני המעבר ל-plaintext.
+// אחרי הסרת שלושת מסלולי ה-`admin`/`123456` בסבב 21 לא נותר לה אף קורא:
+// `ys_users.password_hash` מחזיקה **טקסט גלוי**, וכל מסלולי ההשוואה
+// (`doLogin`, `confirmSwitch`, `changeMyPassword`) משווים מחרוזות ישירות.
+// ⛔ **אין להחזיר אותה.** hash חלש שמעורבב עם ערכים גלויים באותה עמודה הוא
+// גרוע משניהם: הוא אינו מגן, והוא שובר את ההשוואה לכל מי שכבר רשום.
+// שינוי אמיתי של מודל הסיסמאות הוא סבב הגירה — ר' «מודל הסיסמאות» למטה.
 
 // ---- בדוק הרשאה ----
 function canAccess(moduleId) {
@@ -1186,23 +1185,14 @@ function ysApplyPerms(p) {
   return changed;
 }
 
-// ---- תיקון hash חד-פעמי ----
-async function fixAdminHash() {
-  var errEl = document.getElementById('auth-err');
-  errEl.style.color = '#8a97b0';
-  errEl.textContent = 'מתקן...';
-  var hash = simpleHash('123456');
-  var {error} = await SB.from('ys_users')
-    .update({password_hash: hash})
-    .eq('username', 'admin');
-  if (error) {
-    errEl.style.color = '#e53e3e';
-    errEl.textContent = 'שגיאה: ' + error.message;
-  } else {
-    errEl.style.color = '#38a169';
-    errEl.textContent = '✅ תוקן! נסה admin / 123456';
-  }
-}
+// ---- `fixAdminHash`: הוסרה (סבב 21) ----
+// הפונקציה דרסה את הסיסמה של המשתמש `admin` ב-`123456` והציגה «✅ תוקן!
+// נסה admin / 123456». היא לא הייתה מחוברת לשום כפתור, אבל היא הייתה
+// **פצצה רדומה**: קריאה אחת מהקונסולה — או כפתור שמישהו יחזיר בעתיד —
+// והשער נפתח לסיסמה ידועה מראש, מול טבלה שגלויה לכל מי שמחזיק את מפתח
+// ה-anon. ⛔ **אין להחזיר אותה, ואין לכתוב שום מסלול שקובע סיסמה קבועה
+// בקוד.** איפוס סיסמה נעשה מ«ניהול משתמשים» ע"י מנהל, או ידנית במסד.
+
 // ---- מעבר מ-hash ל-plaintext: הוסר (יולי 2026) ----
 // ה-IIFE שהיה כאן רץ בכל טעינת דף, אצל כל מבקר, עוד לפני הכניסה: הוא בדק אם
 // ל-admin יש את הסיסמה '123456' ואם לא — כתב אותה. `.single()` מחזיר data:null
@@ -1210,23 +1200,37 @@ async function fixAdminHash() {
 // להחליף סיסמה כלל. המיגרציה סיימה את תפקידה מזמן — אין להחזיר אותה.
 
 // ---- כניסה ----
-// ===== OFFLINE LOGIN: עותק משתמשים מקומי לאימות ללא רשת =====
-function ysUsersCacheSave(users) {
+// ===== OFFLINE LOGIN: עותק **המשתמש המחובר בלבד** לאימות ללא רשת =====
+// ⚠️ **צומצם בסבב 21.** עד אז המטמון החזיק את הסיסמה של **כל** המשתמשים
+// הפעילים, על **כל** מכשיר: מכשיר אחד שאבד או הושאל חשף את הסיסמאות של כל
+// אנשי הצוות, ומכשיר של איש צוות זוטר החזיק את סיסמת המנהל. כניסה אופליין
+// נדרשת רק למי שכבר נכנס במכשיר הזה, ולכן **שורה אחת מספיקה** — הצמצום אינו
+// עולה בשום יכולת שהמשתמש באמת השתמש בה.
+// ⛔ **אין להחזיר שמירה של כל המשתמשים.**
+//
+// המבנה נשאר **מערך** (באורך 0 או 1) ולא אובייקט יחיד, כדי ששני הקוראים
+// (`doLogin` ו-`confirmSwitch`) יישארו כפי שהם — `Array.isArray` + `find`
+// — וכדי שמטמון ישן מלפני הסבב ייקרא בלי הגירה: הוא נדרס בכתיבה הראשונה.
+function ysUsersCacheSave(user) {
   try {
-    var slim = (users || []).filter(function(u){ return u && u.active === true; }).map(function(u){
-      return { id: u.id, username: u.username, password_hash: u.password_hash, full_name: u.full_name, role: u.role, active: u.active };
-    });
+    if (!user || user.active !== true) return;
+    var slim = [{ id: user.id, username: user.username, password_hash: user.password_hash,
+                  full_name: user.full_name, role: user.role, active: user.active }];
     lsSet('ys_users_cache', JSON.stringify(slim));
   } catch(e) {}
 }
 function ysUsersCacheGet() {
   try { return JSON.parse(localStorage.getItem('ys_users_cache') || 'null'); } catch(e) { return null; }
 }
-// רענון העותק המקומי מהענן — בכל הזדמנות מקוונת (fire-and-forget, לא חוסם)
+// רענון העותק המקומי מהענן — בכל הזדמנות מקוונת (fire-and-forget, לא חוסם).
+// מושך **רק את השורה של המשתמש המחובר**; בלי משתמש מחובר אין מה לרענן.
+// כך סיסמה שהוחלפה בענן מגיעה למטמון בלי לגרור לכאן שורות של אחרים.
 async function ysRefreshUsersCache() {
   try {
-    var res = await SB.from('ys_users').select('id,username,password_hash,full_name,role,active').eq('active', true);
-    if (!res.error && Array.isArray(res.data)) ysUsersCacheSave(res.data);
+    if (!AUTH.user || AUTH.user.id === undefined || AUTH.user.id === null) return;
+    var res = await SB.from('ys_users').select('id,username,password_hash,full_name,role,active')
+      .eq('id', AUTH.user.id).eq('active', true).maybeSingle();
+    if (!res.error && res.data) ysUsersCacheSave(res.data);
   } catch(e) {}
 }
 // ===== ניסוח הודעות אחיד לשלושת הפרויקטים (סבב 8) =====
@@ -1281,14 +1285,14 @@ async function ysRevalidateOfflineLogin() {
     if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק'); doLogout(); return; }
     AUTH.user = res.data;
     AUTH.offlineLogin = false;
-    ysRefreshUsersCache();
+    ysUsersCacheSave(res.data);   // השורה כבר בידינו — אין צורך במשיכה נוספת
     try { loadPerms(); } catch(e2) {}
     console.log('[login] אימות אופליין אושרר מול הענן');
   } catch(e) {}
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v21'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v34'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1388,7 +1392,9 @@ async function _doLoginInner() {
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
     ysLoginLog('login_ok', 'online', ysLoginDetails(username));
-    ysRefreshUsersCache(); // עדכון העותק המקומי אחרי כניסה מקוונת מוצלחת
+    // העותק המקומי = **המשתמש הזה בלבד** (סבב 21). השורה כבר בידינו מהאימות,
+    // ולכן נשמרת ישירות; זו גם הכתיבה שדורסת מטמון רב-משתמשים ישן.
+    ysUsersCacheSave(onlineUser);
     ysLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
     ysLoginLog('login_fail', 'wrong_credentials_online', ysLoginDetails(username));
@@ -1408,16 +1414,27 @@ async function _doLoginInner() {
                         : '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט');
       return;
     }
-    var lu = null;
+    // ⚠️ שני כישלונות שונים, ושתי הודעות שונות (סבב 21). מאז שהמטמון מחזיק
+    // **רק את המשתמש המחובר**, "שם המשתמש אינו במטמון" אינו אומר שהסיסמה
+    // שגויה — הוא אומר שאין כאן במה לאמת אותו. הודעת «שם משתמש או סיסמה
+    // שגויים» במצב הזה היא שקר שמוביל את המשתמש לנסות סיסמאות שוב ושוב.
+    var cu = null, lu = null;
     try {
-      lu = cache.find(function(u){ return u && u.username === username && u.password_hash === pass && u.active === true; });
+      cu = cache.find(function(u){ return u && u.username === username; });
+      if (cu && cu.password_hash === pass && cu.active === true) lu = cu;
     } catch(eF) { console.warn('[login] cache.find failed:', eF); }
+    if (!cu) {
+      ysLoginLog('login_fail', 'other_user_offline', ysLoginDetails(username));
+      showErr('📴 אין חיבור — במצב אופליין אפשר להיכנס רק עם המשתמש האחרון שנכנס במכשיר הזה');
+      return;
+    }
     if (!lu) {
       ysLoginLog('login_fail', 'wrong_credentials_offline', ysLoginDetails(username));
       showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
     AUTH.user = lu;
     AUTH.offlineLogin = true;
+    ysUsersCacheSave(lu);   // מצמצם מטמון רב-משתמשים ישן גם במסלול האופליין
     ysLoginLog('login_ok', 'offline', ysLoginDetails(username));
     toast(serverErr ? '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך'
                     : '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור');
@@ -1944,19 +1961,26 @@ async function confirmSwitch() {
   // ‎.single() מחזיר error גם כשאין שורה, ולכן אין כאן תשובה סמכותית להבחין בה:
   // כל כישלון מנסה את העותק המקומי, ורק אם גם הוא לא מתאים מוצגת שגיאה.
   if(netFail){
-    // אין רשת / פסק זמן — אימות מול העותק המקומי
+    // אין רשת / פסק זמן — אימות מול העותק המקומי.
+    // ⚠️ סבב 21: המטמון מחזיק **רק את המשתמש המחובר**, ולכן מעבר למשתמש
+    // אחר אינו אפשרי אופליין — וזה חייב להיאמר במפורש. הודעת «סיסמה שגויה»
+    // כאן הייתה **כשל שקט**: המשתמש היה מנסה שוב ושוב סיסמה נכונה לחלוטין.
     var cache=ysUsersCacheGet();
-    if(!Array.isArray(cache)||!cache.length){errEl.textContent='אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור';return;}
+    var cu=null;
     try {
-      u=cache.find(function(x){return x&&String(x.id)===String(d._switchId)&&x.password_hash===pass&&x.active===true;});
-    } catch(eF){ console.warn('[switch] cache.find failed:', eF); u=null; }
-    if(!u){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+      cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.id)===String(d._switchId);});
+    } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
+    if(!cu){errEl.textContent='📴 אין חיבור — מעבר משתמש דורש רשת';return;}
+    if(cu.password_hash!==pass||cu.active!==true){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    u=cu;
     AUTH.offlineLogin=true;
   } else {
     if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=res.data;
     AUTH.offlineLogin=false;
-    ysRefreshUsersCache();
+    // ⚠️ **לפני** ‎AUTH.user=u‎ שלמטה — ולכן שומרים את `u` במפורש ולא קוראים
+    // ל-`ysRefreshUsersCache()`, שהייתה מרעננת את המשתמש **הקודם**.
+    ysUsersCacheSave(u);
   }
   closeSwitchModal();
   AUTH.user=u;
@@ -4429,6 +4453,13 @@ document.addEventListener('click', function(e) {
 // ============ DB AUTO-SETUP ============
 // Supabase service role key נדרש ליצירת טבלאות - עושים זאת דרך insert עם fallback
 
+// ⛔ **אין ליצור כאן משתמש עם סיסמת ברירת מחדל** (סבב 21).
+// עד סבב 21 הפונקציה הזו הריצה `insert` של `admin` / `123456` על טבלה ריקה,
+// והיא רצה בקוד העליון בכל טעינת דף אצל **כל מבקר**. אומת חיצונית שהמשתמש
+// אינו קיים במסד היום (שישה משתמשים אמיתיים בלבד), כלומר המסלול מעולם לא
+// ירה בייצור — אבל טבלה שתתרוקן לרגע, פרויקט חדש, או שחזור שנכשל למחצה היו
+// מספיקים כדי לפתוח את המערכת לסיסמה שכתובה בקוד הציבורי. מסלול האתחול
+// **מדווח** מה חסר ומפנה ליצירת המשתמש הראשון ידנית; הוא אינו מייצר סוד.
 async function ensureFirstAdmin() {
   try {
     var {data, error} = await SB.from('ys_users').select('id').limit(1);
@@ -4441,17 +4472,10 @@ async function ensureFirstAdmin() {
       return;
     }
     if (!error && (!data || data.length === 0)) {
-      var {error: insErr} = await SB.from('ys_users').insert({
-        username: 'admin',
-        password_hash: simpleHash('123456'),
-        full_name: 'מנהל ראשי',
-        role: 'admin',
-        active: true
-      });
-      if (!insErr) {
-        var e = document.getElementById('auth-err');
-        e.textContent = '✅ משתמש נוצר: admin / 123456';
-        e.style.color = '#38a169';
+      var e = document.getElementById('auth-err');
+      if (e) {
+        e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
+        e.style.color = '#b7791f';
       }
     }
   } catch(e) { console.error('setup error:', e); }
@@ -4475,11 +4499,10 @@ async function setupWithServiceKey() {
       return;
     }
   }
-  // הוסף admin
-  await SB2.from('ys_users').insert({username:'admin',password_hash:simpleHash('123456'),full_name:'מנהל ראשי',role:'admin',active:true});
-  document.getElementById('svc-err').textContent = '✅ הושלם! רענן את הדף';
+  // ⛔ **אין ליצור כאן משתמש** (סבב 21) — קודם נוצר כאן `admin` / `123456`.
+  // הטבלה נוצרה; המשתמש הראשון נוצר ידנית, עם סיסמה שהמנהל בוחר.
+  document.getElementById('svc-err').textContent = '✅ הטבלה נוצרה — כעת יש ליצור את המשתמש הראשון ידנית (ר\' ההוראות למטה)';
   document.getElementById('svc-err').style.color = '#276749';
-  setTimeout(function(){ location.reload(); }, 1500);
 }
 
 function showSetupScreen() {
@@ -4490,11 +4513,11 @@ function showSetupScreen() {
     '<div style="font-size:.8rem;font-weight:600;color:#1a3a6b;margin-bottom:6px;text-align:right">Service Role Key מ-Supabase Dashboard:</div>' +
     '<input id="svc-key" type="password" placeholder="eyJ..." style="width:100%;border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-size:.78rem;direction:ltr;margin-bottom:8px">' +
     '<div style="font-size:.72rem;color:#8a97b0;margin-bottom:10px;text-align:right">Settings → API → service_role → Reveal → העתק</div>' +
-    '<button id="svc-btn" class="auth-btn" onclick="setupWithServiceKey()">▶️ צור טבלה ומשתמש admin</button>' +
+    '<button id="svc-btn" class="auth-btn" onclick="setupWithServiceKey()">▶️ צור טבלה</button>' +
     '<div id="svc-err" style="font-size:.8rem;color:#e53e3e;margin-top:8px"></div>' +
     '<hr style="margin:14px 0;border-color:#d8e2f0">' +
-    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a>:</div>' +
-    '<textarea readonly style="width:100%;height:120px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null, active boolean default true, created_at timestamptz default now());</textarea>' +
+    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a>. ⚠️ יש להחליף את הסיסמה שבשורה האחרונה — <b>אין סיסמת ברירת מחדל</b>:</div>' +
+    '<textarea readonly style="width:100%;height:120px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null, active boolean default true, created_at timestamptz default now());\ninsert into ys_users (username, password_hash, full_name, role, active) values (\'<שם משתמש>\', \'<סיסמה בת שש ספרות>\', \'<שם מלא>\', \'admin\', true);</textarea>' +
     '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
 }
 
