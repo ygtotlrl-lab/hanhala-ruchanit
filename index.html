@@ -1200,38 +1200,177 @@ function ysApplyPerms(p) {
 // להחליף סיסמה כלל. המיגרציה סיימה את תפקידה מזמן — אין להחזיר אותה.
 
 // ---- כניסה ----
-// ===== OFFLINE LOGIN: עותק **המשתמש המחובר בלבד** לאימות ללא רשת =====
-// ⚠️ **צומצם בסבב 21.** עד אז המטמון החזיק את הסיסמה של **כל** המשתמשים
-// הפעילים, על **כל** מכשיר: מכשיר אחד שאבד או הושאל חשף את הסיסמאות של כל
-// אנשי הצוות, ומכשיר של איש צוות זוטר החזיק את סיסמת המנהל. כניסה אופליין
-// נדרשת רק למי שכבר נכנס במכשיר הזה, ולכן **שורה אחת מספיקה** — הצמצום אינו
-// עולה בשום יכולת שהמשתמש באמת השתמש בה.
-// ⛔ **אין להחזיר שמירה של כל המשתמשים.**
-//
-// המבנה נשאר **מערך** (באורך 0 או 1) ולא אובייקט יחיד, כדי ששני הקוראים
-// (`doLogin` ו-`confirmSwitch`) יישארו כפי שהם — `Array.isArray` + `find`
-// — וכדי שמטמון ישן מלפני הסבב ייקרא בלי הגירה: הוא נדרס בכתיבה הראשונה.
+/* ═══════════════════════════════════════════════════════════════════════
+   טביעת סיסמה — PBKDF2-SHA256 (סבב 22)
+   ═══════════════════════════════════════════════════════════════════════
+   **הבעיה שסבב 22 בא לפתור.** סבב 21 צמצם את `ys_users_cache` למשתמש
+   המחובר בלבד, כדי שלא יישבו סיסמאות של כל הצוות על כל מכשיר. הצמצום
+   נכון מבחינת חשיפה — ו**פוגע בדרישה תפעולית מחייבת**: משגיחים עובדים
+   בישיבה בלי קליטה, וכל משתמש חייב להיכנס אופליין בכל מכשיר, תמיד. אחרי
+   סבב 21 משגיח שקיבל מכשיר שמישהו אחר נכנס בו לאחרונה פשוט **לא יכול היה
+   להיכנס**. הדרישה קודמת לשיקול האחסון.
+
+   **הפתרון.** המטמון חוזר להחזיק את **כל המשתמשים הפעילים**, אבל בלי
+   הסיסמה: לכל משתמש נשמרים `pass_salt` + `pass_fp` — טביעת PBKDF2-SHA256
+   ב-100,000 סיבובים, עם **מלח פר-משתמש**. מכשיר שאבד חושף טביעות, לא
+   סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
+   גם מול סיסמה בת שש ספרות.
+
+   ⚠️ **`password_hash` בענן נשאר טקסט גלוי — במכוון.** המנהל חייב לראות
+   ולנהל סיסמאות מתוך «ניהול משתמשים», וזו החלטה מתועדת (כלל ברזל 9;
+   ר' «מודל הסיסמאות» ב-CLAUDE.md). הטביעה **אינה מחליפה** אותו — היא
+   נוספת לצידו, ותפקידה היחיד הוא האימות המקומי. ⛔ **אין לגזור מכאן
+   מסקנה שהמסד עבר להצפנה.**
+
+   ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** זו הנקודה שכל
+   הסבב עומד עליה: `ysUserSlim` היא נקודת המעבר היחידה אל המטמון, והיא
+   בונה אובייקט **חדש** בשדות מפורשים — לא `Object.assign` ולא `delete`,
+   שהיו מעבירים שדה חדש שיתווסף לטבלה בעתיד בלי שאיש ישים לב.
+   ═══════════════════════════════════════════════════════════════════════ */
+var YS_PASS_ITER = 100000;
+// המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
+// מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
+var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
+// 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
+// (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
+function ysRandSalt() {
+  try {
+    if (typeof crypto === 'undefined' || !crypto || !crypto.getRandomValues) return null;
+    var b = new Uint8Array(16); crypto.getRandomValues(b);
+    var h = ''; for (var i = 0; i < b.length; i++) h += (b[i] + 0x100).toString(16).slice(1);
+    return h;
+  } catch (e) { return null; }
+}
+// PBKDF2-SHA256 → hex בן 64 תווים. מחזירה null כשאין `crypto.subtle`
+// (הקשר לא-מאובטח / WebView ישן) — וגם כאן הקורא נכשל סגור.
+// זהה במנגנון לזה של schar-limud (סבב 13), פרט למלח הפר-משתמש.
+async function ysPassFp(pass, salt) {
+  try {
+    if (!salt) return null;
+    if (typeof crypto === 'undefined' || !crypto || !crypto.subtle || !crypto.subtle.importKey) return null;
+    var enc = new TextEncoder();
+    var key = await crypto.subtle.importKey('raw', enc.encode(String(pass == null ? '' : pass)), 'PBKDF2', false, ['deriveBits']);
+    var bits = await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: enc.encode(YS_PASS_CTX + String(salt)), iterations: YS_PASS_ITER, hash: 'SHA-256' }, key, 256);
+    var b = new Uint8Array(bits), h = '';
+    for (var i = 0; i < b.length; i++) h += (b[i] + 0x100).toString(16).slice(1);
+    return h;
+  } catch (e) { console.warn('[pass] גזירת טביעה נכשלה', e); return null; }
+}
+// גוזרת מלח+טביעה לסיסמה חדשה. מחזירה {salt, fp} או null בכישלון.
+async function ysMakePassFp(pass) {
+  var salt = ysRandSalt();
+  if (!salt) return null;
+  var fp = await ysPassFp(pass, salt);
+  return fp ? { salt: salt, fp: fp } : null;
+}
+// זיהוי תשובת שרת שאומרת "העמודות עדיין לא קיימות" — כלומר המיגרציה של
+// סבב 22 טרם הורצה. ⚠️ בלי הבדיקה הזו כל שמירת משתמש הייתה **נכשלת
+// לגמרי** בחלון שבין דחיפת הקוד להרצת המיגרציה. ר' הנפילה-חזרה בקוראים.
+function ysIsMissingFpCol(err) {
+  var m = ((err && (err.message || err.details || err.code || '')) + '').toLowerCase();
+  return m.indexOf('pass_fp') !== -1 || m.indexOf('pass_salt') !== -1;
+}
+
+// ===== OFFLINE LOGIN: עותק **כל המשתמשים הפעילים**, בלי סיסמאות =====
+// ⚠️ **הורחב בחזרה בסבב 22** אחרי הצמצום של סבב 21 — ר' הפרק שמעל.
+// המבנה הוא **מערך** של רשומות דקות; שני הקוראים (`doLogin`
+// ו-`confirmSwitch`) נשארו על `Array.isArray` + `find`, ולכן מטמון ישן
+// (מלפני הסבב, או של סבב 21) נקרא בלי הגירה — ⛔ אבל הוא **נדרס בכל
+// כתיבה**, כולל דרך `ysUserSlim` על הרשומות שכבר בו: כך `password_hash`
+// שנשאר על הדיסק ממטמון ישן **נמחק בהזדמנות הראשונה**, ולא שורד לנצח.
+// המחיר: רשומה ישנה מאבדת את יכולת האימות עד הרענון המקוון הבא, וזה
+// בדיוק הנכון — סיסמה גלויה על הדיסק אינה תחליף לטביעה.
+function ysUserSlim(u) {
+  // ⛔ שדות מפורשים בלבד — **`password_hash` אינו ביניהם, ולעולם לא יהיה.**
+  return { id: u.id, username: u.username, full_name: u.full_name,
+           role: u.role, active: u.active,
+           pass_salt: u.pass_salt || null, pass_fp: u.pass_fp || null };
+}
+function ysUsersCacheSlimList(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter(function (u) { return u && u.active === true && u.id !== undefined && u.id !== null; })
+    .map(ysUserSlim);
+}
+// החלפת המטמון כולו — נקראת אחרי משיכה מוצלחת של רשימת המשתמשים.
+// משתמש שהושבת או נמחק בענן נושר כאן, ולכן אינו נשאר בר-כניסה אופליין.
+function ysUsersCacheSaveAll(rows) {
+  try {
+    if (!Array.isArray(rows)) return;
+    lsSet('ys_users_cache', JSON.stringify(ysUsersCacheSlimList(rows)));
+  } catch(e) {}
+}
+// עדכון שורה אחת בתוך המטמון הקיים, בלי לאבד את השאר (כניסה, מעבר-משתמש,
+// שינוי סיסמה עצמי). שאר הרשומות עוברות שוב דרך `ysUserSlim` — זו
+// ההזדמנות שבה `password_hash` ממטמון ישן נמחק מהדיסק.
 function ysUsersCacheSave(user) {
   try {
     if (!user || user.active !== true) return;
-    var slim = [{ id: user.id, username: user.username, password_hash: user.password_hash,
-                  full_name: user.full_name, role: user.role, active: user.active }];
-    lsSet('ys_users_cache', JSON.stringify(slim));
+    var rest = ysUsersCacheSlimList(ysUsersCacheGet())
+      .filter(function (u) { return String(u.id) !== String(user.id); });
+    rest.push(ysUserSlim(user));
+    lsSet('ys_users_cache', JSON.stringify(rest));
   } catch(e) {}
 }
 function ysUsersCacheGet() {
   try { return JSON.parse(localStorage.getItem('ys_users_cache') || 'null'); } catch(e) { return null; }
 }
+// אימות אופליין מול הטביעה. מחזירה אחת מארבע: 'ok' · 'bad' (סיסמה שגויה)
+// · 'no-fp' (אין טביעה לרשומה) · 'no-crypto' (הדפדפן לא תומך).
+// ⚠️ שלושת הכישלונות **אינם** אותו דבר, ולכן אינם מקבלים אותה הודעה:
+// «סיסמה שגויה» על היעדר טביעה הוא כשל שקט שמוביל את המשתמש להקליד שוב
+// ושוב סיסמה נכונה לחלוטין. זה בדיוק הבאג שתוקן ב-`confirmSwitch` בסבב 21.
+async function ysVerifyOffline(cu, pass) {
+  if (!cu || cu.active !== true) return 'bad';
+  if (!cu.pass_salt || !cu.pass_fp) return 'no-fp';
+  var fp = await ysPassFp(pass, cu.pass_salt);
+  if (!fp) return 'no-crypto';
+  return (fp === cu.pass_fp) ? 'ok' : 'bad';
+}
 // רענון העותק המקומי מהענן — בכל הזדמנות מקוונת (fire-and-forget, לא חוסם).
-// מושך **רק את השורה של המשתמש המחובר**; בלי משתמש מחובר אין מה לרענן.
-// כך סיסמה שהוחלפה בענן מגיעה למטמון בלי לגרור לכאן שורות של אחרים.
+// מושך את **כל המשתמשים הפעילים**, ⛔ **בלי `password_hash`**: הוא אינו
+// מבוקש בשאילתה כלל, כך שגם באג עתידי במסלול השמירה לא יוכל לדלוף אותו.
+// בלי משתמש מחובר אין קריאה לרשת — אין למי לרענן, ואין סיבה למשוך את
+// רשימת הצוות למכשיר של מי שטרם נכנס.
 async function ysRefreshUsersCache() {
   try {
     if (!AUTH.user || AUTH.user.id === undefined || AUTH.user.id === null) return;
-    var res = await SB.from('ys_users').select('id,username,password_hash,full_name,role,active')
-      .eq('id', AUTH.user.id).eq('active', true).maybeSingle();
-    if (!res.error && res.data) ysUsersCacheSave(res.data);
+    var res = await SB.from('ys_users').select('id,username,full_name,role,active,pass_salt,pass_fp')
+      .eq('active', true);
+    if (!res.error && Array.isArray(res.data)) ysUsersCacheSaveAll(res.data);
   } catch(e) {}
+}
+// ---- השלמת טביעות למשתמשים קיימים (מסלול חד-פעמי) ----
+// רץ **רק** כשיש רשת ומי שמחובר הוא `admin` שנכנס אונליין; אחרת מדלג
+// בשקט. איש צוות זוטר לא יריץ עדכון על שורות של אחרים, ומכשיר אופליין
+// לא ינסה בכלל. אין כאן יצירת סוד — רק גזירת טביעה מהסיסמה שכבר בענן.
+// ⚠️ טבלה בלי העמודות (המיגרציה טרם הורצה) מחזירה שגיאה שנבלעת — זהו
+// אחד ממסלולי הדילוג השקטים המכוונים.
+var _ysFpBackfillDone = false;
+async function ysBackfillPassFp() {
+  if (_ysFpBackfillDone) return;
+  try {
+    if (!navigator.onLine) return;
+    if (!AUTH.user || AUTH.user.role !== 'admin' || AUTH.offlineLogin) return;
+    _ysFpBackfillDone = true;
+    var res = await withTimeout(SB.from('ys_users').select('id,password_hash').is('pass_fp', null));
+    if (!res || res.error || !Array.isArray(res.data) || !res.data.length) return;
+    var done = 0;
+    for (var i = 0; i < res.data.length; i++) {
+      var r = res.data[i];
+      if (!r || !r.password_hash) continue;
+      var made = await ysMakePassFp(r.password_hash);
+      if (!made) return;   // אין crypto — אין טעם להמשיך בלולאה
+      var up = await withTimeout(SB.from('ys_users')
+        .update({ pass_salt: made.salt, pass_fp: made.fp }).eq('id', r.id));
+      if (up && up.error) { console.warn('[pass-fp] עדכון נכשל למשתמש', r.id, up.error.message); continue; }
+      done++;
+    }
+    if (done) {
+      console.log('[pass-fp] הושלמו טביעות ל-' + done + ' משתמשים');
+      ysRefreshUsersCache();
+    }
+  } catch(e) { console.warn('[pass-fp] השלמה נכשלה:', e && e.message); }
 }
 // ===== ניסוח הודעות אחיד לשלושת הפרויקטים (סבב 8) =====
 // **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
@@ -1244,6 +1383,13 @@ var MSG_SAVED     = '✅ נשמר בהצלחה';
 // דבר בשני המצבים, וזו ההטעיה שהסבב הזה בא למנוע.
 var MSG_SAVED_LOCAL = '✅ נשמר במכשיר — יסונכרן כשתחזור הרשת';
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
+// ---- שלוש הודעות אופליין פרטיות ל-hanhala (סבב 22) ----
+// כל אחת מתארת מצב **אחר** שבו האימות המקומי לא יכול להתבצע, ובכולן
+// הפעולה הנדרשת מהמשתמש זהה וכתובה במפורש: חיבור אחד. ⛔ אין לאחד אותן
+// עם `MSG_BAD_LOGIN` — «סיסמה שגויה» על מצב שאינו סיסמה שגויה הוא כשל שקט.
+var MSG_OFF_UNKNOWN = '📴 אין חיבור — המשתמש הזה אינו בעותק המקומי שבמכשיר. נדרש חיבור לאינטרנט פעם אחת';
+var MSG_OFF_NO_FP   = '📴 אין חיבור — המשתמש הזה טרם הוכן לכניסה ללא רשת. נדרש חיבור לאינטרנט פעם אחת';
+var MSG_OFF_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לכניסה ללא רשת';
 // סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
 
@@ -1292,7 +1438,7 @@ async function ysRevalidateOfflineLogin() {
 }
 
 // ===== תיעוד ניסיונות כניסה (login_fail / login_ok) =====
-var YS_APP_VER = 'hanhala-ruchanit-v34'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v35'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1392,9 +1538,13 @@ async function _doLoginInner() {
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
     ysLoginLog('login_ok', 'online', ysLoginDetails(username));
-    // העותק המקומי = **המשתמש הזה בלבד** (סבב 21). השורה כבר בידינו מהאימות,
-    // ולכן נשמרת ישירות; זו גם הכתיבה שדורסת מטמון רב-משתמשים ישן.
+    // השורה כבר בידינו מהאימות — נשמרת ישירות, כדי שגם אם הרענון המלא
+    // שאחריה ייכשל, המשתמש הזה לפחות יוכל להיכנס אופליין בפעם הבאה.
     ysUsersCacheSave(onlineUser);
+    // ...ומיד אחריה הרענון המלא (סבב 22): **כל** המשתמשים הפעילים, בלי
+    // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
+    ysRefreshUsersCache();
+    ysBackfillPassFp();    // מדלג בשקט אם המחובר אינו admin
     ysLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
     ysLoginLog('login_fail', 'wrong_credentials_online', ysLoginDetails(username));
@@ -1414,27 +1564,38 @@ async function _doLoginInner() {
                         : '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט');
       return;
     }
-    // ⚠️ שני כישלונות שונים, ושתי הודעות שונות (סבב 21). מאז שהמטמון מחזיק
-    // **רק את המשתמש המחובר**, "שם המשתמש אינו במטמון" אינו אומר שהסיסמה
-    // שגויה — הוא אומר שאין כאן במה לאמת אותו. הודעת «שם משתמש או סיסמה
-    // שגויים» במצב הזה היא שקר שמוביל את המשתמש לנסות סיסמאות שוב ושוב.
-    var cu = null, lu = null;
+    // ⚠️ ארבעה מצבים שונים, וארבע הודעות שונות (סבב 21, הורחב בסבב 22).
+    // «שם המשתמש אינו במטמון» ו«אין למשתמש טביעה» **אינם** אומרים שהסיסמה
+    // שגויה — הם אומרים שאין כאן במה לאמת אותה. הודעת «שם משתמש או סיסמה
+    // שגויים» במצבים האלה היא שקר שמוביל את המשתמש לנסות סיסמאות שוב ושוב.
+    var cu = null;
     try {
       cu = cache.find(function(u){ return u && u.username === username; });
-      if (cu && cu.password_hash === pass && cu.active === true) lu = cu;
     } catch(eF) { console.warn('[login] cache.find failed:', eF); }
     if (!cu) {
-      ysLoginLog('login_fail', 'other_user_offline', ysLoginDetails(username));
-      showErr('📴 אין חיבור — במצב אופליין אפשר להיכנס רק עם המשתמש האחרון שנכנס במכשיר הזה');
+      ysLoginLog('login_fail', 'unknown_user_offline', ysLoginDetails(username));
+      showErr(MSG_OFF_UNKNOWN);
       return;
     }
-    if (!lu) {
+    // ⛔ ההשוואה היא מול **טביעת PBKDF2** ולא מול סיסמה שמורה: מאז סבב 22
+    // אין `password_hash` במטמון כלל. ר' הפרק בראש מודול הכניסה.
+    var verdict = await ysVerifyOffline(cu, pass);
+    if (verdict === 'no-fp') {
+      ysLoginLog('login_fail', 'no_fp_offline', ysLoginDetails(username));
+      showErr(MSG_OFF_NO_FP); return;
+    }
+    if (verdict === 'no-crypto') {
+      ysLoginLog('login_fail', 'no_crypto_offline', ysLoginDetails(username));
+      showErr(MSG_OFF_NO_CRYPTO); return;
+    }
+    if (verdict !== 'ok') {
       ysLoginLog('login_fail', 'wrong_credentials_offline', ysLoginDetails(username));
       showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
+    var lu = cu;
     AUTH.user = lu;
     AUTH.offlineLogin = true;
-    ysUsersCacheSave(lu);   // מצמצם מטמון רב-משתמשים ישן גם במסלול האופליין
+    ysUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
     ysLoginLog('login_ok', 'offline', ysLoginDetails(username));
     toast(serverErr ? '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך'
                     : '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור');
@@ -1962,16 +2123,21 @@ async function confirmSwitch() {
   // כל כישלון מנסה את העותק המקומי, ורק אם גם הוא לא מתאים מוצגת שגיאה.
   if(netFail){
     // אין רשת / פסק זמן — אימות מול העותק המקומי.
-    // ⚠️ סבב 21: המטמון מחזיק **רק את המשתמש המחובר**, ולכן מעבר למשתמש
-    // אחר אינו אפשרי אופליין — וזה חייב להיאמר במפורש. הודעת «סיסמה שגויה»
-    // כאן הייתה **כשל שקט**: המשתמש היה מנסה שוב ושוב סיסמה נכונה לחלוטין.
+    // ⚠️ סבב 22: המטמון מחזיק שוב את **כל** המשתמשים הפעילים, ולכן מעבר
+    // משתמש אופליין חזר לעבוד. האימות הוא מול **טביעת PBKDF2** — אין כאן
+    // סיסמה שמורה להשוות אליה. שלושת מצבי הכישלון שאינם «סיסמה שגויה»
+    // מקבלים הודעה משלהם: הודעת סיסמה על מצב שאינו כזה היא **כשל שקט**
+    // שמוביל את המשתמש להקליד שוב ושוב סיסמה נכונה לחלוטין (סבב 21).
     var cache=ysUsersCacheGet();
     var cu=null;
     try {
       cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.id)===String(d._switchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
-    if(!cu){errEl.textContent='📴 אין חיבור — מעבר משתמש דורש רשת';return;}
-    if(cu.password_hash!==pass||cu.active!==true){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(!cu){errEl.textContent=MSG_OFF_UNKNOWN;return;}
+    var verdict=await ysVerifyOffline(cu,pass);
+    if(verdict==='no-fp'){errEl.textContent=MSG_OFF_NO_FP;return;}
+    if(verdict==='no-crypto'){errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
+    if(verdict!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=cu;
     AUTH.offlineLogin=true;
   } else {
@@ -1984,6 +2150,10 @@ async function confirmSwitch() {
   }
   closeSwitchModal();
   AUTH.user=u;
+  // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
+  // הרענון המלא (סבב 22) מושך את כל המשתמשים הפעילים; באופליין אין רשת
+  // והקריאה נופלת בשקט, ולכן היא מותנית.
+  if(!AUTH.offlineLogin) ysRefreshUsersCache();
   await loadPerms();
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;
@@ -2265,19 +2435,38 @@ async function saveUser() {
   if (!fullName || !username) { errEl.textContent = 'שם מלא ושם משתמש הם שדות חובה'; return; }
   var obj = {full_name: fullName, username: username, role: role, active: true};
   if (!id && !pass) { errEl.textContent = 'יש להזין סיסמה עבור משתמש חדש'; return; }
+  var noFp = false;
   if (pass) {
     if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
     obj.password_hash = pass;
+    // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
+    var made = await ysMakePassFp(pass);
+    if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
+    else {
+      // ⛔ **חובה לאפס** ולא רק לוותר על כתיבה: טביעה ישנה שנשארת הייתה
+      // ממשיכה לפתוח את הכניסה האופליין עם הסיסמה **הקודמת**, לנצח.
+      obj.pass_salt = null; obj.pass_fp = null; noFp = true;
+    }
   }
   var res;
   try {
     res = await withTimeout(id
       ? SB.from('ys_users').update(obj).eq('id', id)
       : SB.from('ys_users').insert(obj));
+    // נפילה-חזרה לחלון שבין דחיפת הקוד להרצת המיגרציה: בלי זה **כל**
+    // שמירת משתמש הייתה נכשלת עד שהעמודות ייווצרו. המשתמש נשמר, והכניסה
+    // האופליין שלו תושלם ע"י `ysBackfillPassFp` אחרי המיגרציה.
+    if (res && res.error && ysIsMissingFpCol(res.error)) {
+      delete obj.pass_salt; delete obj.pass_fp; noFp = true;
+      res = await withTimeout(id
+        ? SB.from('ys_users').update(obj).eq('id', id)
+        : SB.from('ys_users').insert(obj));
+    }
   } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
   closeUserModal();
-  toast('✅ משתמש נשמר!');
+  toast(noFp ? '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת' : '✅ משתמש נשמר!');
+  ysRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
 
@@ -2290,6 +2479,8 @@ async function toggleUserActive(id, current) {
     toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
     return;
   }
+  // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין
+  ysRefreshUsersCache();
   renderUsersList();
   toast(current ? '🔴 משתמש הושבת' : '🟢 משתמש הופעל');
 }
@@ -2365,13 +2556,30 @@ async function changeMyPassword() {
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  // סבב 22: הטביעה נגזרת בכל שינוי סיסמה. כישלון בגזירה **מאפס** את
+  // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
+  var made = await ysMakePassFp(newPass);
+  var updObj = { password_hash: newPass, pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
   var upd;
-  try { upd = await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id)); }
+  try {
+    upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id));
+    if (upd && upd.error && ysIsMissingFpCol(upd.error)) {   // המיגרציה טרם הורצה
+      made = null;
+      upd = await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id));
+    }
+  }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
+  // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
+  // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
+  try {
+    ysUsersCacheSave({ id: AUTH.user.id, username: AUTH.user.username, full_name: AUTH.user.full_name,
+                       role: AUTH.user.role, active: true,
+                       pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
+  } catch (e3) {}
   document.getElementById('pw-old').value = '';
   document.getElementById('pw-new').value = '';
-  toast('✅ סיסמה עודכנה!');
+  toast(made ? '✅ סיסמה עודכנה!' : '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת');
 }
 
 
@@ -4488,7 +4696,9 @@ async function setupWithServiceKey() {
   btn.textContent = 'מגדיר...'; btn.disabled = true;
   var SB2 = supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co', key);
   // נסה ליצור טבלה דרך rpc
-  var sql = `create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null check (role in ('admin','senior','junior')), active boolean default true, created_at timestamptz default now()); alter table ys_users enable row level security; drop policy if exists allow_all on ys_users; create policy allow_all on ys_users using (true) with check (true);`;
+  // `pass_salt`/`pass_fp` — טביעת PBKDF2 לכניסה אופליין (סבב 22). ניתנות
+  // ל-null: משתמש שנוצר ידנית ב-SQL יקבל טביעה מ-`ysBackfillPassFp`.
+  var sql = `create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null check (role in ('admin','senior','junior')), active boolean default true, created_at timestamptz default now()); alter table ys_users add column if not exists pass_salt text; alter table ys_users add column if not exists pass_fp text; alter table ys_users enable row level security; drop policy if exists allow_all on ys_users; create policy allow_all on ys_users using (true) with check (true);`;
   var {error} = await SB2.rpc('exec_sql', {sql: sql});
   if (error) {
     // rpc לא קיים - נסה ישירות insert (אם הטבלה כבר נוצרה ידנית)
@@ -4517,7 +4727,7 @@ function showSetupScreen() {
     '<div id="svc-err" style="font-size:.8rem;color:#e53e3e;margin-top:8px"></div>' +
     '<hr style="margin:14px 0;border-color:#d8e2f0">' +
     '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a>. ⚠️ יש להחליף את הסיסמה שבשורה האחרונה — <b>אין סיסמת ברירת מחדל</b>:</div>' +
-    '<textarea readonly style="width:100%;height:120px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null, active boolean default true, created_at timestamptz default now());\ninsert into ys_users (username, password_hash, full_name, role, active) values (\'<שם משתמש>\', \'<סיסמה בת שש ספרות>\', \'<שם מלא>\', \'admin\', true);</textarea>' +
+    '<textarea readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null, active boolean default true, created_at timestamptz default now());\nalter table ys_users add column if not exists pass_salt text;\nalter table ys_users add column if not exists pass_fp text;\ninsert into ys_users (username, password_hash, full_name, role, active) values (\'<שם משתמש>\', \'<סיסמה בת שש ספרות>\', \'<שם מלא>\', \'admin\', true);</textarea>' +
     '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
 }
 
