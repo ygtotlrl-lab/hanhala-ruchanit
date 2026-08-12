@@ -357,12 +357,22 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy)}
 
-/* מידע טכני — קיפול מסכי האחסון (תצוגה בלבד): שורה צנועה בתחתית ההגדרות */
+/* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
+   זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
+   הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים לא נשענים על
+   משתני-הצבע של אף אפליקציה (הם נבדלים ביניהן) אלא יורשים צבע וגופן. */
 .tech-info{margin-top:22px;font-size:12px;opacity:.7}
 .tech-info>summary{cursor:pointer;list-style:none;display:inline-block;padding:4px 2px}
 .tech-info>summary::-webkit-details-marker{display:none}
 .tech-info[open]{opacity:1}
 .tech-info .ls-status button{display:none!important}
+.sync-box{margin-top:22px;border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:12px 14px;background:rgba(0,0,0,.02)}
+.sync-box-ttl{font-weight:800;font-size:14px;margin-bottom:6px}
+.sync-line{font-size:13px;line-height:1.8;margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08)}
+.sync-line .sync-act{margin-top:8px}
+.sync-line button{font:inherit;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.18);background:rgba(0,0,0,.05);color:inherit;cursor:pointer}
+.sync-line button[disabled]{opacity:.5;cursor:default}
+/* ═══ סוף CSS אזור המצב ═════════════════════════════════════════════════ */
 .ls-crit-line{margin-top:18px;font-size:12px;font-weight:600;color:#b3261e}
 </style>
 </head>
@@ -872,10 +882,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" onclick="openAddUser()">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss" id="ss-sync">
-        <div class="ss-t">⏳ ממתין לסנכרון</div>
-        <div id="pend-status-box"><div class="ld">טוען...</div></div>
-      </div>
       <div class="ss" id="ss-perms">
         <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
         <div style="overflow-x:auto">
@@ -890,6 +896,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <button class="btn" onclick="savePerms()">💾 שמור הרשאות</button>
         </div>
       </div>
+      <!-- אזור מצב (סבב 17) — שני האלמנטים האחרונים במסך, בסדר הזה -->
+      <div id="sync-status-box"></div>
       <div id="tech-info-box"></div>
     </div>
 
@@ -1232,6 +1240,8 @@ var MSG_SAVED     = '✅ נשמר בהצלחה';
 // דבר בשני המצבים, וזו ההטעיה שהסבב הזה בא למנוע.
 var MSG_SAVED_LOCAL = '✅ נשמר במכשיר — יסונכרן כשתחזור הרשת';
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
+// סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
+var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
 
 // ---- מגבלת זמן לשאילתות אימות ----
 // supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
@@ -1985,13 +1995,13 @@ function showSettingsModule(mod) {
   });
   var target = document.getElementById('settings-'+mod);
   if (target) target.style.display = '';
-  // setTimeout מבטיח שה-DOM עודכן לפני הrender
-  setTimeout(function() {
-    if (mod === 'system') { renderUsersList(); renderPermsTable(); pendRenderStatus(); techInfoMount(); }
-    if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
-    if (mod === 'attend') window.renderAttendSettings();
-    if (mod === 'sleep') window.renderSleepSettings();
-  }, 0);
+  // סבב 17: עטיפת ה-setTimeout(…, 0) הוסרה. כל האלמנטים שהרינדור כותב אליהם
+  // סטטיים ב-HTML, והצגת המודול היא שינוי `display` סינכרוני — לא היה כאן שום
+  // דבר להמתין לו, והדחייה רק פיצלה את החיווט לשני תורים.
+  if (mod === 'system') { renderUsersList(); renderPermsTable(); statusAreaMount(); }
+  if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
+  if (mod === 'attend') window.renderAttendSettings();
+  if (mod === 'sleep') window.renderSleepSettings();
 }
 
 // ברירות מחדל לסיבות היעדרות
@@ -3243,7 +3253,14 @@ window.lsSweepVerified = lsSweepVerified;
    הידני אינם מוצגים (מוסתרים ב-CSS — .tech-info .ls-status button);
    המנגנון האוטומטי (lsBoot/lsSweep) הוא הדרך היחידה לפינוי.
    חריג יחיד ומכוון: מעל LS_CRIT_BYTES מוצגת שורת מצב עדינה גם מחוץ
-   לרכיב — רשת הביטחון היחידה שמוצגת ביוזמת המערכת. */
+   לרכיב — רשת הביטחון היחידה שמוצגת ביוזמת המערכת.
+
+   ⚠️ סבב 17: מצב הפתיחה נשמר ב-`_techInfoOpen` (זיכרון בלבד) ולא רק
+   ב-DOM. בגיוס מסך ההגדרות נבנה מחדש בכל `render()`, ולכן העוגן חוזר
+   ריק, ה-`details` הקודם כבר לא קיים — והרכיב היה נסגר בכל שמירה ובכל
+   ציור מושהה של ⏳. המצב חי בזיכרון בלבד בכוונה: זו העדפת תצוגה של
+   הרגע, לא נתון שראוי לצרוך ממנו מכסת אחסון. */
+var _techInfoOpen = false;
 function techInfoHTML() {
   var crit = '';
   try {
@@ -3260,15 +3277,19 @@ function techInfoHTML() {
     '</details>';
 }
 function techInfoToggle(el) {
-  if (el && el.open) { try { lsRenderStatus(); } catch (e) { } }
+  if (!el) return;
+  _techInfoOpen = !!el.open;
+  if (el.open) { try { lsRenderStatus(); } catch (e) { } }
 }
 function techInfoMount() {
   var box = document.getElementById('tech-info-box');
   if (!box) return;
   var prev = box.querySelector('details.tech-info');
-  var wasOpen = !!(prev && prev.open);
+  if (prev) _techInfoOpen = !!prev.open;
   box.innerHTML = techInfoHTML();
-  if (wasOpen) {
+  // פתיחה מחדש מפעילה `ontoggle` (גם כשהיא תכנותית), וזה מה שמרנדר את
+  // הפירוט — אין צורך לקרוא כאן ל-lsRenderStatus ואין טעם לרנדר פעמיים.
+  if (_techInfoOpen) {
     var d = box.querySelector('details.tech-info');
     if (d) d.open = true;
   }
@@ -3276,6 +3297,71 @@ function techInfoMount() {
 window.techInfoToggle = techInfoToggle;
 window.techInfoMount = techInfoMount;
 /* ═══ סוף רכיב "מידע טכני" ═══════════════════════════════════════════════ */
+/* ── SYNC_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+var SYNC_CFG = {
+  lastSync: function () { return _ysLastSyncAt || 0; },
+  sync: function () { return ysSyncNow(); }
+};
+/* ═══ אזור מצב — בלוק "☁️ סנכרון" (מודול משותף, סבב 17) ═══════════════════
+   כלל ברזל 7: רכיב משותף = קוד זהה + מיקום זהה + חיווט חי. שני האלמנטים
+   האחרונים בכל מסך הגדרות בארגון הם `#sync-status-box` ומיד אחריו
+   `#tech-info-box`, בסדר הזה ובלי שום דבר אחריהם — ובדיקת האחידות
+   שרצה עם השערים נכשלת אחרת.
+
+   התוכן: מסך ה-⏳ הקיים (`pendStatusHTML`, בלי שינוי בתוכנו) ומתחתיו
+   שורת מצב תמציתית — חיבור, מועד הסנכרון המוצלח האחרון, וכפתור
+   "סנכרן עכשיו". המקור הוא כרטיס "מצב סנכרון" של gius (סבב 11); כאן הוא
+   הפך למשותף, וכך שלוש האחיות מקבלות אותו.
+
+   ⚠️ הכפתור אינו מנגנון סנכרון: הסנכרון האוטומטי ממשיך לרוץ ברקע בדיוק
+   כמו קודם, וזו רק דרך לבקש אותו עכשיו ולראות תשובה. לכן גם אין כאן טוסט
+   כשל משלו — מסלול הסנכרון של כל אפליקציה כבר מדווח על כשל פעם אחת,
+   וכפילות הייתה רעש.
+
+   הבלוק אינו נשען על מחלקות הכרטיס של אף אפליקציה (הן נבדלות ביניהן),
+   אלא מרנדר חלונית משלו — ולכן הוא נשאר זהה בית-לבית בארבעתן.
+   `SYNC_CFG` — הדבר היחיד שנבדל בין האפליקציות — יושב מעל הבלוק. */
+function syncFmtTime(t) {
+  try { return new Date(t).toLocaleString('he-IL'); } catch (e) { return String(t); }
+}
+var _syncNowBusy = false;
+function syncLineHTML() {
+  var t = 0;
+  try { t = SYNC_CFG.lastSync() || 0; } catch (e) { t = 0; }
+  return '<div class="sync-line">' +
+    '<div>מצב חיבור: <b>' + (navigator.onLine ? 'מחובר' : 'מנותק') + '</b></div>' +
+    '<div>סנכרון אחרון: <b>' + (t ? esc(syncFmtTime(t)) : '— טרם הסתנכרן —') + '</b></div>' +
+    '<div class="sync-act"><button type="button"' + (_syncNowBusy ? ' disabled' : '') +
+    ' onclick="window.syncNowFromStatus&&window.syncNowFromStatus()">' +
+    (_syncNowBusy ? 'מסנכרן…' : '🔄 סנכרן עכשיו') + '</button></div>' +
+    '</div>';
+}
+function syncStatusHTML() { return pendStatusHTML() + syncLineHTML(); }
+function syncStatusMount() {
+  var box = document.getElementById('sync-status-box');
+  if (!box) return;
+  box.innerHTML = '<div class="sync-box"><div class="sync-box-ttl">☁️ סנכרון</div>' +
+                  syncStatusHTML() + '</div>';
+}
+function syncNowFromStatus() {
+  if (_syncNowBusy) return;
+  _syncNowBusy = true;
+  syncStatusMount();
+  var p = null;
+  try { p = SYNC_CFG.sync(); } catch (e) { p = null; }
+  Promise.resolve(p)['catch'](function () { })
+    .then(function () { _syncNowBusy = false; syncStatusMount(); });
+}
+// נקודת החיווט היחידה של אזור המצב. כל מסך הגדרות קורא לה, והיא מרכיבה
+// את שני האלמנטים בסדר המחייב. בדיקת האחידות דורשת שתהיה לה קריאה חיה.
+function statusAreaMount() {
+  syncStatusMount();
+  techInfoMount();
+}
+window.syncStatusMount = syncStatusMount;
+window.syncNowFromStatus = syncNowFromStatus;
+window.statusAreaMount = statusAreaMount;
+/* ═══ סוף בלוק "☁️ סנכרון" ═══════════════════════════════════════════════ */
 /* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 // `extra` — התור הישן של hanhala הוא **פר-מפתח kv** ולא פר-רשומה, ולכן הוא
 // לא נכנס למפת הסימונים. הוא כן חייב להופיע במונה, אחרת המשתמש רואה "0
@@ -3642,10 +3728,6 @@ var PEND_KV_PREFIX = {
   'ys_attend_treats': PK_AT_TREAT, 'ys_sleep_treats': PK_SL_TREAT,
   'ys_students': PK_STUDENT
 };
-function pendRenderStatus() {
-  var el = document.getElementById('pend-status-box');
-  if (el) el.innerHTML = pendStatusHTML();
-}
 function pendConfirmKv(kvKey, t0) {
   var pfx = PEND_KV_PREFIX[kvKey];
   if (pfx) pendConfirmPush(pfx, t0);
@@ -3670,6 +3752,19 @@ function initDateFields(){
 // לא קוראים loadDash ו-initDateFields ישירות — נקרא אחרי login
 // ============ CLOUD SYNC ============
 var _ysLastTs = 0;
+// סבב 17: מועד הסנכרון המוצלח האחרון — לשורת המצב שבאזור המצב בהגדרות.
+// נכתב על **כל שיחה מוצלחת עם הענן**, כולל בדיקת החותמת בלבד, ולכן הוא נכון
+// גם בדפדפן שרק קורא. ⛔ הוא **אינו** עֵד דחיפה ואינו משמש לפינוי — לזה יש
+// `_ysPushedAt` פר-מפתח (ר' סבב 14). אין לערבב ביניהם.
+var _ysLastSyncAt = 0;
+function _ysMarkSynced() { _ysLastSyncAt = Date.now(); }
+// "סנכרן עכשיו" מאזור המצב: משיכה מלאה + ריקון התור, בלי תלות בחותמת
+// `ys_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
+async function ysSyncNow() {
+  await ysPullFromCloud();
+  try { await ysFlushQueue(); } catch (e) { }
+  _ysMarkSynced();
+}
 var _ysSyncing = false;
 
 // ===== Offline Queue =====
@@ -4090,7 +4185,7 @@ async function ysPushToCloud() {
     }
   } else if (_ysPushWarned) {
     _ysPushWarned = false;
-    toast('☁️ הסנכרון חזר לפעול');
+    toast(MSG_SYNC_BACK);
   }
 }
 
@@ -4214,6 +4309,7 @@ async function ysAutoSync() {
   try {
     // בלי timeout שאילתה תקועה משאירה את _ysSyncing=true לנצח — הפולינג מת בשקט
     var r = await withTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').single());
+    if (r && !r.error) _ysMarkSynced();   // סבב 17: שיחה מוצלחת עם הענן
     if (!r || !r.data) { _ysSyncing = false; return; }
     var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
     if (remoteTs > _ysLastTs) {
