@@ -66,15 +66,20 @@ alter table public.kv enable row level security;
 drop policy if exists allow_all on public.kv;
 create policy allow_all on public.kv using (true) with check (true);
 
--- ⚠️ ההרשאות כאן משקפות את **המצב שנמדד במסד החי**, ולא המלצה.
---    ל-`anon` יש בפועל גם `delete` ו-`truncate` על `kv` — ירושה מברירות
---    המחדל של פרויקט Supabase סטנדרטי (`alter default privileges … grant all`),
---    שאיש לא הסיר. האפליקציה **אינה משתמשת בהן** (כל כתיבה היא `upsert`).
---    ⛔ הצמצום שלהן הוא שינוי מודל אבטחה, כלומר החלטת המנהל ולא של הסשן
---    (כלל ברזל 9) — ולכן הן נכתבות כאן כפי שהן, והשורה שמצמצמת אותן יושבת
---    מוערת בסוף הקובץ.
+-- ⚠️ ההרשאות של `anon` צומצמו בסבב 29, בהחלטת המנהל (`migrations/001`).
+--    ⛔ **`revoke` לפני `grant`, ואין לקצר לשורת `grant` אחת:** פרויקט
+--    Supabase סטנדרטי מגיע עם `alter default privileges … grant all`, ולכן
+--    הטבלה **נולדת** עם `delete` ו-`truncate` ל-anon — ו-GRANT הוא אדיטיבי
+--    בלבד ואינו מסיר אותם. השורה הזו היא גם שורת ההתכנסות להתקנה שנוצרה
+--    לפני סבב 29.
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — האפליקציה אינה
+--    מוחקת שורות `kv` בשום מסלול (כל כתיבה היא `upsert`, ומחיקה היא
+--    tombstone בתוך הערך), ולכן ההרשאה מיותרת ורק פותחת ריקון של מקור
+--    הנתונים היחיד למי שמחזיק את המפתח הציבורי.
+revoke delete, truncate, references, trigger on public.kv from anon, authenticated;
+grant select, insert, update on public.kv to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.kv to anon, authenticated, service_role;
+  on public.kv to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -129,8 +134,13 @@ alter table public.ys_users enable row level security;
 drop policy if exists allow_all on public.ys_users;
 create policy allow_all on public.ys_users using (true) with check (true);
 
+-- ⚠️ אותו דפוס כמו ב-`kv` שלמעלה, ומאותה סיבה — ר' ההסבר שם.
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — משתמש אינו נמחק
+--    כאן לעולם; ההשבתה היא `active=false`, כלומר UPDATE.
+revoke delete, truncate, references, trigger on public.ys_users from anon, authenticated;
+grant select, insert, update on public.ys_users to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.ys_users to anon, authenticated, service_role;
+  on public.ys_users to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -211,13 +221,23 @@ grant select, insert, update, delete, truncate, references, trigger
 
 
 -- ============================================================================
--- ⚠️ הצעה שלא בוצעה — הקשחת ההרשאות על kv
+-- ✅ ההצעה מסבב 28 — בוצעה בסבב 29
 -- ============================================================================
--- האפליקציה אינה מוחקת שורות מ-`kv` (כל כתיבה היא `upsert`), ולכן ל-`anon`
--- אין צורך ב-`delete`/`truncate` שם. ⛔ **השורה הבאה אינה מופעלת** — צמצום
--- הרשאות הוא שינוי מודל אבטחה, והחלטה כזו היא של המנהל ולא של הסשן
--- (כלל ברזל 9). היא רשומה כאן כדי שההצעה תהיה כתובה ולא תישכח:
+-- בסוף הקובץ הזה ישבה עד סבב 28 הצעה מוערת לצמצם את `delete`/`truncate`
+-- של `anon` על `kv`. **המנהל אישר, והיא מיושמת** — גם כאן (השורות שליד
+-- כל טבלה) וגם ב-`migrations/001_revoke_delete_anon.sql` להתקנה קיימת.
+-- מה שנמדד לפני הביצוע: **אפס** קריאות `.delete()` ל-PostgREST בכל הריפו.
 --
---   revoke delete, truncate on public.kv from anon;
+-- ⛔ **מה שנשאר מכוון ואין לגעת בו:** `sync_log` ו-`kv_backup` מקבלות
+-- `insert`+`select` בלבד — **בלי `update`** — כדי שלא ניתן יהיה לזייף
+-- רישום קיים ביומן ראיות. ⛔ אין «ליישר» אותן ל-`kv` ול-`ys_users`
+-- בשם האחידות (כלל ברזל 10 סעיף 9).
 --
--- ⚠️ לפני הפעלה — לוודא שאין מסלול כתיבה חדש שנשען עליהן.
+-- ⚠️ **`authenticated` צומצם יחד עם `anon`**, בהחלטת המנהל: לתפקיד היו
+-- בדיוק אותן הרשאות מלאות, מאותה ירושה, ופתיחת signup או Auth בעתיד הייתה
+-- פוערת את ההגנה בשקט. זהו גם **יישור ל-gius**, שמיגרציה 0002 שלה כבר
+-- צמצמה את שניהם.
+-- ⚠️ **הצמצום נעשה כשאין משתמשי Auth כלל** (`auth.users` ריקה), ולכן הוא
+-- **אינו נבדק מול מסלול חי**. אם ייפתח Auth בעתיד — יש לוודא
+-- ש-`select, insert, update` מספיקים למסלול שייבנה.
+-- ⛔ `service_role` לא נגע — הוא תפקיד השרת.
