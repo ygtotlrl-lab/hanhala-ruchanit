@@ -1,0 +1,84 @@
+-- ============================================================================
+-- הנהלה רוחנית — מיגרציה 002
+-- טבלאות היומן: `INSERT` + `SELECT` בלבד, לשני התפקידים (סבב 29, השלמה)
+-- הרצה: Supabase SQL Editor (פרויקט kxbtskqobynewvnckaaz) →
+--   https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql
+-- ============================================================================
+--
+-- ⭐ **הפער שמיגרציה 001 השאירה פתוח — נסגר כאן.** 001 צמצמה את `kv` ואת
+--    `ys_users`, והשאירה את `sync_log` ואת `kv_backup` בחוץ בהנחה שהן כבר
+--    מוגנות. ⚠️ **ההנחה הייתה נכונה לחצי מהתמונה:**
+--
+--      anon          → INSERT, SELECT                                    ✅
+--      authenticated → DELETE, INSERT, REFERENCES, SELECT, TRIGGER,
+--                      TRUNCATE, UPDATE                                  ❌
+--
+--    כלומר ההגנה על יומני הראיות התקיימה **מול תפקיד אחד בלבד**. נמדד מול
+--    המסד החי ואומת חיצונית.
+--
+-- ⛔ **הלקח, והוא הסיבה שהקובץ הזה קיים** (סבב 29) — **הרשאה שהוחלה על
+--    תפקיד אחד בלבד היא הגנה חלקית.** בדיקת הרשאות חייבת לסרוק את **כל**
+--    התפקידים הנגישים (`anon` **וגם** `authenticated`), ולא להסתפק בזה
+--    שהתפקיד הבולט נראה תקין. סריקה שמכסה תפקיד אחד היא ראיה לתפקיד
+--    שנסרק, ותו לא. ר' כלל ברזל 10 סעיף 9.
+--
+-- **למה דווקא `INSERT` + `SELECT`, ולמה זה שונה מ-001.**
+-- ⛔ **`UPDATE` ו-`DELETE` אסורים כאן לשני התפקידים** (סבב 29) — אלה
+--    **יומני ראיות**: `sync_log` רושמת מי סנכרן ומתי, ו-`kv_backup` מחזיקה
+--    את הגיבוי היומי. יומן שניתן לערוך אינו יומן ראיות — מי שיכול לעדכן
+--    רישום קיים יכול לזייף אותו, ומי שיכול למחוק יכול להעלים אותו.
+-- ⚠️ **ולכן הסט כאן צר מזה של 001**, שם `UPDATE` **נחוץ** (`ysKvSet` הוא
+--    upsert). ⛔ אין «ליישר» את שתי הרשימות בשם האחידות — הצרוּת כאן
+--    **היא** ההגנה.
+--
+-- **מה האפליקציה באמת צריכה — נמדד ולא הונח.** ארבעת אתרי הגישה היחידות
+-- הן `insert`: שלושה ל-`sync_log` (יומן הכניסה, ריקון התור שלו, `ysSyncLog`)
+-- ואחד ל-`kv_backup` (`ysMaybeDailyBackup`; ה-`select` שלפניו הוא על `kv`
+-- ולא על טבלת הגיבוי). ⛔ **אין בקוד אף `update` ואף `delete` על שתיהן**,
+-- ולכן הצמצום אינו שובר דבר.
+-- ⚠️ `SELECT` נשאר בכל זאת: הוא כבר קיים ל-anon, הוא הדרך לקרוא את היומן
+--    לאבחון, ואינו מסכן דבר — יומן ראיות אמור להיות **קריא**.
+--
+-- ⚠️ **הפרויקט משותף** עם schar-limud (`sl_*`) ועם yoman-avoda
+-- (`kv_rishon`/`kv_ramataviv`), אבל שתי טבלאות היומן שכאן משרתות את הנהלה
+-- רוחנית, ולכן המיגרציה יושבת בריפו הזה. ⛔ אין ליצור לה כפילה באחיות.
+--
+-- אדיטיבית, אידמפוטנטית, ⛔ **ואינה נוגעת בנתונים** — הרשאות בלבד. אין
+-- כאן `insert`, `update` או `delete` על אף שורה.
+-- ============================================================================
+
+begin;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['sync_log', 'kv_backup']
+  loop
+    -- ⛔ revoke ואז grant, בסדר הזה (סבב 29) — `grant insert, select` לבדו
+    -- אינו מסיר את update/delete/truncate שכבר קיימים; GRANT הוא אדיטיבי.
+    -- ⚠️ ה-revoke כאן כולל **update** — בשונה מ-001, ומאותה סיבה שהקובץ
+    -- הזה קיים.
+    execute format(
+      'revoke update, delete, truncate, references, trigger on table public.%I ' ||
+      'from anon, authenticated', t);
+    execute format(
+      'grant select, insert on table public.%I to anon, authenticated', t);
+  end loop;
+end $$;
+
+commit;
+
+-- ============================================================================
+-- אימות אחרי ההרצה
+-- ============================================================================
+--   select grantee, table_name,
+--          string_agg(distinct privilege_type, ', ' order by privilege_type)
+--   from information_schema.role_table_grants
+--   where table_schema = 'public' and grantee in ('anon','authenticated')
+--     and table_name in ('sync_log','kv_backup')
+--   group by grantee, table_name order by table_name, grantee;
+--
+-- מצופה, לכל ארבע השורות: INSERT, SELECT
+-- ⛔ אם מופיע שם UPDATE, DELETE או TRUNCATE — המיגרציה לא עשתה את שלה.
+-- ⛔ `service_role` לא נגע ואינו אמור להשתנות — הוא תפקיד השרת ואינו נגיש
+--    מהדפדפן.

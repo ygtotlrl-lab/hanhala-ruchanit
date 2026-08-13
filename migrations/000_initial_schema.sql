@@ -66,15 +66,20 @@ alter table public.kv enable row level security;
 drop policy if exists allow_all on public.kv;
 create policy allow_all on public.kv using (true) with check (true);
 
--- ⚠️ ההרשאות כאן משקפות את **המצב שנמדד במסד החי**, ולא המלצה.
---    ל-`anon` יש בפועל גם `delete` ו-`truncate` על `kv` — ירושה מברירות
---    המחדל של פרויקט Supabase סטנדרטי (`alter default privileges … grant all`),
---    שאיש לא הסיר. האפליקציה **אינה משתמשת בהן** (כל כתיבה היא `upsert`).
---    ⛔ הצמצום שלהן הוא שינוי מודל אבטחה, כלומר החלטת המנהל ולא של הסשן
---    (כלל ברזל 9) — ולכן הן נכתבות כאן כפי שהן, והשורה שמצמצמת אותן יושבת
---    מוערת בסוף הקובץ.
+-- ⚠️ ההרשאות של `anon` צומצמו בסבב 29, בהחלטת המנהל (`migrations/001`).
+--    ⛔ **`revoke` לפני `grant`, ואין לקצר לשורת `grant` אחת:** פרויקט
+--    Supabase סטנדרטי מגיע עם `alter default privileges … grant all`, ולכן
+--    הטבלה **נולדת** עם `delete` ו-`truncate` ל-anon — ו-GRANT הוא אדיטיבי
+--    בלבד ואינו מסיר אותם. השורה הזו היא גם שורת ההתכנסות להתקנה שנוצרה
+--    לפני סבב 29.
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — האפליקציה אינה
+--    מוחקת שורות `kv` בשום מסלול (כל כתיבה היא `upsert`, ומחיקה היא
+--    tombstone בתוך הערך), ולכן ההרשאה מיותרת ורק פותחת ריקון של מקור
+--    הנתונים היחיד למי שמחזיק את המפתח הציבורי.
+revoke delete, truncate, references, trigger on public.kv from anon, authenticated;
+grant select, insert, update on public.kv to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.kv to anon, authenticated, service_role;
+  on public.kv to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -129,16 +134,21 @@ alter table public.ys_users enable row level security;
 drop policy if exists allow_all on public.ys_users;
 create policy allow_all on public.ys_users using (true) with check (true);
 
+-- ⚠️ אותו דפוס כמו ב-`kv` שלמעלה, ומאותה סיבה — ר' ההסבר שם.
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — משתמש אינו נמחק
+--    כאן לעולם; ההשבתה היא `active=false`, כלומר UPDATE.
+revoke delete, truncate, references, trigger on public.ys_users from anon, authenticated;
+grant select, insert, update on public.ys_users to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.ys_users to anon, authenticated, service_role;
+  on public.ys_users to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 3. sync_log — יומן אבחון סנכרון
 -- ────────────────────────────────────────────────────────────────────────────
 -- ⚠️ יומן בלבד — האפליקציה כותבת אליו ואינה קוראת ממנו במסלול חי.
---    ל-`anon` יש כאן `insert` ו-`select` בלבד, ולכן **גם אין לו הרשאה למחוק
---    את היומן שלו עצמו**. זו הבחנה מכוונת מול `kv` שלמעלה.
+--    `insert` ו-`select` בלבד, ולכן **אין הרשאה לערוך או למחוק רישום קיים**.
+--    זו הבחנה מכוונת מול `kv` שלמעלה, ששם `update` נחוץ ל-upsert.
 create table if not exists public.sync_log (
   id           bigint generated always as identity primary key,
   created_at   timestamptz default now(),
@@ -161,10 +171,17 @@ drop policy if exists sync_log_select on public.sync_log;
 create policy sync_log_insert on public.sync_log for insert to anon with check (true);
 create policy sync_log_select on public.sync_log for select to anon using (true);
 
-revoke all on public.sync_log from anon;
-grant insert, select on public.sync_log to anon;
+-- ⛔ **יומן ראיות — `insert`+`select` בלבד, לשני התפקידים** (סבב 29, השלמה).
+--    ⚠️ עד ההשלמה הזו העניק הקובץ ל-`authenticated` את הסט המלא — כולל
+--    `update`, `delete` ו-`truncate` — ולכן ההגנה על היומן התקיימה **מול
+--    `anon` בלבד**. ⛔ אין להחזיר להם `update`/`delete`: יומן שניתן לערוך
+--    אינו יומן ראיות. השורה הזו היא גם שורת ההתכנסות להתקנה קיימת.
+-- ⚠️ הפוליסות שלמעלה מוגבלות ל-`anon`, ולכן RLS חוסם ממילא — **אבל אלה שתי
+--    שכבות נפרדות**, ואין להסתמך על האחת כדי להשאיר את השנייה פתוחה.
+revoke all on public.sync_log from anon, authenticated;
+grant insert, select on public.sync_log to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.sync_log to authenticated, service_role;
+  on public.sync_log to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -172,7 +189,7 @@ grant select, insert, update, delete, truncate, references, trigger
 -- ────────────────────────────────────────────────────────────────────────────
 -- ⚠️ `ysMaybeDailyBackup` כותבת לכאן פעם ביממה, **ורק אחרי שכל המפתחות גובו
 --    בהצלחה** נכתב הדגל `ys_last_backup` (סבב 6). אותה הבחנה כמו ב-sync_log:
---    `insert`+`select` בלבד ל-`anon`.
+--    `insert`+`select` בלבד, לשני התפקידים.
 create table if not exists public.kv_backup (
   id         bigint generated always as identity primary key,
   created_at timestamptz default now(),
@@ -187,10 +204,12 @@ drop policy if exists kv_backup_select on public.kv_backup;
 create policy kv_backup_insert on public.kv_backup for insert to anon with check (true);
 create policy kv_backup_select on public.kv_backup for select to anon using (true);
 
-revoke all on public.kv_backup from anon;
-grant insert, select on public.kv_backup to anon;
+-- ⛔ אותו דפוס כמו ב-`sync_log` שלמעלה, ומאותה סיבה (סבב 29, השלמה) —
+--    ר' ההסבר המלא שם. ⛔ ואין להעניק כאן `update`/`delete` לאף תפקיד.
+revoke all on public.kv_backup from anon, authenticated;
+grant insert, select on public.kv_backup to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.kv_backup to authenticated, service_role;
+  on public.kv_backup to service_role;
 
 
 -- ============================================================================
@@ -211,13 +230,28 @@ grant select, insert, update, delete, truncate, references, trigger
 
 
 -- ============================================================================
--- ⚠️ הצעה שלא בוצעה — הקשחת ההרשאות על kv
+-- ✅ ההצעה מסבב 28 — בוצעה בסבב 29
 -- ============================================================================
--- האפליקציה אינה מוחקת שורות מ-`kv` (כל כתיבה היא `upsert`), ולכן ל-`anon`
--- אין צורך ב-`delete`/`truncate` שם. ⛔ **השורה הבאה אינה מופעלת** — צמצום
--- הרשאות הוא שינוי מודל אבטחה, והחלטה כזו היא של המנהל ולא של הסשן
--- (כלל ברזל 9). היא רשומה כאן כדי שההצעה תהיה כתובה ולא תישכח:
+-- בסוף הקובץ הזה ישבה עד סבב 28 הצעה מוערת לצמצם את `delete`/`truncate`
+-- של `anon` על `kv`. **המנהל אישר, והיא מיושמת** — גם כאן (השורות שליד
+-- כל טבלה) וגם ב-`migrations/001_revoke_delete_anon.sql` להתקנה קיימת.
+-- מה שנמדד לפני הביצוע: **אפס** קריאות `.delete()` ל-PostgREST בכל הריפו.
 --
---   revoke delete, truncate on public.kv from anon;
+-- ⛔ **`sync_log` ו-`kv_backup` — `insert`+`select` בלבד, לשני התפקידים**
+-- (סבב 29, השלמה; מיגרציה `002_revoke_log_tables.sql` להתקנה קיימת).
+-- **בלי `update` ובלי `delete`**, כדי שלא ניתן יהיה לזייף או להעלים רישום
+-- קיים ביומן ראיות. ⛔ אין «ליישר» אותן ל-`kv` ול-`ys_users` בשם האחידות
+-- (כלל ברזל 10 סעיף 9) — הסט הצר שם **הוא** ההגנה.
+-- ⚠️ **וזה תוקן בהשלמה ולא נולד נכון:** הקובץ העניק ל-`authenticated` את
+-- הסט המלא על שתיהן, ולכן ההגנה התקיימה מול `anon` בלבד. ⛔ הלקח —
+-- **הרשאה שהוחלה על תפקיד אחד היא הגנה חלקית**; בדיקת הרשאות סורקת את
+-- שני התפקידים.
 --
--- ⚠️ לפני הפעלה — לוודא שאין מסלול כתיבה חדש שנשען עליהן.
+-- ⚠️ **`authenticated` צומצם יחד עם `anon`**, בהחלטת המנהל: לתפקיד היו
+-- בדיוק אותן הרשאות מלאות, מאותה ירושה, ופתיחת signup או Auth בעתיד הייתה
+-- פוערת את ההגנה בשקט. זהו גם **יישור ל-gius**, שמיגרציה 0002 שלה כבר
+-- צמצמה את שניהם.
+-- ⚠️ **הצמצום נעשה כשאין משתמשי Auth כלל** (`auth.users` ריקה), ולכן הוא
+-- **אינו נבדק מול מסלול חי**. אם ייפתח Auth בעתיד — יש לוודא
+-- ש-`select, insert, update` מספיקים למסלול שייבנה.
+-- ⛔ `service_role` לא נגע — הוא תפקיד השרת.
