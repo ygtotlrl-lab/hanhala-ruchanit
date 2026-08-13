@@ -7,54 +7,46 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#0f2347;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.box{background:#fff;border-radius:16px;padding:28px 24px;max-width:460px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.box{background:#fff;border-radius:16px;padding:28px 24px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
 h2{color:#1a3a6b;margin-bottom:6px;font-size:1.3rem;text-align:center}
 .sub{color:#4a5568;font-size:.85rem;text-align:center;margin-bottom:20px}
 .step-box{background:#f0f4fa;border-radius:10px;padding:16px;margin-bottom:16px;border-right:4px solid #1a3a6b}
 .step-num{font-weight:700;color:#1a3a6b;font-size:.9rem;margin-bottom:8px}
 .step-txt{color:#4a5568;font-size:.83rem;line-height:1.6}
-pre{background:#1a2340;color:#a8d8a8;border-radius:8px;padding:12px;font-size:.72rem;overflow-x:auto;direction:ltr;text-align:left;margin:10px 0;line-height:1.5;white-space:pre-wrap}
+pre{background:#1a2340;color:#a8d8a8;border-radius:8px;padding:12px;font-size:.68rem;overflow:auto;max-height:260px;direction:ltr;text-align:left;margin:10px 0;line-height:1.5;white-space:pre-wrap}
 .btn{display:block;width:100%;background:#1a3a6b;color:#fff;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;font-family:Arial;text-align:center;text-decoration:none;margin-bottom:8px}
 .btn:hover{background:#234a8a}
 .btn.green{background:#276749}
 .btn.green:hover{background:#1e5538}
-.btn.outline{background:#fff;color:#1a3a6b;border:2px solid #1a3a6b}
-.btn.outline:hover{background:#f0f4fa}
 .copied{display:none;color:#276749;font-size:.8rem;text-align:center;margin-bottom:8px}
+.err{display:none;background:#fff5f5;border:1px solid #feb2b2;border-radius:8px;padding:12px;color:#9b2c2c;font-size:.8rem;line-height:1.6;margin:10px 0}
+.err a{color:#9b2c2c;font-weight:700}
+.note{font-size:.75rem;color:#8a97b0;line-height:1.6;margin-top:6px}
 </style>
 </head>
 <body>
 <div class="box">
   <div style="text-align:center;font-size:2rem;margin-bottom:10px">🗄️</div>
   <h2>הגדרת מסד נתונים</h2>
-  <p class="sub">צעד אחד פשוט — פעם אחת בלבד</p>
+  <p class="sub">צעד אחד — פעם אחת בלבד</p>
 
   <div class="step-box">
     <div class="step-num">שלב 1 — העתק את ה-SQL</div>
-    <div class="step-txt">לחץ על הכפתור הירוק להעתקת ה-SQL:</div>
-    <pre id="sql-code">-- ⛔ אין כאן משתמש ברירת מחדל, ואין ליצור אחד (כלל ברזל 8 סעיף 7,
---    כלל ברזל 10 סעיף 3). עד סבב 27 ישבה כאן שורת insert עם שם משתמש
---    וסיסמה אמיתיים — בריפו ציבורי. סוד שנדחף נשאר בהיסטוריית git לנצח,
---    ולכן יש להחליף אותו במסד, לא רק למחוק אותו מהקובץ.
--- ⚠️ role חובה ובמפורש — לעמודה אין DEFAULT, ו-INSERT בלעדיו נכשל במסד.
---    הערכים כאן: 'admin' / 'senior' / 'junior'.
-create table if not exists ys_users (
-  id bigint generated always as identity primary key,
-  username text unique not null,
-  password_hash text not null,
-  full_name text not null,
-  role text not null check (role in ('admin','senior','junior')),
-  active boolean default true,
-  created_at timestamptz default now()
-);
-alter table ys_users enable row level security;
-create policy "allow_all" on ys_users using (true) with check (true);
-
--- החלף את שלושת מצייני המקום, והרץ:
-insert into ys_users (username,password_hash,full_name,role,active)
-values ('&lt;שם המשתמש שלך&gt;','&lt;שש ספרות&gt;','&lt;שם מלא&gt;','admin',true)
-on conflict (username) do nothing;</pre>
-    <button class="btn green" onclick="copySQL()">📋 העתק SQL</button>
+    <div class="step-txt">
+      ה-SQL נמשך מקובץ ההתקנה שבריפו — <code>migrations/000_initial_schema.sql</code>.
+      הוא יוצר את ארבע הטבלאות (<code>kv</code>, <code>ys_users</code>,
+      <code>sync_log</code>, <code>kv_backup</code>) והרצה חוזרת שלו בטוחה.
+    </div>
+    <!-- ⛔ אין כאן עותק מוטבע של הסכימה, ואין להחזיר אחד (סבב 28) — הלקח של
+         השלמת סבב 24 ב-schar-limud: שני עותקים מתיישנים בשקט, וההתקנה
+         הטרייה היא המקום שבו זה מתגלה מאוחר מדי. עד סבב 28 ישב כאן `create
+         table` ל-`ys_users` בלבד — בלי `kv`, שהוא מקור הנתונים היחיד של
+         האפליקציה — ולכן התקנה לפיו נתנה מסך כניסה ותו לא.
+         ⚠️ כשל משיכה מציג הודעה עם קישור ישיר לקובץ, ולא סכימה שאיננו יודעים
+         אם היא עדכנית. -->
+    <pre id="sql-code">טוען…</pre>
+    <div class="err" id="sql-err"></div>
+    <button class="btn green" id="copy-btn" onclick="copySQL()">📋 העתק SQL</button>
     <div class="copied" id="copied-msg">✅ הועתק! עכשיו לך לשלב 2</div>
   </div>
 
@@ -66,19 +58,60 @@ on conflict (username) do nothing;</pre>
     </a>
   </div>
 
-  <div class="step-box" style="border-color:#276749">
-    <div class="step-num" style="color:#276749">שלב 3 — חזור לאפליקציה</div>
+  <div class="step-box">
+    <div class="step-num">שלב 3 — צור את המשתמש הראשון, ידנית</div>
     <div class="step-txt">
-      לאחר הרצת ה-SQL, פתח את האפליקציה והיכנס עם<br>
-      <strong>שם המשתמש והסיסמה שהקלדת בעצמך</strong> בשורת ה-insert שבשלב 1.<br><br>
+      החלף את שלושת מצייני המקום והרץ ב-SQL Editor:
+    </div>
+    <!-- ⛔ אין כאן שם משתמש, סיסמה או ערך «לדוגמה» (כלל ברזל 10 סעיף 8,
+         נלמד בסבב 27 מהסוד ששרד בקובץ הזה עצמו) — מצייני מקום בלבד. הריפו
+         ציבורי, ומחיקה מאוחרת אינה מסירה סוד מהיסטוריית ה-git. -->
+    <pre id="user-sql">insert into public.ys_users (username, password_hash, full_name, role, active)
+values ('&lt;שם המשתמש שלך&gt;', '&lt;שש ספרות&gt;', '&lt;שם מלא&gt;', 'admin', true)
+on conflict (username) do nothing;</pre>
+    <div class="note">
+      ⚠️ <b>role חובה ובמפורש</b> — לעמודה אין ברירת מחדל, ו-INSERT בלעדיו נכשל
+      במסד. הערכים כאן: <code>admin</code> / <code>senior</code> / <code>junior</code>.
+    </div>
+  </div>
+
+  <div class="step-box" style="border-color:#276749">
+    <div class="step-num" style="color:#276749">שלב 4 — חזור לאפליקציה</div>
+    <div class="step-txt">
+      היכנס עם <strong>שם המשתמש והסיסמה שהקלדת בעצמך</strong> בשלב 3.<br><br>
       ⛔ אין סיסמת ברירת מחדל, ואין ליצור אחת.
     </div>
   </div>
 </div>
 
 <script>
+/* ⚠️ המשיכה היא מאותו origin שממנו נטען הדף הזה — אם היא נכשלת, הדף עצמו
+   ממילא לא היה עולה. ⛔ ולכן אין כאן עותק-גיבוי מוטבע: המחיר שלו (מקור אמת
+   שני שמתיישן) אמיתי, והתרחיש שהוא מגן מפניו אינו. */
+var SQL_URL = 'migrations/000_initial_schema.sql';
+var SQL_GITHUB = 'https://github.com/ygtotlrl-lab/hanhala-ruchanit/blob/main/migrations/000_initial_schema.sql';
+
+fetch(SQL_URL, {cache: 'no-store'})
+  .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+  .then(function(t){
+    if(!t || !t.trim()) throw new Error('empty');
+    document.getElementById('sql-code').textContent = t;
+  })
+  .catch(function(e){
+    /* ⛔ בכשל — מסתירים את התיבה ואת כפתור ההעתקה. סכימה שאיננו יודעים אם
+       היא עדכנית, בתיבה שהמשתמש מעתיק ומריץ על המסד, גרועה מהודעה. */
+    document.getElementById('sql-code').style.display = 'none';
+    document.getElementById('copy-btn').style.display = 'none';
+    var el = document.getElementById('sql-err');
+    el.style.display = 'block';
+    el.innerHTML = '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + String(e.message || e) +
+      ').<br>פתח אותו ישירות: <a href="' + SQL_GITHUB + '" target="_blank">' +
+      'migrations/000_initial_schema.sql</a>';
+  });
+
 function copySQL(){
-  var t=document.getElementById('sql-code').textContent;
+  var t = document.getElementById('sql-code').textContent;
+  if(!t || !t.trim()) return;   /* ⚠️ שומר: הכפתור לא מעתיק «טוען…» */
   if(navigator.clipboard){
     navigator.clipboard.writeText(t).then(function(){
       document.getElementById('copied-msg').style.display='block';
