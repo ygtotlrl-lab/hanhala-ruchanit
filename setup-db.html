@@ -32,7 +32,13 @@ pre{background:#1a2340;color:#a8d8a8;border-radius:8px;padding:12px;font-size:.7
   <div class="step-box">
     <div class="step-num">שלב 1 — העתק את ה-SQL</div>
     <div class="step-txt">לחץ על הכפתור הירוק להעתקת ה-SQL:</div>
-    <pre id="sql-code">create table if not exists ys_users (
+    <pre id="sql-code">-- ⛔ אין כאן משתמש ברירת מחדל, ואין ליצור אחד (כלל ברזל 8 סעיף 7,
+--    כלל ברזל 10 סעיף 3). עד סבב 27 ישבה כאן שורת insert עם שם משתמש
+--    וסיסמה אמיתיים — בריפו ציבורי. סוד שנדחף נשאר בהיסטוריית git לנצח,
+--    ולכן יש להחליף אותו במסד, לא רק למחוק אותו מהקובץ.
+-- ⚠️ role חובה ובמפורש — לעמודה אין DEFAULT, ו-INSERT בלעדיו נכשל במסד.
+--    הערכים כאן: 'admin' / 'senior' / 'junior'.
+create table if not exists ys_users (
   id bigint generated always as identity primary key,
   username text unique not null,
   password_hash text not null,
@@ -43,8 +49,10 @@ pre{background:#1a2340;color:#a8d8a8;border-radius:8px;padding:12px;font-size:.7
 );
 alter table ys_users enable row level security;
 create policy "allow_all" on ys_users using (true) with check (true);
+
+-- החלף את שלושת מצייני המקום, והרץ:
 insert into ys_users (username,password_hash,full_name,role,active)
-values ('admin','h3j0m76e','מנהל ראשי','admin',true)
+values ('&lt;שם המשתמש שלך&gt;','&lt;שש ספרות&gt;','&lt;שם מלא&gt;','admin',true)
 on conflict (username) do nothing;</pre>
     <button class="btn green" onclick="copySQL()">📋 העתק SQL</button>
     <div class="copied" id="copied-msg">✅ הועתק! עכשיו לך לשלב 2</div>
@@ -61,9 +69,9 @@ on conflict (username) do nothing;</pre>
   <div class="step-box" style="border-color:#276749">
     <div class="step-num" style="color:#276749">שלב 3 — חזור לאפליקציה</div>
     <div class="step-txt">
-      לאחר הרצת ה-SQL, פתח את האפליקציה והיכנס עם:<br><br>
-      <strong>שם משתמש: admin</strong><br>
-      <strong>סיסמה: 123456</strong>
+      לאחר הרצת ה-SQL, פתח את האפליקציה והיכנס עם<br>
+      <strong>שם המשתמש והסיסמה שהקלדת בעצמך</strong> בשורת ה-insert שבשלב 1.<br><br>
+      ⛔ אין סיסמת ברירת מחדל, ואין ליצור אחת.
     </div>
   </div>
 </div>
