@@ -147,8 +147,8 @@ grant select, insert, update, delete, truncate, references, trigger
 -- 3. sync_log — יומן אבחון סנכרון
 -- ────────────────────────────────────────────────────────────────────────────
 -- ⚠️ יומן בלבד — האפליקציה כותבת אליו ואינה קוראת ממנו במסלול חי.
---    ל-`anon` יש כאן `insert` ו-`select` בלבד, ולכן **גם אין לו הרשאה למחוק
---    את היומן שלו עצמו**. זו הבחנה מכוונת מול `kv` שלמעלה.
+--    `insert` ו-`select` בלבד, ולכן **אין הרשאה לערוך או למחוק רישום קיים**.
+--    זו הבחנה מכוונת מול `kv` שלמעלה, ששם `update` נחוץ ל-upsert.
 create table if not exists public.sync_log (
   id           bigint generated always as identity primary key,
   created_at   timestamptz default now(),
@@ -171,10 +171,17 @@ drop policy if exists sync_log_select on public.sync_log;
 create policy sync_log_insert on public.sync_log for insert to anon with check (true);
 create policy sync_log_select on public.sync_log for select to anon using (true);
 
-revoke all on public.sync_log from anon;
-grant insert, select on public.sync_log to anon;
+-- ⛔ **יומן ראיות — `insert`+`select` בלבד, לשני התפקידים** (סבב 29, השלמה).
+--    ⚠️ עד ההשלמה הזו העניק הקובץ ל-`authenticated` את הסט המלא — כולל
+--    `update`, `delete` ו-`truncate` — ולכן ההגנה על היומן התקיימה **מול
+--    `anon` בלבד**. ⛔ אין להחזיר להם `update`/`delete`: יומן שניתן לערוך
+--    אינו יומן ראיות. השורה הזו היא גם שורת ההתכנסות להתקנה קיימת.
+-- ⚠️ הפוליסות שלמעלה מוגבלות ל-`anon`, ולכן RLS חוסם ממילא — **אבל אלה שתי
+--    שכבות נפרדות**, ואין להסתמך על האחת כדי להשאיר את השנייה פתוחה.
+revoke all on public.sync_log from anon, authenticated;
+grant insert, select on public.sync_log to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.sync_log to authenticated, service_role;
+  on public.sync_log to service_role;
 
 
 -- ────────────────────────────────────────────────────────────────────────────
@@ -182,7 +189,7 @@ grant select, insert, update, delete, truncate, references, trigger
 -- ────────────────────────────────────────────────────────────────────────────
 -- ⚠️ `ysMaybeDailyBackup` כותבת לכאן פעם ביממה, **ורק אחרי שכל המפתחות גובו
 --    בהצלחה** נכתב הדגל `ys_last_backup` (סבב 6). אותה הבחנה כמו ב-sync_log:
---    `insert`+`select` בלבד ל-`anon`.
+--    `insert`+`select` בלבד, לשני התפקידים.
 create table if not exists public.kv_backup (
   id         bigint generated always as identity primary key,
   created_at timestamptz default now(),
@@ -197,10 +204,12 @@ drop policy if exists kv_backup_select on public.kv_backup;
 create policy kv_backup_insert on public.kv_backup for insert to anon with check (true);
 create policy kv_backup_select on public.kv_backup for select to anon using (true);
 
-revoke all on public.kv_backup from anon;
-grant insert, select on public.kv_backup to anon;
+-- ⛔ אותו דפוס כמו ב-`sync_log` שלמעלה, ומאותה סיבה (סבב 29, השלמה) —
+--    ר' ההסבר המלא שם. ⛔ ואין להעניק כאן `update`/`delete` לאף תפקיד.
+revoke all on public.kv_backup from anon, authenticated;
+grant insert, select on public.kv_backup to anon, authenticated;
 grant select, insert, update, delete, truncate, references, trigger
-  on public.kv_backup to authenticated, service_role;
+  on public.kv_backup to service_role;
 
 
 -- ============================================================================
@@ -228,10 +237,15 @@ grant select, insert, update, delete, truncate, references, trigger
 -- כל טבלה) וגם ב-`migrations/001_revoke_delete_anon.sql` להתקנה קיימת.
 -- מה שנמדד לפני הביצוע: **אפס** קריאות `.delete()` ל-PostgREST בכל הריפו.
 --
--- ⛔ **מה שנשאר מכוון ואין לגעת בו:** `sync_log` ו-`kv_backup` מקבלות
--- `insert`+`select` בלבד — **בלי `update`** — כדי שלא ניתן יהיה לזייף
--- רישום קיים ביומן ראיות. ⛔ אין «ליישר» אותן ל-`kv` ול-`ys_users`
--- בשם האחידות (כלל ברזל 10 סעיף 9).
+-- ⛔ **`sync_log` ו-`kv_backup` — `insert`+`select` בלבד, לשני התפקידים**
+-- (סבב 29, השלמה; מיגרציה `002_revoke_log_tables.sql` להתקנה קיימת).
+-- **בלי `update` ובלי `delete`**, כדי שלא ניתן יהיה לזייף או להעלים רישום
+-- קיים ביומן ראיות. ⛔ אין «ליישר» אותן ל-`kv` ול-`ys_users` בשם האחידות
+-- (כלל ברזל 10 סעיף 9) — הסט הצר שם **הוא** ההגנה.
+-- ⚠️ **וזה תוקן בהשלמה ולא נולד נכון:** הקובץ העניק ל-`authenticated` את
+-- הסט המלא על שתיהן, ולכן ההגנה התקיימה מול `anon` בלבד. ⛔ הלקח —
+-- **הרשאה שהוחלה על תפקיד אחד היא הגנה חלקית**; בדיקת הרשאות סורקת את
+-- שני התפקידים.
 --
 -- ⚠️ **`authenticated` צומצם יחד עם `anon`**, בהחלטת המנהל: לתפקיד היו
 -- בדיוק אותן הרשאות מלאות, מאותה ירושה, ופתיחת signup או Auth בעתיד הייתה
