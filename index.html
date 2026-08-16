@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v38'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v39'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -4984,16 +4984,55 @@ async function ensureFirstAdmin() {
   } catch(e) { console.error('setup error:', e); }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ⭐ הסכימה נמשכת מקובץ ההתקנה — ואינה מוטבעת כאן (סבב 32)
+   ══════════════════════════════════════════════════════════════════════════
+   עד הסבב הזה ישבו כאן **שתי** הצהרות `create table` ל-`ys_users`: אחת
+   ב-`setupWithServiceKey` (שרצה בפועל) ואחת ב-`showSetupScreen` (שהוצגה
+   להעתקה). זה מקור אמת שני לסכימה, לצד `migrations/000_initial_schema.sql`
+   שנוצר בסבב 28 — כלומר בדיוק הדפוס שהתיישן בשקט ב-schar-limud והוסר שם
+   בהשלמת סבב 24. הן גם כבר **היו** מיושנות: הן הגדירו טבלה אחת מתוך
+   ארבע, ולא הכירו את `kv`, `sync_log` ו-`kv_backup`.
+
+   ⛔ אין להטביע כאן עותק-גיבוי של הסכימה (סבב 32) — הקובץ יושב על אותו
+      origin שממנו נטען הדף הזה, ואם הוא אינו נגיש האפליקציה עצמה לא
+      נטענה. עותק «ליתר ביטחון» אינו מגן על תרחיש אמיתי, והמחיר שלו —
+      מקור אמת שני שמתיישן — ודאי.
+   ⛔ ובכשל משיכה לא מוצגת סכימה כלשהי (סבב 32) — סכימה שאיננו יודעים אם
+      היא עדכנית, בתיבה שמישהו מעתיק ומריץ על המסד, גרועה מהודעה. זה אותו
+      דפוס בדיוק שכבר קיים ב-`setup-db.html`.
+   ══════════════════════════════════════════════════════════════════════════ */
+var YS_SETUP_SQL_URL = 'migrations/000_initial_schema.sql';
+var YS_SETUP_SQL_GITHUB = 'https://github.com/ygtotlrl-lab/hanhala-ruchanit/blob/main/migrations/000_initial_schema.sql';
+// מחזירה את גוף קובץ ההתקנה, או זורקת. ⚠️ `cache:'no-store'` — הקובץ הזה
+// משתנה בסבבים, ועותק ישן מהמטמון היה מריץ סכימה ישנה על מסד חדש.
+function ysFetchSetupSql() {
+  return fetch(YS_SETUP_SQL_URL, {cache: 'no-store'})
+    .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function(t){ if (!t || !t.trim()) throw new Error('empty'); return t; });
+}
+function ysSetupSqlLink() {
+  return 'פתח אותו ישירות: <a href="' + YS_SETUP_SQL_GITHUB + '" target="_blank" style="color:#1a3a6b">' +
+         esc(YS_SETUP_SQL_URL) + '</a>';
+}
+
 async function setupWithServiceKey() {
   var key = document.getElementById('svc-key').value.trim();
   if (!key) return;
   var btn = document.getElementById('svc-btn');
   btn.textContent = 'מגדיר...'; btn.disabled = true;
   var SB2 = supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co', key);
-  // נסה ליצור טבלה דרך rpc
-  // `pass_salt`/`pass_fp` — טביעת PBKDF2 לכניסה אופליין (סבב 22). ניתנות
-  // ל-null: משתמש שנוצר ידנית ב-SQL יקבל טביעה מ-`ysBackfillPassFp`.
-  var sql = `create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null check (role in ('admin','senior','junior')), active boolean default true, created_at timestamptz default now()); alter table ys_users add column if not exists pass_salt text; alter table ys_users add column if not exists pass_fp text; alter table ys_users enable row level security; drop policy if exists allow_all on ys_users; create policy allow_all on ys_users using (true) with check (true);`;
+  // ⛔ הסכימה נמשכת ואינה מוטבעת (סבב 32) — ר' הבלוק שמעל. כשל משיכה עוצר
+  //    את ההגדרה במקום להריץ סכימה חלקית שנכתבה כאן ביד.
+  var sql;
+  try {
+    sql = await ysFetchSetupSql();
+  } catch (e) {
+    document.getElementById('svc-err').innerHTML =
+      '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + esc(String(e.message || e)) + ').<br>' + ysSetupSqlLink();
+    btn.textContent = 'נסה שוב'; btn.disabled = false;
+    return;
+  }
   var {error} = await SB2.rpc('exec_sql', {sql: sql});
   if (error) {
     // rpc לא קיים - נסה ישירות insert (אם הטבלה כבר נוצרה ידנית)
@@ -5021,9 +5060,24 @@ function showSetupScreen() {
     '<button id="svc-btn" class="auth-btn" onclick="setupWithServiceKey()">▶️ צור טבלה</button>' +
     '<div id="svc-err" style="font-size:.8rem;color:#e53e3e;margin-top:8px"></div>' +
     '<hr style="margin:14px 0;border-color:#d8e2f0">' +
-    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a>. ⚠️ יש להחליף את הסיסמה שבשורה האחרונה — <b>אין סיסמת ברירת מחדל</b>:</div>' +
-    '<textarea readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">create table if not exists ys_users (id bigint generated always as identity primary key, username text unique not null, password_hash text not null, full_name text not null, role text not null, active boolean default true, created_at timestamptz default now());\nalter table ys_users add column if not exists pass_salt text;\nalter table ys_users add column if not exists pass_fp text;\ninsert into ys_users (username, password_hash, full_name, role, active) values (\'<שם משתמש>\', \'<סיסמה בת שש ספרות>\', \'<שם מלא>\', \'admin\', true);</textarea>' +
+    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a> את קובץ ההתקנה. ⚠️ המשתמש הראשון נוצר ידנית לפי ההוראות שבסוף הקובץ — <b>אין סיסמת ברירת מחדל</b>:</div>' +
+    '<textarea id="setup-sql" readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">טוען…</textarea>' +
+    '<div id="setup-sql-err" style="display:none;font-size:.75rem;color:#e53e3e;text-align:right"></div>' +
     '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
+  // ⛔ התיבה מתמלאת מהקובץ ואינה מכילה סכימה מוטבעת (סבב 32) — ר' הבלוק
+  //    שמעל `setupWithServiceKey`. בכשל היא **נעלמת** ובמקומה קישור ישיר.
+  ysFetchSetupSql().then(function(t){
+    var ta = document.getElementById('setup-sql');
+    if (ta) ta.value = t;
+  }, function(e){
+    var ta = document.getElementById('setup-sql');
+    if (ta) ta.style.display = 'none';
+    var el = document.getElementById('setup-sql-err');
+    if (el) {
+      el.style.display = 'block';
+      el.innerHTML = '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + esc(String(e.message || e)) + ').<br>' + ysSetupSqlLink();
+    }
+  });
 }
 
 ensureFirstAdmin();

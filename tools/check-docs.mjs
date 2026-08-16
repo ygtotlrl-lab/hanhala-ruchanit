@@ -58,13 +58,13 @@ const CANON = [
   ['round-24b-what',          '23e31eca803b28fa'],
   ['iron-rule-10-users',      'c822ccbf258e76a5'],
   ['round-26b-what',          '46da920b39793d46'],
-  ['capability-matrix',       '7508e7c3ac5289b2'],
+  ['capability-matrix',       'd6d539ff78571d5f'],
   ['round-27-what',           '5670c4075f64e56f'],
   ['iron-rule-11-comments',   'd03e5416ced01f6c'],
   ['round-28-what',           '423fab93e9616987'],
   ['round-29-what',           '2597ca03d6779d2a'],
   ['round-30-what',           '656a135e10dc4867'],
-  ['iron-rule-12-capabilities', '71ff1e08ef91d698'],
+  ['iron-rule-12-capabilities', '8223e5ba345c4ab3'],
   ['round-30b-what',          '06dc5a926e7fa025'],
 ];
 
