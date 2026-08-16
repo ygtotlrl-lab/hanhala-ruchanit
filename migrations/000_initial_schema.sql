@@ -163,8 +163,10 @@ create table if not exists public.sync_log (
 alter table public.sync_log enable row level security;
 -- ⚠️ שתי פוליסות נפרדות (`insert` ו-`select`) ולא אחת ל-ALL — כך נמדד במסד
 --    החי. ⛔ `supabase-sync-log.sql` הישן הצהיר על פוליסה אחת בשם
---    `sync_log_anon`; היא **אינה קיימת שם בפועל**, וזו בדיוק הסחיפה השקטה
---    שקובץ ההתקנה הזה בא לסגור.
+--    `sync_log_anon`; היא **לא הייתה קיימת שם בפועל**, וזו בדיוק הסחיפה
+--    השקטה שקובץ ההתקנה הזה בא לסגור. הקובץ ההוא **נמחק בסבב 33** — שתי
+--    הטבלאות מוגדרות כאן לפי מיפוי מול המסד החי, ו-`drop policy if exists`
+--    שלמטה מנקה גם את השם הישן בהתקנה שנוצרה לפיו.
 drop policy if exists sync_log_anon   on public.sync_log;
 drop policy if exists sync_log_insert on public.sync_log;
 drop policy if exists sync_log_select on public.sync_log;

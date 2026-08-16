@@ -6,9 +6,9 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <meta name="theme-color" content="#1a3c6e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>הנהלה רוחנית</title>
@@ -381,7 +381,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <!-- ===== מסך כניסה ===== -->
 <div id="auth-screen">
   <div class="auth-box">
-    <div class="auth-logo"><img src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו"></div>
+    <div class="auth-logo"><img src="icons/טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
@@ -415,7 +415,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 <header>
   <div class="hl">
-    <img class="logo" src="טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו ישיבה" style="height:58px;width:auto">
+    <img class="logo" src="icons/טונקל בלוי מיט ווייסן הינטערגרונט.png" alt="לוגו ישיבה" style="height:58px;width:auto">
     <div class="hdiv"></div>
     <div class="htxt" style="display:flex;flex-direction:column;align-items:flex-start;gap:1px;line-height:1.3">
       <span style="font-size:.65rem;opacity:.7">ב"ה</span>
@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v39'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v40'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };

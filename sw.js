@@ -1,12 +1,12 @@
-var CACHE_NAME = 'hanhala-ruchanit-v39';
+var CACHE_NAME = 'hanhala-ruchanit-v40';
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
   './',
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 // סקריפטי CDN — האפליקציה לא רצה בלי supabase (var SB=supabase.createClient זורק
