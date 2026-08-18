@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v43'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v45'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3656,12 +3656,25 @@ var BK_CFG = {
   //    ריקה ומנגנון הסינון של המודול נשאר דרוך לסוד עתידי.
   secrets: [],
   sources: function () {
-    return ['ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
+    /* ⭐ סבב 36 — שלושת מקורות ה-`kind:'table'` הראשונים כאן: שכבת השורות
+       של שלב א. ⚠️ מפתחות הגיבוי נבדלים משמות הטבלאות רק ב-`ys_students`
+       (המפתח `ys_students` כבר תפוס ע"י מקור ה-`kv`), ולכן שם הטבלה
+       `ys_students_rows` הוא גם מפתח הגיבוי. ⛔ ושלושתם נוספו באותו סבב
+       לרשימת-ההיתר של `migrations/004` (סבב 36) — מפתח גיבוי שאינו שם
+       אינו מתפנה לעולם, וזה בדיוק ההיסט שנמדד בהשלמת סבב 35ג.
+       ⚠️ מקורות ה-`kv` **נשארים** — הם המאסטר בשלב א, ויוסרו רק כשהקריאה
+       תעבור לטבלאות. */
+    var out = [
+      { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id' },
+      { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
+      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
+    ];
+    return out.concat(['ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
             'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
             'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
             'ys_cls_years', 'ys_settings_meta'].map(function (k) {
       return { kind: 'kv', table: 'kv', name: k };
-    });
+    }));
   }
 };
 
@@ -4731,6 +4744,11 @@ async function ysFlushQueue() {
         _ysMarkPushed(item.key);
         if (item.key === 'ys_attend_sessions' && window._atData === null) window._atData = item.value;
         if (item.key === 'ys_sleep_sessions'  && window._slData === null) window._slData  = item.value;
+        // ⚠️ מסלול האופליין — הריקון הוא הדחיפה שהצליחה, ולכן שכבת השורות
+        //    מתעדכנת גם ממנו (סבב 36). בלעדיו מכשיר שעבד אופליין היה מסנכרן
+        //    את ה-`kv` ומשאיר את הטבלאות מפגרות עד הכתיבה המקוונת הבאה.
+        if (item.key === 'ys_attend_sessions') ysRowsPushSessions(item.value);
+        if (item.key === 'ys_students')        ysRowsPushStudents(item.value);
         console.log('[ys-queue] flushed', item.key);
       }
     } catch(e) { failed.push(item); }
@@ -4744,6 +4762,191 @@ async function ysFlushQueue() {
   ysUpdateQueueBadge();
 }
 // ===== End Offline Queue =====
+
+/* ══════════════════════════════════════════════════════════════════════════
+   שכבת השורות — טבלאות מובנות, שלב א (סבב 36)
+   ══════════════════════════════════════════════════════════════════════════
+   הנהלה רוחנית הייתה האחרונה בארגון שנתוניה יושבים כמפתחות `kv` שלמים
+   (מטריצת היכולות, שורה 15). נמדד: `ys_attend_sessions` הוא 360KB, ולכן
+   **כל סימון נוכחות בודד דורס את מלוא הערך**. הדפוס כאן מועתק מ-yoman
+   סבבים 30–35: מיגרציות אדיטיביות, כתיבה כפולה, והמתג בסבב נפרד.
+
+   ⛔ שלב א הוא כתיבה בלבד (סבב 36) — ה-`kv` נשאר המאסטר, וכל **קריאה**
+      ממשיכה לעבור דרכו. אין כאן מסלול קריאה מהטבלאות, ואין להוסיף אחד
+      לפני שהשקילות אומתה מול המסד החי. הדגל `YS_KV_LEGACY_WRITE` הוא
+      נתיב החזרה, והוא נשאר דלוק עד שלב ב.
+   ⛔ הכתיבה לשורות אינה קובעת הצלחה (סבב 36) — עֵד הפינוי (`_ysPushedAt`),
+      אישור ה-⏳ ו-`ysTouchLastChanged` נשענים על כתיבת ה-`kv` **בלבד**.
+      אילו הייתה קובעת, טבלה שטרם נוצרה (המיגרציות נכתבו ולא הורצו) הייתה
+      מפילה סנכרון שהצליח במלואו.
+   ⚠️ ולכן הקוד בטוח לפריסה לפני שהמיגרציות רצו: `ysRowsPush` נכשלת סגור
+      ומדלגת בשקט.
+
+   ⭐ שתי טבלאות, אב ובן: `ys_sessions` (מטא הסדר) ו-`ys_marks` (שורה
+      לסימון). מטא הסדר אינה משוכפלת לכל סימון — `filled_by_name` היה
+      חוזר ~48 פעם לכל סדר, וזה ניפוח ישיר של החלון החם המתוכנן.
+   ⚠️ `date_iso` משוכפל לתוך `ys_marks` בכוונה — הדוח פר-תלמיד קורא את
+      טבלת הבן בלי `join` לאב, ובלי השכפול הוא היה מושך את טבלת האב
+      למכשיר רק כדי לדעת מתי היה הסדר.
+   ⛔ `deleted` של הסדר יורד לכל שורות הסימון שלו (סבב 36) — הדוח פר-תלמיד
+      אינו מצטרף לאב, ולכן סימון של סדר מחוק שהיה נשאר `deleted=false`
+      היה נקרא כרשומה חיה.
+   ══════════════════════════════════════════════════════════════════════════ */
+var YS_ROWS = true;
+/* ⛔ אין לכבות את הדגל הזה בלי סבב ייעודי (סבב 36) — כיבוי הכתיבה ל-`kv`
+   לפני שהקריאה עברה לטבלאות משאיר את המאסטר קפוא, וכל מכשיר שעדיין קורא
+   מ-`kv` רואה נתונים שקפאו ברגע הכיבוי. */
+var YS_KV_LEGACY_WRITE = true;
+
+/* מפת חותמות הענן פר-סדר, בזיכרון בלבד. ⛔ `null` פירושו «טרם נמשכה»
+   (סבב 36) — ובספק דוחפים: שורה שלא נדחפה חסרה בענן בשקט, בעוד שדחיפה
+   מיותרת עולה רק בתעבורה. */
+var _ysRowsRemote = null;
+
+/* משיכת מפת החותמות — `client_id` + `updated_at` בלבד, 273 שורות נמדדות.
+   ⚠️ זו **אינה** קריאת נתונים: היא לא מזינה שום מסך ולא נכנסת למיזוג, אלא
+      רק קובעת מה כבר בענן. מסלול הקריאה נשאר ה-`kv` (ר' כותרת הבלוק). */
+async function ysRowsRemoteLoad() {
+  if (!YS_ROWS) return null;
+  if (_ysRowsRemote) return _ysRowsRemote;
+  try {
+    var res = await withTimeout(SB.from('ys_sessions').select('client_id,updated_at'));
+    if (!res || res.error || !Array.isArray(res.data)) return null;
+    var map = {};
+    res.data.forEach(function (r) { if (r) map[String(r.client_id)] = Number(r.updated_at) || 0; });
+    _ysRowsRemote = map;
+    return map;
+  } catch (e) { return null; }
+}
+
+/* שורת האב. ⚠️ השדות מועתקים אחד לאחד מרשומת ה-`kv`, ו-`date_heb` נשמר
+   כמות שהוא — ⛔ אין לגזור אותו מחדש מ-`date_iso` (סבב 36), שחזור תאריך
+   עברי הוא שכבת תצוגה בלבד וגזירה כאן הייתה מייצרת מקור אמת שני ללוח. */
+function ysSessionRow(rec) {
+  if (!rec || rec.id == null) return null;
+  return {
+    client_id: String(rec.id),
+    session: String(rec.session || ''),
+    date_iso: String(rec.date_iso || ''),
+    date_heb: (rec.date_heb && typeof rec.date_heb === 'object') ? rec.date_heb : null,
+    filled_by: (rec.filled_by == null || rec.filled_by === '') ? null : Number(rec.filled_by),
+    filled_by_name: rec.filled_by_name == null ? null : String(rec.filled_by_name),
+    created_at: rec.created_at == null ? null : String(rec.created_at),
+    created_by: rec.createdBy == null ? null : String(rec.createdBy),
+    deleted_by: rec.deletedBy == null ? null : String(rec.deletedBy),
+    open: (typeof rec.open === 'boolean') ? rec.open : null,
+    deleted: !!rec.deleted,
+    updated_at: Math.round(Number(_ysRecTs(rec)) || 0)
+  };
+}
+
+/* שורות הבן. ⚠️ `client_id` נגזר ממפתח הזהות (`<סדר>:<תלמיד>`) ואינו uuid
+   חדש — לסימון כבר יש זהות שנוצרה במכשיר, ומזהה שני היה מאפשר לו להתקיים
+   פעמיים (הלקח של yoman `002`). ⚠️ לסימון אין חותמת משלו ב-`kv`, ולכן הוא
+   יורש את חותמת האב — ⛔ ולא `Date.now()` (סבב 36), שהיה חדש מכל עריכה
+   מקומית שטרם עלתה ודורס אותה במיזוג הראשון. */
+function ysMarkRows(rec) {
+  var out = [];
+  if (!rec || rec.id == null) return out;
+  var marks = (rec.marks && typeof rec.marks === 'object') ? rec.marks : {};
+  var sid = String(rec.id);
+  var d = String(rec.date_iso || '');
+  var del = !!rec.deleted;
+  var ts = Math.round(Number(_ysRecTs(rec)) || 0);
+  Object.keys(marks).forEach(function (k) {
+    if (!/^\d+$/.test(k)) return;
+    var m = marks[k] || {};
+    out.push({
+      client_id: sid + ':' + k,
+      session_client_id: sid,
+      student_id: Number(k),
+      date_iso: d,
+      status: (m.s == null) ? null : String(m.s),
+      minutes: Math.round(Number(m.min) || 0),
+      deleted: del,
+      updated_at: ts
+    });
+  });
+  return out;
+}
+
+/* שורת תלמיד. ⚠️ כאן `data` ולא עמודות — רשומת התלמיד היא בעלת צורה
+   משתנה (9 שדות אופציונליים נמדדו), ופיצוץ שלה לעמודות היה יוצר מקור
+   אמת שני לצורת הרשומה. ⚠️ ואין כאן שיקול משקל: 71 שורות, לא 12,000. */
+function ysStudentRow(rec) {
+  if (!rec || rec.id == null) return null;
+  var n = Number(rec.id);
+  return {
+    client_id: String(rec.id),
+    student_id: isFinite(n) ? Math.round(n) : null,
+    updated_at: Math.round(Number(_ysRecTs(rec)) || 0),
+    deleted: !!rec.deleted,
+    data: rec
+  };
+}
+
+/* ⚠️ דחיפה במנות של `YS_ROWS_CHUNK` (סבב 36) — הדחיפה הראשונה במכשיר
+   נוגעת ב**כל** הסדרים (הטבלה ריקה, ולכן כולם «לא ידועים»), וזה 13,083
+   שורות סימון בבקשה אחת. גוף בקשה בסדר גודל כזה נדחה או נחתך, ולכן
+   ⛔ אין להחזיר `upsert` יחיד על המערך כולו.
+   ⚠️ מנה שנכשלה מפילה את כל הדחיפה (`false`) ולא ממשיכה לבאה — דחיפה
+      חלקית שמדווחת הצלחה הייתה מעדכנת את מפת החותמות ומונעת ניסיון
+      חוזר על מה שלא עלה. */
+var YS_ROWS_CHUNK = 500;
+async function ysRowsUpsert(table, rows) {
+  if (!rows || !rows.length) return true;
+  for (var i = 0; i < rows.length; i += YS_ROWS_CHUNK) {
+    var res = await withTimeout(
+      SB.from(table).upsert(rows.slice(i, i + YS_ROWS_CHUNK), { onConflict: 'client_id' }));
+    if (!res || res.error) return false;
+  }
+  return true;
+}
+
+/* דחיפת הסדרים והסימונים. מחזירה `{ok, n}`; ⛔ הקוראים אינם רשאים לגזור
+   ממנה הצלחה או כישלון של הסנכרון (סבב 36) — ר' כותרת הבלוק.
+   ⚠️ האב נכתב **לפני** הבן, כדי שלא ייווצר רגע שבו יש סימון בלי הסדר שלו;
+      ⛔ ואין כאן מפתח זר פיזי (סבב 36) — רשומות מגיעות ממכשירים אופליין
+      בסדר לא ידוע, ו-`FK` היה דוחה סימון שהקדים את האב שלו. */
+async function ysRowsPushSessions(arr) {
+  if (!YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
+  try {
+    var map = await ysRowsRemoteLoad();
+    var dirty = [];
+    arr.forEach(function (rec) {
+      if (!rec || rec.id == null) return;
+      var ts = Math.round(Number(_ysRecTs(rec)) || 0);
+      var known = map ? map[String(rec.id)] : undefined;
+      if (map === null || known === undefined || ts > known || pendHas(PK_AT_SESS + rec.id)) dirty.push(rec);
+    });
+    if (!dirty.length) return { ok: true, n: 0 };
+    var sRows = [], mRows = [];
+    dirty.forEach(function (rec) {
+      var r = ysSessionRow(rec);
+      if (r) { sRows.push(r); mRows = mRows.concat(ysMarkRows(rec)); }
+    });
+    if (!sRows.length) return { ok: true, n: 0 };
+    if (!(await ysRowsUpsert('ys_sessions', sRows))) return { ok: false, n: 0 };
+    if (!(await ysRowsUpsert('ys_marks', mRows)))    return { ok: false, n: 0 };
+    if (!_ysRowsRemote) _ysRowsRemote = {};
+    sRows.forEach(function (r) { _ysRowsRemote[r.client_id] = r.updated_at; });
+    return { ok: true, n: sRows.length };
+  } catch (e) { return { ok: false, n: 0 }; }
+}
+
+/* דחיפת המצבה. 71 שורות — נדחפות בשלמותן, ⚠️ ובלי מפת חותמות משלהן:
+   הן זולות מכדי להצדיק משיכה נוספת בכל עלייה. */
+async function ysRowsPushStudents(arr) {
+  if (!YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
+  try {
+    var rows = [];
+    arr.forEach(function (rec) { var r = ysStudentRow(rec); if (r) rows.push(r); });
+    if (!rows.length) return { ok: true, n: 0 };
+    if (!(await ysRowsUpsert('ys_students_rows', rows))) return { ok: false, n: 0 };
+    return { ok: true, n: rows.length };
+  } catch (e) { return { ok: false, n: 0 }; }
+}
+/* ═══ סוף שכבת השורות ═══════════════════════════════════════════════════ */
 // מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-ysPullFromCloud עוברים
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
 // שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
@@ -4936,6 +5139,7 @@ async function ysPushToCloud() {
     _ysStudentsSaveRaw(mergedSt);
     var r = await ysKvSet('ys_students', mergedSt);
     if (!(r && r.error)) pendConfirmPush(PK_STUDENT, _t0);
+    ysRowsPushStudents(mergedSt);   // כתיבה כפולה, סבב 36 — ר' שכבת השורות
     ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
     return r;
   });
@@ -6415,6 +6619,10 @@ async function atSaveData(data) {
     // ואז הסימון נשאר עד שהריקון יאשר.
     // אותה עדות בדיוק מזינה את הסימון ⏳ ואת עֵד הפינוי — ר' `_ysPushedAt`.
     if(!(_rAt&&_rAt.error)) { pendConfirmPush(PK_AT_SESS,_t0); _ysMarkPushed('ys_attend_sessions'); }
+    // ⚠️ הכתיבה הכפולה לשכבת השורות (סבב 36) — **אחרי** אישור ה-⏳ ועֵד
+    //    הפינוי, ו⛔ בלי להשפיע עליהם (סבב 36): הראיה שהם דורשים היא כתיבת
+    //    ה-`kv`, שהוא המאסטר בשלב א. טבלה שטרם נוצרה מדלגת בשקט.
+    ysRowsPushSessions(data);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
@@ -6750,6 +6958,79 @@ window.atEditSession = async function(recId) {
   window.atRenderStudents();
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   מניעת כפילות סדרים — ההגנה בנקודת היצירה (השלמת סבב 36)
+   ══════════════════════════════════════════════════════════════════════════
+   נמדד מול הנתונים החיים: חמישה מקרים של שני סדרים לאותו שם-סדר ואותו
+   `date_iso`, ובארבעה מהם **שתי הרשומות חיות**. המנהל אישר שזו תקלה ולא
+   שימוש מכוון — אין מצב שאותו סדר מתקיים פעמיים ביום.
+
+   ⚠️ דיאלוג הכפילות ב-`atOpenSession` כבר היה כאן, ובכל זאת נוצרו
+      הכפילויות — ולכן מה שנסגר הוא שני החורים שאיפשרו אותן:
+      א. הבדיקה רצה מול `window._atData` **כפי שהוא בזיכרון**, ו-`atLoadData`
+         מחזירה את העותק הטעון בלי לגעת ברשת. מכשיר שטען את היום לפני
+         שמכשיר אחר פתח את הסדר פשוט לא ראה אותו.
+      ב. הרשומה נכנסת למערך רק בסימון הראשון (`atMarkDirty` — מניעת רישומי
+         רפאים), ובין הפתיחה לסימון הפולינג יכול להביא סדר מתחרה. שם
+         ה-`push` יצר את הרשומה השנייה בלי שאיש בדק שוב.
+
+   ⛔ כלל אחד לשני המקומות (סבב 36) — `atFindLiveSession` היא ההגדרה
+      היחידה של «כפילות»; שני מימושים היו נסחפים זה מזה, וזה בדיוק הלקח
+      של «בונה אחד לשני מסלולי יצירה» (yoman סבב 31).
+   ⛔ ואין כאן אינדקס ייחודי על `(session, date_iso)` (סבב 36) — הוא היה
+      נכשל על ארבעת הזוגות הקיימים, ומפתח הזהות נשאר `id`. המניעה היא
+      בקוד; מיזוג הזוגות הקיימים הוא פעולת מנהל נפרדת.
+   ⚠️ המודול הזה משרת גם את הנוכחות וגם את השינה — אותו מבנה רשומה בדיוק,
+      ואותו חור. הגנה שיושבת רק באחד מהם מגינה רק עליו.
+   ══════════════════════════════════════════════════════════════════════════ */
+function atFindLiveSession(data, sessName, dateIso, exceptId) {
+  if (!Array.isArray(data)) return null;
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    if (!r || r.deleted) continue;
+    if (r.session !== sessName || r.date_iso !== dateIso) continue;
+    if (exceptId != null && r.id === exceptId) continue;
+    return r;
+  }
+  return null;
+}
+
+/* משיכת מצב הענן לפני בדיקת הכפילות. ⚠️ נכשלת רכה בכוונה (סבב 36): אין
+   רשת ⇒ הבדיקה רצה מול העותק המקומי, בדיוק כפי שרצה עד היום. המסלול
+   האופליין ממשיך לעבוד, והבדיקה רק מדויקת יותר כשיש רשת.
+   ⛔ המיזוג הוא `_ysSessionsMerge` ולא דריסה (סבב 36) — דריסה בענן הייתה
+   מוחקת סדר מקומי שטרם עלה, בדיוק לפני שהמשתמש ממשיך לסמן בו. */
+async function ysFreshSessions(kvKey, cur) {
+  var local = Array.isArray(cur) ? cur : [];
+  try {
+    var remote = await ysKvGet(kvKey);
+    if (Array.isArray(remote)) return _ysSessionsMerge(remote, local, kvKey);
+  } catch (e) {}
+  return local;
+}
+
+/* אימוץ סדר קיים במקום יצירת שני. ⚠️ הסימונים הקיימים נטענים תחילה, וכל
+   סימון שהמשתמש כבר סימן גובר עליהם — ⛔ ולא אימוץ בלי טעינה (סבב 36):
+   `atSaveLocalNow` בונה את `marks` מחדש מ-`_atMarks` לכל התלמידים
+   הפעילים, ולכן אימוץ «יבש» היה מוחק את מה שהמכשיר האחר כבר סימן. */
+function atAdoptSession(rec) {
+  var ex = ysMarks(rec);
+  Object.keys(ex).forEach(function (k) {
+    var cur = window._atMarks[k];
+    if (!cur || !cur.s) window._atMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0 };
+  });
+  window._atCurrentSessionId = rec.id;
+}
+function slAdoptSession(rec) {
+  var ex = ysMarks(rec);
+  Object.keys(ex).forEach(function (k) {
+    var cur = window._slMarks[k];
+    if (!cur || !cur.s) window._slMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0, note: (ex[k] && ex[k].note) || '' };
+  });
+  window._slCurrentSessionId = rec.id;
+}
+/* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
+
 // פתיחת סדר חדש
 window.atOpenSession = async function(sessId, sessName) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
@@ -6757,9 +7038,10 @@ window.atOpenSession = async function(sessId, sessName) {
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
-  // בדוק כפילות — אותו סדר ואותו יום
+  // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   var allData=await atLoadData();
-  var existing=allData.find(function(r){return !r.deleted&&r.session===sessName&&r.date_iso===dateIso;});
+  allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
+  var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     var d=document.createElement('div');
     d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
@@ -6857,7 +7139,16 @@ function atMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
   if(window._atPendingRec && window._atCurrentSessionId===window._atPendingRec.id){
     if(!window._atData) window._atData=[];
-    if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) window._atData.push(window._atPendingRec);
+    // ⛔ הבדיקה חוזרת כאן ולא רק בפתיחה (סבב 36) — זו נקודת היצירה בפועל,
+    //    והפולינג יכול היה להביא סדר מתחרה מאז שהדיאלוג בדק.
+    var _atDup=atFindLiveSession(window._atData,window._atPendingRec.session,
+                                 window._atPendingRec.date_iso,window._atPendingRec.id);
+    if(_atDup){
+      atAdoptSession(_atDup);
+      toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+    } else if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) {
+      window._atData.push(window._atPendingRec);
+    }
     window._atPendingRec=null;
   }
   atSaveLocalNow();
@@ -8220,7 +8511,8 @@ window.slOpenSession = async function(sessId, sessName) {
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
   var allData=await slLoadData();
-  var existing=allData.find(function(r){return !r.deleted&&r.session===sessName&&r.date_iso===dateIso;});
+  allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
+  var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     var d=document.createElement('div');
     d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
@@ -8310,7 +8602,15 @@ function slMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
   if(window._slPendingRec && window._slCurrentSessionId===window._slPendingRec.id){
     if(!window._slData) window._slData=[];
-    if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) window._slData.push(window._slPendingRec);
+    // ⛔ אותה הגנה כמו בנוכחות (סבב 36) — נקודת היצירה בפועל, לא הפתיחה.
+    var _slDup=atFindLiveSession(window._slData,window._slPendingRec.session,
+                                 window._slPendingRec.date_iso,window._slPendingRec.id);
+    if(_slDup){
+      slAdoptSession(_slDup);
+      toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+    } else if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) {
+      window._slData.push(window._slPendingRec);
+    }
     window._slPendingRec=null;
   }
   slSaveLocalNow();
