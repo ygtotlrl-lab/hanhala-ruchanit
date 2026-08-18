@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
    האחיות מחייב עדכון כאן באותו סבב (כלל ברזל 8 סעיף 3). */
 const APP = {
   name: 'hanhala-ruchanit',
-  keys: ['ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
+  keys: ['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
          'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
          'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
          'ys_cls_years', 'ys_settings_meta',
