@@ -111,7 +111,10 @@ function run(src, opts) {
   };
   sandbox.globalThis = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(cutFn('ysNewId', src), sandbox, { filename: 'ysNewId.js' });
+  // ⚠️ מחולל המזהים עבר למודול המשותף בסבב 37א — הבדיקה חותכת אותו משם
+  //    בשמו החדש. ⛔ אין לשכפל אותו לרתמה (סבב 37א) — עותק בבדיקה היה
+  //    ממשיך לעבור גם אם הליבה עצמה תשתנה.
+  vm.runInContext(cutFn('newClientId', src), sandbox, { filename: 'newClientId.js' });
   vm.runInContext(cutAssign('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
   sandbox.window.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
   return {
@@ -159,7 +162,7 @@ const FN = cutAssign('importStudentsFromFile', SRC);
 
 /*  מוטציה א — חזרה למזהה רץ. ⛔ אם היא אינה מפילה את טענה 4, הבדיקה
  *  אינה מודדת את הדבר שהסבב תיקן.                                        */
-const MUT_ID = FN.replace('var nid = ysNewId();',
+const MUT_ID = FN.replace('var nid = newClientId();',
   'var nid = (existing.reduce(function(m,s){return Math.max(m,Number(s.id)||0);},0) + 1 + added);');
 assert(MUT_ID !== FN, '13 · המוטציה מצאה את הקצאת המזהה');
 {

@@ -100,8 +100,12 @@ function t1() {
   const dirB = (M6.match(/'שורות בלבד'/g) || []).length;
   assert(dirA === 3 && dirB === 3 && (M6.match(/except/g) || []).length === 6,
     '2ד · בדיקת שקילות **דו-כיוונית** לשלוש הטבלאות (' + dirA + '+' + dirB + ' כיוונים, 6 `except`)');
-  assert(/m\.key ~ '\^\\d\+\$'/.test(C6),
-    '2ה · מפתח `marks` לא-מספרי מדולג — ונספר כפער בבדיקה ג');
+  /*  ⭐ הטענה הזו התהפכה בסבב 37א: עד `008` ההעברה **סיננה** מפתח `marks`
+      לא-מספרי (`m.key ~ '^\d+$'`) והמירה `::smallint`, כי כך נמדד אז.
+      מאז ש-`student_id` הוא `text` ⛔ אין סינון ואין המרה — מפתח uuid של
+      תלמיד שנוסף מסבב 37 חייב לעבור, אחרת ההעברה משמיטה את כל סימוניו. */
+  assert(!/m\.key ~ '\^\\d\+\$'/.test(C6) && !/m\.key::smallint/.test(C6),
+    '2ה · ⛔ אין סינון והמרה מספריים על מפתח ה-`marks` — `student_id` הוא `text`');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -213,7 +217,16 @@ async function t3() {
     '4ד · שדות המטא מועתקים אחד לאחד (ההעברה מועתקת, לא משוחזרת)');
 
   const marks = sandbox.ysMarkRows(SESS);
-  assert(marks.length === 2, '4ה · מפתח סימון לא-מספרי (`bad`) מדולג (' + marks.length + ' שורות)');
+  /*  ⭐ התהפך בסבב 37א — מזהה תלמיד הוא uuid מסבב 37, ו-`student_id` הוא
+      `text` מאז `008`. סימון שמפתחו אינו מספרי **חייב** להגיע לשכבת
+      השורות; ⛔ דילוג כאן היה משמיט בשקט את כל הסימונים של כל תלמיד
+      שנוסף מסבב 37 ואילך. */
+  assert(marks.length === 3,
+    '4ה · ⭐ סימון עם מפתח לא-מספרי (uuid) מגיע לשכבת השורות (' + marks.length + ' שורות)');
+  assert(marks.every((m) => typeof m.student_id === 'string'),
+    '4ה2 · ⛔ `student_id` נשלח כמחרוזת — אין המרה מספרית על עמודת טקסט');
+  assert(marks.some((m) => m.student_id === 'bad'),
+    '4ה3 · והמפתח עצמו נשמר כמות שהוא, בלי עיגול ובלי NaN');
   assert(marks.every((m) => m.client_id === '111:' + m.student_id),
     '4ו · `client_id` של הסימון נגזר ממפתח הזהות `<סדר>:<תלמיד>` ואינו uuid חדש');
   assert(marks.every((m) => m.updated_at === 900),
@@ -224,8 +237,11 @@ async function t3() {
     '4ט · `date_iso` משוכפל לכל שורת סימון');
 
   const st = sandbox.ysStudentRow({ id: 5, name: 'x', updatedAt: 7 });
-  assert(st.client_id === '5' && st.student_id === 5 && st.data.name === 'x',
+  assert(st.client_id === '5' && st.student_id === '5' && st.data.name === 'x',
     '4י · שורת תלמיד — גוף הרשומה ב-`data`, ורק עמודות המיזוג מחוצה לו');
+  const stU = sandbox.ysStudentRow({ id: 'a1b2-uuid', name: 'y', updatedAt: 7 });
+  assert(stU.student_id === 'a1b2-uuid',
+    '4י2 · ⭐ ותלמיד עם מזהה uuid מקבל `student_id` תקין ולא `null`');
 
   // סדר אב-לפני-בן, ובחירת מה לדחוף.
   const r = await sandbox.ysRowsPushSessions([SESS]);
@@ -344,6 +360,18 @@ async function t4() {
   assert(mutDup !== SRC, '5ח · המוטציה אכן מסירה את בדיקת הכפילות');
   assert(!DUP_GUARD[2][0].test(mutDup),
     '5ט · ⛔ מוטציה שמסירה את בדיקת הכפילות נתפסת — טענת 6ג הייתה נכשלת');
+
+  /*  ו. החזרת הדילוג על מפתח לא-מספרי ב-`ysMarkRows` (סבב 37א) — זה
+      הפיגום שהוסר כשהעמודה הפכה ל-`text`, ו⛔ החזרתו משמיטה בשקט את כל
+      הסימונים של כל תלמיד שנוסף מסבב 37 ואילך. */
+  const mutSkip = SRC.replace(
+    "  Object.keys(marks).forEach(function (k) {\n",
+    "  Object.keys(marks).forEach(function (k) {\n    if (!/^\\d+$/.test(k)) return;\n");
+  assert(mutSkip !== SRC, '5יא · המוטציה אכן מחזירה את הדילוג המספרי');
+  const hSkip = harness(extract(mutSkip), {});
+  const marksSkip = hSkip.sandbox.ysMarkRows(SESS);
+  assert(marksSkip.length === 2 && !marksSkip.some((m) => m.student_id === 'bad'),
+    '5יב · ⛔ במוטנט הסימון עם ה-uuid נעלם — טענות 4ה/4ה3 היו נכשלות');
 
   // ה. הפיכת on conflict do nothing ל-do update.
   const mutD = M6.replace(/on conflict \(client_id\) do nothing/g,

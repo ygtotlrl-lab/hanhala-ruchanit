@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v47'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v48'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -4346,6 +4346,42 @@ function pendBoot() {
 }
 /* ═══════════════ סוף מודול "ממתין לסנכרון" ═════════════════════════════ */
 
+/* ═══ מזהי רשומות — מודול משותף (סבב 37א) ═════════════════════════════════
+   ⭐ **מזהה שנוצר במכשיר, לפני שהרשומה ראתה שרת** — הדפוס שכלל ברזל 6
+   («מזהים») קובע לארגון כולו. עד סבב 37א חיה אותה יכולת **בחמישה שמות**:
+   `newClientId` בשכר לימוד, `newId` ב-gius, `ysNewId` בהנהלה, ודפוס בלי
+   פונקציה ייעודית ביומן — כולן `crypto.randomUUID` עם אותן נפילות-חזרה,
+   ואף שער לא אכף זאת. זו בדיוק הפרת כלל ברזל 14 כפי שנוסח: «קיים רק
+   באחת, בשקט» אינו מצב חוקי, וגם «קיים בארבעתן בארבעה שמות» אינו.
+   ⛔ **השם המשותף הוא `newClientId`** (סבב 37א) — הוותיק והברור מכולם,
+   וזה שכבר היה בשימוש בשכר לימוד; שינוי שם במקום אחד היה מחייב סבב נוסף.
+   ⛔ **אין כאן שינוי התנהגות (סבב 37א) — רק שם וליבה אחידים.** שלושת
+   המסלולים הם אלה שהיו: `randomUUID` כשקיים · `getRandomValues` · ולבסוף
+   `Math.random`. הנפילה-חזרה אינה תיאורטית: `randomUUID` קיים רק
+   ב-secure context ובדפדפנים מודרניים, וב-WebView ישן הוא פשוט חסר.
+   ⛔ **מזהה קיים אינו משתנה לעולם (סבב 37א)** — האיחוד נוגע ל**יצירה**
+   בלבד. מזהה הוא מפתח המיזוג, ושינוי שלו היה מפצל רשומה אחת לשתיים.
+   ⛔ **ומזהה מכשיר אינו מזהה רשומה (סבב 37א)** — `getDeviceId`/
+   `_randDeviceId` הם מושג אחר (זהות של מכשיר, לא של נתון), ואינם עוברים
+   דרך המודול הזה.
+   ═══════════════════════════════════════════════════════════════════════ */
+function newClientId(){
+  try{
+    if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function')return crypto.randomUUID();
+  }catch(e){}
+  var b=null;
+  try{
+    if(typeof crypto!=='undefined'&&crypto&&typeof crypto.getRandomValues==='function'){
+      b=new Uint8Array(16);crypto.getRandomValues(b);
+    }
+  }catch(e){b=null;}
+  if(!b){b=new Array(16);for(var i=0;i<16;i++)b[i]=Math.floor(Math.random()*256);}
+  b[6]=(b[6]&0x0f)|0x40;b[8]=(b[8]&0x3f)|0x80;  // גרסה 4, variant RFC 4122
+  var h=[],j;for(j=0;j<16;j++)h.push((b[j]+0x100).toString(16).slice(1));
+  return h.slice(0,4).join('')+'-'+h.slice(4,6).join('')+'-'+h.slice(6,8).join('')+'-'+h.slice(8,10).join('')+'-'+h.slice(10,16).join('');
+}
+/* ═══════════════ סוף מודול מזהי הרשומות ════════════════════════════════ */
+
 /* ── HW_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
 /* ⚠️ המודול נכלל כאן אך **רדום** בכוונה (סבב 35): הנתונים עדיין יושבים
    כמפתחות `kv` שלמים (מטריצה שורה 15), ואין רשומות-שורה שאפשר לפנות
@@ -4845,9 +4881,6 @@ function ysSessionRow(rec) {
    פעמיים (הלקח של yoman `002`). ⚠️ לסימון אין חותמת משלו ב-`kv`, ולכן הוא
    יורש את חותמת האב — ⛔ ולא `Date.now()` (סבב 36), שהיה חדש מכל עריכה
    מקומית שטרם עלתה ודורס אותה במיזוג הראשון. */
-/* ⚠️ מונה הדילוגים חי בזיכרון בלבד — הוא עדות תפעולית לשלב ב, לא נתון
-   שראוי לצרוך ממנו מכסת אחסון משותפת. */
-var _ysMarkSkipCount = 0;
 function ysMarkRows(rec) {
   var out = [];
   if (!rec || rec.id == null) return out;
@@ -4857,22 +4890,15 @@ function ysMarkRows(rec) {
   var del = !!rec.deleted;
   var ts = Math.round(Number(_ysRecTs(rec)) || 0);
   Object.keys(marks).forEach(function (k) {
-    // ⛔ מפתח שאינו מספרי מדולג — ו**לא בשקט** (סבב 37): `ys_marks.student_id`
-    //    הוא `smallint not null` (`migrations/005`, שרצה), ומזהה תלמיד שנוצר
-    //    כ-uuid אינו נכנס בו. מסבב 37 תלמיד חדש מקבל uuid, ולכן סימוניו
-    //    **אינם מגיעים לשכבת השורות**. זה אינו אובדן נתונים — ה-`kv` הוא
-    //    המאסטר ושכבת השורות אינה סמכותית — אבל הוא **חוסם את שלב ב**
-    //    (מתג הקריאה), ולכן הוא נספר ונרשם לקונסולה. ר' «פערים פתוחים».
-    if (!/^\d+$/.test(k)) {
-      _ysMarkSkipCount++;
-      if (_ysMarkSkipCount <= 3) console.warn('[ys] ys_marks: מזהה תלמיד לא-מספרי דולג —', k);
-      return;
-    }
+    // ⛔ מפתח הסימון עובר כמחרוזת, בלי המרה מספרית (סבב 37א) —
+    //    `ys_marks.student_id` הוא `text` מאז `migrations/008`, ומזהה תלמיד
+    //    שנוצר במכשיר הוא uuid. `Number(k)` היה מחזיר `NaN` לכל תלמיד
+    //    שנוסף מסבב 37 ואילך, כלומר סימוניו לא היו מגיעים לשכבת השורות.
     var m = marks[k] || {};
     out.push({
       client_id: sid + ':' + k,
       session_client_id: sid,
-      student_id: Number(k),
+      student_id: String(k),
       date_iso: d,
       status: (m.s == null) ? null : String(m.s),
       minutes: Math.round(Number(m.min) || 0),
@@ -4888,10 +4914,11 @@ function ysMarkRows(rec) {
    אמת שני לצורת הרשומה. ⚠️ ואין כאן שיקול משקל: 71 שורות, לא 12,000. */
 function ysStudentRow(rec) {
   if (!rec || rec.id == null) return null;
-  var n = Number(rec.id);
   return {
     client_id: String(rec.id),
-    student_id: isFinite(n) ? Math.round(n) : null,
+    // ⛔ מחרוזת ולא מספר (סבב 37א) — העמודה היא `text` מאז `migrations/008`,
+    //    ומזהה תלמיד הוא uuid מסבב 37. עיגול מספרי כאן היה מאפס אותו.
+    student_id: String(rec.id),
     updated_at: Math.round(Number(_ysRecTs(rec)) || 0),
     deleted: !!rec.deleted,
     data: rec
@@ -5129,38 +5156,6 @@ function ysMergeAttend(local, remote) {
 }
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
-/* ══════════════════════════════════════════════════════════════════════════
-   מזהה רשומה שנוצר במכשיר — `ysNewId()`
-   ══════════════════════════════════════════════════════════════════════════
-   ⭐ uuid v4 שנוצר **במכשיר, לפני שהרשומה ראתה שרת** — הדפוס שכלל ברזל 6
-   («מזהים») קובע לארגון, ואותו דפוס בדיוק שממנו נגזר `newClientId()`
-   ב-schar-limud: `crypto.randomUUID` כשקיים, ואחריו **שתי נפילות-חזרה** —
-   `crypto.getRandomValues` ואז `Math.random`. הנפילה-חזרה אינה תיאורטית:
-   `randomUUID` קיים רק ב-secure context ובדפדפנים מודרניים, וב-WebView ישן
-   הוא פשוט חסר.
-   ⛔ אין להקצות מזהה ב-`maxId++` (סבב 37) — שני מכשירים שמייבאים מצבה
-   במקביל מקצים **את אותם מזהים** לתלמידים שונים, ומנוע המיזוג רואה בהם
-   רשומה אחת: תלמיד נעלם בשקט, ואין מזה חזרה.
-   ══════════════════════════════════════════════════════════════════════════ */
-function ysNewId() {
-  try { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); } catch(e) {}
-  try {
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-      var b = new Uint8Array(16);
-      crypto.getRandomValues(b);
-      b[6] = (b[6] & 0x0f) | 0x40;
-      b[8] = (b[8] & 0x3f) | 0x80;
-      var h = [];
-      for (var i = 0; i < 16; i++) h.push((b[i] + 0x100).toString(16).slice(1));
-      return h.slice(0,4).join('')+'-'+h.slice(4,6).join('')+'-'+h.slice(6,8).join('')+
-             '-'+h.slice(8,10).join('')+'-'+h.slice(10,16).join('');
-    }
-  } catch(e) {}
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
-    var r = Math.random()*16|0, v = (c === 'x') ? r : ((r&0x3)|0x8);
-    return v.toString(16);
-  });
-}
 
 function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
 function _ysStudentsSaveRaw(s) { lsSet('ys_students', JSON.stringify(s)); }
@@ -6289,7 +6284,7 @@ function saveStudent(){
     // ⛔ המזהה הוא uuid ולא `maxId+1` (סבב 37) — שני מכשירים שמוסיפים תלמיד
     //    במקביל היו מקצים את אותו מספר לשני אנשים, והמיזוג היה רואה בהם
     //    רשומה אחת. אותו תיקון בדיוק כמו במסלול הייבוא, ובאותו סבב.
-    newId = ysNewId();
+    newId = newClientId();
     students.push({id:newId,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
     students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
@@ -6484,8 +6479,8 @@ window.importStudentsFromFile = function(input) {
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         // ⛔ uuid ולא `maxId++` (סבב 37) — שני מכשירים שמייבאים במקביל היו
         //    מקצים את אותם מזהים לתלמידים שונים, והמיזוג היה רואה בהם רשומה
-        //    אחת: תלמיד נעלם בשקט, ואין מזה חזרה. ר' `ysNewId()`.
-        var nid = ysNewId();
+        //    אחת: תלמיד נעלם בשקט, ואין מזה חזרה. ר' `newClientId()`.
+        var nid = newClientId();
         existing.push({id:nid, name:name, cls:cls, updatedAt:Date.now(), createdBy:ysWho()});
         addedIds.push(nid);
         added++;
