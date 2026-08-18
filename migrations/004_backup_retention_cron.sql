@@ -42,14 +42,21 @@ create extension if not exists pg_cron;
 --     של yoman-avoda:
 --       · hanhala-ruchanit — 14 מפתחות `kv`, בלי קידומת
 --       · schar-limud      — ארבע טבלאות, בלי קידומת
---       · yoman-avoda      — חמישה מקורות × שני מוסדות (`rishon_`/`ramataviv_`)
+--       · yoman-avoda      — חמישה מקורות × שני מוסדות (`rishon_`/`ramataviv_`),
+--                            ועוד שני שמות שיצאו משימוש × שני מוסדות
 --
 -- ⛔ **מפתח שאינו ברשימה אינו נמחק לעולם** — וזה כולל, במפורש:
---    `PRE_SYNC_UNIFY_*` · `PRE_ROUND3B_*` · `ORPHAN_*` · `pre-delete-*`,
---    וכן **מפתחות יומיים שיצאו משימוש** (`rishon_tb_entries`,
---    `rishon_tb_archive` ומקביליהם ברמת אביב — הכתיבה הכפולה אליהם כובתה
---    בסבב 35). ⚠️ הם יישארו ב-`kv_backup` לנצח בכוונה: הוספתם לרשימה היא
---    מחיקת היסטוריה, ולכן החלטת מנהל ולא תופעת לוואי של הסבב הזה.
+--    `PRE_SYNC_UNIFY_*` · `PRE_ROUND3B_*` · `ORPHAN_*` · `pre-delete-*`.
+--
+-- ⭐ **ארבעת שמות הגיבוי היומי שיצאו משימוש נכללים כן ברשימה** (השלמת
+--    סבב 35ג, בהחלטת המנהל): `rishon_tb_entries` · `rishon_tb_archive` ·
+--    `ramataviv_tb_entries` · `ramataviv_tb_archive`. אלה שמות **גיבוי
+--    השגרה** שרצו עד סבב 35, לפני שהיומן והארכיון עברו לגיבוי-טבלאות
+--    (`*_tb_entries_rows`). ⚠️ נמדד מול המסד: 23 שורות שגרה שהרשימה
+--    הראשונה החמיצה, ולכן לא היו מתפנות לעולם — היסט **שמות**, ולא
+--    היסטוריה שיש להגן עליה. ⛔ וההוספה היא ארבעה שמות מפורשים ולא
+--    קידומת (השלמת סבב 35ג) — `like 'rishon\_%'` היה תופס גם את
+--    גיבויי ה-`PRE_*` הפר-מוסדיים.
 create or replace function public.bk_retention_keys()
 returns text[]
 language sql
@@ -68,7 +75,10 @@ as $$
     'rishon_tb_subs_meta', 'rishon_tb_wa_phone',
     -- yoman-avoda — רמת אביב
     'ramataviv_tb_entries_rows', 'ramataviv_tb_cats', 'ramataviv_tb_subs',
-    'ramataviv_tb_subs_meta', 'ramataviv_tb_wa_phone'
+    'ramataviv_tb_subs_meta', 'ramataviv_tb_wa_phone',
+    -- yoman-avoda — שמות גיבוי השגרה שיצאו משימוש בסבב 35 (ר' הנימוק למעלה)
+    'rishon_tb_entries', 'rishon_tb_archive',
+    'ramataviv_tb_entries', 'ramataviv_tb_archive'
   ]::text[];
 $$;
 
