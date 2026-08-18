@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v49'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v50'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -5084,35 +5084,130 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
 //    `keepUnversionedLocal` — רשומה מקומית-בלבד ממשיכה להיות מוכרעת בדיוק
 //    כפי שהייתה.
-function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
-  // onDrop (אופציונלי): callback שמקבל כל רשומה מקומית-בלבד ללא updatedAt שנפלה
-  // בגלל keepUnversionedLocal=false — לתיעוד ושחזור ידני. לא משנה את המיזוג עצמו.
-  var pend = function(k) { return !!(isPending && isPending(k)); };
-  if (remote == null && local == null) return local;
-  if (Array.isArray(remote) || Array.isArray(local)) {
-    var L = Array.isArray(local) ? local : [];
-    var R = Array.isArray(remote) ? remote : [];
+/* ═══ מיזוג רשומות — מודול משותף (סבב 38) ════════════════════════════════
+   ליבת המיזוג של הארגון, זהה בית-לבית בארבע האפליקציות. עד סבב 38 חיו כאן
+   **ארבעה מנועים נפרדים** — `mergeRecords` · `ysMergeRecords` · `slMerge` ·
+   `mergeRows` — שכולם מימשו את אותם שלושה כללים של כלל ברזל 6:
+     • רשומה מקומית מסומנת ⏳ מנצחת, **ללא תלות בחותמת**;
+     • בשוויון חותמות — **הענן מנצח** (שובר-שוויון דטרמיניסטי);
+     • רשומה שקיימת רק מקומית **שורדת** — היעדרות אצל הצד השני אינה מחיקה.
+   ⛔ שלושת הכללים יושבים מעכשיו ב-`_mergePick` בלבד (סבב 38) — ארבעה
+   עותקים של כלל הכרעה הם ארבע הזדמנויות שאחד מהם ייסחף, וזה בדיוק מה
+   שקרה: ההגנה על ⏳ הייתה קיימת בשתיים מארבע במשך שמונה-עשר סבבים.
+
+   ⚠️ **מה שנבדל בין האפליקציות נשאר נבדל — כפרמטר מדוד ולא כקוד כפול.**
+   ארבע ידיות המדיניות (`dedupe` · `remoteDupe` · `keyless` · `localPick`)
+   אינן קישוט: הן מקודדות התנהגויות **קיימות** במצבי קצה, שנמדדו לפני
+   האיחוד ונשמרו בדיוק כפי שהיו. ⛔ אין לשנות אף אחת מהן «לשם אחידות»
+   (סבב 38) — היפוך `dedupe` בשכר לימוד, למשל, היה מכווץ שתי שורות כספיות
+   בעלות אותו מפתח לשורה אחת, בשקט. אובדן שקט גרוע מכפילות גלויה.
+
+   ⛔ ואין להוסיף כאן קריאה לרשת, ל-localStorage או ל-DOM (סבב 38) — הליבה
+   טהורה, וזה מה שמאפשר להריץ אותה בבדיקות דיפרנציאליות מול המנוע שהיא
+   החליפה.
+
+   **ה-API:** `_mergePick` · `mergeCore`.
+   ═══════════════════════════════════════════════════════════════════════ */
+// כלל ההכרעה בין שתי גרסאות של **אותה** רשומה — הנקודה היחידה בארגון שבה
+// הוא נכתב. ⛔ אין לשכפל אותה (סבב 38) — ר' הנימוק שבראש הבלוק.
+// `isPend` הוא הסימון ⏳ של הרשומה המקומית; `mergePair`, כשהוא קיים, מקבל
+// את ההכרעה כפרמטר ומרחיב אותה (מיזוג פנימי של סנאפשוט).
+function _mergePick(loc, rem, k, isPend, tsOf, mergePair) {
+  if (mergePair) return mergePair(loc, rem, k, isPend);
+  return (isPend || tsOf(loc) > tsOf(rem)) ? loc : rem;   // שוויון → הענן
+}
+// `opts`: getKey · ts · isPending · mergePair · keepUnversionedLocal · onDrop
+//         ובנוסף ארבע ידיות המדיניות שבראש הבלוק.
+function mergeCore(local, remote, opts) {
+  var o = opts || {};
+  var getKey = o.getKey, tsOf = o.ts, mergePair = o.mergePair || null;
+  var keepUnversionedLocal = !!o.keepUnversionedLocal, onDrop = o.onDrop || null;
+  var dedupe = o.dedupe !== false;
+  var remoteDupe = o.remoteDupe || 'ts';        // 'ts' | 'last'
+  var keyless = o.keyless || 'drop';            // 'drop' | 'keep-remote'
+  var localPick = o.localPick || 'last';        // 'last' | 'first'
+  var pend = function (k) { return !!(o.isPending && o.isPending(k)); };
+  var L = Array.isArray(local) ? local : [];
+  var R = Array.isArray(remote) ? remote : [];
+
+  // ── מסלול א: איחוד כפילויות (map+order) ────────────────────────────────
+  if (dedupe) {
     var map = {}, order = [];
-    R.forEach(function(r){ if (!r) return; var k = getKey(r); if (k == null) return; k = String(k); if (!(k in map)) order.push(k); map[k] = r; });
-    L.forEach(function(r){
-      if (!r) return; var k = getKey(r); if (k == null) return; k = String(k);
-      if (!(k in map)) {
-        if (ysRecTs(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
-        else if (onDrop) { try { onDrop(r, k); } catch(eD) {} }
-      } else if (pend(k) || ysRecTs(r) > ysRecTs(map[k])) { map[k] = r; } // שוויון → הענן מנצח (דטרמיניסטי), אלא אם המקומי מסומן ⏳
+    R.forEach(function (r) {
+      if (!r) return;
+      var k = getKey(r); if (k == null) return; k = String(k);
+      if (!(k in map)) { order.push(k); map[k] = r; return; }
+      // ⚠️ הסדר כאן הוא (הקיים, החדש) — שוויון נופל על ה**מאוחר** במערך.
+      //    היפוך הארגומנטים הופך את שובר-השוויון בשקט.
+      map[k] = (remoteDupe === 'last') ? r
+             : _mergePick(map[k], r, k, false, tsOf, mergePair);
     });
-    return order.map(function(k){ return map[k]; });
+    L.forEach(function (r) {
+      if (!r) return;
+      var k = getKey(r); if (k == null) return; k = String(k);
+      if (!(k in map)) {
+        // רשומה מקומית-בלבד — היעדרות אצל הצד השני אינה מחיקה.
+        if (tsOf(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
+        else if (onDrop) { try { onDrop(r, k); } catch (eD) {} }
+      } else { map[k] = _mergePick(r, map[k], k, pend(k), tsOf, mergePair); }
+    });
+    return order.map(function (k) { return map[k]; });
   }
+
+  // ── מסלול ב: שימור כפילויות (דחיפה זורמת) ──────────────────────────────
+  var out = [], seen = {}, byKey = {};
+  L.forEach(function (l) {
+    var k = getKey(l); if (k == null) return; k = String(k);
+    if (localPick === 'last' || !(k in byKey)) byKey[k] = l;
+  });
+  R.forEach(function (r) {
+    var k = getKey(r);
+    if (k == null) { if (keyless === 'keep-remote') out.push(r); return; }
+    k = String(k); seen[k] = 1;
+    var l = byKey[k];
+    if (!l) { out.push(r); return; }
+    out.push(_mergePick(l, r, k, pend(k), tsOf, mergePair));
+  });
+  L.forEach(function (l) {
+    var k = getKey(l); if (k == null) return; k = String(k);
+    if (!seen[k]) out.push(l);
+  });
+  return out;
+}
+/* ═══════════════ סוף מודול המיזוג ══════════════════════════════════════ */
+
+// חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
+// ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
+//    מאז ומתמיד לפי **הסדר** (האחרון גובר) ולא לפי החותמת. ⛔ אין ליישר
+//    את זה ל-yoman «לשם אחידות» (סבב 38) — זו התנהגות קיימת שנמדדה, וכל
+//    שינוי בה משנה איזו רשומה שורדת.
+// ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — בענף האובייקטים
+//    הליבה מקבלת מערכי-זוגות ולא את `remote` המקורי, ובלעדיו רשומה
+//    מקומית בלי חותמת הייתה נופלת דווקא כשאין בכלל צד מרוחק.
+function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
+  if (remote == null && local == null) return local;
+  var keepLocal = !!keepUnversionedLocal || remote == null;
+  if (Array.isArray(remote) || Array.isArray(local)) {
+    return mergeCore(local, remote, {
+      getKey: getKey, ts: ysRecTs, isPending: isPending, onDrop: onDrop,
+      keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
+    });
+  }
+  // ענף האובייקטים — `ys_approvals` ומפות `kv` אחרות. המפתח הוא מפתח המפה
+  // עצמה, ולכן הזוגות נעטפים ונפרסים חזרה; סדר המפתחות (מרוחק ואז
+  // מקומי-בלבד) נשמר בזכות סדר ההכנסה של אובייקט JS.
   var Lo = (local && typeof local === 'object') ? local : {};
   var Ro = (remote && typeof remote === 'object') ? remote : {};
-  var out = {};
-  Object.keys(Ro).forEach(function(k){ out[k] = Ro[k]; });
-  Object.keys(Lo).forEach(function(k){
-    if (!(k in out)) {
-      if (ysRecTs(Lo[k]) > 0 || keepUnversionedLocal || remote == null) out[k] = Lo[k];
-      else if (onDrop) { try { onDrop(Lo[k], k); } catch(eD2) {} }
-    } else if (pend(k) || ysRecTs(Lo[k]) > ysRecTs(out[k])) out[k] = Lo[k];
+  var pairs = function (o) { return Object.keys(o).map(function (k) { return { __k: k, __v: o[k] }; }); };
+  var merged = mergeCore(pairs(Lo), pairs(Ro), {
+    getKey: function (x) { return x.__k; },
+    ts: function (x) { return ysRecTs(x.__v); },
+    isPending: isPending, keepUnversionedLocal: keepLocal,
+    onDrop: onDrop ? function (x, k) { return onDrop(x.__v, k); } : null,
+    dedupe: true, remoteDupe: 'last'
   });
+  var out = {};
+  merged.forEach(function (x) { out[x.__k] = x.__v; });
   return out;
 }
 
