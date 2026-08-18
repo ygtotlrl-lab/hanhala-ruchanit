@@ -1,4 +1,4 @@
-var CACHE_NAME = 'hanhala-ruchanit-v42';
+var CACHE_NAME = 'hanhala-ruchanit-v43';
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -12,7 +12,7 @@ var CORE = [
 // סקריפטי CDN — האפליקציה לא רצה בלי supabase (var SB=supabase.createClient זורק
 // וכל הסקריפט המוטבע מת). נמשכים ב-mode:'cors' דווקא, כי תגובת no-cors היא opaque
 // עם status 0 ו-cache.put דוחה אותה — לכן עד היום הם מעולם לא נכנסו למטמון.
-var CDN = [
+var CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
@@ -90,7 +90,7 @@ function cachePut(cache, url, opts) {
 // שקט — לא מפיל כלום. כך מכשירים שנפגעו מתרפאים לבד, בלי לחכות לגרסה חדשה.
 function ensureCdnCached() {
   return caches.open(CACHE_NAME).then(function(cache) {
-    return Promise.all(CDN.map(function(url) {
+    return Promise.all(CDN_ASSETS.map(function(url) {
       return cache.match(url, SUB_OPTS).then(function(hit) {
         if (hit) return;
         return cachePut(cache, url, {mode: 'cors', credentials: 'omit'})
@@ -112,7 +112,7 @@ self.addEventListener('install', function(event) {
           .catch(function() { return cachePut(cache, url, {}); })
           .then(function() { console.log('[SW] cached core:', url); })
           .catch(function(err) { console.error('[SW] FAIL core:', url, err.message); });
-      }).concat(CDN.map(function(url) {
+      }).concat(CDN_ASSETS.map(function(url) {
         return cachePut(cache, url, {mode: 'cors', credentials: 'omit'})
           .then(function() { console.log('[SW] cached cdn:', url.slice(0, 60)); })
           .catch(function(err) { console.warn('[SW] FAIL cdn:', url.slice(0, 60), err.message); });

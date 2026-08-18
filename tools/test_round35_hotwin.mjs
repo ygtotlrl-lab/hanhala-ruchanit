@@ -23,6 +23,10 @@ const APP = {
     [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],
     [/if \(s\.eq\) q = q\.eq\(s\.eq\[0\], s\.eq\[1\]\);/, 'מודול הגיבוי תומך ב-eq למקורות טבלה (מוכנות שלב ב)'],
   ],
+  fileChecks: [
+    ['sw.js', /var CDN_ASSETS = \[/, 'רשימת ה-CDN נושאת את השם המשותף CDN_ASSETS (סבב 35ג)'],
+    ['sw.js', /ensureCdnCached/, 'ריפוי עצמי של ה-CDN קיים (ensureCdnCached)'],
+  ],
   mutations: [],
 };
 
