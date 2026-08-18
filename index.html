@@ -5033,9 +5033,22 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 // keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt (נתוני legacy) שורדת
 // כשהענן קיים. false = מניעת "תחיית מתים" של רשומות שנמחקו פיזית בקוד הישן;
 // true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend, approvals).
-function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop) {
+// ⛔ **רשומה מקומית מסומנת ⏳ מנצחת ללא תלות בחותמת (סבב 37) — אין להסיר את
+//    `isPending` מכאן.** החותמת בענן נכתבת ע"י המכשיר שדחף, ולכן ברגע שמכשיר
+//    א' דוחף, הערך בענן נושא חותמת **מאוחרת יותר** מעריכה חדשה יותר שיושבת
+//    אצל מכשיר ב' וטרם עלתה — ומכשיר ב' היה מאמץ את גרסת א', כלומר מוחק את
+//    העריכה שלו **בשקט**. זו אותה הגנה בדיוק שקיימת ב-schar-limud (`slMerge`)
+//    וב-gius (`mergeRows`) מסבב 12, וכאן היא חסרה עד סבב 37.
+//    המחיר המודע: מכשיר שהיה מנותק זמן רב ידרוס בעלייתו עריכה מרוחקת חדשה
+//    יותר. זו העדפה מכוונת — הרשומה מסומנת ⏳ כל אותו זמן ומתריעה אחרי 24
+//    שעות, בעוד שעריכה שנמחקת בשקט אינה משאירה עקבות.
+//    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
+//    `keepUnversionedLocal` — רשומה מקומית-בלבד ממשיכה להיות מוכרעת בדיוק
+//    כפי שהייתה.
+function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
   // onDrop (אופציונלי): callback שמקבל כל רשומה מקומית-בלבד ללא updatedAt שנפלה
   // בגלל keepUnversionedLocal=false — לתיעוד ושחזור ידני. לא משנה את המיזוג עצמו.
+  var pend = function(k) { return !!(isPending && isPending(k)); };
   if (remote == null && local == null) return local;
   if (Array.isArray(remote) || Array.isArray(local)) {
     var L = Array.isArray(local) ? local : [];
@@ -5047,7 +5060,7 @@ function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop) {
       if (!(k in map)) {
         if (ysRecTs(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
         else if (onDrop) { try { onDrop(r, k); } catch(eD) {} }
-      } else if (ysRecTs(r) > ysRecTs(map[k])) { map[k] = r; } // שוויון → הענן מנצח (דטרמיניסטי)
+      } else if (pend(k) || ysRecTs(r) > ysRecTs(map[k])) { map[k] = r; } // שוויון → הענן מנצח (דטרמיניסטי), אלא אם המקומי מסומן ⏳
     });
     return order.map(function(k){ return map[k]; });
   }
@@ -5059,15 +5072,27 @@ function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop) {
     if (!(k in out)) {
       if (ysRecTs(Lo[k]) > 0 || keepUnversionedLocal || remote == null) out[k] = Lo[k];
       else if (onDrop) { try { onDrop(Lo[k], k); } catch(eD2) {} }
-    } else if (ysRecTs(Lo[k]) > ysRecTs(out[k])) out[k] = Lo[k];
+    } else if (pend(k) || ysRecTs(Lo[k]) > ysRecTs(out[k])) out[k] = Lo[k];
   });
   return out;
+}
+
+// פרדיקט ה-⏳ לפי מפתח ה-kv (סבב 37) — נגזר מ-`PEND_KV_PREFIX`, אותה מפה
+// בדיוק שמשמשת את `pendConfirmKv` בריקון התור. מפתח שאין לו קידומת סימונים
+// (`ys_attend`, `ys_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
+// ⚠️ הקידומת חייבת להיגזר מהמפה ולא להיכתב כאן שוב — שני מקורות לאותו מיפוי
+//    הם בדיוק איך שסימון נכתב תחת מפתח אחד ונקרא תחת אחר.
+function ysPendingFor(kvKey) {
+  var pfx = PEND_KV_PREFIX[kvKey];
+  if (!pfx) return null;
+  return function (k) { return pendHas(pfx + k); };
 }
 
 // עוזר: מיזוג עם איסוף רשומות שנפלו + לוג dropped_legacy לשחזור ידני
 function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey) {
   var dropped = [];
-  var merged = ysMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); });
+  var merged = ysMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); },
+                              ysPendingFor(logKey));
   if (dropped.length) {
     console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sync_log)');
     ysSyncLog('dropped_legacy', logKey, dropped.length, { records: dropped });
