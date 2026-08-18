@@ -67,17 +67,19 @@ on conflict (client_id) do nothing;
 -- ────────────────────────────────────────────────────────────────────────────
 -- 2. ys_marks — הבן
 -- ────────────────────────────────────────────────────────────────────────────
--- ⚠️ `m.key !~ '^\d+$'` מסונן החוצה: מפתח `marks` הוא **תמיד** מזהה תלמיד
---    מספרי (נמדד: 13,083 סימונים, אפס חריגים), ומפתח שאינו כזה הוא נתון
---    פגום. ⛔ הוא מדולג ואינו מפיל את ההעברה, אבל הוא גם **ייספר כפער
---    בבדיקת השקילות** שלמטה — כלומר לא נעלם בשקט.
+-- ⭐ **מפתח ה-`marks` עובר כמחרוזת, בלי סינון וללא המרה** (סבב 37א).
+--    הגרסה שרצה ב-2026-08-18 סיננה `m.key ~ '^\d+$'` והמירה `::smallint`,
+--    לפי המדידה שהייתה נכונה אז (13,083 סימונים, אפס מפתחות לא-מספריים).
+--    מאותו יום מזהה תלמיד חדש הוא uuid, ו-`hanhala_008_student_id_to_text`
+--    המירה את העמודה ל-`text`; ⛔ סינון מספרי כאן היה משמיט **את כל**
+--    הסימונים של התלמידים שנוספו מאז, בשקט.
 insert into public.ys_marks
   (client_id, session_client_id, student_id, date_iso, status, minutes,
    deleted, updated_at)
 select
   (e->>'id') || ':' || m.key,
   e->>'id',
-  m.key::smallint,
+  m.key,
   coalesce(e->>'date_iso', ''),
   m.value->>'s',
   coalesce(nullif(m.value->>'min', '')::numeric, 0)::smallint,
@@ -90,7 +92,6 @@ where k.key = 'ys_attend_sessions'
   and jsonb_typeof(k.value::jsonb) = 'array'
   and e->>'id' is not null
   and jsonb_typeof(e->'marks') = 'object'
-  and m.key ~ '^\d+$'
 on conflict (client_id) do nothing;
 
 
@@ -101,7 +102,7 @@ insert into public.ys_students_rows
   (client_id, student_id, updated_at, deleted, data)
 select
   e->>'id',
-  nullif(e->>'id', '')::smallint,
+  nullif(e->>'id', ''),
   coalesce(nullif(e->>'updatedAt', '')::bigint, 0),
   coalesce(case when jsonb_typeof(e->'deleted') = 'boolean' then (e->>'deleted')::boolean end, false),
   e
@@ -142,14 +143,14 @@ on conflict (client_id) do nothing;
 --   with kvm as (
 --     select (e->>'id')||':'||m.key cid,
 --            (e->>'id') scid,
---            m.key::smallint sid,
+--            m.key sid,
 --            coalesce(e->>'date_iso','') d,
 --            m.value->>'s' st,
 --            coalesce(nullif(m.value->>'min','')::numeric,0)::smallint mn
 --     from public.kv k, lateral jsonb_array_elements(k.value::jsonb) e,
 --          lateral jsonb_each(e->'marks') m
 --     where k.key='ys_attend_sessions' and e->>'id' is not null
---       and jsonb_typeof(e->'marks')='object' and m.key ~ '^\d+$')
+--       and jsonb_typeof(e->'marks')='object')
 --   select 'kv בלבד' src, cid from (
 --     select cid,scid,sid,d,st,mn from kvm
 --     except select client_id,session_client_id,student_id,date_iso,status,minutes
@@ -161,14 +162,10 @@ on conflict (client_id) do nothing;
 --     except select cid,scid,sid,d,st,mn from kvm) y;
 --   -- ציפייה: אפס שורות.
 --
--- --- ג. מפתחות `marks` שאינם מספריים (הדילוג המתועד שלמעלה) ---------------
---   select e->>'id' session_id, m.key bad_key
---   from public.kv k, lateral jsonb_array_elements(k.value::jsonb) e,
---        lateral jsonb_each(e->'marks') m
---   where k.key='ys_attend_sessions' and jsonb_typeof(e->'marks')='object'
---     and m.key !~ '^\d+$';
---   -- ציפייה: אפס שורות. שורה כאן = סימון שלא עבר, ו⛔ אין להריץ את
---   -- שלב ב לפני שהוכרע מה לעשות איתו.
+-- --- ג. אין יותר סינון מפתחות ---------------------------------------------
+--   ⭐ עד `008` ישבה כאן בדיקה שסופרת מפתחות `marks` לא-מספריים, מפני
+--   שהעברה סיננה אותם. מאז ש-`student_id` הוא `text` אין סינון ואין מה
+--   לספור — כל מפתח עובר, וסעיף ב שלמעלה כבר משווה את המלאי המלא.
 --
 -- --- ד. תלמידים -----------------------------------------------------------
 --   with kvst as (

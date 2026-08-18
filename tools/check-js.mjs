@@ -46,7 +46,8 @@ const APP = {
           'test_round22.mjs', 'test_round30_stage_a.mjs',
           'test_round32_schema_source.mjs', 'test_round33_structure.mjs',
           'test_round35_hotwin.mjs', 'test_round35c_cron.mjs',
-          'test_round36_tables.mjs'],
+          'test_round36_tables.mjs', 'test_round37_merge_pending.mjs', 'test_round37_matrix.mjs', 'test_round37_ids.mjs',
+          'test_round37_import.mjs'],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

@@ -138,11 +138,17 @@ grant select, insert, update, delete, truncate, references, trigger
 -- ⚠️ **טיפוסים מינימליים בכוונה** (סבב 36) — זו הטבלה שתמלא את החלון החם
 --    (~12,000 שורות = 80 תלמידים × 3 סדרים × ~50 ימי לימוד), ומשקל שורה
 --    מתורגם ישירות ללחץ על מכסת ה-localStorage המשותפת לארבע האפליקציות.
---    נמדד מהנתונים החיים: `student_id` ≤ 71, `minutes` בטווח 0–55,
---    ו-`status` באורך 2 תווים לכל היותר (`p`/`e`/`l`/`ak`/`ap`/`x`/`a`/`''`).
---    ⛔ אין להרחיב את `student_id`/`minutes` ל-`integer` «ליתר ביטחון» —
---    `smallint` מכסה פי אלף מהטווח הנמדד, וההרחבה היא 4 בתים לשורה על
---    שום דבר.
+--    נמדד מהנתונים החיים: `minutes` בטווח 0–55, ו-`status` באורך 2 תווים
+--    לכל היותר (`p`/`e`/`l`/`ak`/`ap`/`x`/`a`/`''`).
+--    ⛔ אין להרחיב את `minutes` ל-`integer` «ליתר ביטחון» — `smallint` מכסה
+--    פי אלף מהטווח הנמדד, וההרחבה היא 4 בתים לשורה על שום דבר.
+-- ⭐ **`student_id` הוא `text`, ולא `smallint` כפי שנוצר בסבב 36.**
+--    הגרסה שרצה ב-2026-08-18 יצרה `smallint` לפי המדידה שהייתה נכונה אז
+--    (המזהים היו ≤ 71); באותו יום עבר הארגון למזהה שנוצר במכשיר — uuid —
+--    ו-`hanhala_008_student_id_to_text` המירה את העמודה. הקובץ מתאר את
+--    המצב **הסופי**, ו-`008` היא שורת ההתכנסות להתקנה שכבר רצה.
+--    ⛔ ואין כאן `student_key` נפרד לצד `student_id` (סבב 37א) — שתי עמודות
+--    למושג אחד הן מקור אמת כפול, בדיוק הלקח של `deleted` באותו יום.
 -- ⚠️ **`status` נשאר `text` ובלי `CHECK` על הערכים** — קוד סטטוס חדש שיתווסף
 --    באפליקציה היה נדחה במסד ומפיל שמירת נוכחות, בזמן ש-`kv` (המאסטר
 --    בשלב א) היה מקבל אותו. אילוץ שמפיל את הבן ולא את המאסטר הוא כשל
@@ -150,7 +156,7 @@ grant select, insert, update, delete, truncate, references, trigger
 create table if not exists public.ys_marks (
   client_id         text        primary key,
   session_client_id text        not null,
-  student_id        smallint    not null,
+  student_id        text        not null,
   date_iso          text        not null,
   status            text,
   minutes           smallint,
@@ -168,6 +174,9 @@ create unique index if not exists ys_marks_session_student
   on public.ys_marks (session_client_id, student_id);
 -- הדוח פר-תלמיד — הדרישה שנקבעה מראש. `date_iso` הוא ISO, ולכן מיון
 -- לקסיקוגרפי עליו **הוא** מיון כרונולוגי; אין כאן המרת טיפוס בשני הכיוונים.
+-- ⚠️ ומאז `008` גם `student_id` הוא `text`, ולכן כל השוואה עליו היא השוואת
+--    מחרוזות. ⛔ אין להחזיר `::smallint` או מיון מספרי (סבב 37א) — הם היו
+--    מפילים כל מזהה uuid.
 create index if not exists ys_marks_student_date_idx
   on public.ys_marks (student_id, date_iso desc);
 -- שאילתת החלון החם — כל הסימונים בטווח תאריכים.
@@ -200,7 +209,7 @@ grant select, insert, update, delete, truncate, references, trigger
 --    משוכפלות מתוכה במכוון.
 create table if not exists public.ys_students_rows (
   client_id  text        primary key,
-  student_id smallint,
+  student_id text,
   updated_at bigint      not null default 0,
   deleted    boolean     not null default false,
   data       jsonb       not null,
