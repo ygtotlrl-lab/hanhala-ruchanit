@@ -103,17 +103,15 @@ create table if not exists public.ys_users (
   password_hash text not null,
   full_name     text not null,
   role          text not null,
-  -- ⭐ `active` הוא המחיקה הרכה של משתמש. ⛔ אין כאן `deleted` — `active=false`
-  --    הוא המנגנון בארגון כולו (כלל קריטי 4 ב-gius), ועמודה שנייה לאותו מושג
-  --    הייתה יוצרת שני מקורות אמת למצב של משתמש.
+  -- ⭐ `active` הוא המחיקה הרכה של משתמש. ⛔ אין כאן `deleted`, ואין להוסיף
+  --    (סבב 37) — `active=false` הוא המנגנון בארגון כולו (כלל קריטי 4
+  --    ב-gius), ועמודה שנייה לאותו מושג היא מקור אמת שני. העמודה נוספה
+  --    ל-`sl_users` והוסרה באותו יום בהכרעת המנהל, ולכאן לא הגיעה כלל.
   active        boolean default true,
   created_at    timestamptz default now(),
   -- ⭐ `updated_at` — שובר-שוויון דטרמיניסטי להתנגשות על שורת משתמש
-  --    (סבב 37, `migrations/007`). הטריגר עצמו נוצר בהמשך הקובץ.
+  --    (סבב 37, `migrations/007`). הטריגר `ys_users_touch` נוצר בהמשך הקובץ.
   updated_at    timestamptz not null default now(),
-  -- ⭐ `deleted` — הדפוס שנקבע ב-2026-08-18 עם `schar_013` בפרויקט המשותף.
-  --    ⚠️ הסרת משתמש בפועל היא עדיין `active=false`; ר' שורת הפער.
-  deleted       boolean not null default false,
   pass_salt     text,
   pass_fp       text
 );
@@ -126,10 +124,6 @@ alter table public.ys_users add column if not exists updated_at timestamptz;
 update public.ys_users set updated_at = coalesce(created_at, now()) where updated_at is null;
 alter table public.ys_users alter column updated_at set default now();
 alter table public.ys_users alter column updated_at set not null;
-alter table public.ys_users add column if not exists deleted boolean;
-update public.ys_users set deleted = false where deleted is null;
-alter table public.ys_users alter column deleted set default false;
-alter table public.ys_users alter column deleted set not null;
 alter table public.ys_users add column if not exists pass_fp   text;
 
 -- אילוץ ה-`role` — ⛔ אין `add constraint if not exists` ב-Postgres, ולכן
@@ -277,11 +271,16 @@ grant select, insert, update, delete, truncate, references, trigger
 -- ⛔ `service_role` לא נגע — הוא תפקיד השרת.
 
 -- ============================================================
--- 007 (סבב 37) — חותמת עדכון + `deleted` על טבלת המשתמשים
+-- 007 (סבב 37) — חותמת עדכון וטריגר על טבלת המשתמשים
 -- ============================================================
-create or replace function public.ys_touch_updated_at() returns trigger as $$
+-- ⚠️ **`public.users_touch_updated_at()` היא פונקציה אחת לשתי טבלאות
+--    המשתמשים שבפרויקט המשותף** — `ys_users` כאן ו-`sl_users` בשכר לימוד —
+--    וזו שהמנהל יצר ב-2026-08-18. ⛔ אין לגזור ממנה שם פר-אפליקציה
+--    (`ys_touch_…`) (סבב 37): שתי הגדרות לאותה פונקציה בפרויקט אחד הן
+--    גרסה שנייה שאיש אינו יודע עליה (הלקח של סבב 36).
+create or replace function public.users_touch_updated_at() returns trigger as $$
 begin
-  new.updated_at = now();
+  new.updated_at := now();
   return new;
 end;
 $$ language plpgsql;
@@ -289,4 +288,4 @@ $$ language plpgsql;
 drop trigger if exists ys_users_touch on public.ys_users;
 create trigger ys_users_touch
   before update on public.ys_users
-  for each row execute function public.ys_touch_updated_at();
+  for each row execute function public.users_touch_updated_at();

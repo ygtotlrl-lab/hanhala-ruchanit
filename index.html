@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v46'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v47'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -4845,6 +4845,9 @@ function ysSessionRow(rec) {
    פעמיים (הלקח של yoman `002`). ⚠️ לסימון אין חותמת משלו ב-`kv`, ולכן הוא
    יורש את חותמת האב — ⛔ ולא `Date.now()` (סבב 36), שהיה חדש מכל עריכה
    מקומית שטרם עלתה ודורס אותה במיזוג הראשון. */
+/* ⚠️ מונה הדילוגים חי בזיכרון בלבד — הוא עדות תפעולית לשלב ב, לא נתון
+   שראוי לצרוך ממנו מכסת אחסון משותפת. */
+var _ysMarkSkipCount = 0;
 function ysMarkRows(rec) {
   var out = [];
   if (!rec || rec.id == null) return out;
@@ -4854,7 +4857,17 @@ function ysMarkRows(rec) {
   var del = !!rec.deleted;
   var ts = Math.round(Number(_ysRecTs(rec)) || 0);
   Object.keys(marks).forEach(function (k) {
-    if (!/^\d+$/.test(k)) return;
+    // ⛔ מפתח שאינו מספרי מדולג — ו**לא בשקט** (סבב 37): `ys_marks.student_id`
+    //    הוא `smallint not null` (`migrations/005`, שרצה), ומזהה תלמיד שנוצר
+    //    כ-uuid אינו נכנס בו. מסבב 37 תלמיד חדש מקבל uuid, ולכן סימוניו
+    //    **אינם מגיעים לשכבת השורות**. זה אינו אובדן נתונים — ה-`kv` הוא
+    //    המאסטר ושכבת השורות אינה סמכותית — אבל הוא **חוסם את שלב ב**
+    //    (מתג הקריאה), ולכן הוא נספר ונרשם לקונסולה. ר' «פערים פתוחים».
+    if (!/^\d+$/.test(k)) {
+      _ysMarkSkipCount++;
+      if (_ysMarkSkipCount <= 3) console.warn('[ys] ys_marks: מזהה תלמיד לא-מספרי דולג —', k);
+      return;
+    }
     var m = marks[k] || {};
     out.push({
       client_id: sid + ':' + k,
@@ -5116,6 +5129,39 @@ function ysMergeAttend(local, remote) {
 }
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
+/* ══════════════════════════════════════════════════════════════════════════
+   מזהה רשומה שנוצר במכשיר — `ysNewId()`
+   ══════════════════════════════════════════════════════════════════════════
+   ⭐ uuid v4 שנוצר **במכשיר, לפני שהרשומה ראתה שרת** — הדפוס שכלל ברזל 6
+   («מזהים») קובע לארגון, ואותו דפוס בדיוק שממנו נגזר `newClientId()`
+   ב-schar-limud: `crypto.randomUUID` כשקיים, ואחריו **שתי נפילות-חזרה** —
+   `crypto.getRandomValues` ואז `Math.random`. הנפילה-חזרה אינה תיאורטית:
+   `randomUUID` קיים רק ב-secure context ובדפדפנים מודרניים, וב-WebView ישן
+   הוא פשוט חסר.
+   ⛔ אין להקצות מזהה ב-`maxId++` (סבב 37) — שני מכשירים שמייבאים מצבה
+   במקביל מקצים **את אותם מזהים** לתלמידים שונים, ומנוע המיזוג רואה בהם
+   רשומה אחת: תלמיד נעלם בשקט, ואין מזה חזרה.
+   ══════════════════════════════════════════════════════════════════════════ */
+function ysNewId() {
+  try { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); } catch(e) {}
+  try {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      var b = new Uint8Array(16);
+      crypto.getRandomValues(b);
+      b[6] = (b[6] & 0x0f) | 0x40;
+      b[8] = (b[8] & 0x3f) | 0x80;
+      var h = [];
+      for (var i = 0; i < 16; i++) h.push((b[i] + 0x100).toString(16).slice(1));
+      return h.slice(0,4).join('')+'-'+h.slice(4,6).join('')+'-'+h.slice(6,8).join('')+
+             '-'+h.slice(8,10).join('')+'-'+h.slice(10,16).join('');
+    }
+  } catch(e) {}
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){
+    var r = Math.random()*16|0, v = (c === 'x') ? r : ((r&0x3)|0x8);
+    return v.toString(16);
+  });
+}
+
 function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
 function _ysStudentsSaveRaw(s) { lsSet('ys_students', JSON.stringify(s)); }
 
@@ -5687,7 +5733,10 @@ function saveStudents(s){
     var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
     if (tombs.length) s=s.concat(tombs);
   } catch(e){}
-  lsSet('ys_students',JSON.stringify(s));
+  // ⚠️ הערך המוחזר אינו קישוט (סבב 37) — מסלול הייבוא בודק אותו לפני שהוא
+  //    מציג «N תלמידים נוספו בהצלחה». באחסון מלא `lsSet` מחזירה `false`,
+  //    וסיכום הצלחה עליה הוא בדיוק מה שכלל ברזל 2 אוסר.
+  return lsSet('ys_students',JSON.stringify(s));
 }
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
@@ -6232,20 +6281,26 @@ function saveStudent(){
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
   if(!name){alert(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501));return;}
   var students=getStudents();
+  var newId=null;
   if(editingStudentId){
     var idx=students.findIndex(function(s){return s.id===editingStudentId;});
     if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].updatedAt=Date.now();}
   } else {
-    // maxId מהאחסון הגולמי (כולל tombstones) — לא לעשות שימוש חוזר ב-id של תלמיד מחוק
-    var _raw=_ysStudentsRaw();
-    var maxId=(_raw.length?_raw:students).reduce(function(m,s){return Math.max(m,s.id||0);},0);
-    students.push({id:maxId+1,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
+    // ⛔ המזהה הוא uuid ולא `maxId+1` (סבב 37) — שני מכשירים שמוסיפים תלמיד
+    //    במקביל היו מקצים את אותו מספר לשני אנשים, והמיזוג היה רואה בהם
+    //    רשומה אחת. אותו תיקון בדיוק כמו במסלול הייבוא, ובאותו סבב.
+    newId = ysNewId();
+    students.push({id:newId,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
     students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
   // ⚠️ התלמיד נשמר במכשיר וסומן ⏳; האישור יגיע מדחיפת `ys_students` הבאה.
-  pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : students[students.length-1] && students[students.length-1].id));
+  // ⛔ הסימון נגזר מהמזהה עצמו ולא מ-`students[students.length-1]` (סבב 37) —
+  //    המערך ממוין מיד אחרי ה-push, ולכן האיבר האחרון הוא התלמיד האחרון
+  //    **בסדר האלפביתי** ולא זה שנוסף; הסימון נכתב על רשומה אחרת, ושלוש
+  //    נקודות הקריאה (`pendTag`, בחירת מה לדחוף, שער הפינוי) לא ראו אותו.
+  pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : newId));
   scheduleYsPush();
   closeStudentModal();
   renderStudents();
@@ -6408,10 +6463,7 @@ window.importStudentsFromFile = function(input) {
         rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       }
       var existing = getStudents();
-      // maxId מהאחסון הגולמי (כולל tombstones) — לא לעשות שימוש חוזר ב-id של תלמיד מחוק
-      var _rawAll = _ysStudentsRaw();
-      var maxId = (_rawAll.length ? _rawAll : existing).reduce(function(m,s){return Math.max(m,s.id||0);}, 0);
-      var added = 0, failed = [], skipped = 0;
+      var added = 0, failed = [], skipped = 0, addedIds = [];
       var clsMap = {
         'א':'a',"א'":'a','a':'a','שיעור א':'a',"שיעור א'":'a',
         'ב':'b',"ב'":'b','b':'b','שיעור ב':'b',"שיעור ב'":'b',
@@ -6430,29 +6482,51 @@ window.importStudentsFromFile = function(input) {
         var clsStripped = clsRaw.replace(/['']/g,'');
         var cls = clsMap[clsRaw] || clsMap[clsStripped] || clsMap[clsStripped.slice(-1)] || null;
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
-        maxId++;
-        existing.push({id:maxId, name:name, cls:cls, updatedAt:Date.now(), createdBy:ysWho()});
+        // ⛔ uuid ולא `maxId++` (סבב 37) — שני מכשירים שמייבאים במקביל היו
+        //    מקצים את אותם מזהים לתלמידים שונים, והמיזוג היה רואה בהם רשומה
+        //    אחת: תלמיד נעלם בשקט, ואין מזה חזרה. ר' `ysNewId()`.
+        var nid = ysNewId();
+        existing.push({id:nid, name:name, cls:cls, updatedAt:Date.now(), createdBy:ysWho()});
+        addedIds.push(nid);
         added++;
       }
+      var wrote = true;
       if (added > 0) {
         existing.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
         // אין מיספור-מחדש — id חייב להישאר יציב למיזוג בין מכשירים
-        saveStudents(existing);
-        scheduleYsPush();
-        renderStudents();
+        // ⛔ תוצאת הכתיבה המקומית נבדקת לפני כל דיווח הצלחה (סבב 37) —
+        //    באחסון מלא `saveStudents` מחזירה `false`, ועד הסבב הזה הסיכום
+        //    «N תלמידים נוספו בהצלחה» הוצג בכל מקרה. זה בדיוק כלל ברזל 2.
+        wrote = (saveStudents(existing) !== false);
+        if (wrote) {
+          // ⛔ סימון ⏳ לכל שורה מיובאת (סבב 37) — בלעדיו הייבוא אינו נספר
+          //    במונה, אינו נחשב «לדחיפה», ושער הפינוי רשאי לפנות תלמיד
+          //    שטרם עלה לענן. כל שאר מסלולי כתיבת התלמידים כבר מסמנים.
+          addedIds.forEach(function(id){ pendMark(PK_STUDENT + id); });
+          scheduleYsPush();
+          renderStudents();
+        }
       }
       // הצגת סיכום
-      var icon = failed.length===0 ? '✅' : '⚠️';
-      var title = added + ' תלמידים נוספו בהצלחה';
+      var icon = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
+      var title = wrote ? (added + ' תלמידים נוספו בהצלחה')
+                        : 'הייבוא נכשל — אין מקום באחסון המכשיר';
       var body = '';
-      if (skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
-      if (failed.length > 0) {
+      if (!wrote) {
+        body += '<div style="color:#c0392b"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
+                'הכתיבה המקומית נכשלה, ולכן שום דבר לא נוסף. פנה מקום ונסה שוב.</div>';
+      }
+      if (wrote && skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
+      if (wrote && failed.length > 0) {
         body += '<div style="color:#c0392b;margin-top:6px"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
         body += '<div style="font-size:.82rem;margin-top:4px;direction:rtl">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       document.getElementById('import-summary-icon').textContent = icon;
       document.getElementById('import-summary-title').textContent = title;
       document.getElementById('import-summary-body').innerHTML = body || '<div>הכל תקין!</div>';
+      // ⚠️ הסיכום הוא הדיווח היחיד למשתמש כאן, ולכן הוא נבנה מהאמת ולא
+      //    מהכוונה: כשל כתיבה מקומית משנה את האייקון, את הכותרת ואת הגוף.
+
       document.getElementById('import-summary-modal').style.display = 'flex';
     } catch(err) {
       toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err));
