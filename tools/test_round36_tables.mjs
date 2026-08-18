@@ -9,8 +9,11 @@
  *    3. התנהגות: חילוץ שכבת השורות והרצתה ברתמת vm — גזירת `client_id`,
  *       ירושת `deleted` ו-`updated_at` מהאב, דילוג על מפתח סימון לא-מספרי,
  *       בחירת מה לדחוף, וסדר אב-לפני-בן.
- *    4. מוטציות: הסרת הכתיבה הכפולה חייבת להיתפס, אינדקס חלקי חייב להיתפס,
- *       וביטול ירושת ה-`deleted` חייב להיתפס.
+ *    4. מניעת כפילות סדרים (השלמת סבב 36) — כלל אחד בשני המקומות, בדיקה
+ *       טרייה מול הענן שנכשלת רכה, ואימוץ שאינו מוחק סימונים.
+ *    5. מוטציות: הסרת הכתיבה הכפולה חייבת להיתפס, אינדקס חלקי חייב להיתפס,
+ *       ביטול ירושת ה-`deleted` חייב להיתפס, והסרת בדיקת הכפילות חייבת
+ *       להיתפס.
  *
  *  ⚠️ הבדיקה הזו פרטית ל-hanhala-ruchanit — היא בודקת מיגרציות וקוד שקיימים
  *     כאן בלבד (כלל ברזל 14: קיום באחת מחייב חריגה מנומקת, ו-`check-structure`
@@ -162,6 +165,30 @@ function harness(modSrc, opts) {
   return { sandbox, calls };
 }
 
+/* חילוץ מודול מניעת הכפילות + רתמה. `ysMarks` ו-`_ysSessionsMerge` מסופקים
+   כבדלים — הבדיקה כאן היא על כלל הכפילות ועל האימוץ, לא על מנוע המיזוג. */
+const DUP_START = 'מניעת כפילות סדרים — ההגנה בנקודת היצירה';
+const DUP_END = '/* ═══ סוף מניעת כפילות סדרים';
+function extractDup(src) {
+  const lines = src.split('\n');
+  const si = lines.findIndex((l) => l.includes(DUP_START));
+  const ei = lines.findIndex((l) => l.includes(DUP_END));
+  if (si < 0 || ei <= si) return null;
+  return lines.slice(si - 1, ei + 1).join('\n');
+}
+function dupHarness(modSrc) {
+  const sandbox = {
+    console, Object, Array, String, Number,
+    window: { _atMarks: {}, _slMarks: {} },
+    ysMarks: (r) => (r && r.marks && typeof r.marks === 'object') ? r.marks : {},
+    ysKvGet: async () => null,
+    _ysSessionsMerge: (c, l) => l,
+  };
+  vm.createContext(sandbox);
+  vm.runInContext(modSrc, sandbox);
+  return sandbox;
+}
+
 const SESS = {
   id: '111', session: 'שחרית', date_iso: '2026-05-17',
   date_heb: { hy: 5786, mi: 8, day: 1 },
@@ -235,6 +262,53 @@ async function t3() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   3ב · מניעת כפילות סדרים (השלמת סבב 36)
+   ══════════════════════════════════════════════════════════════════════════ */
+const DUP_GUARD = [
+  [/function atFindLiveSession\(data, sessName, dateIso, exceptId\)/,
+    '6א · כלל הכפילות מוגדר פעם אחת (`atFindLiveSession`)'],
+  [/allData=window\._atData=await ysFreshSessions\('ys_attend_sessions',allData\);/,
+    '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן ולא מול הזיכרון בלבד'],
+  [/var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,/,
+    '6ג · ⛔ הבדיקה חוזרת ב-`atMarkDirty` — נקודת היצירה בפועל'],
+  [/var _slDup=atFindLiveSession\(window\._slData,window\._slPendingRec\.session,/,
+    '6ד · אותה הגנה במודול השינה — אותו מבנה רשומה, אותו חור'],
+];
+function t3b() {
+  console.log('\n3ב · מניעת כפילות סדרים');
+  DUP_GUARD.forEach(([re, msg]) => assert(re.test(SRC), msg));
+
+  // ⚠️ הרתמה מריצה את הפונקציות עצמן, לא regex עליהן.
+  const src = extractDup(SRC);
+  assert(src !== null, '6ה · מודול מניעת הכפילות מחולץ מ-index.html');
+  if (!src) return;
+  const sb = dupHarness(src);
+  const rows = [
+    { id: 'a', session: 'שחרית', date_iso: '2026-05-17' },
+    { id: 'b', session: 'שחרית', date_iso: '2026-05-17', deleted: true },
+    { id: 'c', session: 'מנחה',  date_iso: '2026-05-17' },
+  ];
+  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-17').id === 'a',
+    '6ו · סדר חי לאותו שם ואותו יום נמצא');
+  assert(sb.atFindLiveSession(rows, 'מעריב', '2026-05-17') === null,
+    '6ז · שם-סדר אחר אינו נחשב כפילות');
+  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-18') === null,
+    '6ח · יום אחר אינו נחשב כפילות');
+  assert(sb.atFindLiveSession([rows[1]], 'שחרית', '2026-05-17') === null,
+    '6ט · ⛔ סדר מחוק אינו חוסם פתיחה מחדש — הכפילות היא בין סדרים חיים');
+  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-17', 'a') === null,
+    '6י · `exceptId` מוציא את הרשומה הממתינה עצמה מהבדיקה');
+
+  // אימוץ — ⛔ אינו מוחק את סימוני המכשיר האחר.
+  sb.window._atMarks = { '1': { s: 'l', min: 12 }, '2': { s: '', min: 0 } };
+  sb.atAdoptSession({ id: 'a', marks: { '1': { s: 'p', min: 0 }, '2': { s: 'e', min: 0 }, '3': { s: 'ak', min: 0 } } });
+  assert(sb.window._atCurrentSessionId === 'a', '6כ · האימוץ מעביר את הסדר הפעיל לרשומה הקיימת');
+  assert(sb.window._atMarks['1'].s === 'l', '6ל · סימון שהמשתמש כבר סימן גובר');
+  assert(sb.window._atMarks['2'].s === 'e' && sb.window._atMarks['3'].s === 'ak',
+    '6מ · ⛔ סימוני המכשיר האחר נטענים ואינם נמחקים');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    4 · מוטציות — כל טענה שאין מוטציה שמפילה אותה אינה שער
    ══════════════════════════════════════════════════════════════════════════ */
 async function t4() {
@@ -263,15 +337,23 @@ async function t4() {
   assert(marksC.every((m) => m.deleted === false),
     '5ו · ⛔ במוטנט סימון של סדר מחוק נשאר חי — טענת 4ח הייתה נכשלת');
 
-  // ד. הפיכת on conflict do nothing ל-do update.
+  // ד. הסרת בדיקת הכפילות מנקודת היצירה בפועל.
+  const mutDup = SRC.replace(
+    /    var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,\n\s*window\._atPendingRec\.date_iso,window\._atPendingRec\.id\);\n/,
+    '    var _atDup=null;\n');
+  assert(mutDup !== SRC, '5ח · המוטציה אכן מסירה את בדיקת הכפילות');
+  assert(!DUP_GUARD[2][0].test(mutDup),
+    '5ט · ⛔ מוטציה שמסירה את בדיקת הכפילות נתפסת — טענת 6ג הייתה נכשלת');
+
+  // ה. הפיכת on conflict do nothing ל-do update.
   const mutD = M6.replace(/on conflict \(client_id\) do nothing/g,
     'on conflict (client_id) do update set updated_at = excluded.updated_at');
   assert(/do update/i.test(sqlCode(mutD)),
-    '5ז · ⛔ מוטציה שהופכת את ההעברה ל-`do update` נתפסת — טענת 2ב הייתה נכשלת');
+    '5י · ⛔ מוטציה שהופכת את ההעברה ל-`do update` נתפסת — טענת 2ב הייתה נכשלת');
 }
 
 console.log('סבב 36 — מעבר הנהלה לטבלאות מובנות, שלב א');
 t1(); t2();
-await t3(); await t4();
+await t3(); t3b(); await t4();
 console.log(failed ? '\n✗ ' + failed + ' טענות נכשלו' : '\n✓ סבב 36 — כל הטענות עברו');
 process.exit(failed ? 1 : 0);

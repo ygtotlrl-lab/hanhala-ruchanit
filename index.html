@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v44'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v45'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6958,6 +6958,79 @@ window.atEditSession = async function(recId) {
   window.atRenderStudents();
 };
 
+/* ══════════════════════════════════════════════════════════════════════════
+   מניעת כפילות סדרים — ההגנה בנקודת היצירה (השלמת סבב 36)
+   ══════════════════════════════════════════════════════════════════════════
+   נמדד מול הנתונים החיים: חמישה מקרים של שני סדרים לאותו שם-סדר ואותו
+   `date_iso`, ובארבעה מהם **שתי הרשומות חיות**. המנהל אישר שזו תקלה ולא
+   שימוש מכוון — אין מצב שאותו סדר מתקיים פעמיים ביום.
+
+   ⚠️ דיאלוג הכפילות ב-`atOpenSession` כבר היה כאן, ובכל זאת נוצרו
+      הכפילויות — ולכן מה שנסגר הוא שני החורים שאיפשרו אותן:
+      א. הבדיקה רצה מול `window._atData` **כפי שהוא בזיכרון**, ו-`atLoadData`
+         מחזירה את העותק הטעון בלי לגעת ברשת. מכשיר שטען את היום לפני
+         שמכשיר אחר פתח את הסדר פשוט לא ראה אותו.
+      ב. הרשומה נכנסת למערך רק בסימון הראשון (`atMarkDirty` — מניעת רישומי
+         רפאים), ובין הפתיחה לסימון הפולינג יכול להביא סדר מתחרה. שם
+         ה-`push` יצר את הרשומה השנייה בלי שאיש בדק שוב.
+
+   ⛔ כלל אחד לשני המקומות (סבב 36) — `atFindLiveSession` היא ההגדרה
+      היחידה של «כפילות»; שני מימושים היו נסחפים זה מזה, וזה בדיוק הלקח
+      של «בונה אחד לשני מסלולי יצירה» (yoman סבב 31).
+   ⛔ ואין כאן אינדקס ייחודי על `(session, date_iso)` (סבב 36) — הוא היה
+      נכשל על ארבעת הזוגות הקיימים, ומפתח הזהות נשאר `id`. המניעה היא
+      בקוד; מיזוג הזוגות הקיימים הוא פעולת מנהל נפרדת.
+   ⚠️ המודול הזה משרת גם את הנוכחות וגם את השינה — אותו מבנה רשומה בדיוק,
+      ואותו חור. הגנה שיושבת רק באחד מהם מגינה רק עליו.
+   ══════════════════════════════════════════════════════════════════════════ */
+function atFindLiveSession(data, sessName, dateIso, exceptId) {
+  if (!Array.isArray(data)) return null;
+  for (var i = 0; i < data.length; i++) {
+    var r = data[i];
+    if (!r || r.deleted) continue;
+    if (r.session !== sessName || r.date_iso !== dateIso) continue;
+    if (exceptId != null && r.id === exceptId) continue;
+    return r;
+  }
+  return null;
+}
+
+/* משיכת מצב הענן לפני בדיקת הכפילות. ⚠️ נכשלת רכה בכוונה (סבב 36): אין
+   רשת ⇒ הבדיקה רצה מול העותק המקומי, בדיוק כפי שרצה עד היום. המסלול
+   האופליין ממשיך לעבוד, והבדיקה רק מדויקת יותר כשיש רשת.
+   ⛔ המיזוג הוא `_ysSessionsMerge` ולא דריסה (סבב 36) — דריסה בענן הייתה
+   מוחקת סדר מקומי שטרם עלה, בדיוק לפני שהמשתמש ממשיך לסמן בו. */
+async function ysFreshSessions(kvKey, cur) {
+  var local = Array.isArray(cur) ? cur : [];
+  try {
+    var remote = await ysKvGet(kvKey);
+    if (Array.isArray(remote)) return _ysSessionsMerge(remote, local, kvKey);
+  } catch (e) {}
+  return local;
+}
+
+/* אימוץ סדר קיים במקום יצירת שני. ⚠️ הסימונים הקיימים נטענים תחילה, וכל
+   סימון שהמשתמש כבר סימן גובר עליהם — ⛔ ולא אימוץ בלי טעינה (סבב 36):
+   `atSaveLocalNow` בונה את `marks` מחדש מ-`_atMarks` לכל התלמידים
+   הפעילים, ולכן אימוץ «יבש» היה מוחק את מה שהמכשיר האחר כבר סימן. */
+function atAdoptSession(rec) {
+  var ex = ysMarks(rec);
+  Object.keys(ex).forEach(function (k) {
+    var cur = window._atMarks[k];
+    if (!cur || !cur.s) window._atMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0 };
+  });
+  window._atCurrentSessionId = rec.id;
+}
+function slAdoptSession(rec) {
+  var ex = ysMarks(rec);
+  Object.keys(ex).forEach(function (k) {
+    var cur = window._slMarks[k];
+    if (!cur || !cur.s) window._slMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0, note: (ex[k] && ex[k].note) || '' };
+  });
+  window._slCurrentSessionId = rec.id;
+}
+/* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
+
 // פתיחת סדר חדש
 window.atOpenSession = async function(sessId, sessName) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
@@ -6965,9 +7038,10 @@ window.atOpenSession = async function(sessId, sessName) {
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
-  // בדוק כפילות — אותו סדר ואותו יום
+  // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   var allData=await atLoadData();
-  var existing=allData.find(function(r){return !r.deleted&&r.session===sessName&&r.date_iso===dateIso;});
+  allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
+  var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     var d=document.createElement('div');
     d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
@@ -7065,7 +7139,16 @@ function atMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
   if(window._atPendingRec && window._atCurrentSessionId===window._atPendingRec.id){
     if(!window._atData) window._atData=[];
-    if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) window._atData.push(window._atPendingRec);
+    // ⛔ הבדיקה חוזרת כאן ולא רק בפתיחה (סבב 36) — זו נקודת היצירה בפועל,
+    //    והפולינג יכול היה להביא סדר מתחרה מאז שהדיאלוג בדק.
+    var _atDup=atFindLiveSession(window._atData,window._atPendingRec.session,
+                                 window._atPendingRec.date_iso,window._atPendingRec.id);
+    if(_atDup){
+      atAdoptSession(_atDup);
+      toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+    } else if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) {
+      window._atData.push(window._atPendingRec);
+    }
     window._atPendingRec=null;
   }
   atSaveLocalNow();
@@ -8428,7 +8511,8 @@ window.slOpenSession = async function(sessId, sessName) {
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
   var allData=await slLoadData();
-  var existing=allData.find(function(r){return !r.deleted&&r.session===sessName&&r.date_iso===dateIso;});
+  allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
+  var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     var d=document.createElement('div');
     d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
@@ -8518,7 +8602,15 @@ function slMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
   if(window._slPendingRec && window._slCurrentSessionId===window._slPendingRec.id){
     if(!window._slData) window._slData=[];
-    if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) window._slData.push(window._slPendingRec);
+    // ⛔ אותה הגנה כמו בנוכחות (סבב 36) — נקודת היצירה בפועל, לא הפתיחה.
+    var _slDup=atFindLiveSession(window._slData,window._slPendingRec.session,
+                                 window._slPendingRec.date_iso,window._slPendingRec.id);
+    if(_slDup){
+      slAdoptSession(_slDup);
+      toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+    } else if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) {
+      window._slData.push(window._slPendingRec);
+    }
     window._slPendingRec=null;
   }
   slSaveLocalNow();
