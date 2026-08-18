@@ -30,7 +30,9 @@ const APP = {
   keys: ['ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
          'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
          'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
-         'ys_cls_years', 'ys_settings_meta'],
+         'ys_cls_years', 'ys_settings_meta',
+         // סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
+         'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows'],
   prefixes: [''],
   legacyKeys: [],
   sisterKeys: [
@@ -200,7 +202,10 @@ function t2(sql) {
   const uIdx = sql.indexOf("cron.unschedule('bk_retention_daily')");
   const sIdx = sql.indexOf('cron.schedule(');
   assert(uIdx > 0 && sIdx > uIdx, '2ו · `unschedule` לפני `schedule` — אין שתי משימות לאותה גריעה');
-  assert(/'17 3 \* \* \*'/.test(sql), '2ז · תזמון יומי ב-03:17 UTC — רחוק מגל הגיבוי של חצות UTC');
+  /* ⚠️ 03:00 ולא 03:17 (סבב 36) — הקבצים תיארו 03:17 בעוד שהמשימה שנרשמה
+     בפועל בשני הפרויקטים ב-2026-08-18 היא `'0 3 * * *'`. הקובץ יושר למציאות,
+     והשער נועל את הערך שבמסד. */
+  assert(/'0 3 \* \* \*'/.test(sql), '2ז · תזמון יומי ב-03:00 UTC — רחוק מגל הגיבוי של חצות UTC');
   assert(/bk_retention_sweep\(30\)/.test(sql), '2ח · המשימה קוראת לגריעה עם חלון 30 יום');
   assert(/insert into public\.sync_log[\s\S]{0,200}'retention'/.test(sql),
     '2ט · כל ריצה שמחקה כותבת שורת `retention` ל-sync_log');
