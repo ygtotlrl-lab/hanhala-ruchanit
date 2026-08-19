@@ -153,6 +153,9 @@ function harness(modSrc, opts) {
     withTimeout: (p) => p,
     pendHas: () => !!o.pending,
     PK_AT_SESS: 'at-sess:',
+    // ⚠️ סבב 39 — `YS_ROWS_KINDS` נשענת על **שתי** הקידומות; בדף האמיתי
+    //    שתיהן מוגדרות יחד, ולכן הרתמה חייבת לספק את שתיהן.
+    PK_SL_SESS: 'sl-sess:',
     _ysRecTs: (r) => (r && r.updatedAt) || 0,
     SB: {
       from: (t) => ({

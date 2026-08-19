@@ -83,7 +83,9 @@ as $$
     -- ⚠️ נוספו **באותו סבב** שהוסיף אותם ל-`BK_CFG.sources()`: מפתח גיבוי
     --    שאינו כאן אינו מתפנה לעולם, וזה בדיוק ההיסט שנמדד בהשלמת סבב 35ג.
     --    `test_round35c_cron.mjs` גוזר את הרשימה מהקוד ואוכף שקילות דו-כיוונית.
-    'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows'
+    'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows',
+    -- hanhala-ruchanit — שכבת השורות של השינה (סבב 39), באותו כלל בדיוק.
+    'ys_sleep_sessions_rows', 'ys_sleep_marks_rows'
   ]::text[];
 $$;
 
