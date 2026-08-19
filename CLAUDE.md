@@ -1,6 +1,6 @@
 # הנהלה רוחנית — CLAUDE.md
 
-עודכן לאחרונה: סבב 40 · 2026-08-19
+עודכן לאחרונה: סבב 41 · 2026-08-19
 
 ## סביבת עבודה
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit`
@@ -144,7 +144,7 @@ git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא
 (זהה למעטפת של schar-limud, פרט לזהות): טוענת את
 `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` **מהרשת** — לא מנכסים מוטבעים.
 פרטים מלאים ב-`android/README.md`. עיקרי הדברים:
-- **package `com.hanhala.ruchanit`, versionCode 1**, minSdk 21 / targetSdk 34,
+- **package `com.hanhala.ruchanit`, versionCode 2**, minSdk 21 / targetSdk 34,
   `usesCleartextTraffic=false`.
 - **לעולם לא TWA ולא PWABuilder** — סינון התוכן במכשירים חוסם את כרום (נמדד ב-gius).
 - ⛔ **אין נכסים מוטבעים** (עותק `file://` = origin אחסון נפרד = אובדן נתונים שקט)
@@ -152,8 +152,8 @@ git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא
   הכפול-נעילה של יומן בלבד, לעולם לא `addJavascriptInterface`).
 - **`http`/`https` נשארים בתוך המעטפת**; `tel:`/`mailto:` וכו' נמסרים למערכת.
 - **עדכוני קוד web לא מצריכים APK חדש** — מגיעים דרך ה-service worker.
-- **צנרת בנייה:** `.github/workflows/build-apk.yml` — Actions → **Build Signed APK**
-  → Run workflow. ה-artifact: **`hanhala-ruchanit-signed-apk`**.
+- **צנרת בנייה:** `.github/workflows/build-apk.yml` — Actions → **Build APK**
+  → Run workflow. ה-artifact: **`hanhala-ruchanit-apk`**.
 - ⚠️ **ה-APK הישן (`yeshiva-manager.apk` שבשורש הריפו) נבנה מחוץ לריפו במפתח זמני
   שישב ב-`/tmp` ואבד.** המעטפת החדשה חתומה במפתח הקבוע שלמטה — חתימה שונה, ולכן
   מעבר מה-APK הישן הוא **הסרה + התקנה** (חד-פעמי). לפני המעבר לוודא בדפדפן/באפליקציה
@@ -224,7 +224,7 @@ git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא
 3. **כל APK חדש נחתם אך ורק במפתח הזה**, בכל כלי בנייה.
 4. אחרי חתימה — לאמת שה-SHA256 תואם לטבלה.
 
-חתימה: `./signing/sign-apk.sh app-unsigned.apk hanhala.apk` (zipalign + apksigner +
+חתימה: `./signing/sign-apk.sh app-unsigned.apk hanhala-ruchanit.apk` (zipalign + apksigner +
 verify). אימות: `keytool -list -v -keystore signing/hanhala.keystore -storepass hanhala123`.
 
 ## אייקונים (סבב תאומים, אוגוסט 2026)
