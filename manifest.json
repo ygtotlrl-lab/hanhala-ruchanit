@@ -4,6 +4,7 @@
   "description": "מערכת ניהול הנהלה רוחנית לישיבה",
   "start_url": "./index.html",
   "scope": "./",
+  "orientation": "portrait",
   "display": "fullscreen",
   "background_color": "#1a3c6e",
   "theme_color": "#1a3c6e",

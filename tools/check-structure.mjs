@@ -40,7 +40,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /* הסט הקנוני המשותף — זהה בארבעת הריפו. */
 const DIRS = ['.github', 'android', 'icons', 'migrations', 'signing', 'tools'];
 const ROOT_FILES = ['CLAUDE.md', 'CONTEXT.md', 'README.md',
-                    'index.html', 'manifest.json', 'sw.js'];
+                    'index.html', 'manifest.json', 'sw.js',
+                    // ⭐ סבב 39 — קיים בארבעתן, ולכן עבר מרשימות-ההיתר
+                    //    הפר-אפליקציתיות אל הסט הקנוני. קובץ ריק שמנטרל
+                    //    Jekyll ב-GitHub Pages.
+                    '.nojekyll'];
 const CHECKERS = ['check-js.mjs', 'check-structure.mjs', 'check-status-area.mjs',
                   'check-docs.mjs', 'check-comments.mjs', 'check-capabilities.mjs',
                   // ⭐ סבב 39 — אכיפת פרק «פערים פתוחים» (כלל ברזל 15).
