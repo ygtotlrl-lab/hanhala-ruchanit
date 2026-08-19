@@ -15,8 +15,11 @@ android {
         // The old yeshiva-manager.apk predates this android/ project and was
         // built elsewhere with a throwaway key — it is not an ancestor of this
         // versionCode line.
-        versionCode 1
-        versionName "1.0"
+        // 2 = סבב 41 — יישור שכבת הבנייה והחילוץ של המעטפת לתבנית
+        // משותפת. ⛔ כל שינוי תחת android/ מחייב קידום כאן,
+        // ו-tools/test_round40_gradle.mjs אוכף זאת מול origin/main.
+        versionCode 2
+        versionName "2.0"
     }
 
     buildTypes {
