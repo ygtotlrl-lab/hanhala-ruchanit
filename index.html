@@ -1131,8 +1131,9 @@ var AUTH = {
 // ---- `simpleHash`: הוסרה (סבב 21) ----
 // hash לא-קריפטוגרפי (Java string hash) ששימש לפני המעבר ל-plaintext.
 // אחרי הסרת שלושת מסלולי ה-`admin`/`123456` בסבב 21 לא נותר לה אף קורא:
-// `ys_users.password_hash` מחזיקה **טקסט גלוי**, וכל מסלולי ההשוואה
-// (`doLogin`, `confirmSwitch`, `changeMyPassword`) משווים מחרוזות ישירות.
+// ⭐ ומסבב 40 שלושת מסלולי ההשוואה (`doLogin`, `confirmSwitch`,
+// `changeMyPassword`) משווים מול **טביעת PBKDF2** ולא מול טקסט גלוי,
+// כלומר אין יותר אף מסלול שקורא את הסיסמה כדי לאמת אותה.
 // ⛔ **אין להחזיר אותה.** hash חלש שמעורבב עם ערכים גלויים באותה עמודה הוא
 // גרוע משניהם: הוא אינו מגן, והוא שובר את ההשוואה לכל מי שכבר רשום.
 // שינוי אמיתי של מודל הסיסמאות הוא סבב הגירה — ר' «מודל הסיסמאות» למטה.
@@ -1230,11 +1231,17 @@ function ysApplyPerms(p) {
    סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
    גם מול סיסמה בת שש ספרות.
 
-   ⚠️ **`password_hash` בענן נשאר טקסט גלוי — במכוון.** המנהל חייב לראות
-   ולנהל סיסמאות מתוך «ניהול משתמשים», וזו החלטה מתועדת (כלל ברזל 9;
-   ר' «מודל הסיסמאות» ב-CLAUDE.md). הטביעה **אינה מחליפה** אותו — היא
-   נוספת לצידו, ותפקידה היחיד הוא האימות המקומי. ⛔ **אין לגזור מכאן
-   מסקנה שהמסד עבר להצפנה.**
+   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל
+   (סבב 40).** עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**,
+   וזו הייתה בחירה תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך
+   «ניהול משתמשים». מעכשיו האימות — מקוון ואופליין כאחד — הוא מול
+   `pass_fp`, והעמודה נשארת **כתובה-ולא-נקראת** מאחורי
+   `YS_PLAINTEXT_LEGACY_WRITE` בלבד, עד שהמנהל יריץ את `migrations/011`.
+   ⛔ **אין להחזיר השוואה מול העמודה בשום מסלול (סבב 40)** — מפתח ה-anon
+   יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול היה לקרוא את
+   הסיסמאות ולהיכנס בזהות של כל אחד.
+   ⚠️ **והמחיר מדוד:** מסך «ניהול משתמשים» יפסיק להציג את הסיסמה הנוכחית
+   ברגע שהדגל ייסגר. **קביעת** סיסמה חדשה ממשיכה לעבוד.
 
    ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** זו הנקודה שכל
    הסבב עומד עליה: `ysUserSlim` היא נקודת המעבר היחידה אל המטמון, והיא
@@ -1245,6 +1252,13 @@ var YS_PASS_ITER = 100000;
 // המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
 // מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
 var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
+/* ⛔ נתיב-החזרה של הסיסמה הגלויה (סבב 40) — `ys_users.password_hash` היא
+   `NOT NULL` במסד, ולכן קוד שיפסיק לכתוב אליה **לפני** שהמיגרציה רצה יפיל
+   כל יצירת משתמש. הדגל הזה הוא אותו דפוס בדיוק כמו `YS_KV_LEGACY_WRITE`:
+   כל עוד הוא `true` העמודה עדיין נכתבת, וכיבויו הוא הצעד שאחרי
+   `migrations/011`. ⛔ **האימות כבר אינו נשען עליה בשום מסלול** — היא
+   נכתבת ואינה נקראת, וזה מה שהופך את המחיקה לבטוחה. */
+var YS_PLAINTEXT_LEGACY_WRITE = true;
 // 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
 // (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
 function ysRandSalt() {
@@ -1356,38 +1370,13 @@ async function ysRefreshUsersCache() {
     if (!res.error && Array.isArray(res.data)) ysUsersCacheSaveAll(res.data);
   } catch(e) {}
 }
-// ---- השלמת טביעות למשתמשים קיימים (מסלול חד-פעמי) ----
-// רץ **רק** כשיש רשת ומי שמחובר הוא `admin` שנכנס אונליין; אחרת מדלג
-// בשקט. איש צוות זוטר לא יריץ עדכון על שורות של אחרים, ומכשיר אופליין
-// לא ינסה בכלל. אין כאן יצירת סוד — רק גזירת טביעה מהסיסמה שכבר בענן.
-// ⚠️ טבלה בלי העמודות (המיגרציה טרם הורצה) מחזירה שגיאה שנבלעת — זהו
-// אחד ממסלולי הדילוג השקטים המכוונים.
-var _ysFpBackfillDone = false;
-async function ysBackfillPassFp() {
-  if (_ysFpBackfillDone) return;
-  try {
-    if (!navigator.onLine) return;
-    if (!AUTH.user || AUTH.user.role !== 'admin' || AUTH.offlineLogin) return;
-    _ysFpBackfillDone = true;
-    var res = await withTimeout(SB.from('ys_users').select('id,password_hash').is('pass_fp', null));
-    if (!res || res.error || !Array.isArray(res.data) || !res.data.length) return;
-    var done = 0;
-    for (var i = 0; i < res.data.length; i++) {
-      var r = res.data[i];
-      if (!r || !r.password_hash) continue;
-      var made = await ysMakePassFp(r.password_hash);
-      if (!made) return;   // אין crypto — אין טעם להמשיך בלולאה
-      var up = await withTimeout(SB.from('ys_users')
-        .update({ pass_salt: made.salt, pass_fp: made.fp }).eq('id', r.id));
-      if (up && up.error) { console.warn('[pass-fp] עדכון נכשל למשתמש', r.id, up.error.message); continue; }
-      done++;
-    }
-    if (done) {
-      console.log('[pass-fp] הושלמו טביעות ל-' + done + ' משתמשים');
-      ysRefreshUsersCache();
-    }
-  } catch(e) { console.warn('[pass-fp] השלמה נכשלה:', e && e.message); }
-}
+// ---- ⛔ השלמת הטביעות הוסרה (סבב 40) ----
+// `ysBackfillPassFp` גזרה טביעה למשתמש שאין לו אחת, מתוך הסיסמה הגלויה
+// שבענן. ⛔ היא הוסרה מפני ש**אין לה עוד מה לעשות**, וזה נמדד ולא הונח:
+// כל ששת המשתמשים ב-`ys_users` מחזיקים `pass_salt` ו-`pass_fp` באורך 64
+// (נמדד ב-`SELECT` בלבד, 2026-08-19). ⛔ ומעבר לכך היא הייתה **הקורא
+// האחרון של הסיסמה הגלויה לצורך גזירה** — כלומר המסלול היחיד שהיה נשבר
+// ברגע שהעמודה תימחק. משתמש חדש מקבל טביעה ב-`saveUser`, ליד הסיסמה.
 /* ══════════════════════════════════════════════════════════════════════════
    הודעות ועוזרי רשת — נוסח משותף לארבע האפליקציות
    ══════════════════════════════════════════════════════════════════════════ */
@@ -1408,6 +1397,13 @@ var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 var MSG_OFF_UNKNOWN = '📴 אין חיבור — המשתמש הזה אינו בעותק המקומי שבמכשיר. נדרש חיבור לאינטרנט פעם אחת';
 var MSG_OFF_NO_FP   = '📴 אין חיבור — המשתמש הזה טרם הוכן לכניסה ללא רשת. נדרש חיבור לאינטרנט פעם אחת';
 var MSG_OFF_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לכניסה ללא רשת';
+// ⭐ שתי הודעות חדשות (סבב 40) — מאז שהאימות המקוון עובר דרך הטביעה, שני
+// מצבי הכישלון האלה קיימים גם **עם** רשת. ⛔ אין לאחד אותם עם
+// `MSG_BAD_LOGIN` (סבב 40) — «אין למשתמש סיסמה מוגדרת» אינו «סיסמה
+// שגויה», והודעה מאוחדת שולחת אותו לנסות סיסמאות שוב ושוב במקום לומר לו
+// את הדבר היחיד שיפתור: שמנהל יקבע לו סיסמה.
+var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת במערכת — יש לקבוע לו סיסמה חדשה במסך ניהול המשתמשים';
+var MSG_NO_CRYPTO    = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לאימות הסיסמה';
 // סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
 
@@ -1458,7 +1454,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v52'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v54'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1504,10 +1500,14 @@ async function _doLoginInner() {
   dbg('⏳ [1/4] שולח בקשה לשרת...');
   var res = null, netFail = false;
   try {
+    // ⭐ סבב 40 — השורה נשלפת לפי **שם המשתמש בלבד**, וההשוואה היא מול
+    // הטביעה (`ysVerifyOffline`), בדיוק כמו במסלול האופליין. עד הסבב הזה
+    // כאן ישב `.eq('password_hash', pass)` — כלומר הסיסמה הגלויה שבענן
+    // הייתה **המפתח שפותח את הכניסה**, וכל מי שהחזיק את מפתח ה-anon
+    // (שיושב ב-`index.html` הציבורי) יכול היה לקרוא אותה.
     res = await withTimeout(SB.from('ys_users')
       .select('*')
       .eq('username', username)
-      .eq('password_hash', pass)
       .eq('active', true)
       .maybeSingle());
   } catch(e) {
@@ -1520,8 +1520,22 @@ async function _doLoginInner() {
   var serverErr = (!netFail && res && res.error) ? res.error : null;
   // תשובה סמכותית של השרת "אין משתמש כזה" — אסור ליפול לעותק מקומי אחריה,
   // אחרת סיסמה שהוחלפה בענן או משתמש שהושבת ימשיכו להיכנס מהמטמון הישן.
-  var authoritativeNo = (!netFail && res && !res.error && !res.data);
-  var onlineUser = (!netFail && res && !res.error) ? res.data : null;
+  // ⭐ סבב 40 — השרת מחזיר את השורה לפי שם המשתמש, וההכרעה נעשית **כאן**
+  // מול הטביעה. `authoritativeNo` הוא מעכשיו «אין שורה **או** שהטביעה לא
+  // התאימה» — בשני המקרים השרת ענה תשובה סמכותית, ו⛔ אסור ליפול אחריה
+  // לעותק המקומי (אחרת סיסמה שהוחלפה בענן הייתה ממשיכה לפתוח מהמטמון).
+  var onlineRow = (!netFail && res && !res.error) ? res.data : null;
+  var onlineVerdict = onlineRow ? await ysVerifyOffline(onlineRow, pass) : null;
+  if (onlineVerdict === 'no-fp') {
+    ysLoginLog('login_fail', 'no_fp_online', ysLoginDetails(username));
+    showErr(MSG_NO_FP_ONLINE); return;
+  }
+  if (onlineVerdict === 'no-crypto') {
+    ysLoginLog('login_fail', 'no_crypto_online', ysLoginDetails(username));
+    showErr(MSG_NO_CRYPTO); return;
+  }
+  var authoritativeNo = (!netFail && res && !res.error && (!res.data || onlineVerdict === 'bad'));
+  var onlineUser = (onlineVerdict === 'ok') ? onlineRow : null;
 
   if (onlineUser) {
     AUTH.user = onlineUser;
@@ -1533,7 +1547,6 @@ async function _doLoginInner() {
     // ...ומיד אחריה הרענון המלא (סבב 22): **כל** המשתמשים הפעילים, בלי
     // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
     ysRefreshUsersCache();
-    ysBackfillPassFp();    // מדלג בשקט אם המחובר אינו admin
     ysLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
     ysLoginLog('login_fail', 'wrong_credentials_online', ysLoginDetails(username));
@@ -2110,7 +2123,8 @@ async function confirmSwitch() {
   if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
   var res=null, netFail=false;
   try {
-    res=await withTimeout(SB.from('ys_users').select('*').eq('id',d._switchId).eq('password_hash',pass).eq('active',true).single());
+    // ⭐ סבב 40 — לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
+    res=await withTimeout(SB.from('ys_users').select('*').eq('id',d._switchId).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -2137,6 +2151,11 @@ async function confirmSwitch() {
     AUTH.offlineLogin=true;
   } else {
     if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    // ⭐ סבב 40 — ההכרעה מול הטביעה, בדיוק כמו בענף האופליין שמעל.
+    var vOn=await ysVerifyOffline(res.data,pass);
+    if(vOn==='no-fp'){errEl.textContent=MSG_NO_FP_ONLINE;return;}
+    if(vOn==='no-crypto'){errEl.textContent=MSG_NO_CRYPTO;return;}
+    if(vOn!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=res.data;
     AUTH.offlineLogin=false;
     // ⚠️ **לפני** ‎AUTH.user=u‎ שלמטה — ולכן שומרים את `u` במפורש ולא קוראים
@@ -2415,6 +2434,18 @@ async function renderUsersList() {
 }
 
 // ---- פתח מודל הוסף/ערוך משתמש ----
+/* ══════════════════════════════════════════════════════════════════════════
+   ניהול משתמשים, הרשאות ושינוי סיסמה
+   ══════════════════════════════════════════════════════════════════════════
+   ⭐ שלושת מסלולי הכתיבה של הסיסמה יושבים כאן: `saveUser` (יצירה ועריכה
+   ע"י מנהל), `toggleUserActive` (השבתה) ו-`changeMyPassword` (שינוי
+   עצמי). ⛔ בכל אחד מהם הטביעה נגזרת **ליד הסיסמה** ובאותה פעולה (סבב 22)
+   — טביעה שנגזרת מאוחר יותר, במסלול נפרד, היא חלון שבו הכניסה האופליין
+   עובדת עם הסיסמה **הקודמת**.
+   ⛔ ומסבב 40 אף אחד מהם אינו **קורא** את `password_hash` כדי לאמת —
+   הכתיבה אליה נשארת מאחורי `YS_PLAINTEXT_LEGACY_WRITE` בלבד, כנתיב חזרה
+   עד שהמנהל יריץ את `migrations/011`.
+   ══════════════════════════════════════════════════════════════════════════ */
 function openAddUser() {
   document.getElementById('um-id').value = '';
   document.getElementById('um-name').value = '';
@@ -2440,10 +2471,19 @@ async function openEditUser(u) {
   document.getElementById('um-title').textContent = 'ערוך משתמש';
   document.getElementById('um-err').textContent = '';
   // טען סיסמה נוכחית מה-DB
+  // ⚠️ הצגת הסיסמה הנוכחית תלויה בטקסט הגלוי, ולכן היא **הדבר היחיד
+  // שנעלם** כשנתיב-החזרה נסגר (סבב 40). זו יכולת ניהול שהמנהל בחר בה
+  // במפורש, וביטול ההחלטה הזו ב-2026-08-19 הוא שלו — ר' פרק «מודל
+  // הסיסמאות». ⛔ קביעת סיסמה חדשה ממשיכה לעבוד בשני המצבים.
   var pwRes = null;
-  try { pwRes = await withTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
-  if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
-  else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
+  if (YS_PLAINTEXT_LEGACY_WRITE) {
+    try { pwRes = await withTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
+    if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
+    else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
+  } else {
+    document.getElementById('um-curr-pass').value = '';
+    document.getElementById('um-curr-pass').placeholder = 'הסיסמה אינה נשמרת עוד בטקסט גלוי';
+  }
   var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
 function closeUserModal() {
@@ -2464,7 +2504,9 @@ async function saveUser() {
   var noFp = false;
   if (pass) {
     if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
-    obj.password_hash = pass;
+    // ⛔ נכתב רק כל עוד נתיב-החזרה פתוח (סבב 40) — העמודה `NOT NULL`, ולכן
+    // הפסקת הכתיבה לפני `migrations/011` הייתה מפילה כל יצירת משתמש.
+    if (YS_PLAINTEXT_LEGACY_WRITE) obj.password_hash = pass;
     // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
     var made = await ysMakePassFp(pass);
     if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
@@ -2481,7 +2523,7 @@ async function saveUser() {
       : SB.from('ys_users').insert(obj));
     // נפילה-חזרה לחלון שבין דחיפת הקוד להרצת המיגרציה: בלי זה **כל**
     // שמירת משתמש הייתה נכשלת עד שהעמודות ייווצרו. המשתמש נשמר, והכניסה
-    // האופליין שלו תושלם ע"י `ysBackfillPassFp` אחרי המיגרציה.
+    // האופליין שלו תיפתח כשתיווצר לו טביעה בשינוי הסיסמה הבא.
     if (res && res.error && ysIsMissingFpCol(res.error)) {
       delete obj.pass_salt; delete obj.pass_fp; noFp = true;
       res = await withTimeout(id
@@ -2577,21 +2619,29 @@ async function changeMyPassword() {
   if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות'); return; }
   // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
+  // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('ys_users').select('id').eq('id', AUTH.user.id).eq('password_hash', oldPass).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', AUTH.user.id).maybeSingle()); }
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  var vOld = await ysVerifyOffline(chk.data, oldPass);
+  if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP); return; }
+  if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO); return; }
+  if (vOld !== 'ok')        { toast('❌ הסיסמה הנוכחית שגויה'); return; }
   // סבב 22: הטביעה נגזרת בכל שינוי סיסמה. כישלון בגזירה **מאפס** את
   // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
   var made = await ysMakePassFp(newPass);
-  var updObj = { password_hash: newPass, pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
+  var updObj = { pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
+  if (YS_PLAINTEXT_LEGACY_WRITE) updObj.password_hash = newPass;   // ⛔ נתיב-חזרה בלבד (סבב 40) — אינו נקרא באימות
   var upd;
   try {
     upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id));
     if (upd && upd.error && ysIsMissingFpCol(upd.error)) {   // המיגרציה טרם הורצה
       made = null;
-      upd = await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id));
+      upd = YS_PLAINTEXT_LEGACY_WRITE
+        ? await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id))
+        : upd;
     }
   }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
@@ -5030,24 +5080,38 @@ function ysKvGet(key) {
   });
 }
 
-// ============================================================
-// ===== SYNC DIAGNOSTICS + DAILY BACKUP (Phase 1 — additive only) =====
-// ============================================================
-// Stable per-device id (8 chars), created once and kept in localStorage.
+/* ── DEV_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+var DEV_CFG = { key: 'ys_device_id' };
+
+/* ═══ מזהה מכשיר — מודול משותף (סבב 40) ═══════════════════════════════════
+   ⭐ **מזהה בן שמונה תווים שנוצר במכשיר**, ומזהה אותו ב-`sync_log`
+   וב-`kv_backup`. עד סבב 40 הוא חי בארבע האפליקציות **מחוץ לכל בלוק
+   משותף**: `_randDeviceId` היה זהה בית-לבית בארבעתן (אומת ב-md5),
+   `getDeviceId` נבדלה במפתח האחסון בלבד — ⛔ ולא הייתה לו שום חתימה.
+   זו בדיוק הצורה שכלל ברזל 14 אוסר: קוד זהה שאיש אינו שומר עליו הוא קוד
+   שייסחף, ו-gius הוכיחה זאת בסבב 38 — שם `BK_CFG.device` קראה
+   ל-`getDeviceId` שלא הייתה מוגדרת כלל, ה-`try/catch` בלע את השגיאה,
+   וכל שורה ביומן ירדה **בלי מזהה מכשיר**, בשקט.
+   ⛔ **הכתיבה היא `lsSetRaw` ולא `lsSet` (סבב 40)** — זהו החריג היחיד
+   והמתועד של כלל ברזל 1. מזהה מכשיר שלא נשמר הוא חסר-נזק: הוא נוצר מחדש
+   בזיכרון ומשמש לאבחון בלבד, והוא נכתב ב**כל עליית דף** — באחסון חסום
+   `lsSet` היה מרים באנר אדום קבוע כבר בעלייה ומאמן את המשתמש להתעלם
+   ממנו, בדיוק כשההודעה הזו הכי חשובה.
+   ⛔ **ומזהה שכבר יושב במכשיר אינו משתנה לעולם (סבב 40)** — הוא המפתח
+   שלפיו קוראים את היומן אחורה, והחלפתו מנתקת רישומים קיימים מהמקור שלהם.
+   ⛔ **ומזהה מכשיר אינו מזהה רשומה (סבב 40)** — זהות של **מכשיר** ולא של
+   נתון: הוא אינו מפתח מיזוג, אינו חייב להיות uuid, ו⛔ אינו עובר דרך
+   `newClientId()`. זו הסיבה שהוא שורה נפרדת במטריצה (26) ולא הרחבה של 25.
+   ⚠️ **והעטיפה אינה קישוט:** `localStorage` זורק באחסון חסום (WebView
+   מוקשח / גלישה פרטית), ובלעדיה כל קורא של `getDeviceId` מפיל את
+   הפונקציה שקראה לו.
+   ═══════════════════════════════════════════════════════════════════════ */
 var _deviceIdMem = null;
 function getDeviceId() {
-  // localStorage זורק כשהאחסון חסום (WebView מוקשח / גלישה פרטית). בלי העטיפה
-  // הזו כל קורא של getDeviceId מפיל את הפונקציה שקראה לו — כולל doLogin.
-  // ⚠️ החריג היחיד ל-`lsSet` באפליקציה, ובכוונה: הכתיבה כאן עוברת דרך
-  // `lsSetRaw` — אותו עוזר מוקשח, בלי הבאנר האדום. מזהה מכשיר שלא נשמר הוא
-  // חסר-נזק (הוא נוצר מחדש בזיכרון ומשמש רק לאבחון סנכרון), והוא נכתב בכל
-  // עליית דף — באחסון חסום הוא היה מרים באנר קבוע כבר על מסך הכניסה ומאמן
-  // את המשתמש להתעלם ממנו, בדיוק כשההודעה הזו הכי חשובה. **אין להשתמש
-  // ב-`lsSetRaw` לשום נתון של המשתמש.**
-  var id = lsGet('ys_device_id', null);
+  var id = lsGet(DEV_CFG.key, null);
   if (!id) {
     id = _deviceIdMem || _randDeviceId();
-    lsSetRaw('ys_device_id', id);
+    lsSetRaw(DEV_CFG.key, id);
   }
   _deviceIdMem = id;
   return id;
@@ -5057,6 +5121,7 @@ function _randDeviceId() {
   for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
   return id;
 }
+/* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
 
 // ⚠️ `ysSyncLog` היא **מעטפת דקה** מעל מודול הגיבוי והיומן המשותף
 // (סבב 30) — הליבה עברה לשם ומשותפת לארבע האפליקציות.
