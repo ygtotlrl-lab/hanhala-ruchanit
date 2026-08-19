@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v48'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v50'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2708,7 +2708,6 @@ async function loadDash(){
 //      `ap` אישור, `ak` בבית, `a` מנוחה. **חובה לקרוא דרך `ysMarks(rec)`**
 //      (רשומה בלי `marks` זרקה ורוקנה מסך שלם) ו**לסנן `!r.deleted`**
 //      (סדר מחוק שנספר ניפח את לוח המחוונים ואת התראת ה-20+).
-//    • `ys_attend` — מפת נוכחות יומית (`getAttendance()`).
 //    • `ys_students` — מצבת התלמידים (`getStudents()`, כבר מסננת מחוקים).
 //      סטטוסים/היעדרויות פעילות: `getActiveAbsences(s, refDate)` — תמיד להעביר
 //      את זמן הסדר כ-`refDate`, אחרת החישוב נעשה מול "עכשיו".
@@ -3634,7 +3633,7 @@ window.statusAreaMount = statusAreaMount;
    ש-`LS_CFG.pending()` בודק, ושינוי שמו היה מנתק בשקט את ההגנה שמדלגת על
    שלב ב בפינוי כשיש משהו שטרם עלה.
    ⚠️ רשימת המקורות גדלה מארבעה מפתחות לכל מפתחות ה-`kv` (סבב 30): עד היום
-   גובו `ys_students`/`ys_approvals`/`ys_attend`/`ys_attend_sessions` בלבד,
+   גובו ארבעה מפתחות בלבד,
    וההגדרות, הטיפולים, מודול השינה ומטריצת ההרשאות לא גובו כלל. הכיסוי
    המלא נעשה אפשרי בזכות הגיבוי הדיפרנציאלי — רובם סטטיים ואינם נכתבים שוב.
    ⛔ `ys_users` אינה כאן (סבב 30) — היא מחזיקה סיסמאות בטקסט גלוי, ו-
@@ -3669,7 +3668,7 @@ var BK_CFG = {
       { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
       { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
     ];
-    return out.concat(['ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
+    return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
             'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
             'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
             'ys_cls_years', 'ys_settings_meta'].map(function (k) {
@@ -5085,41 +5084,136 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
 //    `keepUnversionedLocal` — רשומה מקומית-בלבד ממשיכה להיות מוכרעת בדיוק
 //    כפי שהייתה.
-function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
-  // onDrop (אופציונלי): callback שמקבל כל רשומה מקומית-בלבד ללא updatedAt שנפלה
-  // בגלל keepUnversionedLocal=false — לתיעוד ושחזור ידני. לא משנה את המיזוג עצמו.
-  var pend = function(k) { return !!(isPending && isPending(k)); };
-  if (remote == null && local == null) return local;
-  if (Array.isArray(remote) || Array.isArray(local)) {
-    var L = Array.isArray(local) ? local : [];
-    var R = Array.isArray(remote) ? remote : [];
+/* ═══ מיזוג רשומות — מודול משותף (סבב 38) ════════════════════════════════
+   ליבת המיזוג של הארגון, זהה בית-לבית בארבע האפליקציות. עד סבב 38 חיו כאן
+   **ארבעה מנועים נפרדים** — `mergeRecords` · `ysMergeRecords` · `slMerge` ·
+   `mergeRows` — שכולם מימשו את אותם שלושה כללים של כלל ברזל 6:
+     • רשומה מקומית מסומנת ⏳ מנצחת, **ללא תלות בחותמת**;
+     • בשוויון חותמות — **הענן מנצח** (שובר-שוויון דטרמיניסטי);
+     • רשומה שקיימת רק מקומית **שורדת** — היעדרות אצל הצד השני אינה מחיקה.
+   ⛔ שלושת הכללים יושבים מעכשיו ב-`_mergePick` בלבד (סבב 38) — ארבעה
+   עותקים של כלל הכרעה הם ארבע הזדמנויות שאחד מהם ייסחף, וזה בדיוק מה
+   שקרה: ההגנה על ⏳ הייתה קיימת בשתיים מארבע במשך שמונה-עשר סבבים.
+
+   ⚠️ **מה שנבדל בין האפליקציות נשאר נבדל — כפרמטר מדוד ולא כקוד כפול.**
+   ארבע ידיות המדיניות (`dedupe` · `remoteDupe` · `keyless` · `localPick`)
+   אינן קישוט: הן מקודדות התנהגויות **קיימות** במצבי קצה, שנמדדו לפני
+   האיחוד ונשמרו בדיוק כפי שהיו. ⛔ אין לשנות אף אחת מהן «לשם אחידות»
+   (סבב 38) — היפוך `dedupe` בשכר לימוד, למשל, היה מכווץ שתי שורות כספיות
+   בעלות אותו מפתח לשורה אחת, בשקט. אובדן שקט גרוע מכפילות גלויה.
+
+   ⛔ ואין להוסיף כאן קריאה לרשת, ל-localStorage או ל-DOM (סבב 38) — הליבה
+   טהורה, וזה מה שמאפשר להריץ אותה בבדיקות דיפרנציאליות מול המנוע שהיא
+   החליפה.
+
+   **ה-API:** `_mergePick` · `mergeCore`.
+   ═══════════════════════════════════════════════════════════════════════ */
+// כלל ההכרעה בין שתי גרסאות של **אותה** רשומה — הנקודה היחידה בארגון שבה
+// הוא נכתב. ⛔ אין לשכפל אותה (סבב 38) — ר' הנימוק שבראש הבלוק.
+// `isPend` הוא הסימון ⏳ של הרשומה המקומית; `mergePair`, כשהוא קיים, מקבל
+// את ההכרעה כפרמטר ומרחיב אותה (מיזוג פנימי של סנאפשוט).
+function _mergePick(loc, rem, k, isPend, tsOf, mergePair) {
+  if (mergePair) return mergePair(loc, rem, k, isPend);
+  return (isPend || tsOf(loc) > tsOf(rem)) ? loc : rem;   // שוויון → הענן
+}
+// `opts`: getKey · ts · isPending · mergePair · keepUnversionedLocal · onDrop
+//         ובנוסף ארבע ידיות המדיניות שבראש הבלוק.
+function mergeCore(local, remote, opts) {
+  var o = opts || {};
+  var getKey = o.getKey, tsOf = o.ts, mergePair = o.mergePair || null;
+  var keepUnversionedLocal = !!o.keepUnversionedLocal, onDrop = o.onDrop || null;
+  var dedupe = o.dedupe !== false;
+  var remoteDupe = o.remoteDupe || 'ts';        // 'ts' | 'last'
+  var keyless = o.keyless || 'drop';            // 'drop' | 'keep-remote'
+  var localPick = o.localPick || 'last';        // 'last' | 'first'
+  var pend = function (k) { return !!(o.isPending && o.isPending(k)); };
+  var L = Array.isArray(local) ? local : [];
+  var R = Array.isArray(remote) ? remote : [];
+
+  // ── מסלול א: איחוד כפילויות (map+order) ────────────────────────────────
+  if (dedupe) {
     var map = {}, order = [];
-    R.forEach(function(r){ if (!r) return; var k = getKey(r); if (k == null) return; k = String(k); if (!(k in map)) order.push(k); map[k] = r; });
-    L.forEach(function(r){
-      if (!r) return; var k = getKey(r); if (k == null) return; k = String(k);
-      if (!(k in map)) {
-        if (ysRecTs(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
-        else if (onDrop) { try { onDrop(r, k); } catch(eD) {} }
-      } else if (pend(k) || ysRecTs(r) > ysRecTs(map[k])) { map[k] = r; } // שוויון → הענן מנצח (דטרמיניסטי), אלא אם המקומי מסומן ⏳
+    R.forEach(function (r) {
+      if (!r) return;
+      var k = getKey(r); if (k == null) return; k = String(k);
+      if (!(k in map)) { order.push(k); map[k] = r; return; }
+      // ⚠️ הסדר כאן הוא (הקיים, החדש) — שוויון נופל על ה**מאוחר** במערך.
+      //    היפוך הארגומנטים הופך את שובר-השוויון בשקט.
+      map[k] = (remoteDupe === 'last') ? r
+             : _mergePick(map[k], r, k, false, tsOf, mergePair);
     });
-    return order.map(function(k){ return map[k]; });
+    L.forEach(function (r) {
+      if (!r) return;
+      var k = getKey(r); if (k == null) return; k = String(k);
+      if (!(k in map)) {
+        // רשומה מקומית-בלבד — היעדרות אצל הצד השני אינה מחיקה.
+        if (tsOf(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
+        else if (onDrop) { try { onDrop(r, k); } catch (eD) {} }
+      } else { map[k] = _mergePick(r, map[k], k, pend(k), tsOf, mergePair); }
+    });
+    return order.map(function (k) { return map[k]; });
   }
+
+  // ── מסלול ב: שימור כפילויות (דחיפה זורמת) ──────────────────────────────
+  var out = [], seen = {}, byKey = {};
+  L.forEach(function (l) {
+    var k = getKey(l); if (k == null) return; k = String(k);
+    if (localPick === 'last' || !(k in byKey)) byKey[k] = l;
+  });
+  R.forEach(function (r) {
+    var k = getKey(r);
+    if (k == null) { if (keyless === 'keep-remote') out.push(r); return; }
+    k = String(k); seen[k] = 1;
+    var l = byKey[k];
+    if (!l) { out.push(r); return; }
+    out.push(_mergePick(l, r, k, pend(k), tsOf, mergePair));
+  });
+  L.forEach(function (l) {
+    var k = getKey(l); if (k == null) return; k = String(k);
+    if (!seen[k]) out.push(l);
+  });
+  return out;
+}
+/* ═══════════════ סוף מודול המיזוג ══════════════════════════════════════ */
+
+// חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
+// ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
+//    מאז ומתמיד לפי **הסדר** (האחרון גובר) ולא לפי החותמת. ⛔ אין ליישר
+//    את זה ל-yoman «לשם אחידות» (סבב 38) — זו התנהגות קיימת שנמדדה, וכל
+//    שינוי בה משנה איזו רשומה שורדת.
+// ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — בענף האובייקטים
+//    הליבה מקבלת מערכי-זוגות ולא את `remote` המקורי, ובלעדיו רשומה
+//    מקומית בלי חותמת הייתה נופלת דווקא כשאין בכלל צד מרוחק.
+function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
+  if (remote == null && local == null) return local;
+  var keepLocal = !!keepUnversionedLocal || remote == null;
+  if (Array.isArray(remote) || Array.isArray(local)) {
+    return mergeCore(local, remote, {
+      getKey: getKey, ts: ysRecTs, isPending: isPending, onDrop: onDrop,
+      keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
+    });
+  }
+  // ענף האובייקטים — `ys_approvals` ומפות `kv` אחרות. המפתח הוא מפתח המפה
+  // עצמה, ולכן הזוגות נעטפים ונפרסים חזרה; סדר המפתחות (מרוחק ואז
+  // מקומי-בלבד) נשמר בזכות סדר ההכנסה של אובייקט JS.
   var Lo = (local && typeof local === 'object') ? local : {};
   var Ro = (remote && typeof remote === 'object') ? remote : {};
-  var out = {};
-  Object.keys(Ro).forEach(function(k){ out[k] = Ro[k]; });
-  Object.keys(Lo).forEach(function(k){
-    if (!(k in out)) {
-      if (ysRecTs(Lo[k]) > 0 || keepUnversionedLocal || remote == null) out[k] = Lo[k];
-      else if (onDrop) { try { onDrop(Lo[k], k); } catch(eD2) {} }
-    } else if (pend(k) || ysRecTs(Lo[k]) > ysRecTs(out[k])) out[k] = Lo[k];
+  var pairs = function (o) { return Object.keys(o).map(function (k) { return { __k: k, __v: o[k] }; }); };
+  var merged = mergeCore(pairs(Lo), pairs(Ro), {
+    getKey: function (x) { return x.__k; },
+    ts: function (x) { return ysRecTs(x.__v); },
+    isPending: isPending, keepUnversionedLocal: keepLocal,
+    onDrop: onDrop ? function (x, k) { return onDrop(x.__v, k); } : null,
+    dedupe: true, remoteDupe: 'last'
   });
+  var out = {};
+  merged.forEach(function (x) { out[x.__k] = x.__v; });
   return out;
 }
 
 // פרדיקט ה-⏳ לפי מפתח ה-kv (סבב 37) — נגזר מ-`PEND_KV_PREFIX`, אותה מפה
 // בדיוק שמשמשת את `pendConfirmKv` בריקון התור. מפתח שאין לו קידומת סימונים
-// (`ys_attend`, `ys_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
+// (`ys_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
 // ⚠️ הקידומת חייבת להיגזר מהמפה ולא להיכתב כאן שוב — שני מקורות לאותו מיפוי
 //    הם בדיוק איך שסימון נכתב תחת מפתח אחד ונקרא תחת אחר.
 function ysPendingFor(kvKey) {
@@ -5140,21 +5234,6 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey)
   return merged;
 }
 
-// מיזוג ys_attend המקונן {date:{sid:rec}} — ברמת הרשומה הפנימית (תאריך+תלמיד).
-// נוכחות לעולם לא נמחקת מפורשות → keepUnversionedLocal=true.
-function ysMergeAttend(local, remote) {
-  var Lo = (local && typeof local === 'object') ? local : {};
-  var Ro = (remote && typeof remote === 'object') ? remote : {};
-  var out = {}, seen = {};
-  Object.keys(Ro).concat(Object.keys(Lo)).forEach(function(d){
-    if (seen[d]) return; seen[d] = 1;
-    if (Ro[d] == null) { out[d] = Lo[d]; return; }
-    if (Lo[d] == null) { out[d] = Ro[d]; return; }
-    out[d] = ysMergeRecords(Lo[d], Ro[d], null, true);
-  });
-  return out;
-}
-
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
 function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
@@ -5172,8 +5251,8 @@ async function ysPushToCloud() {
   var failed = [], pushed = 0, kvMissing = false;
 
   // כל קטגוריה עומדת בפני עצמה. קודם היה try אחד גדול סביב הכול, ולכן ערך
-  // localStorage פגום אחד (getAttendance) זרק ועצר את הדחיפה לפני שנכתב *שום*
-  // מפתח — תלמידים, נוכחות, אישורים והגדרות הפסיקו להסתנכרן בשקט.
+  // localStorage פגום אחד זרק ועצר את הדחיפה לפני שנכתב *שום* מפתח —
+  // תלמידים, אישורים והגדרות הפסיקו להסתנכרן בשקט.
   async function step(label, fn) {
     try {
       var r = await fn();
@@ -5212,17 +5291,6 @@ async function ysPushToCloud() {
 
   // טבלת kv חסרה — אין טעם להמשיך, בדיוק כמו קודם
   if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
-
-  // ---- attend: מיזוג מקונן (תאריך+תלמיד) ----
-  await step('ys_attend', async function() {
-    var localAt = getAttendance();
-    var remoteAt = null; try { remoteAt = await ysKvGet('ys_attend'); } catch(e2) {}
-    var mergedAt = ysMergeAttend(localAt, remoteAt);
-    lsSet('ys_attend', JSON.stringify(mergedAt));
-    var r = await ysKvSet('ys_attend', mergedAt);
-    ysSyncLog('push', 'ys_attend', ysCount(mergedAt), {local_count: ysCount(localAt), remote_count: ysCount(remoteAt), result_count: ysCount(mergedAt)});
-    return r;
-  });
 
   // ---- approvals: מיזוג אובייקט לפי sid ----
   await step('ys_approvals', async function() {
@@ -5304,11 +5372,6 @@ async function ysPullFromCloud() {
       var mergedS = ysMergeWithDropLog(_ysStudentsRaw(), s, function(r){ return r.id; }, false, 'ys_students');
       _ysStudentsSaveRaw(mergedS);
       if (pullMigrated) scheduleYsPush();
-    }
-    // attend: מיזוג מקונן ברמת תאריך+תלמיד (מחליף את מיזוג-היום הידני הישן)
-    var a = await ysKvGet('ys_attend');
-    if (a && typeof a === 'object') {
-      lsSet('ys_attend', JSON.stringify(ysMergeAttend(getAttendance(), a)));
     }
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await ysKvGet('ys_approvals');
@@ -5736,8 +5799,6 @@ function saveStudents(s){
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
-function getAttendance(){try{var v=JSON.parse(localStorage.getItem('ys_attend')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_attend פגום — נטען ריק:',e.message);return {};}}
-function saveAttendance(a){lsSet('ys_attend',JSON.stringify(a));}
 function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(localStorage.getItem('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
 function saveReasons(r){lsSet('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
 function getApprovals(){try{var v=JSON.parse(localStorage.getItem('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
@@ -6218,36 +6279,6 @@ window.cancelSingleAbsence = function(absenceId) {
     toast('✅ הסטטוס בוטל ל-' + s.name);
   }
 };
-
-function togglePresent(sid,present){
-  if(checkLoginNeeded())return;
-  var today=todayKey();
-  var attend=getAttendance();
-  if(!attend[today])attend[today]={};
-  var now=new Date();
-  var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var ex=attend[today][sid]||{};
-  if(present){attend[today][sid]={present:true,entryTime:ex.entryTime||t,exitTime:ex.exitTime,updatedAt:Date.now()};}
-  else{attend[today][sid]={present:false,entryTime:ex.entryTime,exitTime:ex.exitTime,updatedAt:Date.now()};}
-  saveAttendance(attend);
-  scheduleYsPush();
-  renderStudents();
-}
-
-function recordTime(sid){
-  if(checkLoginNeeded())return;
-  var today=todayKey();
-  var attend=getAttendance();
-  if(!attend[today])attend[today]={};
-  var now=new Date();
-  var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  var ex=attend[today][sid]||{};
-  if(!ex.entryTime){attend[today][sid]={present:true,entryTime:t,updatedAt:Date.now()};}
-  else{attend[today][sid]={present:ex.present,entryTime:ex.entryTime,exitTime:t,updatedAt:Date.now()};}
-  saveAttendance(attend);
-  scheduleYsPush();
-  renderStudents();
-}
 
 function openAddStudent(){
   if(checkLoginNeeded())return;

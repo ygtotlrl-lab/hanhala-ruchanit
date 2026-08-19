@@ -64,7 +64,7 @@ immutable
 as $$
   select array[
     -- hanhala-ruchanit
-    'ys_students', 'ys_attend', 'ys_attend_sessions', 'ys_attend_cfg',
+    'ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
     'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
     'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
     'ys_cls_years', 'ys_settings_meta',

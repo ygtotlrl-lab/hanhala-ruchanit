@@ -19,13 +19,16 @@ import vm from 'node:vm';
 /* ── APP — הדבר היחיד שנבדל בין הריפו (hanhala-ruchanit) ───────────────── */
 const APP = {
   app: 'hanhala-ruchanit',
-  names: ['ysRecTs', 'ysMergeRecords', 'ysPendingFor'],
+  names: ['ysRecTs', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
   vars: ['var PEND_KV_PREFIX = '],
   globals: { PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:', PK_AT_TREAT: 'at-treat:', PK_SL_TREAT: 'sl-treat:', PK_STUDENT: 'student:' },
   offlineFn: 'ysVerifyOffline',
-  mutFn: 'ysMergeRecords',
-  guard: /pend\(k\) \|\| ysRecTs\(r\) > ysRecTs\(map\[k\]\)/,
-  mutate: (fn) => fn.replace('pend(k) || ysRecTs(r) > ysRecTs(map[k])', 'ysRecTs(r) > ysRecTs(map[k])'),
+  // ⭐ סבב 38 — כלל ההכרעה עבר לליבה המשותפת, ולכן גם המוטציה מכוונת
+  //    לשם. ⛔ הטענה לא נחלשה: היא עדיין דורשת שהסרת סעיף ה-⏳ תפיל את
+  //    טענת הבסיס — רק שעכשיו זה קורה **בארבע האפליקציות בבת אחת**.
+  mutFn: '_mergePick',
+  guard: /isPend \|\| tsOf\(loc\) > tsOf\(rem\)/,
+  mutate: (fn) => fn.replace('isPend || tsOf(loc) > tsOf(rem)', 'tsOf(loc) > tsOf(rem)'),
   rec: (id, ts, tag) => ({ id: id, updatedAt: ts, name: tag }),
   keyOf: (r) => r.id,
   tag: (r) => r && r.name,
