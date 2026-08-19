@@ -32,7 +32,9 @@ const APP = {
          'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
          'ys_cls_years', 'ys_settings_meta',
          // סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
-         'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows'],
+         'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows',
+         // סבב 39 — שכבת השורות של השינה, אב ובן.
+         'ys_sleep_sessions_rows', 'ys_sleep_marks_rows'],
   prefixes: [''],
   legacyKeys: [],
   sisterKeys: [

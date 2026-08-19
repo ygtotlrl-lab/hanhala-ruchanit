@@ -1458,7 +1458,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v50'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v51'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3666,7 +3666,14 @@ var BK_CFG = {
     var out = [
       { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id' },
       { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
-      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
+      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' },
+      /* ⭐ סבב 39 — שכבת השורות של השינה. ⚠️ מפתח הגיבוי נושא סיומת `_rows`
+         דווקא מפני ששם הטבלה זהה לשם מפתח ה-`kv` (`ys_sleep_sessions`),
+         ובלעדיה גיבוי הטבלה היה דורס את גיבוי ה-`kv` הישן.
+         ⛔ ושניהם נוספו באותו סבב לרשימת-ההיתר של `migrations/004` — מפתח
+         גיבוי שאינו שם אינו מתפנה לעולם (ההיסט של השלמת סבב 35ג). */
+      { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
+      { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
     ];
     return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
             'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
@@ -4783,6 +4790,7 @@ async function ysFlushQueue() {
         //    מתעדכנת גם ממנו (סבב 36). בלעדיו מכשיר שעבד אופליין היה מסנכרן
         //    את ה-`kv` ומשאיר את הטבלאות מפגרות עד הכתיבה המקוונת הבאה.
         if (item.key === 'ys_attend_sessions') ysRowsPushSessions(item.value);
+        if (item.key === 'ys_sleep_sessions')  ysRowsPushSessions(item.value, 'sleep');
         if (item.key === 'ys_students')        ysRowsPushStudents(item.value);
         console.log('[ys-queue] flushed', item.key);
       }
@@ -4833,23 +4841,39 @@ var YS_ROWS = true;
    מ-`kv` רואה נתונים שקפאו ברגע הכיבוי. */
 var YS_KV_LEGACY_WRITE = true;
 
-/* מפת חותמות הענן פר-סדר, בזיכרון בלבד. ⛔ `null` פירושו «טרם נמשכה»
-   (סבב 36) — ובספק דוחפים: שורה שלא נדחפה חסרה בענן בשקט, בעוד שדחיפה
-   מיותרת עולה רק בתעבורה. */
-var _ysRowsRemote = null;
+/* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
+   ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
+      `ysRowsPushSessions` (סבב 39) — שני עותקים של מסלול הכתיבה הם שתי
+      הזדמנויות שאחד מהם ייסחף, בדיוק הלקח של איחוד מנועי המיזוג בסבב 38.
+   ⚠️ `note` קיים בשינה בלבד — נמדד: סימון שינה הוא `{s,min,note}` וסימון
+      נוכחות `{s,min}`. ⛔ ואין להוסיף `note` גם לנוכחות «לשם אחידות»
+      (סבב 39) — ל-`ys_marks` אין עמודה כזו, וה-`upsert` היה נדחה כולו. */
+var YS_ROWS_KINDS = {
+  attend: { parent: 'ys_sessions',       child: 'ys_marks',       pk: PK_AT_SESS, note: false },
+  sleep:  { parent: 'ys_sleep_sessions', child: 'ys_sleep_marks', pk: PK_SL_SESS, note: true  }
+};
 
-/* משיכת מפת החותמות — `client_id` + `updated_at` בלבד, 273 שורות נמדדות.
+/* מפת חותמות הענן פר-סדר, בזיכרון בלבד, **פר-מסלול**. ⛔ `null` פירושו
+   «טרם נמשכה» (סבב 36) — ובספק דוחפים: שורה שלא נדחפה חסרה בענן בשקט,
+   בעוד שדחיפה מיותרת עולה רק בתעבורה.
+   ⛔ ומפה אחת לשני המסלולים הייתה שגויה (סבב 39) — מזהי סדר של נוכחות
+      ושל שינה חיים במרחבים נפרדים, ומפה משותפת הייתה מדווחת «כבר בענן»
+      על סדר שינה שמזההו במקרה זהה לסדר נוכחות. */
+var _ysRowsRemote = { attend: null, sleep: null };
+
+/* משיכת מפת החותמות — `client_id` + `updated_at` בלבד.
    ⚠️ זו **אינה** קריאת נתונים: היא לא מזינה שום מסך ולא נכנסת למיזוג, אלא
       רק קובעת מה כבר בענן. מסלול הקריאה נשאר ה-`kv` (ר' כותרת הבלוק). */
-async function ysRowsRemoteLoad() {
+async function ysRowsRemoteLoad(kind) {
+  kind = kind || 'attend';
   if (!YS_ROWS) return null;
-  if (_ysRowsRemote) return _ysRowsRemote;
+  if (_ysRowsRemote[kind]) return _ysRowsRemote[kind];
   try {
-    var res = await withTimeout(SB.from('ys_sessions').select('client_id,updated_at'));
+    var res = await withTimeout(SB.from(YS_ROWS_KINDS[kind].parent).select('client_id,updated_at'));
     if (!res || res.error || !Array.isArray(res.data)) return null;
     var map = {};
     res.data.forEach(function (r) { if (r) map[String(r.client_id)] = Number(r.updated_at) || 0; });
-    _ysRowsRemote = map;
+    _ysRowsRemote[kind] = map;
     return map;
   } catch (e) { return null; }
 }
@@ -4880,9 +4904,10 @@ function ysSessionRow(rec) {
    פעמיים (הלקח של yoman `002`). ⚠️ לסימון אין חותמת משלו ב-`kv`, ולכן הוא
    יורש את חותמת האב — ⛔ ולא `Date.now()` (סבב 36), שהיה חדש מכל עריכה
    מקומית שטרם עלתה ודורס אותה במיזוג הראשון. */
-function ysMarkRows(rec) {
+function ysMarkRows(rec, kind) {
   var out = [];
   if (!rec || rec.id == null) return out;
+  var wantNote = !!(YS_ROWS_KINDS[kind || 'attend'] || {}).note;
   var marks = (rec.marks && typeof rec.marks === 'object') ? rec.marks : {};
   var sid = String(rec.id);
   var d = String(rec.date_iso || '');
@@ -4894,7 +4919,7 @@ function ysMarkRows(rec) {
     //    שנוצר במכשיר הוא uuid. `Number(k)` היה מחזיר `NaN` לכל תלמיד
     //    שנוסף מסבב 37 ואילך, כלומר סימוניו לא היו מגיעים לשכבת השורות.
     var m = marks[k] || {};
-    out.push({
+    var row = {
       client_id: sid + ':' + k,
       session_client_id: sid,
       student_id: String(k),
@@ -4903,7 +4928,14 @@ function ysMarkRows(rec) {
       minutes: Math.round(Number(m.min) || 0),
       deleted: del,
       updated_at: ts
-    });
+    };
+    // ⛔ `note` נוסף למסלול השינה בלבד (סבב 39) — ל-`ys_marks` של הנוכחות
+    //    אין עמודה כזו, ושדה עודף ב-`upsert` מפיל את הבקשה **כולה**, לא
+    //    רק את השדה. ⚠️ והוא נשלח גם כשהוא ריק — `null` מפורש הוא מה
+    //    שמוחק הערה שנמחקה במכשיר, בעוד שהשמטת המפתח הייתה משאירה בענן
+    //    את ההערה הישנה.
+    if (wantNote) row.note = (m.note == null || m.note === '') ? null : String(m.note);
+    out.push(row);
   });
   return out;
 }
@@ -4947,28 +4979,30 @@ async function ysRowsUpsert(table, rows) {
    ⚠️ האב נכתב **לפני** הבן, כדי שלא ייווצר רגע שבו יש סימון בלי הסדר שלו;
       ⛔ ואין כאן מפתח זר פיזי (סבב 36) — רשומות מגיעות ממכשירים אופליין
       בסדר לא ידוע, ו-`FK` היה דוחה סימון שהקדים את האב שלו. */
-async function ysRowsPushSessions(arr) {
-  if (!YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
+async function ysRowsPushSessions(arr, kind) {
+  kind = kind || 'attend';
+  var cfg = YS_ROWS_KINDS[kind];
+  if (!cfg || !YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
   try {
-    var map = await ysRowsRemoteLoad();
+    var map = await ysRowsRemoteLoad(kind);
     var dirty = [];
     arr.forEach(function (rec) {
       if (!rec || rec.id == null) return;
       var ts = Math.round(Number(_ysRecTs(rec)) || 0);
       var known = map ? map[String(rec.id)] : undefined;
-      if (map === null || known === undefined || ts > known || pendHas(PK_AT_SESS + rec.id)) dirty.push(rec);
+      if (map === null || known === undefined || ts > known || pendHas(cfg.pk + rec.id)) dirty.push(rec);
     });
     if (!dirty.length) return { ok: true, n: 0 };
     var sRows = [], mRows = [];
     dirty.forEach(function (rec) {
       var r = ysSessionRow(rec);
-      if (r) { sRows.push(r); mRows = mRows.concat(ysMarkRows(rec)); }
+      if (r) { sRows.push(r); mRows = mRows.concat(ysMarkRows(rec, kind)); }
     });
     if (!sRows.length) return { ok: true, n: 0 };
-    if (!(await ysRowsUpsert('ys_sessions', sRows))) return { ok: false, n: 0 };
-    if (!(await ysRowsUpsert('ys_marks', mRows)))    return { ok: false, n: 0 };
-    if (!_ysRowsRemote) _ysRowsRemote = {};
-    sRows.forEach(function (r) { _ysRowsRemote[r.client_id] = r.updated_at; });
+    if (!(await ysRowsUpsert(cfg.parent, sRows))) return { ok: false, n: 0 };
+    if (!(await ysRowsUpsert(cfg.child, mRows)))  return { ok: false, n: 0 };
+    if (!_ysRowsRemote[kind]) _ysRowsRemote[kind] = {};
+    sRows.forEach(function (r) { _ysRowsRemote[kind][r.client_id] = r.updated_at; });
     return { ok: true, n: sRows.length };
   } catch (e) { return { ok: false, n: 0 }; }
 }
@@ -5660,56 +5694,26 @@ function ysSetupSqlLink() {
          esc(YS_SETUP_SQL_URL) + '</a>';
 }
 
-async function setupWithServiceKey() {
-  var key = document.getElementById('svc-key').value.trim();
-  if (!key) return;
-  var btn = document.getElementById('svc-btn');
-  btn.textContent = 'מגדיר...'; btn.disabled = true;
-  var SB2 = supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co', key);
-  // ⛔ הסכימה נמשכת ואינה מוטבעת (סבב 32) — ר' הבלוק שמעל. כשל משיכה עוצר
-  //    את ההגדרה במקום להריץ סכימה חלקית שנכתבה כאן ביד.
-  var sql;
-  try {
-    sql = await ysFetchSetupSql();
-  } catch (e) {
-    document.getElementById('svc-err').innerHTML =
-      '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + esc(String(e.message || e)) + ').<br>' + ysSetupSqlLink();
-    btn.textContent = 'נסה שוב'; btn.disabled = false;
-    return;
-  }
-  var {error} = await SB2.rpc('exec_sql', {sql: sql});
-  if (error) {
-    // rpc לא קיים - נסה ישירות insert (אם הטבלה כבר נוצרה ידנית)
-    var {error: e2} = await SB2.from('ys_users').select('id').limit(1);
-    if (e2) {
-      document.getElementById('svc-err').textContent = 'שגיאה: ' + (error.message || e2.message);
-      btn.textContent = 'נסה שוב'; btn.disabled = false;
-      return;
-    }
-  }
-  // ⛔ **אין ליצור כאן משתמש** (סבב 21) — קודם נוצר כאן `admin` / `123456`.
-  // הטבלה נוצרה; המשתמש הראשון נוצר ידנית, עם סיסמה שהמנהל בוחר.
-  document.getElementById('svc-err').textContent = '✅ הטבלה נוצרה — כעת יש ליצור את המשתמש הראשון ידנית (ר\' ההוראות למטה)';
-  document.getElementById('svc-err').style.color = '#276749';
-}
+/* ⛔ מסלול ה-service-key (`setupWithServiceKey` + `exec_sql`) הוסר (סבב 39) —
+      הפונקציה `exec_sql` **אינה קיימת במסד כלל** (נמדד ב-2026-08-18 מול
+      `pg_proc`), ולכן ה-`rpc` החזיר שגיאה תמיד והמסלול מעולם לא יכול היה
+      ליצור טבלה. מה שנשאר ממנו היה שדה שמבקש **service-role key** —
+      המפתח שעוקף RLS לחלוטין — בתמורה לכלום.
+   ⛔ ואין להחזיר אותו (סבב 39) — ההתקנה נעשית דרך `migrations/` ומסך
+      ההתקנה שלמטה, שמציג את קובץ ההתקנה להרצה ב-SQL Editor (סבב 32).
+      מסלול שמבקש מפתח-על מהדפדפן הוא נתיב הרשאה שלם שאין לו צורך. */
 
 function showSetupScreen() {
   var authBox = document.querySelector('.auth-box');
   authBox.innerHTML = 
     '<div style="font-size:1.3rem;font-weight:700;color:#1a3a6b;margin-bottom:6px">⚙️ הגדרה ראשונית</div>' +
     '<div style="font-size:.8rem;color:#4a5568;margin-bottom:14px">יש ליצור את טבלת המשתמשים</div>' +
-    '<div style="font-size:.8rem;font-weight:600;color:#1a3a6b;margin-bottom:6px;text-align:right">Service Role Key מ-Supabase Dashboard:</div>' +
-    '<input id="svc-key" type="password" placeholder="eyJ..." style="width:100%;border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-size:.78rem;direction:ltr;margin-bottom:8px">' +
-    '<div style="font-size:.72rem;color:#8a97b0;margin-bottom:10px;text-align:right">Settings → API → service_role → Reveal → העתק</div>' +
-    '<button id="svc-btn" class="auth-btn" onclick="setupWithServiceKey()">▶️ צור טבלה</button>' +
-    '<div id="svc-err" style="font-size:.8rem;color:#e53e3e;margin-top:8px"></div>' +
-    '<hr style="margin:14px 0;border-color:#d8e2f0">' +
-    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">לחלופין — הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a> את קובץ ההתקנה. ⚠️ המשתמש הראשון נוצר ידנית לפי ההוראות שבסוף הקובץ — <b>אין סיסמת ברירת מחדל</b>:</div>' +
+    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a> את קובץ ההתקנה. ⚠️ המשתמש הראשון נוצר ידנית לפי ההוראות שבסוף הקובץ — <b>אין סיסמת ברירת מחדל</b>:</div>' +
     '<textarea id="setup-sql" readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">טוען…</textarea>' +
     '<div id="setup-sql-err" style="display:none;font-size:.75rem;color:#e53e3e;text-align:right"></div>' +
     '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
   // ⛔ התיבה מתמלאת מהקובץ ואינה מכילה סכימה מוטבעת (סבב 32) — ר' הבלוק
-  //    שמעל `setupWithServiceKey`. בכשל היא **נעלמת** ובמקומה קישור ישיר.
+  //    שמעל `YS_SETUP_SQL_URL`. בכשל היא **נעלמת** ובמקומה קישור ישיר.
   ysFetchSetupSql().then(function(t){
     var ta = document.getElementById('setup-sql');
     if (ta) ta.value = t;
@@ -8357,6 +8361,10 @@ async function slSaveData(data) {
     }
     var _rSl=await ysKvSet('ys_sleep_sessions',data);
     if(!(_rSl&&_rSl.error)) { pendConfirmPush(PK_SL_SESS,_t0); _ysMarkPushed('ys_sleep_sessions'); }
+    // ⚠️ הכתיבה הכפולה לשכבת השורות (סבב 39) — **אחרי** אישור ה-⏳ ועֵד
+    //    הפינוי, ו⛔ בלי להשפיע עליהם (סבב 36): הראיה שהם דורשים היא כתיבת
+    //    ה-`kv`, שהוא המאסטר בשלב א. טבלה שטרם נוצרה מדלגת בשקט.
+    ysRowsPushSessions(data,'sleep');
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
   } catch(e){}

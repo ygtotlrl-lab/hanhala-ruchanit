@@ -4,9 +4,11 @@
  *  ⚠️ פרטי ל-hanhala-ruchanit. ⛔ אין ליישר אותו מריפו אחר — הוא בודק את
  *     מסך ההגדרה הראשונית של האפליקציה הזו, שאינו קיים באחיות באותה צורה.
  *
- *  ⚠️ הבדיקה מריצה את **הקוד האמיתי**: `setupWithServiceKey` ו-
- *     `showSetupScreen` נחתכות מ-`index.html` לפי שמן ורצות ב-`vm` מעל DOM
- *     ו-`fetch` מדומים. מוטציה בקוד האמיתי מפילה טענה.
+ *  ⚠️ הבדיקה מריצה את **הקוד האמיתי**: `showSetupScreen` נחתכת
+ *     מ-`index.html` לפי שמה ורצה ב-`vm` מעל DOM ו-`fetch` מדומים.
+ *     מוטציה בקוד האמיתי מפילה טענה.
+ *  ⛔ `setupWithServiceKey` הוסרה בסבב 39 — `exec_sql` אינה קיימת במסד,
+ *     ולכן המסלול מעולם לא יכול היה לרוץ. טענות 2 ו-3 נועלות את **היעדרו**.
  *
  *  ⛔ אין שעון ואין `setTimeout` כאן (הלקח מסבב 24) — ההמתנה היא על
  *     ה-Promise שהקוד עצמו יצר, ולכן כל טענה נמדדת על אירוע שהסתיים.
@@ -97,13 +99,10 @@ function makeEnv(opts = {}) {
   vm.createContext(sandbox);
   vm.runInContext(cutVar('var YS_SETUP_SQL_URL = '), sandbox);
   vm.runInContext(cutVar('var YS_SETUP_SQL_GITHUB = '), sandbox);
-  for (const n of ['ysFetchSetupSql', 'ysSetupSqlLink', 'setupWithServiceKey', 'showSetupScreen']) {
+  for (const n of ['ysFetchSetupSql', 'ysSetupSqlLink', 'showSetupScreen']) {
     vm.runInContext(cut(n), sandbox, { filename: n + '.js' });
   }
   env.sb = sandbox;
-  els['svc-key'] = mkEl('svc-key');
-  els['svc-btn'] = mkEl('svc-btn');
-  els['svc-err'] = mkEl('svc-err');
   return env;
 }
 // ⚠️ ריקון תור המיקרו-משימות — בלי טיימר, ולכן בלי שעון מדומה.
@@ -125,33 +124,30 @@ function t1() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   2 · ⭐ ההרצה מושכת את הקובץ — ומריצה בדיוק אותו
-   ══════════════════════════════════════════════════════════════════════════ */
-async function t2() {
-  const env = makeEnv();
-  env.els['svc-key'].value = 'eyJ-placeholder';
-  await env.sb.setupWithServiceKey();
-  eq(env.fetches.length, 1, '2א · ⭐ נעשתה משיכה אחת של קובץ ההתקנה');
-  eq(env.fetches[0].url, 'migrations/000_initial_schema.sql', '2ב · מהנתיב הנכון');
-  eq(env.fetches[0].opts && env.fetches[0].opts.cache, 'no-store',
-    '2ג · ⚠️ `no-store` — עותק ישן מהמטמון היה מריץ סכימה ישנה על מסד חדש');
-  eq(env.rpc.length, 1, '2ד · והרצה אחת');
-  eq(env.rpc[0].args.sql, SCHEMA, '2ה · ⭐ ומה שרץ הוא **בדיוק** תוכן הקובץ, בלי עריכה');
+   2 · ⛔ מסלול ה-service-key הוסר — ואינו חוזר (סבב 39)
+   ══════════════════════════════════════════════════════════════════════════
+   `exec_sql` אינה קיימת במסד (נמדד ב-2026-08-18 מול `pg_proc`), ולכן
+   ה-`rpc` נכשל תמיד. מה שנשאר היה שדה שמבקש **service-role key** — המפתח
+   שעוקף RLS — בתמורה לכלום. */
+function t2() {
+  const code = stripComments(SRC);
+  ok(!/setupWithServiceKey/.test(code), '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
+  ok(!/exec_sql/.test(code),            '2ב · ⛔ ואין קריאת `exec_sql`');
+  ok(!/createClient\s*\([^)]*key/.test(code),
+    '2ג · ⛔ ואין לקוח Supabase שנבנה ממפתח שהמשתמש הקליד');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   3 · ⛔ כשל משיכה — עוצר, ואינו מריץ סכימה מומצאת
+   3 · ⛔ ומסך ההגדרה אינו מבקש מפתח כלשהו
    ══════════════════════════════════════════════════════════════════════════ */
-async function t3() {
-  for (const [name, o] of [['רשת', { fetchFails: true }], ['404', { fetchHttp: 404 }], ['קובץ ריק', { fetchEmpty: true }]]) {
-    const env = makeEnv(o);
-    env.els['svc-key'].value = 'eyJ-placeholder';
-    await env.sb.setupWithServiceKey();
-    eq(env.rpc.length, 0, `3א.${name} · ⛔ לא הורצה שום סכימה`);
-    ok(/לא ניתן היה לטעון/.test(env.els['svc-err'].innerHTML), `3ב.${name} · והוצגה הודעה`);
-    ok(/github\.com/.test(env.els['svc-err'].innerHTML), `3ג.${name} · ⭐ עם קישור ישיר לקובץ`);
-    eq(env.els['svc-btn'].disabled, false, `3ד.${name} · והכפתור שוחרר לניסיון חוזר`);
-  }
+function t3() {
+  const env = makeEnv();
+  env.sb.showSetupScreen();
+  const html = env.authBox.innerHTML;
+  ok(!/svc-key/.test(html),      '3א · ⛔ אין שדה `svc-key` במסך');
+  ok(!/service_role/i.test(html), '3ב · ⛔ ואין הפניה ל-service_role');
+  ok(!/type="password"/.test(html), '3ג · ⛔ ואין שדה סוד כלשהו');
+  ok(/SQL Editor/.test(html),    '3ד · ⭐ ומה שנשאר הוא הרצת קובץ ההתקנה ב-SQL Editor');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -210,9 +206,29 @@ function t7() {
     '7ד · ⛔ והמשתמש הראשון הוא מצייני מקום בלבד (כלל ברזל 10 סעיף 8)');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   8 · מוטציות — החזרת מסלול ה-service-key מפילה את טענות 2 ו-3
+   ══════════════════════════════════════════════════════════════════════════ */
+function t8() {
+  const code = stripComments(SRC);
+  const mutFn = code + "\nasync function setupWithServiceKey(){"
+    + "var SB2=supabase.createClient(URL,key);await SB2.rpc('exec_sql',{sql:s});}\n";
+  ok(/setupWithServiceKey/.test(mutFn) && /exec_sql/.test(mutFn),
+    '8א · מוטציה: החזרת הפונקציה מפילה את טענות 2א ו-2ב');
+
+  const env = makeEnv();
+  env.sb.showSetupScreen();
+  const mutHtml = env.authBox.innerHTML
+    + '<input id="svc-key" type="password" placeholder="service_role">';
+  ok(!/svc-key/.test(env.authBox.innerHTML) && /svc-key/.test(mutHtml),
+    '8ב · מוטציה: החזרת שדה המפתח למסך מפילה את טענה 3א');
+  ok(!/type="password"/.test(env.authBox.innerHTML) && /type="password"/.test(mutHtml),
+    '8ג · ⛔ ושדה סוד כלשהו במסך מפיל את טענה 3ג');
+}
+
 /* ── הרצה ──────────────────────────────────────────────────────────────── */
 console.log('\n═══ סבב 32 — מקור אמת יחיד לסכימה ═══\n');
-const tests = [t1, t2, t3, t4, t5, t6, t7];
+const tests = [t1, t2, t3, t4, t5, t6, t7, t8];
 for (const t of tests) {
   try { await t(); }
   catch (e) { failN++; console.error(`❌ ${t.name} זרקה: ${(e && e.stack) || e}`); }
