@@ -59,10 +59,14 @@ function grabVar(name) {
 
 const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
-  'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache', 'ysBackfillPassFp',
+  'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr'];
 const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
-  'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO', '_ysFpBackfillDone'];
+  'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
+  /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
+  'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
+  /* ⛔ דגל נתיב-החזרה של הסיסמה הגלויה (סבב 40). */
+  'YS_PLAINTEXT_LEGACY_WRITE'];
 
 const CODE = VARS.map(grabVar).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
@@ -292,6 +296,20 @@ sec('4. אימות אופליין מול הטביעה');
     await S.ysVerifyOffline({ id: 5, active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
 }
 
+/*  ⭐ סבב 40 — זריעת טביעות לשורות הענן.
+ *  עד סבב 40 השורות בפיקסטורה נשארו בלי `pass_fp`, ומסלולי האימות
+ *  המקוונים עבדו מפני שהם השוו מול `password_hash` הגלוי. מרגע שהם
+ *  משווים מול הטביעה, שורת ענן בלי טביעה **אינה יכולה להיכנס** — וזה
+ *  בדיוק הנכון. הפונקציה הזו מביאה את הפיקסטורה למצב המדוד של המסד
+ *  החי: כל ששת המשתמשים מחזיקים מלח וטביעה.                          */
+async function seedFp(S, rows, pwByUser = { 1: '111111', 2: '222222', 3: '333333', 4: '444444' }) {
+  for (const r of rows) {
+    const made = await S.ysMakePassFp(pwByUser[r.id] || r.password_hash);
+    if (made) { r.pass_salt = made.salt; r.pass_fp = made.fp; }
+  }
+  return rows;
+}
+
 /* ── 5. כניסה אופליין — ⭐ לב הסבב ─────────────────────────────────────── */
 sec('5. כניסה אופליין');
 async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
@@ -376,6 +394,7 @@ sec('6. כניסה מקוונת');
 {
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
+  await seedFp(S, rows);          // ⭐ סבב 40 — האימות המקוון הוא מול הטביעה
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '222222';
   await S._doLoginInner();
   await new Promise((r) => setTimeout(r, 30));   // fire-and-forget של הרענון
@@ -385,46 +404,31 @@ sec('6. כניסה מקוונת');
   T('6ד. ⛔ ואין בו אף סיסמה', !['111111', '222222', '333333'].some((p) => String(LS.ys_users_cache).indexOf(p) !== -1));
 }
 {
-  const S = boot({ tables: { ys_users: USERS() } });
+  const rowsW = USERS();
+  const S = boot({ tables: { ys_users: rowsW } });
+  await seedFp(S, rowsW);
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '000000';
   await S._doLoginInner();
   eq('6ה. סיסמה שגויה אונליין ⇒ נדחית', S.AUTH.user, null);
   T('6ו. ...ונרשמה כ-wrong_credentials_online', LOGINLOG.indexOf('wrong_credentials_online') !== -1);
 }
 
-/* ── 7. השלמת טביעות ───────────────────────────────────────────────────── */
-sec('7. ysBackfillPassFp');
+/* ── 7. ⛔ השלמת הטביעות הוסרה (סבב 40) ─────────────────────────────────
+   ⚠️ **הטענות כאן התהפכו במכוון.** עד סבב 40 הן אכפו ש-`ysBackfillPassFp`
+   גוזרת טביעה מהסיסמה הגלויה; מסבב 40 הן אוכפות ש**היא אינה קיימת**.
+   ⛔ זו אינה ריכוך של הבדיקה אלא הפוכה שלה: כל עוד הפונקציה בקוד, יש
+   מסלול שקורא את `password_hash` כדי לגזור ממנה — כלומר הקורא האחרון של
+   הסיסמה הגלויה, וזה שהיה נשבר ברגע שהעמודה תימחק.
+   ⚠️ ההסרה נשענת על מדידה ולא על הנחה: כל ששת המשתמשים ב-`ys_users`
+   מחזיקים `pass_salt` ו-`pass_fp` (נמדד ב-`SELECT` בלבד, 2026-08-19),
+   ולכן לא נותר למי להשלים.                                            */
+sec('7. ⛔ השלמת הטביעות הוסרה');
 {
-  const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' }; S.AUTH.offlineLogin = false;
-  await S.ysBackfillPassFp();
-  T('7א. כל המשתמשים קיבלו מלח+טביעה', rows.every((r) => r.pass_salt && r.pass_fp));
-  T('7ב. ⛔ password_hash לא שונה', rows.every((r) => /^\d{6}$/.test(r.password_hash)));
-  T('7ג. מלח שונה לכל משתמש', new Set(rows.map((r) => r.pass_salt)).size === rows.length);
-  const fp = await S.ysPassFp('222222', rows.find((r) => r.id === 2).pass_salt);
-  eq('7ד. הטביעה תואמת לסיסמה שבענן', fp, rows.find((r) => r.id === 2).pass_fp);
-}
-{
-  const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
-  S.AUTH.user = { id: 3, role: 'junior' };
-  await S.ysBackfillPassFp();
-  eq('7ה. ⛔ משתמש שאינו admin — אפס פניות לרשת', SBLOG.length, 0);
-}
-{
-  const rows = USERS();
-  const S = boot({ netFail: true, tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' }; S.AUTH.offlineLogin = true;
-  await S.ysBackfillPassFp();
-  eq('7ו. ⛔ אופליין — אפס פניות לרשת', SBLOG.length, 0);
-}
-{
-  const rows = USERS();
-  const S = boot({ missingCols: true, tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' };
-  await S.ysBackfillPassFp();
-  T('7ז. מיגרציה שטרם הורצה ⇒ דילוג שקט, בלי זריקה', rows.every((r) => !r.pass_fp));
+  T('7א. ⛔ `ysBackfillPassFp` אינה בקוד', SRC.indexOf('function ysBackfillPassFp') === -1);
+  T('7ב. ⛔ ואין לה אף אתר קריאה', SRC.indexOf('ysBackfillPassFp(') === -1);
+  T('7ג. ⛔ ו-`_ysFpBackfillDone` נעלם איתה', SRC.indexOf('_ysFpBackfillDone') === -1);
+  T('7ד. ⭐ ואין יותר אף שאילתה ששולפת `password_hash` כדי לגזור ממנה טביעה',
+    SRC.indexOf("select('id,password_hash')") === -1);
 }
 
 /* ── 8. יצירת/עריכת משתמש ושינוי סיסמה ─────────────────────────────────── */
@@ -469,6 +473,7 @@ sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
+  await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
   S.AUTH.user = { id: 2, username: 'moshe', full_name: 'משה', role: 'senior', active: true };
   DOM._m['pw-old'].value = '222222'; DOM._m['pw-new'].value = '246810';
   await S.changeMyPassword();
@@ -483,8 +488,10 @@ sec('8. saveUser / changeMyPassword');
 sec('9. confirmSwitch');
 async function doSwitch(targetId, pass, opts = {}) {
   const modal = mkEl('switch-user-modal'); modal._switchId = targetId;
-  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { ys_users: USERS() } },
+  const cloud = USERS();
+  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { ys_users: cloud } },
                  { domSeed: { 'switch-user-modal': modal } });
+  await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.ys_users_cache = JSON.stringify(opts.cache || CACHED);
   S.AUTH.user = { id: 1, username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
@@ -544,7 +551,7 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
   S.AUTH.user = { id: 1, role: 'admin' };
-  await S.ysBackfillPassFp();
+  await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
   await new Promise((r) => setTimeout(r, 30));
