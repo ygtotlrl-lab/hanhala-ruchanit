@@ -70,31 +70,30 @@ ok('17 · פרק סבב 38 קיים', r38 !== -1);
 /* ⚠️ שתי הבחנות, וזו שמכריעה מה מותר להשאיר:
    • אזכור של המפתח כ**מנגנון קיים** — אסור. שמות הפונקציות שנמחקו הם
      הסימן החד-משמעי לכך, ולכן הם נסרקים בנפרד.
-   • אזכור של הערך שעדיין יושב במסד וממתין למחיקת מנהל — **מותר ונדרש**,
-     והוא חי בפרק «פערים פתוחים» עם טריגר. פער כתוב הוא מציאות, לא
-     יכולת שאינה קיימת.
-   ⛔ מה שאסור הוא אזכור מחוץ לשני המקומות האלה. */
+   • ⭐ עד סבב 39 היה **מותר ונדרש** אזכור אחד — הערך שעדיין ישב במסד
+     וחיכה למחיקת מנהל, בפרק «פערים פתוחים» עם טריגר. פער כתוב הוא
+     מציאות, לא יכולת שאינה קיימת.
+   ⛔ המנהל מחק את הערך ב-2026-08-18 (נמדד: אפס ב-`kv`, ב-`kv_rishon`,
+     ב-`kv_ramataviv` וב-`kv_backup`), ושורת הפער נמחקה בסבב 39 — ולכן
+     מעכשיו אין אזכור מותר כלל מחוץ לפרקי הסבבים, וטענה 20 התהפכה. */
 const DEAD = ['getAttendance', 'saveAttendance', 'ysMergeAttend', 'togglePresent', 'recordTime'];
 ok('18 · ⛔ אין בתיעוד אזכור של אף פונקציה שנמחקה',
   DEAD.every((f) => DOC.slice(0, r38 === -1 ? DOC.length : r38).indexOf(f) === -1));
 
 const gapsStart = DOC.indexOf('## פערים פתוחים');
 const gapsEnd = DOC.indexOf('\n## ', gapsStart + 1);
-const inGaps = (pos) => gapsStart !== -1 && pos > gapsStart && (gapsEnd === -1 || pos < gapsEnd);
 const stray = [];
 for (const m of DOC.matchAll(BARE)) {
   const pos = m.index;
-  if (r38 !== -1 && pos > r38) continue;                       // פרק הסבב
-  if (inGaps(pos)) continue;                                   // פער מתועד עם טריגר
+  if (r38 !== -1 && pos > r38) continue;                       // פרקי הסבבים
   const line = DOC.slice(DOC.lastIndexOf('\n', pos) + 1, DOC.indexOf('\n', pos));
   if (line.indexOf('test_round38_attend') !== -1) continue;    // שורת רישום הבדיקה
   stray.push(line.trim());
 }
-ok('19 · ⛔ אין אזכור מחוץ לפרק הסבב ולפרק הפערים' +
+ok('19 · ⛔ אין אזכור מחוץ לפרקי הסבבים' +
   (stray.length ? ' — נמצא: ' + stray[0] : ''), stray.length === 0);
-ok('20 · ⭐ והפער עצמו רשום, עם טריגר',
-  gapsStart !== -1 && bare(DOC.slice(gapsStart, gapsEnd === -1 ? DOC.length : gapsEnd)) > 0 &&
-  DOC.slice(gapsStart, gapsEnd === -1 ? DOC.length : gapsEnd).indexOf('הטריגר') !== -1);
+ok('20 · ⭐ ושורת הפער נמחקה — הפער נסגר בסבב 39',
+  gapsStart !== -1 && bare(DOC.slice(gapsStart, gapsEnd === -1 ? DOC.length : gapsEnd)) === 0);
 
 /* ── ה. מוטציות ────────────────────────────────────────────────────────── */
 console.log('  — מוטציות —');
@@ -119,6 +118,15 @@ console.log('  — מוטציות —');
   const k = /function public\.bk_retention_keys\(\)[\s\S]*?\$\$;/.exec(mut);
   ok('24 · מוטציה: החזרתו לרשימת-ההיתר לבדה מפילה את טענות 15 ו-16',
     !!k && bare(k[0]) === 1);
+}
+
+{
+  /* ⭐ המוטציה שנועדה לטענה 20 שהתהפכה בסבב 39 — החזרת שורת הפער
+     לפרק «פערים פתוחים» אחרי שהערך כבר נמחק מהמסד. */
+  const gaps = DOC.slice(gapsStart, gapsEnd === -1 ? DOC.length : gapsEnd);
+  const mut = gaps + '\n- **מחיקת המפתח `ys_attend`** — **הטריגר:** המנהל.\n';
+  ok('25 · מוטציה: החזרת שורת הפער מפילה את טענה 20',
+    bare(gaps) === 0 && bare(mut) > 0);
 }
 
 console.log((fail ? '✗' : '✓') + ` סבב 38 (ys_attend) — ${pass} טענות עברו, ${fail} נכשלו`);
