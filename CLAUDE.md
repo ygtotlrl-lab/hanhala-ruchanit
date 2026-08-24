@@ -165,7 +165,7 @@ git push -u origin <שם-הענף>   # דחיפה לענף העבודה — לא
 (זהה למעטפת של schar-limud, פרט לזהות): טוענת את
 `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` **מהרשת** — לא מנכסים מוטבעים.
 פרטים מלאים ב-`android/README.md`. עיקרי הדברים:
-- **package `com.hanhala.ruchanit`, versionCode 2**, minSdk 21 / targetSdk 34,
+- **package `com.hanhala.ruchanit`, versionCode 3**, minSdk 21 / targetSdk 34,
   `usesCleartextTraffic=false`.
 - **לעולם לא TWA ולא PWABuilder** — סינון התוכן במכשירים חוסם את כרום (נמדד ב-gius).
 - ⛔ **אין נכסים מוטבעים** (עותק `file://` = origin אחסון נפרד = אובדן נתונים שקט)
