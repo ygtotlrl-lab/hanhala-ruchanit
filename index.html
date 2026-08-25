@@ -329,12 +329,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .auth-err{color:#e53e3e;font-size:.82rem;margin-top:8px;min-height:18px}
 .auth-spinner{display:none;margin:10px auto 0;width:28px;height:28px;border:3px solid #dde3ef;border-top-color:var(--navy);border-radius:50%;animation:auth-spin .7s linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
-#lock-warn{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;display:flex;align-items:center;justify-content:center}
-#lock-warn.hidden{display:none}
-.lock-box{background:#fff;border-radius:14px;padding:28px 24px;text-align:center;max-width:280px;width:90%}
-.lock-box h3{color:var(--navy);margin:0 0 8px}
-.lock-box p{color:var(--text2);font-size:.88rem;margin:0 0 18px}
-.lock-box .btn{width:100%}
 #pg-settings .ss{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
 #pg-settings .ss-t{font-size:.95rem;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .ur{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f0f4fa}
@@ -390,16 +384,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
 
-  </div>
-</div>
-
-<!-- ===== אזהרת נעילה ===== -->
-<div id="lock-warn" class="hidden">
-  <div class="lock-box">
-    <div style="font-size:2rem;text-align:center;margin-bottom:6px">⚠️</div>
-    <h3>האפליקציה תינעל</h3>
-    <p>דקה של חוסר פעילות נותרה.<br>לחץ להמשך.</p>
-    <button class="btn" onclick="resetLockTimer()">אני כאן ✋</button>
   </div>
 </div>
 
@@ -1100,11 +1084,6 @@ var AUTH = {
   user: null,          // {id, username, full_name, role}
   offlineLogin: false, // true = אומת מול עותק מקומי (ללא רשת); מאומת מחדש כשהרשת חוזרת
   perms: null,         // {students:{admin:'edit',senior:'view',junior:'none'}, ...}
-  lockTimer: null,
-  warnTimer: null,
-  LOCK_MS: 5*60*1000,  // 5 דקות
-  WARN_MS: 4*60*1000,  // אזהרה אחרי 4 דקות (דקה לפני נעילה)
-
   MODULES: [
     {id:'students', label:'👥 מצבת תלמידים'},
     {id:'attend',   label:'✅ שמירת סדרים'},
@@ -1454,7 +1433,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v58'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v59'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1622,7 +1601,7 @@ async function _doLoginInner() {
     if (mr) mr.textContent = AUTH.ROLE_LABELS[u.role] || u.role;
     var hr = document.getElementById('hdr-role'); if (hr) hr.textContent = AUTH.ROLE_LABELS[u.role] || '';
   } catch(e) { console.warn('[login] header update failed:', e); }
-  try { resetLockTimer(); } catch(e) { console.warn('[login] resetLockTimer:', e); }
+  try { lkReset(); } catch(e) { console.warn('[login] lkReset:', e); }
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('⏳ [4/4] טוען נתונים...');
   showPage('home');
@@ -1631,36 +1610,19 @@ async function _doLoginInner() {
 // ---- יציאה ----
 function doLogout() {
   AUTH.user = null;
-  clearTimeout(AUTH.lockTimer);
-  clearTimeout(AUTH.warnTimer);
+  lkStop();
   document.getElementById('auth-screen').classList.remove('hidden');
   var wrap = document.getElementById('user-avatar-wrap');
   if (wrap) wrap.style.display = 'none';
   document.getElementById('auth-user').value = '';
   document.getElementById('auth-pass').value = '';
   document.getElementById('auth-err').textContent = '';
-  document.getElementById('lock-warn').classList.add('hidden');
   showPageInternal('home');
 }
 
 // ---- נעילה אוטומטית ----
-function resetLockTimer() {
-  document.getElementById('lock-warn').classList.add('hidden');
-  clearTimeout(AUTH.lockTimer);
-  clearTimeout(AUTH.warnTimer);
-  if (!AUTH.user) return;
-  AUTH.warnTimer = setTimeout(function() {
-    document.getElementById('lock-warn').classList.remove('hidden');
-  }, AUTH.WARN_MS);
-  AUTH.lockTimer = setTimeout(function() {
-    doLogout();
-  }, AUTH.LOCK_MS);
-}
-
-// אירועי פעילות משתמש לאיפוס טיימר
-['touchstart','click','keydown','scroll'].forEach(function(ev) {
-  document.addEventListener(ev, function() { if(AUTH.user) resetLockTimer(); }, {passive:true});
-});
+// ⭐ המנגנון עבר לליבה המשותפת (סבב 52) — `lkReset()` היא הידית שקוד
+//    האפליקציה קורא לה, ומאזיני הפעילות יושבים בתוך הליבה.
 
 // ---- טעינת הרשאות מ-Supabase (עם נפילה-חזרה לעותק מקומי באופליין) ----
 async function loadPerms() {
@@ -2175,7 +2137,7 @@ async function confirmSwitch() {
   if(mn) mn.textContent=u.full_name;
   var mr=document.getElementById('user-menu-role');
   if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
-  resetLockTimer();
+  lkReset();
   showPage('home');
   toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name);
 }
@@ -2733,6 +2695,8 @@ async function loadDash(){
   try { bkBoot(); } catch (e) { console.warn('[bk] bkBoot', e); }
   // ניסיון חוזר בסנכרון (סבב 44) — נקודת ההפעלה היחידה של המודול.
   try { rtyBoot(); } catch (e) { console.warn('[rty] rtyBoot', e); }
+  // נעילת חוסר-פעילות (סבב 52) — נקודת ההפעלה היחידה של המודול.
+  try { lkBoot(); } catch (e) { console.warn('[lk] lkBoot', e); }
   // מנגנון המשיכה (סבב 51) — נקודת ההפעלה היחידה של המודול.
   try { plBoot(); } catch (e) { console.warn('[pl] plBoot', e); }
   try { hwBoot(); } catch (e) { console.warn('[hw] hwBoot', e); }
@@ -4550,6 +4514,150 @@ function rtyBoot() {
   rtyArm();
 }
 /* ═══════════════ סוף מודול הניסיון החוזר ════════════════════════════════ */
+
+/* ── LK_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
+/* ⚠️ `active()` הוא «יש משתמש מחובר», ו-`lock()` הוא מסלול היציאה של
+   האפליקציה. ⛔ אין להוסיף כאן הודעה משלה (סבב 52) — חלון האזהרה של
+   הליבה הוא ההודעה, ותוספת פר-אפליקציה הייתה מחזירה בדיוק את ההפרש
+   שהסבב הזה סגר. */
+var LK_CFG = {
+  active: function () { return !!AUTH.user; },
+  lock:   function () { doLogout(); },
+};
+/* ═══ נעילת חוסר-פעילות — מודול משותף (סבב 52) ════════════════════════════
+   ⭐ **מה נשמר כאן:** משתמש שהתחבר ואינו נוגע במסך מקבל אחרי ארבע דקות
+   חלון אזהרה, ואחרי חמש הוא מוצא החוצה. זו שכבת ההגנה על מכשיר משותף
+   שנשאר פתוח על שולחן — לא על גניבת סיסמה.
+
+   ⛔ **הערכים אינם ברירת מחדל אלא מדידה (סבב 52)** — חמש וארבע הדקות
+   נמדדו ב-hanhala-ruchanit, שם המנגנון חי מאז ההקמה, וסבב 52 העתיק
+   אותם כלשונם. ⛔ אין לשנות אותם באפליקציה אחת בלבד: מנגנון שהוכרז
+   משותף ונבדל בערך הוא בדיוק «קיים רק באחת, בשקט» (כלל ברזל 14).
+
+   ⛔ **חלון האזהרה נבנה כאן ולא במסמך (סבב 52)** — עד הסבב הזה הוא היה
+   סימון HTML+CSS פר-אפליקציה, כלומר שלוש גרסאות של אותו רכיב. הליבה
+   בונה אותו בעצמה, בדיוק כמו סרגל ה-⏳, וזה מה שמאפשר לה להישאר זהה
+   בית-לבית בשלוש האפליקציות שיש בהן כניסה.
+
+   ⚠️ **`lkReset()` היא הידית שקוד האפליקציה רשאי לקרוא לה** — מסלול
+   הכניסה המוצלחת, שם המשתמש מתחיל להיות פעיל. מאזיני הפעילות שבתוך
+   הליבה קוראים לה מעצמם, ולכן אין צורך לפזר קריאות נוספות.
+   ⛔ **נקודת ההפעלה היחידה היא `lkBoot()` מפונקציית העלייה (סבב 52)** —
+   זו שקוראת גם ל-`lsBoot()` ול-`pendBoot()`. מנגנון בטיחות שתלוי במסלול
+   אחר נעצר בדיוק כשהמסלול ההוא אינו רץ (כלל ברזל 12).
+
+   ⚠️ **הנעילה אינה תפוגת סשן** — היא נמדדת מהפעולה האחרונה ולא מרגע
+   הכניסה, ולכן משתמש שעובד ברציפות אינו מוצא החוצה באמצע עבודה.
+
+   ה-API: `lkBoot` · `lkReset` · `lkStop` · `lkShown` · `lkState`.
+   מעליו `LK_CFG` — הדבר היחיד שנבדל בין האפליקציות.
+   ═══════════════════════════════════════════════════════════════════════ */
+var LK_LOCK_MS = 5 * 60 * 1000;   // נעילה אחרי חמש דקות ללא פעילות
+var LK_WARN_MS = 4 * 60 * 1000;   // אזהרה דקה לפניה
+var LK_EVENTS  = ['touchstart', 'click', 'keydown', 'scroll'];
+var _lkLockT = null, _lkWarnT = null, _lkWired = false;
+
+function _lkActive() {
+  try { return !!(typeof LK_CFG === 'object' && LK_CFG && LK_CFG.active && LK_CFG.active()); }
+  catch (e) { return false; }
+}
+function _lkStyle() {
+  if (typeof document === 'undefined' || document.getElementById('lk-css')) return;
+  var s = document.createElement('style');
+  s.id = 'lk-css';
+  s.textContent =
+    '#lk-warn{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;' +
+    'display:flex;align-items:center;justify-content:center;font:inherit}' +
+    '#lk-warn.lk-hidden{display:none}' +
+    '#lk-warn .lk-box{background:#fff;color:#1a2340;border-radius:14px;' +
+    'padding:28px 24px;text-align:center;max-width:280px;width:90%}' +
+    '#lk-warn .lk-ico{font-size:2rem;margin-bottom:6px}' +
+    '#lk-warn .lk-ttl{font-weight:700;font-size:1.05rem;margin-bottom:8px}' +
+    '#lk-warn .lk-txt{font-size:.88rem;opacity:.75;margin-bottom:18px;line-height:1.6}' +
+    '#lk-warn button{width:100%;border:0;border-radius:10px;padding:11px 16px;' +
+    'font:inherit;font-weight:600;cursor:pointer;background:#1a3a6b;color:#fff}';
+  (document.head || document.documentElement).appendChild(s);
+}
+function _lkWarnEl() {
+  if (typeof document === 'undefined' || !document.body) return null;
+  var el = document.getElementById('lk-warn');
+  if (el) return el;
+  _lkStyle();
+  el = document.createElement('div');
+  el.id = 'lk-warn';
+  el.className = 'lk-hidden';
+  var box = document.createElement('div');
+  box.className = 'lk-box';
+  var ico = document.createElement('div');
+  ico.className = 'lk-ico';
+  ico.textContent = '⚠️';
+  var ttl = document.createElement('div');
+  ttl.className = 'lk-ttl';
+  ttl.textContent = 'האפליקציה תינעל';
+  var txt = document.createElement('div');
+  txt.className = 'lk-txt';
+  txt.textContent = 'דקה של חוסר פעילות נותרה. לחץ להמשך.';
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = 'אני כאן ✋';
+  btn.onclick = function () { lkReset(); };
+  box.appendChild(ico); box.appendChild(ttl); box.appendChild(txt); box.appendChild(btn);
+  el.appendChild(box);
+  document.body.appendChild(el);
+  return el;
+}
+function lkShown() {
+  var el = (typeof document !== 'undefined') ? document.getElementById('lk-warn') : null;
+  return !!(el && el.className.indexOf('lk-hidden') < 0);
+}
+function _lkHide() { var el = _lkWarnEl(); if (el) el.className = 'lk-hidden'; }
+function _lkShow() { var el = _lkWarnEl(); if (el) el.className = ''; }
+
+// איפוס המונה. ⛔ הסדר קבוע: מסתירים, מנקים, ורק אז דורכים מחדש — דריכה
+// לפני הניקוי הייתה משאירה טיימר ישן חי ונועלת מוקדם.
+function lkReset() {
+  _lkHide();
+  if (_lkLockT) { clearTimeout(_lkLockT); _lkLockT = null; }
+  if (_lkWarnT) { clearTimeout(_lkWarnT); _lkWarnT = null; }
+  if (!_lkActive()) return false;
+  _lkWarnT = setTimeout(function () { _lkShow(); }, LK_WARN_MS);
+  _lkLockT = setTimeout(function () {
+    _lkHide();
+    try { if (typeof LK_CFG === 'object' && LK_CFG && LK_CFG.lock) LK_CFG.lock(); }
+    catch (e) { console.warn('[lk] lock', e); }
+  }, LK_LOCK_MS);
+  return true;
+}
+
+// עצירה מלאה — מסלול היציאה. ⛔ אינה מסתמכת על `lkReset` (סבב 52): שם
+// הדריכה מחדש מותנית ב-`LK_CFG.active()`, ומסלול יציאה שמנקה את המשתמש
+// **אחרי** הקריאה היה נשאר עם טיימר דרוך שנועל את מסך הכניסה.
+function lkStop() {
+  if (_lkLockT) { clearTimeout(_lkLockT); _lkLockT = null; }
+  if (_lkWarnT) { clearTimeout(_lkWarnT); _lkWarnT = null; }
+  _lkHide();
+}
+
+function lkBoot() {
+  if (!_lkWired) {
+    _lkWired = true;
+    try {
+      for (var i = 0; i < LK_EVENTS.length; i++) {
+        document.addEventListener(LK_EVENTS[i], function () {
+          if (_lkActive()) lkReset();
+        }, { passive: true });
+      }
+    } catch (e) { console.warn('[lk] wiring', e); }
+  }
+  return lkReset();
+}
+
+function lkState() {
+  return { armed: !!_lkLockT, warned: !!_lkWarnT, shown: lkShown(),
+           lockMs: LK_LOCK_MS, warnMs: LK_WARN_MS };
+}
+/* ═══════════════ סוף מודול נעילת חוסר-הפעילות ═══════════════════════════ */
+
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
 /* ⚠️ בהנהלה החותמת היא שורת `ys_last_changed` שבטבלת `kv` — ⛔ המפתח היחיד
