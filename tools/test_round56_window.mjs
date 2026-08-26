@@ -58,9 +58,11 @@ function harness(y, m, d, extra) {
   const ctx = { window: win, Date: D, Intl, console, JSON, Math, String, Number, isFinite };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  /*  ⚠️ העוזרים נבנים **בתוך** ההקשר ולא מחוצה לו (סבב 56) — `ysHebDate`
-   *  בודקת `d instanceof Date`, ו-Date של ההקשר אינו Date של הבודק:
-   *  אובייקט תאריך שנוצר בחוץ היה נופל לנפילה-חזרה «היום» בשקט. */
+  /*  ⚠️ העוזרים נבנים **בתוך** ההקשר ולא מחוצה לו (סבב 56) — כך התרחיש
+   *  והשעון המזויף חולקים realm אחד. ⭐ הכשל שחייב את זה — `ysHebDate`
+   *  שבדקה `d instanceof Date` ונפלה-חזרה ל«היום» בשקט — **תוקן בסבב 57**
+   *  (`_ysIsDate`, ו-`tools/test_round57_date.mjs` אוכף זאת), ⛔ והבנייה
+   *  בתוך ההקשר נשארת מפני שהיא הדרך הנכונה ממילא. */
   vm.runInContext(CAL + '\n' + WIN + '\n' + (extra || '') + `
     this.__api = {
       ysHwWindowKeys: ysHwWindowKeys,

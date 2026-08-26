@@ -1025,15 +1025,41 @@ window.ysIntlHeb=function(d){
   }catch(e){ window._ysIntlOK=false; return null; }
 };
 
+/*  ⛔ אין לבדוק `d instanceof Date` ואין ליפול-חזרה ל«היום» (סבב 57) —
+ *  `instanceof` תלוי-realm: אובייקט תאריך שנוצר ב-realm אחר (iframe,
+ *  רתמת `vm`) מחזיר `false`, והשורה שהייתה כאן החליפה אותו **בשקט**
+ *  בתאריך של היום. שני כשלים בשורה אחת — בדיקה שתלויה במי יצר את
+ *  האובייקט, ⛔ ונפילה-חזרה שקטה שמציגה תאריך שגוי כאילו הוא נכון.
+ *  ⭐ הבדיקה כאן היא על **החוזה** (`getTime` שמחזיר מספר) ואינה
+ *  תלוית-realm; ⛔ וקלט שאינו עובר אותה מוחזר כ«לא תקף» ונרשם.
+ *  ⚠️ קריאה **בלי ארגומנט** היא חוזה קיים ומשמעה «היום» — היא נשארת,
+ *  ורק ארגומנט שנמסר ואינו תאריך תקף נחשב שגיאה.                       */
+window._ysIsDate=function(d){
+  return !!d&&typeof d.getTime==='function'&&!isNaN(d.getTime());
+};
+window._ysBadDates=[];
+window._ysBadDate=function(where,d){
+  var got;
+  try{ got=Object.prototype.toString.call(d); }catch(e){ got='?'; }
+  window._ysBadDates.push({at:Date.now(),where:where,got:got});
+  if(window._ysBadDates.length>12) window._ysBadDates.shift();
+  try{ console.warn('ysHebDate: קלט שאינו תאריך תקף ב-'+where+' — '+got); }catch(e){}
+};
+window._ysHebNone=function(src){
+  return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',yearLabel:'',
+          yearLabelFull:'',leap:false,ok:false,src:src};
+};
+
 // ---- הפונקציה המרכזית ----
 // מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
 window.ysHebDate=function(d){
-  d=(d instanceof Date&&!isNaN(d.getTime()))?d:new Date();
+  if(d===undefined||d===null) d=new Date();
+  if(!window._ysIsDate(d)){ window._ysBadDate('ysHebDate',d); return window._ysHebNone('bad-input'); }
   // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
   var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
   var r=window.ysIntlHeb(nd),src='intl';
   if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
-  if(!r||!r.hy){ return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',yearLabel:'',yearLabelFull:'',leap:false,ok:false,src:'none'}; }
+  if(!r||!r.hy){ return window._ysHebNone('none'); }
   var names=window.ysHebMonthNames(r.hy);
   return {
     year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
@@ -1046,7 +1072,10 @@ window.ysHebDate=function(d){
 
 // ---- צרכני התצוגה — כולם יושבים על ysHebDate ----
 function hebrewDate(jsDate){
-  jsDate=(jsDate instanceof Date&&!isNaN(jsDate.getTime()))?jsDate:new Date();
+  /*  ⛔ אותו כלל בדיוק כמו ב-ysHebDate (סבב 57) — קלט פגום אינו הופך
+   *  ל«היום»; מחרוזת ריקה היא מה שכל צרכני התצוגה כאן כבר יודעים לטפל בו. */
+  if(jsDate===undefined||jsDate===null) jsDate=new Date();
+  if(!window._ysIsDate(jsDate)){ window._ysBadDate('hebrewDate',jsDate); return ''; }
   var h=window.ysHebDate(jsDate);
   if(!h.ok) return '';
   return 'יום '+window.YS_DOW_HEB[jsDate.getDay()]+', '+h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
@@ -1437,7 +1466,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v62'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v63'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
