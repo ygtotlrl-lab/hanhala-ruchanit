@@ -1437,7 +1437,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v60'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v61'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2828,7 +2828,7 @@ function _ysRecId(r) { return (r && r.id != null) ? r.id : null; }
    ב-timeout — בשני המקרים אין `rows` ולכן לא מפנים דבר. */
 function _ysVerify(kvKey) {
   return function () {
-    return ysKvGet(kvKey).then(function (rows) {
+    return ysCloudGet(kvKey).then(function (rows) {
       return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
     });
   };
@@ -4887,12 +4887,14 @@ function plBoot() {
 
 
 /* ── HW_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
-/* ⚠️ המודול נכלל כאן אך **רדום** בכוונה (סבב 35): הנתונים עדיין יושבים
-   כמפתחות `kv` שלמים (מטריצה שורה 15), ואין רשומות-שורה שאפשר לפנות
-   פר-רשומה. ההפעלה תיעשה בשלב ב של מעבר הטבלאות, עם חלון של חודש עברי
-   נוכחי + קודם (העזרים כבר קיימים: `ysHebDate` / `_hcG` / `ysHebYearInfo`).
-   ⛔ אין להפעיל לפני מעבר הטבלאות (סבב 35) — «פינוי» מעל ערך `kv` שלם
-   היה מוחק את הערך כולו, לא רשומות ישנות שבתוכו.
+/* ⚠️ המודול נכלל כאן אך **רדום** בכוונה (סבב 35): עד סבב 55 הנתונים נקראו
+   כמפתחות `kv` שלמים, ⛔ ו«פינוי» מעל ערך `kv` שלם היה מוחק את הערך כולו
+   ולא רשומות ישנות שבתוכו (סבב 35).
+   ⭐ **מסבב 55 החסם הטכני הוסר** — הקריאה היא פר-שורה, ולרשומה שתפונה
+   מהדיסק יש מאיפה לחזור. ⛔ ובכל זאת הוא נשאר רדום (סבב 55): הפעלתו הופכת
+   את שורה 17 במטריצת היכולות, והמטריצה היא בלוק `SHARED` שאין לשנות
+   בשניים מארבעת הריפו (כלל ברזל 13). ההפעלה היא סבב שנפתח עם ארבעתם, והיא
+   רשומה כפער עם טריגר.
    ⭐ כפתור השחזור פעיל גם ברדימות — הוא אינו תלוי בחלון. */
 var HW_CFG = {
   enabled: false,
@@ -5520,6 +5522,150 @@ async function ysRowsPushStudents(arr) {
     return { ok: true, n: rows.length };
   } catch (e) { return { ok: false, n: 0 }; }
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   שלב ב — מקור הקריאה עובר לטבלאות (סבב 55)
+   ══════════════════════════════════════════════════════════════════════════
+   עד כאן הטבלאות היו **בצל**: הכתיבה הכפולה מילאה אותן מ-18.8, אבל כל
+   קריאה עברה דרך `ysKvGet` — כלומר הן נמדדו ולא שימשו. ⭐ מהסבב הזה
+   הקריאה של שני המפתחות שעברו (`ys_attend_sessions` · `ys_students`) היא
+   מהטבלאות, דרך משפך יחיד — `ysCloudGet`.
+
+   ⭐ **המשפך אחד ולא שישה** — שישה אתרי קריאה נמדדו כאן, וששתם עוברים
+      דרכו. ⛔ אין לקרוא ל-`ysKvGet` ישירות למפתח שעבר (סבב 55) — מסלול
+      קריאה שני היה מחזיר תמונת עולם אחרת בדיוק במקום שבו האחת אמורה
+      להחליף את השנייה.
+
+   ⛔ **הנפילה-חזרה ל-`kv` נשמרת (סבב 55)** — טבלה שנכשלה, שגיאת רשת או
+      תשובה ריקה מחזירות את הקריאה ל-`kv`, שממשיך להתעדכן כל עוד
+      `YS_KV_LEGACY_WRITE` דלוק. זה מה שהופך את החזרה להחלפת דגל אחד ולא
+      לשחזור נתונים. ⛔ אין למחוק אותה בסבב הזה — היא יורדת בסבב הניקוי,
+      אחרי שהמפתחות עצמם נמחקים מהמסד.
+
+   ⭐ **הכלל שמונע תחיית סימון שנמחק (סבב 55, נמדד):** ל-`kv` הסימון הוא
+      מפתח במפה, ומחיקתו היא **היעלמות המפתח** — ואילו `ysMarkRows` פולטת
+      שורה רק לסימון שקיים במפה, ולכן שורת סימון שנמחק אינה מתעדכנת
+      לעולם ונשארת חיה בטבלה. ⛔ ולכן הקורא אינו מקבל כל שורה חיה: הוא
+      דורש שחותמת השורה **לא תהיה ישנה** מחותמת האב. הנימוק מדיד — כל
+      דחיפה חותמת מחדש את כל סימוני הסדר בחותמת האב, ולכן סימון שנשאר
+      נושא בדיוק את חותמת האב וסימון שנמחק נשאר מאחור. נמדד ב-26.8:
+      15,767 מתוך 15,767 שורות הסימון נושאות בדיוק את חותמת האב שלהן.
+   ══════════════════════════════════════════════════════════════════════════ */
+var YS_ROWS_READ = true;
+var YS_ROWS_READ_KEYS = { ys_attend_sessions: 'attend', ys_students: 'students' };
+
+/* ⛔ שליפה בעמודים ולא בבקשה אחת (סבב 55) — טבלת הסימונים מחזיקה 15,767
+   שורות, וזה אותו שיקול בדיוק שהוליד את `YS_ROWS_CHUNK` בכתיבה (סבב 36):
+   גוף בקשה בסדר גודל כזה נדחה או נחתך. ⚠️ ובנוסף PostgREST יודע להגביל
+   את מספר השורות בתשובה (`db-max-rows`) — ⚠️ **נמדד ב-26.8 שהפרויקט הזה
+   אינו מגדיר אותו**, ⛔ אבל זו הגדרת שרת ולא חוזה: ביום שבו תוגדר,
+   התשובה תיחתך **בשקט**, וקורא שמקבל חצי מהסימונים אינו יודע שקיבל חצי.
+   ⛔ תשובה חלקית שנראית שלמה גרועה מ«ריק אינו ראיה».
+   ⛔ ולכן עמוד שנכשל מחזיר `null` ולא מה שהספיק להגיע — נפילה-חזרה
+   ל-`kv` עדיפה על תמונה חסרה. */
+var YS_ROWS_PAGE = 1000;
+async function _ysRowsPaged(table, cols, order) {
+  var out = [], from = 0;
+  for (;;) {
+    var q = SB.from(table).select(cols);
+    if (order) q = q.order(order, { ascending: true });
+    var res = await withTimeout(q.range(from, from + YS_ROWS_PAGE - 1));
+    if (!res || res.error || !Array.isArray(res.data)) return null;
+    out = out.concat(res.data);
+    if (res.data.length < YS_ROWS_PAGE) return out;
+    from += YS_ROWS_PAGE;
+    // ⛔ תקרת בטיחות (סבב 55) — לולאה שתלויה בגודל התשובה חייבת גבול
+    //    עליון משלה, אחרת מסד שמחזיר עמוד מלא לנצח תולה את הדף.
+    if (from > 500000) return out;
+  }
+}
+/* שחזור רשומת ה-`kv` משתי הטבלאות — ההיפוך המדויק של `ysSessionRow`
+   ו-`ysMarkRows`. ⛔ שדה שערכו `null` בטבלה אינו נכתב לרשומה (סבב 55) —
+   ב-`kv` הוא פשוט **נעדר**, ו-`null` מפורש היה משנה את צורת הרשומה ומזליג
+   הפרש לתוך מנוע המיזוג. */
+function _ysRowSet(rec, k, v) { if (v !== null && v !== undefined) rec[k] = v; }
+async function ysRowsGetSessions(kind) {
+  kind = kind || 'attend';
+  var cfg = YS_ROWS_KINDS[kind];
+  if (!cfg || !YS_ROWS || !SB) return { ok: false, data: null };
+  try {
+    var rs = await _ysRowsPaged(cfg.parent,
+      'client_id,session,date_iso,date_heb,filled_by,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at',
+      'client_id');
+    if (!rs) return { ok: false, data: null };
+    var mcols = 'session_client_id,student_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
+    var rm = await _ysRowsPaged(cfg.child, mcols, 'client_id');
+    if (!rm) return { ok: false, data: null };
+    var byId = {}, out = [];
+    rs.forEach(function (r) {
+      if (!r || r.client_id == null) return;
+      var rec = { id: String(r.client_id), marks: {} };
+      _ysRowSet(rec, 'session', (r.session == null) ? '' : String(r.session));
+      _ysRowSet(rec, 'date_iso', (r.date_iso == null) ? '' : String(r.date_iso));
+      if (r.date_heb && typeof r.date_heb === 'object') rec.date_heb = r.date_heb;
+      _ysRowSet(rec, 'filled_by', r.filled_by);
+      _ysRowSet(rec, 'filled_by_name', r.filled_by_name);
+      _ysRowSet(rec, 'created_at', r.created_at);
+      _ysRowSet(rec, 'createdBy', r.created_by);
+      _ysRowSet(rec, 'deletedBy', r.deleted_by);
+      if (typeof r.open === 'boolean') rec.open = r.open;
+      if (r.deleted) rec.deleted = true;
+      rec.updatedAt = Number(r.updated_at) || 0;
+      byId[rec.id] = rec;
+      out.push(rec);
+    });
+    rm.forEach(function (m) {
+      if (!m || m.deleted) return;
+      var rec = byId[String(m.session_client_id)];
+      if (!rec) return;
+      // ⛔ שורה שחותמתה ישנה מחותמת האב היא סימון שנמחק (סבב 55) — ר'
+      //    הנימוק המדוד בכותרת הבלוק.
+      if ((Number(m.updated_at) || 0) < rec.updatedAt) return;
+      var mk = { s: (m.status == null) ? '' : String(m.status), min: Math.round(Number(m.minutes) || 0) };
+      if (cfg.note && m.note != null && m.note !== '') mk.note = String(m.note);
+      rec.marks[String(m.student_id)] = mk;
+    });
+    // ⚠️ סדר דטרמיניסטי — כרונולוגי ואז לפי מזהה. ⛔ אין להסתמך על הסדר
+    //    שהמסד מחזיר (סבב 55) — בלי `ORDER BY` הוא נקבע לפי תוכנית הריצה,
+    //    וזה בדיוק הבאג שנמדד ב-yoman בסבב 31.
+    out.sort(function (a, b) {
+      var da = String(a.date_iso || ''), db = String(b.date_iso || '');
+      if (da !== db) return da < db ? -1 : 1;
+      return String(a.id) < String(b.id) ? -1 : 1;
+    });
+    return { ok: true, data: out };
+  } catch (e) { return { ok: false, data: null }; }
+}
+/* המצבה — כאן `data` מחזיקה את הרשומה כולה, ולכן השחזור הוא העתקה. */
+async function ysRowsGetStudents() {
+  if (!YS_ROWS || !SB) return { ok: false, data: null };
+  try {
+    var rs = await _ysRowsPaged('ys_students_rows', 'client_id,updated_at,deleted,data', 'client_id');
+    if (!rs) return { ok: false, data: null };
+    var out = [];
+    rs.forEach(function (r) {
+      if (!r || !r.data || typeof r.data !== 'object') return;
+      out.push(r.data);
+    });
+    return { ok: true, data: out };
+  } catch (e) { return { ok: false, data: null }; }
+}
+async function ysRowsGet(kvKey) {
+  var k = YS_ROWS_READ_KEYS[kvKey];
+  if (!YS_ROWS_READ || !k) return { ok: false, data: null };
+  return (k === 'students') ? ysRowsGetStudents() : ysRowsGetSessions(k);
+}
+/* ⭐ משפך הקריאה היחיד. מחזיר בדיוק את מה ש-`ysKvGet` החזיר — מערך או
+   `null` — ולכן אף קורא לא נדרש להשתנות מעבר להחלפת השם.
+   ⛔ תשובה ריקה נחשבת «אין ראיה» ונופלת ל-`kv` (סבב 55) — טבלה שטרם
+   אוכלסה הייתה נקראת אחרת כ«הענן ריק», והמיזוג היה מוחק. */
+async function ysCloudGet(kvKey) {
+  var r = null;
+  try { r = await ysRowsGet(kvKey); } catch (e) { r = null; }
+  if (r && r.ok && Array.isArray(r.data) && r.data.length) {
+    return r.data;
+  }
+  return ysKvGet(kvKey);
+}
 /* ═══ סוף שכבת השורות ═══════════════════════════════════════════════════ */
 // מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-ysPullFromCloud עוברים
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
@@ -5829,7 +5975,7 @@ async function ysPushToCloud() {
     var _t0 = Date.now();   // לפני קריאת המצב המקומי — ראה atSaveData
     var localSt = _ysStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
-    var remoteSt = null; try { remoteSt = await ysKvGet('ys_students'); } catch(e1) {}
+    var remoteSt = null; try { remoteSt = await ysCloudGet('ys_students'); } catch(e1) {}
     var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students');
     _ysStudentsSaveRaw(mergedSt);
     var r = await ysKvSet('ys_students', mergedSt);
@@ -5915,7 +6061,7 @@ async function ysPullFromCloud() {
     var meta = ysSettingsMeta();
 
     // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר
-    var s = await ysKvGet('ys_students');
+    var s = await ysCloudGet('ys_students');
     if (s !== null && Array.isArray(s)) {
       var pullMigrated = false;
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
@@ -5937,7 +6083,7 @@ async function ysPullFromCloud() {
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
     // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
-    var atSess = await ysKvGet('ys_attend_sessions');
+    var atSess = await ysCloudGet('ys_attend_sessions');
     if (atSess && Array.isArray(atSess)) {
       var _atLocal = []; try { _atLocal = JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]'); } catch(eAt) {}
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
@@ -7251,7 +7397,7 @@ async function atSaveCfg(cfg) {
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
-  try { var v=await ysKvGet('ys_attend_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
+  try { var v=await ysCloudGet('ys_attend_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
   try { var lc=localStorage.getItem('ys_attend_sessions'); if(lc){window._atData=JSON.parse(lc);return window._atData;} } catch(e){}
   window._atData=[]; return window._atData;
 }
@@ -7264,7 +7410,7 @@ async function atSaveData(data) {
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _atLocalN=ysCount(data);
-    var _atRemote=null; try { _atRemote=await ysKvGet('ys_attend_sessions'); } catch(eR){}
+    var _atRemote=null; try { _atRemote=await ysCloudGet('ys_attend_sessions'); } catch(eR){}
     if (Array.isArray(_atRemote)) {
       data=_ysSessionsMerge(_atRemote, data, 'ys_attend_sessions');
       window._atData=data;
