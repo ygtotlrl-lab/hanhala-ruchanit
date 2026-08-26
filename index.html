@@ -5476,6 +5476,16 @@ var YS_KV_LEGACY_WRITE = true;
    שהשקילות אומתה — קריאה מטבלה ריקה מציגה יומן שינה ריק. */
 var YS_SLEEP_ROWS = false;
 
+/* ⛔ מקור החותמת של הגדרות ה-`kv` — כבוי עד שתרוץ `migrations/013` (סבב 62).
+   ⭐ הרקע: `ys_settings_meta` הוא **מנגנון פיצוי** על כך של-`kv` אין
+   `updated_at`, בעוד ש-`sl_settings` ו-`g_config` — אותו מבנה בדיוק —
+   כן נושאות אחת. ⚠️ ונמדד ב-26.8 שהפיצוי מת: הערך בענן הוא `{}`, כלומר
+   `rts` תמיד 0, התנאי `rts > lts` לעולם אינו מתקיים, ⛔ ו«האחרון שדוחף
+   מנצח» — הגדרות והרשאות נדרסות בלי תנאי.
+   ⛔ אין להדליק לפני שהמיגרציה רצה — `updated_at` שאינו קיים חוזר כ-0
+   ומחזיר בדיוק את אותו כשל, רק דרך מסלול אחר. */
+var YS_KV_UPDATED_AT = false;
+
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
       `ysRowsPushSessions` (סבב 39) — שני עותקים של מסלול הכתיבה הם שתי
@@ -5810,6 +5820,19 @@ async function ysCloudGet(kvKey) {
 // מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-ysPullFromCloud עוברים
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
 // שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
+/* ⛔ חותמת השורה של מפתח `kv` — ⚠️ **נכשלת סגור ומחזירה 0** (סבב 62).
+   0 פירושו «אין ראיה שהענן חדש יותר», ולכן המסלול נופל-חזרה להתנהגות
+   הקודמת (דחיפה) במקום לאמץ ערך מרוחק על סמך חוסר-ידיעה — ⛔ אימוץ על
+   סמך כשל הוא הסקה ולא ראיה (כלל ברזל 6). */
+async function ysKvUpdatedAt(key) {
+  try {
+    var r = await withTimeout(SB.from('kv').select('updated_at').eq('key', key).maybeSingle());
+    if (!r || r.error || !r.data || !r.data.updated_at) return 0;
+    var t = Date.parse(r.data.updated_at);
+    return isFinite(t) ? t : 0;
+  } catch (e) { return 0; }
+}
+
 function ysKvGet(key) {
   return withTimeout(SB.from('kv').select('value').eq('key', key).single()).then(function(r){
     if (r && r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
@@ -6152,7 +6175,13 @@ async function ysPushToCloud() {
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
       var sk = settingsKeys[i];
-      var lts = meta[sk.key] || 0, rts = remoteMeta[sk.key] || 0;
+      /* ⭐ מקור החותמת המרוחקת (סבב 62): `updated_at` של השורה עצמה כשהדגל
+         דלוק, והמפה הישנה כשאינו. ⛔ ושני המסלולים אינם רצים יחד — מפה
+         שממשיכה להתעדכן לצד עמודה היא בדיוק מקור אמת שני.
+         ⚠️ הצד המקומי (`lts`) נשאר המפה בכל מקרה: זו חותמת הכתיבה של
+         **המכשיר הזה**, והיא אינה קיימת בענן מעצם הגדרתה. */
+      var lts = meta[sk.key] || 0;
+      var rts = YS_KV_UPDATED_AT ? await ysKvUpdatedAt(sk.key) : (remoteMeta[sk.key] || 0);
       if (rts > lts) {
         // הענן חדש יותר — אמץ מקומית במקום לדרוס
         var rv = null; try { rv = await ysKvGet(sk.key); } catch(e5) {}
@@ -6166,6 +6195,14 @@ async function ysPushToCloud() {
     var mm = {};
     [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
     lsSet('ys_settings_meta', JSON.stringify(mm));
+    /* ⛔ המפה מפסיקה לעלות לענן ברגע שהעמודה סמכותית (סבב 62) — מפה
+       שממשיכה להיכתב לצד `updated_at` היא מקור אמת שני, וזה בדיוק מה
+       שכלל ברזל 12 (הממד הרביעי) מחייב להסיר כשהמבנה תוקן.
+       ⚠️ המפה **המקומית** נשארת: היא נושאת את `lts`, חותמת הכתיבה של
+       המכשיר, שאין לה מקבילה בענן.
+       ⛔ ומחיקת המפתח מהמסד היא פעולת מנהל ואינה נעשית כאן (סבב 30) —
+       כיבוי ומחיקה בסבבים נפרדים, אחרת אין חלון לגלות טעות. */
+    if (YS_KV_UPDATED_AT) return lastErr ? {error: lastErr} : {};
     var r = await ysKvSet('ys_settings_meta', mm);
     return (r && r.error) ? r : (lastErr ? {error: lastErr} : r);
   });
