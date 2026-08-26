@@ -1466,7 +1466,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v63'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v64'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3719,15 +3719,21 @@ var BK_CFG = {
     var out = [
       { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id' },
       { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
-      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' },
-      /* ⭐ סבב 39 — שכבת השורות של השינה. ⚠️ מפתח הגיבוי נושא סיומת `_rows`
-         דווקא מפני ששם הטבלה זהה לשם מפתח ה-`kv` (`ys_sleep_sessions`),
-         ובלעדיה גיבוי הטבלה היה דורס את גיבוי ה-`kv` הישן.
-         ⛔ ושניהם נוספו באותו סבב לרשימת-ההיתר של `migrations/004` — מפתח
-         גיבוי שאינו שם אינו מתפנה לעולם (ההיסט של השלמת סבב 35ג). */
+      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
+    ];
+    /* ⛔ שני מקורות השינה יושבים מאחורי `YS_SLEEP_ROWS` (סבב 62) — הטבלאות
+       מעולם לא נוצרו (`009`+`010` נכתבו ולא הורצו), ומקור שאינו קיים מחזיר
+       `rt.error`: ⇒ הדגל היומי לא נכתב ⇒ הגריעה לא רצה ⇒ הלולאה רצה בכל
+       עלייה במקום פעם ביום. ⚠️ נמדד ב-26.8 מול המסד — אפס טבלאות,
+       66 גיבויים ביום במקום ~13.
+       ⚠️ ומחרוזות המפתח נשארות בגוף הפונקציה בכוונה: `test_round35c_cron`
+       גוזר מכאן את תרומת האפליקציה לרשימת-ההיתר, ומפתח שאינו שם אינו
+       מתפנה לעולם — כלומר הרשימה חייבת לכסות אותם כבר עכשיו, ליום שבו
+       הדגל יידלק. */
+    if (YS_SLEEP_ROWS) out.push(
       { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
       { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
-    ];
+    );
     return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
             'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
             'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
@@ -3919,7 +3925,7 @@ async function bkMaybeDaily() {
   var src = _bkCfg('sources', []) || [];
   if (!src.length) return false;
   _bkRunning = true;
-  var ok = true, wrote = 0, same = 0;
+  var ok = true, wrote = 0, same = 0, failed = [];
   try {
     var pre = _bkCfg('prefix', '') || '';
     var secrets = _bkSecrets(), dailyKeys = [];
@@ -3933,9 +3939,17 @@ async function bkMaybeDaily() {
       //    כאן היא רשימת-ההיתר של הגריעה — בלי תלות בהצלחת המקור.
       var bkey = pre + (s.key || s.name);
       dailyKeys.push(bkey);
+      /* ⭐ דגל-יום פר-מקור (סבב 62) — מקור שכבר גובה היום מדולג, גם
+         כשהדגל הגלובלי לא נכתב. ⛔ בלעדיו מקור אחד שנכשל החזיק את כל
+         השאר בלולאה: הדגל הגלובלי נכתב רק כשכולם הצליחו, ולכן כל עלייה
+         גיבתה מחדש את מה שכבר גובה — נמדד ב-26.8, 66 גיבויים ביום.
+         ⚠️ הדחיפה ל-`dailyKeys` קודמת לדילוג בכוונה: הרשימה היא
+         רשימת-ההיתר של הגריעה, ומפתח שנופל ממנה אינו מתפנה לעולם. */
+      var dayKey = 'bk_day_' + bkey;
+      if (lsGet(dayKey, '') === today) { same++; continue; }
       if (s.kind === 'kv') {
         var res = await c.from(s.table).select('value').eq('key', s.name).maybeSingle();
-        if (!res || res.error) { ok = false; continue; }
+        if (!res || res.error) { ok = false; failed.push(bkey); continue; }
         val = (res.data && res.data.value != null) ? String(res.data.value) : null;
       } else {
         // ⛔ `cols` ולא `*` בטבלאות שיש בהן סוד (סבב 30) — `kv_backup`
@@ -3947,7 +3961,7 @@ async function bkMaybeDaily() {
         if (s.eq) q = q.eq(s.eq[0], s.eq[1]);
         if (s.order) q = q.order(s.order);
         var rt = await q;
-        if (!rt || rt.error || !Array.isArray(rt.data)) { ok = false; continue; }
+        if (!rt || rt.error || !Array.isArray(rt.data)) { ok = false; failed.push(bkey); continue; }
         var rows = rt.data;
         // ⛔ שדה-סוד בשורות טבלה מסונן לפני הסריאליזציה (השלמת סבב 35) —
         //    שורה שמפתחה (`secretField`, ברירת מחדל `key`) ברשימת הסודות
@@ -3962,23 +3976,30 @@ async function bkMaybeDaily() {
       var sig = bkSig(val), sigKey = 'bk_sig_' + bkey;
       if (lsGet(sigKey, '') === sig) { same++; continue; }
       var ins = await c.from(BK_TABLE).insert({ key: bkey, value: val });
-      if (!ins || ins.error) { ok = false; continue; }
+      if (!ins || ins.error) { ok = false; failed.push(bkey); continue; }
       lsSet(sigKey, sig);
+      lsSet(dayKey, today);
       wrote++;
     }
+    /* ⭐ הגריעה אינה מותנית עוד בהצלחת **כל** המקורות (סבב 62) — היא רצה
+       על רשימת-ההיתר המלאה בכל פעם שנכתב עותק חדש. ⛔ הכריכה הישנה היא
+       ששיתקה אותה: מקור אחד שנכשל מנע גריעה של כל השאר, וזה שורש מצבור
+       ה-503 השורות שנוקה ב-26.8. ⚠️ והיא עדיין רצה **אחרי** הכתיבה, כדי
+       שלא ייגרע עותק ישן לפני שהחדש נכתב (השלמת סבב 35). */
+    if (wrote) { try { await _bkRetention(c, dailyKeys); } catch (e2) { } }
     if (ok) {
       lsSet(flag, today);
       lsSet(_bkVal(BK_CFG.atKey), String(Date.now()));
       logAction('backup', null, wrote, { date: today, scope: pre || null, wrote: wrote, unchanged: same });
-      // ⭐ הגריעה רצה רק אחרי גיבוי מוצלח (השלמת סבב 35) — אין יום שבו
-      //    עותק ישן נגרע לפני שהעותק החדש נכתב, וכשל גריעה אינו כשל גיבוי.
-      try { await _bkRetention(c, dailyKeys); } catch (e2) { }
     } else {
-      // ⛔ בלי כתיבת הדגל — ההזדמנות הבאה באותו יום תנסה שוב (נרשם בסבב 6
-      //    בהנהלה): גיבוי שנכשל ודילג על יממה שלמה הוא בדיוק מה שהדגל
-      //    שנכתב-מראש גרם.
-      logAction('backup_fail', null, wrote, { date: today, scope: pre || null, wrote: wrote, unchanged: same });
-      console.warn('[backup] הגיבוי היומי נכשל — יינסה שוב בהזדמנות הבאה');
+      /* ⛔ בלי כתיבת הדגל הגלובלי — ההזדמנות הבאה באותו יום תנסה שוב
+         (נרשם בסבב 6 בהנהלה): גיבוי שנכשל ודילג על יממה שלמה הוא בדיוק
+         מה שהדגל שנכתב-מראש גרם. ⚠️ ומה שכן השתנה (סבב 62): המקורות
+         שהצליחו נושאים דגל-יום משלהם ואינם נגבים שוב, ולכן הניסיון החוזר
+         מכוון למי שנכשל בלבד. ⛔ וכשל חלקי מדווח ואינו נבלע — `failed`
+         נושא את שמות המקורות, אחרת «נכשל» היה מספר בלי מען. */
+      logAction('backup_fail', null, wrote, { date: today, scope: pre || null, wrote: wrote, unchanged: same, failed: failed });
+      console.warn('[backup] מקורות שנכשלו: ' + (failed.join(', ') || '?') + ' — ייבחנו שוב בהזדמנות הבאה');
     }
   } catch (e) { ok = false; }
   _bkRunning = false;
@@ -5444,6 +5465,27 @@ var YS_ROWS = true;
    מ-`kv` רואה נתונים שקפאו ברגע הכיבוי. */
 var YS_KV_LEGACY_WRITE = true;
 
+/* ⛔ שכבת השורות של השינה כבויה — הטבלאות אינן קיימות (סבב 62).
+   `migrations/009`+`010` נכתבו ומעולם לא הורצו, ולכן `ys_sleep_sessions`
+   ו-`ys_sleep_marks` אינן במסד (נמדד ב-26.8: אפס טבלאות). ⛔ הדגל שולט
+   בשלושה מקומות בלבד — מקורות הגיבוי, מפתחות הקריאה, ותו לא — והכתיבה
+   הכפולה (`ysRowsPushSessions`) נשארת דרוכה כפי שהייתה: היא נכשלת-סגור
+   ואינה מפילה דבר.
+   ⚠️ הדלקתו היא פעולת מנהל בשני צעדים: הרצת `009` ← `010` (שגופה מריץ
+   בדיקת שקילות דו-כיוונית) ← ורק אז הדגל. ⛔ אין להדליק אותו לפני
+   שהשקילות אומתה — קריאה מטבלה ריקה מציגה יומן שינה ריק. */
+var YS_SLEEP_ROWS = false;
+
+/* ⛔ מקור החותמת של הגדרות ה-`kv` — כבוי עד שתרוץ `migrations/013` (סבב 62).
+   ⭐ הרקע: `ys_settings_meta` הוא **מנגנון פיצוי** על כך של-`kv` אין
+   `updated_at`, בעוד ש-`sl_settings` ו-`g_config` — אותו מבנה בדיוק —
+   כן נושאות אחת. ⚠️ ונמדד ב-26.8 שהפיצוי מת: הערך בענן הוא `{}`, כלומר
+   `rts` תמיד 0, התנאי `rts > lts` לעולם אינו מתקיים, ⛔ ו«האחרון שדוחף
+   מנצח» — הגדרות והרשאות נדרסות בלי תנאי.
+   ⛔ אין להדליק לפני שהמיגרציה רצה — `updated_at` שאינו קיים חוזר כ-0
+   ומחזיר בדיוק את אותו כשל, רק דרך מסלול אחר. */
+var YS_KV_UPDATED_AT = false;
+
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
       `ysRowsPushSessions` (סבב 39) — שני עותקים של מסלול הכתיבה הם שתי
@@ -5652,6 +5694,9 @@ async function ysRowsPushStudents(arr) {
    ══════════════════════════════════════════════════════════════════════════ */
 var YS_ROWS_READ = true;
 var YS_ROWS_READ_KEYS = { ys_attend_sessions: 'attend', ys_students: 'students' };
+/* ⛔ מפתח השינה נכנס למפה רק כשהדגל דלוק (סבב 62) — עד אז `ysCloudGet`
+   ממשיך לקרוא אותו מ-`kv`, שהוא המאסטר היחיד שלו בפועל. */
+if (YS_SLEEP_ROWS) YS_ROWS_READ_KEYS.ys_sleep_sessions = 'sleep';
 
 /* ⛔ שליפה בעמודים ולא בבקשה אחת (סבב 55) — טבלת הסימונים מחזיקה 15,767
    שורות, וזה אותו שיקול בדיוק שהוליד את `YS_ROWS_CHUNK` בכתיבה (סבב 36):
@@ -5775,6 +5820,19 @@ async function ysCloudGet(kvKey) {
 // מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-ysPullFromCloud עוברים
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
 // שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
+/* ⛔ חותמת השורה של מפתח `kv` — ⚠️ **נכשלת סגור ומחזירה 0** (סבב 62).
+   0 פירושו «אין ראיה שהענן חדש יותר», ולכן המסלול נופל-חזרה להתנהגות
+   הקודמת (דחיפה) במקום לאמץ ערך מרוחק על סמך חוסר-ידיעה — ⛔ אימוץ על
+   סמך כשל הוא הסקה ולא ראיה (כלל ברזל 6). */
+async function ysKvUpdatedAt(key) {
+  try {
+    var r = await withTimeout(SB.from('kv').select('updated_at').eq('key', key).maybeSingle());
+    if (!r || r.error || !r.data || !r.data.updated_at) return 0;
+    var t = Date.parse(r.data.updated_at);
+    return isFinite(t) ? t : 0;
+  } catch (e) { return 0; }
+}
+
 function ysKvGet(key) {
   return withTimeout(SB.from('kv').select('value').eq('key', key).single()).then(function(r){
     if (r && r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
@@ -6117,7 +6175,13 @@ async function ysPushToCloud() {
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
       var sk = settingsKeys[i];
-      var lts = meta[sk.key] || 0, rts = remoteMeta[sk.key] || 0;
+      /* ⭐ מקור החותמת המרוחקת (סבב 62): `updated_at` של השורה עצמה כשהדגל
+         דלוק, והמפה הישנה כשאינו. ⛔ ושני המסלולים אינם רצים יחד — מפה
+         שממשיכה להתעדכן לצד עמודה היא בדיוק מקור אמת שני.
+         ⚠️ הצד המקומי (`lts`) נשאר המפה בכל מקרה: זו חותמת הכתיבה של
+         **המכשיר הזה**, והיא אינה קיימת בענן מעצם הגדרתה. */
+      var lts = meta[sk.key] || 0;
+      var rts = YS_KV_UPDATED_AT ? await ysKvUpdatedAt(sk.key) : (remoteMeta[sk.key] || 0);
       if (rts > lts) {
         // הענן חדש יותר — אמץ מקומית במקום לדרוס
         var rv = null; try { rv = await ysKvGet(sk.key); } catch(e5) {}
@@ -6131,6 +6195,14 @@ async function ysPushToCloud() {
     var mm = {};
     [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
     lsSet('ys_settings_meta', JSON.stringify(mm));
+    /* ⛔ המפה מפסיקה לעלות לענן ברגע שהעמודה סמכותית (סבב 62) — מפה
+       שממשיכה להיכתב לצד `updated_at` היא מקור אמת שני, וזה בדיוק מה
+       שכלל ברזל 12 (הממד הרביעי) מחייב להסיר כשהמבנה תוקן.
+       ⚠️ המפה **המקומית** נשארת: היא נושאת את `lts`, חותמת הכתיבה של
+       המכשיר, שאין לה מקבילה בענן.
+       ⛔ ומחיקת המפתח מהמסד היא פעולת מנהל ואינה נעשית כאן (סבב 30) —
+       כיבוי ומחיקה בסבבים נפרדים, אחרת אין חלון לגלות טעות. */
+    if (YS_KV_UPDATED_AT) return lastErr ? {error: lastErr} : {};
     var r = await ysKvSet('ys_settings_meta', mm);
     return (r && r.error) ? r : (lastErr ? {error: lastErr} : r);
   });
