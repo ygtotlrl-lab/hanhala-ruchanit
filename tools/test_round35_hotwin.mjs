@@ -18,7 +18,7 @@ import crypto from 'node:crypto';
 const APP = {
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: false,/, 'החלון החם רדום בכוונה (HW_CFG.enabled=false)'],
-    [/specs: \[\]/, 'אין מפרטי חלון עד מעבר הטבלאות (specs ריק)'],
+    [/specs: \[\]/, 'אין מפרטי חלון עד שיוכרע בסבב ארבעת-הריפו (specs ריק)'],
     [/try \{ hwBoot\(\); \}/, 'hwBoot מחווטת מפונקציית העלייה'],
     [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],
     [/if \(s\.eq\) q = q\.eq\(s\.eq\[0\], s\.eq\[1\]\);/, 'מודול הגיבוי תומך ב-eq למקורות טבלה (מוכנות שלב ב)'],
