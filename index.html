@@ -1437,7 +1437,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v61'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v62'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -4886,23 +4886,86 @@ function plBoot() {
 
 
 
+/* ── חלון החודש העברי — עוזר פרטי ל-HW_CFG ─────────────────────────────── */
+/* ⚠️ החלון כאן הוא **חודש עברי נוכחי + הקודם לו**, ולא טווח ימים קבוע:
+   כל המסכים כאן מוצגים בלוח העברי, וסדר נמצא לפי החודש שבו הוא נרשם.
+   ⛔ אין לגזור את החודש הקודם מ«היום פחות 30 יום» (סבב 56) — חודש עברי
+   הוא 29 או 30 יום, ובגבול החודש חיסור קבוע מדלג על חודש שלם או נשאר
+   באותו חודש. הגזירה היא נסיגה של `day` ימים מהיום, שמנחיתה בדיוק על
+   היום האחרון של החודש הקודם.
+   ⛔ ובכל מצב שבו הלוח אינו זמין מחזירים `null` (סבב 56) — קורא שמקבל
+   `null` משאיר את הרשומה בפנים, ⛔ ופינוי על סמך לוח שלא נטען הוא בדיוק
+   «היעדר ראיה כראיה» שכלל ברזל 6 אוסר. */
+var _ysHwWinKeys = null, _ysHwWinDay = '';
+function ysHwWindowKeys() {
+  var now = new Date();
+  var stamp = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+  if (_ysHwWinKeys && _ysHwWinDay === stamp) return _ysHwWinKeys;
+  var cur = null, prev = null;
+  try { cur = window.ysHebDate(now); } catch (e) { cur = null; }
+  if (!cur || !cur.ok || !(cur.day > 0)) return null;
+  try {
+    prev = window.ysHebDate(new Date(now.getFullYear(), now.getMonth(),
+                                     now.getDate() - cur.day, 12, 0, 0));
+  } catch (e2) { prev = null; }
+  if (!prev || !prev.ok) return null;
+  var keys = {};
+  keys[cur.year + ':' + cur.monthIndex] = true;
+  keys[prev.year + ':' + prev.monthIndex] = true;
+  _ysHwWinKeys = keys; _ysHwWinDay = stamp;
+  return keys;
+}
+function ysHwInWindow(rec) {
+  var iso = rec && rec.date_iso;
+  if (!iso) return true;
+  var t = Date.parse(String(iso).slice(0, 10) + 'T12:00:00');
+  if (!isFinite(t)) return true;
+  var keys = ysHwWindowKeys();
+  if (!keys) return true;
+  var h = null;
+  try { h = window.ysHebDate(new Date(t)); } catch (e) { h = null; }
+  if (!h || !h.ok) return true;
+  return !!keys[h.year + ':' + h.monthIndex];
+}
+
 /* ── HW_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
-/* ⚠️ המודול נכלל כאן אך **רדום** בכוונה (סבב 35): עד סבב 55 הנתונים נקראו
-   כמפתחות `kv` שלמים, ⛔ ו«פינוי» מעל ערך `kv` שלם היה מוחק את הערך כולו
-   ולא רשומות ישנות שבתוכו (סבב 35).
-   ⭐ **מסבב 55 החסם הטכני הוסר** — הקריאה היא פר-שורה, ולרשומה שתפונה
-   מהדיסק יש מאיפה לחזור. ⛔ ובכל זאת הוא נשאר רדום (סבב 55): הפעלתו הופכת
-   את שורה 17 במטריצת היכולות, והמטריצה היא בלוק `SHARED` שאין לשנות
-   בשניים מארבעת הריפו (כלל ברזל 13). ההפעלה היא סבב שנפתח עם ארבעתם, והיא
-   רשומה כפער עם טריגר.
-   ⭐ כפתור השחזור פעיל גם ברדימות — הוא אינו תלוי בחלון. */
+/* ⭐ **המודול הופעל בסבב 56.** עד סבב 55 הוא היה רדום מסיבה טכנית: הנתונים
+   נקראו כמפתחות `kv` שלמים, ⛔ ו«פינוי» מעל ערך `kv` שלם היה מוחק את הערך
+   כולו ולא רשומות ישנות שבתוכו (סבב 35). מסבב 55 הקריאה היא פר-שורה
+   (`ysCloudGet` ← `ysRowsGet`), ולכן לרשומה שתפונה מהדיסק יש מאיפה לחזור.
+   ⚠️ הספק היחיד הוא `ys_attend_sessions` — המפתח הגדול כאן (360KB) והיחיד
+   שיש לו שכבת שורות **ושדה תאריך פר-רשומה**. ⛔ `ys_students` אינו בחלון
+   (סבב 56) — מצבת התלמידים אינה סדרת אירועים בזמן, ואין לה «חודש» שמחוצה
+   לו רשומה מיותרת במכשיר.
+   ⭐ כפתור השחזור פעיל בכל מצב — הוא אינו תלוי בחלון. */
 var HW_CFG = {
-  enabled: false,
+  enabled: true,
   admin: function () {
     try { return !!(AUTH.user && AUTH.user.role === 'admin'); }
     catch (e) { return false; }
   },
-  specs: []
+  specs: [{
+    key: 'ys_attend_sessions',
+    label: 'סדרי נוכחות מחוץ לחלון',
+    inWindow: function (r) { return ysHwInWindow(r); },
+    idOf: _ysRecId,
+    ts: _ysRecTs,
+    isPending: function (r) {
+      try { return !!(r && r.id != null && pendHas(PK_AT_SESS + r.id)); }
+      catch (e) { return true; }
+    },
+    fetch: function () {
+      return ysCloudGet('ys_attend_sessions').then(function (rows) {
+        return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
+      }).catch(function () { return { ok: false, rows: [] }; });
+    },
+    rows: function () {
+      if (Array.isArray(window._atData)) return window._atData;
+      try { return JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]'); }
+      catch (e) { return null; }
+    },
+    apply: function (kept) { return lsSetArray('ys_attend_sessions', kept, _ysRecTs); }
+  }]
 };
 /* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35) ════════════════════════
    המכשיר מחזיק דרך קבע רק את «החלון החם» — התקופה הפעילה — וההיסטוריה
@@ -5125,6 +5188,14 @@ function hwBoot() {
 }
 window.hwBoot = hwBoot;
 /* ═══════════════ סוף מודול החלון החם ══════════════════════════════════ */
+
+/* ⛔ משפך כתיבה אחד לדיסק עבור `ys_attend_sessions` (סבב 56) — חמישה אתרי
+   כתיבה נפרדים הם חמישה מקומות שבהם שער הדיסק של החלון החם יכול להישמט,
+   ואחד שנשמט מחזיר בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו.
+   ⚠️ הזיכרון והענן לא נוגעים — רק העותק שעל הדיסק מצטמצם. */
+function _ysAtDiskSave(rows) {
+  return lsSetArray('ys_attend_sessions', hwDiskFilter('ys_attend_sessions', rows), _ysRecTs);
+}
 
 /* ── חיבור hanhala-ruchanit למודול ────────────────────────────────────────
    כאן הכתיבה היא **מקומית-תחילה**: הרשומה נשמרת ב-localStorage מיד, והדחיפה
@@ -5662,6 +5733,11 @@ async function ysCloudGet(kvKey) {
   var r = null;
   try { r = await ysRowsGet(kvKey); } catch (e) { r = null; }
   if (r && r.ok && Array.isArray(r.data) && r.data.length) {
+    // ⛔ הראיה העננית נרשמת במשפך ולא באתרי הקריאה (סבב 56) — נקודה אחת
+    //    היא מה שמונע שער דיסק שמפנה על סמך משיכה שאיש לא רשם.
+    // ⚠️ במסלול הנפילה-חזרה ל-`kv` אין רישום כאן, והפינוי אינו מאבד דבר:
+    //    `hwSweep` רושם בעצמו את מה שהמפרט שלו משך.
+    try { hwNoteCloud(kvKey, r.data); } catch (e1) { }
     return r.data;
   }
   return ysKvGet(kvKey);
@@ -6089,7 +6165,7 @@ async function ysPullFromCloud() {
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
       var _atPending = _ysQueueGet('ys_attend_sessions');
       if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'ys_attend_sessions');
-      lsSetArray('ys_attend_sessions', _atMerge, _ysRecTs);
+      _ysAtDiskSave(_atMerge);
       window._atData = _atMerge;
       if (_atPending && _atMerge.length > atSess.length) {
         _ysQueueAdd('ys_attend_sessions', _atMerge);
@@ -7406,7 +7482,7 @@ async function atSaveData(data) {
   // בתוך הצילום שנדחף, ואישור שלה היה מוריד סימון מרשומה שלא עלתה.
   var _t0=Date.now();
   window._atData=data;
-  lsSetArray('ys_attend_sessions', data, _ysRecTs);
+  _ysAtDiskSave(data);
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _atLocalN=ysCount(data);
@@ -7414,7 +7490,7 @@ async function atSaveData(data) {
     if (Array.isArray(_atRemote)) {
       data=_ysSessionsMerge(_atRemote, data, 'ys_attend_sessions');
       window._atData=data;
-      lsSetArray('ys_attend_sessions', data, _ysRecTs);
+      _ysAtDiskSave(data);
     }
     var _rAt=await ysKvSet('ys_attend_sessions',data);
     // רק כתיבה שהצליחה היא ראיה. ysKvSet מחזירה {error} בכשל ומכניסה לתור,
@@ -7739,7 +7815,7 @@ window.atEditSession = async function(recId) {
     });
     if(_apChanged){
       rec.updatedAt=Date.now();
-      lsSetArray('ys_attend_sessions', data, _ysRecTs);
+      _ysAtDiskSave(data);
       window._atData=data;
       atSaveData(data); // דחיפה ממוזגת לענן (fire-and-forget)
     }
@@ -7926,7 +8002,7 @@ function atSaveLocalNow() {
   rec.updatedAt=Date.now();
   // מסלול קריטי — רישום נוכחות. כישלון כאן חייב לעצור את השרשרת: הסימון
   // כבר על המסך, ובלי העצירה המשתמש היה ממשיך כאילו נשמר.
-  if(!lsSetArray('ys_attend_sessions', window._atData, _ysRecTs)) return null;
+  if(!_ysAtDiskSave(window._atData)) return null;
   // ⚠️ נשמר במכשיר וסומן ⏳ — הסימון יורד רק בדחיפת-מצב מוצלחת.
   pendMark(PK_AT_SESS + rec.id);
   return rec;
