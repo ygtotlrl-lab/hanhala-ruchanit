@@ -73,9 +73,14 @@ function makeEnv(opts = {}) {
     while ((m = re.exec(html))) els[m[1]] = els[m[1]] || mkEl(m[1]);
   }
   const authBox = { _html: '', get innerHTML() { return this._html; }, set innerHTML(v) { this._html = v; harvest(v); } };
-  const env = { els, authBox, rpc: [], fetches: [] };
+  const env = { els, authBox, rpc: [], fetches: [], polls: 0 };
   const sandbox = {
     console, JSON, String, Number, Array, Object, Boolean, Promise, RegExp, Error,
+    /*  ⚠️ בדל להמתנה האוטומטית (סבב 53) — הבדיקה הזו עוסקת ב**מקור
+     *  הסכימה** ולא בסקר, ולכן היא סופרת שהוא נדרך ואינה מריצה טיימר.
+     *  ⛔ אין להסיר את הקריאה מ-`showSetupScreen` כדי «לפשט» את הרתמה:
+     *  זה החיווט שמטריצת היכולות (שורה 37) אוכפת. */
+    startSetupPoll: () => { env.polls++; },
     document: {
       getElementById: (id) => els[id] || null,
       querySelector: (s) => (s === '.auth-box' ? authBox : null),

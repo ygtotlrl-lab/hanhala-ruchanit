@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 
-/* ── APP — הדבר היחיד שנבדל בין הריפו (hanhala-ruchanit) ───────────────── */
+/* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: false,/, 'החלון החם רדום בכוונה (HW_CFG.enabled=false)'],
@@ -29,6 +29,7 @@ const APP = {
   ],
   mutations: [],
 };
+/* ── סוף APP ───────────────────────────────────────────────────────────── */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');

@@ -53,7 +53,7 @@ const APP = {
     'cdn-cached-online':     'body:NET-OK|status:200',
     'version-probe':         'body:NET-OK|status:200',
     'non-get':               'passthrough',
-    'sweep-scope':           'hanhala-ruchanit-v58,sister-app-v9',
+    'sweep-scope':           'hanhala-ruchanit-v60,sister-app-v9',
   },
   defectCount: 0,
 };
