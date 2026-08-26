@@ -1081,7 +1081,11 @@ window._alefFontB64=null;
    ══════════════════════════════════════════════════════════════════════════ */
 // ============================================================
 var AUTH = {
-  user: null,          // {id, username, full_name, role}
+  /* ⭐ `AUTH.user` הוא מעכשיו חלון אל מודול הסשן המשותף (סבב 53) — הערך
+     עצמו יושב שם, בזיכרון בלבד. ⛔ אין להחזיר כאן שדה רגיל: שדה שכל אחד
+     יכול להציב בו ערך הוא בדיוק המסלול שדרכו הסשן חזר לדיסק. */
+  get user() { return sessGet(); },          // {id, username, full_name, role}
+  set user(v) { sessSet(v); },
   offlineLogin: false, // true = אומת מול עותק מקומי (ללא רשת); מאומת מחדש כשהרשת חוזרת
   perms: null,         // {students:{admin:'edit',senior:'view',junior:'none'}, ...}
   MODULES: [
@@ -1433,7 +1437,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v59'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v60'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2686,6 +2690,8 @@ async function loadDash(){
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של ysPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
+  // מודל הסשן (סבב 53) — נקודת ההפעלה היחידה של המודול.
+  try { sessBoot(); } catch (e) { console.warn('[sess] sessBoot', e); }
   // סימוני "ממתין לסנכרון" (סבב 12) — נטענים לפני המשיכה, כך שרשומה שלא
   // אושרה בסשן הקודם מוצגת כממתינה כבר בשנייה הראשונה.
   try { pendBoot(); } catch (e) { console.warn('[pend] pendBoot', e); }
@@ -4521,7 +4527,7 @@ function rtyBoot() {
    הליבה הוא ההודעה, ותוספת פר-אפליקציה הייתה מחזירה בדיוק את ההפרש
    שהסבב הזה סגר. */
 var LK_CFG = {
-  active: function () { return !!AUTH.user; },
+  active: function () { return sessActive(); },
   lock:   function () { doLogout(); },
 };
 /* ═══ נעילת חוסר-פעילות — מודול משותף (סבב 52) ════════════════════════════
@@ -4657,6 +4663,94 @@ function lkState() {
            lockMs: LK_LOCK_MS, warnMs: LK_WARN_MS };
 }
 /* ═══════════════ סוף מודול נעילת חוסר-הפעילות ═══════════════════════════ */
+
+/* ── SESS_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+/* ⚠️ `legacy` הוא רשימת מפתחות ה-localStorage שהאפליקציה **שמרה בהם סשן
+   עד סבב 53** ואינה שומרת בהם עוד. ⛔ אין למחוק שם מהרשימה גם אחרי
+   שהמנגנון הישן ירד מהקוד (סבב 53) — המפתח עצמו עדיין יושב על הדיסק של
+   כל מכשיר שכבר נכנסו בו פעם, והוא מחזיק `id`, `username` ו-`role`. */
+var SESS_CFG = {
+  /* ⛔ ריקה כאן, וזה נמדד ולא הונח (סבב 53) — hanhala-ruchanit מעולם
+     לא שמרה סשן בדיסק, והמנגנון נשאר דרוך למקרה עתידי. */
+  legacy: [],
+};
+
+/* ═══ מודל הסשן — מודול משותף (סבב 53) ════════════════════════════════════
+   ⭐ **המשתמש המחובר חי בזיכרון בלבד, ואינו יורד לדיסק לעולם.** כלומר כל
+   טעינה מחדש של הדף דורשת כניסה. זו הכרעת המנהל מ-2026-08-26, והיא יישרה
+   את שלוש האפליקציות שיש בהן כניסה לדפוס שכבר היה ב-hanhala-ruchanit
+   מאז ההקמה.
+
+   ⛔ **אין לשמור את המשתמש ב-localStorage (סבב 53)** — סשן שנשמר בלי
+   תפוגה הוא כניסה קבועה על מכשיר משותף: מי שמחזיק את המכשיר מחזיק את
+   החשבון, גם חודש אחרי. ⚠️ ולא זו בלבד — סשן ששמר גם `role` הפך את
+   ההרשאה עצמה לערך שיושב על הדיסק וניתן לעריכה ביד.
+
+   ⚠️ **וזו אינה כפילות של נעילת חוסר-הפעילות (סבב 52).** הנעילה נמדדת
+   מהפעולה האחרונה ומוציאה החוצה משתמש ששכח את המסך פתוח; ⛔ היא אינה
+   עוזרת למי שסגר את הלשונית וחזר אליה מחר, מפני שהטיימר מת יחד עם הדף.
+   המודול הזה סוגר בדיוק את החור ההוא.
+
+   ⚠️ **הכניסה האופליין אינה נשענת על המודול הזה** — היא מוכרעת מול
+   `pass_fp` שבמראת המשתמשים (כלל ברזל 10 סעיף 4). ⛔ ולכן הסרת שמירת
+   הסשן אינה פוגעת בה: מי שנכנס בלי רשת ממשיך להיכנס בלי רשת, והשינוי
+   היחיד הוא שהוא מקליד סיסמה גם אחרי רענון.
+
+   ⛔ **`sessBoot()` מנקה את שרידי הסשן הישנים מהמכשיר (סבב 53)** — מפתח
+   שנכתב בגרסה קודמת אינו נעלם מאליו, והוא נשאר קריא בדפדפן לנצח. הניקוי
+   אידמפוטנטי, נכשל-סגור באחסון חסום, ונרשם ביומן הפינוי רק כשנמחק משהו
+   בפועל.
+
+   ה-API: `sessBoot` · `sessSet`/`sessGet`/`sessClear` · `sessActive` ·
+   `sessState`. מעליו `SESS_CFG` — הדבר היחיד שנבדל בין האפליקציות.
+   ═══════════════════════════════════════════════════════════════════════ */
+var _sessUser = null;
+var _sessBooted = false;
+
+function sessSet(u) { _sessUser = u || null; return _sessUser; }
+function sessGet() { return _sessUser; }
+function sessClear() { _sessUser = null; }
+function sessActive() { return !!_sessUser; }
+
+/*  רשימת מפתחות השריד, נכשלת-סגור על תצורה חסרה. */
+function _sessLegacy() {
+  try {
+    var k = (typeof SESS_CFG === 'object' && SESS_CFG && SESS_CFG.legacy) || [];
+    return Object.prototype.toString.call(k) === '[object Array]' ? k : [];
+  } catch (e) { return []; }
+}
+
+/*  ניקוי שרידי הסשן; מחזירה את מספר המפתחות שנמחקו בפועל.
+    ⚠️ הקריאה קודמת למחיקה בכוונה — כדי שהיומן יירשם רק כשבאמת היה שם
+    משהו, ולא בכל עלייה של כל מכשיר. */
+function _sessPurge() {
+  var keys = _sessLegacy(), gone = [];
+  for (var i = 0; i < keys.length; i++) {
+    try {
+      if (lsGet(keys[i], null) === null) continue;
+      lsRemove(keys[i]);
+      gone.push(keys[i]);
+    } catch (e) { /* אחסון חסום — לא נוגעים, וננסה שוב בעלייה הבאה */ }
+  }
+  if (gone.length) { try { lsLog('sess-purge', gone.join(',')); } catch (e) { } }
+  return gone.length;
+}
+
+/*  מצב המודול — לבדיקות ולאבחון. ⛔ אינו מחזיר את אובייקט המשתמש עצמו
+    (סבב 53) — צרכן שהיה מקבל אותו יכול היה לכתוב אותו לדיסק, וזה בדיוק
+    מה שהמודול בא למנוע. */
+function sessState() {
+  return { active: !!_sessUser, booted: _sessBooted, legacy: _sessLegacy().slice() };
+}
+
+/*  ⛔ נקודת ההפעלה היחידה — פונקציית העלייה של האפליקציה (כלל ברזל 12),
+    זו שקוראת גם ל-`lsBoot()` ול-`pendBoot()`. */
+function sessBoot() {
+  if (_sessBooted) return 0;
+  _sessBooted = true;
+  return _sessPurge();
+}
+/* ═══════════════ סוף מודול הסשן ═════════════════════════════════════════ */
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
@@ -6112,6 +6206,28 @@ function ysSetupSqlLink() {
       ההתקנה שלמטה, שמציג את קובץ ההתקנה להרצה ב-SQL Editor (סבב 32).
       מסלול שמבקש מפתח-על מהדפדפן הוא נתיב הרשאה שלם שאין לו צורך. */
 
+/* ⭐ המתנה אוטומטית להרצת ההתקנה (סבב 53) — עד כאן היה כאן כפתור «רענן
+   לאחר הרצה» בלבד, ואילו ל-schar-limud כבר הייתה המתנה אוטומטית. ⛔ שתי
+   האפליקציות שיש בהן מסך התקנה חייבות את אותה התנהגות (כלל ברזל 14) —
+   «קיים רק באחת, בשקט» אינו מצב חוקי. הכפתור **נשאר** כנפילה-חזרה למי
+   שהסקר שלו נחסם.
+   ⚠️ הבדיקה היא `select` בודד על טבלת המשתמשים כל 2.5 שניות, והיא נעצרת
+   ברגע שהטבלה נמצאה. ⛔ אין כאן קריאה חוזרת בלי סוף: `_ysSetupPollInt`
+   מנוקה מיד, ומסך ההתקנה מוצג רק כשהטבלה באמת חסרה. */
+var _ysSetupPollInt = null;
+function startSetupPoll() {
+  if (_ysSetupPollInt) return;
+  _ysSetupPollInt = setInterval(function () {
+    SB.from('ys_users').select('id').limit(1).then(function (r) {
+      if (r && r.error) return;
+      clearInterval(_ysSetupPollInt); _ysSetupPollInt = null;
+      var el = document.getElementById('setup-status');
+      if (el) { el.style.color = '#2f855a'; el.textContent = '✅ הטבלאות נמצאו! טוען את האפליקציה...'; }
+      setTimeout(function () { location.reload(); }, 1200);
+    }, function () { });
+  }, 2500);
+}
+
 function showSetupScreen() {
   var authBox = document.querySelector('.auth-box');
   authBox.innerHTML = 
@@ -6120,7 +6236,8 @@ function showSetupScreen() {
     '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a> את קובץ ההתקנה. ⚠️ המשתמש הראשון נוצר ידנית לפי ההוראות שבסוף הקובץ — <b>אין סיסמת ברירת מחדל</b>:</div>' +
     '<textarea id="setup-sql" readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">טוען…</textarea>' +
     '<div id="setup-sql-err" style="display:none;font-size:.75rem;color:#e53e3e;text-align:right"></div>' +
-    '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>';
+    '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>' +
+    '<div id="setup-status" style="font-size:.78rem;color:#8a97b0;text-align:center;min-height:18px;margin-top:6px">🔄 ממתין... האפליקציה תיטען אוטומטית לאחר הרצת ה-SQL</div>';
   // ⛔ התיבה מתמלאת מהקובץ ואינה מכילה סכימה מוטבעת (סבב 32) — ר' הבלוק
   //    שמעל `YS_SETUP_SQL_URL`. בכשל היא **נעלמת** ובמקומה קישור ישיר.
   ysFetchSetupSql().then(function(t){
@@ -6135,6 +6252,7 @@ function showSetupScreen() {
       el.innerHTML = '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + esc(String(e.message || e)) + ').<br>' + ysSetupSqlLink();
     }
   });
+  startSetupPoll();
 }
 
 ensureFirstAdmin();
