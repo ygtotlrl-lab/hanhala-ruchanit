@@ -1466,7 +1466,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v63'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v64'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3719,15 +3719,21 @@ var BK_CFG = {
     var out = [
       { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id' },
       { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
-      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' },
-      /* ⭐ סבב 39 — שכבת השורות של השינה. ⚠️ מפתח הגיבוי נושא סיומת `_rows`
-         דווקא מפני ששם הטבלה זהה לשם מפתח ה-`kv` (`ys_sleep_sessions`),
-         ובלעדיה גיבוי הטבלה היה דורס את גיבוי ה-`kv` הישן.
-         ⛔ ושניהם נוספו באותו סבב לרשימת-ההיתר של `migrations/004` — מפתח
-         גיבוי שאינו שם אינו מתפנה לעולם (ההיסט של השלמת סבב 35ג). */
+      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
+    ];
+    /* ⛔ שני מקורות השינה יושבים מאחורי `YS_SLEEP_ROWS` (סבב 62) — הטבלאות
+       מעולם לא נוצרו (`009`+`010` נכתבו ולא הורצו), ומקור שאינו קיים מחזיר
+       `rt.error`: ⇒ הדגל היומי לא נכתב ⇒ הגריעה לא רצה ⇒ הלולאה רצה בכל
+       עלייה במקום פעם ביום. ⚠️ נמדד ב-26.8 מול המסד — אפס טבלאות,
+       66 גיבויים ביום במקום ~13.
+       ⚠️ ומחרוזות המפתח נשארות בגוף הפונקציה בכוונה: `test_round35c_cron`
+       גוזר מכאן את תרומת האפליקציה לרשימת-ההיתר, ומפתח שאינו שם אינו
+       מתפנה לעולם — כלומר הרשימה חייבת לכסות אותם כבר עכשיו, ליום שבו
+       הדגל יידלק. */
+    if (YS_SLEEP_ROWS) out.push(
       { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
       { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
-    ];
+    );
     return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
             'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
             'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
@@ -5444,6 +5450,17 @@ var YS_ROWS = true;
    מ-`kv` רואה נתונים שקפאו ברגע הכיבוי. */
 var YS_KV_LEGACY_WRITE = true;
 
+/* ⛔ שכבת השורות של השינה כבויה — הטבלאות אינן קיימות (סבב 62).
+   `migrations/009`+`010` נכתבו ומעולם לא הורצו, ולכן `ys_sleep_sessions`
+   ו-`ys_sleep_marks` אינן במסד (נמדד ב-26.8: אפס טבלאות). ⛔ הדגל שולט
+   בשלושה מקומות בלבד — מקורות הגיבוי, מפתחות הקריאה, ותו לא — והכתיבה
+   הכפולה (`ysRowsPushSessions`) נשארת דרוכה כפי שהייתה: היא נכשלת-סגור
+   ואינה מפילה דבר.
+   ⚠️ הדלקתו היא פעולת מנהל בשני צעדים: הרצת `009` ← `010` (שגופה מריץ
+   בדיקת שקילות דו-כיוונית) ← ורק אז הדגל. ⛔ אין להדליק אותו לפני
+   שהשקילות אומתה — קריאה מטבלה ריקה מציגה יומן שינה ריק. */
+var YS_SLEEP_ROWS = false;
+
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
       `ysRowsPushSessions` (סבב 39) — שני עותקים של מסלול הכתיבה הם שתי
@@ -5652,6 +5669,9 @@ async function ysRowsPushStudents(arr) {
    ══════════════════════════════════════════════════════════════════════════ */
 var YS_ROWS_READ = true;
 var YS_ROWS_READ_KEYS = { ys_attend_sessions: 'attend', ys_students: 'students' };
+/* ⛔ מפתח השינה נכנס למפה רק כשהדגל דלוק (סבב 62) — עד אז `ysCloudGet`
+   ממשיך לקרוא אותו מ-`kv`, שהוא המאסטר היחיד שלו בפועל. */
+if (YS_SLEEP_ROWS) YS_ROWS_READ_KEYS.ys_sleep_sessions = 'sleep';
 
 /* ⛔ שליפה בעמודים ולא בבקשה אחת (סבב 55) — טבלת הסימונים מחזיקה 15,767
    שורות, וזה אותו שיקול בדיוק שהוליד את `YS_ROWS_CHUNK` בכתיבה (סבב 36):
