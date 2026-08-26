@@ -6402,108 +6402,24 @@ async function ensureFirstAdmin() {
       error.code === '42P01' ||
       (error.message && error.message.indexOf('ys_users') !== -1)
     );
+    // ⛔ מסך ההתקנה הוסר (סבב 58) — מה שנשאר הוא **דיווח** במסך הכניסה,
+    //    ואין כאן סכימה, אין תיבת העתקה ואין המתנה אוטומטית. הטיפול
+    //    בטבלה חסרה הוא הרצת `migrations/000_initial_schema.sql` מול המסד.
+    var e = document.getElementById('auth-err');
     if (tableError) {
-      showSetupScreen();
+      if (e) {
+        e.textContent = 'טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
+        e.style.color = '#b7791f';
+      }
       return;
     }
     if (!error && (!data || data.length === 0)) {
-      var e = document.getElementById('auth-err');
       if (e) {
         e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
         e.style.color = '#b7791f';
       }
     }
   } catch(e) { console.error('setup error:', e); }
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   ⭐ הסכימה נמשכת מקובץ ההתקנה — ואינה מוטבעת כאן (סבב 32)
-   ══════════════════════════════════════════════════════════════════════════
-   עד הסבב הזה ישבו כאן **שתי** הצהרות `create table` ל-`ys_users`: אחת
-   ב-`setupWithServiceKey` (שרצה בפועל) ואחת ב-`showSetupScreen` (שהוצגה
-   להעתקה). זה מקור אמת שני לסכימה, לצד `migrations/000_initial_schema.sql`
-   שנוצר בסבב 28 — כלומר בדיוק הדפוס שהתיישן בשקט ב-schar-limud והוסר שם
-   בהשלמת סבב 24. הן גם כבר **היו** מיושנות: הן הגדירו טבלה אחת מתוך
-   ארבע, ולא הכירו את `kv`, `sync_log` ו-`kv_backup`.
-
-   ⛔ אין להטביע כאן עותק-גיבוי של הסכימה (סבב 32) — הקובץ יושב על אותו
-      origin שממנו נטען הדף הזה, ואם הוא אינו נגיש האפליקציה עצמה לא
-      נטענה. עותק «ליתר ביטחון» אינו מגן על תרחיש אמיתי, והמחיר שלו —
-      מקור אמת שני שמתיישן — ודאי.
-   ⛔ ובכשל משיכה לא מוצגת סכימה כלשהי (סבב 32) — סכימה שאיננו יודעים אם
-      היא עדכנית, בתיבה שמישהו מעתיק ומריץ על המסד, גרועה מהודעה. זה אותו
-      דפוס בדיוק שכבר קיים ב-`setup-db.html`.
-   ══════════════════════════════════════════════════════════════════════════ */
-var YS_SETUP_SQL_URL = 'migrations/000_initial_schema.sql';
-var YS_SETUP_SQL_GITHUB = 'https://github.com/ygtotlrl-lab/hanhala-ruchanit/blob/main/migrations/000_initial_schema.sql';
-// מחזירה את גוף קובץ ההתקנה, או זורקת. ⚠️ `cache:'no-store'` — הקובץ הזה
-// משתנה בסבבים, ועותק ישן מהמטמון היה מריץ סכימה ישנה על מסד חדש.
-function ysFetchSetupSql() {
-  return fetch(YS_SETUP_SQL_URL, {cache: 'no-store'})
-    .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
-    .then(function(t){ if (!t || !t.trim()) throw new Error('empty'); return t; });
-}
-function ysSetupSqlLink() {
-  return 'פתח אותו ישירות: <a href="' + YS_SETUP_SQL_GITHUB + '" target="_blank" style="color:#1a3a6b">' +
-         esc(YS_SETUP_SQL_URL) + '</a>';
-}
-
-/* ⛔ מסלול ה-service-key (`setupWithServiceKey` + `exec_sql`) הוסר (סבב 39) —
-      הפונקציה `exec_sql` **אינה קיימת במסד כלל** (נמדד ב-2026-08-18 מול
-      `pg_proc`), ולכן ה-`rpc` החזיר שגיאה תמיד והמסלול מעולם לא יכול היה
-      ליצור טבלה. מה שנשאר ממנו היה שדה שמבקש **service-role key** —
-      המפתח שעוקף RLS לחלוטין — בתמורה לכלום.
-   ⛔ ואין להחזיר אותו (סבב 39) — ההתקנה נעשית דרך `migrations/` ומסך
-      ההתקנה שלמטה, שמציג את קובץ ההתקנה להרצה ב-SQL Editor (סבב 32).
-      מסלול שמבקש מפתח-על מהדפדפן הוא נתיב הרשאה שלם שאין לו צורך. */
-
-/* ⭐ המתנה אוטומטית להרצת ההתקנה (סבב 53) — עד כאן היה כאן כפתור «רענן
-   לאחר הרצה» בלבד, ואילו ל-schar-limud כבר הייתה המתנה אוטומטית. ⛔ שתי
-   האפליקציות שיש בהן מסך התקנה חייבות את אותה התנהגות (כלל ברזל 14) —
-   «קיים רק באחת, בשקט» אינו מצב חוקי. הכפתור **נשאר** כנפילה-חזרה למי
-   שהסקר שלו נחסם.
-   ⚠️ הבדיקה היא `select` בודד על טבלת המשתמשים כל 2.5 שניות, והיא נעצרת
-   ברגע שהטבלה נמצאה. ⛔ אין כאן קריאה חוזרת בלי סוף: `_ysSetupPollInt`
-   מנוקה מיד, ומסך ההתקנה מוצג רק כשהטבלה באמת חסרה. */
-var _ysSetupPollInt = null;
-function startSetupPoll() {
-  if (_ysSetupPollInt) return;
-  _ysSetupPollInt = setInterval(function () {
-    SB.from('ys_users').select('id').limit(1).then(function (r) {
-      if (r && r.error) return;
-      clearInterval(_ysSetupPollInt); _ysSetupPollInt = null;
-      var el = document.getElementById('setup-status');
-      if (el) { el.style.color = '#2f855a'; el.textContent = '✅ הטבלאות נמצאו! טוען את האפליקציה...'; }
-      setTimeout(function () { location.reload(); }, 1200);
-    }, function () { });
-  }, 2500);
-}
-
-function showSetupScreen() {
-  var authBox = document.querySelector('.auth-box');
-  authBox.innerHTML = 
-    '<div style="font-size:1.3rem;font-weight:700;color:#1a3a6b;margin-bottom:6px">⚙️ הגדרה ראשונית</div>' +
-    '<div style="font-size:.8rem;color:#4a5568;margin-bottom:14px">יש ליצור את טבלת המשתמשים</div>' +
-    '<div style="font-size:.75rem;color:#8a97b0;margin-bottom:6px">הרץ ב-<a href=\"https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql/new\" target=\"_blank\" style=\"color:#1a3a6b\">SQL Editor</a> את קובץ ההתקנה. ⚠️ המשתמש הראשון נוצר ידנית לפי ההוראות שבסוף הקובץ — <b>אין סיסמת ברירת מחדל</b>:</div>' +
-    '<textarea id="setup-sql" readonly style="width:100%;height:140px;font-size:.62rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:6px;padding:6px;font-family:monospace;resize:none">טוען…</textarea>' +
-    '<div id="setup-sql-err" style="display:none;font-size:.75rem;color:#e53e3e;text-align:right"></div>' +
-    '<button class="auth-btn" style="margin-top:8px;background:#4a5568" onclick="location.reload()">🔄 רענן לאחר הרצה</button>' +
-    '<div id="setup-status" style="font-size:.78rem;color:#8a97b0;text-align:center;min-height:18px;margin-top:6px">🔄 ממתין... האפליקציה תיטען אוטומטית לאחר הרצת ה-SQL</div>';
-  // ⛔ התיבה מתמלאת מהקובץ ואינה מכילה סכימה מוטבעת (סבב 32) — ר' הבלוק
-  //    שמעל `YS_SETUP_SQL_URL`. בכשל היא **נעלמת** ובמקומה קישור ישיר.
-  ysFetchSetupSql().then(function(t){
-    var ta = document.getElementById('setup-sql');
-    if (ta) ta.value = t;
-  }, function(e){
-    var ta = document.getElementById('setup-sql');
-    if (ta) ta.style.display = 'none';
-    var el = document.getElementById('setup-sql-err');
-    if (el) {
-      el.style.display = 'block';
-      el.innerHTML = '⚠️ לא ניתן היה לטעון את קובץ ההתקנה (' + esc(String(e.message || e)) + ').<br>' + ysSetupSqlLink();
-    }
-  });
-  startSetupPoll();
 }
 
 ensureFirstAdmin();
