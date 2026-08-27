@@ -38,8 +38,10 @@ const APP = {
   tables: ['ys_sessions', 'ys_marks', 'ys_students_rows',
            'ys_sleep_sessions', 'ys_sleep_marks'],
   /* דגלים שמותר להם לשער מקור — ⛔ מקור מאחורי דגל אינו נדרש להיות
-     ב-`tables`, מפני שהוא אינו נשלף עד שהדגל יידלק. */
-  gates: ['YS_SLEEP_ROWS']
+     ב-`tables`, מפני שהוא אינו נשלף עד שהדגל יידלק.
+     ⭐ ריק מסבב 63: `YS_SLEEP_ROWS` נמחק כשהטבלאות אומתו, ⛔ ואין כאן
+     היום אף מקור מגודר — כל מקור-טבלה פעיל ומוכרז ב-`tables`. */
+  gates: []
 };
 
 const here = dirname(fileURLToPath(import.meta.url));

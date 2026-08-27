@@ -5460,23 +5460,19 @@ var YS_ROWS = true;
    מ-`kv` רואה נתונים שקפאו ברגע הכיבוי. */
 var YS_KV_LEGACY_WRITE = true;
 
-/* ⭐ שכבת השורות של השינה **דלוקה** (סבב 63) — `migrations/009`+`010`
-   הורצו ואומתו ב-26.8, והשקילות הדו-כיוונית נמדדה מול המסד: 21 סדרים
-   מול 21, 988 סימונים מול 988, ⛔ ואפס רשומות בכל אחד משני הכיוונים.
-   ⛔ אין לכבות אותו בלי סבב ייעודי (סבב 63) — כיבוי מחזיר את הקריאה
-   ל-`kv`, שממשיך להיכתב אך אינו עוד המאסטר היחיד. */
-var YS_SLEEP_ROWS = true;
+/* ⭐ חותמת ההגדרות נקראת מ-`updated_at` של השורה — ⛔ ולא ממפה בתוך הערך
+   (סבב 63). `migrations/013` הורצה ואומתה ב-26.8: העמודה קיימת בשלוש
+   טבלאות ה-`kv`, ⛔ ואפס שורות נושאות ערך ריק.
+   ⛔ אין להחזיר את `ys_settings_meta` כמקור חותמת מרוחקת (סבב 63) — היא
+   הייתה **מנגנון פיצוי** על היעדר העמודה, ונמדד שהיא מתה: הערך בענן הוא
+   `{}`, ולכן `rts` היה תמיד 0 ו«האחרון שדוחף מנצח» על שלושת המפתחות.
+   ⚠️ המפה **המקומית** נשארת — היא נושאת את `lts`, חותמת הכתיבה של המכשיר
+   הזה, שאין לה מקבילה בענן. */
 
-/* ⭐ מקור החותמת של הגדרות ה-`kv` — **דלוק** (סבב 63). `migrations/013`
-   הורצה ואומתה ב-26.8: העמודה קיימת בשלוש טבלאות ה-`kv`, ⛔ ואפס שורות
-   נושאות `updated_at` ריק (13 מתוך 13 חתומות).
-   ⭐ הרקע: `ys_settings_meta` היה **מנגנון פיצוי** על כך של-`kv` לא הייתה
-   `updated_at`, בעוד ש-`sl_settings` ו-`g_config` — אותו מבנה בדיוק —
-   כן נשאו אחת. ⚠️ ונמדד שהפיצוי מת: הערך בענן הוא `{}`, כלומר `rts` תמיד
-   0, התנאי `rts > lts` לעולם אינו מתקיים, ⛔ ו«האחרון שדוחף מנצח» —
-   הגדרות והרשאות נדרסו בלי תנאי. ⛔ החותמת פר-שורה מחליפה אותו בדיוק
-   (יחס 1:1 — כל מפתח `kv` הוא שורה), ⛔ ואין להחזיר את המפה. */
-var YS_KV_UPDATED_AT = true;
+/* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
+   ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
+   דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
+var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons', 'ys_cls_years'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -6157,8 +6153,6 @@ async function ysPushToCloud() {
   // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
   await step('ys_settings', async function() {
     var meta = ysSettingsMeta();
-    var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(e4) {}
-    remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
     var settingsKeys = [
       { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ lsSet('ys_reasons', JSON.stringify(v)); } },
       { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ lsSet('ys_absence_reasons', JSON.stringify(v)); } },
@@ -6167,13 +6161,10 @@ async function ysPushToCloud() {
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
       var sk = settingsKeys[i];
-      /* ⭐ מקור החותמת המרוחקת (סבב 62): `updated_at` של השורה עצמה כשהדגל
-         דלוק, והמפה הישנה כשאינו. ⛔ ושני המסלולים אינם רצים יחד — מפה
-         שממשיכה להתעדכן לצד עמודה היא בדיוק מקור אמת שני.
-         ⚠️ הצד המקומי (`lts`) נשאר המפה בכל מקרה: זו חותמת הכתיבה של
-         **המכשיר הזה**, והיא אינה קיימת בענן מעצם הגדרתה. */
+      /* ⚠️ הצד המקומי (`lts`) הוא המפה, והמרוחק (`rts`) הוא העמודה — זו
+         חותמת הכתיבה של **המכשיר הזה** מול חותמת השורה בענן. */
       var lts = meta[sk.key] || 0;
-      var rts = YS_KV_UPDATED_AT ? await ysKvUpdatedAt(sk.key) : (remoteMeta[sk.key] || 0);
+      var rts = await ysKvUpdatedAt(sk.key);
       if (rts > lts) {
         // הענן חדש יותר — אמץ מקומית במקום לדרוס
         var rv = null; try { rv = await ysKvGet(sk.key); } catch(e5) {}
@@ -6184,19 +6175,13 @@ async function ysPushToCloud() {
         catch (e6) { lastErr = {message: e6 && e6.message}; }
       }
     }
-    var mm = {};
-    [meta, remoteMeta].forEach(function(m){ Object.keys(m).forEach(function(k){ if (!(k in mm) || m[k] > mm[k]) mm[k] = m[k]; }); });
-    lsSet('ys_settings_meta', JSON.stringify(mm));
-    /* ⛔ המפה מפסיקה לעלות לענן ברגע שהעמודה סמכותית (סבב 62) — מפה
-       שממשיכה להיכתב לצד `updated_at` היא מקור אמת שני, וזה בדיוק מה
-       שכלל ברזל 12 (הממד הרביעי) מחייב להסיר כשהמבנה תוקן.
-       ⚠️ המפה **המקומית** נשארת: היא נושאת את `lts`, חותמת הכתיבה של
-       המכשיר, שאין לה מקבילה בענן.
+    lsSet('ys_settings_meta', JSON.stringify(meta));
+    /* ⛔ המפה אינה עולה לענן (סבב 63) — מפה שנכתבת לצד `updated_at` היא
+       מקור אמת שני, וזה בדיוק מה שכלל ברזל 12 (הממד הרביעי) מחייב להסיר
+       כשהמבנה תוקן.
        ⛔ ומחיקת המפתח מהמסד היא פעולת מנהל ואינה נעשית כאן (סבב 30) —
        כיבוי ומחיקה בסבבים נפרדים, אחרת אין חלון לגלות טעות. */
-    if (YS_KV_UPDATED_AT) return lastErr ? {error: lastErr} : {};
-    var r = await ysKvSet('ys_settings_meta', mm);
-    return (r && r.error) ? r : (lastErr ? {error: lastErr} : r);
+    return lastErr ? {error: lastErr} : {};
   });
 
   // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
@@ -6224,9 +6209,21 @@ async function ysPushToCloud() {
 
 async function ysPullFromCloud() {
   try {
-    // מטא הגדרות מהענן — משמש להחלטות LWW על מפתחות ההגדרות הקטנים
-    var remoteMeta = null; try { remoteMeta = await ysKvGet('ys_settings_meta'); } catch(eM) {}
-    remoteMeta = (remoteMeta && typeof remoteMeta === 'object') ? remoteMeta : {};
+    /* ⭐ מטא הגדרות מהענן — החותמת המרוחקת להכרעת ה-LWW על שלושת מפתחות
+       ההגדרות הקטנים, ומסבב 63 היא נקראת מ-`updated_at` של השורה.
+       ⛔ אין לחזור למפה `ys_settings_meta` (סבב 63) — היא `{}` בענן
+       (נמדד 26.8), כלומר `remoteMeta[k]` היה תמיד 0: התנאי
+       `0 >= meta[k]` נכשל לכל מפתח שהמכשיר **ערך אי-פעם**, ⛔ ולכן
+       מכשיר שערך הגדרה הפך חירש לצמיתות לשינוי שלה ממכשיר אחר.
+       ⚠️ וזה הצד השני של אותו מסלול: צד הדחיפה עבר לעמודה, ומפה מתה
+       שנשארת בצד המשיכה היא בדיוק «מקור אמת שני» שכלל ברזל 12 אוסר.
+       ⛔ נכשל-סגור נשמר — `ysKvUpdatedAt` מחזירה 0 בכשל, ואפס אינו
+       מאמץ ערך מרוחק על מכשיר שערך מקומית. */
+    var remoteMeta = {};
+    for (var _mi = 0; _mi < YS_SETTINGS_LWW_KEYS.length; _mi++) {
+      var _mk = YS_SETTINGS_LWW_KEYS[_mi];
+      remoteMeta[_mk] = await ysKvUpdatedAt(_mk);
+    }
     var meta = ysSettingsMeta();
 
     // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר

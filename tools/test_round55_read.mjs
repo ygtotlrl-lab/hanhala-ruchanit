@@ -75,9 +75,6 @@ function run(block, tables, kvValue, opts) {
   const ctx = {
     SB: sb,
     YS_ROWS: true,
-    /* ⛔ שכבת השורות של השינה כבויה (סבב 62) — הטבלאות אינן קיימות במסד,
-       והבלוק מכריז את המפתח רק כשהדגל דלוק. */
-    YS_SLEEP_ROWS: false,
     YS_ROWS_KINDS: { attend: { parent: 'ys_sessions', child: 'ys_marks', pk: 'at-sess:', note: false } },
     withTimeout: (p) => Promise.resolve(p),
     ysKvGet: () => { log.kv++; return Promise.resolve(kvValue); },
