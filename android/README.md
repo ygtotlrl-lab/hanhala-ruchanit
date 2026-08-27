@@ -189,3 +189,40 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 ### פרטי המעטפת
 package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
 `usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
+
+<!-- SHARED:start id="context-smali-scope" -->
+## תיקון URL ב-APK קיים ובנוי (בלי מקור) — smali בלבד
+
+⚠️ **הפרק הזה רלוונטי רק ל-APK ישן שנבנה לפני `android/`.** בנייה רגילה היום
+היא מ-`android/` דרך `.github/workflows/build-apk.yml`, והמעטפת טוענת מהרשת —
+ולכן אין בה URL שצריך לתקן.
+⛔ **smali בלבד — לא binary patch.** עריכה בינארית של ה-APK שוברת את החתימה
+ואינה ניתנת לאימות, ⛔ והחתימה מחדש היא במפתח הקבוע של הריפו בלבד — ר' הפרק
+«חתימת APK» ב-CLAUDE.md.
+<!-- SHARED:end -->
+
+```bash
+apktool d <app>.apk -o /tmp/hanhala_work -f
+# תקן את ה-URL ב-MainActivity.smali ו-MainActivity$2.smali
+rm -rf /tmp/hanhala_work/build          # חובה לפני בנייה חוזרת
+apktool b /tmp/hanhala_work -o built.apk
+zipalign -f 4 built.apk aligned.apk
+apksigner sign --ks signing/hanhala.keystore --ks-key-alias hanhala \
+  --ks-pass pass:hanhala123 --key-pass pass:hanhala123 --out output.apk aligned.apk
+```
+
+⚠️ **המפתח הישן שישב ב-`/tmp` אבד**, והמפתח הקבוע הוא
+`signing/hanhala.keystore`; לכן מעבר מה-APK הישן הוא **הסרה + התקנה**
+חד-פעמית.
+
+<!-- SHARED:start id="context-cache-apk" -->
+### ⚠️ Cache APK — כלל זהב
+
+שם קובץ חוזר נתפס במטמון — של הדפדפן, של מנהל ההורדות ושל המכשיר — והמשתמש
+מתקין שוב את הבנייה **הקודמת** בלי לדעת. ⛔ **תמיד שם חדש בכל בנייה**, עם
+חותמת זמן:
+<!-- SHARED:end -->
+
+```bash
+TS=$(date +%s) && apksigner sign ... --out hanhala-${TS}.apk
+```
