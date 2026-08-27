@@ -2410,9 +2410,9 @@ async function renderUsersList() {
       '<div class="ua">' +
         '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
-        '<button onclick="moveUser('+u.id+',-1)" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
-        '<button onclick="moveUser('+u.id+',1)" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
-        '<button onclick="toggleUserActive('+u.id+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+        '<button onclick="moveUser('+idArg(u.id)+',-1)" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
+        '<button onclick="moveUser('+idArg(u.id)+',1)" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
+        '<button onclick="toggleUserActive('+idArg(u.id)+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -6994,7 +6994,7 @@ window.openCurrentStatusModal = function() {
     var badge = isFuture
       ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#EBF4FF;color:#2B6CB0">⏳ עתידי</span>'
       : '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:'+(TBR[a.type]||'#ddd')+';color:'+(TC[a.type]||'#333')+'">● פעיל</span>';
-    var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + a.id + ')';
+    var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + idArg(a.id) + ')';
     return '<div style="background:' + (TB[a.type]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[a.type]||'#ddd') + ';border-radius:12px;padding:12px 14px;margin-bottom:12px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<div style="display:flex;align-items:center;gap:8px">' +
@@ -7055,7 +7055,7 @@ window.cancelSingleAbsence = function(absenceId) {
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone לפי id — לא הסרה פיזית (מונע חזרת ההיעדרות אחרי מיזוג בין מכשירים)
-    s.absences.forEach(function(a){ if (a.id === absenceId) { a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = ysWho(); } });
+    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = ysWho(); } });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
