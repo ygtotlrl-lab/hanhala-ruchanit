@@ -15,6 +15,16 @@
    סיסמה שכתובה בריפו. ההוראה, עם מצייני מקום, נמצאת בקובץ ההתקנה.
 3. `setup-db.html` הוא כלי עזר חד-פעמי שמושך את אותו קובץ ומציג אותו להעתקה.
 
+### התקנת מסד הנתונים
+מריצים את **`migrations/000_initial_schema.sql`** ב-Supabase SQL Editor —
+הקובץ אידמפוטנטי ומגדיר את ארבע הטבלאות: `kv` (מקור הנתונים היחיד),
+`ys_users` (כולל `pass_salt`/`pass_fp` וה-`CHECK` על `role`), `sync_log`
+ו-`kv_backup`. `setup-db.html` הוא כלי חד-פעמי שמושך את הקובץ
+(`cache:'no-store'`) ואינו מחזיק עותק משלו.
+**הרשאות:** `kv` ו-`ys_users` — `INSERT, SELECT, UPDATE` לשני התפקידים;
+`sync_log` ו-`kv_backup` — `INSERT`+`SELECT` בלבד (יומני ראיות).
+המשתמש הראשון נוצר **ידנית**, עם `role` מפורש.
+
 ## מסכים
 
 - **מצבת תלמידים** — רשימה, כרטיס תלמיד, סטטוסים והיעדרויות.
@@ -37,6 +47,11 @@ node tools/check-js.mjs   # חובה לפני כל push
 
 ⚠️ קידום `CACHE_NAME` ב-`sw.js` הוא חובה בכל שינוי קוד, ו-`YS_APP_VER`
 ב-`index.html` מיושר אליו — הוא שדה `sw_version` שנרשם ביומן הכניסה.
+
+### PDF
+ספריית **pdfmake** (לא html2pdf — בעיות RTL), מ-`cdnjs` בגרסה נעוצה
+`0.2.7` (`pdfmake.min.js` + `vfs_fonts.js`), עם
+`defaultStyle: { font: 'Roboto', alignment: 'right' }`.
 
 <!-- SHARED:start id="readme-apk" -->
 ## APK

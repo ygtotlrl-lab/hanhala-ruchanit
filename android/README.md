@@ -104,10 +104,17 @@ open on the users' devices, while yoman and the old hanhala APK — both WebView
 ⚠️ **המקור עצמו נבדל פר-אפליקציה**, והוא מתועד בשורה שמתחת.
 <!-- SHARED:end -->
 
-⚠️ **המקור כאן:** קובץ המאסטר `icons/טונקל בלוי מיט ווייסן הינטערגרונט.png`
-(1024×1024, דיו `#18335c` על לבן) — `ic_launcher` הוא הלוגו המלא על לבן,
-ו-`ic_launcher_foreground` הוא דיו שטוח על שקוף ב-66% מהקנבס. ⛔ אין למחוק את
-קובץ המאסטר — הוא גם הלוגו של מסך הכניסה ושל הכותרת.
+### הסט כאן
+- **המקור הגרפי היחיד = `design/icon-master.png`** (1024×1024, דיו `#18335c`
+  על לבן). ⛔ **נכס עיצוב שאינו נטען בדף** (סבב 50) — 850KB לשום צורך;
+  הלוגו במסך הכניסה ובכותרת מוגש מ-`icons/icon-512.png` שממילא ב-`CORE`.
+  הסט נגזר ממנו ב-LANCZOS, ולצידו `icon-maskable-512.png` — הלוגו ב-72%
+  במרכז קנבס לבן.
+- **mipmap במעטפת:** `ic_launcher` (מלא על לבן) + `ic_launcher_foreground`
+  (דיו שטוח על שקוף, הלוגו ב-66% מהקנבס) בכל חמש הרזולוציות, ואדפטיבי
+  ב-`mipmap-anydpi-v26` עם רקע לבן.
+- **אותה גיאומטריה משמשת את הסט הירוק של schar-limud** (דיו `#307535`;
+  אומתה התאמה מבנית ≥99.9% בין הסטים בכל גודל).
 
 <!-- SHARED:start id="android-shell-split" -->
 ## המעטפת — ליבה משותפת ומעטפת פר-אפליקציה (סבב 41)
@@ -157,5 +164,28 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 ../signing/sign-apk.sh app/build/outputs/apk/release/app-release-unsigned.apk hanhala-ruchanit.apk
 ```
 
-או ידנית — ר' הפרק "חתימת APK" ב-CLAUDE.md (מפתח `signing/hanhala.keystore`,
-alias `hanhala`). אחרי חתימה מאמתים שה-SHA256 תואם לטבלה שם.
+### המפתח הקבוע — ⛔ לעולם לא להחליף
+
+| | |
+|---|---|
+| **קובץ** | `signing/hanhala.keystore` (PKCS12, RSA 2048) |
+| **alias** | `hanhala` |
+| **storepass / keypass** | `hanhala123` (זהה לשניהם) |
+| **תוקף** | 10,000 יום — 10.08.2026 עד 26.12.2053 |
+| **SHA256** | `9F:68:B5:A0:0E:FA:D1:2F:19:C6:FF:E7:05:8E:D0:61:79:92:E6:99:9F:34:74:12:66:B0:93:93:E4:E1:6D:BF` |
+| **SHA1** | `D7:E5:DC:42:32:EC:4A:04:B0:64:40:3F:48:EA:2B:2F:C8:67:1E:59` |
+| **DN** | `CN=hanhala, OU=Yeshiva, O=Yeshiva, L=Rishon LeZion, ST=Israel, C=IL` |
+
+אימות: `keytool -list -v -keystore signing/hanhala.keystore -storepass hanhala123`,
+ואחרי חתימה — ש-`apksigner verify --print-certs` מחזיר את אותו SHA256.
+
+⚠️ **ה-APK הישן (`yeshiva-manager.apk`) נבנה מחוץ לריפו במפתח זמני שאבד**,
+ולכן מעבר ממנו הוא **הסרה + התקנה** חד-פעמית. לפני המעבר לוודא באפליקציה
+הישנה ש«⏳ ממתין לסנכרון» מציג **0**.
+
+⚠️ **בסביבת הענן אין Android SDK ו-`dl.google.com` חסום** — הדרך המעשית היא
+ה-workflow שלמעלה. ⛔ ולא PWABuilder: הוא יודע לייצר TWA בלבד.
+
+### פרטי המעטפת
+package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
+`usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
