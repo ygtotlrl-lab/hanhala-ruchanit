@@ -37,6 +37,9 @@ import crypto from 'node:crypto';
  *  ומדווח ✅ על בדיוק מה שהשער מפיל. ⚠️ הייבוא שקט — הריצה העצמית שם
  *  מוגנת ב-`SELF`. */
 const { audit: iconAudit } = await import('./test_round66_iconlayer.mjs');
+/*  ⭐ ושורה 47 נמדדת ע"י `audit` של שער סבב 67 — ⛔ אותו נימוק בדיוק:
+ *  מדידה שנייה של אותה שכבה הייתה נסחפת מהראשונה. */
+const { audit: inputAudit } = await import('./test_round67_inputlayer.mjs');
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
@@ -54,7 +57,11 @@ const APP = {
   kvFallbackFn: 'ysKvGet',
   naRows: [],
   matrixProbe: {
-    4:  (c) => !!c.fnBody('ysUsersCacheSave'),
+    /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (כלל ברזל 26ד, סבב 67) —
+     *  «נתיב עדכון חלקי» שאין לו אף קורא הוא קוד מת, ו-✅ עליו נקרא
+     *  כעדות. ⚠️ הספירה היא >1 מפני שההגדרה עצמה נספרת גם היא. */
+    4:  (c) => !!c.fnBody('ysUsersCacheSave')
+             && (c.code.match(/\bysUsersCacheSave\s*\(/g) || []).length > 1,
     // ⛔ שלב א בלבד (סבב 36) — ה-`kv` הוא עדיין המאסטר וכל קריאה עוברת בו. הדגל
     //    הזה הוא המתג — כשהוא יכובה (שלב ב), התא חייב להפוך ל-✅.
     15: (c) => c.hasCode(/YS_KV_LEGACY_WRITE\s*=\s*false/),
@@ -702,6 +709,12 @@ const MATRIX = [
    *  נותן ✅ גם לאייקון שתופס 32% מהמסגרת בזמן שהאחיות תופסות 44%. */
   { row: 46, name: 'שכבת אייקונים',
     probe: () => iconAudit('.').length === 0 },
+  { row: 47, name: 'שכבת קלט אחידה',
+    probe: () => inputAudit('.').length === 0 },
+  /*  ⛔ שתי נקודות כניסה חיות ולא שתי פונקציות (סבב 67) — כלל ברזל 26ד:
+   *  פונקציה שקיימת בקובץ ואין לה קורא היא קוד מת, ו-✅ עליה נקרא כעדות. */
+  { row: 48, name: 'שכבת כניסה מלאה',
+    probe: () => /onclick="[^"]*myPasswordModal\s*\(/.test(src) && /onclick="[^"]*switchUserEl\s*\(/.test(src) },
 ];
 
 /*  ⭐ אתרי העברת-מזהה (סבב 64) — אופרנד שמשורשר מיד אחרי `('` או `,'`,
