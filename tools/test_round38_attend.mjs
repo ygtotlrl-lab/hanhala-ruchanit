@@ -43,7 +43,7 @@ ok('5 · `togglePresent` נמחקה', !/togglePresent/.test(SRC));
 ok('6 · `recordTime` נמחקה', !/recordTime/.test(SRC));
 ok('7 · אין צעד דחיפה למפתח', !/step\('ys_attend'/.test(SRC));
 
-/* ── ב. מה ש⛔ לא נגע ──────────────────────────────────────────────────── */
+/* ── ב. מה ש⛔ לא נגע ───────────────────────────────────────────────────── */
 ok('8 · ⛔ `ys_attend_sessions` שרד — הנוכחית האמיתית',
   SRC.indexOf("'ys_attend_sessions'") !== -1);
 ok('9 · ⛔ `_ysSessionsMerge` שרד', /function\s+_ysSessionsMerge/.test(SRC));

@@ -123,7 +123,7 @@ const WIRING = [
 function t2() {
   console.log('\n2 · הכתיבה הכפולה');
   WIRING.forEach(([re, msg]) => assert(re.test(SRC), msg));
-  // ⛔ הטענה המרכזית: השורות אינן שער.
+  // ⛔ הטענה המרכזית — השורות אינן שער: כשל בהן אינו חוסם את מסלול ה-kv.
   assert(!/await ysRowsPushSessions/.test(SRC) && !/await ysRowsPushStudents/.test(SRC),
     '3ו · ⛔ הדחיפה לשורות אינה ב-`await` ואינה חוסמת את מסלול ה-kv');
   assert(!/if\s*\([^)]*ysRowsPush[^)]*\)\s*\{?\s*(pendConfirmPush|_ysMarkPushed)/.test(SRC),

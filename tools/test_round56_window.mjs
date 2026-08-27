@@ -29,7 +29,7 @@ const ok = (m) => console.log('  ok   ' + m);
 const bad = (m) => { failed++; console.error('  FAIL ' + m); };
 const assert = (c, m) => (c ? ok(m) : bad(m));
 
-/* ── חילוץ: לוח התאריכים העברי + עוזרי החלון ──────────────────────────── */
+/* ── חילוץ: לוח התאריכים העברי + עוזרי החלון ───────────────────────────── */
 const L = SRC.split('\n');
 const calFrom = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
 const calTo = L.findIndex((l, i) => i > calFrom && l.startsWith('window.ysHebDate=function'));
@@ -82,7 +82,7 @@ function harness(y, m, d, extra) {
   return { api: ctx.__api, RealDate: REAL, D };
 }
 
-/* ── 1. החלון: חודש עברי נוכחי + הקודם, ולא יותר ──────────────────────── */
+/* ── 1. החלון: חודש עברי נוכחי + הקודם, ולא יותר ───────────────────────── */
 const TODAY = new Date();
 const h = harness(TODAY.getFullYear(), TODAY.getMonth() + 1, TODAY.getDate());
 const keys = h.api.ysHwWindowKeys();
@@ -109,11 +109,12 @@ assert(h.api.ysHwInWindow({}), 'רשומה בלי date_iso נשארת בחלון
 assert(h.api.ysHwInWindow({ date_iso: 'לא-תאריך' }), 'תאריך שאינו נקרא משאיר את הרשומה בחלון');
 
 /*  ⚠️ בדיקת גבול אמיתית: יום אחד לפני תחילת החודש הנוכחי הוא עדיין בחלון
- *  (החודש הקודם), ⛔ ויום אחד לפני תחילת החודש הקודם כבר אינו. */
+ *  (החודש הקודם), ⛔ ויום אחד לפני תחילת החודש הקודם כבר אינו — זה
+ *  ההבדל בין בדיקת גבול לבדיקה שעוברת על כל תאריך. */
 assert(prev.monthIndex !== cur.monthIndex && h.api.hebOfIso(backIso).monthIndex !== prev.monthIndex,
   'שלושת החודשים שנמדדו נבדלים זה מזה — הגבול חד ואינו מקרי');
 
-/* ── 2. שער הדיסק מצמצם את הדיסק בלבד ─────────────────────────────────── */
+/* ── 2. שער הדיסק מצמצם את הדיסק בלבד ──────────────────────────────────── */
 const MODS = (() => {
   const s = L.findIndex((l) => l.includes('/* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35)'));
   const e = L.findIndex((l) => l.includes('/* ═══════════════ סוף מודול החלון החם'));
@@ -156,7 +157,7 @@ assert(kept.some((r) => r.id === 'b'), '⛔ רשומה מסומנת ⏳ נשאר
 assert(kept.some((r) => r.id === 'c'), 'רשומה בתוך החלון נשארת');
 assert(memory.length === before, '⛔ מערך הזיכרון לא השתנה — הפינוי נוגע בדיסק בלבד');
 
-/* ── 3. החיווט הסטטי ──────────────────────────────────────────────────── */
+/* ── 3. החיווט הסטטי ───────────────────────────────────────────────────── */
 const STATIC = [
   [/HW_CFG = \{\s*\n\s*enabled: true,/, 'HW_CFG.enabled = true'],
   [/key: 'ys_attend_sessions',/, "מפרט החלון קיים ל-ys_attend_sessions"],
@@ -173,7 +174,7 @@ assert(raw === 2, '⛔ שתי כתיבות גולמיות בלבד: apply של �
 assert((SRC.match(/_ysAtDiskSave\(/g) || []).length >= 6,
   'חמשת אתרי הכתיבה + ההגדרה עוברים דרך המשפך');
 
-/* ── מוטציות ──────────────────────────────────────────────────────────── */
+/* ── מוטציות ───────────────────────────────────────────────────────────── */
 function mutFails(label, mutSrc, re) {
   assert(!re.test(mutSrc), 'מוטציה — ' + label + ' מפילה את הטענה');
 }

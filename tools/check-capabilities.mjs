@@ -49,7 +49,7 @@ const APP = {
   naRows: [],
   matrixProbe: {
     4:  (c) => !!c.fnBody('ysUsersCacheSave'),
-    // ⛔ שלב א בלבד: ה-`kv` הוא עדיין המאסטר וכל קריאה עוברת דרכו. הדגל
+    // ⛔ שלב א בלבד (סבב 36) — ה-`kv` הוא עדיין המאסטר וכל קריאה עוברת בו. הדגל
     //    הזה הוא המתג — כשהוא יכובה (שלב ב), התא חייב להפוך ל-✅.
     15: (c) => c.hasCode(/YS_KV_LEGACY_WRITE\s*=\s*false/),
     19: (c) => !!c.fnBody('changeMyPassword'),
