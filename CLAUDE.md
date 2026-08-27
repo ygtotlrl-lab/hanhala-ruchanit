@@ -1952,6 +1952,9 @@ schar-limud, yoman-avoda, gius). הם חלים על כל קוד חדש בארג�
 `hanhala-ruchanit/migrations/004_backup_retention_cron.sql` (הפרויקט
 המשותף — חלה גם על yoman ועל schar) ו-`gius/migrations/0005_backup_retention_cron.sql`;
 `bk_retention_daily` פעילה בשני הפרויקטים בתזמון `'0 3 * * *'`.
+⛔ **ורשימת-ההיתר עצמה נקראת מהמיגרציה האחרונה שמגדירה אותה מחדש** — היום
+`hanhala-ruchanit/migrations/014_backup_allowlist_drop_wa_phone.sql`; ⛔ מיגרציה
+שכבר רצה אינה נערכת, ולכן שינוי ברשימה הוא תמיד קובץ חדש.
 ⚠️ **עובדה ולא הנחה: 57 השורות שהיו בפרויקט המשותף תחת `PRE_*`/`ORPHAN_*`
 נמחקו ב-2026-08-18 ואינן ניתנות לשחזור** — מסלול Free אינו כולל גיבויי
 פרויקט. ⛔ האיסור על מחיקה אוטומטית נשאר בתוקף לכל גיבוי `PRE_*` **עתידי**.
