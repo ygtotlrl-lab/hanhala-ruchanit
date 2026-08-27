@@ -31,7 +31,7 @@ const ok = (m) => console.log('  ok   ' + m);
 const bad = (m) => { failed++; console.error('  FAIL ' + m); };
 const assert = (cond, m) => (cond ? ok(m) : bad(m));
 
-/* ── חיתוך לפי שם, בהתאמת סוגריים (זהה לרתמות האחרות של הסבב) ─────────── */
+/* ── חיתוך לפי שם, בהתאמת סוגריים (זהה לרתמות האחרות של הסבב) ──────────── */
 function cutAssign(name, src) {
   const re = new RegExp('\\nwindow\\.' + name + '\\s*=\\s*function', 'g');
   const m = re.exec(src);
@@ -138,7 +138,7 @@ assert(idsA.size === 3, '3 · שלושת המזהים באותו ייבוא שו
 assert(idsB.every((id) => !idsA.has(id)),
   '4 · ⛔ שני מכשירים שמייבאים את אותו קובץ במקביל אינם מקצים מזהה משותף');
 
-/* ── 2 · סימון ⏳ לכל שורה מיובאת ──────────────────────────────────────── */
+/* ── 2 · סימון ⏳ לכל שורה מיובאת ───────────────────────────────────────── */
 assert(a.marked.length === 3, '5 · שלושה סימוני ⏳ נכתבו (' + a.marked.length + ')');
 assert(a.added.every((s) => a.marked.indexOf('student:' + s.id) > -1),
   '6 · ⛔ הסימון נגזר מהמזהה של הרשומה שנוספה בפועל, ולא ממיקום במערך');
@@ -157,7 +157,7 @@ const nc = run(SRC, { dev: 'D', noCrypto: true });
 assert(nc.added.length === 3 && new Set(nc.added.map((s) => String(s.id))).size === 3,
   '12 · ⚠️ בלי `crypto` הנפילה-חזרה עדיין נותנת שלושה מזהים שונים');
 
-/* ── 5 · שלוש מוטציות ─────────────────────────────────────────────────── */
+/* ── 5 · שלוש מוטציות ──────────────────────────────────────────────────── */
 const FN = cutAssign('importStudentsFromFile', SRC);
 
 /*  מוטציה א — חזרה למזהה רץ. ⛔ אם היא אינה מפילה את טענה 4, הבדיקה

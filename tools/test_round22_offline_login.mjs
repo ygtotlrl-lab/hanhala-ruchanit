@@ -65,7 +65,7 @@ const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
-  /* ⛔ דגל נתיב-החזרה של הסיסמה הגלויה (סבב 40). */
+  /* ⛔ דגל נתיב-החזרה של הסיסמה הגלויה (סבב 40) — העמודה `NOT NULL`. */
   'YS_PLAINTEXT_LEGACY_WRITE'];
 
 const CODE = VARS.map(grabVar).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
@@ -180,7 +180,7 @@ function boot(state, opts = {}) {
 let ok = 0, bad = 0;
 const T = (name, cond) => { if (cond) { ok++; console.log('  ✅ ' + name); } else { bad++; console.error('  ❌ ' + name); } };
 const eq = (name, a, b) => T(name + (a === b ? '' : ` (התקבל: ${JSON.stringify(a)})`), a === b);
-const sec = (t) => console.log('\n── ' + t);
+const sec = (t) => console.log('\n──────────────────────────────────── ' + t);
 
 const USERS = () => ([
   { id: 1, username: 'admin',  password_hash: '111111', full_name: 'מנהל',  role: 'admin',  active: true, pass_salt: null, pass_fp: null },
@@ -214,7 +214,7 @@ sec('1. PBKDF2 — גזירה, מלח, ודטרמיניזם');
   eq('1יא. בלי crypto ⇒ ysMakePassFp מחזירה null', await S.ysMakePassFp('123456'), null);
 }
 
-/* ── 2. המטמון — ⛔ password_hash לעולם לא בדיסק ───────────────────────── */
+/* ── 2. המטמון — ⛔ password_hash לעולם לא בדיסק ────────────────────────── */
 sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאות');
 {
   const S = boot({ tables: { ys_users: USERS() } });
@@ -310,7 +310,7 @@ async function seedFp(S, rows, pwByUser = { 1: '111111', 2: '222222', 3: '333333
   return rows;
 }
 
-/* ── 5. כניסה אופליין — ⭐ לב הסבב ─────────────────────────────────────── */
+/* ── 5. כניסה אופליין — ⭐ לב הסבב ──────────────────────────────────────── */
 sec('5. כניסה אופליין');
 async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
   // בונה מטמון מלא כפי שהוא נראה אחרי כניסה מקוונת + רענון
@@ -413,7 +413,7 @@ sec('6. כניסה מקוונת');
   T('6ו. ...ונרשמה כ-wrong_credentials_online', LOGINLOG.indexOf('wrong_credentials_online') !== -1);
 }
 
-/* ── 7. ⛔ השלמת הטביעות הוסרה (סבב 40) ─────────────────────────────────
+/* ── 7. ⛔ השלמת הטביעות הוסרה (סבב 40) ──────────────────────────────────────
    ⚠️ **הטענות כאן התהפכו במכוון.** עד סבב 40 הן אכפו ש-`ysBackfillPassFp`
    גוזרת טביעה מהסיסמה הגלויה; מסבב 40 הן אוכפות ש**היא אינה קיימת**.
    ⛔ זו אינה ריכוך של הבדיקה אלא הפוכה שלה: כל עוד הפונקציה בקוד, יש
@@ -545,7 +545,7 @@ async function doSwitch(targetId, pass, opts = {}) {
     String(LS.ys_users_cache).indexOf('222222') === -1);
 }
 
-/* ── 10. סריקה גורפת של כל מפתחות localStorage ────────────────────────── */
+/* ── 10. סריקה גורפת של כל מפתחות localStorage ─────────────────────────── */
 sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיסק');
 {
   const rows = USERS();
