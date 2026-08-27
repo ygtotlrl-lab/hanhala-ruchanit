@@ -32,9 +32,11 @@ const APP = {
   /* ⛔ הטבלאות שקיימות במסד של האפליקציה הזו ומותר להכריז עליהן כמקור
      גיבוי. ⚠️ נמדדו מול `information_schema.tables` ב-26.8.2026, ⛔ ולא
      הועתקו מהקוד — העתקה מהקוד הייתה מאשרת את הבאג שהשער נועד לתפוס.
-     ⛔ `ys_sleep_sessions`/`ys_sleep_marks` **אינן כאן** (סבב 62): הן
-     נכתבו ב-`009` ומעולם לא הורצו. */
-  tables: ['ys_sessions', 'ys_marks', 'ys_students_rows'],
+     ⭐ `ys_sleep_sessions`/`ys_sleep_marks` **נוספו בסבב 63**: `009`+`010`
+     הורצו ואומתו, ⛔ והקיום נמדד מול `information_schema` ולא הוסק
+     מכך שהדגל נדלק. */
+  tables: ['ys_sessions', 'ys_marks', 'ys_students_rows',
+           'ys_sleep_sessions', 'ys_sleep_marks'],
   /* דגלים שמותר להם לשער מקור — ⛔ מקור מאחורי דגל אינו נדרש להיות
      ב-`tables`, מפני שהוא אינו נשלף עד שהדגל יידלק. */
   gates: ['YS_SLEEP_ROWS']
