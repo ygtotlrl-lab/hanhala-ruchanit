@@ -378,8 +378,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div class="auth-logo"><img src="icons/icon-512.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
-    <div class="auth-field"><label>שם משתמש</label><input type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
-    <div class="auth-field"><label>סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.doLogin()"></div>
+    <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
+    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.doLogin()"></div>
     <button class="auth-btn" id="auth-btn" onclick="doLogin()">כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
@@ -462,7 +462,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button id="btn-manage-list" class="btn sm out" onclick="window.openManageListDlg()" style="display:none">⚙️ ניהול רשימה</button><input type="file" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
+<div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" onclick="window.printStudents()">🖨️ הדפסה</button><button id="btn-manage-list" class="btn sm out" onclick="window.openManageListDlg()" style="display:none">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none" onchange="window.importStudentsFromFile(this)"></div>
 
 
 <!-- Filter Tabs -->
@@ -475,7 +475,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div style="display:flex;justify-content:center;margin:0 0 14px">
-<div class="sw" id="sw-inner"><input type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="window.onSearchInput()" autocomplete="off"><div id="search-dropdown"></div></div>
+<div class="sw" id="sw-inner"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="window.onSearchInput()" autocomplete="off"><div id="search-dropdown"></div></div>
 </div>
 
 <!-- Summary Bar -->
@@ -514,9 +514,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div id="student-modal" class="modal-overlay" style="display:none">
 <div class="modal-box" style="max-width:420px">
 <h3 id="student-modal-title">➕ הוסף תלמיד</h3>
-<label>שם התלמיד (משפחה שם)</label>
-<input type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">
-<label>שיעור</label>
+<label for="st-name">שם התלמיד (משפחה שם)</label>
+<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">
+<label for="st-class">שיעור</label>
 <select id="st-class" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px">
 <option value="a">שיעור א'</option>
 <option value="b">שיעור ב'</option>
@@ -534,28 +534,28 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="modal-box" style="max-width:480px">
 <h3>📋 אישור היעדרות</h3>
 <div id="approval-student-name" style="font-weight:bold;margin-bottom:12px;color:#1a3c6e"></div>
-<label>סיבה</label>
+<label for="appr-reason">סיבה</label>
 <select id="appr-reason" onchange="checkOther()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0">
 </select>
 <div id="other-text-wrap" style="display:none;margin-top:8px">
-<label>פרט</label>
-<textarea id="appr-other" rows="2" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;direction:rtl"></textarea>
+<label for="appr-other">פרט</label>
+<textarea aria-label="פירוט הסיבה" id="appr-other" rows="2" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;direction:rtl"></textarea>
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
 <div>
-<label>מתאריך עברי</label>
-<input type="text" id="appr-from-heb" placeholder="א׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
+<label for="appr-from-heb">מתאריך עברי</label>
+<input aria-label="א׳ ניסן ה׳תשפ״ו" type="text" id="appr-from-heb" placeholder="א׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
 </div>
 <div>
-<label>שעת יציאה</label>
+<label for="appr-from-time">שעת יציאה</label>
 <input type="time" id="appr-from-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
 </div>
 <div>
-<label>עד תאריך עברי</label>
-<input type="text" id="appr-to-heb" placeholder="ג׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
+<label for="appr-to-heb">עד תאריך עברי</label>
+<input aria-label="ג׳ ניסן ה׳תשפ״ו" type="text" id="appr-to-heb" placeholder="ג׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
 </div>
 <div>
-<label>שעת חזרה</label>
+<label for="appr-to-time">שעת חזרה</label>
 <input type="time" id="appr-to-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
 </div>
 </div>
@@ -583,7 +583,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="modal-box" style="max-width:400px">
 <h3>⚙️ עריכת סיבות אישור</h3>
 <div id="reasons-list" style="margin:10px 0;max-height:300px;overflow-y:auto"></div>
-<input type="text" id="new-reason" placeholder="סיבה חדשה..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:8px 0;direction:rtl">
+<input aria-label="סיבה חדשה" type="text" id="new-reason" placeholder="סיבה חדשה..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:8px 0;direction:rtl">
 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
 <button class="btn out" onclick="closeReasons()">סגור</button>
 <button class="btn" onclick="window.addReason()">➕ הוסף</button>
@@ -618,8 +618,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
               <div id="at-date-wrap"></div>
             </div>
             <div style="flex:1;min-width:140px">
-              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
-              <input id="at-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
+              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px" for="at-filler">ממלא</label>
+              <input aria-label="שם הממלא" id="at-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
             </div>
           </div>
           <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px">בחר סדר לפתיחה:</div>
@@ -653,8 +653,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><button class="gear" data-gear="reports">⚙️</button><input type="month" id="rm"><button class="btn" id="btn-rpt">📊 הצג</button></div>
-    <div class="ep" id="ep-reports"><h4>⚙️ עריכת כותרות</h4><textarea>גיליונות חודשיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-reports')">סגור</button><button class="btn" onclick="saveEp('reports')">💾 שמור</button></div></div>
+    <div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><button class="gear" data-gear="reports">⚙️</button><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" id="btn-rpt">📊 הצג</button></div>
+    <div class="ep" id="ep-reports"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">גיליונות חודשיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-reports')">סגור</button><button class="btn" onclick="saveEp('reports')">💾 שמור</button></div></div>
     <div id="rc"></div>
   </div>
 </div>
@@ -679,8 +679,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
               <div id="sl-date-wrap"></div>
             </div>
             <div style="flex:1;min-width:140px">
-              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">ממלא</label>
-              <input id="sl-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
+              <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px" for="sl-filler">ממלא</label>
+              <input aria-label="שם הממלא" id="sl-filler" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem" placeholder="שם הממלא">
             </div>
           </div>
           <div style="font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:10px">בחר דו"ח לפתיחה:</div>
@@ -708,8 +708,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </div>
   </div>
 </div>
-<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea>מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
-<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea>תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">מבחנים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-exams')">סגור</button><button class="btn" onclick="saveEp('exams')">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" onclick="window.showPage('home')">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">תיקים אישיים</textarea><div class="ep-act"><button class="btn out" onclick="closeEp('ep-files')">סגור</button><button class="btn" onclick="saveEp('files')">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <!-- ===== דף הגדרות ===== -->
 <div class="pg" id="pg-settings">
   <div class="inner">
@@ -781,15 +781,15 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
         <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px">שנת המחזור נשמרת לצמיתות עם כל תלמיד ומוצגת בתצוגת "לא פעילים"</div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור א'</label>
+            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-a">שיעור א'</label>
             <select id="cy-a" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ב'</label>
+            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-b">שיעור ב'</label>
             <select id="cy-b" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600">שיעור ג'</label>
+            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-g">שיעור ג'</label>
             <select id="cy-g" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
           </div>
         </div>
@@ -897,11 +897,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <button class="mc" onclick="closeUserModal()">✕</button>
     <div class="md-title"><span>👤</span><span id="um-title">הוסף משתמש</span></div>
     <input type="hidden" id="um-id">
-    <label>שם מלא *</label>
-    <input type="text" id="um-name" placeholder="ישראל ישראלי">
-    <label>שם משתמש * (לכניסה)</label>
-    <input type="text" id="um-username" placeholder="israel" style="direction:ltr">
-    <label>תפקיד</label>
+    <label for="um-name">שם מלא *</label>
+    <input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">
+    <label for="um-username">שם משתמש * (לכניסה)</label>
+    <input aria-label="israel" type="text" id="um-username" placeholder="israel" style="direction:ltr">
+    <label for="um-role">תפקיד</label>
     <select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">
       <option value="admin">מנהל</option>
       <option value="senior">צוות בכיר</option>
@@ -913,11 +913,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
            מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
            הייתה מרמזת שאפשר לערוך אותו כאן. ⚠️ קביעת סיסמה חדשה היא
            `um-pass` שמתחתיו, והוא כן נושא את שניהם. -->
-      <input type="password" id="um-curr-pass" readonly style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">
+      <input type="password" aria-label="הסיסמה הנוכחית" id="um-curr-pass" readonly autocomplete="off" style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">
       <button type="button" onclick="var i=document.getElementById('um-curr-pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>
     </div>
-    <label id="um-pass-label">סיסמה חדשה (6 ספרות)</label>
-    <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
+    <label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>
+    <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
     <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>    <div class="auth-err" id="um-err"></div>
     <div class="ma" style="margin-top:14px">
       <button class="btn out" onclick="closeUserModal()">ביטול</button>
@@ -1944,7 +1944,7 @@ window._hcBuild=function(pfx,initH,tv){
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
     '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:#fff;border:1.5px solid #d8e2f0;border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
-    (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:#888;white-space:nowrap">שעה:</span><input type="time" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid #d8e2f0;border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
+    (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:#888;white-space:nowrap">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid #d8e2f0;border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
 document.addEventListener('mousedown',function(e){
@@ -2005,7 +2005,7 @@ function openStatusForm(type) {
     '<div style="display:flex;flex-direction:column;gap:16px">' +
       '<div>' +
         '<label style="'+lbl+'">סיבה</label>' +
-        '<select id="sfm-reason" style="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptions+'<option value="אחר">אחר</option></select>' +
+        '<select aria-label="סיבת ההיעדרות" id="sfm-reason" style="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptions+'<option value="אחר">אחר</option></select>' +
       '</div>' +
       '<div>' +
         '<label style="'+lbl+'">תאריך התחלה</label>' +
@@ -2101,7 +2101,7 @@ function switchUser(id, name) {
     var subTitle = H(1492,1499,1504,1505,32,1505,1497,1505,1502,1488);
     var cancelTxt = H(1489,1497,1496,1493,1500);
     var enterTxt = H(1499,1504,1497,1505,1492);
-    d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:300px;text-align:center;border-top:4px solid #1a3a6b;direction:rtl"><div style="font-size:1.8rem;margin-bottom:8px">'+String.fromCharCode(128100)+'</div><div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px" id="switch-name"></div><div style="font-size:.8rem;color:#888;margin-bottom:16px">'+subTitle+'</div><input type="password" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px"><div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px"></div><div style="display:flex;gap:10px;justify-content:center"><button onclick="closeSwitchModal()" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button><button onclick="confirmSwitch()" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button></div></div>';
+    d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:300px;text-align:center;border-top:4px solid #1a3a6b;direction:rtl"><div style="font-size:1.8rem;margin-bottom:8px">'+String.fromCharCode(128100)+'</div><div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px" id="switch-name"></div><div style="font-size:.8rem;color:#888;margin-bottom:16px">'+subTitle+'</div><input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px"><div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px"></div><div style="display:flex;gap:10px;justify-content:center"><button onclick="closeSwitchModal()" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button><button onclick="confirmSwitch()" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button></div></div>';
     document.body.appendChild(d);
     document.getElementById('switch-pass').addEventListener('keydown',function(e){if(e.key==='Enter')confirmSwitch();});
   }
@@ -2572,7 +2572,7 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','senior','junior'].forEach(function(role) {
       var cur = (p[m.id]||{})[role] || 'none';
-      var sel = '<select class="ps" data-mod="'+m.id+'" data-role="'+role+'">';
+      var sel = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
         sel += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
@@ -6600,7 +6600,7 @@ window.openDeactivateStudentDlg = function(){
   dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:810;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
   dlg.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;max-width:360px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
     '<div style="font-weight:700;font-size:.97rem;color:var(--navy);margin-bottom:14px">😴 סמן תלמיד כלא פעיל</div>'+
-    '<select id="deact-st-sel" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;margin-bottom:16px;direction:rtl">'+
+    '<select aria-label="תלמיד להשבתה" id="deact-st-sel" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;margin-bottom:16px;direction:rtl">'+
       '<option value="">-- בחר תלמיד --</option>'+opts+
     '</select>'+
     '<div style="font-size:.82rem;color:#c05621;background:#fffbeb;border-radius:8px;padding:8px 12px;margin-bottom:16px">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>'+
@@ -8000,7 +8000,7 @@ window.atRenderStudents = function() {
     var isPendingLate=isLate&&!!window._atPending[String(s.id)];
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
+        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
         'oninput="window.atSetLateMin('+idArg(s.id)+',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
@@ -8516,9 +8516,9 @@ window.atRenderSupervision = async function() {
     html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">➕ הוסף טיפול</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     var cfg=window._atCfg||atDefaultCfg();
-    html+='<select id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
+    html+='<select aria-label="סוג הטיפול" id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
-    html+='<input id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
+    html+='<input aria-label="הערה (אופציונלי)" id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
     html+='<button onclick="window.atAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
@@ -8761,8 +8761,8 @@ window.renderAttendSettings = async function() {
   if(sc){
     sc.innerHTML=cfg.sessions.map(function(s){
       return '<div data-sess-row="1" style="display:flex;gap:6px;align-items:center;margin-bottom:2px">'+
-        '<input data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
-        '<input data-sess-time="1" type="time" value="'+(s.startTime||'')+'" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
+        '<input aria-label="שם הסדר" data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+(s.startTime||'')+'" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
@@ -8770,7 +8770,7 @@ window.renderAttendSettings = async function() {
   if(tc){
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input value="'+esc(t)+'" id="at-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input aria-label="שם הטיפול" value="'+esc(t)+'" id="at-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
@@ -8783,8 +8783,8 @@ window.atAddSession = function() {
   var div=document.createElement('div');
   div.setAttribute('data-sess-row','1');
   div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:2px';
-  div.innerHTML='<input data-sess-name="1" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
-    '<input data-sess-time="1" type="time" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
+  div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+    '<input data-sess-time="1" aria-label="שעת הסדר" type="time" style="width:90px;border:1.5px solid var(--border);border-radius:8px;padding:5px 7px;font-family:Heebo;font-size:.85rem">'+
     '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
   sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 };
@@ -8793,7 +8793,7 @@ window.atAddTreatRow = function() {
   if(!tc) return;
   var div=document.createElement('div');
   div.style.cssText='display:flex;gap:6px;align-items:center';
-  div.innerHTML='<input placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
@@ -9456,7 +9456,7 @@ window.slRenderStudents = function() {
     var isPendingLate=isLate&&!!window._slPending[String(s.id)];
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
-        '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
+        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
         'oninput="window.slSetLateMin('+idArg(s.id)+',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
@@ -9464,7 +9464,7 @@ window.slRenderStudents = function() {
         (isPendingLate?'<button onclick="window.slConfirmLate('+idArg(s.id)+')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
-    var noteField='<input type="text" placeholder="הערה" value="'+noteVal+'" '+
+    var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
       'id="sl-note-'+s.id+'" '+
       'oninput="window.slSetNote('+idArg(s.id)+',this.value)" '+
       'style="width:80px;padding:3px 7px;border:1.5px solid #ccc;border-radius:6px;font-family:Heebo;font-size:.78rem">';
@@ -9957,9 +9957,9 @@ window.slRenderSupervision = async function() {
     html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">➕ הוסף טיפול</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     var slCfg=window._slCfg||slDefaultCfg();
-    html+='<select id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
+    html+='<select aria-label="סוג הטיפול" id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       slCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
-    html+='<input id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
+    html+='<input aria-label="הערה (אופציונלי)" id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
     html+='<button onclick="window.slAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
@@ -10140,7 +10140,7 @@ window.renderSleepSettings = async function() {
   if(tc){
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div style="display:flex;gap:6px;align-items:center">'+
-        '<input value="'+esc(t)+'" id="sl-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
+        '<input aria-label="שם הטיפול" value="'+esc(t)+'" id="sl-treat-inp-'+i+'" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem">'+
         '<button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>'+
       '</div>';
     }).join('');
@@ -10152,7 +10152,7 @@ window.slAddTreatRow = function() {
   if(!tc) return;
   var div=document.createElement('div');
   div.style.cssText='display:flex;gap:6px;align-items:center';
-  div.innerHTML='<input placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
+  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem"><button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
