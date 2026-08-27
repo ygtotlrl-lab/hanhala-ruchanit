@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/*  test_round38_attend.mjs — סבב 38: `ys_attend` נמחק (פיצ'ר נטוש).
+/*  test_attend.mjs — סבב 38: `ys_attend` נמחק (פיצ'ר נטוש).
  *
  *  ⚠️ פרטי ל-hanhala-ruchanit — זה המפתח היחיד מסוגו בארגון.
  *
@@ -92,7 +92,7 @@ for (const m of DOC.matchAll(BARE)) {
   const pos = m.index;
   if (r38 !== -1 && pos > r38) continue;                       // פרקי הסבבים
   const line = DOC.slice(DOC.lastIndexOf('\n', pos) + 1, DOC.indexOf('\n', pos));
-  if (line.indexOf('test_round38_attend') !== -1) continue;    // שורת רישום הבדיקה
+  if (line.indexOf('test_attend') !== -1) continue;    // שורת רישום הבדיקה
   stray.push(line.trim());
 }
 ok('19 · ⛔ אין אזכור מחוץ לפרקי הסבבים' +
