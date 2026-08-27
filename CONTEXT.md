@@ -73,7 +73,7 @@ alter table public.TABLE_NAME enable row level security;
 - כניסה אופליין מול טביעת PBKDF2, ⛔ בלי סיסמה על הדיסק ✅
 - גיבוי יומי ל-`kv_backup` + יומן פעולות ל-`sync_log` ✅
 - **דוחות חודשיים / מבחנים / תיקים אישיים — בבנייה** (`UNDER_CONSTRUCTION`)
-- PWA + באנר עדכון — `CACHE_NAME` נוכחי `hanhala-ruchanit-v51`
+- PWA + באנר עדכון — ⛔ ערך `CACHE_NAME` ב-`sw.js` בלבד
 
 ## פרטי מערכת
 - מעטפת APK: **WebView מקורי** ב-`android/` שטוען מהרשת — ⛔ לא TWA ולא PWABuilder
