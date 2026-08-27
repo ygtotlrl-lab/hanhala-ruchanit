@@ -2373,6 +2373,39 @@ function sortUsersByOrder(data) {
     return ia - ib;
   });
 }
+/* ══════════════════════════════════════════════════════════════════════════
+   העברת מזהה ל-DOM — `data-id` ודלגציה (סבב 67, כלל ברזל 27)
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ מזהה רשומה עובר ב-`data-id` ובדלגציה — ⛔ לעולם לא מוטבע ב-`onclick`.
+   ⛔ **וכל ערך שחוזר מ-`data-*` הוא מחרוזת** (סבב 67) — ⚠️ וזה בדיוק
+   המקום שבו ההמרה נשברת בשקט: `idx + dir` על המחרוזת `"-1"` הוא שרשור
+   ולא חיבור, ו-`!current` על המחרוזת `"false"` הוא `false`. ⛔ שני
+   הארגומנטים האלה מומרים כאן במפורש, ⛔ ואין להסיר את ההמרה.
+   ⚠️ **וההמרה כאן חלקית בכוונה** — 29 אתרים במודולי הנוכחות והשינה
+   נושאים `event.stopPropagation()` בתוך אותו מאפיין, ⛔ ודלגציה ב-
+   `document` הופכת את סדר הבועות: המטפל של השורה העוטפת היה רץ **לפני**
+   המטפל המואצל, כלומר `stopPropagation` היה מפסיק להגן. ⛔ הם נשארו
+   כפי שהם ונרשמו כפער — ר' «פערים פתוחים».
+   ══════════════════════════════════════════════════════════════════════════ */
+var DOM_ACTIONS = {
+  'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
+  'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
+  'user-toggle': function (el) { toggleUserActive(el.getAttribute('data-id'),
+                                   el.getAttribute('data-active') === '1'); },
+  'st-pick':     function (el) { window.selectSearchStudent(el.getAttribute('data-id')); },
+  'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
+  'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
+  'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
+};
+document.addEventListener('click', function (ev) {
+  var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
+  if (!el) return;
+  var fn = DOM_ACTIONS[el.getAttribute('data-act')];
+  if (!fn) return;
+  ev.preventDefault();
+  fn(el);
+});
+
 function moveUser(id, dir) {
   var el = document.getElementById('users-list');
   var rows = Array.from(el.querySelectorAll('.ur'));
@@ -2415,9 +2448,9 @@ async function renderUsersList() {
       '<div class="ua">' +
         '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
-        '<button onclick="moveUser('+idArg(u.id)+',-1)" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
-        '<button onclick="moveUser('+idArg(u.id)+',1)" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
-        '<button onclick="toggleUserActive('+idArg(u.id)+','+u.active+')" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+        '<button data-act="user-up" data-id="'+esc(u.id)+'" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
+        '<button data-act="user-down" data-id="'+esc(u.id)+'" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
+        '<button data-act="user-toggle" data-id="'+esc(u.id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -6223,7 +6256,7 @@ function updateSearchDropdown() {
   dd.innerHTML = matches.map(function(s) {
     var clsLabel = CLS_NAME[s.cls] || s.cls || '';
     var nameHl = esc(s.name).replace(re, '<mark>$1</mark>');
-    return '<div class="sd-item" tabindex="0" onclick="window.selectSearchStudent(' + idArg(s.id) + ')">' +
+    return '<div class="sd-item" tabindex="0" data-act="st-pick" data-id="' + esc(s.id) + '">' +
       '<span class="sd-name">' + nameHl + '</span>' +
       '<span class="sd-cls">' + esc(clsLabel) + '</span>' +
       '</div>';
@@ -6440,7 +6473,7 @@ function renderStudents(){
           '<div style="display:flex;align-items:center;gap:6px">'+badge+'</div>'+
         '</div>'+
         '<div style="flex-shrink:0">'+
-          '<button onclick="window.setStudentActive('+idArg(s.id)+')" style="padding:5px 12px;background:#eaf7f0;color:#276749;border:1.5px solid #9ae6b4;border-radius:20px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">↩ החזר לפעיל</button>'+
+          '<button data-act="st-activate" data-id="'+esc(s.id)+'" style="padding:5px 12px;background:#eaf7f0;color:#276749;border:1.5px solid #9ae6b4;border-radius:20px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">↩ החזר לפעיל</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -6471,12 +6504,12 @@ function renderStudents(){
     var presIcon=isPresent
       ?'<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; נוכח</span>'
       :'<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; אינו נוכח</span>';
-    var statusBtn='<button onclick="openAttendanceEdit('+idArg(s.id)+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
+    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
     html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
-    html+='<button onclick="window.editStudent('+idArg(s.id)+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
