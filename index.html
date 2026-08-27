@@ -158,17 +158,17 @@ th{color:#fff;font-weight:600;padding:12px 16px;text-align:right;font-size:.86re
 td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#eef2fa}
-.abox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.abox-h{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:13px 20px;font-weight:600;font-size:.93rem}
-.ar{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--border)}
-.ar:last-child{border-bottom:none}
-.ar:hover{background:#eef2fa}
-.abtns{display:flex;gap:7px}
+
+
+
+
+
+
 .ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:#fff;color:var(--text2);transition:all .15s}
 .ab:hover{border-color:var(--navy);color:var(--navy)}
 .ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
-.ab.sa{background:#fdf0f0;border-color:#e74c3c;color:#c0392b;font-weight:600}
-.ab.sl{background:#fff8e8;border-color:#c9a84c;color:#a07830;font-weight:600}
+
+
 .sw{position:relative;width:100%}
 #search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:#fff;border:1.5px solid var(--navy);border-radius:14px;box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
 #search-dropdown.open{display:block}
@@ -188,15 +188,15 @@ tr:hover td{background:#eef2fa}
 input[type=date],input[type=month]{padding:8px 12px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy)}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:600}
-.bp{background:#eaf7f0;color:#1a7a4a;border:1px solid #a8dfc0}
-.ba{background:#fdf0f0;color:#c0392b;border:1px solid #f5b8b8}
-.bl{background:#fff8e8;color:#a07830;border:1px solid #e8d090}
+
+
+
 .mb{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
 .modal-box{background:#fff;border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy);max-height:85vh;overflow-y:auto}
 .mb.on{display:flex}
 .hidden{display:none!important}
-.mb:not(.hidden).show-modal{display:flex}
+
 .md{background:var(--bg2);border-radius:14px;padding:32px;width:100%;max-width:490px;box-shadow:0 20px 60px rgba(0,0,0,.22);position:relative;border-top:4px solid var(--navy)}
 .md-title{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px}
 .md label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
@@ -262,7 +262,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .md{padding:20px 16px;max-width:calc(100vw - 28px)}
 }
 @media(max-width:480px){
-  .nb .nb-lbl{display:none}
+
   .nb{padding:7px 9px}
   header{height:56px}
   .logo{width:40px;height:40px}
@@ -1239,7 +1239,7 @@ function ysApplyPerms(p) {
 
    **הפתרון.** המטמון חוזר להחזיק את **כל המשתמשים הפעילים**, אבל בלי
    הסיסמה: לכל משתמש נשמרים `pass_salt` + `pass_fp` — טביעת PBKDF2-SHA256
-   ב-100,000 סיבובים, עם **מלח פר-משתמש**. מכשיר שאבד חושף טביעות, לא
+   ב-`YS_PASS_ITER` סיבובים, עם **מלח פר-משתמש**. מכשיר שאבד חושף טביעות, לא
    סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
    גם מול סיסמה בת שש ספרות.
 
