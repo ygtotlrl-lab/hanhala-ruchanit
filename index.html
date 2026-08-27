@@ -2037,7 +2037,7 @@ function saveStudentStatus(type) {
   var sid = window._statusSid;
 
   var students = getStudents();
-  var s = students.find(function(x){return x.id===sid;});
+  var s = students.find(function(x){return idEq(x.id, sid);});
   if (!s) return;
 
   if (!Array.isArray(s.absences)) s.absences = [];
@@ -4449,6 +4449,13 @@ function pendBoot() {
    `arcEditEntry`) חיפשו מזהה בלי מרכאות מאז סבב 38 — הצד שיוצר את
    המאפיין קיבל `idArg` והצד שמחפש אותו לא — וכפתור העריכה היה מת.
    ⛔ **ובכל הרשומות ולא רק בחדשות**, מפני ש-`idArg` מצטט ללא תנאי.
+   ⛔ **ומזהים קיימים אינם מומרים לעולם (סבב 38)** — מזהה הוא מפתח המיזוג,
+   והמרתו הייתה מפצלת רשומה אחת לשתיים בכל מכשיר שטרם קיבל
+   את ההמרה. כלומר הקוד חייב לסבול **את שני הסוגים לנצח**: uuid
+   לרשומה חדשה, ומספר לרשומה שנוצרה לפני המעבר.
+   ⛔ **ואין להחזיר השוואה או מיון מספריים על מזהה (סבב 38)** — `===`
+   מול מספר נכשל על uuid, ו-`b.id - a.id` מחזיר `NaN` ומשאיר את
+   הרשימה בסדר שרירותי.
    ═══════════════════════════════════════════════════════════════════════ */
 function newClientId(){
   try{
@@ -4464,6 +4471,23 @@ function newClientId(){
   b[6]=(b[6]&0x0f)|0x40;b[8]=(b[8]&0x3f)|0x80;  // גרסה 4, variant RFC 4122
   var h=[],j;for(j=0;j<16;j++)h.push((b[j]+0x100).toString(16).slice(1));
   return h.slice(0,4).join('')+'-'+h.slice(4,6).join('')+'-'+h.slice(6,8).join('')+'-'+h.slice(8,10).join('')+'-'+h.slice(10,16).join('');
+}
+// השוואת זהות — תמיד כמחרוזת. עובדת על מזהה ישן (מספר) ועל חדש (uuid)
+// באותה מידה, ⛔ וגם על התאמה חוצת-סוגים שנוצרת כשמזהה עובר דרך מאפיין
+// HTML וחוזר כמחרוזת (סבב 38).
+function idEq(a, b) {
+  if (a == null || b == null) return false;
+  return String(a) === String(b);
+}
+// מזהה כארגומנט למאפיין `onclick`, וכבורר לאיתור האלמנט בחזרה.
+// ⛔ **מצוטט תמיד** (סבב 38) — uuid בלי מרכאות הוא שם משתנה שאינו קיים,
+// וכל כפתורי העריכה והמחיקה היו מתים.
+// ⛔ והסינון הוא **רשימת-היתר של תווים** ולא בריחה (סבב 38): ערך המאפיין
+//    עובר פענוח-ישויות לפני שהוא נקרא כ-JS, ולכן `&#39;` שנוצר ע"י `esc`
+//    היה חוזר להיות גרש וסוגר את המחרוזת. מזהה חוקי כאן הוא ספרות, אותיות
+//    לטיניות, מקף וקו תחתון בלבד — כל השאר נחתך.
+function idArg(v) {
+  return "'" + String(v == null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '') + "'";
 }
 /* ═══════════════ סוף מודול מזהי הרשומות ════════════════════════════════ */
 
@@ -6419,7 +6443,7 @@ function updateSearchDropdown() {
   dd.innerHTML = matches.map(function(s) {
     var clsLabel = CLS_NAME[s.cls] || s.cls || '';
     var nameHl = esc(s.name).replace(re, '<mark>$1</mark>');
-    return '<div class="sd-item" tabindex="0" onclick="window.selectSearchStudent(' + s.id + ')">' +
+    return '<div class="sd-item" tabindex="0" onclick="window.selectSearchStudent(' + idArg(s.id) + ')">' +
       '<span class="sd-name">' + nameHl + '</span>' +
       '<span class="sd-cls">' + esc(clsLabel) + '</span>' +
       '</div>';
@@ -6431,7 +6455,7 @@ function selectSearchStudent(sid) {
   var searchEl = document.getElementById('search-st');
   var dd = document.getElementById('search-dropdown');
   var allStudents = getStudents();
-  var s = allStudents.find(function(x) { return x.id === sid; });
+  var s = allStudents.find(function(x) { return idEq(x.id, sid); });
   if (!s) return;
   if (searchEl) searchEl.value = s.name;
   if (dd) dd.classList.remove('open');
@@ -6636,7 +6660,7 @@ function renderStudents(){
           '<div style="display:flex;align-items:center;gap:6px">'+badge+'</div>'+
         '</div>'+
         '<div style="flex-shrink:0">'+
-          '<button onclick="window.setStudentActive('+s.id+')" style="padding:5px 12px;background:#eaf7f0;color:#276749;border:1.5px solid #9ae6b4;border-radius:20px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">↩ החזר לפעיל</button>'+
+          '<button onclick="window.setStudentActive('+idArg(s.id)+')" style="padding:5px 12px;background:#eaf7f0;color:#276749;border:1.5px solid #9ae6b4;border-radius:20px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">↩ החזר לפעיל</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -6667,12 +6691,12 @@ function renderStudents(){
     var presIcon=isPresent
       ?'<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; נוכח</span>'
       :'<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; אינו נוכח</span>';
-    var statusBtn='<button onclick="openAttendanceEdit('+s.id+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
+    var statusBtn='<button onclick="openAttendanceEdit('+idArg(s.id)+')" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
     html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
-    html+='<button onclick="window.editStudent('+s.id+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button onclick="window.editStudent('+idArg(s.id)+')" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
@@ -6729,7 +6753,7 @@ function _initClsYearsInputs(){
 // -------- הפעלה/השבתה של תלמיד --------
 window.setStudentInactive = function(sid){
   var students=getStudents();
-  var s=students.find(function(x){return x.id===sid;});
+  var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast('⚠️ תלמיד לא נמצא');return;}
   var years=getClsYears();
   s.active=false;
@@ -6743,7 +6767,7 @@ window.setStudentInactive = function(sid){
 
 window.setStudentActive = function(sid){
   var students=getStudents();
-  var s=students.find(function(x){return x.id===sid;});
+  var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast('⚠️ תלמיד לא נמצא');return;}
   s.active=true;
   saveStudents(students);
@@ -6915,7 +6939,7 @@ function _getStatusModal() {
 
 function openAttendanceEdit(sid) {
   var students = getStudents();
-  var s = students.find(function(x){return x.id===sid;});
+  var s = students.find(function(x){return idEq(x.id, sid);});
   if (!s) return;
   window._statusSid = sid;
   window._statusStudentName = s.name;
@@ -7008,7 +7032,7 @@ function ysRefreshSupervisionViews() {
 window.cancelStudentStatus = function() {
   var sid = window._statusSid;
   var students = getStudents();
-  var s = students.find(function(x){return x.id===sid;});
+  var s = students.find(function(x){return idEq(x.id, sid);});
   if (!s) return;
   s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
@@ -7027,7 +7051,7 @@ window.cancelStudentStatus = function() {
 window.cancelSingleAbsence = function(absenceId) {
   var sid = window._statusSid;
   var students = getStudents();
-  var s = students.find(function(x){return x.id===sid;});
+  var s = students.find(function(x){return idEq(x.id, sid);});
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone לפי id — לא הסרה פיזית (מונע חזרת ההיעדרות אחרי מיזוג בין מכשירים)
@@ -7061,7 +7085,7 @@ function openAddStudent(){
 
 function editStudent(sid){
   if(checkLoginNeeded())return;
-  var s=getStudents().find(function(x){return x.id===sid;});
+  var s=getStudents().find(function(x){return idEq(x.id, sid);});
   if(!s)return;
   editingStudentId=sid;
   var t=document.getElementById('student-modal-title');
@@ -7078,7 +7102,7 @@ function saveStudent(){
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
-    var idx=students.findIndex(function(s){return s.id===editingStudentId;});
+    var idx=students.findIndex(function(s){return idEq(s.id, editingStudentId);});
     if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].updatedAt=Date.now();}
   } else {
     // ⛔ המזהה הוא uuid ולא `maxId+1` (סבב 37) — שני מכשירים שמוסיפים תלמיד
@@ -7126,7 +7150,7 @@ function ysTombstoneStudents(ids){
 
 function deleteStudent(sid){
   if(checkLoginNeeded())return;
-  var s=getStudents().find(function(x){return x.id===sid;});
+  var s=getStudents().find(function(x){return idEq(x.id, sid);});
   if(!s)return;
   var msg=document.getElementById('confirm-msg');
   if(msg)msg.textContent=H(1492,1488,1501,32,1500,1502,1495,1493,1511,32,1488,1514,32)+s.name+'?';
@@ -7144,7 +7168,7 @@ function confirmAction(){if(confirmCallback)confirmCallback();closeConfirm();}
 function openApproval(sid){
   if(checkLoginNeeded())return;
   currentApprovalId=sid;
-  var s=getStudents().find(function(x){return x.id===sid;});
+  var s=getStudents().find(function(x){return idEq(x.id, sid);});
   var nameEl=document.getElementById('approval-student-name');
   if(nameEl)nameEl.textContent=s?s.name:'';
   var reasons=getReasons();
@@ -7711,7 +7735,7 @@ var AT_COLORS={
 // אישור/היעדרות לתלמיד. מעדכן רק סימון ריק או 'ap' (לעולם לא דורס סימון ידני).
 async function ysRefreshApprovalMarks(sid) {
   try {
-    var student = getStudents().find(function(x){ return x.id === sid; });
+    var student = getStudents().find(function(x){ return idEq(x.id, sid); });
     if (!student) return;
     var sidKey = String(sid);
     var todayIso = new Date().toISOString().split('T')[0];
