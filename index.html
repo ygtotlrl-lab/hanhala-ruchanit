@@ -231,7 +231,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .stat{padding:12px 8px}
   .stat .n{font-size:1.5rem}
 
-  /* header */
+  /* כותרת עליונה */
   header{height:60px;padding:0 12px}
   .logo{width:46px;height:46px}
   .hdiv{display:none}
@@ -268,7 +268,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .logo{width:40px;height:40px}
 }
 
-/* ===== BOTTOM NAV - MOBILE ONLY ===== */
+/* ===== ניווט תחתון — מובייל בלבד ===== */
 .bottom-nav{display:none}
 @media(max-width:800px){
   body{padding-bottom:64px}
@@ -311,7 +311,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .hl{gap:10px}
 }
 
-/* ===== AUTH ===== */
+/* ===== כניסה ===== */
 #auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
 #auth-screen.hidden{display:none}
 .auth-box{background:#fff;border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
@@ -2338,7 +2338,7 @@ function closeDenied() {
   var dm=document.getElementById('denied-modal');dm.classList.add('hidden');dm.classList.remove('on');
 }
 
-// Enter handled via onkeydown in HTML
+// Enter מטופל דרך onkeydown ב-HTML
 
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5178,7 +5178,7 @@ async function ysSyncNow() {
   _ysMarkSynced();
 }
 
-// ===== Offline Queue =====
+// ===== תור האופליין =====
 var _YS_Q_KEY = 'ys_offline_queue';
 
 function _ysKvSetRaw(key, value) {
@@ -5196,9 +5196,9 @@ async function ysTouchLastChanged() {
   return await plTouch();
 }
 
-// ysKvSet with auto-queue fallback — transparent drop-in replacement
+// ysKvSet עם נפילה-חזרה לתור — תחליף שקוף, באותו חוזה
 async function ysKvSet(key, value) {
-  // Never queue the timestamp key (it's always derived)
+  // ⛔ לעולם לא להכניס לתור את מפתח החותמת (נרשם בסבב 67) — הוא תמיד נגזר
   if (key === 'ys_last_changed') {
     try { return await _ysKvSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
   }
@@ -5257,7 +5257,7 @@ function ysUpdateQueueBadge() {
     }
   } catch(e) {}
 }
-// Merge two session arrays by record id (local-only items appended)
+// ממזג שני מערכי סדרים לפי מזהה רשומה (פריטים מקומיים בלבד מתווספים בסוף)
 function _ysSessionsMerge(cloudArr, localArr, logKey) {
   // משודרג: מיזוג ברמת רשומה עם updatedAt + tombstones (היה: הוספה-בלבד לפי id).
   // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection) — אך מתועדת.
@@ -5305,7 +5305,7 @@ async function ysFlushQueue() {
   lsSet(_YS_Q_KEY, JSON.stringify(failed));
   ysUpdateQueueBadge();
 }
-// ===== End Offline Queue =====
+// ===== סוף תור האופליין =====
 
 /* ══════════════════════════════════════════════════════════════════════════
    שכבת השורות — טבלאות מובנות, שלב א (סבב 36)
@@ -5747,7 +5747,7 @@ function ysSyncLog(action, key, recordCount, details) {
   logAction(action, key, recordCount, details);
 }
 
-// record_count helper: array length, object key-count, else 0/1
+// עוזר record_count: אורך מערך, מספר מפתחות באובייקט, אחרת 0/1
 function ysCount(v) {
   return Array.isArray(v) ? v.length
        : (v && typeof v === 'object' ? Object.keys(v).length
@@ -6182,10 +6182,10 @@ async function ysPullFromCloud() {
 //    `plBoot()` מ-`loadDash()`, ופולינג שרץ לפני הכניסה נגע ברשת בשביל
 //    משיכה ש-`ysApplyPerms` ממילא זורקת.
 
-// Initial load from cloud on startup - with auto-create kv table if missing
+// טעינה ראשונית מהענן בעלייה — עם יצירה אוטומטית של טבלת kv אם חסרה
 setTimeout(async function() {
   try {
-    // Try to read - if table missing, create it via pg REST
+    // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
     var r = await withTimeout(SB.from('kv').select('value').eq('key', 'ys_last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
@@ -6207,7 +6207,7 @@ setTimeout(async function() {
   ysUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
 }, 1500);
 
-// Online event: flush offline queue when network returns
+// אירוע online: ריקון תור האופליין כשהרשת חוזרת
 window.addEventListener('online', function() {
   console.log('[ys-queue] network online — flushing queue');
   ysUpdateQueueBadge();
@@ -6221,13 +6221,13 @@ window.addEventListener('offline', function() {
   ysUpdateQueueBadge();
 });
 
-// Debounced push
+// דחיפה מושהית
 var _ysPushTimer = null;
 function scheduleYsPush() {
   if (_ysPushTimer) clearTimeout(_ysPushTimer);
   _ysPushTimer = setTimeout(function() { ysPushToCloud(); }, 400);
 }
-// ============ END CLOUD SYNC ============
+// ============ סוף סנכרון הענן ============
 
 /* ══════════════════════════════════════════════════════════════════════════
    חיפוש תלמידים — השלמה אוטומטית
@@ -6285,7 +6285,7 @@ document.addEventListener('click', function(e) {
   var dd = document.getElementById('search-dropdown');
   if (dd && sw && !sw.contains(e.target)) dd.classList.remove('open');
 });
-// ============ END SEARCH AUTOCOMPLETE ============
+// ============ סוף השלמת החיפוש ============
 
 /* ══════════════════════════════════════════════════════════════════════════
    הגדרה ראשונית של המסד
@@ -6331,7 +6331,7 @@ async function ensureFirstAdmin() {
 }
 
 ensureFirstAdmin();
-// ============ END DB AUTO-SETUP ============
+// ============ סוף ההקמה האוטומטית של המסד ============
 
 /* ══════════════════════════════════════════════════════════════════════════
    מצבת התלמידים — רשימה, סטטוסים והיעדרויות
@@ -6383,7 +6383,7 @@ function getDefaultStudents(){return [
   {id:73,name:H(1511,1493,1492,1503,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'g'},{id:74,name:H(1513,1500,1493,32,1512,1494),cls:'b'},
   {id:75,name:H(1513,1500,1493,32,1512,1494,32,1489),cls:'g'}
 ];}
-// Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
+// מפת השיעורות: 'a'=א, 'b'=ב, 'g'=ג
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
 function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
@@ -6709,7 +6709,7 @@ function getActiveAbsences(s, refDate) {
   return [];
 }
 
-// Returns all non-expired absences including future ones (for display in dialog)
+// מחזירה את כל ההיעדרויות שטרם פגו, כולל עתידיות (לתצוגה בדיאלוג)
 function getAllRelevantAbsences(s) {
   var now = new Date();
   if (Array.isArray(s.absences) && s.absences.length > 0) {
@@ -7225,7 +7225,7 @@ window.printStudents = function() {
       pdfMake.fonts['Alef'] = {normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
       fontName = 'Alef';
     }
-    // Canvas RTL image helper (bypasses pdfmake bidi)
+    // עוזר תמונת RTL על canvas (עוקף את ה-bidi של pdfmake)
     function rtlImg(text, opts) {
       var scale=2, W=opts.w||515, H=opts.h||28;
       var c=document.createElement('canvas');
@@ -7239,7 +7239,7 @@ window.printStudents = function() {
       ctx.fillText(text, W/2, H/2);
       return {image:c.toDataURL('image/png'),width:W,alignment:'center',margin:opts.margin||[0,0,0,0]};
     }
-    // Register document font for canvas use
+    // רושם את גופן המסמך לשימוש ב-canvas
     if(window._alefFontB64&&typeof FontFace!=='undefined'){try{var _hf=false;document.fonts.forEach(function(f){if(f.family==='Alef')_hf=true;});if(!_hf){var _b=atob(window._alefFontB64),_ab=new ArrayBuffer(_b.length),_v=new Uint8Array(_ab);for(var _i=0;_i<_b.length;_i++)_v[_i]=_b.charCodeAt(_i);document.fonts.add(new FontFace('Alef',_ab));}}catch(_e){}}
     var subtitleImg = rtlImg('דוח נוכחות — '+today, {fs:11,color:'#555',h:22,fontName:fontName,margin:[0,0,0,14]});
     var summaryImg = rtlImg('סהכ: '+students.length+' | נוכחים: '+present.length+' | אינם נוכחים: '+absent.length, {fs:13,bold:true,color:'#333',h:28,fontName:fontName,margin:[0,0,0,20]});
@@ -7262,7 +7262,7 @@ window.printStudents = function() {
     alert('PDF Error: '+e.message);
   }
 }
-// ============ END STUDENTS MODULE ============
+// ============ סוף מודול התלמידים ============
 
 /* ══════════════════════════════════════════════════════════════════════════
    מודול הנוכחות — סדרי היום, רישום סימונים והשגחה
@@ -8328,7 +8328,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
     console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
-    // SpreadsheetML (Excel 2003 XML) with ss:RightToLeft=1
+    // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
