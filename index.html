@@ -1466,7 +1466,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v66'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v67'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -7599,7 +7599,7 @@ window.loadAttend = async function() {
         '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRec.session+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>'+
         '<div style="display:flex;gap:10px;justify-content:center">'+
         '<button onclick="this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.atEditSession(\''+_openRec.id+'\');this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
+        '<button onclick="window.atEditSession('+idArg(_openRec.id)+');this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
         '</div></div>';
       document.body.appendChild(_rd);
     }
@@ -7810,7 +7810,7 @@ function atRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=atSummaryHtml(cnts);
-    html+='<div onclick="window.atEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div onclick="window.atEditSession('+idArg(rec.id)+')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -7824,7 +7824,7 @@ function atRenderTodaySessions() {
 // עריכת סדר קיים
 window.atEditSession = async function(recId) {
   var data=await atLoadData();
-  var rec=data.find(function(r){return r.id===recId;});
+  var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   // אתחל סימונים מהרשומה הקיימת
   window._atMarks={};window._atPending={};window._atCleared={};
@@ -7970,7 +7970,7 @@ window.atOpenSession = async function(sessId, sessName) {
       '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>'+
       '<div style="display:flex;gap:10px;justify-content:center">'+
       '<button onclick="this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.atEditSession(\''+existing.id+'\');this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
+      '<button onclick="window.atEditSession('+idArg(existing.id)+');this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
       '</div></div>';
     document.body.appendChild(d);
     return;
@@ -8030,7 +8030,7 @@ window.atOpenSession = async function(sessId, sessName) {
 // שמירה מקומית מיידית של הסימונים לתוך רשומת הסשן האמיתית (ללא רשת)
 function atSaveLocalNow() {
   if(!window._atCurrentSessionId||!window._atData) return null;
-  var rec=window._atData.find(function(r){return r.id===window._atCurrentSessionId;});
+  var rec=window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);});
   if(!rec) return null;
   var marks={};
   getStudents().forEach(function(s){
@@ -8055,7 +8055,7 @@ async function atAutoSaveNow() {
 // כל סימון: שמירה מקומית מיידית + דחיפה מרוכזת לענן (debounce)
 function atMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
-  if(window._atPendingRec && window._atCurrentSessionId===window._atPendingRec.id){
+  if(window._atPendingRec && idEq(window._atCurrentSessionId,window._atPendingRec.id)){
     if(!window._atData) window._atData=[];
     // ⛔ הבדיקה חוזרת כאן ולא רק בפתיחה (סבב 36) — זו נקודת היצירה בפועל,
     //    והפולינג יכול היה להביא סדר מתחרה מאז שהדיאלוג בדק.
@@ -8064,7 +8064,7 @@ function atMarkDirty() {
     if(_atDup){
       atAdoptSession(_atDup);
       toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
-    } else if(!window._atData.some(function(r){return r&&r.id===window._atPendingRec.id;})) {
+    } else if(!window._atData.some(function(r){return r&&idEq(r.id,window._atPendingRec.id);})) {
       window._atData.push(window._atPendingRec);
     }
     window._atPendingRec=null;
@@ -8109,7 +8109,7 @@ function atShowOverrideDialog(sid, student) {
       '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
       '<div style="display:flex;gap:10px">'+
         '<button onclick="this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
-        '<button onclick="window.atCancelStudentStatusFromReg(\''+sid+'\');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
+        '<button onclick="window.atCancelStudentStatusFromReg('+idArg(sid)+');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(d);
@@ -8196,10 +8196,10 @@ window.atRenderStudents = function() {
     var col=AT_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
       'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
-    return '<button onclick="window.atSetMark(\''+sid+'\',\''+code+'\')" style="'+style+'">'+label+'</button>';
+    return '<button onclick="window.atSetMark('+idArg(sid)+',\''+code+'\')" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
-    return '<button onclick="window.atClearMark(\''+sid+'\')" title="נקה סימון" '+
+    return '<button onclick="window.atClearMark('+idArg(sid)+')" title="נקה סימון" '+
       'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
       'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
       'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
@@ -8221,11 +8221,11 @@ window.atRenderStudents = function() {
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
         '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
-        'oninput="window.atSetLateMin(\''+s.id+'\',this.value)" '+
-        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate(\''+s.id+'\')}" '+
+        'oninput="window.atSetLateMin('+idArg(s.id)+',this.value)" '+
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
-        (isPendingLate?'<button onclick="window.atConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
+        (isPendingLate?'<button onclick="window.atConfirmLate('+idArg(s.id)+')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
@@ -8260,7 +8260,7 @@ window.atSetMark = function(sid, code) {
   var student=getStudents().find(function(s){return String(s.id)===String(sid);});
   // חשב auto-mark עם תאריך ושעת הסדר הנוכחי — זהה לחישוב בפתיחת הסדר
   var curRec=window._atData&&window._atCurrentSessionId?
-    window._atData.find(function(r){return r.id===window._atCurrentSessionId;}):null;
+    window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);}):null;
   var sessDateIso=curRec?curRec.date_iso:null;
   var _cfg=window._atCfg||atDefaultCfg();
   var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
@@ -8296,10 +8296,10 @@ window.atSetLateMin = function(sid, val) {
 window.atCloseSession = async function() {
   clearTimeout(window._atSaveTimer);
   // "שמור וסגור" = סימון הסשן כסגור (open=false); הרשומה עצמה כבר נשמרה לאורך הדרך
-  var _cRec=window._atData&&window._atData.find(function(r){return r.id===window._atCurrentSessionId;});
+  var _cRec=window._atData&&window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await atAutoSaveNow();
-  var rec=window._atData&&window._atData.find(function(r){return r.id===window._atCurrentSessionId;});
+  var rec=window._atData&&window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);});
   var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הסדר נשמר';
   window._atCurrentSessionId=null;
   window._atMarks={};
@@ -8406,7 +8406,7 @@ window.atRenderArchive = async function(records) {
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
-          html+='<button onclick="event.stopPropagation();window.atDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='<button onclick="event.stopPropagation();window.atDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
           var rows=Object.entries(ysMarks(rec)).map(function(e2){
@@ -8449,7 +8449,7 @@ window.atDeleteSession = function(id) {
       '<p style="font-size:.85rem;color:var(--text2);margin-bottom:20px">הסדר יימחק לצמיתות מהארכיון.<br>לא ניתן לשחזר פעולה זו.</p>'+
       '<div style="display:flex;gap:10px">'+
         '<button onclick="this.closest(\'[data-dlg=at-del]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">ביטול</button>'+
-        '<button onclick="window.atDeleteSessionConfirmed(\''+id+'\');this.closest(\'[data-dlg=at-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
+        '<button onclick="window.atDeleteSessionConfirmed('+idArg(id)+');this.closest(\'[data-dlg=at-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(dlg);
@@ -8458,7 +8458,7 @@ window.atDeleteSession = function(id) {
 window.atDeleteSessionConfirmed = async function(id) {
   var data=await atLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
-  var _dRec=data.find(function(r){return r.id===id;});
+  var _dRec=data.find(function(r){return idEq(r.id,id);});
   if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await atSaveData(data);
   window.atRenderArchive();
@@ -8726,7 +8726,7 @@ window.atRenderSupervision = async function() {
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    html+='<button onclick="event.stopPropagation();window.atSupDetail(\''+sid+'\')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<button onclick="event.stopPropagation();window.atSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -8739,7 +8739,7 @@ window.atRenderSupervision = async function() {
     html+='<select id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button onclick="window.atAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button onclick="window.atAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
@@ -8752,7 +8752,7 @@ window.atRenderSupervision = async function() {
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
-          '<button onclick="window.atDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+          '<button onclick="window.atDeleteTreat('+idArg(t.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -8801,7 +8801,7 @@ window.atDeleteTreat = function(id) {
     +'<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'
     +'<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'
     +'<div style="display:flex;gap:10px;justify-content:center">'
-    +'<button onclick="window.atDeleteTreatConfirmed(\''+id+'\')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'
+    +'<button onclick="window.atDeleteTreatConfirmed('+idArg(id)+')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'
     +'<button onclick="this.closest(\'[data-dlg=del-treat]\').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
     +'</div>'
     +'</div>';
@@ -8849,7 +8849,7 @@ window.atSupDetail = function(sid) {
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
       rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+'</span>';
-      rows+='<button onclick="window.atSupEditMarkDlg(\''+r.recId+'\',\''+sid+'\',\''+r.mark+'\')" '+
+      rows+='<button onclick="window.atSupEditMarkDlg('+idArg(r.recId)+','+idArg(sid)+',\''+r.mark+'\')" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
     });
@@ -8882,7 +8882,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
   ];
   var btns=CODES.map(function(cd){
     var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
-    return '<button onclick="window.atEditMark(\''+recId+'\',\''+sid+'\',\''+cd.c+'\')" '+
+    return '<button onclick="window.atEditMark('+idArg(recId)+','+idArg(sid)+',\''+cd.c+'\')" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
   var dlg=document.createElement('div');
@@ -8898,7 +8898,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
 
 window.atEditMark = async function(recId, sid, newCode) {
   var data=await atLoadData();
-  var rec=data.find(function(r){return r.id===recId;});
+  var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
@@ -9210,7 +9210,7 @@ window.loadSleep = async function() {
         '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRecSl.session+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>'+
         '<div style="display:flex;gap:10px;justify-content:center">'+
         '<button onclick="this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.slEditSession(\''+_openRecSl.id+'\');this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
+        '<button onclick="window.slEditSession('+idArg(_openRecSl.id)+');this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
         '</div></div>';
       document.body.appendChild(_rd);
     }
@@ -9363,7 +9363,7 @@ function slRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=slSummaryHtml(cnts);
-    html+='<div onclick="window.slEditSession(\''+rec.id+'\')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div onclick="window.slEditSession('+idArg(rec.id)+')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_SL_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -9376,7 +9376,7 @@ function slRenderTodaySessions() {
 
 window.slEditSession = async function(recId) {
   var data=await slLoadData();
-  var rec=data.find(function(r){return r.id===recId;});
+  var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   window._slMarks={};window._slPending={};window._slCleared={};
   Object.entries(ysMarks(rec)).forEach(function(e){
@@ -9445,7 +9445,7 @@ window.slOpenSession = async function(sessId, sessName) {
       '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>'+
       '<div style="display:flex;gap:10px;justify-content:center">'+
       '<button onclick="this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.slEditSession(\''+existing.id+'\');this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
+      '<button onclick="window.slEditSession('+idArg(existing.id)+');this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
       '</div></div>';
     document.body.appendChild(d);
     return;
@@ -9500,7 +9500,7 @@ window.slOpenSession = async function(sessId, sessName) {
 // שמירה מקומית מיידית (ללא רשת)
 function slSaveLocalNow() {
   if(!window._slCurrentSessionId||!window._slData) return null;
-  var rec=window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
+  var rec=window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);});
   if(!rec) return null;
   var marks={};
   getStudents().forEach(function(s){
@@ -9522,7 +9522,7 @@ async function slAutoSaveNow() {
 // כל סימון: שמירה מקומית מיידית + דחיפה מרוכזת לענן (debounce)
 function slMarkDirty() {
   // סימון ראשון בפועל — ממש את רשומת הסשן הממתינה (מניעת רישומי רפאים)
-  if(window._slPendingRec && window._slCurrentSessionId===window._slPendingRec.id){
+  if(window._slPendingRec && idEq(window._slCurrentSessionId,window._slPendingRec.id)){
     if(!window._slData) window._slData=[];
     // ⛔ אותה הגנה כמו בנוכחות (סבב 36) — נקודת היצירה בפועל, לא הפתיחה.
     var _slDup=atFindLiveSession(window._slData,window._slPendingRec.session,
@@ -9530,7 +9530,7 @@ function slMarkDirty() {
     if(_slDup){
       slAdoptSession(_slDup);
       toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
-    } else if(!window._slData.some(function(r){return r&&r.id===window._slPendingRec.id;})) {
+    } else if(!window._slData.some(function(r){return r&&idEq(r.id,window._slPendingRec.id);})) {
       window._slData.push(window._slPendingRec);
     }
     window._slPendingRec=null;
@@ -9573,7 +9573,7 @@ function slShowOverrideDialog(sid, student) {
       '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
       '<div style="display:flex;gap:10px">'+
         '<button onclick="this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
-        '<button onclick="window.slCancelStudentStatusFromReg(\''+sid+'\');this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
+        '<button onclick="window.slCancelStudentStatusFromReg('+idArg(sid)+');this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(d);
@@ -9652,10 +9652,10 @@ window.slRenderStudents = function() {
     var col=SL_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
       'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
-    return '<button onclick="window.slSetMark(\''+sid+'\',\''+code+'\')" style="'+style+'">'+label+'</button>';
+    return '<button onclick="window.slSetMark('+idArg(sid)+',\''+code+'\')" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
-    return '<button onclick="window.slClearMark(\''+sid+'\')" title="נקה סימון" '+
+    return '<button onclick="window.slClearMark('+idArg(sid)+')" title="נקה סימון" '+
       'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
       'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
       'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
@@ -9677,16 +9677,16 @@ window.slRenderStudents = function() {
     var lateField=isLate?
       '<div style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">'+
         '<input type="number" min="1" max="30" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
-        'oninput="window.slSetLateMin(\''+s.id+'\',this.value)" '+
-        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate(\''+s.id+'\')}" '+
+        'oninput="window.slSetLateMin('+idArg(s.id)+',this.value)" '+
+        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
-        (isPendingLate?'<button onclick="window.slConfirmLate(\''+s.id+'\')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
+        (isPendingLate?'<button onclick="window.slConfirmLate('+idArg(s.id)+')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
     var noteField='<input type="text" placeholder="הערה" value="'+noteVal+'" '+
       'id="sl-note-'+s.id+'" '+
-      'oninput="window.slSetNote(\''+s.id+'\',this.value)" '+
+      'oninput="window.slSetNote('+idArg(s.id)+',this.value)" '+
       'style="width:80px;padding:3px 7px;border:1.5px solid #ccc;border-radius:6px;font-family:Heebo;font-size:.78rem">';
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
@@ -9720,7 +9720,7 @@ window.slRenderStudents = function() {
 window.slSetMark = function(sid, code) {
   var student=getStudents().find(function(s){return String(s.id)===String(sid);});
   var curRec=window._slData&&window._slCurrentSessionId?
-    window._slData.find(function(r){return r.id===window._slCurrentSessionId;}):null;
+    window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);}):null;
   var sessDateIso=curRec?curRec.date_iso:null;
   var _cfg=window._slCfg||slDefaultCfg();
   var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
@@ -9762,10 +9762,10 @@ window.slSetNote = function(sid, val) {
 window.slCloseSession = async function() {
   clearTimeout(window._slSaveTimer);
   // "שמור וסגור" = סימון הסשן כסגור (open=false)
-  var _cRec=window._slData&&window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
+  var _cRec=window._slData&&window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await slAutoSaveNow();
-  var rec=window._slData&&window._slData.find(function(r){return r.id===window._slCurrentSessionId;});
+  var rec=window._slData&&window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);});
   var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
   window._slCurrentSessionId=null;
   window._slMarks={};
@@ -9867,7 +9867,7 @@ window.slRenderArchive = async function(records) {
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
-          html+='<button onclick="event.stopPropagation();window.slDeleteSession(\''+rec.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='<button onclick="event.stopPropagation();window.slDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
           var rows=Object.entries(ysMarks(rec)).map(function(e2){
@@ -9911,7 +9911,7 @@ window.slDeleteSession = function(id) {
       '<p style="font-size:.85rem;color:var(--text2);margin-bottom:20px">הרשומה תימחק לצמיתות מהארכיון.<br>לא ניתן לשחזר פעולה זו.</p>'+
       '<div style="display:flex;gap:10px">'+
         '<button onclick="this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">ביטול</button>'+
-        '<button onclick="window.slDeleteSessionConfirmed(\''+id+'\');this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
+        '<button onclick="window.slDeleteSessionConfirmed('+idArg(id)+');this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(dlg);
@@ -9920,7 +9920,7 @@ window.slDeleteSession = function(id) {
 window.slDeleteSessionConfirmed = async function(id) {
   var data=await slLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
-  var _dRec=data.find(function(r){return r.id===id;});
+  var _dRec=data.find(function(r){return idEq(r.id,id);});
   if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await slSaveData(data);
   window.slRenderArchive();
@@ -10168,7 +10168,7 @@ window.slRenderSupervision = async function() {
     html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    html+='<button onclick="event.stopPropagation();window.slSupDetail(\''+sid+'\')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<button onclick="event.stopPropagation();window.slSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sl-sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -10180,7 +10180,7 @@ window.slRenderSupervision = async function() {
     html+='<select id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       slCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button onclick="window.slAddTreat(\''+sid+'\')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button onclick="window.slAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
@@ -10193,7 +10193,7 @@ window.slRenderSupervision = async function() {
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
-          '<button onclick="window.slDeleteTreat(\''+t.id+'\')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+          '<button onclick="window.slDeleteTreat('+idArg(t.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -10239,7 +10239,7 @@ window.slDeleteTreat = function(id) {
     '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'+
     '<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'+
     '<div style="display:flex;gap:10px;justify-content:center">'+
-    '<button onclick="window.slDeleteTreatConfirmed(\''+id+'\')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'+
+    '<button onclick="window.slDeleteTreatConfirmed('+idArg(id)+')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'+
     '<button onclick="this.closest(\'[data-dlg=sl-del-treat]\').remove()" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'+
     '</div></div>';
   document.body.appendChild(dlg);
@@ -10286,7 +10286,7 @@ window.slSupDetail = function(sid) {
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
       rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+esc(noteStr)+'</span>';
-      rows+='<button onclick="window.slSupEditMarkDlg(\''+r.recId+'\',\''+sid+'\',\''+r.mark+'\')" '+
+      rows+='<button onclick="window.slSupEditMarkDlg('+idArg(r.recId)+','+idArg(sid)+',\''+r.mark+'\')" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
     });
@@ -10318,7 +10318,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
   ];
   var btns=CODES.map(function(cd){
     var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
-    return '<button onclick="window.slEditMark(\''+recId+'\',\''+sid+'\',\''+cd.c+'\')" '+
+    return '<button onclick="window.slEditMark('+idArg(recId)+','+idArg(sid)+',\''+cd.c+'\')" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
   var dlg=document.createElement('div');
@@ -10334,7 +10334,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
 
 window.slEditMark = async function(recId, sid, newCode) {
   var data=await slLoadData();
-  var rec=data.find(function(r){return r.id===recId;});
+  var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
