@@ -429,6 +429,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:#1a3a6b;border-bottom:1px solid #eee"></div>
       <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:#888;border-bottom:1px solid #eee"></div>
       <div id="user-menu-others" style="border-bottom:1px solid #eee"></div>
+      <button onclick="closeUserMenu();myPasswordModal()" style="width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid #eee;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#1a3a6b;font-weight:600">שינוי הסיסמה שלי 🔑</button>
       <button onclick="closeUserMenu();doLogout()" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#e53e3e;font-weight:600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
@@ -908,6 +909,10 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     </select>
     <label>סיסמה נוכחית</label>
     <div style="position:relative;display:flex;align-items:center">
+      <!-- ⛔ ללא inputmode ו-maxlength בכוונה (סבב 67) — השדה readonly ואינו
+           מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
+           הייתה מרמזת שאפשר לערוך אותו כאן. ⚠️ קביעת סיסמה חדשה היא
+           `um-pass` שמתחתיו, והוא כן נושא את שניהם. -->
       <input type="password" id="um-curr-pass" readonly style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">
       <button type="button" onclick="var i=document.getElementById('um-curr-pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>
     </div>
@@ -916,7 +921,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>    <div class="auth-err" id="um-err"></div>
     <div class="ma" style="margin-top:14px">
       <button class="btn out" onclick="closeUserModal()">ביטול</button>
-      <button class="btn" onclick="saveUser()">💾 שמור</button>
+      <button class="btn" onclick="saveUser(this)">💾 שמור</button>
     </div>
   </div>
 </div>
@@ -1466,7 +1471,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v69'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v70'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2485,7 +2490,14 @@ function closeUserModal() {
   var um=document.getElementById('user-modal');um.classList.add('hidden');um.classList.remove('on');
 }
 
-async function saveUser() {
+// ⛔ מעטפת מגן השליחה הכפולה (סבב 67) — `saveUser` כותבת לענן, ולחיצה
+// שנייה בזמן שהראשונה באוויר יוצרת משתמש כפול או דורסת עדכון שטרם חזר.
+async function saveUser(btn) {
+  ysBusy(btn, true);
+  try { return await _saveUserInner(); }
+  finally { ysBusy(btn, false); }
+}
+async function _saveUserInner() {
   var id = document.getElementById('um-id').value;
   var fullName = document.getElementById('um-name').value.trim();
   var username = document.getElementById('um-username').value.trim();
@@ -2606,12 +2618,84 @@ async function savePerms() {
   toast('✅ הרשאות נשמרו!');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   שינוי סיסמה אישית — המסך, ומגן השליחה הכפולה
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ כפתור שמפעיל כתיבה לרשת מושבת עד שהיא הסתיימה (סבב 67) — לחיצה
+   שנייה על אותו כפתור בזמן שהראשונה באוויר שולחת בקשה שנייה, ובכתיבת
+   משתמש היא יוצרת שורה כפולה או דורסת עדכון שטרם חזר.
+   ⛔ ושלושה שדות ולא שניים (סבב 67) — עד היום `changeMyPassword` הכירה
+   `pw-old` ו-`pw-new` בלבד, ⚠️ ולכן שגיאת הקלדה בסיסמה החדשה הייתה
+   נכתבת כמות שהיא ונועלת את המשתמש בחוץ בלי שום דרך לגלות זאת.
+   ══════════════════════════════════════════════════════════════════════════ */
+// מגן שליחה כפולה: מחזיר את מצב הכפתור לקדמותו כשהפעולה נגמרת.
+function ysBusy(btn, on) {
+  if (!btn) return;
+  if (on) {
+    if (btn._ysTxt === undefined) btn._ysTxt = btn.innerHTML;
+    btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
+    btn.innerHTML = '⏳ שומר…';
+  } else {
+    btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
+    if (btn._ysTxt !== undefined) { btn.innerHTML = btn._ysTxt; btn._ysTxt = undefined; }
+  }
+}
+
+function myPasswordModal() {
+  var d = document.getElementById('my-pass-modal');
+  if (!d) {
+    d = document.createElement('div');
+    d.id = 'my-pass-modal';
+    d.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
+    var fld = 'border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
+    var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
+    d.innerHTML =
+      '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:320px;border-top:4px solid #1a3a6b;direction:rtl">' +
+      '<div style="font-size:1.8rem;margin-bottom:8px;text-align:center">🔑</div>' +
+      '<div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:16px;text-align:center">שינוי הסיסמה שלי</div>' +
+      '<label style="' + lbl + '" for="pw-old">סיסמה נוכחית</label>' +
+      '<input type="password" id="pw-old" maxlength="6" inputmode="numeric" autocomplete="current-password" style="' + fld + '">' +
+      '<label style="' + lbl + '" for="pw-new">סיסמה חדשה (6 ספרות)</label>' +
+      '<input type="password" id="pw-new" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+      '<label style="' + lbl + '" for="pw-new2">אימות סיסמה חדשה</label>' +
+      '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+      '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px;text-align:right"></div>' +
+      '<div style="display:flex;gap:10px;justify-content:center">' +
+      '<button onclick="closeMyPassModal()" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
+      '<button id="pw-save" onclick="changeMyPassword(this)" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>' +
+      '</div></div>';
+    document.body.appendChild(d);
+  }
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-new2').value = '';
+  document.getElementById('pw-err').textContent = '';
+  d.style.display = 'flex';
+  setTimeout(function () { var e = document.getElementById('pw-old'); if (e) e.focus(); }, 100);
+}
+function closeMyPassModal() {
+  var d = document.getElementById('my-pass-modal');
+  if (d) d.style.display = 'none';
+}
+
 // ---- שינוי סיסמה אישית ----
-async function changeMyPassword() {
+// ⛔ המעטפת היא נקודת הכניסה היחידה מה-UI (סבב 67) — היא מחזיקה את מגן
+// השליחה הכפולה, והפנימית נשארת חשופה לבדיקות בדיוק כמו `_doLoginInner`.
+async function changeMyPassword(btn) {
+  ysBusy(btn, true);
+  try { return await _changeMyPasswordInner(); }
+  finally { ysBusy(btn, false); }
+}
+async function _changeMyPasswordInner() {
   var oldPass = document.getElementById('pw-old').value.trim();
   var newPass = document.getElementById('pw-new').value.trim();
-  if (!oldPass || !newPass) { toast('❌ נא למלא את שני השדות'); return; }
+  var newPass2El = document.getElementById('pw-new2');
+  var newPass2 = newPass2El ? newPass2El.value.trim() : newPass;
+  if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות'); return; }
   if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות'); return; }
+  // ⛔ אימות ולא נוחות (סבב 67) — שגיאת הקלדה בסיסמה החדשה נכתבת כמות
+  // שהיא, ומרגע זה המשתמש נעול בחוץ בלי דרך לגלות מה הוקלד בפועל.
+  if (newPass !== newPass2) { toast('❌ שתי הסיסמאות החדשות אינן זהות'); return; }
   // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
@@ -2650,6 +2734,8 @@ async function changeMyPassword() {
   } catch (e3) {}
   document.getElementById('pw-old').value = '';
   document.getElementById('pw-new').value = '';
+  if (newPass2El) newPass2El.value = '';
+  if (typeof closeMyPassModal === 'function') closeMyPassModal();
   toast(made ? '✅ סיסמה עודכנה!' : '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת');
 }
 

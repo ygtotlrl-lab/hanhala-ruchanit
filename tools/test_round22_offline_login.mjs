@@ -60,7 +60,10 @@ function grabVar(name) {
 const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
-  '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr'];
+  '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
+  /* ⛔ מגן השליחה הכפולה ושתי הפנימיות שלו (סבב 67) — המעטפות קוראות
+   * להן, ורתמה שאינה מחלצת אותן נופלת ב-ReferenceError. */
+  'ysBusy', '_saveUserInner', '_changeMyPasswordInner'];
 const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
