@@ -1348,7 +1348,7 @@ function ysUsersCacheSaveAll(rows) {
   try {
     if (!Array.isArray(rows)) return;
     lsSet('ys_users_cache', JSON.stringify(ysUsersCacheSlimList(rows)));
-  } catch(e) {}
+  } catch (e) { ysWriteFail('ysUsersCacheSaveAll', e); }
 }
 // עדכון שורה אחת בתוך המטמון הקיים, בלי לאבד את השאר (כניסה, מעבר-משתמש,
 // שינוי סיסמה עצמי). שאר הרשומות עוברות שוב דרך `ysUserSlim` — זו
@@ -1360,7 +1360,7 @@ function ysUsersCacheSave(user) {
       .filter(function (u) { return String(u.id) !== String(user.id); });
     rest.push(ysUserSlim(user));
     lsSet('ys_users_cache', JSON.stringify(rest));
-  } catch(e) {}
+  } catch (e) { ysWriteFail('ysUsersCacheSave', e); }
 }
 function ysUsersCacheGet() {
   try { return JSON.parse(lsGet('ys_users_cache') || 'null'); } catch(e) { return null; }
@@ -1474,7 +1474,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v70'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v71'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -5186,7 +5186,7 @@ function _ysMarkSynced() { _ysLastSyncAt = Date.now(); }
 // `ys_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
 async function ysSyncNow() {
   await ysPullFromCloud();
-  try { await ysFlushQueue(); } catch (e) { }
+  try { await ysFlushQueue(); } catch (e) { ysWriteFail('ysSyncNow', e); }
   _ysMarkSynced();
 }
 
@@ -5204,6 +5204,21 @@ function _ysKvSetRaw(key, value) {
 //    בשמה מפני שהיא **המשפך** שכל הכותבים כאן קוראים לו. ⛔ אין לפצל
 //    אותה לשני נתיבים (סבב 51) — קידום חותמת ממקום שאינו כתיבה מוצלחת
 //    מכריז על שינוי שלא קרה, והמכשירים האחרים מושכים לחינם.
+/* ══════════════════════════════════════════════════════════════════════════
+   רישום כשל כתיבה שנבלע — `ysWriteFail` (סבב 68)
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ `catch` ריק סביב **כתיבה** מסתיר כשל (סבב 68) — ⚠️ המשתמש רואה מסך
+   שהתעדכן, והנתון לא ירד לדיסק ולא עלה לענן. ⭐ הפונקציה הזו אינה משנה
+   את הזרימה — היא רק **רושמת** ליומן הפינוי, שנקרא מ«מידע טכני ›».
+   ⚠️ **ו-`catch` ריק סביב תצוגה או קריאה נשאר כפי שהוא (סבב 68)** —
+   «נסה להציג הודעה; נכשלת — אל תפיל את האפליקציה» הוא הדפוס הנכון,
+   ⛔ ואין להחליף אותו ברישום שיציף את היומן.
+   ⛔ הרישום עצמו עטוף — ⚠️ שער שנופל בתוך שער אינו שער.
+   ══════════════════════════════════════════════════════════════════════════ */
+function ysWriteFail(where, e) {
+  try { lsLog('write-fail', String(where) + ' — ' + ((e && e.message) || e), 0); } catch (e2) { }
+}
+
 async function ysTouchLastChanged() {
   return await plTouch();
 }
@@ -5246,7 +5261,7 @@ function _ysQueueRemove(key) {
     var q = JSON.parse(lsGet(_YS_Q_KEY) || '[]');
     q = q.filter(function(x){return x.key !== key;});
     lsSet(_YS_Q_KEY, JSON.stringify(q));
-  } catch(e) {}
+  } catch (e) { ysWriteFail('_ysQueueRemove', e); }
 }
 function _ysQueueGet(key) {
   try {
@@ -6171,7 +6186,7 @@ async function ysPullFromCloud() {
       if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; lsSet('ys_attend_cfg', JSON.stringify(_atCfgV)); }
       var _slCfgV = await ysKvGet('ys_sleep_cfg');
       if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; lsSet('ys_sleep_cfg', JSON.stringify(_slCfgV)); }
-    } catch(eCfg) {}
+    } catch (eCfg) { ysWriteFail('ysPullFromCloud', eCfg); }
     // ---- הרשאות: משיכה שוטפת ----
     // עד היום ys_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
     // למשתמש רק אחרי יציאה וכניסה מחדש. עכשיו הוא מגיע תוך שניות (הפולינג של
@@ -6188,7 +6203,7 @@ async function ysPullFromCloud() {
       if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
       if (typeof slFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { slFillSessionBtns(); if (typeof slRenderTodaySessions === 'function') slRenderTodaySessions(); }
       if (typeof renderReasonsList === 'function') { try { renderReasonsList(); } catch(eRL) {} }
-    } catch(eRf) {}
+    } catch (eRf) { ysWriteFail('ysPullFromCloud', eRf); }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
     ysRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
@@ -7343,7 +7358,7 @@ async function atSaveCfg(cfg) {
   lsSet('ys_attend_cfg',JSON.stringify(cfg));
   // בלי קידום ys_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
   // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
-  try { var r=await ysKvSet('ys_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
+  try { var r=await ysKvSet('ys_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('atSaveCfg', e); }
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
@@ -7378,7 +7393,7 @@ async function atSaveData(data) {
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
-  } catch(e){}
+  } catch (e) { ysWriteFail('atSaveData', e); }
 }
 async function atLoadTreats() {
   try { var v=await ysKvGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
@@ -7400,7 +7415,7 @@ async function atSaveTreats(data) {
     }
     var r=await ysKvSet('ys_attend_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
-  } catch(e){}
+  } catch (e) { ysWriteFail('atSaveTreats', e); }
   return data;
 }
 
@@ -7601,7 +7616,7 @@ async function ysRefreshApprovalMarks(sid) {
       });
       if (changed) {
         lsSet(lsKey, JSON.stringify(data));
-        try { saveFn(data); } catch(eS) {}
+        try { saveFn(data); } catch (eS) { ysWriteFail('refreshSet', eS); }
       }
     }
 
@@ -8944,8 +8959,8 @@ function _slCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = slDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { lsSet('ys_sleep_cfg', JSON.stringify(cfg)); } catch(e){}
-    try { ysKvSet('ys_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch(e){}
+    try { lsSet('ys_sleep_cfg', JSON.stringify(cfg)); } catch (e) { ysWriteFail('_slCleanCfg', e); }
+    try { ysKvSet('ys_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch (e) { ysWriteFail('_slCleanCfg', e); }
   }
   return cfg;
 }
@@ -8959,7 +8974,7 @@ async function slSaveCfg(cfg) {
   window._slCfg=cfg;
   lsSet('ys_sleep_cfg',JSON.stringify(cfg));
   // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
-  try { var r=await ysKvSet('ys_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch(e){}
+  try { var r=await ysKvSet('ys_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('slSaveCfg', e); }
 }
 async function slLoadData() {
   if (window._slData) return window._slData;
@@ -8994,7 +9009,7 @@ async function slSaveData(data) {
     ysRowsPushSessions(data,'sleep');
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
-  } catch(e){}
+  } catch (e) { ysWriteFail('slSaveData', e); }
 }
 async function slLoadTreats() {
   try { var v=await ysKvGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
@@ -9015,7 +9030,7 @@ async function slSaveTreats(data) {
     }
     var r=await ysKvSet('ys_sleep_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
-  } catch(e){}
+  } catch (e) { ysWriteFail('slSaveTreats', e); }
   return data;
 }
 
