@@ -30,7 +30,7 @@ open on the users' devices, while yoman and the old hanhala APK — both WebView
 |---|---|
 | **Package ID** | `com.hanhala.ruchanit` |
 | **טוען** | `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` — **מהרשת**, לא מנכסים מוטבעים |
-| **versionCode** | 9 — קודם בסבב 68 (היסטוריית הגרסאות ירדה מהערות `build.gradle` — מקור אמת שני; ⛔ הטבלה הזו היא ההיסטוריה). 8 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו, ר' CLAUDE.md) |
+| **versionCode** | 9 — קודם בסבב 68 (היסטוריית הגרסאות ירדה מהערות `build.gradle` — מקור אמת שני; ⛔ הטבלה הזו היא ההיסטוריה). 8 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו) |
 | **minSdk / targetSdk** | 21 / 34 |
 | **WebView** | JavaScript, DOM storage (localStorage — שם יושבים מפתחות ה-`ys_*` וה-pending), DB. **בלי** גישת `file://` ובלי mixed content פתוח — האתר הוא https בלבד, `usesCleartextTraffic=false` |
 | **ניווט** | כל `http`/`https` **נשאר בתוך המעטפת**. שאר הסכימות (`tel:`, `mailto:`, `whatsapp:`, …) נמסרות למערכת |
@@ -45,27 +45,20 @@ open on the users' devices, while yoman and the old hanhala APK — both WebView
 
 ## ⛔ אין גשר שיתוף — וזה ההבדל היחיד מהתבנית של יומן
 
-למעטפת של yoman-avoda יש `AndroidShareBridge` (מוגבל-origin, בשני מנעולים) כי הדף
-שלה קורא ל-`navigator.share` עם תמונת דו"ח. **בקוד של הנהלה רוחנית אין
-`navigator.share` בכלל**, ולכן הגשר הושמט כליל — לא בצד Java, לא בצד הדף, לא
-ב-manifest (אין `FileProvider`, אין `<queries>`) ולא בתלויות (אין androidx).
-
-גשר מקורי על דף שנטען מהרשת הוא כוח שנמסר למי שמגיש את הדף. אם אי-פעם יידרש כאן
-גשר — מעתיקים את הדפוס הכפול-נעילה של יומן (`WebViewCompat.addWebMessageListener`
-עם `ALLOWED_ORIGINS`, ונפילה-חזרה שמחוברת רק על ה-origin שלנו). **לעולם לא
-`addJavascriptInterface` חשוף.**
+⛔ אין כאן `navigator.share`, ולכן הגשר הושמט כליל — לא בצד Java, לא בצד
+הדף, לא ב-manifest ולא בתלויות. ⚠️ גשר מקורי על דף שנטען מהרשת הוא כוח
+שנמסר למי שמגיש את הדף. ⛔ אם יידרש — בדפוס הכפול-נעילה של יומן
+(`addWebMessageListener` עם `ALLOWED_ORIGINS`), ⛔ ולעולם לא
+`addJavascriptInterface` חשוף.
 
 ## למה אין נכסים מוטבעים
 
-- ⛔ **`file://` הוא origin אחסון אחר.** ה-localStorage של `file://` ושל
-  `https://ygtotlrl-lab.github.io` הן שתי מחיצות נפרדות לחלוטין. רישום נוכחות
-  שנכתב לעותק מוטבע בעלייה ראשונה **לא נראה לאפליקציה האמיתית לעולם** — והוא גם
-  לא יסונכרן, כי הסנכרון רץ בדף השני.
-- **זה מקור אמת שני** — בדיוק מה שכלל קריטי 6 של הריפו אוסר. הוא מתיישן בכל שחרור.
-- **מה שהוא אמור לפתור כבר פתור**: אחרי עלייה מוצלחת אחת, ה-service worker מגיש
-  הכול אופליין והעותק המקומי (`ys_*` + מנוע המיזוג) עובד בלי רשת. המקרה היחיד
-  שנשאר הוא **התקנה + הפעלה ראשונה בלי רשת בכלל** — ולהתקנת APK ממילא צריך רשת.
-  במקרה הזה המעטפת מציגה דף שגיאה בעברית עם כפתור "נסה שוב".
+- ⛔ **`file://` הוא origin אחסון אחר** — רישום שנכתב לעותק מוטבע
+  **אינו נראה לאפליקציה האמיתית לעולם**, וגם אינו מסתנכרן.
+- ⛔ **והוא מקור אמת שני** שמתיישן בכל שחרור.
+- ⚠️ **ומה שהוא אמור לפתור כבר פתור:** אחרי עלייה מוצלחת אחת ה-service
+  worker מגיש הכול אופליין. ⛔ נשאר רק «התקנה והפעלה ראשונה בלי רשת»,
+  ⚠️ ולהתקנת APK ממילא צריך רשת — ושם המעטפת מציגה דף שגיאה בעברית.
 
 <!-- SHARED:start id="android-origin-switch" -->
 ## ⚠️ מעבר-origin חד-פעמי — ולפני כל הפצת APK
@@ -183,8 +176,8 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 ולכן מעבר ממנו הוא **הסרה + התקנה** חד-פעמית. לפני המעבר לוודא באפליקציה
 הישנה ש«⏳ ממתין לסנכרון» מציג **0**.
 
-⚠️ **בסביבת הענן אין Android SDK ו-`dl.google.com` חסום** — הדרך המעשית היא
-ה-workflow שלמעלה. ⛔ ולא PWABuilder: הוא יודע לייצר TWA בלבד.
+⚠️ **בסביבת הענן אין Android SDK ו-`dl.google.com` חסום** — הדרך המעשית
+היא ה-workflow. ⛔ ולא PWABuilder: הוא יודע לייצר TWA בלבד.
 
 ### פרטי המעטפת
 package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
@@ -198,7 +191,7 @@ package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
 ולכן אין בה URL שצריך לתקן.
 ⛔ **smali בלבד — לא binary patch.** עריכה בינארית של ה-APK שוברת את החתימה
 ואינה ניתנת לאימות, ⛔ והחתימה מחדש היא במפתח הקבוע של הריפו בלבד — ר' הפרק
-«חתימת APK» ב-CLAUDE.md.
+«Sign with the PERMANENT key» שלמעלה.
 <!-- SHARED:end -->
 
 ```bash
