@@ -1,7 +1,7 @@
 # הנהלה רוחנית
 
-אפליקציית PWA לניהול הנהלה רוחנית בישיבה — מצבת תלמידים, נוכחות, סדרי שינה
-וטיפולים. עברית מלאה, RTL, מובייל ודסקטופ.
+אפליקציית PWA לניהול הנהלה רוחנית — מצבת תלמידים, נוכחות וסדרי שינה.
+עברית מלאה, RTL, מובייל ודסקטופ.
 
 **https://ygtotlrl-lab.github.io/hanhala-ruchanit/**
 
@@ -33,12 +33,10 @@ node tools/check-js.mjs   # חובה לפני כל push
 ומריץ את כל שערי האחידות ואת חבילות בדיקות הסבבים.
 <!-- SHARED:end -->
 
-⚠️ קידום `CACHE_NAME` ב-`sw.js` חובה בכל שינוי קוד, ו-`YS_APP_VER` מיושר
-אליו — הוא שדה `sw_version` שנרשם ביומן הכניסה.
+⚠️ קידום `CACHE_NAME` ב-`sw.js` חובה בכל שינוי קוד, ו-`YS_APP_VER` מיושר אליו.
 
 ### PDF
-**pdfmake** (⛔ לא html2pdf — בעיות RTL), מ-`cdnjs` בגרסה נעוצה `0.2.7`, עם
-`defaultStyle: { font: 'Roboto', alignment: 'right' }`.
+**pdfmake** (⛔ לא html2pdf — בעיות RTL), `cdnjs` בגרסה נעוצה `0.2.7`.
 
 <!-- SHARED:start id="readme-apk" -->
 ## APK
