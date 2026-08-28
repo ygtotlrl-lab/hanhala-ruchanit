@@ -85,7 +85,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <script>
-if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProperty('--force-mobile','1');var s=document.createElement('style');s.textContent='@media all{'+['.inner{padding:14px!important}','.mods-wrap{padding:14px!important}','.hero{padding:18px 14px 24px!important}','.hero-title{font-size:1.3rem!important}','.stats{grid-template-columns:repeat(2,1fr)!important}','.stat{padding:12px 8px!important}','.stat .n{font-size:1.5rem!important}','header{height:60px!important;padding:0 12px!important}','.logo{width:46px!important;height:46px!important}','.hdiv{display:none!important}','.htxt{font-size:.78rem!important}','.htxt strong{font-size:.88rem!important}','nav{gap:2px!important;overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}','nav::-webkit-scrollbar{display:none!important}','.nb{padding:8px 10px!important;font-size:.78rem!important;gap:4px!important;min-height:44px!important;flex-shrink:0!important;white-space:nowrap!important}','.mods{grid-template-columns:1fr!important;gap:10px!important}','.mod{padding:16px 14px!important;gap:12px!important;width:100%!important}','.mod-ic{width:48px!important;height:48px!important;font-size:1.4rem!important;border-radius:10px!important}','.mod-name{font-size:1rem!important}','.mod-desc{font-size:.82rem!important}','.mods-lbl{font-size:.75rem!important;margin-bottom:12px!important}','.ptitle{font-size:1.1rem!important;margin-bottom:16px!important}','table{font-size:.82rem!important}','th{padding:9px 10px!important;font-size:.78rem!important}','td{padding:8px 10px!important}','.btn{padding:10px 16px!important;font-size:.84rem!important;min-height:44px!important}','.rh{margin-bottom:12px!important}','.tw{border-radius:8px!important}','.md{padding:20px 16px!important;max-width:calc(100vw - 28px)!important}','body{padding-bottom:64px!important}','.bottom-nav{display:flex!important;position:fixed!important;bottom:0!important;left:0!important;right:0!important;height:64px!important}','.hide-mobile{display:none!important}'].join('')+'}';document.head.appendChild(s);}
+if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProperty('--force-mobile','1');var s=document.createElement('style');s.textContent='@media all{'+['.inner{padding:14px!important}','.mods-wrap{padding:14px!important}','.hero{padding:18px 14px 24px!important}','.hero-title{font-size:1.3rem!important}','.stats{grid-template-columns:repeat(2,1fr)!important}','.stat{padding:12px 8px!important}','.stat .n{font-size:1.5rem!important}','header{height:60px!important;padding:0 12px!important}','.logo{width:46px!important;height:46px!important}','.hdiv{display:none!important}','.htxt{font-size:.78rem!important}','.htxt strong{font-size:.88rem!important}','nav{gap:2px!important;overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}','nav::-webkit-scrollbar{display:none!important}','.nb{padding:8px 10px!important;font-size:.78rem!important;gap:4px!important;min-height:44px!important;flex-shrink:0!important;white-space:nowrap!important}','.mods{grid-template-columns:1fr!important;gap:10px!important}','.mod{padding:16px 14px!important;gap:12px!important;width:100%!important}','.mod-ic{width:48px!important;height:48px!important;font-size:1.4rem!important;border-radius:10px!important}','.mod-name{font-size:1rem!important}','.mod-desc{font-size:.82rem!important}','.mods-lbl{font-size:.75rem!important;margin-bottom:12px!important}','.ptitle{font-size:1.1rem!important;margin-bottom:16px!important}','table{font-size:.82rem!important}','th{padding:9px 10px!important;font-size:.78rem!important}','td{padding:8px 10px!important}','.btn{padding:10px 16px!important;font-size:.84rem!important;min-height:44px!important}','.md{padding:20px 16px!important;max-width:calc(100vw - 28px)!important}','body{padding-bottom:64px!important}','.bottom-nav{display:flex!important;position:fixed!important;bottom:0!important;left:0!important;right:0!important;height:64px!important}','.hide-mobile{display:none!important}'].join('')+'}';document.head.appendChild(s);}
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
@@ -150,8 +150,6 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .btn.out{background:#fff;color:var(--navy);border-color:var(--navy)}
 .btn.out:hover{background:#eef2fa}
-.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
-.tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy),var(--navy2))}
 th{color:#fff;font-weight:600;padding:12px 16px;text-align:right;font-size:.86rem}
@@ -257,8 +255,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   th{padding:9px 10px;font-size:.78rem}
   td{padding:8px 10px}
   .btn{padding:10px 16px;font-size:.84rem;min-height:44px}
-  .rh{margin-bottom:12px}
-  .tw{border-radius:8px}
   .md{padding:20px 16px;max-width:calc(100vw - 28px)}
 }
 @media(max-width:480px){
@@ -1118,10 +1114,10 @@ var AUTH = {
   /* ⭐ `AUTH.user` הוא מעכשיו חלון אל מודול הסשן המשותף (סבב 53) — הערך
      עצמו יושב שם, בזיכרון בלבד. ⛔ אין להחזיר כאן שדה רגיל: שדה שכל אחד
      יכול להציב בו ערך הוא בדיוק המסלול שדרכו הסשן חזר לדיסק. */
-  get user() { return sessGet(); },          // {id, username, full_name, role}
+  get user() { return sessGet(); },          // המבנה: {id, username, full_name, role}
   set user(v) { sessSet(v); },
   offlineLogin: false, // true = אומת מול עותק מקומי (ללא רשת); מאומת מחדש כשהרשת חוזרת
-  perms: null,         // {students:{admin:'edit',senior:'view',junior:'none'}, ...}
+  perms: null,         // המבנה: {students:{admin:'edit',senior:'view',junior:'none'}, ...}
   MODULES: [
     {id:'students', label:'👥 מצבת תלמידים'},
     {id:'attend',   label:'✅ שמירת סדרים'},
@@ -2899,10 +2895,14 @@ var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.ad
 
 // חתימה משותפת לשלושת הפרויקטים (סבב 8): toast(msg, dur) — dur באלפיות שנייה,
 // אופציונלי. ברירת המחדל נשארת של כל אפליקציה (כאן 2800) כדי לא לשנות התנהגות.
+/*  ⛔ מספר שיש לו משמעות מקבל שם (סבב 67, כלל ברזל 11 סעיף 5) —
+ *  ⚠️ הערך במקרה זהה ל-`LS_SUCCESS_MUTE_MS`, ⛔ אך הוא מושג אחר
+ *  לגמרי (משך תצוגה מול חלון השתקה), ⛔ ואין לאחד ביניהם. */
+var TOAST_DEFAULT_MS = 2800;
 var tt;function toast(msg,dur){
   // שער סבב 11 — אין טוסט הצלחה אחרי כישלון שמירה מקומית. אין להסיר.
   if(typeof lsGuardToast==='function'&&!lsGuardToast(msg))return;
-  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},dur||2800)}
+  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},dur||TOAST_DEFAULT_MS)}
 
 /* ══════════════════════════════════════════════════════════════════════════
    מדיניות האחסון המקומי — `LS_CFG` ועֵד הדחיפה
@@ -6171,7 +6171,7 @@ async function ysPullFromCloud() {
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
     ysRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
-    ysSyncLog('pull', null, null); // Phase-1 diagnostic: successful pull
+    ysSyncLog('pull', null, null); // אבחון שלב א: משיכה מוצלחת
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
 
@@ -6341,7 +6341,7 @@ var currentFilter='all';
 var confirmCallback=null;
 var editingStudentId=null;
 var currentApprovalId=null;
-var H=String.fromCharCode; // shortcut for Hebrew chars
+var H=String.fromCharCode; // קיצור ליצירת תווים עבריים
 
 function getDefaultStudents(){return [
   {id:1,name:H(1488,1493,1495,1504,1492,32,1497,1493,1505,1507),cls:'a'},{id:2,name:H(1488,1493,1495,1504,1492,32,1491,1493,1491),cls:'g'},
@@ -7288,7 +7288,7 @@ function atSummaryHtml(cnts){
 
 window._atCfg = null;
 window._atData = null;
-window._atMarks = {};              // {sid:{s,min}}
+window._atMarks = {};              // המבנה: {sid:{s,min}}
 window._atPending = {};            // sid → true: סומן לאחרונה, עדיין לא ירד
 window._atCleared = {};            // sid → true: נוקה ידנית (לא לסמן אוטומטית שוב)
 window._atCurrentSessionId = null;
@@ -8232,11 +8232,11 @@ window.atRenderArchive = async function(records) {
           });
           html+=rows.join('')+'</div></div>';
         });
-        html+='</div></div>'; // day content + day wrap
+        html+='</div></div>'; // תוכן היום ועטיפת היום
       });
-      html+='</div></div>'; // month content + month wrap
+      html+='</div></div>'; // תוכן החודש ועטיפת החודש
     });
-    html+='</div></div>'; // year content + year wrap
+    html+='</div></div>'; // תוכן השנה ועטיפת השנה
   });
   html+='</div>';
   el.innerHTML=html;
@@ -8858,7 +8858,7 @@ window.atSaveSettingsCfg = async function() {
     });
     cfg.treats=newTreats;
   }
-  window._atCfg=null; // force reload
+  window._atCfg=null; // כפיית טעינה מחדש
   await atSaveCfg(cfg);
   window._atCfg=cfg;
   toast('✅ הגדרות נשמרו');
