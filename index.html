@@ -1191,7 +1191,14 @@ function ysApplyPerms(p) {
   var changed = (next !== JSON.stringify(AUTH.perms || {}));
   AUTH.perms = p;
   // בלי העותק המקומי כניסה אופליין אחרי עדכון הרשאות מחזירה מטריצה ישנה
-  try { lsSet('ys_perms_cache', next); } catch (e) {}
+  // ⛔ ערך מוחזר שנבדק ולא כשל נבלע (סבב 67) — בלי העותק המקומי,
+  // כניסה אופליין אחרי עדכון הרשאות מחזירה את המטריצה **הישנה**.
+  // `lsSet` כבר מרימה באנר בעצמה; כאן נרשם גם ליומן.
+  try {
+    if (!lsSet('ys_perms_cache', next)) {
+      console.warn('[perms] העותק המקומי של ההרשאות לא נשמר');
+    }
+  } catch (e) { console.warn('[perms] lsSet זרקה:', e && e.message); }
   // ⚠️ הבדיקה הזו נחוצה גם בלי רענון התצוגה: canAccess מחזירה false כשאין
   // משתמש, ולכן בלעדיה משיכה שרצה **לפני הכניסה** (ysPullFromCloud באתחול)
   // הייתה מפעילה showPage('home') + טוסט מעל מסך הכניסה. אין להסיר.
@@ -1356,7 +1363,7 @@ function ysUsersCacheSave(user) {
   } catch(e) {}
 }
 function ysUsersCacheGet() {
-  try { return JSON.parse(localStorage.getItem('ys_users_cache') || 'null'); } catch(e) { return null; }
+  try { return JSON.parse(lsGet('ys_users_cache') || 'null'); } catch(e) { return null; }
 }
 // אימות אופליין מול הטביעה. מחזירה אחת מארבע: 'ok' · 'bad' (סיסמה שגויה)
 // · 'no-fp' (אין טביעה לרשומה) · 'no-crypto' (הדפדפן לא תומך).
@@ -1677,7 +1684,7 @@ async function loadPerms() {
   }
   // אין רשת / פסק זמן / שגיאת שרת / ערך פגום — עותק מקומי, ואם אין: ברירות מחדל
   try {
-    var c = localStorage.getItem('ys_perms_cache');
+    var c = lsGet('ys_perms_cache');
     if (c) {
       ysApplyPerms(JSON.parse(c));
       console.log('[perms] נטען מעותק מקומי', res && res.error ? '('+(res.error.message||res.error.code)+')' : '(אין רשת)');
@@ -2247,7 +2254,7 @@ function getDefaultReasons() {
 }
 
 window.getAbsenceReasons = function() {
-  try { return JSON.parse(localStorage.getItem('ys_absence_reasons') || 'null') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  try { return JSON.parse(lsGet('ys_absence_reasons') || 'null') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 };
 function getAbsenceReasons() { return window.getAbsenceReasons(); }
 
@@ -2353,7 +2360,7 @@ function renderSettings() {
 
 // ---- רשימת משתמשים ----
 function getUserOrder() {
-  try { return JSON.parse(localStorage.getItem('ys_user_order') || '[]'); } catch(e) { return []; }
+  try { return JSON.parse(lsGet('ys_user_order') || '[]'); } catch(e) { return []; }
 }
 function saveUserOrder(ids) {
   lsSet('ys_user_order', JSON.stringify(ids));
@@ -2943,9 +2950,9 @@ var LS_CFG = {
   // כלל ג: כל עוד יש משהו בתור האופליין — לא מפנים כלום בשלב ב.
   pending: function () {
     try {
-      var q = JSON.parse(localStorage.getItem('ys_offline_queue') || '[]');
+      var q = JSON.parse(lsGet('ys_offline_queue') || '[]');
       if (Array.isArray(q) && q.length) return true;
-      var l = JSON.parse(localStorage.getItem('ys_login_log_queue') || '[]');
+      var l = JSON.parse(lsGet('ys_login_log_queue') || '[]');
       return Array.isArray(l) && l.length > 0;
     } catch (e) { return true; }   // ספק = לא מפנים
   },
@@ -4107,7 +4114,7 @@ var PEND_CFG = {
   app: 'hanhala-ruchanit', key: 'ys_pending',
   extra: function () {
     try {
-      var q = JSON.parse(localStorage.getItem('ys_offline_queue') || '[]');
+      var q = JSON.parse(lsGet('ys_offline_queue') || '[]');
       return (Array.isArray(q) && q.length) ? (q.length + ' מפתחות בתור') : '';
     } catch (e) { return ''; }
   },
@@ -4913,7 +4920,7 @@ var HW_CFG = {
     },
     rows: function () {
       if (Array.isArray(window._atData)) return window._atData;
-      try { return JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]'); }
+      try { return JSON.parse(lsGet('ys_attend_sessions') || '[]'); }
       catch (e) { return null; }
     },
     apply: function (kept) { return lsSetArray('ys_attend_sessions', kept, _ysRecTs); }
@@ -5220,7 +5227,7 @@ async function ysKvSet(key, value) {
 
 function _ysQueueAdd(key, value) {
   try {
-    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var q = JSON.parse(lsGet(_YS_Q_KEY) || '[]');
     q = q.filter(function(x){return x.key !== key;});
     q.push({key: key, value: value, ts: Date.now()});
     lsSet(_YS_Q_KEY, JSON.stringify(q));
@@ -5231,14 +5238,14 @@ function _ysQueueAdd(key, value) {
 }
 function _ysQueueRemove(key) {
   try {
-    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var q = JSON.parse(lsGet(_YS_Q_KEY) || '[]');
     q = q.filter(function(x){return x.key !== key;});
     lsSet(_YS_Q_KEY, JSON.stringify(q));
   } catch(e) {}
 }
 function _ysQueueGet(key) {
   try {
-    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var q = JSON.parse(lsGet(_YS_Q_KEY) || '[]');
     var item = q.find(function(x){return x.key === key;});
     return item ? item.value : null;
   } catch(e) { return null; }
@@ -5247,7 +5254,7 @@ function ysUpdateQueueBadge() {
   try {
     var badge = document.getElementById('ys-sync-badge');
     if (!badge) return;
-    var q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]');
+    var q = JSON.parse(lsGet(_YS_Q_KEY) || '[]');
     var n = q.length;
     if (n > 0) {
       badge.textContent = '⏳ ' + n + ' רשומות ממתינות לסנכרון';
@@ -5267,7 +5274,7 @@ function _ysSessionsMerge(cloudArr, localArr, logKey) {
 }
 async function ysFlushQueue() {
   var q;
-  try { q = JSON.parse(localStorage.getItem(_YS_Q_KEY) || '[]'); } catch(e) { return; }
+  try { q = JSON.parse(lsGet(_YS_Q_KEY) || '[]'); } catch(e) { return; }
   if (!q.length) return;
   console.log('[ys-queue] flushing', q.length, 'items');
   var failed = [];
@@ -5299,7 +5306,16 @@ async function ysFlushQueue() {
   }
   if (nOk > 0) {
     var ts = Date.now();
-    try { await _ysKvSetRaw('ys_last_changed', ts); _ysLastTs = ts; } catch(e){}
+    // ⛔ כשל חותמת אינו נבלע (סבב 67) — `ys_last_changed` הוא האות
+    // היחיד ש-`ysAutoSync` במכשירים האחרים משווה מולו, ולכן חותמת
+    // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
+    // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
+    try { await _ysKvSetRaw('ys_last_changed', ts); _ysLastTs = ts; }
+    catch(e){
+      console.warn('[sync] חותמת ys_last_changed לא נכתבה:', e && e.message);
+      try { ysSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
+      toast('⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים');
+    }
     toast('☁️ ' + nOk + ' רשומות סונכרנו בהצלחה');
   }
   lsSet(_YS_Q_KEY, JSON.stringify(failed));
@@ -5930,11 +5946,11 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey)
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
-function _ysStudentsRaw() { try { return JSON.parse(localStorage.getItem('ys_students') || 'null') || []; } catch(e) { return []; } }
+function _ysStudentsRaw() { try { return JSON.parse(lsGet('ys_students') || 'null') || []; } catch(e) { return []; } }
 function _ysStudentsSaveRaw(s) { lsSet('ys_students', JSON.stringify(s)); }
 
 // updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
-function ysSettingsMeta() { try { return JSON.parse(localStorage.getItem('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
+function ysSettingsMeta() { try { return JSON.parse(lsGet('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
 function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); lsSet('ys_settings_meta', JSON.stringify(m)); }
 
 // זוכר אם כבר הזהרנו על כשל סנכרון, כדי לא להציף בטוסטים בכל דחיפה
@@ -6098,7 +6114,7 @@ async function ysPullFromCloud() {
     // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
     var atSess = await ysCloudGet('ys_attend_sessions');
     if (atSess && Array.isArray(atSess)) {
-      var _atLocal = []; try { _atLocal = JSON.parse(localStorage.getItem('ys_attend_sessions') || '[]'); } catch(eAt) {}
+      var _atLocal = []; try { _atLocal = JSON.parse(lsGet('ys_attend_sessions') || '[]'); } catch(eAt) {}
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
       var _atPending = _ysQueueGet('ys_attend_sessions');
       if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'ys_attend_sessions');
@@ -6112,7 +6128,7 @@ async function ysPullFromCloud() {
     // טען נתוני שינה
     var slSess = await ysKvGet('ys_sleep_sessions');
     if (slSess && Array.isArray(slSess)) {
-      var _slLocal2 = []; try { _slLocal2 = JSON.parse(localStorage.getItem('ys_sleep_sessions') || '[]'); } catch(eSl) {}
+      var _slLocal2 = []; try { _slLocal2 = JSON.parse(lsGet('ys_sleep_sessions') || '[]'); } catch(eSl) {}
       var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
       var _slPending = _ysQueueGet('ys_sleep_sessions');
       if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'ys_sleep_sessions');
@@ -6386,7 +6402,7 @@ function getDefaultStudents(){return [
 // מפת השיעורות: 'a'=א, 'b'=ב, 'g'=ג
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
-function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
 // ו-tombstones שורדים כל מחזור קריאה-שמירה.
@@ -6405,9 +6421,9 @@ function saveStudents(s){
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(localStorage.getItem('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(lsGet('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
 function saveReasons(r){lsSet('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
-function getApprovals(){try{var v=JSON.parse(localStorage.getItem('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
+function getApprovals(){try{var v=JSON.parse(lsGet('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
 function saveApprovals(a){lsSet('ys_approvals',JSON.stringify(a));}
 function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 
@@ -6524,7 +6540,7 @@ function renderStudents(){
 
 
 // -------- ניהול שנות מחזור --------
-function getClsYears(){try{return JSON.parse(localStorage.getItem('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
+function getClsYears(){try{return JSON.parse(lsGet('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
 function saveClsYears(y){lsSet('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
 
 window.saveClsYearsSettings = async function(){
@@ -7314,7 +7330,7 @@ function atDefaultCfg() {
 async function atLoadCfg() {
   if (window._atCfg) return window._atCfg;
   try { var v=await ysKvGet('ys_attend_cfg'); if(v){window._atCfg=v;return v;} } catch(e){}
-  try { var lc=localStorage.getItem('ys_attend_cfg'); if(lc){window._atCfg=JSON.parse(lc);return window._atCfg;} } catch(e){}
+  try { var lc=lsGet('ys_attend_cfg'); if(lc){window._atCfg=JSON.parse(lc);return window._atCfg;} } catch(e){}
   window._atCfg = atDefaultCfg(); return window._atCfg;
 }
 async function atSaveCfg(cfg) {
@@ -7327,7 +7343,7 @@ async function atSaveCfg(cfg) {
 async function atLoadData() {
   if (window._atData) return window._atData;
   try { var v=await ysCloudGet('ys_attend_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
-  try { var lc=localStorage.getItem('ys_attend_sessions'); if(lc){window._atData=JSON.parse(lc);return window._atData;} } catch(e){}
+  try { var lc=lsGet('ys_attend_sessions'); if(lc){window._atData=JSON.parse(lc);return window._atData;} } catch(e){}
   window._atData=[]; return window._atData;
 }
 async function atSaveData(data) {
@@ -7361,7 +7377,7 @@ async function atSaveData(data) {
 }
 async function atLoadTreats() {
   try { var v=await ysKvGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=localStorage.getItem('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
   return [];
 }
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
@@ -7555,7 +7571,7 @@ async function ysRefreshApprovalMarks(sid) {
 
     function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
       var data = null;
-      try { data = JSON.parse(localStorage.getItem(lsKey) || 'null'); } catch(e0) {}
+      try { data = JSON.parse(lsGet(lsKey) || 'null'); } catch(e0) {}
       if (!Array.isArray(data)) return;
       var changed = false;
       data.forEach(function(rec){
@@ -8927,7 +8943,7 @@ function _slCleanCfg(cfg) {
 async function slLoadCfg() {
   if (window._slCfg) return window._slCfg;
   try { var v=await ysKvGet('ys_sleep_cfg'); if(v){window._slCfg=_slCleanCfg(v);return window._slCfg;} } catch(e){}
-  try { var lc=localStorage.getItem('ys_sleep_cfg'); if(lc){window._slCfg=_slCleanCfg(JSON.parse(lc));return window._slCfg;} } catch(e){}
+  try { var lc=lsGet('ys_sleep_cfg'); if(lc){window._slCfg=_slCleanCfg(JSON.parse(lc));return window._slCfg;} } catch(e){}
   window._slCfg = slDefaultCfg(); return window._slCfg;
 }
 async function slSaveCfg(cfg) {
@@ -8939,7 +8955,7 @@ async function slSaveCfg(cfg) {
 async function slLoadData() {
   if (window._slData) return window._slData;
   try { var v=await ysKvGet('ys_sleep_sessions'); if(Array.isArray(v)){window._slData=v;return v;} } catch(e){}
-  try { var lc=localStorage.getItem('ys_sleep_sessions'); if(lc){window._slData=JSON.parse(lc);return window._slData;} } catch(e){}
+  try { var lc=lsGet('ys_sleep_sessions'); if(lc){window._slData=JSON.parse(lc);return window._slData;} } catch(e){}
   window._slData=[]; return window._slData;
 }
 
@@ -8973,7 +8989,7 @@ async function slSaveData(data) {
 }
 async function slLoadTreats() {
   try { var v=await ysKvGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=localStorage.getItem('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
   return [];
 }
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)

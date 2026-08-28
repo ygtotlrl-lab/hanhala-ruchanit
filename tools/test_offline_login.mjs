@@ -158,6 +158,10 @@ function boot(state, opts = {}) {
       removeItem: (k) => { delete LS[k]; },
     },
     lsSet: (k, v) => { LS[k] = String(v); return true; },
+    /*  ⛔ הקריאה מהאחסון עוברת גם היא במודול (סבב 67) — `lsGet` החליף
+     *  את `localStorage.getItem` בכל אתר שמחוץ למודול, ורתמה בלי
+     *  הדמה הזו קוראת `undefined` במקום את המטמון. */
+    lsGet: (k, fb) => (k in LS ? LS[k] : (fb === undefined ? null : fb)),
     toast: (m) => TOASTS.push(m),
     H: String.fromCharCode,
     AUTH: state.AUTH || { user: null, perms: null, ROLE_LABELS: {}, offlineLogin: false },
