@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/*  test_round37_import.mjs — סבב 37 (השלמה): מסלול הייבוא.
+/*  test_import.mjs — סבב 37 (השלמה): מסלול הייבוא.
  *
  *  ⚠️ **הקובץ פרטי ל-hanhala-ruchanit**, וזו חריגה מנומקת ולא סטייה:
  *  `importStudentsFromFile` הוא **מסלול הייבוא היחיד בארגון** — ל-yoman,

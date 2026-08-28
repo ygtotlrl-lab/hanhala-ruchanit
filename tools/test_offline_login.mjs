@@ -60,7 +60,10 @@ function grabVar(name) {
 const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
-  '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr'];
+  '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
+  /* ⛔ מגן השליחה הכפולה ושתי הפנימיות שלו (סבב 67) — המעטפות קוראות
+   * להן, ורתמה שאינה מחלצת אותן נופלת ב-ReferenceError. */
+  'ysBusy', '_saveUserInner', '_changeMyPasswordInner'];
 const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
@@ -155,6 +158,10 @@ function boot(state, opts = {}) {
       removeItem: (k) => { delete LS[k]; },
     },
     lsSet: (k, v) => { LS[k] = String(v); return true; },
+    /*  ⛔ הקריאה מהאחסון עוברת גם היא במודול (סבב 67) — `lsGet` החליף
+     *  את `localStorage.getItem` בכל אתר שמחוץ למודול, ורתמה בלי
+     *  הדמה הזו קוראת `undefined` במקום את המטמון. */
+    lsGet: (k, fb) => (k in LS ? LS[k] : (fb === undefined ? null : fb)),
     toast: (m) => TOASTS.push(m),
     H: String.fromCharCode,
     AUTH: state.AUTH || { user: null, perms: null, ROLE_LABELS: {}, offlineLogin: false },
@@ -566,3 +573,46 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
 
 console.log(`\n${bad ? '❌' : '✅'} סבב 22: ${ok} טענות עברו, ${bad} נכשלו`);
 process.exit(bad ? 1 : 0);
+
+/* ───────────────────────────────────────────────────────────────────────────
+   ⛔ מוטציה ומוטציית-נגד — סבב 67
+   ───────────────────────────────────────────────────────────────────────────
+   ⛔ מבחן נכנס עם מוטציה, או עם נימוק כתוב מדוע אינו ניתן למוטציה.
+   ⚠️ בלעדיה אין שום ראיה שהמבחן **מסוגל** ליפול: 97 טענות שעוברות על עץ
+   תקין נראות כרשת ביטחון ופועלות כאישור. ⛔ והמוטציה רצה על **עותק
+   בתיקייה זמנית** ולא על העץ (הלקח של סבב 42ג).
+   ⚠️ הרצת-המשנה מסומנת ב-`RD67_MUT` — ⛔ בלעדיו המוטציה הייתה מריצה את
+   עצמה שוב בתוך העותק, לאין סוף.
+   ──────────────────────────────────────────────────────────────────────── */
+if (!process.env.RD67_MUT) {
+  const _m = await import('node:fs');
+  const _p = await import('node:path');
+  const _o = await import('node:os');
+  const _c = await import('node:child_process');
+  const _self = new URL(import.meta.url).pathname;
+  const _name = _p.basename(_self);
+  const _root = _p.resolve(_p.dirname(_self), '..');
+  const _run = (dir) => _c.spawnSync(process.execPath, [_p.join(dir, 'tools', _name)],
+    { cwd: dir, encoding: 'utf8', env: { ...process.env, RD67_MUT: '1' } }).status;
+
+  const _mut = (label, file, edit, expectFail) => {
+    const d = _m.mkdtempSync(_p.join(_o.tmpdir(), 'rd67-'));
+    _m.cpSync(_root, d, { recursive: true, filter: (s) => !s.includes('/.git') });
+    const f = _p.join(d, file);
+    if (!_m.existsSync(f)) { console.log('  ok   ' + label + ' — ⚠️ הקובץ אינו קיים כאן, הטענה מוצהרת ריקה'); return; }
+    _m.writeFileSync(f, edit(_m.readFileSync(f, 'utf8')));
+    const st = _run(d);
+    const fell = st !== 0;
+    console.log((fell === expectFail ? '  ok   ' : '  FAIL ') + label);
+    /*  ⛔ יציאה מיידית ולא `exitCode` (סבב 67) — סיכום המבחן קורא
+     *  ל-`process.exit` בסופו, והוא היה דורס כשל מוטציה בשקט. */
+    if (fell !== expectFail) process.exit(1);
+    _m.rmSync(d, { recursive: true, force: true });
+  };
+
+  console.log('\n— מוטציות (סבב 67) —');
+  _mut('⛔ ביטול בדיקת הטביעה בכניסה האופליין מפיל', 'index.html',
+       (s) => s.replace(/pass_fp/g, 'pass_fp_x'), true);
+  _mut('⭐ מוטציית-נגד: הוספת שורת הערה ל-index.html ⛔ אינה מפילה', 'index.html',
+       (s) => s.replace('</body>', '<!-- הערה -->\n</body>'), false);
+}

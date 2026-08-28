@@ -30,7 +30,7 @@ open on the users' devices, while yoman and the old hanhala APK — both WebView
 |---|---|
 | **Package ID** | `com.hanhala.ruchanit` |
 | **טוען** | `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` — **מהרשת**, לא מנכסים מוטבעים |
-| **versionCode** | 7 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו, ר' CLAUDE.md) |
+| **versionCode** | 8 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו, ר' CLAUDE.md) |
 | **minSdk / targetSdk** | 21 / 34 |
 | **WebView** | JavaScript, DOM storage (localStorage — שם יושבים מפתחות ה-`ys_*` וה-pending), DB. **בלי** גישת `file://` ובלי mixed content פתוח — האתר הוא https בלבד, `usesCleartextTraffic=false` |
 | **ניווט** | כל `http`/`https` **נשאר בתוך המעטפת**. שאר הסכימות (`tel:`, `mailto:`, `whatsapp:`, …) נמסרות למערכת |
@@ -138,7 +138,7 @@ hanhala ו-schar כמעט זהות בית-לבית, gius נבדלת בניסוח
 
 ⚠️ **החריגה היחידה היום היא גשר השיתוף של yoman-avoda**, והיא מדודה: הליבה
 נושאת חתימה אחת בארבעתן (`d8efd10bc6d47354`), ורק המעטפת של yoman נבדלת.
-`tools/test_round40_shell.mjs` אוכף את שתי החתימות, ו⛔ **נכשל אם נמצא גשר
+`tools/test_shell.mjs` אוכף את שתי החתימות, ו⛔ **נכשל אם נמצא גשר
 בליבה** — גשר שם היה מגיע לארבע האפליקציות בבת אחת.
 <!-- SHARED:end -->
 

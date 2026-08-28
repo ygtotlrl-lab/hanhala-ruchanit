@@ -36,7 +36,10 @@ import crypto from 'node:crypto';
  *  (סבב 66): מדידת פיקסלים היא מאות שורות, ומימוש שני היה נסחף מהראשון
  *  ומדווח ✅ על בדיוק מה שהשער מפיל. ⚠️ הייבוא שקט — הריצה העצמית שם
  *  מוגנת ב-`SELF`. */
-const { audit: iconAudit } = await import('./test_round66_iconlayer.mjs');
+const { audit: iconAudit } = await import('./test_iconlayer.mjs');
+/*  ⭐ ושורה 47 נמדדת ע"י `audit` של שער סבב 67 — ⛔ אותו נימוק בדיוק:
+ *  מדידה שנייה של אותה שכבה הייתה נסחפת מהראשונה. */
+const { audit: inputAudit } = await import('./test_inputlayer.mjs');
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
@@ -54,11 +57,22 @@ const APP = {
   kvFallbackFn: 'ysKvGet',
   naRows: [],
   matrixProbe: {
-    4:  (c) => !!c.fnBody('ysUsersCacheSave'),
+    /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (כלל ברזל 26ד, סבב 67) —
+     *  «נתיב עדכון חלקי» שאין לו אף קורא הוא קוד מת, ו-✅ עליו נקרא
+     *  כעדות. ⚠️ הספירה היא >1 מפני שההגדרה עצמה נספרת גם היא. */
+    4:  (c) => !!c.fnBody('ysUsersCacheSave')
+             && (c.code.match(/\bysUsersCacheSave\s*\(/g) || []).length > 1,
     // ⛔ שלב א בלבד (סבב 36) — ה-`kv` הוא עדיין המאסטר וכל קריאה עוברת בו. הדגל
     //    הזה הוא המתג — כשהוא יכובה (שלב ב), התא חייב להפוך ל-✅.
     15: (c) => c.hasCode(/YS_KV_LEGACY_WRITE\s*=\s*false/),
-    19: (c) => !!c.fnBody('changeMyPassword'),
+    /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (סבב 67) — עד הסבב הזה ה-probe
+     *  מדד `fnBody('changeMyPassword')` בלבד, ⚠️ והפונקציה אכן הייתה שם:
+     *  שלמה, נכונה, ובלי שום קורא ובלי שדות ב-DOM. ⛔ שער שמאשר ✅ על קוד
+     *  מת הוא בדיוק «מטריצה שאינה תואמת לקוד» שכלל ברזל 12 אוסר. */
+    19: (c) => !!c.fnBody('changeMyPassword')
+             && /onclick="[^"]*myPasswordModal\s*\(/.test(c.src)
+             && /id="pw-old"/.test(c.src) && /id="pw-new"/.test(c.src)
+             && /id="pw-new2"/.test(c.src),
   },
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
@@ -147,7 +161,7 @@ const CAPS = {
    *  מהמודולים חסרי-החיווט שמעליו) מפני שהוא **יכולת עלייה**: הוא דורך
    *  את עצמו בעלייה ומרשם את מאזיני `online`/`visibilitychange`. ⛔ מה
    *  שאינו נאכף כאן הוא `rtyNote()` — נקודת הדריכה מהמשפך המקומי — והיא
-   *  נאכפת ב-`test_round44_retry.mjs`, שיודע גם מהו המשפך בכל אפליקציה. */
+   *  נאכפת ב-`test_retry.mjs`, שיודע גם מהו המשפך בכל אפליקציה. */
   retry: {
     name: 'מודול הניסיון החוזר בסנכרון',
     block: { sha: 'a3c80c97f6388e81', lines: 68,
@@ -157,7 +171,7 @@ const CAPS = {
   },
   /*  ⭐ סבב 51 — מנגנון המשיכה. יש לו `hooks` מפני שהוא **יכולת עלייה**:
    *  הוא דורך את התקתוק ומרשם את מאזין ה-`online`. ⛔ מה שאינו נאכף כאן
-   *  הוא קידום החותמת ממסלולי הכתיבה — הוא נאכף ב-`test_round51_pull.mjs`,
+   *  הוא קידום החותמת ממסלולי הכתיבה — הוא נאכף ב-`test_pull.mjs`,
    *  שיודע גם מהם המשפכים בכל אפליקציה.                                */
   pull: {
     name: 'מנגנון המשיכה',
@@ -521,11 +535,11 @@ const MATRIX = [
             'ש«גיבוי ממקור שאינו קיים מדלג בשקט», ובפועל הוא מחזיר error, ' +
             'מונע את כתיבת הדגל היומי ומשתק את הגריעה — נמדד בהנהלה, 66 ' +
             'גיבויים ביום. הצד שכן נבדק — הצהרת המקורות מול APP.tables — ' +
-            'נאכף ב-test_round62_sources.mjs, ורשימת-ההיתר ב-test_round35c_cron.mjs.' },
+            'נאכף ב-test_sources.mjs, ורשימת-ההיתר ב-test_cron.mjs.' },
   { row: 22, name: 'פינוי גיבויים אוטומטי במסד',
     exempt: 'התא מצהיר שמשימת `pg_cron` **רשומה ופעילה במסד**, ואין דרך ' +
             'לראות זאת מהריפו. הצד שכן נבדק — `_bkRetention` וקובץ המיגרציה — ' +
-            'נאכף ב-test_round35c_cron.mjs, שנועל גם את התזמון.' },
+            'נאכף ב-test_cron.mjs, שנועל גם את התזמון.' },
   /*  ⭐ סבב 38 — ה-probe הפך גנרי. עד אז הוא היה `app: true`, מפני שכל
    *  אפליקציה מימשה את כלל ה-⏳ בפונקציה משלה; מרגע שהכלל יושב ב-`_mergePick`
    *  המשותפת, אותה בדיקה בדיוק תקפה בארבעתן — וזו בעצמה עדות שהאיחוד
@@ -561,15 +575,15 @@ const MATRIX = [
    *  חתימה מוצהרת הוא שער שאינו נועל דבר — בדיוק המצב שהיה עד הסבב הזה,
    *  שבו ל-`MainActivity.java` לא נגעה שום בדיקה.                     */
   { row: 28, name: 'מעטפת WebView חתומה',
-    probe: () => hasPath('tools/test_round40_shell.mjs') &&
-                 fileHas('tools/test_round40_shell.mjs', /shellSha:\s*'[0-9a-f]{16}'/) },
+    probe: () => hasPath('tools/test_shell.mjs') &&
+                 fileHas('tools/test_shell.mjs', /shellSha:\s*'[0-9a-f]{16}'/) },
   /*  ⭐ סבב 40 — אימות מול טביעה בענן. ה-probe **קורא את הצהרת השער**
    *  (`verifyFn`) ואז מוודא שהפונקציה הזו באמת נקראת ב-`index.html` —
    *  כלומר הוא נשען על הקוד ולא על קיום הקובץ בלבד. ⛔ הצהרה בלי קריאה
    *  היא בדיוק המצב שהמטריצה אמורה לתפוס.                            */
   { row: 29, name: 'אימות מול טביעה בענן',
     probe: () => {
-      const p = 'tools/test_round40_passwords.mjs';
+      const p = 'tools/test_passwords.mjs';
       if (!hasPath(p)) return false;
       const t = fs.readFileSync(p, 'utf8');   /* ⚠️ נתיב יחסי, כמו `hasPath` — הבודק רץ מתיקיית הריפו */
       const m = /verifyFn:\s*'(\w+)'/.exec(t);
@@ -584,7 +598,7 @@ const MATRIX = [
    *  חתימה משלו הוא בדיוק מסלול החתימה השני, והוא ייתפס כאן.        */
   { row: 30, name: 'בניית APK אחידה עם שער חתימה',
     probe: () => {
-      if (!hasPath('tools/test_round41_build.mjs')) return false;
+      if (!hasPath('tools/test_build.mjs')) return false;
       const yml = '.github/workflows/build-apk.yml';
       if (!hasPath(yml)) return false;
       const bare = fs.readFileSync(yml, 'utf8').split('\n')
@@ -687,14 +701,27 @@ const MATRIX = [
    *  אלא שכל אתר העברה **עטוף בו**: הבאג של סבב 64 היה בדיוק קיום בלי
    *  עטיפה — הפונקציה הייתה שם, והאתר שמחפש את האלמנט לא קרא לה.
    *  ⚠️ אפליקציה בלי אתרי העברה כלל מוצהרת «לא רלוונטי» ב-`naRows`. */
+  /*  ⛔ מסבב 67 (כלל ברזל 27) — לא די בכך שהמזהה **עטוף**: הוא חייב
+   *  לעבור ב-`data-id` ובדלגציה. ⚠️ הצירוף הוא מה שהופך את התא למדיד —
+   *  `wrapped>0 && bare===0` לבדו עבר גם על אפליקציה שכל אתריה
+   *  מוטבעים ב-`onclick`, כלומר בדיוק על מה שהכלל בא לסלק. */
   { row: 45, name: 'העברת מזהה ל-DOM',
-    probe: () => idSites().wrapped > 0 && idSites().bare === 0 },
+    probe: () => idSites().bare === 0 &&
+                 /data-act="/.test(src) &&
+                 /getAttribute\('data-id'\)|dataset\.id\b/.test(src) &&
+                 /addEventListener\('click'/.test(src) },
   /*  ⭐ סבב 66 — שכבת האייקונים. ⛔ ה-probe אינו בודק שעשרת הקבצים
    *  **קיימים** אלא שהם עומדים בארבעת הממדים שכלל ברזל 25 קובע: כמות,
    *  ממדים, תוכן בפיקסלים, והתאמת הרקע לשוליים. ⚠️ probe של קיום היה
    *  נותן ✅ גם לאייקון שתופס 32% מהמסגרת בזמן שהאחיות תופסות 44%. */
   { row: 46, name: 'שכבת אייקונים',
     probe: () => iconAudit('.').length === 0 },
+  { row: 47, name: 'שכבת קלט אחידה',
+    probe: () => inputAudit('.').length === 0 },
+  /*  ⛔ שתי נקודות כניסה חיות ולא שתי פונקציות (סבב 67) — כלל ברזל 26ד:
+   *  פונקציה שקיימת בקובץ ואין לה קורא היא קוד מת, ו-✅ עליה נקרא כעדות. */
+  { row: 48, name: 'שכבת כניסה מלאה',
+    probe: () => /onclick="[^"]*myPasswordModal\s*\(/.test(src) && /onclick="[^"]*switchUserEl\s*\(/.test(src) },
 ];
 
 /*  ⭐ אתרי העברת-מזהה (סבב 64) — אופרנד שמשורשר מיד אחרי `('` או `,'`,
