@@ -2384,11 +2384,16 @@ function sortUsersByOrder(data) {
    המקום שבו ההמרה נשברת בשקט: `idx + dir` על המחרוזת `"-1"` הוא שרשור
    ולא חיבור, ו-`!current` על המחרוזת `"false"` הוא `false`. ⛔ שני
    הארגומנטים האלה מומרים כאן במפורש, ⛔ ואין להסיר את ההמרה.
-   ⚠️ **וההמרה כאן חלקית בכוונה** — 29 אתרים במודולי הנוכחות והשינה
-   נושאים `event.stopPropagation()` בתוך אותו מאפיין, ⛔ ודלגציה ב-
-   `document` הופכת את סדר הבועות: המטפל של השורה העוטפת היה רץ **לפני**
-   המטפל המואצל, כלומר `stopPropagation` היה מפסיק להגן. ⛔ הם נשארו
-   כפי שהם ונרשמו כפער — ר' «פערים פתוחים».
+   ⚠️ **וההמרה כאן חלקית בכוונה, ובשני מצבים שונים** (נמדד בסבב 68):
+   ⛔ **ארבעה** אתרים במודולי הנוכחות והשינה נושאים `event.stopPropagation()`
+   בתוך אותו מאפיין, ⛔ ודלגציה ב-`document` הופכת את סדר הבועות: המטפל של
+   השורה העוטפת היה רץ **לפני** המטפל המואצל, כלומר `stopPropagation` היה
+   מפסיק להגן **בשקט**. ⛔ ארבעתם הם **חריגה מנומקת קבועה** ואינם פער
+   (סבב 68) — הערה צמודה יושבת ליד כל אחד מהם, ו-`check-capabilities`
+   מפיל כל אתר שסומן `data-act` ונושא `stopPropagation` באותה שורה.
+   ⚠️ **ו-26 האתרים הנותרים אינם כאלה** — הם מוטבעים ב-`onclick` בלי
+   `stopPropagation`, ⛔ ורובם סוגרים דיאלוג ב-`this.closest('[data-dlg=…]')`;
+   ⛔ המרתם תלויה בסבב שכבת המודאל, ולכן הם נשארו רשומים כפער.
    ══════════════════════════════════════════════════════════════════════════ */
 var DOM_ACTIONS = {
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
@@ -8235,6 +8240,8 @@ window.atRenderArchive = async function(records) {
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
+          /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
+           *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
           html+='<button onclick="event.stopPropagation();window.atDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
@@ -8555,6 +8562,8 @@ window.atRenderSupervision = async function() {
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
+     *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
     html+='<button onclick="event.stopPropagation();window.atSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
@@ -9696,6 +9705,8 @@ window.slRenderArchive = async function(records) {
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
+          /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
+           *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
           html+='<button onclick="event.stopPropagation();window.slDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
@@ -9997,6 +10008,8 @@ window.slRenderSupervision = async function() {
     html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
+     *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
     html+='<button onclick="event.stopPropagation();window.slSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sl-sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
