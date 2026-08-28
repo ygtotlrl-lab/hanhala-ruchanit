@@ -726,6 +726,15 @@ const MATRIX = [
     probe: () => inputAudit('.').length === 0 },
   /*  ⛔ שתי נקודות כניסה חיות ולא שתי פונקציות (סבב 67) — כלל ברזל 26ד:
    *  פונקציה שקיימת בקובץ ואין לה קורא היא קוד מת, ו-✅ עליה נקרא כעדות. */
+  /*  ⭐ סבב 68 — שכבת המודאל. ⛔ ה-probe מאמת **חתימה** ולא קיום שם:
+   *  `openModal(id)` בשכר נשאה עד סבב 68 את אותו שם ומשמעות אחרת, ⚠️ ומי
+   *  שהעתיק קריאה מגיוס לשם קיבל קוד שמתקמפל ואינו עובד. ⛔ ובנוסף נדרשים
+   *  המיכל הקבוע ומסלול הסגירה היחיד — ⚠️ דיאלוג שמפספס את `Escape` נראה
+   *  תקין עד שמישהו לוחץ עליו. */
+  { row: 49, name: 'שכבת המודאל',
+    probe: () => /function openModal\s*\(\s*title\s*,\s*body\s*,\s*foot\s*\)/.test(code) &&
+                 /id="modal"/.test(src) && /id="ask"/.test(src) &&
+                 /function closeAsk/.test(code) },
   { row: 48, name: 'שכבת כניסה מלאה',
     probe: () => /onclick="[^"]*myPasswordModal\s*\(/.test(src) && /onclick="[^"]*switchUserEl\s*\(/.test(src) },
 ];
