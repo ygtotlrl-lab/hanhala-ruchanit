@@ -183,7 +183,7 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
 `usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
 
-<!-- SHARED:start id="context-smali-scope" -->
+<!-- SHARED:start id="android-smali-scope" -->
 ## תיקון URL ב-APK קיים ובנוי (בלי מקור) — smali בלבד
 
 ⚠️ **הפרק הזה רלוונטי רק ל-APK ישן שנבנה לפני `android/`.** בנייה רגילה היום
@@ -208,7 +208,7 @@ apksigner sign --ks signing/hanhala.keystore --ks-key-alias hanhala \
 `signing/hanhala.keystore`; לכן מעבר מה-APK הישן הוא **הסרה + התקנה**
 חד-פעמית.
 
-<!-- SHARED:start id="context-cache-apk" -->
+<!-- SHARED:start id="android-cache-apk" -->
 ### ⚠️ Cache APK — כלל זהב
 
 שם קובץ חוזר נתפס במטמון — של הדפדפן, של מנהל ההורדות ושל המכשיר — והמשתמש
