@@ -818,7 +818,7 @@ const GATES = {
   30: 'check-capabilities',
   31: 'test_docrules',
   32: 'test_readonly',
-  33: { manual: 'טרם נבנה שער — הסתירה נמדדה ותוקנה, והשער נכתב בסעיף הבא' },
+  33: 'test_crossgate',
   34: 'check-capabilities',
   45: 'check-status-area',
   48: { manual: 'ספירת אתרי `onclick` מול דלגציה נמדדת ידנית — טרם נבנה שער' },
