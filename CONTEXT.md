@@ -29,7 +29,7 @@ alter table public.TABLE_NAME enable row level security;
 (כלל ברזל 6 סעיף 1), ולכן ההרשאות האלה מיותרות בהגדרה ומסוכנות בפועל: מפתח
 ה-anon יושב גלוי ב-`index.html` הציבורי. ר' `migrations/001`+`002`.
 
-מקור האמת המלא לסכימה: `migrations/000_initial_schema.sql` (כלל קריטי 6 ב-CLAUDE.md).
+מקור האמת המלא לסכימה: `migrations/000_initial_schema.sql`.
 
 ---
 
@@ -44,5 +44,5 @@ alter table public.TABLE_NAME enable row level security;
 ---
 
 ⛔ **הקובץ הזה מחזיק לקוח וצורך בלבד** (כלל ברזל 23) — כללי הפיתוח,
-הסכימה ופרטי המערכת יושבים ב-[CLAUDE.md](CLAUDE.md), ב-[README.md](README.md)
+הסכימה ופרטי המערכת יושבים ב-[README.md](README.md)
 וב-[android/README.md](android/README.md). ⛔ תיאור שחוזר משם נסחף בשקט.
