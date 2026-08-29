@@ -30,7 +30,7 @@ open on the users' devices, while yoman and the old hanhala APK — both WebView
 |---|---|
 | **Package ID** | `com.hanhala.ruchanit` |
 | **טוען** | `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` — **מהרשת**, לא מנכסים מוטבעים |
-| **versionCode** | 9 — קודם בסבב 68 (היסטוריית הגרסאות ירדה מהערות `build.gradle` — מקור אמת שני; ⛔ הטבלה הזו היא ההיסטוריה). 8 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו) |
+| **versionCode** | 11 — קודם בסבב 71 (כל נכסי האייקון נוצרו מחדש ע"י `tools/gen-icons.mjs`, שהוא מעכשיו מקור האמת היחיד להם). 10 — קודם בסבב 71 (חמשת קובצי `ic_launcher_foreground` נגזרו מחדש לצלע תוכן 48/72/96/144/192 בדיוק, בהכפלה מוקדמת באלפא). 9 — קודם בסבב 68 (היסטוריית הגרסאות ירדה מהערות `build.gradle` — מקור אמת שני; ⛔ הטבלה הזו היא ההיסטוריה). 8 — קודם בסבב 66 (עשרת קובצי ה-mipmap הוחלפו; חמישה קובצי `ic_launcher_foreground` שנדחפו בטעות אל `src/main/github.com/…` נמחקו אחרי מדידה של אפס קוראים). 6 — קודם בתיקון שאחרי סבב 60 (קיצור ההערה המשותפת ב-`ShellActivity`, שנעשה בסבב 60 בלי קידום). 5 — קודם בסבב 58 (הסרת `FLAG_ACTIVITY_NEW_TASK` ממסירת יעד חיצוני ל-`ACTION_VIEW`). 4 = סבב 46ב (היפוך ברירת המחדל בקובצי התצורה). 3 = סבב 45, 2 = סבב 41 (חילוץ המעטפת), 1 = המעטפת הראשונה בריפו הזה, טוענת מהרשת. (ה-APK הישן `yeshiva-manager.apk` נבנה מחוץ לריפו במפתח זמני — הוא איננו אב של המעטפת הזו) |
 | **minSdk / targetSdk** | 21 / 34 |
 | **WebView** | JavaScript, DOM storage (localStorage — שם יושבים מפתחות ה-`ys_*` וה-pending), DB. **בלי** גישת `file://` ובלי mixed content פתוח — האתר הוא https בלבד, `usesCleartextTraffic=false` |
 | **ניווט** | כל `http`/`https` **נשאר בתוך המעטפת**. שאר הסכימות (`tel:`, `mailto:`, `whatsapp:`, …) נמסרות למערכת |
@@ -183,7 +183,7 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
 `usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
 
-<!-- SHARED:start id="context-smali-scope" -->
+<!-- SHARED:start id="android-smali-scope" -->
 ## תיקון URL ב-APK קיים ובנוי (בלי מקור) — smali בלבד
 
 ⚠️ **הפרק הזה רלוונטי רק ל-APK ישן שנבנה לפני `android/`.** בנייה רגילה היום
@@ -208,7 +208,7 @@ apksigner sign --ks signing/hanhala.keystore --ks-key-alias hanhala \
 `signing/hanhala.keystore`; לכן מעבר מה-APK הישן הוא **הסרה + התקנה**
 חד-פעמית.
 
-<!-- SHARED:start id="context-cache-apk" -->
+<!-- SHARED:start id="android-cache-apk" -->
 ### ⚠️ Cache APK — כלל זהב
 
 שם קובץ חוזר נתפס במטמון — של הדפדפן, של מנהל ההורדות ושל המכשיר — והמשתמש
