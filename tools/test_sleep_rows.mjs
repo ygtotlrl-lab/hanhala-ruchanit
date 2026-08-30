@@ -165,8 +165,9 @@ if (MOD) {
     !tables.includes('ys_sessions') && !tables.includes('ys_marks'));
   ok('3ח · ⚠️ האב נכתב לפני הבן — לא נוצר סימון בלי הסדר שלו',
     tables.indexOf('ys_sleep_sessions') < tables.indexOf('ys_sleep_marks'));
+  const sleepRows2 = h2.calls.find((c) => c.table === 'ys_sleep_marks').rows;
   ok('3ט · והסימונים יורשים את חותמת האב ואת `deleted` שלו',
-    h2.calls.find((c) => c.table === 'ys_sleep_marks').rows.every(
+    sleepRows2.length > 0 && sleepRows2.every(
       (x) => x.updated_at === 1000 && x.deleted === false));
 
   const h3 = harness(MOD);

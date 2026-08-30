@@ -234,9 +234,9 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
   T('2ג. ⛔ אין password_hash באף רשומה', !c.some((u) => 'password_hash' in u));
-  T('2ד. יש id/username/full_name/role/active', c.every((u) =>
+  T('2ד. יש id/username/full_name/role/active', c.length > 0 && c.every((u) =>
     'id' in u && 'username' in u && 'full_name' in u && 'role' in u && 'active' in u));
-  T('2ה. יש pass_salt/pass_fp', c.every((u) => 'pass_salt' in u && 'pass_fp' in u));
+  T('2ה. יש pass_salt/pass_fp', c.length > 0 && c.every((u) => 'pass_salt' in u && 'pass_fp' in u));
   T('2ו. ⛔ המחרוזת password_hash אינה בשום מפתח localStorage',
     !Object.values(LS).some((v) => String(v).indexOf('password_hash') !== -1));
   T('2ז. ⛔ אף סיסמה אינה בשום מפתח localStorage',

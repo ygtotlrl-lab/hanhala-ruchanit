@@ -134,17 +134,17 @@ console.log('· hanhala-ruchanit — סבב 37 (השלמה): מסלול הייב
 const a = run(SRC, { dev: 'A' });
 const b = run(SRC, { dev: 'B' });
 assert(a.added.length === 3, '1 · שלושה תלמידים יובאו (' + a.added.length + ')');
-assert(a.added.every((s) => typeof s.id === 'string' && s.id.length >= 8),
+assert(a.added.length > 0 && a.added.every((s) => typeof s.id === 'string' && s.id.length >= 8),
   '2 · ⭐ כל מזהה הוא מחרוזת שנוצרה במכשיר, ולא מספר רץ');
 const idsA = new Set(a.added.map((s) => String(s.id)));
 const idsB = b.added.map((s) => String(s.id));
 assert(idsA.size === 3, '3 · שלושת המזהים באותו ייבוא שונים זה מזה');
-assert(idsB.every((id) => !idsA.has(id)),
+assert(idsB.length > 0 && idsB.every((id) => !idsA.has(id)),
   '4 · ⛔ שני מכשירים שמייבאים את אותו קובץ במקביל אינם מקצים מזהה משותף');
 
 /* ── 2 · סימון ⏳ לכל שורה מיובאת ───────────────────────────────────────── */
 assert(a.marked.length === 3, '5 · שלושה סימוני ⏳ נכתבו (' + a.marked.length + ')');
-assert(a.added.every((s) => a.marked.indexOf('student:' + s.id) > -1),
+assert(a.added.length > 0 && a.added.every((s) => a.marked.indexOf('student:' + s.id) > -1),
   '6 · ⛔ הסימון נגזר מהמזהה של הרשומה שנוספה בפועל, ולא ממיקום במערך');
 assert(a.pushed, '7 · הדחיפה תוזמנה אחרי כתיבה מוצלחת');
 

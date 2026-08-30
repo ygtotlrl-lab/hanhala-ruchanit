@@ -234,17 +234,17 @@ async function t3() {
       שנוסף מסבב 37 ואילך. */
   assert(marks.length === 3,
     '4ה · ⭐ סימון עם מפתח לא-מספרי (uuid) מגיע לשכבת השורות (' + marks.length + ' שורות)');
-  assert(marks.every((m) => typeof m.student_id === 'string'),
+  assert(marks.length > 0 && marks.every((m) => typeof m.student_id === 'string'),
     '4ה2 · ⛔ `student_id` נשלח כמחרוזת — אין המרה מספרית על עמודת טקסט');
   assert(marks.some((m) => m.student_id === 'bad'),
     '4ה3 · והמפתח עצמו נשמר כמות שהוא, בלי עיגול ובלי NaN');
-  assert(marks.every((m) => m.client_id === '111:' + m.student_id),
+  assert(marks.length > 0 && marks.every((m) => m.client_id === '111:' + m.student_id),
     '4ו · `client_id` של הסימון נגזר ממפתח הזהות `<סדר>:<תלמיד>` ואינו uuid חדש');
-  assert(marks.every((m) => m.updated_at === 900),
+  assert(marks.length > 0 && marks.every((m) => m.updated_at === 900),
     '4ז · הסימון יורש את חותמת האב — ⛔ ולא `Date.now()`');
-  assert(marks.every((m) => m.deleted === true),
+  assert(marks.length > 0 && marks.every((m) => m.deleted === true),
     '4ח · ⛔ הסימון יורש את `deleted` של האב — אחרת סדר מחוק דולף לדוח פר-תלמיד');
-  assert(marks.every((m) => m.date_iso === '2026-05-17'),
+  assert(marks.length > 0 && marks.every((m) => m.date_iso === '2026-05-17'),
     '4ט · `date_iso` משוכפל לכל שורת סימון');
 
   const st = sandbox.ysStudentRow({ id: 5, name: 'x', updatedAt: 7 });
@@ -361,7 +361,7 @@ async function t4() {
   assert(mutC !== SRC, '5ה · המוטציה אכן מבטלת את ירושת ה-`deleted`');
   const hC = harness(extract(mutC), {});
   const marksC = hC.sandbox.ysMarkRows(SESS);
-  assert(marksC.every((m) => m.deleted === false),
+  assert(marksC.length > 0 && marksC.every((m) => m.deleted === false),
     '5ו · ⛔ במוטנט סימון של סדר מחוק נשאר חי — טענת 4ח הייתה נכשלת');
 
   // ד. הסרת בדיקת הכפילות מנקודת היצירה בפועל.
