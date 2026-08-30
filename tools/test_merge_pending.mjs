@@ -28,7 +28,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
-/* ── APP — הדבר היחיד שנבדל בין הריפו (hanhala-ruchanit) ───────────────── */
+/* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   app: 'hanhala-ruchanit',
   names: ['ysRecTs', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
