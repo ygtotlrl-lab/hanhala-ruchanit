@@ -17,6 +17,10 @@ import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+
+/*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
+ *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
+export const ROWS = [];
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const M009 = fs.readFileSync(path.join(ROOT, 'migrations/009_sleep_structured_tables.sql'), 'utf8');
@@ -161,8 +165,9 @@ if (MOD) {
     !tables.includes('ys_sessions') && !tables.includes('ys_marks'));
   ok('3ח · ⚠️ האב נכתב לפני הבן — לא נוצר סימון בלי הסדר שלו',
     tables.indexOf('ys_sleep_sessions') < tables.indexOf('ys_sleep_marks'));
+  const sleepRows2 = h2.calls.find((c) => c.table === 'ys_sleep_marks').rows;
   ok('3ט · והסימונים יורשים את חותמת האב ואת `deleted` שלו',
-    h2.calls.find((c) => c.table === 'ys_sleep_marks').rows.every(
+    sleepRows2.length > 0 && sleepRows2.every(
       (x) => x.updated_at === 1000 && x.deleted === false));
 
   const h3 = harness(MOD);

@@ -12,6 +12,10 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
 
+
+/*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
+ *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
+export const ROWS = [];
 /* ── חילוץ ─────────────────────────────────────────────────────────────── */
 const html = fs.readFileSync('index.html', 'utf8');
 const SRC = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)]
@@ -230,9 +234,9 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
   T('2ג. ⛔ אין password_hash באף רשומה', !c.some((u) => 'password_hash' in u));
-  T('2ד. יש id/username/full_name/role/active', c.every((u) =>
+  T('2ד. יש id/username/full_name/role/active', c.length > 0 && c.every((u) =>
     'id' in u && 'username' in u && 'full_name' in u && 'role' in u && 'active' in u));
-  T('2ה. יש pass_salt/pass_fp', c.every((u) => 'pass_salt' in u && 'pass_fp' in u));
+  T('2ה. יש pass_salt/pass_fp', c.length > 0 && c.every((u) => 'pass_salt' in u && 'pass_fp' in u));
   T('2ו. ⛔ המחרוזת password_hash אינה בשום מפתח localStorage',
     !Object.values(LS).some((v) => String(v).indexOf('password_hash') !== -1));
   T('2ז. ⛔ אף סיסמה אינה בשום מפתח localStorage',
@@ -613,6 +617,6 @@ if (!process.env.RD67_MUT) {
   console.log('\n— מוטציות (סבב 67) —');
   _mut('⛔ ביטול בדיקת הטביעה בכניסה האופליין מפיל', 'index.html',
        (s) => s.replace(/pass_fp/g, 'pass_fp_x'), true);
-  _mut('⭐ מוטציית-נגד: הוספת שורת הערה ל-index.html ⛔ אינה מפילה', 'index.html',
-       (s) => s.replace('</body>', '<!-- הערה -->\n</body>'), false);
+  _mut('⭐ מוטציית-נגד: פונקציה חדשה וחיה ב-index.html ⛔ אינה מפילה', 'index.html',
+       (s) => s.replace('</body>', '<script>function r72Live(){ return 1; }</script>\n</body>'), false);
 }

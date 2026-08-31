@@ -21,6 +21,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 
+
+/*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
+ *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
+export const ROWS = [];
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
@@ -206,12 +210,14 @@ mutFails('הסרת הראיה העננית', SRC.replace('try { hwNoteCloud(kvKe
     'מוטציה — חלון של חודש אחד מוציא את החודש הקודם (הטענה מודדת ולא מצהירה)');
 }
 
-/*  ⭐ מוטציית-נגד: שינוי **הערה** בלבד אינו מפיל דבר. */
+/*  ⭐ מוטציית-נגד — ⛔ שינוי **חי** שאסור לו להפיל (סבב 72): הצהרה חדשה
+ *  שנוספת לקוד. ⚠️ עד כאן היא הייתה שינוי **הערה**, ⛔ ושינוי כזה מוכיח
+ *  רק שהשער אינו `hash` של כל הקובץ — ולא שהוא מודד את מה שהוא טוען. */
 {
-  const counter = SRC.replace('/* ── HW_CFG — הדבר היחיד שנבדל בין האפליקציות',
-                              '/* ── HW_CFG — (הערה שונתה) הדבר היחיד שנבדל בין האפליקציות');
+  const counter = SRC.replace('</body>', '<script>var r72Live = 1;</script>\n</body>');
+  assert(counter !== SRC, 'מוטציית-הנגד אכן שינתה את המקור');
   assert(STATIC.every(([re]) => re.test(counter)),
-    'מוטציית-נגד — שינוי הערה אינו מפיל אף טענה סטטית');
+    '⭐ מוטציית-נגד — הצהרה חדשה וחיה ⛔ אינה מפילה אף טענה סטטית');
 }
 
 console.log(failed ? `\n❌ בדיקת סבב 56 נכשלה (${failed})` : '\n✅ בדיקת סבב 56 עברה');

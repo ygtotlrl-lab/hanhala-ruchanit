@@ -19,6 +19,10 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+
+/*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
+ *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
+export const ROWS = [];
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 const SQL = readFileSync(join(ROOT, 'migrations/004_backup_retention_cron.sql'), 'utf8');
