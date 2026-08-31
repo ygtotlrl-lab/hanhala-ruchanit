@@ -6,6 +6,13 @@
  *  ו-`crypto` מדומים. `crypto.subtle` הוא ה-WebCrypto האמיתי של node,
  *  ולכן ה-PBKDF2 שנבדק כאן הוא זה שירוץ בדפדפן.
  *
+ *
+ *  ⛔ **הקובץ פרטי לאפליקציה ואינו זהה לשלוש האחרות, ⛔ ואין ליישר אותו** —
+ *  ⚠️ מודל הכניסה עצמו נבדל, ולכן גם הטענות:
+ *   העמודה הגלויה כאן היא שריד **כתוב-ולא-נקרא** ואין מסלול השלמת טביעה,
+ *   ⛔ ולכן הטענות הן שהיא אינה נוגעת בדיסק באף נתיב.
+ *  ⚠️ וביומן אין קובץ כזה כלל — ⛔ אין שם כניסה, ואין מה לאמת.
+ *
  *  הרצה:  node tools/test_round22.mjs
  */
 import fs from 'node:fs';
@@ -191,6 +198,20 @@ function boot(state, opts = {}) {
 let ok = 0, bad = 0;
 const T = (name, cond) => { if (cond) { ok++; console.log('  ✅ ' + name); } else { bad++; console.error('  ❌ ' + name); } };
 const eq = (name, a, b) => T(name + (a === b ? '' : ` (התקבל: ${JSON.stringify(a)})`), a === b);
+/*  ⛔ המתנה היא על **תנאי** ⛔ ולא על שעון — ⚠️ רענון המטמון הוא
+    fire-and-forget, ⭐ ושינה קבועה נגמרת על מכונה עמוסה לפני שהשרשרת
+    סיימה: ⛔ הטענה נופלת בזמן שהקוד תקין. ⚠️ התקרה קיימת כדי שהבדיקה
+    תיכשל **ברעש** אם האירוע לא יקרה כלל, ⛔ ולא כדי לתזמן. */
+async function waitFor(pred, label, ms = 5000) {
+  const t0 = Date.now();
+  for (;;) {
+    let v = false;
+    try { v = pred(); } catch (e) { v = false; }
+    if (v) return true;
+    if (Date.now() - t0 > ms) { T(`⛔ ${label} — לא קרה בתוך ${ms}ms`, false); return false; }
+    await new Promise((r) => setTimeout(r, 5));
+  }
+}
 const sec = (t) => console.log('\n──────────────────────────────────── ' + t);
 
 const USERS = () => ([
@@ -408,7 +429,8 @@ sec('6. כניסה מקוונת');
   await seedFp(S, rows);          // ⭐ סבב 40 — האימות המקוון הוא מול הטביעה
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '222222';
   await S._doLoginInner();
-  await new Promise((r) => setTimeout(r, 30));   // fire-and-forget של הרענון
+  await waitFor(() => JSON.parse(LS.ys_users_cache || '[]').length === 3,
+                'רענון המטמון אחרי כניסה מקוונת');
   T('6א. כניסה מקוונת הצליחה', !!S.AUTH.user && S.AUTH.user.username === 'moshe');
   eq('6ב. ⭐ המטמון מכיל את כל הפעילים (לא רק את המחובר)', JSON.parse(LS.ys_users_cache).length, 3);
   T('6ג. ⛔ ואין בו password_hash', String(LS.ys_users_cache).indexOf('password_hash') === -1);
@@ -534,7 +556,8 @@ async function doSwitch(targetId, pass, opts = {}) {
 }
 {
   const r = await doSwitch(2, '222222');
-  await new Promise((res) => setTimeout(res, 30));
+  await waitFor(() => !!JSON.parse(LS.ys_users_cache || '[]').find((u) => String(u.id) === '2'),
+                'רענון המטמון על המשתמש החדש');
   T('9י. מעבר מקוון עובד', r.user.id === 2);
   const c = JSON.parse(LS.ys_users_cache);
   T('9יא. ⭐ המטמון רוענן על המשתמש **החדש** (הבאג של סבב 21)',
@@ -546,7 +569,8 @@ async function doSwitch(targetId, pass, opts = {}) {
   // `ysRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
   // ולכן רק `ysUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
   const r = await doSwitch(2, '222222', { listSelectFail: true, cache: [] });
-  await new Promise((res) => setTimeout(res, 30));
+  await waitFor(() => JSON.parse(LS.ys_users_cache || '[]').length === 1,
+                'שמירת היעד מהשורה שבידינו');
   T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.id === 2);
   const c = JSON.parse(LS.ys_users_cache || '[]');
   T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם (באג סבב 21)',
@@ -565,7 +589,7 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
-  await new Promise((r) => setTimeout(r, 30));
+  await waitFor(() => !!LS.ys_users_cache, 'רענון המטמון לפני שינוי הסיסמה');
   DOM._m['pw-old'].value = '111111'; DOM._m['pw-new'].value = '135790';
   await S.changeMyPassword();
   const all = Object.entries(LS).map(([k, v]) => k + '=' + v).join('\n');
