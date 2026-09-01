@@ -1,8 +1,11 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   סבב 62 — `updated_at` ל-kv: המתג, הנכשל-סגור, והמיגרציה
+   סבב 62 — חותמת השורה: המתג, הנכשל-סגור, והמיגרציה
    ══════════════════════════════════════════════════════════════════════════
    ⚠️ **פרטי כאן.** שלוש טבלאות ה-`kv` חיות בפרויקט המשותף, וקובץ המיגרציה
       יושב בריפו הזה — ⛔ קובץ אחד לפרויקט אחד (אותו כלל של `004`).
+   ⛔ **והקוד קורא היום מ-`ys_settings` ⛔ ולא מ-`kv` (סבב 78)** — ⚠️ המיגרציה
+      נשארת נאכפת כאן מפני ששתי טבלאות ה-`kv` שנותרו הן של יומן, ⭐ והעמודה
+      שם היא מפתח ההכרעה שלה.
    ⭐ מה שנמדד ב-26.8.2026 והוליד את הסבב: `sl_settings` ו-`g_config` —
       אותו מבנה מפתח/ערך בדיוק — נושאות `updated_at`, ⛔ ושלוש טבלאות
       ה-`kv` לא. ⚠️ ובהיעדרה `kv.ys_settings_meta` מחזיק `{}` (שני בתים),
@@ -45,8 +48,8 @@ ok(/var\s+YS_SETTINGS_LWW_KEYS\s*=\s*\[[^\]]*'ys_reasons'[^\]]*'ys_absence_reaso
    '1ב · ⭐ `YS_SETTINGS_LWW_KEYS` מוגדר ומכסה את שלושת מפתחות ההגדרות');
 
 /* ── ב. הנכשל-סגור, על הפונקציה האמיתית ברתמת vm ───────────────────────── */
-const fn = /async function ysKvUpdatedAt\(key\) \{[\s\S]*?\n\}/.exec(SRC);
-ok(!!fn, '2 · `ysKvUpdatedAt` מחולצת מ-index.html');
+const fn = /async function ysCfgUpdatedAt\(key\) \{[\s\S]*?\n\}/.exec(SRC);
+ok(!!fn, '2 · `ysCfgUpdatedAt` מחולצת מ-index.html');
 
 async function callWith(row) {
   const SB = {
@@ -63,7 +66,7 @@ async function callWith(row) {
   };
   const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
   vm.createContext(ctx);
-  vm.runInContext(fn[0] + '\nthis.__f = ysKvUpdatedAt;', ctx);
+  vm.runInContext(fn[0] + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   return ctx.__f('k');
 }
 
@@ -78,12 +81,12 @@ ok(await callWith({ data: { updated_at: 'לא-תאריך' } }) === 0,
    '7 · ⛔ ערך שאינו תאריך ⇒ 0 — ⚠️ `Date.parse` מחזיר NaN, וללא הבדיקה הוא היה זולג להשוואה');
 
 /* ── ג. החיווט — הדגל הוא שקובע מאיפה נקראת החותמת ─────────────────────── */
-ok(/rts\s*=\s*await ysKvUpdatedAt\(sk\.key\)/.test(SRC),
+ok(/rts\s*=\s*await ysCfgUpdatedAt\(sk\.key\)/.test(SRC),
    '8 · ⭐ צד הדחיפה קורא את `rts` מהעמודה — בלי תנאי ובלי מפה');
 /* ⛔ שני הצדדים, ולא אחד — זה מה שנשבר בסבב 63 ותוקן בו. */
-ok(/remoteMeta\[_mk\]\s*=\s*await ysKvUpdatedAt\(_mk\)/.test(SRC),
+ok(/remoteMeta\[_mk\]\s*=\s*await ysCfgUpdatedAt\(_mk\)/.test(SRC),
    '8ב · ⭐ וגם צד המשיכה קורא מהעמודה — ⛔ ולא ממפה שהיא `{}` בענן');
-ok(!/ysKvSet\(\s*'ys_settings_meta'/.test(SRC),
+ok(!/ysCfgSet\(\s*'ys_settings_meta'/.test(SRC),
    '9 · ⛔ המפה אינה עולה לענן — אין מקור אמת שני');
 
 /* ── ד. המיגרציה ───────────────────────────────────────────────────────── */
@@ -123,7 +126,7 @@ console.log('  — מוטציות —');
   const SB = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ error: { message: 'x' }, data: { updated_at: '2026-01-01T00:00:00Z' } }) }) }) }) };
   const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
   vm.createContext(ctx);
-  vm.runInContext(mutated + '\nthis.__f = ysKvUpdatedAt;', ctx);
+  vm.runInContext(mutated + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   ok(await ctx.__f('k') !== 0,
      '17 · ⛔ מוטציה: התעלמות מ-`r.error` מחזירה חותמת משגיאה — טענה 4 נופלת');
 }

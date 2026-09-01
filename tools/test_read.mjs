@@ -20,10 +20,9 @@ import vm from 'node:vm';
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   // המפתחות שעברו לטבלאות, ואתרי הקריאה שחייבים לעבור דרך המשפך.
-  keys: ['ys_attend_sessions', 'ys_students'],
+  keys: ['ys_attend_sessions', 'ys_students', 'ys_sleep_sessions'],
   funnel: 'ysCloudGet',
-  rawGet: 'ysKvGet',
-  legacyFlag: /var YS_KV_LEGACY_WRITE = true;/,
+  rawGet: 'ysCfgGet',
   minCallSites: 6,
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
@@ -48,7 +47,7 @@ function extract(src) {
   return src.slice(src.lastIndexOf('/*', i), j);
 }
 
-/* רתמה: מסד מזויף שמחזיר את מה שהתרחיש קבע, ו-`ysKvGet` שסופר קריאות. */
+/* רתמה: מסד מזויף שמחזיר את מה שהתרחיש קבע, ו-`ysCfgGet` שסופר קריאות. */
 function run(block, tables, kvValue, opts) {
   opts = opts || {};
   const log = { kv: 0, sel: [] };
@@ -85,7 +84,7 @@ function run(block, tables, kvValue, opts) {
     YS_ROWS: true,
     YS_ROWS_KINDS: { attend: { parent: 'ys_sessions', child: 'ys_marks', pk: 'at-sess:', note: false } },
     withTimeout: (p) => Promise.resolve(p),
-    ysKvGet: () => { log.kv++; return Promise.resolve(kvValue); },
+    ysCfgGet: () => { log.kv++; return Promise.resolve(kvValue); },
     console,
     log
   };
@@ -128,22 +127,22 @@ async function scenarios(block, label) {
     const { api } = run(block, { ys_sessions: [SESS({ deleted: true })], ys_marks: [] }, null);
     res.tomb = (await api.ysCloudGet('ys_attend_sessions'))[0];
   }
-  // ה. כשל טבלה ⇐ נפילה-חזרה ל-kv
+  // ה. כשל טבלה ⇐ `null` — «אין ראיה», ולא «הענן ריק»
   {
     const { api, log } = run(block, { ys_sessions: 'error' }, [{ id: 'KV' }]);
     res.onError = await api.ysCloudGet('ys_attend_sessions');
     res.onErrorKv = log.kv;
   }
-  // ו. טבלה ריקה ⇐ נפילה-חזרה ל-kv
+  // ו. טבלה ריקה ⇐ מערך ריק — «נמדד ואין», והמיזוג מכריע לפיו
   {
     const { api, log } = run(block, { ys_sessions: [], ys_marks: [] }, [{ id: 'KV' }]);
     res.onEmpty = await api.ysCloudGet('ys_attend_sessions');
     res.onEmptyKv = log.kv;
   }
-  // ז. מפתח שלא עבר ⇐ ישר ל-kv, בלי לגעת בטבלאות
+  // ז. מפתח הגדרות ⇐ `ys_settings`, בלי לגעת בטבלאות הרשומות
   {
     const { api, log } = run(block, {}, [{ id: 'KV' }]);
-    res.passthru = await api.ysCloudGet('ys_sleep_sessions');
+    res.passthru = await api.ysCloudGet('ys_attend_cfg');
     res.passthruSel = log.sel.length;
   }
   // ח2. יותר מעמוד אחד ⇐ נמשכים כל העמודים
@@ -183,12 +182,17 @@ assert(r.delMark && Object.keys(r.delMark).length === 0, '3א · סימון מח
 assert(r.staleMark && !r.staleMark['st-1'] && !!r.staleMark['st-9'],
   '3ב · ⭐ סימון שחותמתו ישנה מהאב אינו חוזר — הכלל שמונע תחיית סימון שנמחק');
 assert(r.tomb && r.tomb.deleted === true, '3ג · ⛔ tombstone של סדר נשמר — היעדר רשומה אינו מחיקה');
-assert(Array.isArray(r.onError) && r.onError[0] && r.onError[0].id === 'KV' && r.onErrorKv === 1,
-  '4א · כשל טבלה ⇐ נפילה-חזרה ל-kv');
-assert(Array.isArray(r.onEmpty) && r.onEmpty[0] && r.onEmpty[0].id === 'KV' && r.onEmptyKv === 1,
-  '4ב · טבלה ריקה ⇐ נפילה-חזרה ל-kv (⛔ «ריק» אינו ראיה)');
+/*  ⛔ הנפילה-חזרה הוסרה (סבב 78) — ⚠️ השקילות אומתה מול המסד, ⭐ ומאותו
+ *  רגע היא מקור אמת שני ולא רשת ביטחון. ⛔ ומה שנאכף כאן הוא ההבחנה
+ *  שהחליפה אותה: **כשל אינו «ריק»** — ⚠️ כשל מחזיר `null`, ⛔ וטבלה ריקה
+ *  מחזירה מערך ריק: ⭐ מיזוג מול מערך ריק היה מוחק את מה שלא הספיק לעלות,
+ *  ומיזוג מול `null` אינו נוגע בדבר. */
+assert(r.onError === null && r.onErrorKv === 0,
+  '4א · כשל טבלה ⇐ `null`, ⛔ ובלי נפילה-חזרה לערך שלם');
+assert(Array.isArray(r.onEmpty) && r.onEmpty.length === 0 && r.onEmptyKv === 0,
+  '4ב · טבלה ריקה ⇐ מערך ריק, ⛔ ו«ריק» אינו «אין ראיה»');
 assert(Array.isArray(r.passthru) && r.passthru[0].id === 'KV' && r.passthruSel === 0,
-  '4ג · מפתח שלא עבר נקרא מ-kv בלי לגעת בטבלאות');
+  '4ג · מפתח הגדרות נקרא מטבלת ההגדרות, ⛔ בלי לגעת בטבלאות הרשומות');
 assert(r.paged === 1200,
   '5א · ⛔ שליפה בעמודים — 1,200 שורות סימון חוזרות במלואן (' + r.paged + ')');
 assert(Array.isArray(r.students) && r.students[0] && r.students[0].name === 'ב',
@@ -204,8 +208,12 @@ for (const k of APP.keys) {
 assert(direct === 0, '6א · ⛔ אין קריאה ישירה ל-' + APP.rawGet + ' למפתח שעבר — משפך אחד');
 const sites = (code.match(new RegExp(APP.funnel + '\\(', 'g')) || []).length;
 assert(sites >= APP.minCallSites, '6ב · ' + APP.funnel + ' משמשת ב-' + sites + ' אתרים (≥' + APP.minCallSites + ')');
-assert(APP.legacyFlag.test(code), '6ג · ⛔ רשת הביטחון של ה-kv עדיין דלוקה — הכתיבה הכפולה לא כובתה');
-assert(/return ysKvGet\(kvKey\);/.test(block), '6ד · הנפילה-חזרה ל-kv קיימת בגוף המשפך');
+/*  ⛔ מה שנאכף כאן הוא **היעדר** הנפילה-חזרה (סבב 78) — ⚠️ שורה אחת
+ *  שמחזירה ערך שלם כשהטבלה לא ענתה מחזירה את מקור האמת השני, ⛔ ובשקט. */
+assert(!/return ysCfgGet\(kvKey\);\s*\n\}/.test(block),
+  '6ג · ⛔ אין נפילה-חזרה לערך שלם בסוף המשפך');
+assert(/if \(!YS_ROWS_READ_KEYS\[kvKey\]\) return ysCfgGet\(kvKey\);/.test(block),
+  '6ד · ⭐ מפתח בלי טבלה מנותב לטבלת ההגדרות, ⛔ ואינו נופל אליה');
 
 console.log('— מוטציות —');
 async function mut(find, repl, key, name) {
@@ -224,9 +232,9 @@ await mut('if (!m || m.deleted) return;', 'if (!m) return;',
 await mut('if (r.deleted) rec.deleted = true;', '',
   (x) => !x || !(x.tomb && x.tomb.deleted === true),
   '⛔ השמטת ה-tombstone מאבדת מחיקה');
-await mut('Array.isArray(r.data) && r.data.length', 'Array.isArray(r.data)',
-  (x) => !x || !(Array.isArray(x.onEmpty) && x.onEmpty[0] && x.onEmpty[0].id === 'KV'),
-  '⛔ «טבלה ריקה = ראיה» מבטל את הנפילה-חזרה');
+await mut('if (!r || !r.ok || !Array.isArray(r.data)) return null;', 'if (!r || !r.ok || !Array.isArray(r.data)) return [];',
+  (x) => !x || x.onError !== null,
+  '⛔ החזרת מערך ריק בכשל הופכת «אין ראיה» ל«הענן ריק»');
 await mut('if (res.data.length < YS_ROWS_PAGE) return out;', 'return out;',
   (x) => !x || x.paged !== 1200,
   '⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
@@ -237,7 +245,7 @@ await mut('_ysRowSet(rec, \'createdBy\', r.created_by);', '',
 {
   const b = block.replace("label: 'סדרי נוכחות'", "label: 'סדרי נוכחות '");
   const x = await scenarios(b === block ? block : b);
-  assert(x.rebuild && x.rebuild[0].id === 'S1' && x.onErrorKv === 1,
+  assert(x.rebuild && x.rebuild[0].id === 'S1' && x.onError === null,
     'מוטציית-נגד: שינוי שאינו התנהגותי אינו מפיל טענה');
 }
 
