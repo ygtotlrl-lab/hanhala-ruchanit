@@ -963,6 +963,7 @@ function hebrewDate(jsDate){
   return 'יום '+window.YS_DOW_HEB[jsDate.getDay()]+', '+h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
 }
 function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
+// ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
@@ -1091,7 +1092,7 @@ function ysApplyPerms(p) {
       for (var i = 0; i < AUTH.MODULES.length; i++) {
         if (AUTH.MODULES[i].id === cur) { lbl = AUTH.MODULES[i].label; break; }
       }
-      try { closeDenied(); } catch (e2) {}
+      closeModal();
       showPage('home');
       try { toast('🔒 ההרשאות שלך עודכנו — ' + lbl + ' אינו זמין עוד'); } catch (e3) {}
     }
@@ -1352,7 +1353,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v79'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v80'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6939,7 +6940,7 @@ function saveStudent(){
   //    נקודות הקריאה (`pendTag`, בחירת מה לדחוף, שער הפינוי) לא ראו אותו.
   pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : newId));
   scheduleYsPush();
-  closeStudentModal();
+  closeModal();
   renderStudents();
 }
 
