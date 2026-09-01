@@ -1,17 +1,24 @@
 #!/usr/bin/env node
-/*  בדיקת סבב 32 — מקור אמת יחיד לסכימה (צומצמה בסבב 58).
+/*  test_schema_source.mjs — מקור אמת יחיד לסכימה.
  *
- *  ⚠️ פרטי ל-hanhala-ruchanit. ⛔ אין ליישר אותו מריפו אחר — הוא בודק את
- *     כלי ההתקנה של האפליקציה הזו, שאינו קיים באחיות באותה צורה.
+ *  **מה נאכף:** ⛔ אין סכימה מוטבעת ב-`index.html` · ⛔ אין מסלול שמשתמש
+ *  במפתח שירות · ⛔ כלי ההתקנה מושך את **אותו** קובץ ואינו מחזיק עותק שני ·
+ *  ⛔ ומסך ההתקנה שהוסר אינו חוזר.
  *
- *  ⛔ מסך ההתקנה שבתוך `index.html` הוסר בסבב 58 — ואיתו ארבע הטענות
- *     שרצו את `showSetupScreen` ברתמת `vm` (3 · 4 · 5, והמוטציה 8ב–8ג).
- *     ⚠️ **מה שנשאר כאן אינו שריד:** הטענות ששרדו אינן על המסך אלא על
- *     **מקור האמת** — ⛔ אין סכימה מוטבעת ב-`index.html`, ⛔ אין מסלול
- *     service-key, ו-`setup-db.html` מושך את אותו קובץ ואינו מחזיק עותק
- *     שני. שלושתן היו נכונות לפני המסך והן נכונות אחריו.
- *  ⭐ ונוספה טענה אחת: ⛔ המסך אינו חוזר (סעיף 3).
+ *  **הנימוק המדוד:** עותק מוטבע של הסכימה מתיישן בכל מיגרציה — ⚠️ ומי
+ *  שמתקין ממנו מקבל מסד שאינו זהה לזה שבייצור.
+ *
+ *  **מה יישבר בלעדיו:** ⛔ מפתח שירות בקוד לקוח הוא מפתח על, ⚠️ והוא
+ *  ציבורי; ⛔ ושני מקורות סכימה נסחפים זה מזה בשקט.
+ *
+ *  **מה אינו נאכף כאן:** ⛔ תוכן הסכימה עצמה — ⚠️ הוא נאכף בשערי המיגרציות,
+ *  ⭐ וכאן נמדד **מניין** היא נקראת.
+ *
+ *  ⚠️ פרטי לאפליקציה הזו. ⛔ אין ליישר אותו מריפו אחר — כלי ההתקנה שלה
+ *  אינו קיים באחיות באותה צורה. ⚠️ **והטענות ששרדו אינן שריד** — ⭐ הן על
+ *  **מקור האמת** ולא על המסך שהוסר.
  */
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +34,15 @@ const SCHEMA = fs.readFileSync(path.join(ROOT, 'migrations/000_initial_schema.sq
 
 let passN = 0, failN = 0;
 const ok = (c, m) => { if (c) passN++; else { failN++; console.error('❌ ' + m); } };
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
+const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
+const someIn = (re, s, label) => ok(_hits(re, s) >= 1,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
+
 
 /* ── הסרת הערות והצהרות DDL אמיתיות ─────────────────────────────────────────
    ⚠️ המילים «create table» מופיעות גם בפרוזה של ההערות שמסבירות למה
@@ -50,10 +66,10 @@ function t1() {
   const code = stripComments(SRC);
   ok(!DDL.table.test(code), '1א · ⭐ אין אף `create table` בקוד הרץ של index.html');
   ok(!DDL.alter.test(code), '1ב · ⛔ וגם לא `alter table` — הסכימה כולה עברה לקובץ');
-  ok(!/password_hash[ \t]+text[ \t]+not[ \t]+null/i.test(SRC), '1ג · ולא הגדרת עמודה');
+  noneIn(/password_hash[ \t]+text[ \t]+not[ \t]+null/i, SRC, '1ג · ולא הגדרת עמודה');
   ok(!DDL.policy.test(code), '1ד · ולא פוליסה');
   // ⛔ ואין עותק-גיבוי מוטבע «ליתר ביטחון» — הוא בדיוק המקור השני
-  ok(!/pass_salt text;?\\n/.test(SRC), '1ה · ⛔ ואין עותק-גיבוי מוטבע של ה-SQL כמחרוזת');
+  noneIn(/pass_salt text;?\\n/, SRC, '1ה · ⛔ ואין עותק-גיבוי מוטבע של ה-SQL כמחרוזת');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -64,9 +80,9 @@ function t1() {
    שעוקף RLS — בתמורה לכלום. */
 function t2() {
   const code = stripComments(SRC);
-  ok(!/setupWithServiceKey/.test(code), '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
-  ok(!/exec_sql/.test(code),            '2ב · ⛔ ואין קריאת `exec_sql`');
-  ok(!/createClient\s*\([^)]*key/.test(code),
+  noneIn(/setupWithServiceKey/, code, '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
+  noneIn(/exec_sql/, code,            '2ב · ⛔ ואין קריאת `exec_sql`');
+  noneIn(/createClient\s*\([^)]*key/, code,
     '2ג · ⛔ ואין לקוח Supabase שנבנה ממפתח שהמשתמש הקליד');
 }
 
@@ -78,11 +94,11 @@ function t2() {
    שלמה שאיש אינו נוגע בה — ושתיים מארבע האפליקציות מעולם לא היו צריכות. */
 function t3() {
   const code = stripComments(SRC);
-  ok(!/function\s+showSetupScreen\s*\(/.test(code), '3א · ⛔ אין `showSetupScreen`');
-  ok(!/function\s+startSetupPoll\s*\(/.test(code),  '3ב · ⛔ ואין `startSetupPoll`');
-  ok(!/YS_SETUP_SQL_URL|ysFetchSetupSql/.test(code),
+  noneIn(/function\s+showSetupScreen\s*\(/, code, '3א · ⛔ אין `showSetupScreen`');
+  noneIn(/function\s+startSetupPoll\s*\(/, code,  '3ב · ⛔ ואין `startSetupPoll`');
+  noneIn(/YS_SETUP_SQL_URL|ysFetchSetupSql/, code,
     '3ג · ⛔ ואין משיכת קובץ ההתקנה לתוך הדף');
-  ok(!/setup-sql|setup-status/.test(SRC),
+  noneIn(/setup-sql|setup-status/, SRC,
     '3ד · ⛔ ואין עוגני DOM של המסך שהוסר');
 }
 
@@ -136,9 +152,24 @@ function t8() {
     '8ג · ⛔ וגם החזרת הסקר מפילה את טענה 3ב');
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   9 · ⭐ מוטציית-נגד — קוד שנוסף ⛔ אינו מפיל
+   ══════════════════════════════════════════════════════════════════════════
+   ⚠️ טענות 1–3 הן טענות **היעדר**: הן מודדות שמות שהוסרו, ⛔ ולא את העובדה
+   שהקובץ לא השתנה. ⭐ שער שהיה נופל על כל תוספת היה הופך כל עבודה
+   באפליקציה להפרה. */
+function t9() {
+  const added = stripComments(SRC) + '\nfunction _ncSchemaPing(){ return 1; }\n';
+  ok(added !== stripComments(SRC), 'נ1 · מוטציית-הנגד אכן מוסיפה קוד רץ');
+  ok(!DDL.table.test(added) && !DDL.alter.test(added) && !DDL.policy.test(added),
+    'נ2 · ⭐ ואף על פי כן אין בו DDL — נמדדו 0 הצהרות והצפוי אפס');
+  ok(_hits(/setupWithServiceKey/, added) === 0 && _hits(/exec_sql/, added) === 0,
+    'נ3 · ⛔ ומסלול ה-service-key נשאר מוסר — נמדדו 0 מופעים והצפוי אפס');
+}
+
 /* ── הרצה ──────────────────────────────────────────────────────────────── */
 console.log('\n═══ סבב 32 — מקור אמת יחיד לסכימה ═══\n');
-const tests = [t1, t2, t3, t6, t7, t8];
+const tests = [t1, t2, t3, t6, t7, t8, t9];
 for (const t of tests) {
   try { await t(); }
   catch (e) { failN++; console.error(`❌ ${t.name} זרקה: ${(e && e.stack) || e}`); }
