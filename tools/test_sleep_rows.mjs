@@ -133,11 +133,12 @@ ok('2ג · ⛔ ואין `ysRowsPushSleep` נפרדת',
   !/function ysRowsPushSleep/.test(SRC));
 ok('2ד · `slSaveData` דוחפת לשכבת השורות עם המסלול `sleep`',
   /ysRowsPushSessions\(data,'sleep'\)/.test(SRC));
-ok('2ה · ⛔ ואחרי אישור ה-⏳, בלי `await` — אינה חוסמת את מסלול ה-kv',
-  /pendConfirmPush\(PK_SL_SESS,_t0\); _ysMarkPushed\('ys_sleep_sessions'\); \}\n[\s\S]{0,400}?ysRowsPushSessions\(data,'sleep'\)/.test(SRC) &&
-  !/await ysRowsPushSessions\(data,'sleep'\)/.test(SRC));
-ok('2ו · ⚠️ מסלול האופליין מחווט גם הוא',
-  /if \(item\.key === 'ys_sleep_sessions'\)\s+ysRowsPushSessions\(item\.value, 'sleep'\)/.test(SRC));
+/*  ⛔ הכתיבה הכפולה כובתה (סבב 78) — ⚠️ שכבת השורות היא הכתיבה, ⭐ ואישור
+ *  ה-⏳ ועֵד הפינוי נשענים על הצלחתה: ⛔ אין עוד ערך שלם להישען עליו. */
+ok('2ה · ⭐ ואישור ה-⏳ ועֵד הפינוי נשענים על הצלחתה',
+  /if\(_rSl&&_rSl\.ok\) \{ pendConfirmPush\(PK_SL_SESS,_t0\); _ysMarkPushed\('ys_sleep_sessions'\); \}/.test(SRC));
+ok('2ו · ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ אחרת אין לה ניסיון חוזר',
+  /if\(!\(_rSl&&_rSl\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('ys_sleep_sessions',data\);/.test(SRC));
 ok('2ז · שני מקורות הגיבוי רשומים ב-BK_CFG',
   /ys_sleep_sessions_rows/.test(SRC) && /ys_sleep_marks_rows/.test(SRC));
 ok('2ח · ⛔ ושניהם ברשימת-ההיתר של `004` — אחרת לא היו מתפנים לעולם',
@@ -193,8 +194,9 @@ if (MOD) {
 /* ── ד. מוטציות ────────────────────────────────────────────────────────── */
 console.log('  — מוטציות —');
 {
-  const mut = SRC.replace("    ysRowsPushSessions(data,'sleep');\n", '');
-  ok('4א · מוטציה: הסרת הכתיבה הכפולה מ-`slSaveData` מפילה את טענה 2ד',
+  const mut = SRC.replace("var _rSl=await ysRowsPushSessions(data,'sleep');",
+                          "var _rSl=await ysCfgSet('ys_sleep_sessions',data);");
+  ok('4א · מוטציה: החזרת הכתיבה לערך שלם מפילה את טענה 2ד',
     !/ysRowsPushSessions\(data,'sleep'\)/.test(mut));
 }
 if (MOD) {

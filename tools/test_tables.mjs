@@ -117,25 +117,30 @@ function t1() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   2 · הכתיבה הכפולה — חיווט, ו⛔ מה שהיא אינה קובעת
+   2 · הכתיבה לשורות — חיווט, ו⛔ מה שהיא קובעת
    ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔ הכתיבה הכפולה כובתה (סבב 78) — ⚠️ מה שנאכף כאן הפוך בדיוק: ⭐ שכבת
+ *  השורות היא **הכתיבה**, ⛔ ואישור ה-⏳ ועֵד הפינוי נשענים עליה: ⚠️ עדות
+ *  שנשענת על כתיבה אחרת מזו שקרתה היא ראיה למשהו שלא נמדד. */
 const WIRING = [
-  [/var YS_KV_LEGACY_WRITE = true;/, '3א · ⛔ ה-`kv` נשאר המאסטר בשלב א (YS_KV_LEGACY_WRITE=true)'],
   [/var YS_ROWS = true;/, '3ב · שכבת השורות פעילה (YS_ROWS=true)'],
-  [/pendConfirmPush\(PK_AT_SESS,_t0\); _ysMarkPushed\('ys_attend_sessions'\); \}\n[\s\S]{0,400}?ysRowsPushSessions\(data\);/,
-    '3ג · הכתיבה הכפולה מחווטת ב-`atSaveData`, **אחרי** אישור ה-⏳ ועֵד הפינוי'],
-  [/ysRowsPushStudents\(mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `ysPushToCloud`'],
-  [/if \(item\.key === 'ys_attend_sessions'\) ysRowsPushSessions\(item\.value\);/,
-    '3ה · מסלול האופליין (`ysFlushQueue`) מעדכן גם את השורות'],
+  [/var _rAt=await ysRowsPushSessions\(data\);/,
+    '3ג · `atSaveData` כותבת לשורות, ⛔ ובלי כתיבה שנייה לערך שלם'],
+  [/var r = await ysRowsPushStudents\(mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `ysPushToCloud`'],
+  [/if\(!\(_rAt&&_rAt\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('ys_attend_sessions',data\);/,
+    '3ה · כתיבה שנכשלה חוזרת לתור — ⛔ ויש לה ניסיון חוזר'],
+  [/if \(!kind\) return _ysCfgSetRaw\(key, value\);/,
+    '3ה2 · ⭐ ריקון התור מנתב לפי היעד — מפתח שיש לו טבלה חוזר אליה'],
 ];
 function t2() {
   console.log('\n2 · הכתיבה הכפולה');
   WIRING.forEach(([re, msg]) => assert(re.test(SRC), msg));
-  // ⛔ הטענה המרכזית — השורות אינן שער: כשל בהן אינו חוסם את מסלול ה-kv.
-  assert(!/await ysRowsPushSessions/.test(SRC) && !/await ysRowsPushStudents/.test(SRC),
-    '3ו · ⛔ הדחיפה לשורות אינה ב-`await` ואינה חוסמת את מסלול ה-kv');
-  assert(!/if\s*\([^)]*ysRowsPush[^)]*\)\s*\{?\s*(pendConfirmPush|_ysMarkPushed)/.test(SRC),
-    '3ז · ⛔ אישור ה-⏳ ועֵד הפינוי אינם תלויים בהצלחת הכתיבה לשורות');
+  /* ⛔ הטענה המרכזית התהפכה (סבב 78) — ⚠️ השורות **הן** השער: ⭐ אישור ה-⏳
+     ועֵד הפינוי נשענים על הצלחתן, ⛔ ואין עוד ערך שלם שאפשר להישען עליו. */
+  assert(!/ysCfgSet\('ys_attend_sessions'|ysCfgSet\('ys_students'|ysCfgSet\('ys_sleep_sessions'/.test(SRC),
+    '3ו · ⛔ אין כתיבת ערך שלם למפתח שיש לו טבלה — מקור אמת אחד');
+  assert(/if\(_rAt&&_rAt\.ok\) \{ pendConfirmPush\(PK_AT_SESS,_t0\)/.test(SRC),
+    '3ז · ⭐ אישור ה-⏳ ועֵד הפינוי תלויים בהצלחת הכתיבה לשורות');
   assert(/ys_sessions_rows/.test(SRC) && /ys_marks_rows/.test(SRC),
     '3ח · מקורות הגיבוי החדשים רשומים ב-BK_CFG (ומשם לרשימת-ההיתר של 004)');
 }
@@ -342,10 +347,11 @@ async function t4() {
   console.log('\n4 · מוטציות');
 
   // א. הסרת הכתיבה הכפולה מ-atSaveData.
-  const mutA = SRC.replace('    ysRowsPushSessions(data);\n', '');
-  assert(mutA !== SRC, '5א · המוטציה אכן מסירה את הכתיבה הכפולה');
-  assert(!WIRING[2][0].test(mutA),
-    '5ב · ⛔ מוטציה שמסירה את הכתיבה הכפולה נתפסת — טענת 3ג הייתה נכשלת');
+  const mutA = SRC.replace('var _rAt=await ysRowsPushSessions(data);',
+                           "var _rAt=await ysCfgSet('ys_attend_sessions',data);");
+  assert(mutA !== SRC, '5א · המוטציה אכן מחזירה את הכתיבה לערך שלם');
+  assert(!WIRING[1][0].test(mutA),
+    '5ב · ⛔ מוטציה שמחזירה כתיבה לערך שלם נתפסת — טענת 3ג הייתה נכשלת');
 
   // ב. אינדקס חלקי במקום מלא.
   const mutB = M5.replace(

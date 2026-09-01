@@ -45,7 +45,10 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 /* ── חילוץ: לוח התאריכים העברי עד צרכני התצוגה ─────────────────────────── */
 const L = SRC.split('\n');
 const from = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
-const to = L.findIndex((l, i) => i > from && l.startsWith('function hebrewMonth('));
+/*  ⛔ העוגן הוא צרכן התאריך האחרון באזור ⛔ ולא שם שנבחר לנוחות — ⚠️ העוגן
+ *  הקודם היה `hebrewMonth`, שנמחקה כפונקציה בלי קורא, ⛔ והשער איתר אז
+ *  אזור ריק ונפל על קוד תקין. */
+const to = L.findIndex((l, i) => i > from && l.startsWith('function hebrewDateShort('));
 assert(from >= 0 && to > from, 'אזור לוח התאריכים העברי אותר ב-index.html');
 const CAL = L.slice(from, to + 1).join('\n');
 
