@@ -1,22 +1,23 @@
 -- ============================================================================
--- הנהלה רוחנית — קובץ ההתקנה המלא (סבב 28)
--- פרויקט Supabase: kxbtskqobynewvnckaaz
--- הרצה: Supabase SQL Editor →
---   https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql
+-- 000_initial_schema.sql — הנהלה רוחנית — קובץ ההתקנה המלא
 -- ============================================================================
 --
--- ⭐ זהו **מקור האמת היחיד לסכימה** של האפליקציה הזו (סבב 28). הרצתו על מסד
+-- ⛔ **רץ במסד.** ⛔ מיגרציה שכבר רצה אינה נערכת — ⚠️ המסד החיל אותה,
+--    ועריכה שלה יוצרת מצב שבו הקובץ מתאר משהו אחר ממה שרץ; ⛔ שינוי מבני
+--    נעשה בקובץ הבא בתור.
+--
+-- ⭐ זהו **מקור האמת היחיד לסכימה** של האפליקציה הזו. הרצתו על מסד
 --    ריק נותנת התקנה עובדת; הרצה חוזרת על מסד קיים מתכנסת אליו בלי לגעת
---    בנתונים. עד סבב 28 לא היה כאן קובץ כזה כלל: `setup-db.html` הציג SQL
+-- בנתונים. לא היה כאן קובץ כזה כלל: `setup-db.html` הציג SQL
 --    ל-`ys_users` בלבד — בלי `kv`, שהוא **מקור הנתונים היחיד** של האפליקציה,
 --    ובלי `sync_log` ו-`kv_backup`. התקנה טרייה לפיו נתנה מסך כניסה ותו לא.
 --
 -- ⛔ אין ליצור עותק שני של הסכימה בשום קובץ אחר (כלל קריטי 6 + הלקח של
---    השלמת סבב 24 ב-schar-limud) — שני עותקים מתיישנים בשקט, וההתקנה
+-- ב-schar-limud) — שני עותקים מתיישנים בשקט, וההתקנה
 --    הטרייה היא בדיוק המקום שבו זה מתגלה מאוחר מדי. `setup-db.html` מפנה
 --    לכאן ואינו מחזיק סכימה משלו.
 --
--- ⚠️ אידמפוטנטיות אמיתית (כלל ברזל 10 סעיף 7, נלמד בסבב 27):
+-- ⚠️ אידמפוטנטיות אמיתית (כלל ברזל 10 סעיף 7):
 --    `create table if not exists` **מדלג על טבלה קיימת ועל כל מה שבתוכה** —
 --    עמודה שנוספה אחרי ההתקנה הראשונה, אינדקס, פוליסה או אילוץ. לכן לכל
 --    שינוי מבני שנעשה כאן מאז ההקמה יושבת בקובץ **גם** שורת התכנסות:
@@ -29,12 +30,6 @@
 --    כלל ברזל 10 סעיפים 3 ו-8). המשתמש הראשון נוצר ידנית; הפקודה עם מצייני
 --    המקום יושבת בסוף הקובץ, מוערת.
 --
--- ⚠️ מקור הנתונים של הקובץ: **מיפוי מלא מול המסד החי בסבב 28** —
---    `information_schema.columns`, `pg_indexes`, `pg_constraint`, `pg_policies`,
---    `information_schema.role_table_grants` ו-`information_schema.triggers`.
---    ⛔ הוא **לא** נכתב מתוך קריאת קוד האפליקציה. אי-ודאות שנותרה רשומה
---    במפורש בהערות «⚠️ טרם אומת» שלמטה, ואין אף אחת כזו שקטה.
---
 -- ⚠️ הפרויקט הזה משותף עם schar-limud (טבלאות `sl_*`) ועם yoman-avoda
 --    (`kv_rishon` / `kv_ramataviv`). הקובץ הזה יוצר **רק** את ארבע הטבלאות
 --    של הנהלה רוחנית ואינו נוגע בהן.
@@ -44,9 +39,9 @@
 -- ============================================================================
 
 
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- 1. kv — מקור הנתונים היחיד של האפליקציה
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- ⚠️ כל נתוני האפליקציה יושבים כאן כזוגות מפתח/ערך, כשהערך הוא JSON כמחרוזת:
 --    `ys_students` · `ys_attend` · `ys_attend_sessions` · `ys_attend_cfg` ·
 --    `ys_attend_treats` · `ys_sleep_sessions` · `ys_sleep_cfg` ·
@@ -66,13 +61,13 @@ alter table public.kv enable row level security;
 drop policy if exists allow_all on public.kv;
 create policy allow_all on public.kv using (true) with check (true);
 
--- ⚠️ ההרשאות של `anon` צומצמו בסבב 29, בהחלטת המנהל (`migrations/001`).
+-- ⚠️ ההרשאות של `anon` צומצמו, בהחלטת המנהל (`migrations/001`).
 --    ⛔ **`revoke` לפני `grant`, ואין לקצר לשורת `grant` אחת:** פרויקט
 --    Supabase סטנדרטי מגיע עם `alter default privileges … grant all`, ולכן
 --    הטבלה **נולדת** עם `delete` ו-`truncate` ל-anon — ו-GRANT הוא אדיטיבי
 --    בלבד ואינו מסיר אותם. השורה הזו היא גם שורת ההתכנסות להתקנה שנוצרה
---    לפני סבב 29.
--- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — האפליקציה אינה
+--.
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` — האפליקציה אינה
 --    מוחקת שורות `kv` בשום מסלול (כל כתיבה היא `upsert`, ומחיקה היא
 --    tombstone בתוך הערך), ולכן ההרשאה מיותרת ורק פותחת ריקון של מקור
 --    הנתונים היחיד למי שמחזיק את המפתח הציבורי.
@@ -82,9 +77,9 @@ grant select, insert, update, delete, truncate, references, trigger
   on public.kv to service_role;
 
 
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- 2. ys_users — משתמשי המערכת
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- ⚠️ `role` הוא `not null` **בלי `default`** (כלל ברזל 10 סעיף 1): יצירת
 --    משתמש בלי תפקיד נכשלת במסד, וזו ההתנהגות הרצויה — תפקיד הוא החלטה ולא
 --    ערך שנופל מאליו. שלושת הערכים כאן: `admin` / `senior` / `junior`.
@@ -96,7 +91,7 @@ grant select, insert, update, delete, truncate, references, trigger
 --    להגר את העמודה בלי החלטה מפורשת של המנהל.
 -- ⚠️ `pass_salt`+`pass_fp` הן טביעת PBKDF2-SHA256 (100,000 סיבובים, מלח
 --    אקראי פר-משתמש) — **מה שיורד למכשיר לכניסה אופליין**. ⛔ הסיסמה עצמה
---    לעולם אינה יורדת לדיסק (סבב 22).
+-- לעולם אינה יורדת לדיסק.
 create table if not exists public.ys_users (
   id            bigint generated always as identity primary key,
   username      text not null unique,
@@ -104,22 +99,22 @@ create table if not exists public.ys_users (
   full_name     text not null,
   role          text not null,
   -- ⭐ `active` הוא המחיקה הרכה של משתמש. ⛔ אין כאן `deleted`, ואין להוסיף
-  --    (סבב 37) — `active=false` הוא המנגנון בארגון כולו (כלל קריטי 4
+  -- — `active=false` הוא המנגנון בארגון כולו (כלל קריטי 4
   --    ב-gius), ועמודה שנייה לאותו מושג היא מקור אמת שני. העמודה נוספה
   --    ל-`sl_users` והוסרה באותו יום בהכרעת המנהל, ולכאן לא הגיעה כלל.
   active        boolean default true,
   created_at    timestamptz default now(),
   -- ⭐ `updated_at` — שובר-שוויון דטרמיניסטי להתנגשות על שורת משתמש
-  --    (סבב 37, `migrations/007`). הטריגר `ys_users_touch` נוצר בהמשך הקובץ.
+  --. הטריגר `ys_users_touch` נוצר בהמשך הקובץ.
   updated_at    timestamptz not null default now(),
   pass_salt     text,
   pass_fp       text
 );
 
--- שורות התכנסות להתקנה שנוצרה לפני סבב 22 (הטביעה) — ⛔ בלי הן, הרצה חוזרת
+-- שורות התכנסות להתקנה שנוצרה (הטביעה) — ⛔ בלי הן, הרצה חוזרת
 -- «רצה בהצלחה» ונשארת בלי כניסה אופליין, בשקט.
 alter table public.ys_users add column if not exists pass_salt text;
--- שורת התכנסות ל-007 (סבב 37) — התקנה שנוצרה לפניה נשארת בלי חותמת עדכון.
+-- שורת התכנסות ל-007 — התקנה שנוצרה לפניה נשארת בלי חותמת עדכון.
 alter table public.ys_users add column if not exists updated_at timestamptz;
 update public.ys_users set updated_at = coalesce(created_at, now()) where updated_at is null;
 alter table public.ys_users alter column updated_at set default now();
@@ -139,7 +134,8 @@ begin
   end if;
 end $$;
 
--- ⛔ שורת התכנסות: ל-`role` אין `default` באף התקנה (כלל ברזל 10 סעיף 1).
+-- ⛔ שורת התכנסות: ל-`role` אין `default` באף התקנה — ⚠️ ברירת מחדל כאן
+--    הייתה מעניקה תפקיד למשתמש שנוצר בלי שנשאל עליו.
 alter table public.ys_users alter column role drop default;
 
 alter table public.ys_users enable row level security;
@@ -147,7 +143,7 @@ drop policy if exists allow_all on public.ys_users;
 create policy allow_all on public.ys_users using (true) with check (true);
 
 -- ⚠️ אותו דפוס כמו ב-`kv` שלמעלה, ומאותה סיבה — ר' ההסבר שם.
--- ⛔ אין להחזיר ל-anon את `delete`/`truncate` (סבב 29) — משתמש אינו נמחק
+-- ⛔ אין להחזיר ל-anon את `delete`/`truncate` — משתמש אינו נמחק
 --    כאן לעולם; ההשבתה היא `active=false`, כלומר UPDATE.
 revoke delete, truncate, references, trigger on public.ys_users from anon, authenticated;
 grant select, insert, update on public.ys_users to anon, authenticated;
@@ -155,9 +151,9 @@ grant select, insert, update, delete, truncate, references, trigger
   on public.ys_users to service_role;
 
 
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- 3. sync_log — יומן אבחון סנכרון
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- ⚠️ יומן בלבד — האפליקציה כותבת אליו ואינה קוראת ממנו במסלול חי.
 --    `insert` ו-`select` בלבד, ולכן **אין הרשאה לערוך או למחוק רישום קיים**.
 --    זו הבחנה מכוונת מול `kv` שלמעלה, ששם `update` נחוץ ל-upsert.
@@ -173,10 +169,10 @@ create table if not exists public.sync_log (
 );
 
 alter table public.sync_log enable row level security;
--- ⚠️ שתי פוליסות נפרדות (`insert` ו-`select`) ולא אחת ל-ALL — כך נמדד במסד
+-- ⚠️ שתי פוליסות נפרדות (`insert` ו-`select`) ולא אחת ל-ALL — כך נבדק במסד
 --    החי. ⛔ `supabase-sync-log.sql` הישן הצהיר על פוליסה אחת בשם
 --    `sync_log_anon`; היא **לא הייתה קיימת שם בפועל**, וזו בדיוק הסחיפה
---    השקטה שקובץ ההתקנה הזה בא לסגור. הקובץ ההוא **נמחק בסבב 33** — שתי
+-- השקטה שקובץ ההתקנה הזה בא לסגור. הקובץ ההוא **נמחק** — שתי
 --    הטבלאות מוגדרות כאן לפי מיפוי מול המסד החי, ו-`drop policy if exists`
 --    שלמטה מנקה גם את השם הישן בהתקנה שנוצרה לפיו.
 drop policy if exists sync_log_anon   on public.sync_log;
@@ -185,7 +181,7 @@ drop policy if exists sync_log_select on public.sync_log;
 create policy sync_log_insert on public.sync_log for insert to anon with check (true);
 create policy sync_log_select on public.sync_log for select to anon using (true);
 
--- ⛔ **יומן ראיות — `insert`+`select` בלבד, לשני התפקידים** (סבב 29, השלמה).
+-- ⛔ **יומן ראיות — `insert`+`select` בלבד, לשני התפקידים**.
 --    ⚠️ עד ההשלמה הזו העניק הקובץ ל-`authenticated` את הסט המלא — כולל
 --    `update`, `delete` ו-`truncate` — ולכן ההגנה על היומן התקיימה **מול
 --    `anon` בלבד**. ⛔ אין להחזיר להם `update`/`delete`: יומן שניתן לערוך
@@ -198,11 +194,11 @@ grant select, insert, update, delete, truncate, references, trigger
   on public.sync_log to service_role;
 
 
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- 4. kv_backup — גיבוי יומי של ערכי ה-kv
--- ────────────────────────────────────────────────────────────────────────────
+-- ───────────────────────────────────────────────────────────────────────────
 -- ⚠️ `ysMaybeDailyBackup` כותבת לכאן פעם ביממה, **ורק אחרי שכל המפתחות גובו
---    בהצלחה** נכתב הדגל `ys_last_backup` (סבב 6). אותה הבחנה כמו ב-sync_log:
+-- בהצלחה** נכתב הדגל `ys_last_backup`. אותה הבחנה כמו ב-sync_log:
 --    `insert`+`select` בלבד, לשני התפקידים.
 create table if not exists public.kv_backup (
   id         bigint generated always as identity primary key,
@@ -218,7 +214,7 @@ drop policy if exists kv_backup_select on public.kv_backup;
 create policy kv_backup_insert on public.kv_backup for insert to anon with check (true);
 create policy kv_backup_select on public.kv_backup for select to anon using (true);
 
--- ⛔ אותו דפוס כמו ב-`sync_log` שלמעלה, ומאותה סיבה (סבב 29, השלמה) —
+-- ⛔ אותו דפוס כמו ב-`sync_log` שלמעלה, ומאותה סיבה —
 --    ר' ההסבר המלא שם. ⛔ ואין להעניק כאן `update`/`delete` לאף תפקיד.
 revoke all on public.kv_backup from anon, authenticated;
 grant insert, select on public.kv_backup to anon, authenticated;
@@ -244,15 +240,15 @@ grant select, insert, update, delete, truncate, references, trigger
 
 
 -- ============================================================================
--- ✅ ההצעה מסבב 28 — בוצעה בסבב 29
+-- ⭐ ההצעה שהייתה כאן — בוצעה
 -- ============================================================================
--- בסוף הקובץ הזה ישבה עד סבב 28 הצעה מוערת לצמצם את `delete`/`truncate`
+-- בסוף הקובץ הזה ישבה הצעה מוערת לצמצם את `delete`/`truncate`
 -- של `anon` על `kv`. **המנהל אישר, והיא מיושמת** — גם כאן (השורות שליד
 -- כל טבלה) וגם ב-`migrations/001_revoke_delete_anon.sql` להתקנה קיימת.
--- מה שנמדד לפני הביצוע: **אפס** קריאות `.delete()` ל-PostgREST בכל הריפו.
+-- לפני הביצוע נבדק: **אפס** קריאות `.delete()` ל-PostgREST בכל הריפו.
 --
 -- ⛔ **`sync_log` ו-`kv_backup` — `insert`+`select` בלבד, לשני התפקידים**
--- (סבב 29, השלמה; מיגרציה `002_revoke_log_tables.sql` להתקנה קיימת).
+--.
 -- **בלי `update` ובלי `delete`**, כדי שלא ניתן יהיה לזייף או להעלים רישום
 -- קיים ביומן ראיות. ⛔ אין «ליישר» אותן ל-`kv` ול-`ys_users` בשם האחידות
 -- (כלל ברזל 10 סעיף 9) — הסט הצר שם **הוא** ההגנה.
@@ -271,13 +267,13 @@ grant select, insert, update, delete, truncate, references, trigger
 -- ⛔ `service_role` לא נגע — הוא תפקיד השרת.
 
 -- ============================================================
--- 007 (סבב 37) — חותמת עדכון וטריגר על טבלת המשתמשים
+-- 007 — חותמת עדכון וטריגר על טבלת המשתמשים
 -- ============================================================
 -- ⚠️ **`public.users_touch_updated_at()` היא פונקציה אחת לשתי טבלאות
 --    המשתמשים שבפרויקט המשותף** — `ys_users` כאן ו-`sl_users` בשכר לימוד —
---    וזו שהמנהל יצר ב-2026-08-18. ⛔ אין לגזור ממנה שם פר-אפליקציה
---    (`ys_touch_…`) (סבב 37): שתי הגדרות לאותה פונקציה בפרויקט אחד הן
---    גרסה שנייה שאיש אינו יודע עליה (הלקח של סבב 36).
+-- וזו שהמנהל יצר. ⛔ אין לגזור ממנה שם פר-אפליקציה
+-- (`ys_touch_…`): שתי הגדרות לאותה פונקציה בפרויקט אחד הן
+-- גרסה שנייה שאיש אינו יודע עליה.
 create or replace function public.users_touch_updated_at() returns trigger as $$
 begin
   new.updated_at := now();
