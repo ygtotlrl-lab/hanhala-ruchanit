@@ -151,5 +151,16 @@ ok(!/remoteMeta\s*=\s*await ysKvGet\(\s*'ys_settings_meta'/.test(SRC) &&
 ok(!/revoke all on function/.test(sql.replace(/revoke all on function[^\n]*\n/, '')),
    '19 · מוטציה: הסרת ה-`revoke` מהמיגרציה — טענה 13 נופלת');
 
+/*  ⭐ מוטציית-נגד: **קוד שנוסף** ⛔ אינו מפיל — ⚠️ הטענות מודדות את מסלול
+ *  החותמת, ⛔ ולא את אורך הקובץ: ⭐ שער שהיה נופל על כל תוספת היה הופך כל
+ *  עבודה באפליקציה להפרה. */
+{
+  const added = SRC + '\nfunction _ncMetaPing(){ return 1; }\nvar _ncMetaSeen = _ncMetaPing();\n';
+  ok(added !== SRC &&
+    (added.match(/ys_settings_meta\b/g) || []).length === (SRC.match(/ys_settings_meta\b/g) || []).length &&
+    (added.match(/updated_at\b/g) || []).length === (SRC.match(/updated_at\b/g) || []).length,
+    'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו משנה את מסלול החותמת הנמדד');
+}
+
 console.log((fail ? '✗' : '✓') + ' סבב 62 (`updated_at` ל-kv) — ' + pass + ' טענות עברו, ' + fail + ' נכשלו\n');
 process.exit(fail ? 1 : 0);

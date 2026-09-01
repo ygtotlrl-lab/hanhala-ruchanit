@@ -198,6 +198,21 @@ assert(MUT_WROTE !== FN, '17 · המוטציה מצאה את בדיקת תוצא
     '18 · ⛔ בלי הבדיקה מוצג «נוספו בהצלחה» על כתיבה שנכשלה — המוטציה נתפסה');
 }
 
+/*  ⭐ מוטציית-נגד — **שם מקומי שהוחלף בעקביות** ⛔ אינו מפיל.
+ *  ⚠️ הטענות מודדות את **מקור המזהה** ואת הסימון שנגזר ממנו, ⛔ ולא את שם
+ *  המשתנה שמחזיק אותו: ⭐ שער שהיה נופל על שינוי שם היה חוסם כל ניקוי. */
+const NC_REN = FN.replace(/\bnid\b/g, 'newLocalId');
+assert(NC_REN !== FN && !/\bnid\b/.test(NC_REN),
+  'נ1 · מוטציית-הנגד אכן מחליפה את שם המשתנה בעקביות');
+{
+  const p = run(SRC.replace(FN, NC_REN), { dev: 'A' });
+  const q = run(SRC.replace(FN, NC_REN), { dev: 'B' });
+  const sp = new Set(p.added.map((s) => String(s.id)));
+  assert(p.added.length === 3 && sp.size === 3 && p.marked.length === 3 && p.pushed &&
+         q.added.every((s) => !sp.has(String(s.id))),
+    'נ2 · ⭐ שם מקומי שהוחלף בעקביות ⛔ אינו מפיל — נמדד מקור המזהה, לא שמו');
+}
+
 console.log(failed ? `\n✗ סבב 37 (ייבוא) — ${failed} טענות נכשלו`
-                   : `\n✓ סבב 37 (ייבוא) — ${18} טענות עברו`);
+                   : `\n✓ סבב 37 (ייבוא) — ${20} טענות עברו`);
 process.exit(failed ? 1 : 0);

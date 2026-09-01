@@ -406,5 +406,16 @@ async function t4() {
 console.log('סבב 36 — מעבר הנהלה לטבלאות מובנות, שלב א');
 t1(); t2();
 await t3(); t3b(); await t4();
+/*  ⭐ מוטציית-נגד: **קוד שנוסף** ⛔ אינו מפיל — ⚠️ הטענות מודדות את מפת
+ *  הטבלאות ואת מסלול הכתיבה, ⛔ ולא את אורך הקובץ: ⭐ שער שהיה נופל על כל
+ *  תוספת היה הופך כל עבודה באפליקציה להפרה. */
+{
+  const added = SRC + '\nfunction _ncTablesPing(){ return 1; }\nvar _ncTablesSeen = _ncTablesPing();\n';
+  assert(added !== SRC &&
+    (added.match(/ys_marks\b/g) || []).length === (SRC.match(/ys_marks\b/g) || []).length &&
+    (added.match(/ys_sessions\b/g) || []).length === (SRC.match(/ys_sessions\b/g) || []).length,
+    'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו משנה את מפת הטבלאות הנמדדת');
+}
+
 console.log(failed ? '\n✗ ' + failed + ' טענות נכשלו' : '\n✓ סבב 36 — כל הטענות עברו');
 process.exit(failed ? 1 : 0);

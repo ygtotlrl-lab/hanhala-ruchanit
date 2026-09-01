@@ -152,6 +152,22 @@ if (mutated === CAL) {
          '⭐ המוטציה: השורה הישנה אכן מחזירה תאריך מ-realm זר כ«היום» — הבאג אמיתי');
 }
 
+/* ── 4. מוטציית-נגד — קוד שנוסף אינו מפיל ──────────────────────────────── */
+/*  ⚠️ הטענות מודדות את **שער הקלט** ולא את העובדה שהקובץ לא השתנה.
+ *  ⛔ ואין להפיל כאן על תוספת קוד — ⚠️ שער כזה היה הופך כל עבודה
+ *  באפליקציה להפרה. */
+{
+  const grown = CAL + '\nfunction _ncDatePing(){ return 1; }\nvar _ncDateSeen = _ncDatePing();\n';
+  const Hn = harness(grown);
+  const tn = Hn.api.hebNoArg();
+  const fn = Hn.api.heb(Hn.foreign(2025, 3, 5));
+  assert(grown !== CAL && tn.ok === true && fn.ok === true &&
+         !(fn.year === tn.year && fn.monthIndex === tn.monthIndex && fn.day === tn.day),
+         'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו מפיל את שער הקלט');
+  assert(Hn.api.heb('2025-03-05').src === 'bad-input',
+         'נ2 · ⛔ וגם דחיית הקלט הפגום נשמרת בו');
+}
+
 console.log(failed ? `\n✗ סבב 57 (התאריך העברי) — ${failed} טענות נכשלו`
                    : `\n✓ סבב 57 (התאריך העברי) — כל הטענות עברו`);
 process.exit(failed ? 1 : 0);

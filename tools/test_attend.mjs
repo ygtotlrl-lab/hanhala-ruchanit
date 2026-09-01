@@ -143,5 +143,15 @@ console.log('  — מוטציות —');
     bare(gaps) === 0 && bare(mut) > 0);
 }
 
+/*  ⭐ מוטציית-נגד: **קוד שנוסף** ⛔ אינו מפיל — ⚠️ טענת-היעדר מודדת את
+ *  המזהה שנמחק, ⛔ ולא את העובדה שהקובץ לא השתנה: ⭐ שער שהיה נופל על כל
+ *  תוספת היה הופך כל עבודה באפליקציה להפרה. */
+{
+  const added = SRC + '\nfunction _ncPing(){ return 1; }\nvar _ncSeen = _ncPing();\n';
+  ok('נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו מפיל את טענות ההיעדר',
+    added !== SRC && (added.match(/ys_attend\b(?!_)/g) || []).length ===
+                     (SRC.match(/ys_attend\b(?!_)/g) || []).length);
+}
+
 console.log((fail ? '✗' : '✓') + ` סבב 38 (ys_attend) — ${pass} טענות עברו, ${fail} נכשלו`);
 process.exit(fail ? 1 : 0);

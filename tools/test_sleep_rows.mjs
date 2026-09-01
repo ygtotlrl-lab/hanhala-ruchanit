@@ -243,5 +243,16 @@ if (MOD) {
     !/m\.value->>'note'/.test(mut));
 }
 
+/*  ⭐ מוטציית-נגד: **קוד שנוסף** ⛔ אינו מפיל — ⚠️ הטענות מודדות את שמות
+ *  הטבלאות ואת מסלול ההעברה, ⛔ ולא את אורך הקובץ: ⭐ שער שהיה נופל על כל
+ *  תוספת היה הופך כל עבודה באפליקציה להפרה. */
+{
+  const added = SRC + '\nfunction _ncSleepPing(){ return 1; }\nvar _ncSleepSeen = _ncSleepPing();\n';
+  ok('נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו משנה את שמות הטבלאות הנמדדים',
+    added !== SRC &&
+    (added.match(/ys_sleep_marks\b/g) || []).length === (SRC.match(/ys_sleep_marks\b/g) || []).length &&
+    (added.match(/ys_sleep_sessions\b/g) || []).length === (SRC.match(/ys_sleep_sessions\b/g) || []).length);
+}
+
 console.log(`\n${fail ? '✗' : '✓'} סבב 39 (שכבת השורות של השינה) — ${pass} טענות עברו, ${fail} נכשלו`);
 process.exit(fail ? 1 : 0);
