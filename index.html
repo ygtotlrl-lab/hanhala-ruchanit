@@ -1083,8 +1083,6 @@ function hebrewDate(jsDate){
 }
 function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
 
-function hebrewMonth(d){var h=window.ysHebDate(d);return h.ok?(h.monthName+' '+h.yearLabelFull):'';}
-
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
@@ -1474,7 +1472,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v72'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v73'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2786,8 +2784,6 @@ async function _changeMyPasswordInner() {
 
 
 // hebrewDate כבר כולל את שם היום — כאן רק שם נרדף (בעבר שוכפל "יום X, יום X,")
-function hebrewDateFull(d){return hebrewDate(d);}
-
 // showPage הישן הוחלף במערכת auth - ראה למעלה
 
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
@@ -6421,8 +6417,6 @@ function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,
 function saveReasons(r){lsSet('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
 function getApprovals(){try{var v=JSON.parse(lsGet('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
 function saveApprovals(a){lsSet('ys_approvals',JSON.stringify(a));}
-function todayKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-
 function checkLoginNeeded(){
   // הוחלף במערכת auth החדשה
   return !AUTH.user;
@@ -7221,9 +7215,7 @@ window.printStudents = function() {
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=window._hcH(_todG);
     var today=window._hcFmt(_todH.hy,_todH.mi,_todH.day).replace(/"/g,'\u05F4');
-    var NB = ' ';
-    function rtlNum(n){return String(n).split('').reverse().join('');}
-    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
+    var NB = ' ';    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
     function fixName(n){return (n||'').replace(/ /g,NB);}
     var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
