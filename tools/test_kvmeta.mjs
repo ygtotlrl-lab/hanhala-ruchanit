@@ -36,16 +36,25 @@ const MIG = join(ROOT, 'migrations', '013_kv_updated_at.sql');
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('  ok   ' + m); } else { fail++; console.log('  FAIL ' + m); } };
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
+const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
+const someIn = (re, s, label) => ok(_hits(re, s) >= 1,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
+
 
 console.log('\n— סבב 62: `updated_at` ל-kv —');
 
 /* ── א. ⛔ הדגל נמחק — המעבר הושלם (סבב 63) ─────────────────────────────── */
-ok(!/YS_KV_UPDATED_AT/.test(SRC),
+noneIn(/YS_KV_UPDATED_AT/, SRC,
    '1 · ⛔ `YS_KV_UPDATED_AT` אינו קיים עוד — המיגרציה הורצה והמסלול יחיד');
 /* ⛔ ושתי הרשימות — צד הדחיפה וצד המשיכה — נגזרות ממקור אחד (סבב 63).
    ⚠️ זה בדיוק ההפרש שנמצא: הדחיפה עברה לעמודה והמשיכה נשארה על המפה
    המתה, ⛔ ומכשיר שערך הגדרה הפך חירש לשינוי שלה ממכשיר אחר. */
-ok(/var\s+YS_SETTINGS_LWW_KEYS\s*=\s*\[[^\]]*'ys_reasons'[^\]]*'ys_absence_reasons'[^\]]*'ys_cls_years'[^\]]*\]/.test(SRC),
+someIn(/var\s+YS_SETTINGS_LWW_KEYS\s*=\s*\[[^\]]*'ys_reasons'[^\]]*'ys_absence_reasons'[^\]]*'ys_cls_years'[^\]]*\]/, SRC,
    '1ב · ⭐ `YS_SETTINGS_LWW_KEYS` מוגדר ומכסה את שלושת מפתחות ההגדרות');
 
 /* ── ב. הנכשל-סגור, על הפונקציה האמיתית ברתמת vm ───────────────────────── */
@@ -82,12 +91,12 @@ ok(await callWith({ data: { updated_at: 'לא-תאריך' } }) === 0,
    '7 · ⛔ ערך שאינו תאריך ⇒ 0 — ⚠️ `Date.parse` מחזיר NaN, וללא הבדיקה הוא היה זולג להשוואה');
 
 /* ── ג. החיווט — הדגל הוא שקובע מאיפה נקראת החותמת ─────────────────────── */
-ok(/rts\s*=\s*await ysCfgUpdatedAt\(sk\.key\)/.test(SRC),
+someIn(/rts\s*=\s*await ysCfgUpdatedAt\(sk\.key\)/, SRC,
    '8 · ⭐ צד הדחיפה קורא את `rts` מהעמודה — בלי תנאי ובלי מפה');
 /* ⛔ שני הצדדים, ולא אחד — זה מה שנשבר בסבב 63 ותוקן בו. */
-ok(/remoteMeta\[_mk\]\s*=\s*await ysCfgUpdatedAt\(_mk\)/.test(SRC),
+someIn(/remoteMeta\[_mk\]\s*=\s*await ysCfgUpdatedAt\(_mk\)/, SRC,
    '8ב · ⭐ וגם צד המשיכה קורא מהעמודה — ⛔ ולא ממפה שהיא `{}` בענן');
-ok(!/ysCfgSet\(\s*'ys_settings_meta'/.test(SRC),
+noneIn(/ysCfgSet\(\s*'ys_settings_meta'/, SRC,
    '9 · ⛔ המפה אינה עולה לענן — אין מקור אמת שני');
 
 /* ── ד. המיגרציה ───────────────────────────────────────────────────────── */

@@ -34,6 +34,15 @@ const SCHEMA = fs.readFileSync(path.join(ROOT, 'migrations/000_initial_schema.sq
 
 let passN = 0, failN = 0;
 const ok = (c, m) => { if (c) passN++; else { failN++; console.error('❌ ' + m); } };
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
+const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
+const someIn = (re, s, label) => ok(_hits(re, s) >= 1,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
+
 
 /* ── הסרת הערות והצהרות DDL אמיתיות ─────────────────────────────────────────
    ⚠️ המילים «create table» מופיעות גם בפרוזה של ההערות שמסבירות למה
@@ -57,10 +66,10 @@ function t1() {
   const code = stripComments(SRC);
   ok(!DDL.table.test(code), '1א · ⭐ אין אף `create table` בקוד הרץ של index.html');
   ok(!DDL.alter.test(code), '1ב · ⛔ וגם לא `alter table` — הסכימה כולה עברה לקובץ');
-  ok(!/password_hash[ \t]+text[ \t]+not[ \t]+null/i.test(SRC), '1ג · ולא הגדרת עמודה');
+  noneIn(/password_hash[ \t]+text[ \t]+not[ \t]+null/i, SRC, '1ג · ולא הגדרת עמודה');
   ok(!DDL.policy.test(code), '1ד · ולא פוליסה');
   // ⛔ ואין עותק-גיבוי מוטבע «ליתר ביטחון» — הוא בדיוק המקור השני
-  ok(!/pass_salt text;?\\n/.test(SRC), '1ה · ⛔ ואין עותק-גיבוי מוטבע של ה-SQL כמחרוזת');
+  noneIn(/pass_salt text;?\\n/, SRC, '1ה · ⛔ ואין עותק-גיבוי מוטבע של ה-SQL כמחרוזת');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -71,9 +80,9 @@ function t1() {
    שעוקף RLS — בתמורה לכלום. */
 function t2() {
   const code = stripComments(SRC);
-  ok(!/setupWithServiceKey/.test(code), '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
-  ok(!/exec_sql/.test(code),            '2ב · ⛔ ואין קריאת `exec_sql`');
-  ok(!/createClient\s*\([^)]*key/.test(code),
+  noneIn(/setupWithServiceKey/, code, '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
+  noneIn(/exec_sql/, code,            '2ב · ⛔ ואין קריאת `exec_sql`');
+  noneIn(/createClient\s*\([^)]*key/, code,
     '2ג · ⛔ ואין לקוח Supabase שנבנה ממפתח שהמשתמש הקליד');
 }
 
@@ -85,11 +94,11 @@ function t2() {
    שלמה שאיש אינו נוגע בה — ושתיים מארבע האפליקציות מעולם לא היו צריכות. */
 function t3() {
   const code = stripComments(SRC);
-  ok(!/function\s+showSetupScreen\s*\(/.test(code), '3א · ⛔ אין `showSetupScreen`');
-  ok(!/function\s+startSetupPoll\s*\(/.test(code),  '3ב · ⛔ ואין `startSetupPoll`');
-  ok(!/YS_SETUP_SQL_URL|ysFetchSetupSql/.test(code),
+  noneIn(/function\s+showSetupScreen\s*\(/, code, '3א · ⛔ אין `showSetupScreen`');
+  noneIn(/function\s+startSetupPoll\s*\(/, code,  '3ב · ⛔ ואין `startSetupPoll`');
+  noneIn(/YS_SETUP_SQL_URL|ysFetchSetupSql/, code,
     '3ג · ⛔ ואין משיכת קובץ ההתקנה לתוך הדף');
-  ok(!/setup-sql|setup-status/.test(SRC),
+  noneIn(/setup-sql|setup-status/, SRC,
     '3ד · ⛔ ואין עוגני DOM של המסך שהוסר');
 }
 

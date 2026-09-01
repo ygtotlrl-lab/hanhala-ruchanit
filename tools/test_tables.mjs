@@ -38,6 +38,15 @@ let failed = 0;
 const ok = (m) => console.log('  ok   ' + m);
 const bad = (m) => { failed++; console.error('  FAIL ' + m); };
 const assert = (cond, m) => (cond ? ok(m) : bad(m));
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
+const noneIn = (re, s, label) => assert(_hits(re, s) === 0,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
+const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
+
 
 /* מסיר הערות SQL — הטענות המבניות אמורות לחול על הקוד, לא על התיעוד.
    ⛔ בלי זה כל טענה כאן הייתה עוברת על סמך משפט בהערה (סבב 36) — בדיוק
@@ -134,9 +143,9 @@ function t2() {
   WIRING.forEach(([re, msg]) => assert(re.test(SRC), msg));
   /* ⛔ הטענה המרכזית התהפכה (סבב 78) — ⚠️ השורות **הן** השער: ⭐ אישור ה-⏳
      ועֵד הפינוי נשענים על הצלחתן, ⛔ ואין עוד ערך שלם שאפשר להישען עליו. */
-  assert(!/ysCfgSet\('ys_attend_sessions'|ysCfgSet\('ys_students'|ysCfgSet\('ys_sleep_sessions'/.test(SRC),
+  noneIn(/ysCfgSet\('ys_attend_sessions'|ysCfgSet\('ys_students'|ysCfgSet\('ys_sleep_sessions'/, SRC,
     '3ו · ⛔ אין כתיבת ערך שלם למפתח שיש לו טבלה — מקור אמת אחד');
-  assert(/if\(_rAt&&_rAt\.ok\) \{ pendConfirmPush\(PK_AT_SESS,_t0\)/.test(SRC),
+  someIn(/if\(_rAt&&_rAt\.ok\) \{ pendConfirmPush\(PK_AT_SESS,_t0\)/, SRC,
     '3ז · ⭐ אישור ה-⏳ ועֵד הפינוי תלויים בהצלחת הכתיבה לשורות');
   assert(/ys_sessions_rows/.test(SRC) && /ys_marks_rows/.test(SRC),
     '3ח · מקורות הגיבוי החדשים רשומים ב-BK_CFG (ומשם לרשימת-ההיתר של 004)');

@@ -38,6 +38,15 @@ let failed = 0;
 const ok = (m) => console.log('  ok   ' + m);
 const bad = (m) => { failed++; console.error('  FAIL ' + m); };
 const assert = (c, m) => (c ? ok(m) : bad(m));
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
+const noneIn = (re, s, label) => assert(_hits(re, s) === 0,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
+const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
+  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
+
 
 /* ── חילוץ: לוח התאריכים העברי עד צרכני התצוגה ─────────────────────────── */
 const L = SRC.split('\n');
@@ -55,13 +64,13 @@ const CAL = L.slice(from, to + 1).join('\n');
  *  הבדיקה הייתה נופלת על ההסבר שלה עצמה.                              */
 const CODE = CAL.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ');
 
-assert(!/instanceof\s+Date/.test(CODE),
+noneIn(/instanceof\s+Date/, CODE,
        '⛔ אין `instanceof Date` באזור הלוח — הבדיקה אינה תלוית-realm');
-assert(/window\._ysIsDate\s*=\s*function/.test(CODE),
+someIn(/window\._ysIsDate\s*=\s*function/, CODE,
        'שער הקלט `_ysIsDate` קיים');
-assert(/typeof\s+d\.getTime\s*===\s*'function'/.test(CODE),
+someIn(/typeof\s+d\.getTime\s*===\s*'function'/, CODE,
        'שער הקלט נבדק על החוזה (`getTime`) ולא על הטיפוס');
-assert(/window\._ysBadDate\(/.test(CODE),
+someIn(/window\._ysBadDate\(/, CODE,
        '⛔ קלט פגום נרשם ואינו נבלע');
 
 /*  ⛔ ומה שהיה שם קודם אינו חוזר: אין באזור הזה שום `?d:new Date()`
