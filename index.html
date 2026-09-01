@@ -525,68 +525,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 </div>
 
-<!-- Approval Modal -->
-<div id="approval-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:480px">
-<h3>📋 אישור היעדרות</h3>
-<div id="approval-student-name" style="font-weight:bold;margin-bottom:12px;color:#1a3c6e"></div>
-<label for="appr-reason">סיבה</label>
-<select id="appr-reason" onchange="checkOther()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0">
-</select>
-<div id="other-text-wrap" style="display:none;margin-top:8px">
-<label for="appr-other">פרט</label>
-<textarea aria-label="פירוט הסיבה" id="appr-other" rows="2" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;direction:rtl"></textarea>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-<div>
-<label for="appr-from-heb">מתאריך עברי</label>
-<input aria-label="א׳ ניסן ה׳תשפ״ו" type="text" id="appr-from-heb" placeholder="א׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
-</div>
-<div>
-<label for="appr-from-time">שעת יציאה</label>
-<input type="time" id="appr-from-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
-</div>
-<div>
-<label for="appr-to-heb">עד תאריך עברי</label>
-<input aria-label="ג׳ ניסן ה׳תשפ״ו" type="text" id="appr-to-heb" placeholder="ג׳ ניסן ה׳תשפ״ו" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc;direction:rtl">
-</div>
-<div>
-<label for="appr-to-time">שעת חזרה</label>
-<input type="time" id="appr-to-time" style="width:100%;padding:7px;border-radius:6px;border:1px solid #ccc">
-</div>
-</div>
-<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
-<button class="btn out" onclick="closeApproval()">ביטול</button>
-<button class="btn" onclick="saveApproval()">✅ אשר</button>
-</div>
-</div>
-</div>
-
-<!-- Confirm Delete Modal -->
-<div id="confirm-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:360px;text-align:center">
-<div style="font-size:2em">⚠️</div>
-<h3 id="confirm-msg">האם למחוק?</h3>
-<div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
-<button class="btn out" onclick="closeConfirm()">ביטול</button>
-<button class="btn" style="background:#e53e3e" onclick="confirmAction()">אשר מחיקה</button>
-</div>
-</div>
-</div>
-
-<!-- Edit Reasons Modal -->
-<div id="reasons-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:400px">
-<h3>⚙️ עריכת סיבות אישור</h3>
-<div id="reasons-list" style="margin:10px 0;max-height:300px;overflow-y:auto"></div>
-<input aria-label="סיבה חדשה" type="text" id="new-reason" placeholder="סיבה חדשה..." style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:8px 0;direction:rtl">
-<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
-<button class="btn out" onclick="closeReasons()">סגור</button>
-<button class="btn" onclick="window.addReason()">➕ הוסף</button>
-</div>
-</div>
-</div>
-
 </div>
 </div>
 <div class="pg" id="pg-attend">
@@ -1254,7 +1192,7 @@ function ysApplyPerms(p) {
    וזו הייתה בחירה תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך
    «ניהול משתמשים». מעכשיו האימות — מקוון ואופליין כאחד — הוא מול
    `pass_fp`, והעמודה נשארת **כתובה-ולא-נקראת** מאחורי
-   `YS_PLAINTEXT_LEGACY_WRITE` בלבד, עד שהמנהל יריץ את `migrations/011`.
+   `YS_PLAINTEXT_LEGACY_WRITE` בלבד, עד שהמנהל יריץ את **צעד ב** של הסרתה.
    ⛔ **אין להחזיר השוואה מול העמודה בשום מסלול (סבב 40)** — מפתח ה-anon
    יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול היה לקרוא את
    הסיסמאות ולהיכנס בזהות של כל אחד.
@@ -1270,11 +1208,11 @@ var YS_PASS_ITER = 100000;
 // המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
 // מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
 var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
-/* ⛔ נתיב-החזרה של הסיסמה הגלויה (סבב 40) — `ys_users.password_hash` היא
-   `NOT NULL` במסד, ולכן קוד שיפסיק לכתוב אליה **לפני** שהמיגרציה רצה יפיל
-   כל יצירת משתמש. ⭐ כל עוד הדגל `true` העמודה עדיין נכתבת, וכיבויו הוא הצעד שאחרי
-   `migrations/011`. ⛔ **האימות כבר אינו נשען עליה בשום מסלול** — היא
-   נכתבת ואינה נקראת, וזה מה שהופך את המחיקה לבטוחה. */
+/* ⛔ נתיב-החזרה של הסיסמה הגלויה (סבב 40) — ⚠️ נמדד מול המסד: העמודה כבר
+   **מותרת ב-NULL** ⛔ ועודנה קיימת. ⭐ כל עוד הדגל `true` היא עדיין נכתבת,
+   ⛔ וכיבויו הוא **החלטת המנהל** ולא חוב טכני שסשן סוגר מיוזמתו: ⚠️ הוא
+   הצעד שלפני מחיקת העמודה, ⛔ ואחריו אין דרך חזרה. ⛔ **והאימות כבר אינו
+   נשען עליה בשום מסלול** — היא נכתבת ואינה נקראת. */
 var YS_PLAINTEXT_LEGACY_WRITE = true;
 // 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
 // (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
@@ -1471,7 +1409,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v74'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v75'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6184,7 +6122,6 @@ async function ysPullFromCloud() {
     try {
       if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
       if (typeof slFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { slFillSessionBtns(); if (typeof slRenderTodaySessions === 'function') slRenderTodaySessions(); }
-      if (typeof renderReasonsList === 'function') { try { renderReasonsList(); } catch(eRL) {} }
     } catch (eRf) { ysWriteFail('ysPullFromCloud', eRf); }
     if (typeof renderStudents === 'function') renderStudents();
     if (typeof refreshDashStats === 'function') refreshDashStats();
@@ -6356,9 +6293,7 @@ ensureFirstAdmin();
    ══════════════════════════════════════════════════════════════════════════ */
 // ADMIN_PASS ו-isLoggedIn הוסרו - מוחלף במערכת auth
 var currentFilter='all';
-var confirmCallback=null;
 var editingStudentId=null;
-var currentApprovalId=null;
 var H=String.fromCharCode; // קיצור ליצירת תווים עבריים
 
 function getDefaultStudents(){return [
@@ -6424,9 +6359,7 @@ function saveStudents(s){
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
 function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(lsGet('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function saveReasons(r){lsSet('ys_reasons',JSON.stringify(r));ysSettingsTouch('ys_reasons');}
 function getApprovals(){try{var v=JSON.parse(lsGet('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
-function saveApprovals(a){lsSet('ys_approvals',JSON.stringify(a));}
 function checkLoginNeeded(){
   // הוחלף במערכת auth החדשה
   return !AUTH.user;
@@ -6976,116 +6909,6 @@ function ysTombstoneStudents(ids){
   (ids||[]).forEach(function(id){ if(id!=null) pendMark(PK_STUDENT+id); });
   return n;
 }
-
-function deleteStudent(sid){
-  if(checkLoginNeeded())return;
-  var s=getStudents().find(function(x){return idEq(x.id, sid);});
-  if(!s)return;
-  var msg=document.getElementById('confirm-msg');
-  if(msg)msg.textContent=H(1492,1488,1501,32,1500,1502,1495,1493,1511,32,1488,1514,32)+s.name+'?';
-  confirmCallback=function(){
-    ysTombstoneStudents([sid]);
-    scheduleYsPush();
-    renderStudents();
-  };
-  document.getElementById('confirm-modal').style.display='flex';
-}
-
-function closeConfirm(){document.getElementById('confirm-modal').style.display='none';confirmCallback=null;}
-function confirmAction(){if(confirmCallback)confirmCallback();closeConfirm();}
-
-function openApproval(sid){
-  if(checkLoginNeeded())return;
-  currentApprovalId=sid;
-  var s=getStudents().find(function(x){return idEq(x.id, sid);});
-  var nameEl=document.getElementById('approval-student-name');
-  if(nameEl)nameEl.textContent=s?s.name:'';
-  var reasons=getReasons();
-  var sel=document.getElementById('appr-reason');
-  if(sel)sel.innerHTML=reasons.map(function(r){return '<option>'+esc(r)+'</option>';}).join('');
-  var ow=document.getElementById('other-text-wrap');if(ow)ow.style.display='none';
-  var fh=document.getElementById('appr-from-heb');
-  try{if(fh&&typeof hebrewDateShort==='function')fh.value=hebrewDateShort();}catch(e){}
-  var th=document.getElementById('appr-to-heb');if(th)th.value='';
-  var ft=document.getElementById('appr-from-time');if(ft)ft.value='';
-  var tt=document.getElementById('appr-to-time');if(tt)tt.value='';
-  document.getElementById('approval-modal').style.display='flex';
-}
-
-function checkOther(){
-  var val=(document.getElementById('appr-reason')||{value:''}).value;
-  var ow=document.getElementById('other-text-wrap');
-  if(ow)ow.style.display=(val===H(1488,1495,1512)?'block':'none');
-}
-
-function saveApproval(){
-  var reason=(document.getElementById('appr-reason')||{value:''}).value;
-  var other=(document.getElementById('appr-other')||{value:''}).value;
-  var finalReason=reason===H(1488,1495,1512)?other:reason;
-  var fromHeb=(document.getElementById('appr-from-heb')||{value:''}).value;
-  var toHeb=(document.getElementById('appr-to-heb')||{value:''}).value;
-  var fromTime=(document.getElementById('appr-from-time')||{value:''}).value;
-  var toTime=(document.getElementById('appr-to-time')||{value:''}).value;
-  var appr=getApprovals();
-  var now=new Date();
-  var returnDate=new Date(now.getTime()+7*86400000);
-  appr[currentApprovalId]={reason:finalReason,fromHeb:fromHeb,toHeb:toHeb,fromTime:fromTime,toTime:toTime,active:true,fromGreg:now.toISOString(),toGreg:returnDate.toISOString(),updatedAt:Date.now()};
-  saveApprovals(appr);
-  scheduleYsPush();
-  closeApproval();
-  renderStudents();
-}
-
-function clearApproval(sid){
-  if(checkLoginNeeded())return;
-  var appr=getApprovals();
-  if(appr[sid]){appr[sid].active=false;appr[sid].updatedAt=Date.now();}
-  saveApprovals(appr);
-  scheduleYsPush();
-  renderStudents();
-}
-
-function closeApproval(){document.getElementById('approval-modal').style.display='none';}
-
-function openReasonsEditor(){
-  if(checkLoginNeeded())return;
-  renderReasonsList();
-  document.getElementById('reasons-modal').style.display='flex';
-}
-
-function renderReasonsList(){
-  var reasons=getReasons();
-  var list=document.getElementById('reasons-list');
-  if(!list)return;
-  list.innerHTML=reasons.map(function(r,i){
-    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #eee">'+
-      '<span style="flex:1">'+r+'</span>'+
-      '<button onclick="deleteReason('+i+')" style="background:none;border:none;cursor:pointer;color:#e53e3e">&#x1F5D1;&#xFE0F;</button>'+
-    '</div>';
-  }).join('');
-}
-
-function addReason(){
-  var v=(document.getElementById('new-reason')||{value:''}).value.trim();
-  if(!v)return;
-  var reasons=getReasons();
-  var oi=reasons.indexOf(H(1488,1495,1512));
-  if(oi>-1)reasons.splice(oi,0,v);else reasons.push(v);
-  saveReasons(reasons);
-  scheduleYsPush();
-  document.getElementById('new-reason').value='';
-  renderReasonsList();
-}
-
-function deleteReason(i){
-  var reasons=getReasons();
-  reasons.splice(i,1);
-  saveReasons(reasons);
-  scheduleYsPush();
-  renderReasonsList();
-}
-
-function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
 
 // ---- ייבוא תלמידים מ-Excel ----
 /* ══════════════════════════════════════════════════════════════════════════
