@@ -1409,7 +1409,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v77'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v78'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3893,6 +3893,13 @@ function _bkLogRow(action, key, count, details) {
     details: details || null
   };
 }
+/*  ⛔ כשל כתיבה נרשם ואינו נבלע (סבב 79) — ⚠️ הכתיבה נכשלת כפי שנכשלה,
+ *  אבל היא מפסיקה להיות שקטה: ⭐ `catch` ריק סביב כתיבה הוא בדיוק המצב
+ *  שבו נתון נעלם ואיש אינו יודע. ⛔ והרישום אינו משנה את הזרימה — ⚠️ תיעוד
+ *  אבחון שמפיל שמירה גרוע מהיעדרו. */
+function _bkWriteFail(where, e) {
+  try { console.warn('[write-fail] ' + where, (e && e.message) ? e.message : e); } catch (e0) { }
+}
 function _bkLogQueue(row) {
   try {
     var qk = _bkVal(BK_CFG.logQueueKey);
@@ -3901,7 +3908,7 @@ function _bkLogQueue(row) {
     q.push(row);
     if (q.length > BK_LOG_MAX) q = q.slice(-BK_LOG_MAX);
     lsSet(qk, JSON.stringify(q));
-  } catch (e) { }
+  } catch (e) { _bkWriteFail('_bkLogQueue', e); }
 }
 // רישום fire-and-forget. ⛔ לעולם אינו חוסם ואינו מפיל את המסלול שקרא לו
 // (נרשם בסבב 6 בהנהלה) — תיעוד אבחון שמפיל כניסה או שמירה גרוע מהיעדרו.
@@ -3937,7 +3944,7 @@ async function logFlush() {
       var q2 = JSON.parse(lsGet(qk, '[]') || '[]');
       if (!Array.isArray(q2)) q2 = [];
       lsSet(qk, JSON.stringify(q2.concat(failed).slice(-BK_LOG_MAX)));
-    } catch (e3) { }
+    } catch (e3) { _bkWriteFail('logFlush', e3); }
   }
   return sent;
 }
