@@ -194,8 +194,10 @@ function boot(state, opts = {}) {
     showPage: () => {},
     lkReset: () => {},   // סבב 52 — המנגנון עבר לליבה המשותפת
     initDateFields: () => {},
-    closeSwitchModal: () => {},
-    closeUserModal: () => {},
+    /*  ⛔ מסלול סגירה אחד מסבב 80 — ⚠️ שלוש פונקציות הסגירה הנפרדות ירדו
+     *  עם המיכלים שלהן, ⭐ והרתמה מדמה את היחידה שנשארה. */
+    closeModal: () => {},
+    openModal: () => {},
     renderUsersList: () => {},
   };
   sandbox.window = sandbox;
@@ -530,10 +532,11 @@ sec('8. saveUser / changeMyPassword');
 /* ── 9. מעבר-משתמש ─────────────────────────────────────────────────────── */
 sec('9. confirmSwitch');
 async function doSwitch(targetId, pass, opts = {}) {
-  const modal = mkEl('switch-user-modal'); modal._switchId = targetId;
   const cloud = USERS();
-  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { ys_users: cloud } },
-                 { domSeed: { 'switch-user-modal': modal } });
+  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { ys_users: cloud } });
+  /*  ⛔ היעד יושב ב-`window._ysSwitchId` מסבב 80 — ⚠️ עד אז הוא נתלה על
+   *  מיכל הדיאלוג, ⭐ ומיכל אחד לכל הדיאלוגים אינו יכול לשאת מצב של אחד. */
+  S._ysSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.ys_users_cache = JSON.stringify(opts.cache || CACHED);
   S.AUTH.user = { id: 1, username: 'admin', role: 'admin', active: true };
