@@ -123,7 +123,7 @@ const APP = {
      *  שלמה, נכונה, ובלי שום קורא ובלי שדות ב-DOM. ⛔ שער שמאשר ✅ על קוד
      *  מת הוא בדיוק «מטריצה שאינה תואמת לקוד» שכלל ברזל 12 אוסר. */
     119: (c) => !!c.fnBody('changeMyPassword')
-             && /onclick="[^"]*myPasswordModal\s*\(/.test(c.src)
+             && domEntry('myPasswordModal', c.src)
              && /id="pw-old"/.test(c.src) && /id="pw-new"/.test(c.src)
              && /id="pw-new2"/.test(c.src),
   },
@@ -428,6 +428,23 @@ function callSites(fn) {
 }
 
 const lineOf = (pos) => code.slice(0, pos).split('\n').length;
+
+/*  נקודת הפעלה חיה לפונקציה — ⛔ בשתי הצורות (סבב 79): `onclick` מוטבע,
+ *  ⛔ **או** `data-act` שמחווט אליה ב-`DOM_ACTIONS`. ⚠️ הנימוק המדוד:
+ *  ה-probe מדד `onclick="…f("` בלבד, ⭐ ולכן המרה לדלגציה — שהיא בדיוק
+ *  מה שהטבלה דורשת — הפילה אותו על קוד תקין. ⛔ והמדידה נשארת «ערך ולא
+ *  קיום»: הפעולה חייבת להיות **בגוף** המפה ולקרוא לפונקציה. */
+function domEntry(fn, s) {
+  const text = s === undefined ? src : s;
+  if (new RegExp('onclick="[^"]*' + fn + '\\s*\\(').test(text)) return true;
+  const i = text.indexOf('var DOM_ACTIONS');
+  if (i < 0) return false;
+  const j = text.indexOf('\ndocument.addEventListener', i);
+  const map = text.slice(i, j < 0 ? i + 8000 : j);
+  const re = new RegExp("'([\\w-]+)'\\s*:\\s*function[^\\n]*\\n?[^}]*?" + fn + '\\s*\\(');
+  const m = re.exec(map);
+  return !!(m && new RegExp('data-act=\\\\?["\']' + m[1] + '\\\\?["\']').test(text));
+}
 
 const anchors = { boot: APP.bootFn, settings: APP.settingsFn };
 const anchorRange = {};
@@ -1223,7 +1240,7 @@ const MATRIX = [
                  /id="modal"/.test(src) && /id="ask"/.test(src) &&
                  /function closeAsk/.test(code) },
   { row: 119, name: 'שכבת כניסה מלאה',
-    probe: () => /onclick="[^"]*myPasswordModal\s*\(/.test(src) && /onclick="[^"]*switchUserEl\s*\(/.test(src) },
+    probe: () => domEntry('myPasswordModal') && domEntry('switchUserEl') },
 ];
 
 /*  ⭐ אתרי העברת-מזהה (סבב 64) — אופרנד שמשורשר מיד אחרי `('` או `,'`,
