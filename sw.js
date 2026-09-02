@@ -7,7 +7,7 @@
  */
 var CACHE_NAME = 'hanhala-ruchanit-v87'; // ⚠️ לעדכן יחד עם YS_APP_VER ב-index.html
 
-// קבצים מקומיים — חובה. './' ו-v1'./index.html' הם אותו קובץ בשני מפתחות.
+// קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
   './',
   './index.html',
@@ -53,7 +53,7 @@ var SW_OFFLINE_HTML =
  *  ⚠️ `navIgnoreSearch` נחוץ כאן ורק כאן: ה-APK טוען את האפליקציה עם
  *  '?apk=1', ובלעדיו בקשת הניווט אינה מוצאת את './' שבמטמון. */
 var SW_CFG = {
-  prefix: 'hanhala-ruchanit-v1',
+  prefix: 'hanhala-ruchanit-',
   skipHosts: [],
   cdnHosts: [],
   scoped: false,
