@@ -1362,7 +1362,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v94'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v95'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1557,16 +1557,19 @@ function doLogout() {
 async function loadPerms() {
   // supabase-js לא זורק בכשל רשת אלא מחזיר {data:null, error:{...}} — לכן ה-catch
   // הישן היה קוד מת, והעותק המקומי מעולם לא נטען. חובה לבדוק error במפורש.
+  /*  ⛔ הקריאה עוברת ב-`ysCfgGet` ⛔ ואינה שאילתה שנייה — ⚠️ זו הייתה
+   *  נקודת הפעלה שנייה לאותה טבלה, ⭐ ו-`single` שבה סימן על מפתח שאינו
+   *  קיים **שגיאה**: ⛔ המסלול נפל לעותק המקומי כאילו אין רשת. */
   var res = null;
   try {
-    res = await withTimeout(SB.from('ys_settings').select('value').eq('key','ys_perms').single());
+    res = await ysCfgGet('ys_perms', true);
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
-  if (res && !res.error && res.data && res.data.value) {
+  if (res && res.ok && res.value) {
     try {
       // ysApplyPerms שומר גם את העותק המקומי ומחיל על התצוגה — מימוש אחד
-      ysApplyPerms(JSON.parse(res.data.value));
+      ysApplyPerms(res.value);
       return;
     } catch(eP) { console.warn('[perms] ערך פגום בענן:', eP); }
   }
@@ -1575,7 +1578,7 @@ async function loadPerms() {
     var c = lsGet('ys_perms_cache');
     if (c) {
       ysApplyPerms(JSON.parse(c));
-      console.log('[perms] נטען מעותק מקומי', res && res.error ? '('+(res.error.message||res.error.code)+')' : '(אין רשת)');
+      console.log('[perms] נטען מעותק מקומי', res && res.ok ? '(אין ערך בענן)' : '(אין רשת)');
       return;
     }
   } catch(e2) { console.warn('[perms] עותק מקומי פגום:', e2); }
