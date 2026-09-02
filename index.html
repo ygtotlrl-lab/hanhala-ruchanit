@@ -1331,7 +1331,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v83'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v84'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6762,7 +6762,7 @@ window.openStatusPickerModal = function() {
 
 window.openCurrentStatusModal = function() {
   var students = getStudents();
-  var s = students.find(function(x){return x.id === window._statusSid;});
+  var s = students.find(function(x){return idEq(x.id, window._statusSid);});
   if (!s) return;
   var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב'};
   var TC = {approved:'#276749', suspended:'#c05621', left:'#c53030'};
@@ -7668,7 +7668,7 @@ function atFindLiveSession(data, sessName, dateIso, exceptId) {
     var r = data[i];
     if (!r || r.deleted) continue;
     if (r.session !== sessName || r.date_iso !== dateIso) continue;
-    if (exceptId != null && r.id === exceptId) continue;
+    if (exceptId != null && idEq(r.id, exceptId)) continue;
     return r;
   }
   return null;
@@ -7731,7 +7731,7 @@ window.atOpenSession = async function(sessId, sessName) {
 
   // אתחול סימונים — סימון אוטומטי לפי סטאטוס + שעת הסדר
   var _oCfg=window._atCfg||atDefaultCfg();
-  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
+  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
   var students=ysSortStudents(getStudents());
   window._atMarks={};
@@ -9126,7 +9126,7 @@ window.slOpenSession = async function(sessId, sessName) {
   }
 
   var _oCfg=window._slCfg||slDefaultCfg();
-  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
+  var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
   var students=ysSortStudents(getStudents());
   window._slMarks={};window._slPending={};window._slCleared={};
@@ -9240,6 +9240,29 @@ function slShowOverrideDialog(sid, student) {
     '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
     '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>');
 }
+
+/*  ⛔ ביטול סטטוס מתוך לשונית הרישום — ⚠️ הקורא הוא `sl-status-cancel`,
+ *  ⛔ ואין להסירה בלי להסיר גם אותו: כפתור שקורא לשם שאינו מוגדר זורק,
+ *  ⭐ והמודאל נסגר — והמשגיח קורא את הסגירה כהצלחה. */
+window.slCancelStudentStatusFromReg = function(sid) {
+  var students=getStudents();
+  var s=students.find(function(x){return idEq(x.id, sid);});
+  if(!s) return;
+  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
+  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=ysWho(); });
+  s.present=true;
+  s.updatedAt=Date.now();
+  saveStudents(students);
+  scheduleYsPush();
+  delete window._slMarks[sid];
+  delete window._slCleared[sid];
+  delete window._slPending[sid];
+  slMarkDirty();
+  window.slRenderStudents();
+  renderStudents();
+  toast('✅ הסטטוס בוטל ל-'+s.name);
+};
 
 window.slApplyMark = function(sid, code) {
   var s=String(sid);
