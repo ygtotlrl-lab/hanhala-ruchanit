@@ -1331,7 +1331,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v82'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v83'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6491,10 +6491,10 @@ function renderStudents(){
     if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'#fff':'#f9fafb';
-      // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נקרא כשיש `cycle` — ⭐ עשר
-      //    הרשומות שנרשמו ידנית מחזיקות את שניהם, ובשתיים מהן הם נבדלים:
-      //    ⛔ מה שנרשם אחרון הוא מה שמוצג.
-      var yr=s.cycle||s.cohortYear||'';
+      // ⛔ `cycle` הוא השדה היחיד ⛔ ואין נפילה-חזרה לכתיב הישן — ⚠️ נמדד
+      //    במסד שכל רשומה שנשאה את הישן נושאת גם את החדש, ⭐ ולכן הנפילה
+      //    לא נבחרה מעולם; ⛔ ושני שדות לאותו מושג הם שני מקורות אמת.
+      var yr=s.cycle||'';
       var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
       return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
@@ -6968,9 +6968,7 @@ function editStudent(sid){
   openModal(H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491), studentFormHtml(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
-  // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נכתב חזרה — ⭐ מי שנוגע בכרטיס
-  //    מעביר את הערך לשדה החדש, והישן מפסיק להיות מקור שני.
-  document.getElementById('st-cycle').value=s.cycle||s.cohortYear||'';
+  document.getElementById('st-cycle').value=s.cycle||'';
 }
 
 function saveStudent(){
