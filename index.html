@@ -518,8 +518,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <button id="at-tab-arc" data-act="at-tab" data-tab="arc" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
       <button id="at-tab-sup" data-act="at-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
-    <!-- אזור טעינה -->
-    <div id="at-loading" style="text-align:center;padding:40px;color:var(--text2)">⏳ טוען...</div>
+    <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
+    <div id="at-stale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <!-- תצוגת רישום -->
     <div id="at-view-reg" style="display:none">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
@@ -582,7 +582,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <button id="sl-tab-arc" data-act="sl-tab" data-tab="arc" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
-    <div id="sl-loading" style="text-align:center;padding:40px;color:var(--text2)">⏳ טוען...</div>
+    <div id="sl-stale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <div id="sl-view-reg" style="display:none">
       <div id="sl-reg-picker">
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
@@ -1361,7 +1361,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v90'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v91'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -5808,10 +5808,19 @@ async function ysCfgUpdatedAt(key) {
   } catch (e) { return 0; }
 }
 
-function ysCfgGet(key) {
-  return withTimeout(SB.from('ys_settings').select('value').eq('key', key).single()).then(function(r){
-    if (r && r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
-    return null;
+/*  ⛔ «אין שורה» אינה כשל — ⚠️ מפתח שטרם נכתב אינו שגיאת רשת,
+ *  ⛔ ואינו מצדיק אזהרה למשתמש: ⭐ `maybeSingle` מחזיר `data:null` נקי,
+ *  בעוד ש-`single` מסמן שגיאה על היעדר שורה. ⛔ והדגל `res` הוא מה
+ *  שמאפשר להבחין בין «אין ערך» ל«הענן לא ענה» — ⚠️ שניהם `null`,
+ *  ⛔ ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל. */
+function ysCfgGet(key, res) {
+  return withTimeout(SB.from('ys_settings').select('value').eq('key', key).maybeSingle()).then(function(r){
+    var v = null;
+    if (r && r.data) try { v = JSON.parse(r.data.value); } catch(e) { v = null; }
+    return res ? { ok: !(r && r.error), value: v } : v;
+  }, function(e){
+    if (res) return { ok: false, value: null };
+    throw e;
   });
 }
 
@@ -7330,25 +7339,58 @@ window._atTreats = null;
  *  הראשון הוא «מסך תקוע עד שהרשת חוזרת», ⛔ ולא «מסך שמתעדכן». */
 function ysCachedArr(memKey, lsKey) {
   if (Array.isArray(window[memKey])) return window[memKey];
+  var p = _ysDiskArr(lsKey);
+  if (p) { window[memKey] = p; return p; }
+  return null;
+}
+/*  ⛔ קריאת הדיסק היא נקודה אחת — ⚠️ שני קוראים היו נבדלים ברגע שאחד
+ *  מהם ילמד לזהות פורמט חדש, ⭐ והשני היה מחזיר null על נתון קיים. */
+function _ysDiskArr(lsKey) {
   try {
     var lc = lsGet(lsKey);
-    if (lc) { var p = JSON.parse(lc); if (Array.isArray(p)) { window[memKey] = p; return p; } }
+    if (lc) { var p = JSON.parse(lc); if (Array.isArray(p)) return p; }
   } catch (e) {}
   return null;
+}
+/*  ⛔ כשל רענון מסומן גלוי ⛔ ולא בשקט — ⚠️ מסך שמציג נתון ישן בלי לומר
+ *  זאת הוא הכשל השקט עצמו: ⭐ מי שמחליט על סמך המסך חייב לדעת מה גילו
+ *  של מה שהוא רואה. ⛔ ונקודת הסימון אחת לשני המודולים — ⚠️ שני מימושים
+ *  כמעט-זהים הם בדיוק מה שנסחף. */
+function _ysStaleMark(el, bad) {
+  if (!el) return;
+  el.textContent = bad ? '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר' : '';
+  el.style.display = bad ? 'block' : 'none';
 }
 /*  ⛔ המשיכה מחזירה **האם הענן ענה** ⛔ ולא את הנתון (סבב 85) — ⚠️
  *  `atLoadData` נופלת-חזרה לדיסק ומחזירה מערך גם כשהמשיכה נכשלה, ⭐ ולכן
  *  אי אפשר להסיק ממנה שהרענון עבד: ⛔ וכשל שקט על מסך השגחה הוא החלטה
  *  שמתקבלת על נתון ישן בלי לדעת. */
+/*  ⛔ המשיכה נשמרת לדיסק — ⚠️ עד כאן היא ישבה בזיכרון בלבד, ⛔ ולכן בכל
+ *  פתיחה של האפליקציה המטמון היה ריק והמסך חזר לחיווי הטעינה. ⛔ והשמירה
+ *  **ממזגת ואינה דורסת** — ⚠️ רשומה שנרשמה אופליין וטרם עלתה אינה בענן,
+ *  ⭐ ודריסה הייתה מוחקת אותה מהדיסק. */
 async function _atPullSessions() {
   var v = null; try { v = await ysCloudGet('ys_attend_sessions'); } catch (e) {}
-  if (Array.isArray(v)) { window._atData = v; return true; }
-  return false;
+  if (!Array.isArray(v)) return false;
+  var loc = _ysDiskArr('ys_attend_sessions');
+  var out = loc ? _ysSessionsMerge(v, loc, 'ys_attend_sessions') : v;
+  window._atData = out; _ysAtDiskSave(out);
+  return true;
+}
+async function _atPullCfg() {
+  var r = null; try { r = await ysCfgGet('ys_attend_cfg', true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  if (r.value) { window._atCfg = r.value; lsSet('ys_attend_cfg', JSON.stringify(r.value)); }
+  return true;
 }
 async function _atPullTreats() {
-  var v = null; try { v = await ysCfgGet('ys_attend_treats'); } catch (e) {}
-  if (Array.isArray(v)) { window._atTreats = v; return true; }
-  return false;
+  var r = null; try { r = await ysCfgGet('ys_attend_treats', true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
+   *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
+  if (Array.isArray(r.value)) { window._atTreats = r.value; lsSetArray('ys_attend_treats', r.value, _ysRecTs); }
+  else if (!Array.isArray(window._atTreats)) window._atTreats = ysCachedArr('_atTreats', 'ys_attend_treats') || [];
+  return true;
 }
 window._atMarks = {};              // המבנה: {sid:{s,min}}
 window._atPending = {};            // sid → true: סומן לאחרונה, עדיין לא ירד
@@ -7373,10 +7415,17 @@ function atDefaultCfg() {
   };
 }
 
+/*  ⛔ קריאה סינכרונית — מהזיכרון, ואם אין, מהדיסק: ⚠️ הציור הראשון אינו
+ *  רשאי להמתין לרשת, ⭐ וההגדרות הן מה שקובע אילו כפתורי סדר להציג. */
+function atCachedCfg() {
+  if (window._atCfg) return window._atCfg;
+  try { var lc=lsGet('ys_attend_cfg'); if(lc){ var p=JSON.parse(lc); if(p){ window._atCfg=p; return p; } } } catch(e){}
+  return null;
+}
 async function atLoadCfg() {
   if (window._atCfg) return window._atCfg;
   try { var v=await ysCfgGet('ys_attend_cfg'); if(v){window._atCfg=v;return v;} } catch(e){}
-  try { var lc=lsGet('ys_attend_cfg'); if(lc){window._atCfg=JSON.parse(lc);return window._atCfg;} } catch(e){}
+  var c=atCachedCfg(); if(c) return c;
   window._atCfg = atDefaultCfg(); return window._atCfg;
 }
 async function atSaveCfg(cfg) {
@@ -7451,36 +7500,9 @@ async function atSaveTreats(data) {
   return data;
 }
 
-// טעינה ראשית של המודול
-window.loadAttend = async function() {
-  var el = document.getElementById('at-loading');
-  if(!el) return;
-  el.style.display='block';
-  ['reg','arc','sup'].forEach(function(t){
-    var v=document.getElementById('at-view-'+t);
-    if(v) v.style.display='none';
-  });
-
-  await atLoadCfg();
-  await atLoadData();
-  window._atMarks={};
-  window._atCurrentSessionId=null;
-  window._atPendingRec=null;
-  var _todayIsoR=new Date().toISOString().split('T')[0];
-  var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
-  // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
-  try {
-    /*  ⚠️ ההצעה אינה דורסת מודאל פתוח — ⛔ מיכל אחד, ⭐ ומי שכבר עומד
-     *  בדיאלוג אחר לא ימצא אותו מוחלף מתחת לידיו. */
-    if(_openRec && !modalOpen()) {
-      openModal('⏳ סדר פתוח מהיום',
-        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
-        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button data-act="at-resume-go" data-id="'+esc(_openRec.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
-    }
-  } catch(eRes){}
-
-
+/*  ⛔ הציור הסינכרוני של לשונית הרישום — ⚠️ הוא נקרא פעמיים: מהמטמון
+ *  לפני הרשת, ושוב אחרי הרענון; ⛔ ואין בו `await`. */
+function _atPaintReg() {
   // בורר תאריך לרישום — ללא שעה (tv=undefined)
   var dw=document.getElementById('at-date-wrap');
   if(dw){
@@ -7507,9 +7529,47 @@ window.loadAttend = async function() {
   var rl=document.getElementById('at-reg-list');
   if(pk) pk.style.display='';
   if(rl) rl.style.display='none';
+}
 
-  el.style.display='none';
-  window.atShowTab('reg');
+// טעינה ראשית של המודול
+window.loadAttend = async function() {
+  var el = document.getElementById('at-stale');
+  window._atMarks={};
+  window._atCurrentSessionId=null;
+  window._atPendingRec=null;
+  /*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ עד כאן שתי המשיכות ישבו **לפני**
+   *  הציור הראשון, ⭐ ולכן חיווי הטעינה של המודול נשאר על המסך כל זמן
+   *  הרשת: ⛔ ובתוכו הלשוניות כבר לחיצות, והלשונית שנפתחה ציירה חיווי
+   *  שני משלה — ⚠️ שני ספינרים על מסך אחד. ⭐ הציור הראשון סינכרוני,
+   *  ⛔ ולכן החיווי היחיד הוא זה של הלשונית עצמה. */
+  _ysStaleMark(el, false);
+  /*  ⛔ העותק נקרא ⛔ ואינו נכתב כברירת מחדל — ⚠️ `_atCfg=atDefaultCfg()`
+   *  היה מסמן «נטען», ⭐ ו-`atLoadCfg` לא הייתה מנסה את הרשת שוב לעולם. */
+  atCachedCfg();
+  ysCachedArr('_atData','ys_attend_sessions');
+  _atPaintReg();
+  window.atShowTab(window._atView||'reg');
+
+  /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
+   *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
+  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions()]);
+  _atPaintReg();
+  window.atShowTab(window._atView||'reg');
+  _ysStaleMark(el, !(_okAt[0]&&_okAt[1]));
+
+  var _todayIsoR=new Date().toISOString().split('T')[0];
+  var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
+  // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
+  try {
+    /*  ⚠️ ההצעה אינה דורסת מודאל פתוח — ⛔ מיכל אחד, ⭐ ומי שכבר עומד
+     *  בדיאלוג אחר לא ימצא אותו מוחלף מתחת לידיו. */
+    if(_openRec && !modalOpen()) {
+      openModal('⏳ סדר פתוח מהיום',
+        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
+        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button data-act="at-resume-go" data-id="'+esc(_openRec.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
+    }
+  } catch(eRes){}
   atCheckAlert();
 };
 
@@ -8908,13 +8968,25 @@ window._slTreats = null;
  *  ⛔ ותיקון באחד בלבד היה משאיר את השני תקוע על «⏳ טוען...». */
 async function _slPullSessions() {
   var v = null; try { v = await ysCloudGet('ys_sleep_sessions'); } catch (e) {}
-  if (Array.isArray(v)) { window._slData = v; return true; }
-  return false;
+  if (!Array.isArray(v)) return false;
+  var loc = _ysDiskArr('ys_sleep_sessions');
+  var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions') : v;
+  window._slData = out; lsSetArray('ys_sleep_sessions', out, _ysRecTs);
+  return true;
+}
+async function _slPullCfg() {
+  var r = null; try { r = await ysCfgGet('ys_sleep_cfg', true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  if (r.value) { window._slCfg = _slCleanCfg(r.value); lsSet('ys_sleep_cfg', JSON.stringify(window._slCfg)); }
+  return true;
 }
 async function _slPullTreats() {
-  var v = null; try { v = await ysCfgGet('ys_sleep_treats'); } catch (e) {}
-  if (Array.isArray(v)) { window._slTreats = v; return true; }
-  return false;
+  var r = null; try { r = await ysCfgGet('ys_sleep_treats', true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  /*  ⛔ ראה `_atPullTreats` — מפתח שטרם נכתב אינו מוחק את הדיסק. */
+  if (Array.isArray(r.value)) { window._slTreats = r.value; lsSetArray('ys_sleep_treats', r.value, _ysRecTs); }
+  else if (!Array.isArray(window._slTreats)) window._slTreats = ysCachedArr('_slTreats', 'ys_sleep_treats') || [];
+  return true;
 }
 window._slMarks = {};
 window._slPending = {};
@@ -8944,10 +9016,16 @@ function _slCleanCfg(cfg) {
   }
   return cfg;
 }
+/*  ⛔ ראה `atCachedCfg` — שני המודולים הם אותו דפוס בדיוק. */
+function slCachedCfg() {
+  if (window._slCfg) return window._slCfg;
+  try { var lc=lsGet('ys_sleep_cfg'); if(lc){ var p=JSON.parse(lc); if(p){ window._slCfg=_slCleanCfg(p); return window._slCfg; } } } catch(e){}
+  return null;
+}
 async function slLoadCfg() {
   if (window._slCfg) return window._slCfg;
   try { var v=await ysCfgGet('ys_sleep_cfg'); if(v){window._slCfg=_slCleanCfg(v);return window._slCfg;} } catch(e){}
-  try { var lc=lsGet('ys_sleep_cfg'); if(lc){window._slCfg=_slCleanCfg(JSON.parse(lc));return window._slCfg;} } catch(e){}
+  var c=slCachedCfg(); if(c) return c;
   window._slCfg = slDefaultCfg(); return window._slCfg;
 }
 async function slSaveCfg(cfg) {
@@ -9017,34 +9095,9 @@ async function slSaveTreats(data) {
   return data;
 }
 
-// טעינה ראשית של מודול שינה
-window.loadSleep = async function() {
-  var el = document.getElementById('sl-loading');
-  if(!el) return;
-  el.style.display='block';
-  ['reg','arc','sup'].forEach(function(t){
-    var v=document.getElementById('sl-view-'+t);
-    if(v) v.style.display='none';
-  });
-
-  await slLoadCfg();
-  await slLoadData();
-  window._slMarks={};
-  window._slCurrentSessionId=null;
-  window._slPendingRec=null;
-  var _logIsoR=slGetLogicalDate();
-  var _openRecSl=(window._slData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
-  // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
-  try {
-    if(_openRecSl && !modalOpen()) {
-      openModal('⏳ בדיקת שינה פתוחה',
-        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRecSl.session)+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>',
-        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
-    }
-  } catch(eRes){}
-
-
+/*  ⛔ ראה `_atPaintReg` — שני המודולים הם אותו דפוס בדיוק, ⛔ ותיקון
+ *  באחד בלבד היה משאיר את השני על שני חיוויים. */
+function _slPaintReg() {
   // בורר תאריך — תאריך לוגי (לפני 12:00 = אמש)
   var dw=document.getElementById('sl-date-wrap');
   if(dw){
@@ -9073,9 +9126,38 @@ window.loadSleep = async function() {
   var rl=document.getElementById('sl-reg-list');
   if(pk) pk.style.display='';
   if(rl) rl.style.display='none';
+}
 
-  el.style.display='none';
-  window.slShowTab('reg');
+// טעינה ראשית של מודול שינה
+window.loadSleep = async function() {
+  var el = document.getElementById('sl-stale');
+  window._slMarks={};
+  window._slCurrentSessionId=null;
+  window._slPendingRec=null;
+  /*  ⛔ ראה `loadAttend` — אותו סדר בדיוק: ציור מהמטמון, ואז רענון. */
+  _ysStaleMark(el, false);
+  /*  ⛔ ראה `loadAttend` — קוראים את העותק ואין כותבים ברירת מחדל. */
+  slCachedCfg();
+  ysCachedArr('_slData','ys_sleep_sessions');
+  _slPaintReg();
+  window.slShowTab(window._slView||'reg');
+
+  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions()]);
+  _slPaintReg();
+  window.slShowTab(window._slView||'reg');
+  _ysStaleMark(el, !(_okSl[0]&&_okSl[1]));
+
+  var _logIsoR=slGetLogicalDate();
+  var _openRecSl=(window._slData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
+  // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
+  try {
+    if(_openRecSl && !modalOpen()) {
+      openModal('⏳ בדיקת שינה פתוחה',
+        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRecSl.session)+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>',
+        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
+    }
+  } catch(eRes){}
   // אין התראת כניסה במודול שינה
 };
 
