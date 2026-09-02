@@ -1129,17 +1129,15 @@ function ysApplyPerms(p) {
    סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
    גם מול סיסמה בת שש ספרות.
 
-   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל
-   (סבב 40).** עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**,
-   וזו הייתה בחירה תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך
-   «ניהול משתמשים». מעכשיו האימות — מקוון ואופליין כאחד — הוא מול
-   `pass_fp`, והעמודה נשארת **כתובה-ולא-נקראת** מאחורי
-   `YS_PLAINTEXT_LEGACY_WRITE` בלבד, עד שהמנהל יריץ את **צעד ב** של הסרתה.
-   ⛔ **אין להחזיר השוואה מול העמודה בשום מסלול (סבב 40)** — מפתח ה-anon
-   יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול היה לקרוא את
-   הסיסמאות ולהיכנס בזהות של כל אחד.
-   ⚠️ **והמחיר מדוד:** מסך «ניהול משתמשים» יפסיק להציג את הסיסמה הנוכחית
-   ברגע שהדגל ייסגר. **קביעת** סיסמה חדשה ממשיכה לעבוד.
+   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל.**
+   עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**, וזו הייתה בחירה
+   תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך «ניהול משתמשים».
+   ⭐ **וצעד ב הושלם בהחלטתו:** אין בקוד אף מסלול שכותב את העמודה, ואין
+   אף מסלול שקורא אותה. ⛔ **אין להחזיר לא כתיבה ולא קריאה בשום מסלול** —
+   מפתח ה-anon יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול
+   היה לקרוא את הסיסמאות ולהיכנס בזהות של כל אחד.
+   ⚠️ **והמחיר שולם במודע:** מסך «ניהול משתמשים» חדל להציג את הסיסמה
+   הנוכחית — אין מאין לקרוא אותה. **קביעת** סיסמה חדשה עובדת כשהייתה.
 
    ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** זו הנקודה שכל
    הסבב עומד עליה: `ysUserSlim` היא נקודת המעבר היחידה אל המטמון, והיא
@@ -1150,12 +1148,6 @@ var YS_PASS_ITER = 100000;
 // המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
 // מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
 var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
-/* ⛔ נתיב-החזרה של הסיסמה הגלויה (סבב 40) — ⚠️ נמדד מול המסד: העמודה כבר
-   **מותרת ב-NULL** ⛔ ועודנה קיימת. ⭐ כל עוד הדגל `true` היא עדיין נכתבת,
-   ⛔ וכיבויו הוא **החלטת המנהל** ולא חוב טכני שסשן סוגר מיוזמתו: ⚠️ הוא
-   הצעד שלפני מחיקת העמודה, ⛔ ואחריו אין דרך חזרה. ⛔ **והאימות כבר אינו
-   נשען עליה בשום מסלול** — היא נכתבת ואינה נקראת. */
-var YS_PLAINTEXT_LEGACY_WRITE = true;
 // 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
 // (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
 function ysRandSalt() {
@@ -1369,7 +1361,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v85'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v90'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2427,10 +2419,6 @@ var DOM_ACTIONS = {
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { toggleUserMenu(); },
-  'um-pass-peek':     function () {
-                        var i = document.getElementById('um-curr-pass');
-                        i.type = i.type === 'password' ? 'text' : 'password';
-                      },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function (el) { saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
@@ -2522,9 +2510,9 @@ async function renderUsersList() {
    עצמי). ⛔ בכל אחד מהם הטביעה נגזרת **ליד הסיסמה** ובאותה פעולה (סבב 22)
    — טביעה שנגזרת מאוחר יותר, במסלול נפרד, היא חלון שבו הכניסה האופליין
    עובדת עם הסיסמה **הקודמת**.
-   ⛔ ומסבב 40 אף אחד מהם אינו **קורא** את `password_hash` כדי לאמת —
-   הכתיבה אליה נשארת מאחורי `YS_PLAINTEXT_LEGACY_WRITE` בלבד, כנתיב חזרה
-   עד שהמנהל יריץ את `migrations/011`.
+   ⛔ ואף אחד מהם אינו **קורא** את `password_hash` כדי לאמת ⛔ ואף אינו
+   כותב אליה: ⭐ העמודה ירדה בהחלטת המנהל, ⚠️ והחזרת כתיבה אליה תיפול
+   על עמודה שאינה קיימת.
    ══════════════════════════════════════════════════════════════════════════ */
 function openAddUser() {
   openUserModal('הוסף משתמש');
@@ -2532,27 +2520,13 @@ function openAddUser() {
   document.getElementById('um-pass-hint').style.display = 'none';
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
 }
-async function openEditUser(u) {
+function openEditUser(u) {
   openUserModal('ערוך משתמש');
   document.getElementById('um-id').value = u.id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
-  // טען סיסמה נוכחית מה-DB
-  // ⚠️ הצגת הסיסמה הנוכחית תלויה בטקסט הגלוי, ולכן היא **הדבר היחיד
-  // שנעלם** כשנתיב-החזרה נסגר (סבב 40). זו יכולת ניהול שהמנהל בחר בה
-  // במפורש, וביטול ההחלטה הזו ב-2026-08-19 הוא שלו — ר' פרק «מודל
-  // הסיסמאות». ⛔ קביעת סיסמה חדשה ממשיכה לעבוד בשני המצבים.
-  var pwRes = null;
-  if (YS_PLAINTEXT_LEGACY_WRITE) {
-    try { pwRes = await withTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
-    if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
-    else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
-  } else {
-    document.getElementById('um-curr-pass').value = '';
-    document.getElementById('um-curr-pass').placeholder = 'הסיסמה אינה נשמרת עוד בטקסט גלוי';
-  }
 }
 /*  ⛔ טופס אחד לשני מסלולי הפתיחה — ⚠️ «הוסף» ו«ערוך» נבדלים בערכים
  *  ובתוויות בלבד, ⭐ ולא במבנה: טופס שנבנה פעמיים נבדל בשדה אחד. */
@@ -2568,14 +2542,8 @@ function userFormHtml() {
       '<option value="senior">צוות בכיר</option>'+
       '<option value="junior">צוות</option>'+
     '</select>'+
-    '<label>סיסמה נוכחית</label>'+
-    '<div style="position:relative;display:flex;align-items:center">'+
-      /*  ⛔ ללא inputmode ו-maxlength בכוונה (סבב 67) — השדה readonly ואינו
-          מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
-          הייתה מרמזת שאפשר לערוך אותו כאן. */
-      '<input type="password" aria-label="הסיסמה הנוכחית" id="um-curr-pass" readonly autocomplete="off" style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">'+
-      '<button type="button" data-act="um-pass-peek" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>'+
-    '</div>'+
+    /*  ⛔ אין כאן שדה «סיסמה נוכחית» — ⚠️ הצגתה חייבה לקרוא את הטקסט הגלוי
+        מהענן, ⭐ והעמודה ירדה: אין מאין לקרוא. ⛔ ואין להחזיר את השדה. */
     '<label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>'+
     '<input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" style="text-align:center;letter-spacing:4px;font-size:1.1rem">'+
     '<div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>'+
@@ -2608,9 +2576,6 @@ async function _saveUserInner() {
   var noFp = false;
   if (pass) {
     if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
-    // ⛔ נכתב רק כל עוד נתיב-החזרה פתוח (סבב 40) — העמודה `NOT NULL`, ולכן
-    // הפסקת הכתיבה לפני `migrations/011` הייתה מפילה כל יצירת משתמש.
-    if (YS_PLAINTEXT_LEGACY_WRITE) obj.password_hash = pass;
     // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
     var made = await ysMakePassFp(pass);
     if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
@@ -2789,17 +2754,11 @@ async function _changeMyPasswordInner() {
   // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
   var made = await ysMakePassFp(newPass);
   var updObj = { pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
-  if (YS_PLAINTEXT_LEGACY_WRITE) updObj.password_hash = newPass;   // ⛔ נתיב-חזרה בלבד (סבב 40) — אינו נקרא באימות
+  /*  ⛔ אין כאן נפילה-חזרה כשעמודות הטביעה חסרות — ⚠️ עד היום היא כתבה את
+   *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
+   *  נכשל בקול ⛔ ואינו מדווח «עודכנה» על סיסמה שלא השתנתה. */
   var upd;
-  try {
-    upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id));
-    if (upd && upd.error && ysIsMissingFpCol(upd.error)) {   // המיגרציה טרם הורצה
-      made = null;
-      upd = YS_PLAINTEXT_LEGACY_WRITE
-        ? await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id))
-        : upd;
-    }
-  }
+  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id)); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין

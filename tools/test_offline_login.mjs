@@ -88,9 +88,7 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
 const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
-  'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
-  /* ⛔ דגל נתיב-החזרה של הסיסמה הגלויה (סבב 40) — העמודה `NOT NULL`. */
-  'YS_PLAINTEXT_LEGACY_WRITE'];
+  'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO'];
 
 const CODE = VARS.map(grabVar).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
@@ -501,7 +499,11 @@ sec('8. saveUser / changeMyPassword');
   await S.saveUser();
   eq('8ג. ⭐ בלי crypto — הטביעה הישנה **אופסה** ולא נשארה', rows[1].pass_fp, null);
   eq('8ד. ...וגם המלח', rows[1].pass_salt, null);
-  eq('8ה. ...הסיסמה כן נשמרה', rows[1].password_hash, '888888');
+  /*  ⛔ צעד ב — הסיסמה הגלויה **אינה** נכתבת עוד: ⚠️ הערך שבשורה הוא זה
+   *  שהיה שם לפני השמירה, ⭐ ולא הסיסמה החדשה שהוקלדה. */
+  eq('8ה. ⛔ והסיסמה הגלויה לא נכתבה — הערך הישן נשאר', rows[1].password_hash, '222222');
+  T('8ה2. ⛔ ואף מטען שנשלח לענן אינו נושא את העמודה',
+    !SBLOG.some((q) => q.payload && 'password_hash' in q.payload));
   T('8ו. ...והמשתמש קיבל אזהרה ולא «נשמר בהצלחה»', TOASTS.some((t) => t.indexOf('⚠️') === 0));
 }
 {
@@ -512,7 +514,8 @@ sec('8. saveUser / changeMyPassword');
   DOM._m['um-username'].value = 'moshe'; DOM._m['um-role'].value = 'senior';
   DOM._m['um-pass'].value = '777777';
   await S.saveUser();
-  eq('8ז. מיגרציה שטרם הורצה ⇒ המשתמש נשמר בכל זאת', rows[1].password_hash, '777777');
+  eq('8ז. מיגרציה שטרם הורצה ⇒ המשתמש נשמר בכל זאת', rows[1].full_name, 'משה');
+  eq('8ז2. ⛔ וגם בנפילה-חזרה הסיסמה הגלויה לא נכתבה', rows[1].password_hash, '222222');
   T('8ח. ...עם אזהרה', TOASTS.some((t) => t.indexOf('⚠️') === 0));
 }
 {
@@ -522,7 +525,7 @@ sec('8. saveUser / changeMyPassword');
   S.AUTH.user = { id: 2, username: 'moshe', full_name: 'משה', role: 'senior', active: true };
   DOM._m['pw-old'].value = '222222'; DOM._m['pw-new'].value = '246810';
   await S.changeMyPassword();
-  eq('8ט. הסיסמה עודכנה בענן', rows[1].password_hash, '246810');
+  eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
   const c = JSON.parse(LS.ys_users_cache).find((u) => u.id === 2);
   eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.ysPassFp('246810', c.pass_salt), c.pass_fp);
