@@ -5875,6 +5875,14 @@ function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.upd
 function ysMarks(rec) { return (rec && rec.marks && typeof rec.marks === 'object') ? rec.marks : {}; }
 // בריחת HTML להודעות שגיאה שמגיעות מהשרת ומוזרקות ל-innerHTML
 // בריחת HTML — מימוש זהה לשלושת הפרויקטים (סבב 8), כולל גרש בודד.
+/*  ⛔ משווה אחד ברמת המודול (סבב 85) — ⚠️ `localeCompare` בונה משווה חדש
+ *  בכל קריאה, ⛔ ובתוך `.sort()` זה קורה O(n log n) פעמים: ⭐ אובייקט יקר
+ *  נבנה **פעם אחת**, ⛔ ולא בגוף פונקציה שנקראת יותר מפעם אחת.
+ *  ⚠️ ובדפדפן שאין בו `Intl.Collator` — נפילה-חזרה ל-`localeCompare` עם
+ *  אותו `he` מפורש, ⛔ שהיא בדיוק ההתנהגות שהייתה כאן עד היום. */
+var _heColl = null;
+try { _heColl = new Intl.Collator('he'); } catch (e) { _heColl = null; }
+var HE = _heColl || { compare: function (a, b) { return String(a).localeCompare(String(b), 'he'); } };
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -6490,7 +6498,7 @@ function ysSortStudents(list) {
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;
-    return String((x && x.name) || '').localeCompare(String((y && y.name) || ''), 'he');
+    return HE.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
 function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
@@ -7509,7 +7517,7 @@ window.loadAttend = async function() {
 function atSortedSessions(cfg) {
   if(!cfg) cfg=window._atCfg||atDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return (a.startTime||'').localeCompare(b.startTime||'');
+    return HE.compare(a.startTime||'', b.startTime||'');
   });
 }
 
@@ -8222,7 +8230,7 @@ window.atRenderArchive = async function(records) {
 
       var _arcSessOrder={};
       atSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE.compare(b,a);});
       days.forEach(function(iso){
         var dId=uid();
         var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
@@ -8344,7 +8352,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -8399,7 +8407,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName='Roboto';
     if(typeof pdfMake!=='undefined'&&window._alefFontB64){
@@ -8558,7 +8566,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
     // תאריך + יום הערה אחרונה
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
     var lastLabel='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
@@ -8679,7 +8687,7 @@ window.atSupDetail = function(sid) {
   var rows='';
   if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין חיסורים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
+    records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
       var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+atDow(r.date_iso);
@@ -9074,7 +9082,7 @@ window.loadSleep = async function() {
 function slSortedSessions(cfg) {
   if(!cfg) cfg=window._slCfg||slDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return (a.startTime||'').localeCompare(b.startTime||'');
+    return HE.compare(a.startTime||'', b.startTime||'');
   });
 }
 
@@ -9640,7 +9648,7 @@ window.slRenderArchive = async function(records) {
 
       var _arcSessOrder={};
       slSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE.compare(b,a);});
       days.forEach(function(iso){
         var dId=uid();
         var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
@@ -9757,7 +9765,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
@@ -9808,7 +9816,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName='Roboto';
     if(typeof pdfMake!=='undefined'&&window._alefFontB64){
@@ -9953,7 +9961,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
     var lastLabel='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
@@ -10069,7 +10077,7 @@ window.slSupDetail = function(sid) {
   var rows='';
   if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין אירועים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
+    records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
       var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+slDow(r.date_iso);
