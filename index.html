@@ -1353,7 +1353,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v80'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v81'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -3852,12 +3852,15 @@ var BK_CFG = {
       { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
       { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
     );
-    return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
-            'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
-            'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
-            'ys_cls_years', 'ys_settings_meta'].map(function (k) {
-      return { kind: 'kv', table: 'kv', name: k };
-    }));
+    /*  ⛔ שלושה-עשר מקורות `kind:'kv'` ירדו (סבב 80) — ⚠️ **טבלת `kv` כבר
+        אינה קיימת במסד**: `018` הפילה אותה, ⛔ וגיבוי ממקור שאינו קיים
+        מחזיר שגיאה, מונע את כתיבת הדגל היומי ומשתק את הגריעה.
+        ⭐ נמדד ב-1.9: עשרה מהמפתחות לא גובו כלל, ⛔ ושלושת הנותרים גובו
+        עד **שש פעמים באותו יום** — הריצה החוזרת של גיבוי שלא סומן כהושלם.
+        ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`ys_settings` בסבב 78,
+        ⭐ והמקור החדש הוא הטבלה ההיא. */
+    out.push({ kind: 'table', name: 'ys_settings', key: 'ys_settings', order: 'key' });
+    return out;
   }
 };
 
