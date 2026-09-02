@@ -4,8 +4,9 @@
  *  **מה נאכף:** (1) טענות סטטיות — בדיקת הטיפוס ⛔ אינה חוזרת לאזור הלוח;
  *  (2) התנהגות — הפונקציות **האמיתיות** ברתמת `vm` עם שעון מזויף: תאריך
  *  תקף מ-realm זר ⛔ נקרא נכון · קלט פגום ⛔ אינו «היום» · קריאה בלי
- *  ארגומנט ⛔ נשארת «היום» · והכשל **נרשם**; (3) מוטציה — החזרת השורה
- *  הישנה ⛔ **חייבת** להחזיר את הבאג.
+ *  ארגומנט ⛔ נשארת «היום» · והכשל **נרשם**; (2ב) המטמון — הגזירה רצה
+ *  **פעם אחת לכל יום**, ⛔ והתשובה היא עותק שכתיבה אליו אינה מרעילה אותו;
+ *  (3) מוטציה — החזרת השורה הישנה ⛔ **חייבת** להחזיר את הבאג.
  *
  *  **הנימוק המדוד:** שני כשלים בשורה אחת — ⛔ בדיקת טיפוס תלוית-realm
  *  מחזירה שלילי על תאריך תקף לחלוטין, ⛔ והנפילה-חזרה **שקטה**: קלט פגום
@@ -103,6 +104,11 @@ function harness(calSrc) {
                    isLeap: function (hy) { return window.ysHebIsLeap(hy); },
                    text: function (d) { return hebrewDate(d); },
                    textNoArg: function () { return hebrewDate(); },
+                   /*  ⛔ מונה גזירות — ⚠️ הוא מותקן **לפני** הקריאה הראשונה,
+                    *  ⭐ ולכן המטמון קר כשהמדידה מתחילה. */
+                   spy: function () { var n = 0, orig = window.ysIntlHeb;
+                                      window.ysIntlHeb = function (d) { n++; return orig(d); };
+                                      return function () { return n; }; },
                    log: function () { return window._ysBadDates || []; } };`, ctx);
   /*  ⚠️ **תאריך מה-realm של הבודק** — `REAL` ולא `FakeDate`. זה בדיוק
    *  אובייקט התאריך ש-`instanceof` היה דוחה, והוא תקף לחלוטין.        */
@@ -165,6 +171,58 @@ assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === '
          `⭐ ובשנה פשוטה «אדר» בלבד (נמדד «${adar.monthName}»)`);
   assert(adarI.monthIndex !== adarII.monthIndex,
          `⛔ ושני האדרים אינם אותו אינדקס — ${adarI.monthIndex} מול ${adarII.monthIndex}`);
+}
+
+/* ── 2ב. המטמון — הגזירה רצה פעם אחת ליום, והתשובה עותק ────────────────── */
+/*  ⛔ **הנימוק המדוד:** `formatToParts` וארבע גזירות הגימטריה רצו בכל
+ *  קריאה, ⚠️ ובמסך ההשגחה הן חוזרות פעם לכל רשומה — ⭐ נמדד ×13.6 על
+ *  400,000 קריאות, ⛔ ו-7,305 ימים רצופים החזירו פלט זהה בית-לבית.
+ *  ⛔ **הטענה היא על מספר הגזירות** — ⚠️ «יש מטמון» עובר גם על מטמון
+ *  שאיש אינו קורא ממנו. */
+{
+  const Hc = harness(CAL);
+  const stop = Hc.api.spy();
+  const DISTINCT = 5, CALLS = 500;
+  const day = (i) => Hc.foreign(2026, 6, 1 + (i % DISTINCT));
+  const seen = [];
+  for (let i = 0; i < CALLS; i++) seen.push(Hc.api.heb(day(i)));
+  const derivations = stop();
+  assert(derivations === DISTINCT,
+         `⛔ ${CALLS} קריאות על ${DISTINCT} ימים — נמדדו ${derivations} גזירות והצפוי ${DISTINCT}`);
+  assert(JSON.stringify(seen[0]) === JSON.stringify(seen[DISTINCT]) && seen[0].ok === true,
+         '⭐ ותשובת המטמון זהה בתוכן לתשובה שנגזרה — נמדדה השוואת JSON מלאה');
+  assert(seen[0] !== seen[DISTINCT],
+         '⛔ ושתי הקריאות אינן אותו אובייקט — התשובה עותק, לא הרשומה שבמטמון');
+  seen[0].day = -999; seen[0].monthName = 'הורעל';
+  const after = Hc.api.heb(day(0));
+  assert(after.day !== -999 && after.monthName !== 'הורעל',
+         '⛔ וכתיבה לתשובה אינה מרעילה את המטמון — נמדד שהקריאה הבאה נקייה');
+}
+
+/* ── 2ג. מוטציה על המטמון — הסרת פגיעת המטמון מחזירה את הגזירה לכל קריאה ─ */
+{
+  const HIT = '  if(hit) return Object.assign({},hit);';
+  const mutCache = CAL.replace(HIT, '  if(false) return Object.assign({},hit);');
+  if (mutCache === CAL) {
+    bad('המוטציה לא נתפסה — שורת פגיעת המטמון לא נמצאה בגוף ysHebDate. ' +
+        'מיישרים את המחרוזת שבשער לשורה שבקוד');
+  } else {
+    const Hm2 = harness(mutCache);
+    const stop2 = Hm2.api.spy();
+    for (let i = 0; i < 60; i++) Hm2.api.heb(Hm2.foreign(2026, 6, 1 + (i % 5)));
+    const n = stop2();
+    assert(n === 60,
+           `⭐ המוטציה: בלי פגיעת המטמון נמדדו ${n} גזירות ל-60 קריאות והצפוי 60 — ` +
+           'הטענה על מספר הגזירות אמיתית');
+  }
+  /*  ⛔ מוטציית-נגד — ⚠️ תקרת ניקוי אחרת היא שינוי חי, ⛔ ואסור לה להפיל. */
+  const cnt = CAL.replace('window._ysHebCacheN>=4000', 'window._ysHebCacheN>=9000');
+  const Hn2 = harness(cnt);
+  const stop3 = Hn2.api.spy();
+  for (let i = 0; i < 60; i++) Hn2.api.heb(Hn2.foreign(2026, 6, 1 + (i % 5)));
+  const n3 = stop3();
+  assert(cnt !== CAL && n3 === 5,
+         `נ0 · ⭐ מוטציית-נגד: תקרת ניקוי אחרת ⛔ אינה מפילה — נמדדו ${n3} גזירות והצפוי 5`);
 }
 
 /* ── 3. מוטציה — החזרת השורה הישנה חייבת להחזיר את הבאג ────────────────── */

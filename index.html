@@ -915,22 +915,39 @@ window._ysHebNone=function(src){
 
 // ---- הפונקציה המרכזית ----
 // מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
+/*  ⛔ מטמון הגזירה — ⚠️ `formatToParts` וארבע גזירות הגימטריה רצות בכל
+ *  קריאה, ⭐ ובמסך ההשגחה הגזירה חוזרת פעם לכל רשומה: אלפי קריאות על
+ *  עשרות תאריכים שונים בלבד. ⛔ **והמפרמט עצמו כבר נשמר** — ⚠️ מה שחוזר
+ *  על עצמו הוא הגזירה, ⛔ ולא בניית המפרמט.
+ *  ⛔ **המפתח הוא היום המקומי** — ⚠️ הגזירה מעגנת בצהריים מקומיים, ⛔ ולכן
+ *  שעה ודקה אינן משנות את התוצאה: מפתח שכולל אותן אינו פוגע לעולם.
+ *  ⛔ **והתשובה מוחזרת כעותק רדוד** — ⚠️ קורא שיכתוב לשדה היה מרעיל את
+ *  המטמון לכל שאר הקוראים, ⭐ והעתקה של עשרה שדות זולה מהגזירה בסדר גודל.
+ *  ⛔ **והמטמון מתרוקן בתקרה** — ⚠️ מפה שגדלה בלי גבול היא דליפה בסשן ארוך. */
+window._ysHebCache={};
+window._ysHebCacheN=0;
 window.ysHebDate=function(d){
   if(d===undefined||d===null) d=new Date();
   if(!window._ysIsDate(d)){ window._ysBadDate('ysHebDate',d); return window._ysHebNone('bad-input'); }
+  var ck=d.getFullYear()+'|'+d.getMonth()+'|'+d.getDate();
+  var hit=window._ysHebCache[ck];
+  if(hit) return Object.assign({},hit);
   // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
   var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
   var r=window.ysIntlHeb(nd),src='intl';
   if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
   if(!r||!r.hy){ return window._ysHebNone('none'); }
   var names=window.ysHebMonthNames(r.hy);
-  return {
+  var out={
     year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
     dayLabel:window.ysHebDayLabel(r.day),
     yearLabel:window.ysHebYearLabel(r.hy),
     yearLabelFull:window.ysHebYearLabelFull(r.hy),
     leap:window.ysHebIsLeap(r.hy), ok:true, src:src
   };
+  if(window._ysHebCacheN>=4000){ window._ysHebCache={}; window._ysHebCacheN=0; }
+  window._ysHebCache[ck]=out; window._ysHebCacheN++;
+  return Object.assign({},out);
 };
 
 // ---- צרכני התצוגה — כולם יושבים על ysHebDate ----
