@@ -7316,6 +7316,32 @@ function atSummaryHtml(cnts){
 
 window._atCfg = null;
 window._atData = null;
+window._atTreats = null;
+/*  ⛔ קריאה סינכרונית — מהזיכרון, ואם אין, מהדיסק (סבב 85) — ⚠️ הציור
+ *  הראשון אינו רשאי להמתין לרשת: ⭐ `await` שיושב לפני ה-`innerHTML`
+ *  הראשון הוא «מסך תקוע עד שהרשת חוזרת», ⛔ ולא «מסך שמתעדכן». */
+function ysCachedArr(memKey, lsKey) {
+  if (Array.isArray(window[memKey])) return window[memKey];
+  try {
+    var lc = lsGet(lsKey);
+    if (lc) { var p = JSON.parse(lc); if (Array.isArray(p)) { window[memKey] = p; return p; } }
+  } catch (e) {}
+  return null;
+}
+/*  ⛔ המשיכה מחזירה **האם הענן ענה** ⛔ ולא את הנתון (סבב 85) — ⚠️
+ *  `atLoadData` נופלת-חזרה לדיסק ומחזירה מערך גם כשהמשיכה נכשלה, ⭐ ולכן
+ *  אי אפשר להסיק ממנה שהרענון עבד: ⛔ וכשל שקט על מסך השגחה הוא החלטה
+ *  שמתקבלת על נתון ישן בלי לדעת. */
+async function _atPullSessions() {
+  var v = null; try { v = await ysCloudGet('ys_attend_sessions'); } catch (e) {}
+  if (Array.isArray(v)) { window._atData = v; return true; }
+  return false;
+}
+async function _atPullTreats() {
+  var v = null; try { v = await ysCfgGet('ys_attend_treats'); } catch (e) {}
+  if (Array.isArray(v)) { window._atTreats = v; return true; }
+  return false;
+}
 window._atMarks = {};              // המבנה: {sid:{s,min}}
 window._atPending = {};            // sid → true: סומן לאחרונה, עדיין לא ירד
 window._atCleared = {};            // sid → true: נוקה ידנית (לא לסמן אוטומטית שוב)
@@ -7391,8 +7417,10 @@ async function atSaveData(data) {
   } catch (e) { ysWriteFail('atSaveData', e); }
 }
 async function atLoadTreats() {
-  try { var v=await ysCfgGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ⚠️ הציור הראשון של מסך ההשגחה קורא
+  //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
+  try { var v=await ysCfgGet('ys_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
@@ -7411,6 +7439,7 @@ async function atSaveTreats(data) {
     var r=await ysCfgSet('ys_attend_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('atSaveTreats', e); }
+  window._atTreats=data;
   return data;
 }
 
@@ -8434,14 +8463,30 @@ window.atRenderSupervision = async function() {
   if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
-  // כפה טעינה מחדש מ-KV (לא ממטמון)
-  window._atData=null;
+  /*  ⛔ מציג מיד ⛔ ומרענן ברקע (סבב 85) — ⚠️ עד כאן המסך המתין לרשת
+   *  **לפני** הציור הראשון, ⭐ ולכן גם ניווט בין חודשים — שאינו נוגע
+   *  בנתונים כלל — נראה תקוע עד שהמשיכה חזרה. ⛔ והרענון עצמו לא בוטל:
+   *  המשגיח חייב נתונים טריים, ⚠️ ומה שהשתנה הוא **הסדר**. */
+  var cD=ysCachedArr('_atData','ys_attend_sessions');
+  var cT=ysCachedArr('_atTreats','ys_attend_treats');
+  if(cD&&cT) _atSupPaint(el,cD,cT,'');
+  else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
+   *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
+  var okA=await Promise.all([_atPullSessions(), _atPullTreats()]);
+  /*  ⛔ כשל משיכה מסומן גלוי ⛔ ולא בשקט — ⚠️ מסך שמציג נתון ישן בלי לומר
+   *  זאת הוא הכשל השקט עצמו: ⭐ המשגיח מחליט על סמך מה שהוא רואה. */
+  _atSupPaint(el, ysCachedArr('_atData','ys_attend_sessions')||[],
+                  ysCachedArr('_atTreats','ys_attend_treats')||[],
+                  (okA[0]&&okA[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+
+function _atSupPaint(el, rawData, rawTreats, warn) {
   // סדרים מחוקים לא נספרים בהשגחה
-  var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
+  var data=(rawData||[]).filter(function(r){ return !(r && r.deleted); });
   var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
-  var treats=atLiveTreats(await atLoadTreats());
+  var treats=atLiveTreats(rawTreats);
 
   // אתחל חודש נצפה אם לא מוגדר
   if(window._atSupHY===null){
@@ -8464,6 +8509,7 @@ window.atRenderSupervision = async function() {
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
@@ -8849,6 +8895,19 @@ function slGetLogicalDate() {
 
 window._slCfg = null;
 window._slData = null;
+window._slTreats = null;
+/*  ⛔ אותו זוג בדיוק כמו בנוכחות (סבב 85) — ⚠️ שני המסכים הם אותו דפוס,
+ *  ⛔ ותיקון באחד בלבד היה משאיר את השני תקוע על «⏳ טוען...». */
+async function _slPullSessions() {
+  var v = null; try { v = await ysCloudGet('ys_sleep_sessions'); } catch (e) {}
+  if (Array.isArray(v)) { window._slData = v; return true; }
+  return false;
+}
+async function _slPullTreats() {
+  var v = null; try { v = await ysCfgGet('ys_sleep_treats'); } catch (e) {}
+  if (Array.isArray(v)) { window._slTreats = v; return true; }
+  return false;
+}
 window._slMarks = {};
 window._slPending = {};
 window._slCleared = {};
@@ -8926,8 +8985,9 @@ async function slSaveData(data) {
   } catch (e) { ysWriteFail('slSaveData', e); }
 }
 async function slLoadTreats() {
-  try { var v=await ysCfgGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ר' `atLoadTreats`.
+  try { var v=await ysCfgGet('ys_sleep_treats'); if(Array.isArray(v)){window._slTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._slTreats=p;return p;}} } catch(e){}
   return [];
 }
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
@@ -8945,6 +9005,7 @@ async function slSaveTreats(data) {
     var r=await ysCfgSet('ys_sleep_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('slSaveTreats', e); }
+  window._slTreats=data;
   return data;
 }
 
@@ -9812,13 +9873,23 @@ window.slRenderSupervision = async function() {
   if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
-  window._slData=null;
+  /*  ⛔ מציג מיד ומרענן ברקע (סבב 85) — ר' `atRenderSupervision`. */
+  var cD=ysCachedArr('_slData','ys_sleep_sessions');
+  var cT=ysCachedArr('_slTreats','ys_sleep_treats');
+  if(cD&&cT) _slSupPaint(el,cD,cT,'');
+  else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  var okS=await Promise.all([_slPullSessions(), _slPullTreats()]);
+  _slSupPaint(el, ysCachedArr('_slData','ys_sleep_sessions')||[],
+                  ysCachedArr('_slTreats','ys_sleep_treats')||[],
+                  (okS[0]&&okS[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+
+function _slSupPaint(el, rawData, rawTreats, warn) {
   // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
-  var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
+  var data=(rawData||[]).filter(function(r){ return !(r && r.deleted); });
   var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
-  var treats=slLiveTreats(await slLoadTreats());
+  var treats=slLiveTreats(rawTreats);
 
   if(window._slSupHY===null){
     var ch=window._hcH(new Date());
@@ -9838,6 +9909,7 @@ window.slRenderSupervision = async function() {
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
