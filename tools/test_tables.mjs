@@ -202,7 +202,16 @@ function extractDup(src) {
   if (si < 0 || ei <= si) return null;
   return lines.slice(si - 1, ei + 1).join('\n');
 }
+/*  ⛔ `idEq` נחלצת מ-`index.html` ⛔ ואינה נכתבת כאן מחדש — ⚠️ עותק שני של
+    ההשוואה היה ממשיך לעבור אחרי שהמקורית השתנתה, ⭐ והרתמה הייתה מודדת
+    את עצמה. */
+function extractIdEq(src) {
+  const m = /function idEq\(a, b\) \{[\s\S]*?\n\}/.exec(src);
+  return m ? m[0] : null;
+}
 function dupHarness(modSrc) {
+  const idEqSrc = extractIdEq(SRC);
+  if (!idEqSrc) throw new Error('idEq לא נחלצה מ-index.html — נמדדו 0 הגדרות והצפוי אחת');
   const sandbox = {
     console, Object, Array, String, Number,
     window: { _atMarks: {}, _slMarks: {} },
@@ -211,7 +220,7 @@ function dupHarness(modSrc) {
     _ysSessionsMerge: (c, l) => l,
   };
   vm.createContext(sandbox);
-  vm.runInContext(modSrc, sandbox);
+  vm.runInContext(idEqSrc + '\n' + modSrc, sandbox);
   return sandbox;
 }
 
