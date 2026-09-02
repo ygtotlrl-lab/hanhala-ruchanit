@@ -685,28 +685,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <button class="btn" data-act="absence-reasons-save">💾 שמור</button>
         </div>
       </div>
-      <!-- שנות מחזור לכל שיעור -->
-      <div class="ss" style="margin-top:14px">
-        <div class="ss-t">🎓 שנות מחזור לכל שיעור</div>
-        <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px">שנת המחזור נשמרת לצמיתות עם כל תלמיד ומוצגת בתצוגת "לא פעילים"</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-a">שיעור א'</label>
-            <select id="cy-a" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-b">שיעור ב'</label>
-            <select id="cy-b" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-g">שיעור ג'</label>
-            <select id="cy-g" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-        </div>
-        <div style="margin-top:14px;text-align:left">
-          <button class="btn" data-act="cls-years-save">💾 שמור</button>
-        </div>
-      </div>
     </div>
 
     <!-- הגדרות מודול סדרים -->
@@ -1353,7 +1331,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v81'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v82'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2082,7 +2060,7 @@ function showSettingsModule(mod) {
   // סטטיים ב-HTML, והצגת המודול היא שינוי `display` סינכרוני — לא היה כאן שום
   // דבר להמתין לו, והדחייה רק פיצלה את החיווט לשני תורים.
   if (mod === 'system') { renderUsersList(); renderPermsTable(); statusAreaMount(); bkStatusMount(); hwRestoreMount(); }
-  if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
+  if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') window.renderAttendSettings();
   if (mod === 'sleep') window.renderSleepSettings();
 }
@@ -2287,6 +2265,7 @@ var DOM_ACTIONS = {
   'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
+  'st-history':  function (el) { window.openStatusHistory(el.getAttribute('data-id')); },
   /*  ⛔ ניווט ⛔ ופתיחת מסך עוברים בדלגציה (סבב 79) — ⚠️ המסכים כאן נבנים
    *  מחדש בכל רינדור, ⛔ ומאזין פר-אלמנט היה צריך חיווט מחדש בכל פעם.
    *  ⭐ `page-nav` הוא `page` ועוד סימון הכפתור הפעיל — ⛔ שני שמות ולא
@@ -2386,7 +2365,6 @@ var DOM_ACTIONS = {
   'ep-save':             function (el) { saveEp(el.getAttribute('data-ep')); },
   'ep-close':            function (el) { closeEp(el.getAttribute('data-ep')); },
   'absence-reasons-save': function () { window.saveAbsenceReasons(); },
-  'cls-years-save':       function () { window.saveClsYearsSettings(); },
   'status-abs-cancel':    function (el) {
                             var id = el.getAttribute('data-id');
                             if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
@@ -5405,7 +5383,7 @@ var YS_ROWS = true;
 /* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
    ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
    דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
-var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons', 'ys_cls_years'];
+var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -6052,8 +6030,7 @@ async function ysPushToCloud() {
     var meta = ysSettingsMeta();
     var settingsKeys = [
       { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ lsSet('ys_reasons', JSON.stringify(v)); } },
-      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ lsSet('ys_absence_reasons', JSON.stringify(v)); } },
-      { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ lsSet('ys_cls_years', JSON.stringify(v)); } }
+      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ lsSet('ys_absence_reasons', JSON.stringify(v)); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -6178,22 +6155,10 @@ async function ysPullFromCloud() {
       lsSet('ys_absence_reasons', JSON.stringify(abR));
       if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
     }
-    var clsY = await ysCfgGet('ys_cls_years');
-    console.log('[pull] ys_cls_years from KV:', clsY);
-    if (clsY && typeof clsY === 'object' && (remoteMeta['ys_cls_years'] || 0) >= (meta['ys_cls_years'] || 0)) {
-      lsSet('ys_cls_years', JSON.stringify(clsY));
-      if (remoteMeta['ys_cls_years']) { meta['ys_cls_years'] = remoteMeta['ys_cls_years']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
-      console.log('[pull] ys_cls_years saved to localStorage');
-    } else if (clsY == null) {
-      // מפתח לא קיים ב-DB — אם יש ערכים מקומיים, דחוף אותם (bootstrap חד-פעמי)
-      var _localCY = getClsYears();
-      console.log('[pull] ys_cls_years missing in KV, local:', _localCY);
-      if (_localCY.a || _localCY.b || _localCY.g) {
-        console.log('[pull] bootstrapping ys_cls_years to KV:', _localCY);
-        ysCfgSet('ys_cls_years', _localCY);
-        ysCfgSet('ys_last_changed', Date.now());
-      }
-    }
+    /*  ⛔ `ys_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
+     *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
+     *  ⭐ השורה עצמה נשארת בענן ⛔ ואינה נמחקת מכאן — מחיקת נתון היא
+     *  פעולת מנהל. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
       var _atCfgV = await ysCfgGet('ys_attend_cfg');
@@ -6433,6 +6398,24 @@ function getDefaultStudents(){return [
 // מפת השיעורות: 'a'=א, 'b'=ב, 'g'=ג
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
+// ⛔ נקודת המיון היחידה של התלמידים — ⚠️ ואין מיון מקומי בשום מסך: המצבת,
+//    דפי הסדרים, זמן השינה, ההשגחה, הארכיונים ורשימת הלא-פעילים הציגו כל
+//    אחד סדר משלו, ⭐ ומי שמסמן נוכחות בשני מסכים סרק את אותה רשימה פעמיים
+//    בשני סדרים. ⛔ ומיון במקום — הרשימה שהתקבלה נשארת כפי שהיא: הקוראים
+//    מחזיקים אותה גם כמקור לחיפוש ולספירה, וסידור מתחת לידיהם הוא שינוי
+//    שקט של מה שהם כבר החזיקו.
+function ysSortStudents(list) {
+  if (!Array.isArray(list)) return [];
+  var ord = { a: 0, b: 1, g: 2 };
+  return list.slice().sort(function (x, y) {
+    // ⚠️ שיעור שאינו אחד מהשלושה יורד לסוף ⛔ ואינו מתערבב בתוכם — תלמיד
+    //    שסיווגו ריק היה נופל בין א׳ לב׳ ונקרא כשייך לאחד מהם.
+    var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
+    var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
+    if (ox !== oy) return ox - oy;
+    return String((x && x.name) || '').localeCompare(String((y && y.name) || ''), 'he');
+  });
+}
 function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
@@ -6469,7 +6452,7 @@ function filterClass(cls){
 
 
 function renderStudents(){
-  var allSts=getStudents();
+  var allSts=ysSortStudents(getStudents());
   var activeSts=allSts.filter(function(s){return s.active!==false;});
   var inactiveSts=allSts.filter(function(s){return s.active===false;});
   var searchEl=document.getElementById('search-st');
@@ -6508,7 +6491,10 @@ function renderStudents(){
     if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'#fff':'#f9fafb';
-      var yr=s.cohortYear||'';
+      // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נקרא כשיש `cycle` — ⭐ עשר
+      //    הרשומות שנרשמו ידנית מחזיקות את שניהם, ובשתיים מהן הם נבדלים:
+      //    ⛔ מה שנרשם אחרון הוא מה שמוצג.
+      var yr=s.cycle||s.cohortYear||'';
       var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
       return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
@@ -6566,44 +6552,28 @@ function renderStudents(){
 }
 
 
-// -------- ניהול שנות מחזור --------
-function getClsYears(){try{return JSON.parse(lsGet('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
-function saveClsYears(y){lsSet('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
-
-window.saveClsYearsSettings = async function(){
-  var a=(document.getElementById('cy-a')||{}).value||'';
-  var b=(document.getElementById('cy-b')||{}).value||'';
-  var g=(document.getElementById('cy-g')||{}).value||'';
-  var y={a:a.trim(),b:b.trim(),g:g.trim()};
-  saveClsYears(y);
-  console.log('[cls-years] saving:', y);
-  try {
-    var r = await ysCfgSet('ys_cls_years', y);
-    console.log('[cls-years] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
-    var ts = Date.now();
-    await ysCfgSet('ys_last_changed', ts);
-    console.log('[cls-years] ys_last_changed updated:', ts);
-  } catch(e) { console.error('[cls-years] save error:', e); }
-  toast('✅ שנות המחזור נשמרו');
-};
-
-// רשימת שנים עבריות תשפ"ד–תשצ"ה
-var _CLS_HEB_YEARS = [
-  'תשפ"ד','תשפ"ה','תשפ"ו','תשפ"ז','תשפ"ח','תשפ"ט',
-  'תש"ץ','תשצ"א','תשצ"ב','תשצ"ג','תשצ"ד','תשצ"ה'
-];
-function _clsYearOptions(sel, curVal) {
-  sel.innerHTML = '<option value="">בחר שנה...</option>' +
-    _CLS_HEB_YEARS.map(function(y){
-      return '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'</option>';
-    }).join('');
+// -------- מחזור התלמיד --------
+// ⛔ המחזור נגזר משנת הלימודים ⛔ ואינו נבחר מרשימת שנים מוקלדת — ⚠️ רשימה
+//    מוקלדת נגמרת בשנה האחרונה שמישהו טרח להוסיף, ⭐ ומאותו יום ואילך אין
+//    בכלל ערך לבחור; ⛔ והיא גם דורשת שלוש בחירות ידניות בכל ראש שנה, ⚠️
+//    ובשנה שבה נשכחו — כל תלמיד שהושבת נרשם על מחזור של השנה שעברה.
+// ⚠️ שנת הלימודים מתגלגלת באלול ⛔ ולא בתשרי — הבוגרים עוזבים בסוף אלול,
+//    ⭐ והמחזור שנרשם להם הוא זה שנפתח מיד אחריהם.
+function ysSchoolYear(now) {
+  var h = window.ysHebDate(now || new Date());
+  if (!h.ok) return 0;
+  return (h.monthIndex === window.ysHebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
 }
-// מילוי ערכים קיימים בפתיחת הגדרות מצבת
-function _initClsYearsInputs(){
-  var y=getClsYears();
-  var ea=document.getElementById('cy-a');if(ea)_clsYearOptions(ea,y.a||'');
-  var eb=document.getElementById('cy-b');if(eb)_clsYearOptions(eb,y.b||'');
-  var eg=document.getElementById('cy-g');if(eg)_clsYearOptions(eg,y.g||'');
+// ⚠️ המחזור הוא שנת ה**סיום** ולא שנת הכניסה — ⭐ הוא זהה לכל מי שסיים יחד,
+//    ולכן ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה אחריה, וא׳ את שלאחריה.
+function ysCycleFor(cls, now) {
+  var y = ysSchoolYear(now);
+  var add = { g: 0, b: 1, a: 2 };
+  if (!y || add[cls] == null) return '';
+  var hy = y + add[cls];
+  // ⚠️ שנה שמאיות עגולה נותנת שתי ספרות אפס ⛔ ואין לה צורה מקוצרת —
+  //    התווית המלאה היא מה שנשאר, ⭐ ולא מחרוזת ריקה שנקראת «אין מחזור».
+  return window.ysGematria(hy % 100, '״') || window.ysHebYearLabel(hy);
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
@@ -6611,9 +6581,11 @@ window.setStudentInactive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast('⚠️ תלמיד לא נמצא');return;}
-  var years=getClsYears();
   s.active=false;
-  if(!s.cohortYear) s.cohortYear=years[s.cls]||'';
+  // ⚠️ המחזור נרשם רק כשאין לו ערך ⛔ ואינו נדרס — ⭐ תלמיד שהמנהל רשם לו
+  //    מחזור ידנית והוחזר לפעיל וחזר והושבת היה מקבל את המחזור של השנה
+  //    שבה נלחץ הכפתור, ⛔ ולא את זה שאיתו הוא באמת סיים.
+  if(!s.cycle) s.cycle=ysCycleFor(s.cls);
   s.updatedAt=Date.now();
   saveStudents(students);
   scheduleYsPush();
@@ -6665,7 +6637,7 @@ window.openManageListDlg = function(){
 
 // -------- דיאלוג: סמן תלמיד כלא פעיל --------
 window.openDeactivateStudentDlg = function(){
-  var students=getStudents().filter(function(s){return s.active!==false;});
+  var students=ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
   var opts=students.map(function(s){
     return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
@@ -6680,8 +6652,8 @@ window.openDeactivateStudentDlg = function(){
 
 // -------- דיאלוג: מעבר שנתי --------
 window.openYearTransitionDlg = function(){
-  var years=getClsYears();
-  var gYr=years.g?(' (מחזור '+years.g+')'):'';
+  var _gc=ysCycleFor('g');
+  var gYr=_gc?(' (מחזור '+_gc+')'):'';
   openModal('🔄 מעבר שנתי',
     '<div style="font-size:.84rem;color:var(--text2);margin-bottom:14px;line-height:1.6">'+
       '<strong style="color:#c53030">⚠️ פעולה בלתי הפיכה!</strong><br>'+
@@ -6697,13 +6669,13 @@ window.openYearTransitionDlg = function(){
 
 window.doYearTransition = function(){
   var students=getStudents();
-  var years=getClsYears();
+  var _gCycle=ysCycleFor('g');
   var changed=0;
   students.forEach(function(s){
     if(s.active===false) return;
     if(s.cls==='g'){
       s.active=false;
-      if(!s.cohortYear) s.cohortYear=years.g||'';
+      if(!s.cycle) s.cycle=_gCycle;
       s.updatedAt=Date.now(); changed++;
     } else if(s.cls==='b'){
       s.cls='g'; s.updatedAt=Date.now(); changed++;
@@ -6886,7 +6858,7 @@ window.cancelSingleAbsence = function(absenceId) {
 
 /*  ⛔ שני מסלולי הפתיחה בונים את אותו טופס — ⚠️ טופס שנבנה פעמיים נבדל
  *  בשדה אחד, ⭐ והשדה שנשמט נקרא «ריק» ולא «לא נשאל». */
-function studentFormHtml(){
+function studentFormHtml(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
     '<label for="st-class">שיעור</label>'+
@@ -6894,8 +6866,89 @@ function studentFormHtml(){
       '<option value="a">שיעור א\'</option>'+
       '<option value="b">שיעור ב\'</option>'+
       '<option value="g">שיעור ג\'</option>'+
-    '</select>';
+    '</select>'+
+    '<label for="st-cycle">מחזור</label>'+
+    '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
+    /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
+     *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
 }
+// -------- היסטוריית הסטטוסים --------
+/*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
+ *  ששרד את הפינוי ואת מה שהמכשיר הזה במקרה ראה, ⭐ וסטטוס שנרשם ממכשיר אחר
+ *  ולא הגיע לכאן היה נעדר מהרשימה בלי שדבר יסמן שהוא חסר. */
+window.openStatusHistory = async function (sid) {
+  openModal('📜 היסטוריית סטטוסים',
+    '<div style="padding:22px;text-align:center;color:var(--text3);font-size:.88rem">טוען מהענן…</div>', '');
+  var rows = null, failed = false;
+  try { rows = await ysCloudGet('ys_students'); } catch (e) { failed = true; }
+  if (!Array.isArray(rows)) failed = true;
+  var box = document.getElementById('modal-body');
+  var ttl = document.getElementById('modal-title');
+  /*  ⛔ נבדק גם שהכותרת עדיין שלנו ⛔ ולא רק שהמודאל פתוח — ⚠️ מודאל אחר
+   *  שנפתח בזמן ההמתנה מקבל את אותו מיכל, ⭐ והתשובה הייתה נשפכת לתוכו. */
+  if (!box || !ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
+  /*  ⛔ כשל קריאה מוצג כ«אין ראיה» ⛔ ולא כהיסטוריה ריקה — ⚠️ רשימה ריקה
+   *  נקראת «מעולם לא היה לו סטטוס», ⭐ והיא בדיוק ההפך ממה שנמדד. */
+  if (failed) {
+    box.innerHTML = '<div style="padding:22px;text-align:center;color:#c05621;font-size:.88rem">' +
+      '⚠️ לא ניתן לקרוא מהענן כרגע — ⛔ אין ראיה שאין סטטוסים.<br>' +
+      '<span style="color:var(--text3);font-size:.82rem">נסו שוב כשיש חיבור.</span></div>';
+    return;
+  }
+  var s = rows.find(function (x) { return idEq(x.id, sid); });
+  var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
+  /*  ⚠️ הכתיב הישן החזיק סטטוס יחיד על הרשומה ⛔ ואינו נשמט מההיסטוריה —
+   *  ⭐ תלמיד שלא נגעו בו מאז נראה בלעדיו כמי שמעולם לא היה לו סטטוס. */
+  if (s && !list.length && s.status && ['approved', 'suspended', 'left'].indexOf(s.status) !== -1) {
+    list.push({ id: 'legacy', type: s.status, reason: s.statusReason || '',
+                from: s.statusFrom || '', to: s.statusTo || null });
+  }
+  var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
+  var TC = { approved: '#276749', suspended: '#c05621', left: '#c53030' };
+  var TB = { approved: '#f0fff4', suspended: '#fffbeb', left: '#fff5f5' };
+  var TBR = { approved: '#9ae6b4', suspended: '#fbd38d', left: '#feb2b2' };
+  var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
+  var fmt = function (v) {
+    if (!v) return '—';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return '—';
+    var h = window.ysHebDate(d);
+    var hh = d.getHours(), mm = d.getMinutes();
+    var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+    return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabel) : '—') + ' · ' + t;
+  };
+  var ts = function (a) { var d = new Date(a && a.from); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+  list.sort(function (a, b) { return ts(b) - ts(a); });
+  if (!list.length) {
+    box.innerHTML = '<div style="padding:22px;text-align:center;color:var(--text3);font-size:.88rem">' +
+      'לא נרשם אף סטטוס לתלמיד הזה.</div>';
+    return;
+  }
+  box.innerHTML = list.map(function (a) {
+    var cancelled = !!a.deleted;
+    return '<div style="background:' + (cancelled ? '#f7f7f7' : (TB[a.type] || '#f9f9f9')) +
+        ';border:1.5px solid ' + (cancelled ? '#ddd' : (TBR[a.type] || '#ddd')) +
+        ';border-radius:12px;padding:12px 14px;margin-bottom:10px' + (cancelled ? ';opacity:.75' : '') + '">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:1.1rem">' + (TI[a.type] || '📋') + '</span>' +
+        '<span style="font-weight:700;font-size:.9rem;color:' + (cancelled ? '#777' : (TC[a.type] || '#333')) + '">' +
+          esc(TL[a.type] || a.type || '—') + '</span>' +
+        (cancelled ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#eee;color:#777">בוטל</span>' : '') +
+      '</div>' +
+      (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + esc(a.reason) + '</div>' : '') +
+      '<div style="font-size:.78rem;color:#888;line-height:1.7">' +
+        'מ: ' + esc(fmt(a.from)) + '<br>' +
+        'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
+      '</div>' +
+      '<div style="font-size:.75rem;color:#999;margin-top:5px">' +
+        'נרשם ע״י: ' + esc(a.createdBy || '—') +
+        (cancelled ? ' · בוטל ע״י: ' + esc(a.deletedBy || '—') : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+};
+
 function studentFormFoot(){
   return '<button class="btn out" data-act="modal-close">ביטול</button>'+
          '<button class="btn" data-act="student-save">💾 שמור</button>';
@@ -6912,27 +6965,31 @@ function editStudent(sid){
   var s=getStudents().find(function(x){return idEq(x.id, sid);});
   if(!s)return;
   editingStudentId=sid;
-  openModal(H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491), studentFormHtml(), studentFormFoot());
+  openModal(H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491), studentFormHtml(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
+  // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נכתב חזרה — ⭐ מי שנוגע בכרטיס
+  //    מעביר את הערך לשדה החדש, והישן מפסיק להיות מקור שני.
+  document.getElementById('st-cycle').value=s.cycle||s.cohortYear||'';
 }
 
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
+  var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
   if(!name){toast(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501));return;}
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
     var idx=students.findIndex(function(s){return idEq(s.id, editingStudentId);});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].updatedAt=Date.now();}
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].updatedAt=Date.now();}
   } else {
     // ⛔ המזהה הוא uuid ולא `maxId+1` (סבב 37) — שני מכשירים שמוסיפים תלמיד
     //    במקביל היו מקצים את אותו מספר לשני אנשים, והמיזוג היה רואה בהם
     //    רשומה אחת. אותו תיקון בדיוק כמו במסלול הייבוא, ובאותו סבב.
     newId = newClientId();
-    students.push({id:newId,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
-    students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+    students.push({id:newId,name:name,cls:cls,cycle:cycle,updatedAt:Date.now(),createdBy:ysWho()});
+    students=ysSortStudents(students);
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
@@ -7022,7 +7079,7 @@ window.importStudentsFromFile = function(input) {
       }
       var wrote = true;
       if (added > 0) {
-        existing.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+        existing=ysSortStudents(existing);
         // אין מיספור-מחדש — id חייב להישאר יציב למיזוג בין מכשירים
         // ⛔ תוצאת הכתיבה המקומית נבדקת לפני כל דיווח הצלחה (סבב 37) —
         //    באחסון מלא `saveStudents` מחזירה `false`, ועד הסבב הזה הסיכום
@@ -7102,7 +7159,7 @@ window.printStudents = function() {
   try {
     if (typeof pdfMake === 'undefined') { toast('⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב'); return; }
     toast('מייצר PDF...');
-    var students = getStudents().filter(function(s){return s.active!==false;});
+    var students = ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=window._hcH(_todG);
@@ -7678,7 +7735,7 @@ window.atOpenSession = async function(sessId, sessName) {
   var _oCfg=window._atCfg||atDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   window._atMarks={};
   window._atPending={};
   window._atCleared={};
@@ -7861,7 +7918,7 @@ window.atConfirmLate = function(sid) {
 window.atRenderStudents = function() {
   var el=document.getElementById('at-students');
   if(!el) return;
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
 
   var active=students.filter(function(s){return s.active!==false;});
@@ -8095,9 +8152,15 @@ window.atRenderArchive = async function(records) {
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(ysMarks(rec)).map(function(e2){
-            var sid2=e2[0],m2=e2[1];
-            var sn=nameById(sid2);
+          var _mk2=ysMarks(rec);
+          var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
+            var _st2=students.find(function(x){return String(x.id)===String(sid2);});
+            // ⚠️ תלמיד שנמחק אחרי הסדר אינו במצבת ⛔ ואינו נשמט מהשורה —
+            //    הסדר שנרשם הוא עובדה, ו«חסר» בארכיון נקרא כמי שלא סומן.
+            return _st2||{id:sid2,name:nameById(sid2),cls:''};
+          })).map(function(_s2){
+            var sid2=String(_s2.id),m2=_mk2[sid2]||{};
+            var sn=_s2.name;
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var col=ARC_COL[m2.s]||'#888';
             return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
@@ -8301,7 +8364,7 @@ window.atRenderSupervision = async function() {
   window._atData=null;
   // סדרים מחוקים לא נספרים בהשגחה
   var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=atLiveTreats(await atLoadTreats());
 
@@ -8353,7 +8416,11 @@ window.atRenderSupervision = async function() {
     });
   });
 
-  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+  /*  ⛔ הרשימה נבנית מסדר התלמידים ⛔ ולא מ-`Object.entries` — ⚠️ מפתח שנראה
+   *  כמספר שלם מסודר ב-JS **מספרית** לפני כל שאר המפתחות, ⭐ ולכן השוויון
+   *  בין שני תלמידים עם אותו מספר חיסורים נשבר לפי המזהה. */
+  var rows=students.map(function(s){return [String(s.id), stats[s.id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
@@ -9063,7 +9130,7 @@ window.slOpenSession = async function(sessId, sessName) {
   var _oCfg=window._slCfg||slDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   window._slMarks={};window._slPending={};window._slCleared={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var am=slAutoMark(s,dateIso,_oSessTime);
@@ -9210,7 +9277,7 @@ window.slConfirmLate = function(sid) {
 window.slRenderStudents = function() {
   var el=document.getElementById('sl-students');
   if(!el) return;
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
 
   var active=students.filter(function(s){return s.active!==false;});
@@ -9447,9 +9514,15 @@ window.slRenderArchive = async function(records) {
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(ysMarks(rec)).map(function(e2){
-            var sid2=e2[0],m2=e2[1];
-            var sn=nameById(sid2);
+          var _mk2=ysMarks(rec);
+          var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
+            var _st2=students.find(function(x){return String(x.id)===String(sid2);});
+            // ⚠️ תלמיד שנמחק אחרי הסדר אינו במצבת ⛔ ואינו נשמט מהשורה —
+            //    הסדר שנרשם הוא עובדה, ו«חסר» בארכיון נקרא כמי שלא סומן.
+            return _st2||{id:sid2,name:nameById(sid2),cls:''};
+          })).map(function(_s2){
+            var sid2=String(_s2.id),m2=_mk2[sid2]||{};
+            var sn=_s2.name;
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var noteStr=m2.note?(' — '+m2.note):'';
             var col=ARC_COL[m2.s]||'#888';
@@ -9645,7 +9718,7 @@ window.slRenderSupervision = async function() {
   window._slData=null;
   // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
   var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=slLiveTreats(await slLoadTreats());
 
@@ -9692,7 +9765,11 @@ window.slRenderSupervision = async function() {
     });
   });
 
-  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+  /*  ⛔ הרשימה נבנית מסדר התלמידים ⛔ ולא מ-`Object.entries` — ⚠️ מפתח שנראה
+   *  כמספר שלם מסודר ב-JS **מספרית** לפני כל שאר המפתחות, ⭐ ולכן השוויון
+   *  בין שני תלמידים עם אותו מספר חיסורים נשבר לפי המזהה. */
+  var rows=students.map(function(s){return [String(s.id), stats[s.id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){

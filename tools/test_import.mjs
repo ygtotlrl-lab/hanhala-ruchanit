@@ -120,6 +120,10 @@ function run(src, opts) {
   //    בשמו החדש. ⛔ אין לשכפל אותו לרתמה (סבב 37א) — עותק בבדיקה היה
   //    ממשיך לעבור גם אם הליבה עצמה תשתנה.
   vm.runInContext(cutFn('newClientId', src), sandbox, { filename: 'newClientId.js' });
+  /*  ⛔ פונקציית המיון נחתכת מהמקור ⛔ ואינה מדומה ברתמה — ⚠️ מסלול הייבוא
+   *  קורא לה על הרשימה שהוא עומד לשמור, ⭐ ופונקציה מדומה כאן הייתה מאשרת
+   *  ייבוא שנשען על מיון שאינו קיים באפליקציה. */
+  vm.runInContext(cutFn('ysSortStudents', src), sandbox, { filename: 'ysSortStudents.js' });
   vm.runInContext(cutAssign('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
   sandbox.window.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
   return {
