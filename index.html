@@ -1129,17 +1129,15 @@ function ysApplyPerms(p) {
    סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
    גם מול סיסמה בת שש ספרות.
 
-   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל
-   (סבב 40).** עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**,
-   וזו הייתה בחירה תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך
-   «ניהול משתמשים». מעכשיו האימות — מקוון ואופליין כאחד — הוא מול
-   `pass_fp`, והעמודה נשארת **כתובה-ולא-נקראת** מאחורי
-   `YS_PLAINTEXT_LEGACY_WRITE` בלבד, עד שהמנהל יריץ את **צעד ב** של הסרתה.
-   ⛔ **אין להחזיר השוואה מול העמודה בשום מסלול (סבב 40)** — מפתח ה-anon
-   יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול היה לקרוא את
-   הסיסמאות ולהיכנס בזהות של כל אחד.
-   ⚠️ **והמחיר מדוד:** מסך «ניהול משתמשים» יפסיק להציג את הסיסמה הנוכחית
-   ברגע שהדגל ייסגר. **קביעת** סיסמה חדשה ממשיכה לעבוד.
+   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל.**
+   עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**, וזו הייתה בחירה
+   תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך «ניהול משתמשים».
+   ⭐ **וצעד ב הושלם בהחלטתו:** אין בקוד אף מסלול שכותב את העמודה, ואין
+   אף מסלול שקורא אותה. ⛔ **אין להחזיר לא כתיבה ולא קריאה בשום מסלול** —
+   מפתח ה-anon יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול
+   היה לקרוא את הסיסמאות ולהיכנס בזהות של כל אחד.
+   ⚠️ **והמחיר שולם במודע:** מסך «ניהול משתמשים» חדל להציג את הסיסמה
+   הנוכחית — אין מאין לקרוא אותה. **קביעת** סיסמה חדשה עובדת כשהייתה.
 
    ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** זו הנקודה שכל
    הסבב עומד עליה: `ysUserSlim` היא נקודת המעבר היחידה אל המטמון, והיא
@@ -1150,12 +1148,6 @@ var YS_PASS_ITER = 100000;
 // המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
 // מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
 var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
-/* ⛔ נתיב-החזרה של הסיסמה הגלויה (סבב 40) — ⚠️ נמדד מול המסד: העמודה כבר
-   **מותרת ב-NULL** ⛔ ועודנה קיימת. ⭐ כל עוד הדגל `true` היא עדיין נכתבת,
-   ⛔ וכיבויו הוא **החלטת המנהל** ולא חוב טכני שסשן סוגר מיוזמתו: ⚠️ הוא
-   הצעד שלפני מחיקת העמודה, ⛔ ואחריו אין דרך חזרה. ⛔ **והאימות כבר אינו
-   נשען עליה בשום מסלול** — היא נכתבת ואינה נקראת. */
-var YS_PLAINTEXT_LEGACY_WRITE = true;
 // 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
 // (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
 function ysRandSalt() {
@@ -1369,7 +1361,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v85'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v90'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2427,10 +2419,6 @@ var DOM_ACTIONS = {
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { toggleUserMenu(); },
-  'um-pass-peek':     function () {
-                        var i = document.getElementById('um-curr-pass');
-                        i.type = i.type === 'password' ? 'text' : 'password';
-                      },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function (el) { saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
@@ -2522,9 +2510,9 @@ async function renderUsersList() {
    עצמי). ⛔ בכל אחד מהם הטביעה נגזרת **ליד הסיסמה** ובאותה פעולה (סבב 22)
    — טביעה שנגזרת מאוחר יותר, במסלול נפרד, היא חלון שבו הכניסה האופליין
    עובדת עם הסיסמה **הקודמת**.
-   ⛔ ומסבב 40 אף אחד מהם אינו **קורא** את `password_hash` כדי לאמת —
-   הכתיבה אליה נשארת מאחורי `YS_PLAINTEXT_LEGACY_WRITE` בלבד, כנתיב חזרה
-   עד שהמנהל יריץ את `migrations/011`.
+   ⛔ ואף אחד מהם אינו **קורא** את `password_hash` כדי לאמת ⛔ ואף אינו
+   כותב אליה: ⭐ העמודה ירדה בהחלטת המנהל, ⚠️ והחזרת כתיבה אליה תיפול
+   על עמודה שאינה קיימת.
    ══════════════════════════════════════════════════════════════════════════ */
 function openAddUser() {
   openUserModal('הוסף משתמש');
@@ -2532,27 +2520,13 @@ function openAddUser() {
   document.getElementById('um-pass-hint').style.display = 'none';
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
 }
-async function openEditUser(u) {
+function openEditUser(u) {
   openUserModal('ערוך משתמש');
   document.getElementById('um-id').value = u.id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
-  // טען סיסמה נוכחית מה-DB
-  // ⚠️ הצגת הסיסמה הנוכחית תלויה בטקסט הגלוי, ולכן היא **הדבר היחיד
-  // שנעלם** כשנתיב-החזרה נסגר (סבב 40). זו יכולת ניהול שהמנהל בחר בה
-  // במפורש, וביטול ההחלטה הזו ב-2026-08-19 הוא שלו — ר' פרק «מודל
-  // הסיסמאות». ⛔ קביעת סיסמה חדשה ממשיכה לעבוד בשני המצבים.
-  var pwRes = null;
-  if (YS_PLAINTEXT_LEGACY_WRITE) {
-    try { pwRes = await withTimeout(SB.from('ys_users').select('password_hash').eq('id', u.id).maybeSingle()); } catch (e) {}
-    if (pwRes && !pwRes.error) document.getElementById('um-curr-pass').value = (pwRes.data && pwRes.data.password_hash) || '';
-    else document.getElementById('um-err').textContent = 'לא ניתן לטעון את הסיסמה הנוכחית (אין חיבור)';
-  } else {
-    document.getElementById('um-curr-pass').value = '';
-    document.getElementById('um-curr-pass').placeholder = 'הסיסמה אינה נשמרת עוד בטקסט גלוי';
-  }
 }
 /*  ⛔ טופס אחד לשני מסלולי הפתיחה — ⚠️ «הוסף» ו«ערוך» נבדלים בערכים
  *  ובתוויות בלבד, ⭐ ולא במבנה: טופס שנבנה פעמיים נבדל בשדה אחד. */
@@ -2568,14 +2542,8 @@ function userFormHtml() {
       '<option value="senior">צוות בכיר</option>'+
       '<option value="junior">צוות</option>'+
     '</select>'+
-    '<label>סיסמה נוכחית</label>'+
-    '<div style="position:relative;display:flex;align-items:center">'+
-      /*  ⛔ ללא inputmode ו-maxlength בכוונה (סבב 67) — השדה readonly ואינו
-          מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
-          הייתה מרמזת שאפשר לערוך אותו כאן. */
-      '<input type="password" aria-label="הסיסמה הנוכחית" id="um-curr-pass" readonly autocomplete="off" style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">'+
-      '<button type="button" data-act="um-pass-peek" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>'+
-    '</div>'+
+    /*  ⛔ אין כאן שדה «סיסמה נוכחית» — ⚠️ הצגתה חייבה לקרוא את הטקסט הגלוי
+        מהענן, ⭐ והעמודה ירדה: אין מאין לקרוא. ⛔ ואין להחזיר את השדה. */
     '<label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>'+
     '<input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" style="text-align:center;letter-spacing:4px;font-size:1.1rem">'+
     '<div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>'+
@@ -2608,9 +2576,6 @@ async function _saveUserInner() {
   var noFp = false;
   if (pass) {
     if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
-    // ⛔ נכתב רק כל עוד נתיב-החזרה פתוח (סבב 40) — העמודה `NOT NULL`, ולכן
-    // הפסקת הכתיבה לפני `migrations/011` הייתה מפילה כל יצירת משתמש.
-    if (YS_PLAINTEXT_LEGACY_WRITE) obj.password_hash = pass;
     // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
     var made = await ysMakePassFp(pass);
     if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
@@ -2789,17 +2754,11 @@ async function _changeMyPasswordInner() {
   // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
   var made = await ysMakePassFp(newPass);
   var updObj = { pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
-  if (YS_PLAINTEXT_LEGACY_WRITE) updObj.password_hash = newPass;   // ⛔ נתיב-חזרה בלבד (סבב 40) — אינו נקרא באימות
+  /*  ⛔ אין כאן נפילה-חזרה כשעמודות הטביעה חסרות — ⚠️ עד היום היא כתבה את
+   *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
+   *  נכשל בקול ⛔ ואינו מדווח «עודכנה» על סיסמה שלא השתנתה. */
   var upd;
-  try {
-    upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id));
-    if (upd && upd.error && ysIsMissingFpCol(upd.error)) {   // המיגרציה טרם הורצה
-      made = null;
-      upd = YS_PLAINTEXT_LEGACY_WRITE
-        ? await withTimeout(SB.from('ys_users').update({password_hash: newPass}).eq('id', AUTH.user.id))
-        : upd;
-    }
-  }
+  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id)); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
@@ -5916,6 +5875,14 @@ function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.upd
 function ysMarks(rec) { return (rec && rec.marks && typeof rec.marks === 'object') ? rec.marks : {}; }
 // בריחת HTML להודעות שגיאה שמגיעות מהשרת ומוזרקות ל-innerHTML
 // בריחת HTML — מימוש זהה לשלושת הפרויקטים (סבב 8), כולל גרש בודד.
+/*  ⛔ משווה אחד ברמת המודול (סבב 85) — ⚠️ `localeCompare` בונה משווה חדש
+ *  בכל קריאה, ⛔ ובתוך `.sort()` זה קורה O(n log n) פעמים: ⭐ אובייקט יקר
+ *  נבנה **פעם אחת**, ⛔ ולא בגוף פונקציה שנקראת יותר מפעם אחת.
+ *  ⚠️ ובדפדפן שאין בו `Intl.Collator` — נפילה-חזרה ל-`localeCompare` עם
+ *  אותו `he` מפורש, ⛔ שהיא בדיוק ההתנהגות שהייתה כאן עד היום. */
+var _heColl = null;
+try { _heColl = new Intl.Collator('he'); } catch (e) { _heColl = null; }
+var HE = _heColl || { compare: function (a, b) { return String(a).localeCompare(String(b), 'he'); } };
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -6531,7 +6498,7 @@ function ysSortStudents(list) {
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;
-    return String((x && x.name) || '').localeCompare(String((y && y.name) || ''), 'he');
+    return HE.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
 function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
@@ -7357,6 +7324,32 @@ function atSummaryHtml(cnts){
 
 window._atCfg = null;
 window._atData = null;
+window._atTreats = null;
+/*  ⛔ קריאה סינכרונית — מהזיכרון, ואם אין, מהדיסק (סבב 85) — ⚠️ הציור
+ *  הראשון אינו רשאי להמתין לרשת: ⭐ `await` שיושב לפני ה-`innerHTML`
+ *  הראשון הוא «מסך תקוע עד שהרשת חוזרת», ⛔ ולא «מסך שמתעדכן». */
+function ysCachedArr(memKey, lsKey) {
+  if (Array.isArray(window[memKey])) return window[memKey];
+  try {
+    var lc = lsGet(lsKey);
+    if (lc) { var p = JSON.parse(lc); if (Array.isArray(p)) { window[memKey] = p; return p; } }
+  } catch (e) {}
+  return null;
+}
+/*  ⛔ המשיכה מחזירה **האם הענן ענה** ⛔ ולא את הנתון (סבב 85) — ⚠️
+ *  `atLoadData` נופלת-חזרה לדיסק ומחזירה מערך גם כשהמשיכה נכשלה, ⭐ ולכן
+ *  אי אפשר להסיק ממנה שהרענון עבד: ⛔ וכשל שקט על מסך השגחה הוא החלטה
+ *  שמתקבלת על נתון ישן בלי לדעת. */
+async function _atPullSessions() {
+  var v = null; try { v = await ysCloudGet('ys_attend_sessions'); } catch (e) {}
+  if (Array.isArray(v)) { window._atData = v; return true; }
+  return false;
+}
+async function _atPullTreats() {
+  var v = null; try { v = await ysCfgGet('ys_attend_treats'); } catch (e) {}
+  if (Array.isArray(v)) { window._atTreats = v; return true; }
+  return false;
+}
 window._atMarks = {};              // המבנה: {sid:{s,min}}
 window._atPending = {};            // sid → true: סומן לאחרונה, עדיין לא ירד
 window._atCleared = {};            // sid → true: נוקה ידנית (לא לסמן אוטומטית שוב)
@@ -7432,8 +7425,10 @@ async function atSaveData(data) {
   } catch (e) { ysWriteFail('atSaveData', e); }
 }
 async function atLoadTreats() {
-  try { var v=await ysCfgGet('ys_attend_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ⚠️ הציור הראשון של מסך ההשגחה קורא
+  //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
+  try { var v=await ysCfgGet('ys_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
@@ -7452,6 +7447,7 @@ async function atSaveTreats(data) {
     var r=await ysCfgSet('ys_attend_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('atSaveTreats', e); }
+  window._atTreats=data;
   return data;
 }
 
@@ -7521,7 +7517,7 @@ window.loadAttend = async function() {
 function atSortedSessions(cfg) {
   if(!cfg) cfg=window._atCfg||atDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return (a.startTime||'').localeCompare(b.startTime||'');
+    return HE.compare(a.startTime||'', b.startTime||'');
   });
 }
 
@@ -8234,7 +8230,7 @@ window.atRenderArchive = async function(records) {
 
       var _arcSessOrder={};
       atSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE.compare(b,a);});
       days.forEach(function(iso){
         var dId=uid();
         var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
@@ -8356,7 +8352,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -8411,7 +8407,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName='Roboto';
     if(typeof pdfMake!=='undefined'&&window._alefFontB64){
@@ -8475,14 +8471,30 @@ window.atRenderSupervision = async function() {
   if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
-  // כפה טעינה מחדש מ-KV (לא ממטמון)
-  window._atData=null;
+  /*  ⛔ מציג מיד ⛔ ומרענן ברקע (סבב 85) — ⚠️ עד כאן המסך המתין לרשת
+   *  **לפני** הציור הראשון, ⭐ ולכן גם ניווט בין חודשים — שאינו נוגע
+   *  בנתונים כלל — נראה תקוע עד שהמשיכה חזרה. ⛔ והרענון עצמו לא בוטל:
+   *  המשגיח חייב נתונים טריים, ⚠️ ומה שהשתנה הוא **הסדר**. */
+  var cD=ysCachedArr('_atData','ys_attend_sessions');
+  var cT=ysCachedArr('_atTreats','ys_attend_treats');
+  if(cD&&cT) _atSupPaint(el,cD,cT,'');
+  else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
+   *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
+  var okA=await Promise.all([_atPullSessions(), _atPullTreats()]);
+  /*  ⛔ כשל משיכה מסומן גלוי ⛔ ולא בשקט — ⚠️ מסך שמציג נתון ישן בלי לומר
+   *  זאת הוא הכשל השקט עצמו: ⭐ המשגיח מחליט על סמך מה שהוא רואה. */
+  _atSupPaint(el, ysCachedArr('_atData','ys_attend_sessions')||[],
+                  ysCachedArr('_atTreats','ys_attend_treats')||[],
+                  (okA[0]&&okA[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+
+function _atSupPaint(el, rawData, rawTreats, warn) {
   // סדרים מחוקים לא נספרים בהשגחה
-  var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
+  var data=(rawData||[]).filter(function(r){ return !(r && r.deleted); });
   var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
-  var treats=atLiveTreats(await atLoadTreats());
+  var treats=atLiveTreats(rawTreats);
 
   // אתחל חודש נצפה אם לא מוגדר
   if(window._atSupHY===null){
@@ -8505,6 +8517,7 @@ window.atRenderSupervision = async function() {
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
@@ -8553,7 +8566,7 @@ window.atRenderSupervision = async function() {
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
     // תאריך + יום הערה אחרונה
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
     var lastLabel='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
@@ -8674,7 +8687,7 @@ window.atSupDetail = function(sid) {
   var rows='';
   if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין חיסורים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
+    records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
       var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+atDow(r.date_iso);
@@ -8890,6 +8903,19 @@ function slGetLogicalDate() {
 
 window._slCfg = null;
 window._slData = null;
+window._slTreats = null;
+/*  ⛔ אותו זוג בדיוק כמו בנוכחות (סבב 85) — ⚠️ שני המסכים הם אותו דפוס,
+ *  ⛔ ותיקון באחד בלבד היה משאיר את השני תקוע על «⏳ טוען...». */
+async function _slPullSessions() {
+  var v = null; try { v = await ysCloudGet('ys_sleep_sessions'); } catch (e) {}
+  if (Array.isArray(v)) { window._slData = v; return true; }
+  return false;
+}
+async function _slPullTreats() {
+  var v = null; try { v = await ysCfgGet('ys_sleep_treats'); } catch (e) {}
+  if (Array.isArray(v)) { window._slTreats = v; return true; }
+  return false;
+}
 window._slMarks = {};
 window._slPending = {};
 window._slCleared = {};
@@ -8967,8 +8993,9 @@ async function slSaveData(data) {
   } catch (e) { ysWriteFail('slSaveData', e); }
 }
 async function slLoadTreats() {
-  try { var v=await ysCfgGet('ys_sleep_treats'); if(Array.isArray(v))return v; } catch(e){}
-  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p))return p;} } catch(e){}
+  // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ר' `atLoadTreats`.
+  try { var v=await ysCfgGet('ys_sleep_treats'); if(Array.isArray(v)){window._slTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._slTreats=p;return p;}} } catch(e){}
   return [];
 }
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
@@ -8986,6 +9013,7 @@ async function slSaveTreats(data) {
     var r=await ysCfgSet('ys_sleep_treats',data);
     if(!(r&&r.error)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('slSaveTreats', e); }
+  window._slTreats=data;
   return data;
 }
 
@@ -9054,7 +9082,7 @@ window.loadSleep = async function() {
 function slSortedSessions(cfg) {
   if(!cfg) cfg=window._slCfg||slDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return (a.startTime||'').localeCompare(b.startTime||'');
+    return HE.compare(a.startTime||'', b.startTime||'');
   });
 }
 
@@ -9620,7 +9648,7 @@ window.slRenderArchive = async function(records) {
 
       var _arcSessOrder={};
       slSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return b.localeCompare(a);});
+      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE.compare(b,a);});
       days.forEach(function(iso){
         var dId=uid();
         var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
@@ -9737,7 +9765,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
@@ -9788,7 +9816,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
-    var sorted=data.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName='Roboto';
     if(typeof pdfMake!=='undefined'&&window._alefFontB64){
@@ -9853,13 +9881,23 @@ window.slRenderSupervision = async function() {
   if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
-  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
-  window._slData=null;
+  /*  ⛔ מציג מיד ומרענן ברקע (סבב 85) — ר' `atRenderSupervision`. */
+  var cD=ysCachedArr('_slData','ys_sleep_sessions');
+  var cT=ysCachedArr('_slTreats','ys_sleep_treats');
+  if(cD&&cT) _slSupPaint(el,cD,cT,'');
+  else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
+  var okS=await Promise.all([_slPullSessions(), _slPullTreats()]);
+  _slSupPaint(el, ysCachedArr('_slData','ys_sleep_sessions')||[],
+                  ysCachedArr('_slTreats','ys_sleep_treats')||[],
+                  (okS[0]&&okS[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+
+function _slSupPaint(el, rawData, rawTreats, warn) {
   // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
-  var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
+  var data=(rawData||[]).filter(function(r){ return !(r && r.deleted); });
   var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
-  var treats=slLiveTreats(await slLoadTreats());
+  var treats=slLiveTreats(rawTreats);
 
   if(window._slSupHY===null){
     var ch=window._hcH(new Date());
@@ -9879,6 +9917,7 @@ window.slRenderSupervision = async function() {
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
@@ -9922,7 +9961,7 @@ window.slRenderSupervision = async function() {
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return (b.date_iso||'').localeCompare(a.date_iso||'');})[0]:null;
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
     var lastLabel='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
@@ -10038,7 +10077,7 @@ window.slSupDetail = function(sid) {
   var rows='';
   if(!records.length){rows='<div style="text-align:center;padding:20px;color:var(--text2)">אין אירועים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return a.date_iso.localeCompare(b.date_iso)||(a.session.localeCompare(b.session));}).forEach(function(r){
+    records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
       var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+slDow(r.date_iso);
