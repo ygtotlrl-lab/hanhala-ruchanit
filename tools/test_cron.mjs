@@ -42,13 +42,16 @@ const APP = {
          // סבב 80 — ההגדרות, שירשו את שלושה-עשר מפתחות ה-`kv`.
          'ys_settings'],
   prefixes: [''],
-  /*  ⛔ שלושה-עשר מפתחות שהאפליקציה **חדלה לכתוב** בסבב 80 ⛔ ואינם
+  /*  ⛔ שנים-עשר מפתחות שהאפליקציה **חדלה לכתוב** בסבב 80 ⛔ ואינם
       יורדים מרשימת-ההיתר — ⚠️ לכל אחד מהם יש עדיין עותקי גיבוי במסד,
-      ⭐ ומפתח שיוצא מהרשימה אינו מתפנה לעולם. */
+      ⭐ ומפתח שיוצא מהרשימה אינו מתפנה לעולם.
+      ⛔ `ys_cls_years` ירד מכאן בסבב 82 — ⚠️ המנהל הוציא אותו מהרשימה
+      במסד, ⭐ ושבע שורות הגיבוי שלו קפאו כתוצאה מכך: ⛔ ההצהרה כאן
+      מיישרת את השער למה שרץ, ⛔ ואינה מאשרת את התוצאה. */
   legacyKeys: ['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
                'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg',
                'ys_sleep_treats', 'ys_reasons', 'ys_absence_reasons',
-               'ys_approvals', 'ys_perms', 'ys_cls_years', 'ys_settings_meta'],
+               'ys_approvals', 'ys_perms', 'ys_settings_meta'],
   sisterKeys: [
     // schar-limud
     'sl_students', 'sl_transactions', 'sl_settings', 'sl_lists',
@@ -62,8 +65,8 @@ const APP = {
     'ramataviv_tb_entries', 'ramataviv_tb_archive',
   ],
   migration: 'migrations/004_backup_retention_cron.sql',
-  allowlistMigration: 'migrations/019_backup_allowlist_add_ys_settings.sql',
-  migrationDoc: 'hanhala-ruchanit/migrations/019_backup_allowlist_add_ys_settings.sql',
+  allowlistMigration: 'migrations/021_soft_delete_ys_cls_years.sql',
+  migrationDoc: 'hanhala-ruchanit/migrations/021_soft_delete_ys_cls_years.sql',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

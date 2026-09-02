@@ -1331,7 +1331,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v84'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v85'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -6157,8 +6157,8 @@ async function ysPullFromCloud() {
     }
     /*  ⛔ `ys_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
      *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
-     *  ⭐ השורה עצמה נשארת בענן ⛔ ואינה נמחקת מכאן — מחיקת נתון היא
-     *  פעולת מנהל. */
+     *  ⭐ השורה נמחקה מחיקה רכה בענן בהחלטת מנהל, ⛔ ואין להחזיר את
+     *  המשיכה: ⚠️ משיכה של שורה מחוקה מחזירה אותה למסך כאילו היא חיה. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
       var _atCfgV = await ysCfgGet('ys_attend_cfg');
