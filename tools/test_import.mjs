@@ -86,7 +86,7 @@ function run(src, opts) {
     style: {},
     value: '',
   });
-  const slots = { icon: {}, title: {}, body: {}, modal: {} };
+  const slots = { title: {}, body: {} };
   const sandbox = {
     console, JSON, Date, Math, String, Number, Array, Object, Boolean,
     isFinite, parseInt, parseFloat, RegExp, Error, Uint8Array,
@@ -101,14 +101,12 @@ function run(src, opts) {
     pendMark: (k) => { marked.push(k); },
     scheduleYsPush: () => { summary.pushed = true; },
     renderStudents: () => {},
+    /*  ⛔ הסיכום עובר ב-`openModal` מסבב 80 — ⚠️ עד אז הוא מילא שלושה
+     *  אלמנטים מוצהרים והציג מיכל משלו; ⭐ הרתמה לוכדת את הקריאה עצמה,
+     *  ⛔ ולא את המיכל שכבר אינו קיים. */
+    openModal: (title, body) => { slots.title.v = title; slots.body.v = body; summary.shown = true; },
     document: {
-      getElementById: (id) => {
-        if (id === 'import-summary-icon') return el(slots.icon);
-        if (id === 'import-summary-title') return el(slots.title);
-        if (id === 'import-summary-body') return el(slots.body);
-        if (id === 'import-summary-modal') return { style: { set display(v) { summary.shown = (v === 'flex'); }, get display() { return summary.shown ? 'flex' : 'none'; } } };
-        return el({});
-      },
+      getElementById: (id) => el({}),
     },
     FileReader: function () {
       this.readAsText = () => { this.onload({ target: { result: CSV } }); };
@@ -122,11 +120,15 @@ function run(src, opts) {
   //    בשמו החדש. ⛔ אין לשכפל אותו לרתמה (סבב 37א) — עותק בבדיקה היה
   //    ממשיך לעבור גם אם הליבה עצמה תשתנה.
   vm.runInContext(cutFn('newClientId', src), sandbox, { filename: 'newClientId.js' });
+  /*  ⛔ פונקציית המיון נחתכת מהמקור ⛔ ואינה מדומה ברתמה — ⚠️ מסלול הייבוא
+   *  קורא לה על הרשימה שהוא עומד לשמור, ⭐ ופונקציה מדומה כאן הייתה מאשרת
+   *  ייבוא שנשען על מיון שאינו קיים באפליקציה. */
+  vm.runInContext(cutFn('ysSortStudents', src), sandbox, { filename: 'ysSortStudents.js' });
   vm.runInContext(cutAssign('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
   sandbox.window.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
   return {
     saved, marked, pushed: !!summary.pushed,
-    icon: slots.icon.v, title: slots.title.v, body: slots.body.v, shown: summary.shown,
+    title: slots.title.v, body: slots.body.v, shown: summary.shown,
     added: saved.length ? saved[0].filter((s) => s.createdBy === 'tester') : [],
   };
 }

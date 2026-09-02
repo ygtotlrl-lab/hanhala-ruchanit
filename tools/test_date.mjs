@@ -18,7 +18,8 @@
  *  האריתמטי הקבוע, ⛔ ולא מול ספריית המערכת: ⭐ גרסאות ישנות שוגות בשנים
  *  מסוימות.
  *
- *  ⛔ **אפס מופעים בשלוש האחיות** — ⚠️ אין מה ליישר שם, ⭐ ולכן פרטי כאן.
+ *  ⛔ **אפס מופעים בשכר ובגיוס** — ⚠️ אין בהן צרכן תאריך עברי כלל, ⭐ ולכן
+ *  השער חי ביומן ובהנהלה בלבד, ⛔ ובאותו נוסח בית-לבית.
  *  ⛔ המוטציות אינן נכתבות לעץ — הן רצות על מחרוזת.
  */
 
@@ -51,10 +52,9 @@ const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
 /* ── חילוץ: לוח התאריכים העברי עד צרכני התצוגה ─────────────────────────── */
 const L = SRC.split('\n');
 const from = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
-/*  ⛔ העוגן הוא צרכן התאריך האחרון באזור ⛔ ולא שם שנבחר לנוחות — ⚠️ העוגן
- *  הקודם היה `hebrewMonth`, שנמחקה כפונקציה בלי קורא, ⛔ והשער איתר אז
- *  אזור ריק ונפל על קוד תקין. */
-const to = L.findIndex((l, i) => i > from && l.startsWith('function hebrewDateShort('));
+/*  ⛔ העוגן הוא סמן סוף מוצהר ⛔ ולא שם פונקציה — ⚠️ עוגן שהוא שם נשבר
+ *  ברגע שהפונקציה נמחקת, ⛔ והשער מאתר אז אזור ריק ונופל על קוד תקין. */
+const to = L.findIndex((l, i) => i > from && l.startsWith('// ═══ סוף אזור התאריך העברי'));
 assert(from >= 0 && to > from, 'אזור לוח התאריכים העברי אותר ב-index.html');
 const CAL = L.slice(from, to + 1).join('\n');
 
@@ -99,6 +99,8 @@ function harness(calSrc) {
   vm.runInContext(calSrc + `
     this.__api = { heb: function (d) { return window.ysHebDate(d); },
                    hebNoArg: function () { return window.ysHebDate(); },
+                   names: function (hy) { return window.ysHebMonthNames(hy); },
+                   isLeap: function (hy) { return window.ysHebIsLeap(hy); },
                    text: function (d) { return hebrewDate(d); },
                    textNoArg: function () { return hebrewDate(); },
                    log: function () { return window._ysBadDates || []; } };`, ctx);
@@ -137,6 +139,33 @@ assert(log.length > 0 && log.length <= 12,
        `הכשלים נרשמו (${log.length} רשומות) והרישום מוגבל ל-12`);
 assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === 'hebrewDate'),
        'הרישום מציין את המקום שבו הקלט נדחה');
+
+/* ── 2ב. חודשי אדר — שנה מעוברת מול פשוטה ──────────────────────────────── */
+/*  ⛔ הטענה היא על **הערך** ולא על קיום השם (סבב 80) — ⚠️ טבלת החודשים
+ *  נבחרת לפי העיבור, ⭐ ושנה מעוברת נושאת שלושה-עשר חודשים ופשוטה
+ *  שנים-עשר: ⛔ מיפוי שקורס את שני האדרים לאחד היה מאחד כ-60 יום לדלי
+ *  חודש אחד בארכיון. ⚠️ שם החודש נבדל בין הריפו («אדר א» מול «אדר א׳»),
+ *  ⛔ ולכן נמדדת הקידומת ולא המחרוזת המלאה. */
+{
+  const leapNames  = H.api.names(5787);   /* תשפ״ז — מעוברת */
+  const plainNames = H.api.names(5786);   /* תשפ״ו — פשוטה  */
+  assert(H.api.isLeap(5787) === true && H.api.isLeap(5786) === false,
+         `⭐ העיבור נגזר מהשנה — 5787 מעוברת ו-5786 אינה (${H.api.isLeap(5787)}/${H.api.isLeap(5786)})`);
+  assert(leapNames.length === 13 && plainNames.length === 12,
+         `טבלת החודשים נבחרת לפי העיבור — ${leapNames.length} מול ${plainNames.length}`);
+
+  const adarI  = H.api.heb(H.foreign(2027, 2, 20));
+  const adarII = H.api.heb(H.foreign(2027, 3, 20));
+  const adar   = H.api.heb(H.foreign(2026, 3, 5));
+  assert(adarI.ok && adarI.monthName.indexOf('אדר א') === 0,
+         `⭐ שנה מעוברת ⟵ «אדר א» (נמדד «${adarI.monthName}»)`);
+  assert(adarII.ok && adarII.monthName.indexOf('אדר ב') === 0,
+         `⭐ ובחודש שאחריו «אדר ב» (נמדד «${adarII.monthName}»)`);
+  assert(adar.ok && adar.monthName === 'אדר',
+         `⭐ ובשנה פשוטה «אדר» בלבד (נמדד «${adar.monthName}»)`);
+  assert(adarI.monthIndex !== adarII.monthIndex,
+         `⛔ ושני האדרים אינם אותו אינדקס — ${adarI.monthIndex} מול ${adarII.monthIndex}`);
+}
 
 /* ── 3. מוטציה — החזרת השורה הישנה חייבת להחזיר את הבאג ────────────────── */
 const mutated = CAL

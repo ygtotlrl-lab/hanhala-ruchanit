@@ -189,20 +189,19 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 
 
-.mb{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
 .modal-box{background:#fff;border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy);max-height:85vh;overflow-y:auto}
-.mb.on{display:flex}
+.modal-overlay.open{display:flex}
+.mdl-x{background:none;border:none;font-size:1.1rem;line-height:1;cursor:pointer;color:var(--text2);padding:2px 6px}
+.mdl-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.mdl-hd h3{margin:0;font-size:1rem;font-weight:700;color:var(--navy)}
+.mdl-ft{display:flex;gap:10px;margin-top:18px}
+.mdl-ft:empty{display:none}
 .hidden{display:none!important}
 
-.md{background:var(--bg2);border-radius:14px;padding:32px;width:100%;max-width:490px;box-shadow:0 20px 60px rgba(0,0,0,.22);position:relative;border-top:4px solid var(--navy)}
-.md-title{font-size:1.1rem;font-weight:700;color:var(--navy);margin-bottom:20px;display:flex;align-items:center;gap:10px}
-.md label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
-.md input{width:100%;padding:10px 14px;margin-bottom:13px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
-.md input:focus{outline:none;border-color:var(--navy)}
-.ma{display:flex;gap:10px;margin-top:8px;justify-content:flex-end}
-.mc{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.mc:hover{background:#eef2fa;color:var(--navy)}
+#modal-body label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
+#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
+#modal-body input:focus{outline:none;border-color:var(--navy)}
 .cs{text-align:center;padding:70px 40px;background:var(--bg2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
 .cs .ci{font-size:3.2rem;margin-bottom:14px;opacity:.6}
 .cs h3{font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:8px}
@@ -383,15 +382,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   </div>
 </div>
 
-<!-- ===== חלון חסום ===== -->
-<div class="mb hidden" id="denied-modal">
-  <div class="md" style="text-align:center;max-width:300px">
-    <div style="font-size:2.5rem;margin-bottom:8px">🔒</div>
-    <div class="md-title" style="justify-content:center">גישה מוגבלת</div>
-    <p style="color:var(--text2);font-size:.88rem;margin:10px 0 20px">אין לך הרשאה לאפשרות זו.<br>פנה למנהל המערכת.</p>
-    <button class="btn" data-act="denied-close">הבנתי</button>
-  </div>
-</div>
 
 <header>
   <div class="hl">
@@ -482,47 +472,33 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <div id="students-tbody"></div>
 </div>
 
-<!-- Delete All Confirmation Modal -->
-<div id="delete-all-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:400px;text-align:center">
-<div style="font-size:2.4rem;margin-bottom:10px">⚠️</div>
-<h3 style="color:#c0392b;margin-bottom:10px">מחיקת כלל התלמידים</h3>
-<p style="color:var(--text2);margin-bottom:6px">פעולה זו תמחק לצמיתות את <strong>כל</strong> התלמידים מהמערכת.</p>
-<p style="color:#c0392b;font-weight:600;margin-bottom:20px;font-size:.9rem">לא ניתן לשחזר לאחר האישור.</p>
-<div style="display:flex;gap:10px;justify-content:center">
-<button class="btn out" onclick="document.getElementById('delete-all-modal').style.display='none'">ביטול</button>
-<button class="btn" style="background:#c0392b;border-color:#c0392b" data-act="delete-all-confirm">🗑️ כן, מחק הכל</button>
+<!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ עד סבב 80
+      כל דיאלוג בנה מיכל משלו וסגר אותו בדרך משלו, ⛔ ומיכל שהוחלף חלקית
+      משאיר שני מסלולי סגירה.  -->
+<div id="modal" class="modal-overlay">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="mdl-hd">
+      <h3 id="modal-title"></h3>
+      <button class="mdl-x" data-act="modal-close" aria-label="סגירה">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="mdl-ft" id="modal-foot"></div>
+  </div>
 </div>
-</div>
+<!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
+      ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
+<div class="modal-overlay" id="ask">
+  <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="ask-title" style="max-width:340px">
+    <div class="mdl-hd"><h3 id="ask-title">אישור</h3></div>
+    <div id="ask-body" style="font-size:.9rem;color:var(--text2)"></div>
+    <div class="mdl-ft">
+      <button class="btn out" data-act="ask-no">ביטול</button>
+      <button class="btn" data-act="ask-yes" id="ask-yes">אישור</button>
+    </div>
+  </div>
 </div>
 
-<!-- Import Summary Modal -->
-<div id="import-summary-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:380px;text-align:center">
-<div id="import-summary-icon" style="font-size:2rem;margin-bottom:10px"></div>
-<h3 id="import-summary-title" style="margin-bottom:14px"></h3>
-<div id="import-summary-body" style="color:var(--text2);font-size:.92rem;margin-bottom:20px;line-height:1.7"></div>
-<button class="btn" onclick="document.getElementById('import-summary-modal').style.display='none'">סגור</button>
-</div>
-</div>
 
-<!-- Add/Edit Student Modal -->
-<div id="student-modal" class="modal-overlay" style="display:none">
-<div class="modal-box" style="max-width:420px">
-<h3 id="student-modal-title">➕ הוסף תלמיד</h3>
-<label for="st-name">שם התלמיד (משפחה שם)</label>
-<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">
-<label for="st-class">שיעור</label>
-<select id="st-class" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px">
-<option value="a">שיעור א'</option>
-<option value="b">שיעור ב'</option>
-<option value="g">שיעור ג'</option>
-</select>
-<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-<button class="btn out" onclick="closeStudentModal()">ביטול</button>
-<button class="btn" data-act="student-save">💾 שמור</button>
-</div>
-</div>
 </div>
 
 </div>
@@ -709,28 +685,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
           <button class="btn" data-act="absence-reasons-save">💾 שמור</button>
         </div>
       </div>
-      <!-- שנות מחזור לכל שיעור -->
-      <div class="ss" style="margin-top:14px">
-        <div class="ss-t">🎓 שנות מחזור לכל שיעור</div>
-        <div style="font-size:.82rem;color:var(--text2);margin-bottom:12px">שנת המחזור נשמרת לצמיתות עם כל תלמיד ומוצגת בתצוגת "לא פעילים"</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-a">שיעור א'</label>
-            <select id="cy-a" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-b">שיעור ב'</label>
-            <select id="cy-b" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px">
-            <label style="min-width:80px;font-size:.87rem;font-weight:600" for="cy-g">שיעור ג'</label>
-            <select id="cy-g" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;direction:rtl;background:#fff"></select>
-          </div>
-        </div>
-        <div style="margin-top:14px;text-align:left">
-          <button class="btn" data-act="cls-years-save">💾 שמור</button>
-        </div>
-      </div>
     </div>
 
     <!-- הגדרות מודול סדרים -->
@@ -825,40 +779,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 </main>
 
-<!-- מודל ניהול משתמש -->
-<div class="mb hidden" id="user-modal">
-  <div class="md" style="max-width:380px">
-    <button class="mc" data-act="user-modal-close">✕</button>
-    <div class="md-title"><span>👤</span><span id="um-title">הוסף משתמש</span></div>
-    <input type="hidden" id="um-id">
-    <label for="um-name">שם מלא *</label>
-    <input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">
-    <label for="um-username">שם משתמש * (לכניסה)</label>
-    <input aria-label="israel" type="text" id="um-username" placeholder="israel" style="direction:ltr">
-    <label for="um-role">תפקיד</label>
-    <select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">
-      <option value="admin">מנהל</option>
-      <option value="senior">צוות בכיר</option>
-      <option value="junior">צוות</option>
-    </select>
-    <label>סיסמה נוכחית</label>
-    <div style="position:relative;display:flex;align-items:center">
-      <!-- ⛔ ללא inputmode ו-maxlength בכוונה (סבב 67) — השדה readonly ואינו
-           מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
-           הייתה מרמזת שאפשר לערוך אותו כאן. ⚠️ קביעת סיסמה חדשה היא
-           `um-pass` שמתחתיו, והוא כן נושא את שניהם. -->
-      <input type="password" aria-label="הסיסמה הנוכחית" id="um-curr-pass" readonly autocomplete="off" style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">
-      <button type="button" onclick="var i=document.getElementById('um-curr-pass');i.type=i.type==='password'?'text':'password'" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>
-    </div>
-    <label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>
-    <input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" style="text-align:center;letter-spacing:4px;font-size:1.1rem">
-    <div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>    <div class="auth-err" id="um-err"></div>
-    <div class="ma" style="margin-top:14px">
-      <button class="btn out" data-act="user-modal-close">ביטול</button>
-      <button class="btn" data-act="user-save">💾 שמור</button>
-    </div>
-  </div>
-</div>
+
 <div id="toast"></div>
 <script>
 // ============================================================
@@ -1020,6 +941,7 @@ function hebrewDate(jsDate){
   return 'יום '+window.YS_DOW_HEB[jsDate.getDay()]+', '+h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
 }
 function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
+// ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg');
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
@@ -1148,7 +1070,7 @@ function ysApplyPerms(p) {
       for (var i = 0; i < AUTH.MODULES.length; i++) {
         if (AUTH.MODULES[i].id === cur) { lbl = AUTH.MODULES[i].label; break; }
       }
-      try { closeDenied(); } catch (e2) {}
+      closeModal();
       showPage('home');
       try { toast('🔒 ההרשאות שלך עודכנו — ' + lbl + ' אינו זמין עוד'); } catch (e3) {}
     }
@@ -1409,7 +1331,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v78'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v82'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -1785,9 +1707,9 @@ window._hcDraw=function(pfx){
   var h='<div style="padding:12px 10px;font-family:Heebo;direction:rtl;min-width:252px">';
   // כותרת ניווט — חץ ימני=חודש הקודם, שמאלי=הבא
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-  h+='<button onclick="window._hcNav(\''+pfx+'\',-1)" style="'+bs+(hasPrev?'':';opacity:.25;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>';
+  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" style="'+bs+(hasPrev?'':';opacity:.25;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>';
   h+='<span style="font-weight:700;font-size:.95rem;color:#1a3a6b">'+window._hcMN(v.hy)[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
-  h+='<button onclick="window._hcNav(\''+pfx+'\',1)" style="'+bs+(hasNext?'':';opacity:.25;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>';
+  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" style="'+bs+(hasNext?'':';opacity:.25;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>';
   h+='</div>';
   // כותרת ימים: DOM[0]=ימין=א׳(ראשון) → DOM[6]=שמאל=ש׳(שבת)
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px);text-align:center;margin-bottom:3px">';
@@ -1802,7 +1724,7 @@ window._hcDraw=function(pfx){
     var bg=isSel?'#1a3a6b':isToday?'#dbeafe':'transparent';
     var fg=isSel?'#fff':isToday?'#1e40af':'#1a1a1a';
     var fw=isSel||isToday?'700':'400';
-    h+='<button onclick="window._hcPick(\''+pfx+'\','+v.hy+','+v.mi+','+d+')" '+
+    h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
       'style="font-family:Heebo;font-size:.78rem;padding:5px 1px;border:none;border-radius:6px;cursor:pointer;'+
       'background:'+bg+';color:'+fg+';font-weight:'+fw+';text-align:center">'+window._hcD[d]+'</button>';
   }
@@ -1876,7 +1798,7 @@ window._hcBuild=function(pfx,initH,tv){
   if(initH){var g=window._hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
   var trg='display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;border:1.5px solid #d8e2f0;border-radius:10px;background:#f4f8ff;font-family:Heebo;font-size:.92rem;color:#1a3a6b;font-weight:600;box-sizing:border-box;transition:border-color .15s';
   return '<div style="position:relative">'+
-    '<div id="'+pfx+'_trg" onclick="window._hcOpen(\''+pfx+'\')" style="'+trg+'">'+
+    '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" style="'+trg+'">'+
       '<span id="'+pfx+'_lbl">'+label+'</span>'+
       '<span style="font-size:.8rem;opacity:.5;margin-right:4px">📅</span>'+
     '</div>'+
@@ -1896,18 +1818,8 @@ document.addEventListener('mousedown',function(e){
 /* ══════════════════════════════════════════════════════════════════════════
    סטטוס תלמיד והחלפת משתמש — מודלים
    ══════════════════════════════════════════════════════════════════════════ */
-function closeStatusModal() {
-  var m = document.getElementById('status-modal');
-  if (m) m.style.display = 'none';
-  var f = document.getElementById('status-form-modal');
-  if (f) f.style.display = 'none';
-}
 
 function openStatusForm(type) {
-  // סגור מודל בחירה
-  var m = document.getElementById('status-modal');
-  if (m) m.style.display = 'none';
-
   var typeLabels = {approved: 'אישור', suspended: 'השעיה', left: 'לא שב'};
   var typeColors = {approved: '#276749', suspended: '#c05621', left: '#c53030'};
   var typeBg = {approved: '#f0fff4', suspended: '#fffbeb', left: '#fff5f5'};
@@ -1922,25 +1834,13 @@ function openStatusForm(type) {
   var defaultTime = String(now.getHours()).padStart(2,'0')+':'+String(mins).padStart(2,'0');
   var todayHeb = window._hcH(now);
 
-  var form = document.getElementById('status-form-modal');
-  if (!form) {
-    form = document.createElement('div');
-    form.id = 'status-form-modal';
-    form.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);direction:rtl';
-    document.body.appendChild(form);
-  }
-
   var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px';
   var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff;box-sizing:border-box';
 
   window._currentStatusType = type;
-  form.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:95%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid '+typeBorder[type]+'">' +
-      '<div style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem">'+typeIcons[type]+'</span><span style="font-weight:700;font-size:1rem;color:'+typeColors[type]+'">'+typeLabels[type]+' — <span id="sfm-name"></span></span></div>' +
-      '<button data-act="status-modal-close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
-    '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:16px">' +
+  openModal(typeIcons[type]+' '+typeLabels[type]+' — '+window._statusStudentName,
+    '<div style="display:flex;flex-direction:column;gap:16px;border-top:2px solid '+typeBorder[type]+';padding-top:14px">' +
       '<div>' +
         '<label style="'+lbl+'">סיבה</label>' +
         '<select aria-label="סיבת ההיעדרות" id="sfm-reason" style="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptions+'<option value="אחר">אחר</option></select>' +
@@ -1956,15 +1856,9 @@ function openStatusForm(type) {
           window._hcBuild('sfmT', null, '') +
         '</div>' +
       '</div>' +
-    '</div>' +
-    '<div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-start">' +
-      '<button data-act="student-status-save" style="background:'+typeColors[type]+';color:#fff;border:none;padding:10px 24px;border-radius:10px;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">שמור</button>' +
-      '<button data-act="status-modal-close" style="background:none;border:1.5px solid #ddd;color:#666;padding:10px 18px;border-radius:10px;font-family:Heebo;font-size:.92rem;cursor:pointer">ביטול</button>' +
-    '</div>' +
-  '</div>';
-
-  document.getElementById('sfm-name').textContent = window._statusStudentName;
-  form.style.display = 'flex';
+    '</div>',
+    '<button data-act="student-status-save" style="background:'+typeColors[type]+';color:#fff;border:none;padding:10px 24px;border-radius:10px;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">שמור</button>' +
+    '<button data-act="modal-close" style="background:none;border:1.5px solid #ddd;color:#666;padding:10px 18px;border-radius:10px;font-family:Heebo;font-size:.92rem;cursor:pointer">ביטול</button>');
 }
 
 function saveStudentStatus(type) {
@@ -1993,7 +1887,7 @@ function saveStudentStatus(type) {
   scheduleYsPush();
   ysRefreshApprovalMarks(sid); // רענון סדרים פתוחים של היום
   renderStudents();
-  closeStatusModal();
+  closeModal();
   toast('✅ סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום'));
 }
 
@@ -2030,39 +1924,31 @@ window.switchUserEl = function(el) {
 };
 function switchUser(id, name) {
   closeUserMenu();
-  var d = document.getElementById('switch-user-modal');
-  if (!d) {
-    d = document.createElement('div');
-    d.id = 'switch-user-modal';
-    d.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
-    var title = H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513);
-    var subTitle = H(1492,1499,1504,1505,32,1505,1497,1505,1502,1488);
-    var cancelTxt = H(1489,1497,1496,1493,1500);
-    var enterTxt = H(1499,1504,1497,1505,1492);
-    d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:300px;text-align:center;border-top:4px solid #1a3a6b;direction:rtl"><div style="font-size:1.8rem;margin-bottom:8px">'+String.fromCharCode(128100)+'</div><div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px" id="switch-name"></div><div style="font-size:.8rem;color:#888;margin-bottom:16px">'+subTitle+'</div><input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px"><div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px"></div><div style="display:flex;gap:10px;justify-content:center"><button data-act="switch-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button><button data-act="switch-confirm" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button></div></div>';
-    document.body.appendChild(d);
-    document.getElementById('switch-pass').addEventListener('keydown',function(e){if(e.key==='Enter')confirmSwitch();});
-  }
-  d._switchId = id;
+  var subTitle = H(1492,1499,1504,1505,32,1505,1497,1505,1502,1488);
+  var cancelTxt = H(1489,1497,1496,1493,1500);
+  var enterTxt = H(1499,1504,1497,1505,1492);
+  window._ysSwitchId = id;
+  openModal(String.fromCharCode(128100) + ' ' + H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513),
+    '<div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px;text-align:center" id="switch-name"></div>'+
+    '<div style="font-size:.8rem;color:#888;margin-bottom:16px;text-align:center">'+subTitle+'</div>'+
+    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px">'+
+    '<div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px"></div>',
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button>'+
+    '<button data-act="switch-confirm" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button>');
   document.getElementById('switch-name').textContent = name;
-  document.getElementById('switch-pass').value = '';
-  document.getElementById('switch-err').textContent = '';
-  d.style.display = 'flex';
-  setTimeout(function(){document.getElementById('switch-pass').focus();},100);
+  var sp = document.getElementById('switch-pass');
+  sp.addEventListener('keydown', function (e) { if (e.key === 'Enter') confirmSwitch(); });
+  sp.focus();
 }
-function closeSwitchModal() {
-  var d=document.getElementById('switch-user-modal');
-  if(d) d.style.display='none';
-}
+
 async function confirmSwitch() {
-  var d=document.getElementById('switch-user-modal');
   var pass=document.getElementById('switch-pass').value.trim();
   var errEl=document.getElementById('switch-err');
   if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
   var res=null, netFail=false;
   try {
     // ⭐ סבב 40 — לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
-    res=await withTimeout(SB.from('ys_users').select('*').eq('id',d._switchId).eq('active',true).single());
+    res=await withTimeout(SB.from('ys_users').select('*').eq('id',window._ysSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -2078,7 +1964,7 @@ async function confirmSwitch() {
     var cache=ysUsersCacheGet();
     var cu=null;
     try {
-      cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.id)===String(d._switchId);});
+      cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.id)===String(window._ysSwitchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
     if(!cu){errEl.textContent=MSG_OFF_UNKNOWN;return;}
     var verdict=await ysVerifyOffline(cu,pass);
@@ -2100,7 +1986,7 @@ async function confirmSwitch() {
     // ל-`ysRefreshUsersCache()`, שהייתה מרעננת את המשתמש **הקודם**.
     ysUsersCacheSave(u);
   }
-  closeSwitchModal();
+  closeModal();
   AUTH.user=u;
   // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
   // הרענון המלא (סבב 22) מושך את כל המשתמשים הפעילים; באופליין אין רשת
@@ -2174,7 +2060,7 @@ function showSettingsModule(mod) {
   // סטטיים ב-HTML, והצגת המודול היא שינוי `display` סינכרוני — לא היה כאן שום
   // דבר להמתין לו, והדחייה רק פיצלה את החיווט לשני תורים.
   if (mod === 'system') { renderUsersList(); renderPermsTable(); statusAreaMount(); bkStatusMount(); hwRestoreMount(); }
-  if (mod === 'students') { renderAbsenceReasons(); _initClsYearsInputs(); }
+  if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') window.renderAttendSettings();
   if (mod === 'sleep') window.renderSleepSettings();
 }
@@ -2255,25 +2141,68 @@ window.addAbsenceReason = function(type) {
   inp.focus();
 };
 
-function showConstruction() {
-  var existing = document.getElementById('construction-modal');
-  if (existing) { existing.style.display='flex'; return; }
-  var d = document.createElement('div');
-  d.id = 'construction-modal';
-  d.style.cssText = 'display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
-  d.innerHTML = '<div style="background:#fff;border-radius:14px;padding:32px;width:90%;max-width:320px;text-align:center;border-top:4px solid #1a3a6b"><div style="font-size:3rem;margin-bottom:10px">\uD83C\uDFD7\uFE0F</div><div style="font-size:1.1rem;font-weight:700;color:#1a3a6b;margin-bottom:12px">' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492) + '</div><p style="color:#4a5568;font-size:.88rem;margin:8px 0 22px;line-height:1.6">' + H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) + '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p><button data-act="construction-close" style="background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.95rem;font-family:Heebo;cursor:pointer;min-width:120px">' + H(1492,1489,1504,1514,1497) + '</button></div>';
-  document.body.appendChild(d);
+/*  ⛔ מיכל אחד ו-`openModal(title, body, foot)` — ⚠️ מסלול נפרד לכל דיאלוג
+ *  הוא בדיוק מה שנשבר בשקט: ⭐ הכותרת ב-`textContent` ⛔ ולא ב-HTML, מפני
+ *  שהיא מגיעה גם משם שהמשתמש הקליד. */
+function openModal(title, body, foot) {
+  var m = document.getElementById('modal');
+  if (!m) return;
+  m.classList.add('open');
+  document.getElementById('modal-title').textContent = title || '';
+  document.getElementById('modal-body').innerHTML = body || '';
+  document.getElementById('modal-foot').innerHTML = foot || '';
 }
-function closeConstruction() {
-  var m = document.getElementById('construction-modal');
-  if (m) m.style.display='none';
+function modalOpen() {
+  var m = document.getElementById('modal');
+  return !!(m && m.classList.contains('open'));
+}
+function closeModal() {
+  var m = document.getElementById('modal');
+  if (!m) return;
+  m.classList.remove('open');
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-foot').innerHTML = '';
+}
+/*  ⚠️ `askResolve` יחיד — ⛔ אין תמיכה בשני דיאלוגי אישור פתוחים בו-זמנית,
+ *  וגם אין בכך צורך: `#ask` הוא אלמנט יחיד ב-DOM. */
+var askResolve = null;
+function ask(title, text, yesLabel) {
+  document.getElementById('ask-title').textContent = title || '';
+  document.getElementById('ask-body').textContent = text || '';
+  document.getElementById('ask-yes').textContent = yesLabel || 'אישור';
+  document.getElementById('ask').classList.add('open');
+  return new Promise(function (res) { askResolve = res; });
+}
+function closeAsk(v) {
+  document.getElementById('ask').classList.remove('open');
+  if (askResolve) { askResolve(v); askResolve = null; }
+}
+/*  ⛔ שלוש דרכי הסגירה מגיעות לאותה פונקציה (סבב 80) — כפתור ה-✕, לחיצה
+ *  על הרקע, ו-`Escape`: ⚠️ שלוש דרכים אינן שלושה מסלולים. */
+document.addEventListener('click', function (e) {
+  if (!e.target) return;
+  if (e.target.id === 'modal') closeModal();
+  if (e.target.id === 'ask') closeAsk(false);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Escape') return;
+  var a = document.getElementById('ask'), m = document.getElementById('modal');
+  if (a && a.classList.contains('open')) closeAsk(false);
+  else if (m && m.classList.contains('open')) closeModal();
+});
+
+function showConstruction() {
+  openModal('\uD83C\uDFD7\uFE0F ' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492),
+    '<p style="color:#4a5568;font-size:.88rem;line-height:1.6;text-align:center">' +
+      H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) +
+      '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p>',
+    '<button data-act="modal-close" style="flex:1;background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.95rem;font-family:Heebo;cursor:pointer">' + H(1492,1489,1504,1514,1497) + '</button>');
 }
 
 function showDenied() {
-  var dm=document.getElementById('denied-modal');dm.classList.remove('hidden');dm.classList.add('on');
-}
-function closeDenied() {
-  var dm=document.getElementById('denied-modal');dm.classList.add('hidden');dm.classList.remove('on');
+  openModal('🔒 גישה מוגבלת',
+    '<p style="color:var(--text2);font-size:.88rem;text-align:center">אין לך הרשאה לאפשרות זו.<br>פנה למנהל המערכת.</p>',
+    '<button class="btn" data-act="modal-close" style="flex:1">הבנתי</button>');
 }
 
 // Enter מטופל דרך onkeydown ב-HTML
@@ -2319,16 +2248,13 @@ function sortUsersByOrder(data) {
    המקום שבו ההמרה נשברת בשקט: `idx + dir` על המחרוזת `"-1"` הוא שרשור
    ולא חיבור, ו-`!current` על המחרוזת `"false"` הוא `false`. ⛔ שני
    הארגומנטים האלה מומרים כאן במפורש, ⛔ ואין להסיר את ההמרה.
-   ⚠️ **וההמרה כאן חלקית בכוונה, ובשני מצבים שונים** (נמדד בסבב 68):
-   ⛔ **ארבעה** אתרים במודולי הנוכחות והשינה נושאים `event.stopPropagation()`
-   בתוך אותו מאפיין, ⛔ ודלגציה ב-`document` הופכת את סדר הבועות: המטפל של
-   השורה העוטפת היה רץ **לפני** המטפל המואצל, כלומר `stopPropagation` היה
-   מפסיק להגן **בשקט**. ⛔ ארבעתם הם **חריגה מנומקת קבועה** ואינם פער
-   (סבב 68) — הערה צמודה יושבת ליד כל אחד מהם, ו-`check-capabilities`
-   מפיל כל אתר שסומן `data-act` ונושא `stopPropagation` באותה שורה.
-   ⚠️ **ו-26 האתרים הנותרים אינם כאלה** — הם מוטבעים ב-`onclick` בלי
-   `stopPropagation`, ⛔ ורובם סוגרים דיאלוג ב-`this.closest('[data-dlg=…]')`;
-   ⛔ המרתם תלויה בסבב שכבת המודאל, ולכן הם נשארו רשומים כפער.
+   ⚠️ **וההמרה הושלמה בסבב 80** — ⛔ אפס אתרי `onclick` בקובץ.
+   ⛔ ארבעת האתרים שנשאו `event.stopPropagation()` הומרו אף הם, ⚠️ וההגנה
+   ירדה איתם ולא נשארה כשארית: ⭐ הסיבה שהיא נדרשה הייתה ש**השורה העוטפת**
+   הייתה `onclick` מוטבע, ⛔ שרץ בבעבוע לפני המטפל המואצל. ⭐ משהוצא גם
+   העוטף לדלגציה, `closest('[data-act]')` מחזיר את **הפנימי ביותר**,
+   ⛔ ורק מטפל אחד רץ. ⚠️ `check-capabilities` ממשיך להפיל כל אתר שסומן
+   `data-act` ונושא `stopPropagation` באותה שורה — ⛔ הצירוף הזה נשאר אסור.
    ══════════════════════════════════════════════════════════════════════════ */
 var DOM_ACTIONS = {
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
@@ -2339,6 +2265,7 @@ var DOM_ACTIONS = {
   'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
+  'st-history':  function (el) { window.openStatusHistory(el.getAttribute('data-id')); },
   /*  ⛔ ניווט ⛔ ופתיחת מסך עוברים בדלגציה (סבב 79) — ⚠️ המסכים כאן נבנים
    *  מחדש בכל רינדור, ⛔ ומאזין פר-אלמנט היה צריך חיווט מחדש בכל פעם.
    *  ⭐ `page-nav` הוא `page` ועוד סימון הכפתור הפעיל — ⛔ שני שמות ולא
@@ -2349,9 +2276,78 @@ var DOM_ACTIONS = {
                    document.querySelectorAll('.bn').forEach(function (b) { b.classList.remove('on'); });
                    el.classList.add('on');
                  },
-  /*  ⚠️ הדיאלוגים כאן נבנים לתוך ה-DOM ומוסרים ממנו — ⛔ ולכן הסגירה היא
-   *  הסרת המיכל שנושא `data-dlg`, ⭐ ולא שם דיאלוג מוטבע בכל כפתור. */
-  'dlg-close':   function (el) { var d = el.closest('[data-dlg]'); if (d) d.remove(); },
+  'modal-close': function () { closeModal(); },
+  'ask-no':      function () { closeAsk(false); },
+  'ask-yes':     function () { closeAsk(true); },
+  'manage-pick': function (el) {
+                   var f = MANAGE_PICK[el.getAttribute('data-mk')];
+                   closeModal();
+                   if (f) f();
+                 },
+  'deact-st-confirm': function () {
+                   var v = document.getElementById('deact-st-sel').value;
+                   if (!v) { toast('⚠️ יש לבחור תלמיד'); return; }
+                   window.setStudentInactive(parseInt(v));
+                   closeModal();
+                 },
+  'year-transition-confirm': function () { window.doYearTransition(); closeModal(); },
+  'at-resume-go':     function (el) { window.atEditSession(el.getAttribute('data-id')); closeModal(); },
+  'at-status-cancel': function (el) { window.atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
+  'at-export-go':     function (el) { window.atExportConfirm(el.getAttribute('data-type')); },
+  'at-mark-edit':     function (el) { window.atSupEditMarkDlg(el.getAttribute('data-rec'),
+                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
+  'at-mark-set':      function (el) { window.atEditMark(el.getAttribute('data-rec'),
+                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
+  'sl-resume-go':     function (el) { window.slEditSession(el.getAttribute('data-id')); closeModal(); },
+  'sl-status-cancel': function (el) { window.slCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
+  'sl-export-go':     function (el) { window.slExportConfirm(el.getAttribute('data-type')); },
+  'sl-mark-edit':     function (el) { window.slSupEditMarkDlg(el.getAttribute('data-rec'),
+                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
+  'sl-mark-set':      function (el) { window.slEditMark(el.getAttribute('data-rec'),
+                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
+  /*  ⛔ בורר התאריך העברי מנותב כאן — ⚠️ הלוח נבנה מחדש בכל ניווט חודש,
+   *  ⭐ ומאזין פר-תא היה צריך חיווט מחדש בכל פעם. */
+  'hc-nav':           function (el) { window._hcNav(el.getAttribute('data-pfx'),
+                                        Number(el.getAttribute('data-dir'))); },
+  'hc-pick':          function (el) { window._hcPick(el.getAttribute('data-pfx'),
+                                        Number(el.getAttribute('data-hy')),
+                                        Number(el.getAttribute('data-mi')),
+                                        Number(el.getAttribute('data-day'))); },
+  'hc-open':          function (el) { window._hcOpen(el.getAttribute('data-pfx')); },
+  /*  ⛔ הכפתור הפנימי גובר על השורה העוטפת בלי `stopPropagation` (סבב 80) —
+   *  ⚠️ `closest('[data-act]')` מחזיר את הפנימי ביותר, ⭐ ולכן שני הצדדים
+   *  מואצלים ורק אחד מהם רץ; ⛔ עד סבב 79 העוטף היה `onclick` מוטבע,
+   *  ⛔ והוא זה שחייב את ההגנה. */
+  'toggle-panel':     function (el) {
+                        var e = document.getElementById(el.getAttribute('data-panel'));
+                        if (e) e.style.display = e.style.display === 'none' ? 'block' : 'none';
+                      },
+  'toggle-next':      function (el) {
+                        var pnl = el.nextElementSibling;
+                        if (!pnl) return;
+                        var open = pnl.style.display !== 'none';
+                        pnl.style.display = open ? 'none' : 'block';
+                        var chev = el.querySelector('.' + el.getAttribute('data-chev'));
+                        if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+                      },
+  'at-edit-session':  function (el) { window.atEditSession(el.getAttribute('data-id')); },
+  'at-del-session':   function (el) { window.atDeleteSession(el.getAttribute('data-id')); },
+  'at-sup-detail':    function (el) { window.atSupDetail(el.getAttribute('data-id')); },
+  'at-set-mark':      function (el) { window.atSetMark(el.getAttribute('data-id'),
+                                        el.getAttribute('data-code')); },
+  'at-clear-mark':    function (el) { window.atClearMark(el.getAttribute('data-id')); },
+  'at-confirm-late':  function (el) { window.atConfirmLate(el.getAttribute('data-id')); },
+  'at-add-treat':     function (el) { window.atAddTreat(el.getAttribute('data-id')); },
+  'at-del-treat':     function (el) { window.atDeleteTreat(el.getAttribute('data-id')); },
+  'sl-edit-session':  function (el) { window.slEditSession(el.getAttribute('data-id')); },
+  'sl-del-session':   function (el) { window.slDeleteSession(el.getAttribute('data-id')); },
+  'sl-sup-detail':    function (el) { window.slSupDetail(el.getAttribute('data-id')); },
+  'sl-set-mark':      function (el) { window.slSetMark(el.getAttribute('data-id'),
+                                        el.getAttribute('data-code')); },
+  'sl-clear-mark':    function (el) { window.slClearMark(el.getAttribute('data-id')); },
+  'sl-confirm-late':  function (el) { window.slConfirmLate(el.getAttribute('data-id')); },
+  'sl-add-treat':     function (el) { window.slAddTreat(el.getAttribute('data-id')); },
+  'sl-del-treat':     function (el) { window.slDeleteTreat(el.getAttribute('data-id')); },
   'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
   'settings-home':   function () { window.showSettingsHome(); },
   'settings-module': function (el) { window.showSettingsModule(el.getAttribute('data-mod')); },
@@ -2369,12 +2365,13 @@ var DOM_ACTIONS = {
   'ep-save':             function (el) { saveEp(el.getAttribute('data-ep')); },
   'ep-close':            function (el) { closeEp(el.getAttribute('data-ep')); },
   'absence-reasons-save': function () { window.saveAbsenceReasons(); },
-  'cls-years-save':       function () { window.saveClsYearsSettings(); },
-  'status-modal-close':   function () { window.closeStatusModal(); },
+  'status-abs-cancel':    function (el) {
+                            var id = el.getAttribute('data-id');
+                            if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
+                          },
   'status-picker-open':   function () { window.openStatusPickerModal(); },
   'student-status-save':  function () { window.saveStudentStatus(window._currentStatusType); },
   'manage-list-open':     function () { window.openManageListDlg(); },
-  'delete-all-confirm':   function () { window.confirmDeleteAll(); },
   'students-print':       function () { window.printStudents(); },
   'users-render':         function () { window.renderUsersList(); },
   'hc-toggle':            function () { window._hcToggle(); },
@@ -2392,18 +2389,22 @@ var DOM_ACTIONS = {
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { toggleUserMenu(); },
-  'user-modal-close': function () { closeUserModal(); },
+  'um-pass-peek':     function () {
+                        var i = document.getElementById('um-curr-pass');
+                        i.type = i.type === 'password' ? 'text' : 'password';
+                      },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function (el) { saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
   'mypass-change':    function (el) { changeMyPassword(el); },
-  'mypass-close':     function () { closeMyPassModal(); },
-  'switch-close':     function () { closeSwitchModal(); },
   'switch-confirm':   function () { confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
   'perms-save':       function () { savePerms(); },
-  'construction-close': function () { closeConstruction(); },
-  'denied-close':       function () { closeDenied(); },
+  'ls-sweep-now':      function () { lsSweepNow(); },
+  'ls-refresh-status': function () { lsRefreshStatus(); },
+  'ls-restore-all':    function () { lsRestoreAll(); },
+  'sync-now-status':   function () { syncNowFromStatus(); },
+  'hw-restore':        function (el) { hwRestoreClick(el); },
 };
 document.addEventListener('click', function (ev) {
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
@@ -2488,29 +2489,18 @@ async function renderUsersList() {
    עד שהמנהל יריץ את `migrations/011`.
    ══════════════════════════════════════════════════════════════════════════ */
 function openAddUser() {
-  document.getElementById('um-id').value = '';
-  document.getElementById('um-name').value = '';
-  document.getElementById('um-username').value = '';
+  openUserModal('הוסף משתמש');
   document.getElementById('um-role').value = 'junior';
-  document.getElementById('um-pass').value = '';
   document.getElementById('um-pass-hint').style.display = 'none';
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
-  document.getElementById('um-title').textContent = 'הוסף משתמש';
-  document.getElementById('um-err').textContent = '';
-  var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
 async function openEditUser(u) {
+  openUserModal('ערוך משתמש');
   document.getElementById('um-id').value = u.id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
-  document.getElementById('um-pass').value = '';
-  document.getElementById('um-curr-pass').value = '';
-  document.getElementById('um-curr-pass').type = 'password';
-  document.getElementById('um-pass-hint').style.display = '';
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
-  document.getElementById('um-title').textContent = 'ערוך משתמש';
-  document.getElementById('um-err').textContent = '';
   // טען סיסמה נוכחית מה-DB
   // ⚠️ הצגת הסיסמה הנוכחית תלויה בטקסט הגלוי, ולכן היא **הדבר היחיד
   // שנעלם** כשנתיב-החזרה נסגר (סבב 40). זו יכולת ניהול שהמנהל בחר בה
@@ -2525,10 +2515,38 @@ async function openEditUser(u) {
     document.getElementById('um-curr-pass').value = '';
     document.getElementById('um-curr-pass').placeholder = 'הסיסמה אינה נשמרת עוד בטקסט גלוי';
   }
-  var um=document.getElementById('user-modal');um.classList.remove('hidden');um.classList.add('on');
 }
-function closeUserModal() {
-  var um=document.getElementById('user-modal');um.classList.add('hidden');um.classList.remove('on');
+/*  ⛔ טופס אחד לשני מסלולי הפתיחה — ⚠️ «הוסף» ו«ערוך» נבדלים בערכים
+ *  ובתוויות בלבד, ⭐ ולא במבנה: טופס שנבנה פעמיים נבדל בשדה אחד. */
+function userFormHtml() {
+  return '<input type="hidden" id="um-id">'+
+    '<label for="um-name">שם מלא *</label>'+
+    '<input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">'+
+    '<label for="um-username">שם משתמש * (לכניסה)</label>'+
+    '<input aria-label="israel" type="text" id="um-username" placeholder="israel" style="direction:ltr">'+
+    '<label for="um-role">תפקיד</label>'+
+    '<select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">'+
+      '<option value="admin">מנהל</option>'+
+      '<option value="senior">צוות בכיר</option>'+
+      '<option value="junior">צוות</option>'+
+    '</select>'+
+    '<label>סיסמה נוכחית</label>'+
+    '<div style="position:relative;display:flex;align-items:center">'+
+      /*  ⛔ ללא inputmode ו-maxlength בכוונה (סבב 67) — השדה readonly ואינו
+          מקבל הקלדה, ולכן רמזי מקלדת ותקרת אורך אינם חלים עליו; הוספתם
+          הייתה מרמזת שאפשר לערוך אותו כאן. */
+      '<input type="password" aria-label="הסיסמה הנוכחית" id="um-curr-pass" readonly autocomplete="off" style="text-align:center;letter-spacing:4px;font-size:1.1rem;flex:1;padding-left:40px;background:var(--bg);color:var(--text2)">'+
+      '<button type="button" data-act="um-pass-peek" style="position:absolute;left:8px;background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px">👁</button>'+
+    '</div>'+
+    '<label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>'+
+    '<input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" style="text-align:center;letter-spacing:4px;font-size:1.1rem">'+
+    '<div style="font-size:.78rem;color:var(--text3);margin-top:-8px" id="um-pass-hint">השאר ריק כדי לשמור סיסמה קיימת</div>'+
+    '<div class="auth-err" id="um-err"></div>';
+}
+function openUserModal(title) {
+  openModal('👤 ' + title, userFormHtml(),
+    '<button class="btn out" data-act="modal-close">ביטול</button>'+
+    '<button class="btn" data-act="user-save">💾 שמור</button>');
 }
 
 // ⛔ מעטפת מגן השליחה הכפולה (סבב 67) — `saveUser` כותבת לענן, ולחיצה
@@ -2580,7 +2598,7 @@ async function _saveUserInner() {
     }
   } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
-  closeUserModal();
+  closeModal();
   toast(noFp ? '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת' : '✅ משתמש נשמר!');
   ysRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
@@ -2683,41 +2701,21 @@ function ysBusy(btn, on) {
 }
 
 function myPasswordModal() {
-  var d = document.getElementById('my-pass-modal');
-  if (!d) {
-    d = document.createElement('div');
-    d.id = 'my-pass-modal';
-    d.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(2px)';
-    var fld = 'border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
-    var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
-    d.innerHTML =
-      '<div style="background:#fff;border-radius:14px;padding:28px;width:90%;max-width:320px;border-top:4px solid #1a3a6b;direction:rtl">' +
-      '<div style="font-size:1.8rem;margin-bottom:8px;text-align:center">🔑</div>' +
-      '<div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:16px;text-align:center">שינוי הסיסמה שלי</div>' +
-      '<label style="' + lbl + '" for="pw-old">סיסמה נוכחית</label>' +
-      '<input type="password" id="pw-old" maxlength="6" inputmode="numeric" autocomplete="current-password" style="' + fld + '">' +
-      '<label style="' + lbl + '" for="pw-new">סיסמה חדשה (6 ספרות)</label>' +
-      '<input type="password" id="pw-new" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
-      '<label style="' + lbl + '" for="pw-new2">אימות סיסמה חדשה</label>' +
-      '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
-      '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;margin-bottom:10px;text-align:right"></div>' +
-      '<div style="display:flex;gap:10px;justify-content:center">' +
-      '<button data-act="mypass-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
-      '<button id="pw-save" data-act="mypass-change" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>' +
-      '</div></div>';
-    document.body.appendChild(d);
-  }
-  document.getElementById('pw-old').value = '';
-  document.getElementById('pw-new').value = '';
-  document.getElementById('pw-new2').value = '';
-  document.getElementById('pw-err').textContent = '';
-  d.style.display = 'flex';
-  setTimeout(function () { var e = document.getElementById('pw-old'); if (e) e.focus(); }, 100);
+  var fld = 'border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
+  var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
+  openModal('🔑 שינוי הסיסמה שלי',
+    '<label style="' + lbl + '" for="pw-old">סיסמה נוכחית</label>' +
+    '<input type="password" id="pw-old" maxlength="6" inputmode="numeric" autocomplete="current-password" style="' + fld + '">' +
+    '<label style="' + lbl + '" for="pw-new">סיסמה חדשה (6 ספרות)</label>' +
+    '<input type="password" id="pw-new" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+    '<label style="' + lbl + '" for="pw-new2">אימות סיסמה חדשה</label>' +
+    '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+    '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;text-align:right"></div>',
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
+    '<button id="pw-save" data-act="mypass-change" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
+  document.getElementById('pw-old').focus();
 }
-function closeMyPassModal() {
-  var d = document.getElementById('my-pass-modal');
-  if (d) d.style.display = 'none';
-}
+
 
 // ---- שינוי סיסמה אישית ----
 // ⛔ המעטפת היא נקודת הכניסה היחידה מה-UI (סבב 67) — היא מחזיקה את מגן
@@ -2773,10 +2771,9 @@ async function _changeMyPasswordInner() {
                        role: AUTH.user.role, active: true,
                        pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
   } catch (e3) {}
-  document.getElementById('pw-old').value = '';
-  document.getElementById('pw-new').value = '';
-  if (newPass2El) newPass2El.value = '';
-  if (typeof closeMyPassModal === 'function') closeMyPassModal();
+  /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
+   *  ⭐ והשדות חדלים להתקיים איתו. */
+  closeModal();
   toast(made ? '✅ סיסמה עודכנה!' : '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת');
 }
 
@@ -3640,9 +3637,9 @@ function lsStatusHTML() {
   }
 
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-       '<button type="button" onclick="window.lsSweepNow()">🧹 פנה מקום עכשיו</button>' +
-       '<button type="button" onclick="window.lsRefreshStatus()">↻ רענן</button>';
-  if (hz.length) h += '<button type="button" onclick="window.lsRestoreAll()">☁️ טען הכל מחדש מהענן</button>';
+       '<button type="button" data-act="ls-sweep-now">🧹 פנה מקום עכשיו</button>' +
+       '<button type="button" data-act="ls-refresh-status">↻ רענן</button>';
+  if (hz.length) h += '<button type="button" data-act="ls-restore-all">☁️ טען הכל מחדש מהענן</button>';
   h += '</div></div>';
   return h;
 }
@@ -3753,7 +3750,7 @@ function syncLineHTML() {
     '<div>מצב חיבור: <b>' + (navigator.onLine ? 'מחובר' : 'מנותק') + '</b></div>' +
     '<div>סנכרון אחרון: <b>' + (t ? esc(syncFmtTime(t)) : '— טרם הסתנכרן —') + '</b></div>' +
     '<div class="sync-act"><button type="button"' + (_syncNowBusy ? ' disabled' : '') +
-    ' onclick="window.syncNowFromStatus&&window.syncNowFromStatus()">' +
+    ' data-act="sync-now-status">' +
     (_syncNowBusy ? 'מסנכרן…' : '🔄 סנכרן עכשיו') + '</button></div>' +
     '</div>';
 }
@@ -3833,12 +3830,15 @@ var BK_CFG = {
       { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
       { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
     );
-    return out.concat(['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
-            'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
-            'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
-            'ys_cls_years', 'ys_settings_meta'].map(function (k) {
-      return { kind: 'kv', table: 'kv', name: k };
-    }));
+    /*  ⛔ שלושה-עשר מקורות `kind:'kv'` ירדו (סבב 80) — ⚠️ **טבלת `kv` כבר
+        אינה קיימת במסד**: `018` הפילה אותה, ⛔ וגיבוי ממקור שאינו קיים
+        מחזיר שגיאה, מונע את כתיבת הדגל היומי ומשתק את הגריעה.
+        ⭐ נמדד ב-1.9: עשרה מהמפתחות לא גובו כלל, ⛔ ושלושת הנותרים גובו
+        עד **שש פעמים באותו יום** — הריצה החוזרת של גיבוי שלא סומן כהושלם.
+        ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`ys_settings` בסבב 78,
+        ⭐ והמקור החדש הוא הטבלה ההיא. */
+    out.push({ kind: 'table', name: 'ys_settings', key: 'ys_settings', order: 'key' });
+    return out;
   }
 };
 
@@ -5068,7 +5068,7 @@ async function hwPastLoad(key, filter) {
 var _hwRestoreArmed = 0;
 function hwRestoreHTML() {
   return '<div class="sync-line hw-restore-line"><button type="button" ' +
-    'onclick="window.hwRestoreClick&&window.hwRestoreClick(this)">' +
+    'data-act="hw-restore">' +
     '☁️ שחזר הכול מהענן</button></div>';
 }
 function hwRestoreMount() {
@@ -5383,7 +5383,7 @@ var YS_ROWS = true;
 /* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
    ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
    דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
-var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons', 'ys_cls_years'];
+var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -6030,8 +6030,7 @@ async function ysPushToCloud() {
     var meta = ysSettingsMeta();
     var settingsKeys = [
       { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ lsSet('ys_reasons', JSON.stringify(v)); } },
-      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ lsSet('ys_absence_reasons', JSON.stringify(v)); } },
-      { key: 'ys_cls_years',       get: getClsYears,                                      set: function(v){ lsSet('ys_cls_years', JSON.stringify(v)); } }
+      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ lsSet('ys_absence_reasons', JSON.stringify(v)); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -6156,22 +6155,10 @@ async function ysPullFromCloud() {
       lsSet('ys_absence_reasons', JSON.stringify(abR));
       if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
     }
-    var clsY = await ysCfgGet('ys_cls_years');
-    console.log('[pull] ys_cls_years from KV:', clsY);
-    if (clsY && typeof clsY === 'object' && (remoteMeta['ys_cls_years'] || 0) >= (meta['ys_cls_years'] || 0)) {
-      lsSet('ys_cls_years', JSON.stringify(clsY));
-      if (remoteMeta['ys_cls_years']) { meta['ys_cls_years'] = remoteMeta['ys_cls_years']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
-      console.log('[pull] ys_cls_years saved to localStorage');
-    } else if (clsY == null) {
-      // מפתח לא קיים ב-DB — אם יש ערכים מקומיים, דחוף אותם (bootstrap חד-פעמי)
-      var _localCY = getClsYears();
-      console.log('[pull] ys_cls_years missing in KV, local:', _localCY);
-      if (_localCY.a || _localCY.b || _localCY.g) {
-        console.log('[pull] bootstrapping ys_cls_years to KV:', _localCY);
-        ysCfgSet('ys_cls_years', _localCY);
-        ysCfgSet('ys_last_changed', Date.now());
-      }
-    }
+    /*  ⛔ `ys_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
+     *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
+     *  ⭐ השורה עצמה נשארת בענן ⛔ ואינה נמחקת מכאן — מחיקת נתון היא
+     *  פעולת מנהל. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
       var _atCfgV = await ysCfgGet('ys_attend_cfg');
@@ -6411,6 +6398,24 @@ function getDefaultStudents(){return [
 // מפת השיעורות: 'a'=א, 'b'=ב, 'g'=ג
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
 
+// ⛔ נקודת המיון היחידה של התלמידים — ⚠️ ואין מיון מקומי בשום מסך: המצבת,
+//    דפי הסדרים, זמן השינה, ההשגחה, הארכיונים ורשימת הלא-פעילים הציגו כל
+//    אחד סדר משלו, ⭐ ומי שמסמן נוכחות בשני מסכים סרק את אותה רשימה פעמיים
+//    בשני סדרים. ⛔ ומיון במקום — הרשימה שהתקבלה נשארת כפי שהיא: הקוראים
+//    מחזיקים אותה גם כמקור לחיפוש ולספירה, וסידור מתחת לידיהם הוא שינוי
+//    שקט של מה שהם כבר החזיקו.
+function ysSortStudents(list) {
+  if (!Array.isArray(list)) return [];
+  var ord = { a: 0, b: 1, g: 2 };
+  return list.slice().sort(function (x, y) {
+    // ⚠️ שיעור שאינו אחד מהשלושה יורד לסוף ⛔ ואינו מתערבב בתוכם — תלמיד
+    //    שסיווגו ריק היה נופל בין א׳ לב׳ ונקרא כשייך לאחד מהם.
+    var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
+    var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
+    if (ox !== oy) return ox - oy;
+    return String((x && x.name) || '').localeCompare(String((y && y.name) || ''), 'he');
+  });
+}
 function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
@@ -6447,7 +6452,7 @@ function filterClass(cls){
 
 
 function renderStudents(){
-  var allSts=getStudents();
+  var allSts=ysSortStudents(getStudents());
   var activeSts=allSts.filter(function(s){return s.active!==false;});
   var inactiveSts=allSts.filter(function(s){return s.active===false;});
   var searchEl=document.getElementById('search-st');
@@ -6486,7 +6491,10 @@ function renderStudents(){
     if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'#fff':'#f9fafb';
-      var yr=s.cohortYear||'';
+      // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נקרא כשיש `cycle` — ⭐ עשר
+      //    הרשומות שנרשמו ידנית מחזיקות את שניהם, ובשתיים מהן הם נבדלים:
+      //    ⛔ מה שנרשם אחרון הוא מה שמוצג.
+      var yr=s.cycle||s.cohortYear||'';
       var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
       return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
@@ -6544,44 +6552,28 @@ function renderStudents(){
 }
 
 
-// -------- ניהול שנות מחזור --------
-function getClsYears(){try{return JSON.parse(lsGet('ys_cls_years')||'null')||{a:'',b:'',g:''};} catch(e){return {a:'',b:'',g:''};}}
-function saveClsYears(y){lsSet('ys_cls_years',JSON.stringify(y));ysSettingsTouch('ys_cls_years');}
-
-window.saveClsYearsSettings = async function(){
-  var a=(document.getElementById('cy-a')||{}).value||'';
-  var b=(document.getElementById('cy-b')||{}).value||'';
-  var g=(document.getElementById('cy-g')||{}).value||'';
-  var y={a:a.trim(),b:b.trim(),g:g.trim()};
-  saveClsYears(y);
-  console.log('[cls-years] saving:', y);
-  try {
-    var r = await ysCfgSet('ys_cls_years', y);
-    console.log('[cls-years] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
-    var ts = Date.now();
-    await ysCfgSet('ys_last_changed', ts);
-    console.log('[cls-years] ys_last_changed updated:', ts);
-  } catch(e) { console.error('[cls-years] save error:', e); }
-  toast('✅ שנות המחזור נשמרו');
-};
-
-// רשימת שנים עבריות תשפ"ד–תשצ"ה
-var _CLS_HEB_YEARS = [
-  'תשפ"ד','תשפ"ה','תשפ"ו','תשפ"ז','תשפ"ח','תשפ"ט',
-  'תש"ץ','תשצ"א','תשצ"ב','תשצ"ג','תשצ"ד','תשצ"ה'
-];
-function _clsYearOptions(sel, curVal) {
-  sel.innerHTML = '<option value="">בחר שנה...</option>' +
-    _CLS_HEB_YEARS.map(function(y){
-      return '<option value="'+y+'"'+(y===curVal?' selected':'')+'>'+y+'</option>';
-    }).join('');
+// -------- מחזור התלמיד --------
+// ⛔ המחזור נגזר משנת הלימודים ⛔ ואינו נבחר מרשימת שנים מוקלדת — ⚠️ רשימה
+//    מוקלדת נגמרת בשנה האחרונה שמישהו טרח להוסיף, ⭐ ומאותו יום ואילך אין
+//    בכלל ערך לבחור; ⛔ והיא גם דורשת שלוש בחירות ידניות בכל ראש שנה, ⚠️
+//    ובשנה שבה נשכחו — כל תלמיד שהושבת נרשם על מחזור של השנה שעברה.
+// ⚠️ שנת הלימודים מתגלגלת באלול ⛔ ולא בתשרי — הבוגרים עוזבים בסוף אלול,
+//    ⭐ והמחזור שנרשם להם הוא זה שנפתח מיד אחריהם.
+function ysSchoolYear(now) {
+  var h = window.ysHebDate(now || new Date());
+  if (!h.ok) return 0;
+  return (h.monthIndex === window.ysHebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
 }
-// מילוי ערכים קיימים בפתיחת הגדרות מצבת
-function _initClsYearsInputs(){
-  var y=getClsYears();
-  var ea=document.getElementById('cy-a');if(ea)_clsYearOptions(ea,y.a||'');
-  var eb=document.getElementById('cy-b');if(eb)_clsYearOptions(eb,y.b||'');
-  var eg=document.getElementById('cy-g');if(eg)_clsYearOptions(eg,y.g||'');
+// ⚠️ המחזור הוא שנת ה**סיום** ולא שנת הכניסה — ⭐ הוא זהה לכל מי שסיים יחד,
+//    ולכן ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה אחריה, וא׳ את שלאחריה.
+function ysCycleFor(cls, now) {
+  var y = ysSchoolYear(now);
+  var add = { g: 0, b: 1, a: 2 };
+  if (!y || add[cls] == null) return '';
+  var hy = y + add[cls];
+  // ⚠️ שנה שמאיות עגולה נותנת שתי ספרות אפס ⛔ ואין לה צורה מקוצרת —
+  //    התווית המלאה היא מה שנשאר, ⭐ ולא מחרוזת ריקה שנקראת «אין מחזור».
+  return window.ysGematria(hy % 100, '״') || window.ysHebYearLabel(hy);
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
@@ -6589,9 +6581,11 @@ window.setStudentInactive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast('⚠️ תלמיד לא נמצא');return;}
-  var years=getClsYears();
   s.active=false;
-  if(!s.cohortYear) s.cohortYear=years[s.cls]||'';
+  // ⚠️ המחזור נרשם רק כשאין לו ערך ⛔ ואינו נדרס — ⭐ תלמיד שהמנהל רשם לו
+  //    מחזור ידנית והוחזר לפעיל וחזר והושבת היה מקבל את המחזור של השנה
+  //    שבה נלחץ הכפתור, ⛔ ולא את זה שאיתו הוא באמת סיים.
+  if(!s.cycle) s.cycle=ysCycleFor(s.cls);
   s.updatedAt=Date.now();
   saveStudents(students);
   scheduleYsPush();
@@ -6611,72 +6605,56 @@ window.setStudentActive = function(sid){
 };
 
 // -------- דיאלוג ניהול רשימה --------
+/*  ⛔ הפעולה עוברת ב-`data-mk` ובדלגציה — ⚠️ עד סבב 80 היא הייתה מחרוזת
+ *  JS בתוך `onclick`, ⛔ כלומר קוד שנבנה מחרוזת ורץ ב-`eval` של הדפדפן. */
+var MANAGE_PICK = {
+  'add':    function () { openAddStudent(); },
+  'deact':  function () { window.openDeactivateStudentDlg(); },
+  'tmpl':   function () { window.downloadImportTemplate(); },
+  'import': function () { document.getElementById('import-file-input').click(); },
+  'delall': function () { window.openDeleteAllModal(); },
+  'year':   function () { window.openYearTransitionDlg(); }
+};
 window.openManageListDlg = function(){
-  var prev=document.querySelector('[data-dlg="manage-list"]');if(prev)prev.remove();
   var isAdmin=AUTH.user&&AUTH.user.role==='admin';
   if(!isAdmin){toast('⚠️ גישה למנהלים בלבד');return;}
   var ITEMS=[
-    {icon:'➕',label:'הוסף תלמיד',fn:'openAddStudent()'},
-    {icon:'➖',label:'סמן תלמיד כלא פעיל',fn:'window.openDeactivateStudentDlg()'},
-    {icon:'📥',label:'תבנית ייבוא',fn:"window.downloadImportTemplate()"},
-    {icon:'📤',label:'ייבוא תלמידים',fn:"document.getElementById('import-file-input').click()"},
-    {icon:'🗑️',label:'מחק הכל',fn:'window.openDeleteAllModal()',col:'#c0392b'},
-    {icon:'🔄',label:'מעבר שנתי',fn:'window.openYearTransitionDlg()',col:'#c05621'}
+    {icon:'➕',label:'הוסף תלמיד',k:'add'},
+    {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
+    {icon:'📥',label:'תבנית ייבוא',k:'tmpl'},
+    {icon:'📤',label:'ייבוא תלמידים',k:'import'},
+    {icon:'🗑️',label:'מחק הכל',k:'delall',col:'#c0392b'},
+    {icon:'🔄',label:'מעבר שנתי',k:'year',col:'#c05621'}
   ];
   var rows=ITEMS.map(function(item){
-    return '<button onclick="'+item.fn+';document.querySelector(\'[data-dlg=manage-list]\').remove()" '+
+    return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
       'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:#fff;border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy)')+';cursor:pointer;text-align:right;direction:rtl">'+
       '<span style="font-size:1.25rem;width:28px;text-align:center">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','manage-list');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.45);z-index:800;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:480px;overflow:hidden;padding-bottom:env(safe-area-inset-bottom,0)">'+
-    '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)">'+
-      '<span style="font-weight:700;font-size:.97rem;color:var(--navy)">⚙️ ניהול רשימת תלמידים</span>'+
-      '<button data-act="dlg-close" style="background:none;border:none;font-size:1.3rem;color:#aaa;cursor:pointer">✕</button>'+
-    '</div>'+
-    rows+
-  '</div>';
-  dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.remove();});
-  document.body.appendChild(dlg);
+  openModal('⚙️ ניהול רשימת תלמידים','<div style="margin:0 -24px -24px">'+rows+'</div>','');
 };
 
 // -------- דיאלוג: סמן תלמיד כלא פעיל --------
 window.openDeactivateStudentDlg = function(){
-  var students=getStudents().filter(function(s){return s.active!==false;});
+  var students=ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
   var opts=students.map(function(s){
     return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','deactivate-st');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:810;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;max-width:360px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
-    '<div style="font-weight:700;font-size:.97rem;color:var(--navy);margin-bottom:14px">😴 סמן תלמיד כלא פעיל</div>'+
+  openModal('😴 סמן תלמיד כלא פעיל',
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.87rem;margin-bottom:16px;direction:rtl">'+
       '<option value="">-- בחר תלמיד --</option>'+opts+
     '</select>'+
-    '<div style="font-size:.82rem;color:#c05621;background:#fffbeb;border-radius:8px;padding:8px 12px;margin-bottom:16px">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>'+
-    '<div style="display:flex;gap:10px">'+
-      '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="var v=document.getElementById(\'deact-st-sel\').value;if(!v){toast(\'⚠️ יש לבחור תלמיד\');return;}window.setStudentInactive(parseInt(v));this.closest(\'[data-dlg=deactivate-st]\').remove()" '+
-        'style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">✅ אשר</button>'+
-    '</div>'+
-  '</div>';
-  document.body.appendChild(dlg);
+    '<div style="font-size:.82rem;color:#c05621;background:#fffbeb;border-radius:8px;padding:8px 12px">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
+    '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+    '<button data-act="deact-st-confirm" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">✅ אשר</button>');
 };
 
 // -------- דיאלוג: מעבר שנתי --------
 window.openYearTransitionDlg = function(){
-  var years=getClsYears();
-  var gYr=years.g?(' (מחזור '+years.g+')'):'';
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','year-transition');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:810;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;max-width:400px;width:100%;direction:rtl;border-top:4px solid #c05621">'+
-    '<div style="font-size:2rem;text-align:center;margin-bottom:8px">🔄</div>'+
-    '<div style="font-weight:700;font-size:1rem;color:#c05621;text-align:center;margin-bottom:6px">מעבר שנתי</div>'+
+  var _gc=ysCycleFor('g');
+  var gYr=_gc?(' (מחזור '+_gc+')'):'';
+  openModal('🔄 מעבר שנתי',
     '<div style="font-size:.84rem;color:var(--text2);margin-bottom:14px;line-height:1.6">'+
       '<strong style="color:#c53030">⚠️ פעולה בלתי הפיכה!</strong><br>'+
       '• שיעור ג\''+gYr+' → יועברו ל<strong>לא פעילים</strong><br>'+
@@ -6684,25 +6662,20 @@ window.openYearTransitionDlg = function(){
       '• שיעור א\' → שיעור ב\'<br>'+
       '• שיעור א\' יישאר ריק לתלמידים חדשים'+
     '</div>'+
-    '<div style="font-size:.82rem;background:#fff5f5;border-radius:8px;padding:8px 12px;margin-bottom:18px;color:#c53030">לא ניתן לבטל פעולה זו לאחר האישור.</div>'+
-    '<div style="display:flex;gap:10px">'+
-      '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.doYearTransition();this.closest(\'[data-dlg=year-transition]\').remove()" '+
-        'style="flex:1;padding:9px;background:#c05621;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:700;cursor:pointer">🔄 בצע מעבר שנתי</button>'+
-    '</div>'+
-  '</div>';
-  document.body.appendChild(dlg);
+    '<div style="font-size:.82rem;background:#fff5f5;border-radius:8px;padding:8px 12px;color:#c53030">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
+    '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+    '<button data-act="year-transition-confirm" style="flex:1;padding:9px;background:#c05621;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:700;cursor:pointer">🔄 בצע מעבר שנתי</button>');
 };
 
 window.doYearTransition = function(){
   var students=getStudents();
-  var years=getClsYears();
+  var _gCycle=ysCycleFor('g');
   var changed=0;
   students.forEach(function(s){
     if(s.active===false) return;
     if(s.cls==='g'){
       s.active=false;
-      if(!s.cohortYear) s.cohortYear=years.g||'';
+      if(!s.cycle) s.cycle=_gCycle;
       s.updatedAt=Date.now(); changed++;
     } else if(s.cls==='b'){
       s.cls='g'; s.updatedAt=Date.now(); changed++;
@@ -6760,16 +6733,7 @@ function _runLegacyMigration() {
   if (changed) { saveStudents(students); scheduleYsPush(); }
 }
 
-function _getStatusModal() {
-  var modal = document.getElementById('status-modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'status-modal';
-    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(3px);direction:rtl';
-    document.body.appendChild(modal);
-  }
-  return modal;
-}
+
 
 function openAttendanceEdit(sid) {
   var students = getStudents();
@@ -6781,26 +6745,19 @@ function openAttendanceEdit(sid) {
 }
 
 window.openStatusPickerModal = function() {
-  var modal = _getStatusModal();
-  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-      '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b">' + window._statusStudentName + '</div>' +
-      '<button data-act="status-modal-close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
-    '</div>' +
+  openModal(window._statusStudentName,
     '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' +
-      '<button data-act=\"status-form\" data-kind=\"approved\" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
+      '<button data-act="status-form" data-kind="approved" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
         '<span style="font-size:1.5rem">✅</span><div>אישור</div>' +
       '</button>' +
-      '<button data-act=\"status-form\" data-kind=\"suspended\" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
+      '<button data-act="status-form" data-kind="suspended" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #fbd38d;background:#fffbeb;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c05621;text-align:right">' +
         '<span style="font-size:1.5rem">⚠️</span><div>השעיה</div>' +
       '</button>' +
-      '<button data-act=\"status-form\" data-kind=\"left\" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
+      '<button data-act="status-form" data-kind="left" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #feb2b2;background:#fff5f5;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#c53030;text-align:right">' +
         '<span style="font-size:1.5rem">🚪</span><div>לא שב</div>' +
       '</button>' +
-    '</div>' +
-  '</div>';
-  modal.style.display = 'flex';
+    '</div>', '');
 };
 
 window.openCurrentStatusModal = function() {
@@ -6828,7 +6785,7 @@ window.openCurrentStatusModal = function() {
     var badge = isFuture
       ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#EBF4FF;color:#2B6CB0">⏳ עתידי</span>'
       : '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:'+(TBR[a.type]||'#ddd')+';color:'+(TC[a.type]||'#333')+'">● פעיל</span>';
-    var cancelCall = a.id === 'legacy' ? 'window.cancelStudentStatus()' : 'window.cancelSingleAbsence(' + idArg(a.id) + ')';
+    var cancelId = a.id === 'legacy' ? '' : String(a.id);
     return '<div style="background:' + (TB[a.type]||'#f9f9f9') + ';border:1.5px solid ' + (TBR[a.type]||'#ddd') + ';border-radius:12px;padding:12px 14px;margin-bottom:12px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
         '<div style="display:flex;align-items:center;gap:8px">' +
@@ -6836,22 +6793,14 @@ window.openCurrentStatusModal = function() {
           '<span style="font-weight:700;color:' + (TC[a.type]||'#333') + ';font-size:.9rem">' + (TL[a.type]||a.type) + '</span>' +
           badge +
         '</div>' +
-        '<button onclick="' + cancelCall + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
+        '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
       '</div>' +
       (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + a.reason + '</div>' : '') +
       '<div style="font-size:.78rem;color:#888;line-height:1.7">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
-  var modal = _getStatusModal();
-  modal.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:360px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
-      '<div style="font-weight:700;font-size:1.05rem;color:#1a3a6b">' + s.name + '</div>' +
-      '<button data-act="status-modal-close" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:#aaa">✕</button>' +
-    '</div>' +
-    absencesHtml +
-    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>' +
-  '</div>';
-  modal.style.display = 'flex';
+  openModal(s.name, absencesHtml +
+    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>', '');
 };
 
 // רענון לשונית ההשגחה הפעילה (נוכחות/שינה) — כדי שתלמיד שחזר לנוכח ירד מהרשימה מיד
@@ -6878,7 +6827,7 @@ window.cancelStudentStatus = function() {
   ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
   ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
-  closeStatusModal();
+  closeModal();
   toast('✅ הסטטוס בוטל ל-' + s.name);
 };
 
@@ -6902,19 +6851,113 @@ window.cancelSingleAbsence = function(absenceId) {
   if (stillActive.length > 0) {
     window.openCurrentStatusModal();
   } else {
-    closeStatusModal();
+    closeModal();
     toast('✅ הסטטוס בוטל ל-' + s.name);
   }
 };
 
+/*  ⛔ שני מסלולי הפתיחה בונים את אותו טופס — ⚠️ טופס שנבנה פעמיים נבדל
+ *  בשדה אחד, ⭐ והשדה שנשמט נקרא «ריק» ולא «לא נשאל». */
+function studentFormHtml(sid){
+  return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
+    '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
+    '<label for="st-class">שיעור</label>'+
+    '<select id="st-class" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px">'+
+      '<option value="a">שיעור א\'</option>'+
+      '<option value="b">שיעור ב\'</option>'+
+      '<option value="g">שיעור ג\'</option>'+
+    '</select>'+
+    '<label for="st-cycle">מחזור</label>'+
+    '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
+    /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
+     *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
+}
+// -------- היסטוריית הסטטוסים --------
+/*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
+ *  ששרד את הפינוי ואת מה שהמכשיר הזה במקרה ראה, ⭐ וסטטוס שנרשם ממכשיר אחר
+ *  ולא הגיע לכאן היה נעדר מהרשימה בלי שדבר יסמן שהוא חסר. */
+window.openStatusHistory = async function (sid) {
+  openModal('📜 היסטוריית סטטוסים',
+    '<div style="padding:22px;text-align:center;color:var(--text3);font-size:.88rem">טוען מהענן…</div>', '');
+  var rows = null, failed = false;
+  try { rows = await ysCloudGet('ys_students'); } catch (e) { failed = true; }
+  if (!Array.isArray(rows)) failed = true;
+  var box = document.getElementById('modal-body');
+  var ttl = document.getElementById('modal-title');
+  /*  ⛔ נבדק גם שהכותרת עדיין שלנו ⛔ ולא רק שהמודאל פתוח — ⚠️ מודאל אחר
+   *  שנפתח בזמן ההמתנה מקבל את אותו מיכל, ⭐ והתשובה הייתה נשפכת לתוכו. */
+  if (!box || !ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
+  /*  ⛔ כשל קריאה מוצג כ«אין ראיה» ⛔ ולא כהיסטוריה ריקה — ⚠️ רשימה ריקה
+   *  נקראת «מעולם לא היה לו סטטוס», ⭐ והיא בדיוק ההפך ממה שנמדד. */
+  if (failed) {
+    box.innerHTML = '<div style="padding:22px;text-align:center;color:#c05621;font-size:.88rem">' +
+      '⚠️ לא ניתן לקרוא מהענן כרגע — ⛔ אין ראיה שאין סטטוסים.<br>' +
+      '<span style="color:var(--text3);font-size:.82rem">נסו שוב כשיש חיבור.</span></div>';
+    return;
+  }
+  var s = rows.find(function (x) { return idEq(x.id, sid); });
+  var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
+  /*  ⚠️ הכתיב הישן החזיק סטטוס יחיד על הרשומה ⛔ ואינו נשמט מההיסטוריה —
+   *  ⭐ תלמיד שלא נגעו בו מאז נראה בלעדיו כמי שמעולם לא היה לו סטטוס. */
+  if (s && !list.length && s.status && ['approved', 'suspended', 'left'].indexOf(s.status) !== -1) {
+    list.push({ id: 'legacy', type: s.status, reason: s.statusReason || '',
+                from: s.statusFrom || '', to: s.statusTo || null });
+  }
+  var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
+  var TC = { approved: '#276749', suspended: '#c05621', left: '#c53030' };
+  var TB = { approved: '#f0fff4', suspended: '#fffbeb', left: '#fff5f5' };
+  var TBR = { approved: '#9ae6b4', suspended: '#fbd38d', left: '#feb2b2' };
+  var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
+  var fmt = function (v) {
+    if (!v) return '—';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return '—';
+    var h = window.ysHebDate(d);
+    var hh = d.getHours(), mm = d.getMinutes();
+    var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+    return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabel) : '—') + ' · ' + t;
+  };
+  var ts = function (a) { var d = new Date(a && a.from); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+  list.sort(function (a, b) { return ts(b) - ts(a); });
+  if (!list.length) {
+    box.innerHTML = '<div style="padding:22px;text-align:center;color:var(--text3);font-size:.88rem">' +
+      'לא נרשם אף סטטוס לתלמיד הזה.</div>';
+    return;
+  }
+  box.innerHTML = list.map(function (a) {
+    var cancelled = !!a.deleted;
+    return '<div style="background:' + (cancelled ? '#f7f7f7' : (TB[a.type] || '#f9f9f9')) +
+        ';border:1.5px solid ' + (cancelled ? '#ddd' : (TBR[a.type] || '#ddd')) +
+        ';border-radius:12px;padding:12px 14px;margin-bottom:10px' + (cancelled ? ';opacity:.75' : '') + '">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+        '<span style="font-size:1.1rem">' + (TI[a.type] || '📋') + '</span>' +
+        '<span style="font-weight:700;font-size:.9rem;color:' + (cancelled ? '#777' : (TC[a.type] || '#333')) + '">' +
+          esc(TL[a.type] || a.type || '—') + '</span>' +
+        (cancelled ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#eee;color:#777">בוטל</span>' : '') +
+      '</div>' +
+      (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + esc(a.reason) + '</div>' : '') +
+      '<div style="font-size:.78rem;color:#888;line-height:1.7">' +
+        'מ: ' + esc(fmt(a.from)) + '<br>' +
+        'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
+      '</div>' +
+      '<div style="font-size:.75rem;color:#999;margin-top:5px">' +
+        'נרשם ע״י: ' + esc(a.createdBy || '—') +
+        (cancelled ? ' · בוטל ע״י: ' + esc(a.deletedBy || '—') : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+};
+
+function studentFormFoot(){
+  return '<button class="btn out" data-act="modal-close">ביטול</button>'+
+         '<button class="btn" data-act="student-save">💾 שמור</button>';
+}
 function openAddStudent(){
   if(checkLoginNeeded())return;
   editingStudentId=null;
-  var t=document.getElementById('student-modal-title');
-  if(t)t.textContent=H(1492,1493,1505,1507,32,1514,1500,1502,1497,1491);
-  var n=document.getElementById('st-name');if(n)n.value='';
-  var c=document.getElementById('st-class');if(c)c.value='a';
-  document.getElementById('student-modal').style.display='flex';
+  openModal(H(1492,1493,1505,1507,32,1514,1500,1502,1497,1491), studentFormHtml(), studentFormFoot());
+  document.getElementById('st-class').value='a';
 }
 
 function editStudent(sid){
@@ -6922,29 +6965,31 @@ function editStudent(sid){
   var s=getStudents().find(function(x){return idEq(x.id, sid);});
   if(!s)return;
   editingStudentId=sid;
-  var t=document.getElementById('student-modal-title');
-  if(t)t.textContent=H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491);
-  var n=document.getElementById('st-name');if(n)n.value=s.name;
-  var c=document.getElementById('st-class');if(c)c.value=s.cls;
-  document.getElementById('student-modal').style.display='flex';
+  openModal(H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491), studentFormHtml(sid), studentFormFoot());
+  document.getElementById('st-name').value=s.name;
+  document.getElementById('st-class').value=s.cls;
+  // ⚠️ `cohortYear` הוא הכתיב הישן ⛔ ואינו נכתב חזרה — ⭐ מי שנוגע בכרטיס
+  //    מעביר את הערך לשדה החדש, והישן מפסיק להיות מקור שני.
+  document.getElementById('st-cycle').value=s.cycle||s.cohortYear||'';
 }
 
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
+  var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
   if(!name){toast(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501));return;}
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
     var idx=students.findIndex(function(s){return idEq(s.id, editingStudentId);});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].updatedAt=Date.now();}
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].updatedAt=Date.now();}
   } else {
     // ⛔ המזהה הוא uuid ולא `maxId+1` (סבב 37) — שני מכשירים שמוסיפים תלמיד
     //    במקביל היו מקצים את אותו מספר לשני אנשים, והמיזוג היה רואה בהם
     //    רשומה אחת. אותו תיקון בדיוק כמו במסלול הייבוא, ובאותו סבב.
     newId = newClientId();
-    students.push({id:newId,name:name,cls:cls,updatedAt:Date.now(),createdBy:ysWho()});
-    students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+    students.push({id:newId,name:name,cls:cls,cycle:cycle,updatedAt:Date.now(),createdBy:ysWho()});
+    students=ysSortStudents(students);
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
@@ -6955,11 +7000,10 @@ function saveStudent(){
   //    נקודות הקריאה (`pendTag`, בחירת מה לדחוף, שער הפינוי) לא ראו אותו.
   pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : newId));
   scheduleYsPush();
-  closeStudentModal();
+  closeModal();
   renderStudents();
 }
 
-function closeStudentModal(){document.getElementById('student-modal').style.display='none';}
 
 // ליבת המחיקה — משותפת למחיקת תלמיד בודד ולמחיקה ההמונית, כדי שלא יהיו שתי
 // מימושים שנפרדים אחד מהשני. מחיקה = tombstone (deleted=true + updatedAt),
@@ -7035,7 +7079,7 @@ window.importStudentsFromFile = function(input) {
       }
       var wrote = true;
       if (added > 0) {
-        existing.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+        existing=ysSortStudents(existing);
         // אין מיספור-מחדש — id חייב להישאר יציב למיזוג בין מכשירים
         // ⛔ תוצאת הכתיבה המקומית נבדקת לפני כל דיווח הצלחה (סבב 37) —
         //    באחסון מלא `saveStudents` מחזירה `false`, ועד הסבב הזה הסיכום
@@ -7064,13 +7108,12 @@ window.importStudentsFromFile = function(input) {
         body += '<div style="color:#c0392b;margin-top:6px"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
         body += '<div style="font-size:.82rem;margin-top:4px;direction:rtl">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
-      document.getElementById('import-summary-icon').textContent = icon;
-      document.getElementById('import-summary-title').textContent = title;
-      document.getElementById('import-summary-body').innerHTML = body || '<div>הכל תקין!</div>';
       // ⚠️ הסיכום הוא הדיווח היחיד למשתמש כאן, ולכן הוא נבנה מהאמת ולא
       //    מהכוונה: כשל כתיבה מקומית משנה את האייקון, את הכותרת ואת הגוף.
-
-      document.getElementById('import-summary-modal').style.display = 'flex';
+      openModal(icon + ' ' + title,
+        '<div style="color:var(--text2);font-size:.92rem;line-height:1.7;text-align:center">' +
+        (body || '<div>הכל תקין!</div>') + '</div>',
+        '<button class="btn" data-act="modal-close" style="flex:1">סגור</button>');
     } catch(err) {
       toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err));
     }
@@ -7081,11 +7124,12 @@ window.importStudentsFromFile = function(input) {
 // ---- מחיקת כלל התלמידים ----
 window.openDeleteAllModal = function() {
   if (checkLoginNeeded()) return;
-  document.getElementById('delete-all-modal').style.display = 'flex';
+  ask('⚠️ מחיקת כלל התלמידים',
+      'פעולה זו תמחק לצמיתות את כל התלמידים מהמערכת. לא ניתן לשחזר לאחר האישור.',
+      '🗑️ כן, מחק הכל').then(function (yes) { if (yes) window.confirmDeleteAll(); });
 };
 
 window.confirmDeleteAll = function() {
-  document.getElementById('delete-all-modal').style.display = 'none';
   // saveStudents([]) הפיל את התלמידים החיים בלי tombstone, ולכן המיזוג הבא
   // החזיר את כולם מהענן תוך פחות משנייה. אותה ליבה כמו מחיקת תלמיד בודד.
   var n = ysTombstoneStudents(getStudents().map(function(s){ return s.id; }));
@@ -7115,7 +7159,7 @@ window.printStudents = function() {
   try {
     if (typeof pdfMake === 'undefined') { toast('⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב'); return; }
     toast('מייצר PDF...');
-    var students = getStudents().filter(function(s){return s.active!==false;});
+    var students = ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=window._hcH(_todG);
@@ -7314,19 +7358,13 @@ window.loadAttend = async function() {
   var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
   try {
-    if(_openRec && !document.querySelector('[data-dlg="at-resume"]')) {
-      var _rd=document.createElement('div');
-      _rd.setAttribute('data-dlg','at-resume');
-      _rd.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-      _rd.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-        '<div style="font-size:1.5rem;margin-bottom:6px">⏳</div>'+
-        '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">סדר פתוח מהיום</div>'+
-        '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRec.session+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>'+
-        '<div style="display:flex;gap:10px;justify-content:center">'+
-        '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.atEditSession('+idArg(_openRec.id)+');this.closest(\'[data-dlg=at-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
-        '</div></div>';
-      document.body.appendChild(_rd);
+    /*  ⚠️ ההצעה אינה דורסת מודאל פתוח — ⛔ מיכל אחד, ⭐ ומי שכבר עומד
+     *  בדיאלוג אחר לא ימצא אותו מוחלף מתחת לידיו. */
+    if(_openRec && !modalOpen()) {
+      openModal('⏳ סדר פתוח מהיום',
+        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
+        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button data-act="at-resume-go" data-id="'+esc(_openRec.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
     }
   } catch(eRes){}
 
@@ -7535,7 +7573,7 @@ function atRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=atSummaryHtml(cnts);
-    html+='<div onclick="window.atEditSession('+idArg(rec.id)+')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div data-act="at-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -7686,18 +7724,10 @@ window.atOpenSession = async function(sessId, sessName) {
   allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
-    var d=document.createElement('div');
-    d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-    d.setAttribute('data-dlg','dup');
-    d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-      '<div style="font-size:1.5rem;margin-bottom:6px">📋</div>'+
-      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">סדר כבר מולא</div>'+
-      '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>'+
-      '<div style="display:flex;gap:10px;justify-content:center">'+
-      '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.atEditSession('+idArg(existing.id)+');this.closest(\'[data-dlg=dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
-      '</div></div>';
-    document.body.appendChild(d);
+    openModal('📋 סדר כבר מולא',
+      '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
+      '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button data-act="at-resume-go" data-id="'+esc(existing.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>');
     return;
   }
 
@@ -7705,7 +7735,7 @@ window.atOpenSession = async function(sessId, sessName) {
   var _oCfg=window._atCfg||atDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   window._atMarks={};
   window._atPending={};
   window._atCleared={};
@@ -7819,25 +7849,13 @@ function atShowOverrideDialog(sid, student) {
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
   var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
-  var d=document.createElement('div');
-  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-  d.setAttribute('data-dlg','override');
-  d.innerHTML=
-    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #eee">'+
-        '<span style="font-size:1.2rem">'+typeIcon+'</span>'+
-        '<span style="font-weight:700;font-size:.95rem;color:'+typeClr+'">'+typeLbl+'</span>'+
-        '<span style="font-size:.85rem;color:#aaa;margin-right:auto">'+student.name+'</span>'+
-      '</div>'+
-      reasonHtml+
-      datesHtml+
-      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
-      '<div style="display:flex;gap:10px">'+
-        '<button data-act="dlg-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
-        '<button onclick="window.atCancelStudentStatusFromReg('+idArg(sid)+');this.closest(\'[data-dlg=override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(d);
+  openModal(typeIcon+' '+typeLbl+' — '+student.name,
+    '<div style="font-size:.85rem;color:'+typeClr+';font-weight:700;margin-bottom:8px">'+esc(typeLbl)+'</div>'+
+    reasonHtml+
+    datesHtml+
+    '<div style="margin-top:14px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
+    '<button data-act="at-status-cancel" data-id="'+esc(sid)+'" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>');
 }
 
 // ביטול סטטוס תלמיד מתוך לשונית הרישום
@@ -7900,7 +7918,7 @@ window.atConfirmLate = function(sid) {
 window.atRenderStudents = function() {
   var el=document.getElementById('at-students');
   if(!el) return;
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
 
   var active=students.filter(function(s){return s.active!==false;});
@@ -7921,10 +7939,10 @@ window.atRenderStudents = function() {
     var col=AT_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
       'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
-    return '<button onclick="window.atSetMark('+idArg(sid)+',\''+code+'\')" style="'+style+'">'+label+'</button>';
+    return '<button data-act="at-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
-    return '<button onclick="window.atClearMark('+idArg(sid)+')" title="נקה סימון" '+
+    return '<button data-act="at-clear-mark" data-id="'+esc(sid)+'" title="נקה סימון" '+
       'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
       'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
       'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
@@ -7950,7 +7968,7 @@ window.atRenderStudents = function() {
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
-        (isPendingLate?'<button onclick="window.atConfirmLate('+idArg(s.id)+')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'#f9fafb':'#fff';
     return '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:'+rowBg+';border:1.5px solid var(--border);border-radius:9px;margin-bottom:6px;flex-wrap:wrap">'+
@@ -8079,7 +8097,7 @@ window.atRenderArchive = async function(records) {
     var isYearCur=hy===curHY;
     html+='<div style="margin-bottom:18px">';
     // כותרת שנה
-    html+='<div onclick="var e=document.getElementById(\''+yId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+    html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
       'style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:9px;cursor:pointer;font-weight:700;font-size:.95rem;margin-bottom:10px;user-select:none">'+
       '<span style="flex:1">📅 '+window._hcYL(hy)+'</span><span style="font-size:.8rem;opacity:.6">▾</span>'+
     '</div>';
@@ -8092,7 +8110,7 @@ window.atRenderArchive = async function(records) {
       var mName=window._hcMN(hy)[mi];
       html+='<div style="margin-bottom:12px">';
       // כותרת חודש
-      html+='<div onclick="var e=document.getElementById(\''+mId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+      html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
         'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
         '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
       '</div>';
@@ -8113,7 +8131,7 @@ window.atRenderArchive = async function(records) {
         var isToday=iso===todayIso;
         html+='<div style="margin-bottom:8px">';
         // כותרת יום
-        html+='<div onclick="var e=document.getElementById(\''+dId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+        html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
           'style="display:flex;align-items:center;gap:8px;padding:6px 11px;background:'+(isToday?'#fef3c7':'#f0f4fa')+';border:1px solid '+(isToday?'#f6d860':'#d8e3f0')+';border-radius:6px;cursor:pointer;font-weight:600;font-size:.83rem;color:var(--navy);margin-bottom:4px;user-select:none">'+
           '<span style="flex:1">'+dayLabel+(isToday?' — <span style="color:#b7791f">היום</span>':'')+
           ' <span style="font-size:.76rem;font-weight:400;color:var(--text2)">('+entries.length+' סדרים)</span></span>'+
@@ -8128,17 +8146,21 @@ window.atRenderArchive = async function(records) {
           var summary=atSummaryHtml(cnts);
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
-          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
-          /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
-           *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
-          html+='<button onclick="event.stopPropagation();window.atDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(ysMarks(rec)).map(function(e2){
-            var sid2=e2[0],m2=e2[1];
-            var sn=nameById(sid2);
+          var _mk2=ysMarks(rec);
+          var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
+            var _st2=students.find(function(x){return String(x.id)===String(sid2);});
+            // ⚠️ תלמיד שנמחק אחרי הסדר אינו במצבת ⛔ ואינו נשמט מהשורה —
+            //    הסדר שנרשם הוא עובדה, ו«חסר» בארכיון נקרא כמי שלא סומן.
+            return _st2||{id:sid2,name:nameById(sid2),cls:''};
+          })).map(function(_s2){
+            var sid2=String(_s2.id),m2=_mk2[sid2]||{};
+            var sn=_s2.name;
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var col=ARC_COL[m2.s]||'#888';
             return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
@@ -8166,20 +8188,8 @@ window.atArcFilter = async function(all) {
 };
 
 window.atDeleteSession = function(id) {
-  var dlg=document.createElement('div');
-  dlg.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-  dlg.setAttribute('data-dlg','at-del');
-  dlg.innerHTML=
-    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">'+
-      '<div style="font-size:1.5rem;margin-bottom:8px">🗑️</div>'+
-      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px">מחיקת סדר</div>'+
-      '<p style="font-size:.85rem;color:var(--text2);margin-bottom:20px">הסדר יימחק לצמיתות מהארכיון.<br>לא ניתן לשחזר פעולה זו.</p>'+
-      '<div style="display:flex;gap:10px">'+
-        '<button data-act="dlg-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">ביטול</button>'+
-        '<button onclick="window.atDeleteSessionConfirmed('+idArg(id)+');this.closest(\'[data-dlg=at-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(dlg);
+  ask('🗑️ מחיקת סדר', 'הסדר יימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.', 'מחק')
+    .then(function (yes) { if (yes) window.atDeleteSessionConfirmed(id); });
 };
 
 window.atDeleteSessionConfirmed = async function(id) {
@@ -8198,31 +8208,21 @@ window.atDeleteSessionConfirmed = async function(id) {
    נוכחות — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
 window.atShowExportDialog = function(type) {
-  document.querySelectorAll('[data-dlg=at-export]').forEach(function(d){d.remove();});
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','at-export');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML=
-    '<div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'
-    +'<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:18px">'+(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel')+'</div>'
-    +'<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">מתאריך</div>'+window._hcBuild('expF',null)+'</div>'
+  openModal(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel',
+     '<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">מתאריך</div>'+window._hcBuild('expF',null)+'</div>'
     +'<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
-    +'<div style="font-size:.8rem;color:var(--text3);margin-bottom:18px;text-align:center">השאר ריק לייצוא כל הנתונים</div>'
-    +'<div style="display:flex;gap:10px;justify-content:center">'
-    +'<button class="exp-ok" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
-    +'<button class="exp-cancel" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
-    +'</div>'
-    +'</div>';
-  document.body.appendChild(dlg);
-  dlg.querySelector('.exp-ok').onclick=function(){window.atExportConfirm(type);};
-  dlg.querySelector('.exp-cancel').onclick=function(){dlg.remove();};
+    +'<div style="font-size:.8rem;color:var(--text3);text-align:center">השאר ריק לייצוא כל הנתונים</div>',
+     '<button data-act="at-export-go" data-type="'+esc(type)+'" style="flex:1;padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
+    +'<button data-act="modal-close" style="flex:1;padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
 };
 
 window.atExportConfirm = async function(type) {
   console.log('[dbg] atExportConfirm called, type='+type);
   var fromIso=(document.getElementById('expF_iso')||{}).value||null;
   var toIso=(document.getElementById('expT_iso')||{}).value||null;
-  document.querySelectorAll('[data-dlg=at-export]').forEach(function(d){d.remove();});
+  /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
+   *  ⭐ וקריאה אחריה הייתה מחזירה `null` על טווח שהמשתמש בחר. */
+  closeModal();
   if(type==='excel') await window.atExportExcel(fromIso,toIso);
   else await window.atExportPdf(fromIso,toIso);
 };
@@ -8364,7 +8364,7 @@ window.atRenderSupervision = async function() {
   window._atData=null;
   // סדרים מחוקים לא נספרים בהשגחה
   var data=(await atLoadData()).filter(function(r){ return !(r && r.deleted); });
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=atLiveTreats(await atLoadTreats());
 
@@ -8416,7 +8416,11 @@ window.atRenderSupervision = async function() {
     });
   });
 
-  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+  /*  ⛔ הרשימה נבנית מסדר התלמידים ⛔ ולא מ-`Object.entries` — ⚠️ מפתח שנראה
+   *  כמספר שלם מסודר ב-JS **מספרית** לפני כל שאר המפתחות, ⭐ ולכן השוויון
+   *  בין שני תלמידים עם אותו מספר חיסורים נשבר לפי המזהה. */
+  var rows=students.map(function(s){return [String(s.id), stats[s.id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
@@ -8446,16 +8450,14 @@ window.atRenderSupervision = async function() {
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
     html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
-    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
-     *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
-    html+='<button onclick="event.stopPropagation();window.atSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<button data-act="at-sup-detail" data-id="'+esc(sid)+'" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -8468,7 +8470,7 @@ window.atRenderSupervision = async function() {
     html+='<select aria-label="סוג הטיפול" id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input aria-label="הערה (אופציונלי)" id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button onclick="window.atAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button data-act="at-add-treat" data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
@@ -8481,7 +8483,7 @@ window.atRenderSupervision = async function() {
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
-          '<button onclick="window.atDeleteTreat('+idArg(t.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+          '<button data-act="at-del-treat" data-id="'+esc(t.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -8522,23 +8524,12 @@ window.atAddTreat = async function(sid) {
 };
 
 window.atDeleteTreat = function(id) {
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','del-treat');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:28px 24px;text-align:center;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'
-    +'<div style="font-size:2rem;margin-bottom:10px">🗑️</div>'
-    +'<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'
-    +'<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'
-    +'<div style="display:flex;gap:10px;justify-content:center">'
-    +'<button onclick="window.atDeleteTreatConfirmed('+idArg(id)+')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'
-    +'<button data-act="dlg-close" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'
-    +'</div>'
-    +'</div>';
-  document.body.appendChild(dlg);
+  ask('🗑️ מחיקת טיפול', 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.', 'מחק')
+    .then(function (yes) { if (yes) window.atDeleteTreatConfirmed(id); });
 };
 
 window.atDeleteTreatConfirmed = async function(id) {
-  document.querySelectorAll('[data-dlg=del-treat]').forEach(function(d){d.remove();});
+  closeModal();
   var treats=await atLoadTreats();
   // tombstone ולא filter פיזי: רשומה שנעלמת מהמערך בלי סימון חוזרת מהענן
   // במיזוג הבא (ysMergeRecords מחזיר כל רשומה מרוחקת שאין לה מקבילה מקומית).
@@ -8578,28 +8569,17 @@ window.atSupDetail = function(sid) {
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
       rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+'</span>';
-      rows+='<button onclick="window.atSupEditMarkDlg('+idArg(r.recId)+','+idArg(sid)+',\''+r.mark+'\')" '+
+      rows+='<button data-act="at-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
     });
   }
 
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','supdetail');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:820;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:82vh;display:flex;flex-direction:column;direction:rtl;overflow:hidden">'+
-    '<div style="display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--navy);color:#fff;border-radius:14px 14px 0 0">'+
-      '<span style="font-weight:700;font-size:.97rem;flex:1">📋 פירוט חודשי — '+name+'</span>'+
-      '<button data-act="dlg-close" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:4px 10px;font-family:Heebo;cursor:pointer;font-size:.88rem">✕ סגור</button>'+
-    '</div>'+
-    '<div style="flex:1;overflow-y:auto;padding:14px 18px">'+rows+'</div>'+
-  '</div>';
-  document.body.appendChild(dlg);
+  openModal('📋 פירוט חודשי — '+name,
+    '<div style="max-height:60vh;overflow-y:auto">'+rows+'</div>','');
 };
 
 window.atSupEditMarkDlg = function(recId, sid, curMark) {
-  // סגור דיאלוג קודם אם קיים
-  var prev=document.querySelector('[data-dlg="supedmark"]');if(prev)prev.remove();
   var CODES=[
     {c:'p',  lbl:'✓ נוכח',   col:'#276749'},
     {c:'l',  lbl:'⏰ איחור',  col:'#dd6b20'},
@@ -8611,18 +8591,12 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
   ];
   var btns=CODES.map(function(cd){
     var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
-    return '<button onclick="window.atEditMark('+idArg(recId)+','+idArg(sid)+',\''+cd.c+'\')" '+
+    return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','supedmark');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.4);z-index:830;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:13px;padding:22px;max-width:340px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
-    '<div style="font-weight:700;font-size:.94rem;color:var(--navy);margin-bottom:14px">✏️ עדכן סימון</div>'+
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+btns+'</div>'+
-    '<button data-act="dlg-close" style="width:100%;padding:8px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-  '</div>';
-  document.body.appendChild(dlg);
+  openModal('✏️ עדכן סימון',
+    '<div style="display:flex;flex-wrap:wrap;gap:8px">'+btns+'</div>',
+    '<button data-act="modal-close" style="flex:1;padding:8px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>');
 };
 
 window.atEditMark = async function(recId, sid, newCode) {
@@ -8635,11 +8609,7 @@ window.atEditMark = async function(recId, sid, newCode) {
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
   await atSaveData(data);
-  // סגור דיאלוגי ההשגחה לפני רינדור מחדש
-  ['supedmark','supdetail'].forEach(function(n){
-    var d=document.querySelector('[data-dlg="'+n+'"]');
-    if(d) d.remove();
-  });
+  closeModal();
   // רענן את כל הלשוניות
   atRenderTodaySessions();
   window.atRenderArchive();
@@ -8681,24 +8651,16 @@ function atCheckAlert() {
   });
   if(!alerts.length) return;
 
-  // הצג מודל התראה
-  var d=document.createElement('div');
-  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.6);z-index:700;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   var list=alerts.slice(0,10).map(function(s){
     return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+esc(s.name)+
       (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span style="color:#b7791f;margin-right:6px"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
   }).join('');
-  d.innerHTML='<div style="background:#fff;border-radius:16px;padding:28px;width:90%;max-width:420px;border-top:4px solid #e53e3e">'+
-    '<div style="font-size:1.5rem;margin-bottom:8px;text-align:center">⚠️</div>'+
-    '<div style="font-weight:700;font-size:1.05rem;color:#c53030;margin-bottom:6px;text-align:center">התראת חיסורים</div>'+
+  openModal('⚠️ התראת חיסורים',
     '<p style="font-size:.85rem;color:var(--text2);margin-bottom:14px;text-align:center">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div style="max-height:220px;overflow-y:auto;margin-bottom:16px">'+list+'</div>'+
-    '<div style="text-align:center">'+
-    '<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="background:#1a3a6b;color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>'+
-    '</div></div>';
-  document.body.appendChild(d);
+    '<div style="max-height:220px;overflow-y:auto">'+list+'</div>',
+    '<button data-act="modal-close" style="flex:1;background:#1a3a6b;color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>');
 }
 
 // -------- הגדרות מודול --------
@@ -8930,19 +8892,11 @@ window.loadSleep = async function() {
   var _openRecSl=(window._slData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
   try {
-    if(_openRecSl && !document.querySelector('[data-dlg="sl-resume"]')) {
-      var _rd=document.createElement('div');
-      _rd.setAttribute('data-dlg','sl-resume');
-      _rd.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-      _rd.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-        '<div style="font-size:1.5rem;margin-bottom:6px">⏳</div>'+
-        '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">בדיקת שינה פתוחה</div>'+
-        '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+_openRecSl.session+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>'+
-        '<div style="display:flex;gap:10px;justify-content:center">'+
-        '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
-        '<button onclick="window.slEditSession('+idArg(_openRecSl.id)+');this.closest(\'[data-dlg=sl-resume]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>'+
-        '</div></div>';
-      document.body.appendChild(_rd);
+    if(_openRecSl && !modalOpen()) {
+      openModal('⏳ בדיקת שינה פתוחה',
+        '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(_openRecSl.session)+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>',
+        '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">אחר כך</button>'+
+        '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">▶ המשך</button>');
     }
   } catch(eRes){}
 
@@ -9093,7 +9047,7 @@ function slRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=slSummaryHtml(cnts);
-    html+='<div onclick="window.slEditSession('+idArg(rec.id)+')" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_SL_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -9166,25 +9120,17 @@ window.slOpenSession = async function(sessId, sessName) {
   allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
-    var d=document.createElement('div');
-    d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-    d.setAttribute('data-dlg','sl-dup');
-    d.innerHTML='<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;text-align:center;border-top:4px solid var(--navy);direction:rtl">'+
-      '<div style="font-size:1.5rem;margin-bottom:6px">📋</div>'+
-      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:6px">דו"ח כבר מולא</div>'+
-      '<p style="font-size:.84rem;color:var(--text2);margin-bottom:18px">'+sessName+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>'+
-      '<div style="display:flex;gap:10px;justify-content:center">'+
-      '<button data-act="dlg-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-      '<button onclick="window.slEditSession('+idArg(existing.id)+');this.closest(\'[data-dlg=sl-dup]\').remove()" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>'+
-      '</div></div>';
-    document.body.appendChild(d);
+    openModal('📋 דו"ח כבר מולא',
+      '<p style="font-size:.84rem;color:var(--text2);text-align:center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
+      '<button data-act="modal-close" style="flex:1;padding:9px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
+      '<button data-act="sl-resume-go" data-id="'+esc(existing.id)+'" style="flex:1;padding:9px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">ערוך</button>');
     return;
   }
 
   var _oCfg=window._slCfg||slDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||s.id===sessId;});
   var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   window._slMarks={};window._slPending={};window._slCleared={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var am=slAutoMark(s,dateIso,_oSessTime);
@@ -9289,45 +9235,13 @@ function slShowOverrideDialog(sid, student) {
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
   var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
-  var d=document.createElement('div');
-  d.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-  d.setAttribute('data-dlg','sl-override');
-  d.innerHTML=
-    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:360px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25)">'+
-      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #eee">'+
-        '<span style="font-size:1.2rem">'+typeIcon+'</span>'+
-        '<span style="font-weight:700;font-size:.95rem;color:'+typeClr+'">'+typeLbl+'</span>'+
-        '<span style="font-size:.85rem;color:#aaa;margin-right:auto">'+student.name+'</span>'+
-      '</div>'+
-      reasonHtml+datesHtml+
-      '<div style="margin-top:14px;margin-bottom:16px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>'+
-      '<div style="display:flex;gap:10px">'+
-        '<button data-act="dlg-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
-        '<button onclick="window.slCancelStudentStatusFromReg('+idArg(sid)+');this.closest(\'[data-dlg=sl-override]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(d);
+  openModal(typeIcon+' '+typeLbl+' — '+student.name,
+    '<div style="font-size:.85rem;color:'+typeClr+';font-weight:700;margin-bottom:8px">'+esc(typeLbl)+'</div>'+
+    reasonHtml+datesHtml+
+    '<div style="margin-top:14px;font-size:.85rem;color:var(--text2)">האם לבטל את הסטטוס לגמרי?<br><span style="font-size:.78rem;color:#aaa;font-weight:700;text-decoration:underline">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">סגור</button>'+
+    '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">בטל סטטוס</button>');
 }
-
-window.slCancelStudentStatusFromReg = function(sid) {
-  var students=getStudents();
-  var s=students.find(function(x){return String(x.id)===String(sid);});
-  if(!s) return;
-  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
-  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=ysWho(); });
-  s.present=true;
-  s.updatedAt=Date.now();
-  saveStudents(students);
-  scheduleYsPush();
-  delete window._slMarks[sid];
-  delete window._slCleared[sid];
-  delete window._slPending[sid];
-  slMarkDirty();
-  window.slRenderStudents();
-  renderStudents();
-  toast('✅ הסטטוס בוטל ל-'+s.name);
-};
 
 window.slApplyMark = function(sid, code) {
   var s=String(sid);
@@ -9363,7 +9277,7 @@ window.slConfirmLate = function(sid) {
 window.slRenderStudents = function() {
   var el=document.getElementById('sl-students');
   if(!el) return;
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   if(!students||!students.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים</div>';return;}
 
   var active=students.filter(function(s){return s.active!==false;});
@@ -9382,10 +9296,10 @@ window.slRenderStudents = function() {
     var col=SL_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
       'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
-    return '<button onclick="window.slSetMark('+idArg(sid)+',\''+code+'\')" style="'+style+'">'+label+'</button>';
+    return '<button data-act="sl-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
-    return '<button onclick="window.slClearMark('+idArg(sid)+')" title="נקה סימון" '+
+    return '<button data-act="sl-clear-mark" data-id="'+esc(sid)+'" title="נקה סימון" '+
       'style="padding:4px 8px;border:1.5px dashed #ccc;border-radius:6px;background:none;color:#bbb;'+
       'font-size:.75rem;cursor:pointer;font-family:Heebo;margin-right:2px" '+
       'onmouseover="this.style.borderColor=\'#e53e3e\';this.style.color=\'#e53e3e\'" '+
@@ -9411,7 +9325,7 @@ window.slRenderStudents = function() {
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
         '<span style="font-size:.74rem;color:#888">דק׳</span>'+
-        (isPendingLate?'<button onclick="window.slConfirmLate('+idArg(s.id)+')" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
     var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
@@ -9547,7 +9461,7 @@ window.slRenderArchive = async function(records) {
     var yId=uid();
     var isYearCur=hy===curHY;
     html+='<div style="margin-bottom:18px">';
-    html+='<div onclick="var e=document.getElementById(\''+yId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+    html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
       'style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--navy);color:#fff;border-radius:9px;cursor:pointer;font-weight:700;font-size:.95rem;margin-bottom:10px;user-select:none">'+
       '<span style="flex:1">📅 '+window._hcYL(hy)+'</span><span style="font-size:.8rem;opacity:.6">▾</span>'+
     '</div>';
@@ -9559,7 +9473,7 @@ window.slRenderArchive = async function(records) {
       var isMonthCur=isYearCur&&mi===curMI;
       var mName=window._hcMN(hy)[mi];
       html+='<div style="margin-bottom:12px">';
-      html+='<div onclick="var e=document.getElementById(\''+mId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+      html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
         'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
         '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
       '</div>';
@@ -9579,7 +9493,7 @@ window.slRenderArchive = async function(records) {
         var dayLabel=window._hcD[hd0.day]+' '+mName;
         var isToday=iso===todayIso;
         html+='<div style="margin-bottom:8px">';
-        html+='<div onclick="var e=document.getElementById(\''+dId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'" '+
+        html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
           'style="display:flex;align-items:center;gap:8px;padding:6px 11px;background:'+(isToday?'#fef3c7':'#f0f4fa')+';border:1px solid '+(isToday?'#f6d860':'#d8e3f0')+';border-radius:6px;cursor:pointer;font-weight:600;font-size:.83rem;color:var(--navy);margin-bottom:4px;user-select:none">'+
           '<span style="flex:1">'+dayLabel+(isToday?' — <span style="color:#b7791f">היום</span>':'')+
           ' <span style="font-size:.76rem;font-weight:400;color:var(--text2)">('+entries.length+' דוחות)</span></span>'+
@@ -9594,17 +9508,21 @@ window.slRenderArchive = async function(records) {
           var summary=slSummaryHtml(cnts);
           var sId=uid();
           html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
-          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="var e=document.getElementById(\''+sId+'\');e.style.display=e.style.display===\'none\'?\'block\':\'none\'">';
+          html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
-          /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
-           *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
-          html+='<button onclick="event.stopPropagation();window.slDeleteSession('+idArg(rec.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
+          html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
-          var rows=Object.entries(ysMarks(rec)).map(function(e2){
-            var sid2=e2[0],m2=e2[1];
-            var sn=nameById(sid2);
+          var _mk2=ysMarks(rec);
+          var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
+            var _st2=students.find(function(x){return String(x.id)===String(sid2);});
+            // ⚠️ תלמיד שנמחק אחרי הסדר אינו במצבת ⛔ ואינו נשמט מהשורה —
+            //    הסדר שנרשם הוא עובדה, ו«חסר» בארכיון נקרא כמי שלא סומן.
+            return _st2||{id:sid2,name:nameById(sid2),cls:''};
+          })).map(function(_s2){
+            var sid2=String(_s2.id),m2=_mk2[sid2]||{};
+            var sn=_s2.name;
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var noteStr=m2.note?(' — '+m2.note):'';
             var col=ARC_COL[m2.s]||'#888';
@@ -9633,20 +9551,8 @@ window.slArcFilter = async function(all) {
 };
 
 window.slDeleteSession = function(id) {
-  var dlg=document.createElement('div');
-  dlg.style.cssText='display:flex;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:800;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
-  dlg.setAttribute('data-dlg','sl-del');
-  dlg.innerHTML=
-    '<div style="background:#fff;border-radius:14px;padding:24px;width:90%;max-width:320px;direction:rtl;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center">'+
-      '<div style="font-size:1.5rem;margin-bottom:8px">🗑️</div>'+
-      '<div style="font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px">מחיקת רשומה</div>'+
-      '<p style="font-size:.85rem;color:var(--text2);margin-bottom:20px">הרשומה תימחק לצמיתות מהארכיון.<br>לא ניתן לשחזר פעולה זו.</p>'+
-      '<div style="display:flex;gap:10px">'+
-        '<button data-act="dlg-close" style="flex:1;padding:10px;background:none;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;cursor:pointer">ביטול</button>'+
-        '<button onclick="window.slDeleteSessionConfirmed('+idArg(id)+');this.closest(\'[data-dlg=sl-del]\').remove()" style="flex:1;padding:10px;background:#e53e3e;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer">מחק</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(dlg);
+  ask('🗑️ מחיקת רשומה', 'הרשומה תימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.', 'מחק')
+    .then(function (yes) { if (yes) window.slDeleteSessionConfirmed(id); });
 };
 
 window.slDeleteSessionConfirmed = async function(id) {
@@ -9665,29 +9571,22 @@ window.slDeleteSessionConfirmed = async function(id) {
    שינה — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
 window.slShowExportDialog = function(type) {
-  document.querySelectorAll('[data-dlg=sl-export]').forEach(function(d){d.remove();});
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','sl-export');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML=
-    '<div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:24px;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'+
-    '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:18px">'+(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel')+'</div>'+
+  openModal(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel',
     '<div style="margin-bottom:14px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">מתאריך</div>'+window._hcBuild('slExpF',null)+'</div>'+
     '<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('slExpT',null)+'</div>'+
-    '<div style="font-size:.8rem;color:var(--text3);margin-bottom:18px;text-align:center">השאר ריק לייצוא כל הנתונים</div>'+
-    '<div style="display:flex;gap:10px;justify-content:center">'+
-    '<button class="exp-ok" style="padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'+
-    '<button class="exp-cancel" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'+
-    '</div></div>';
-  document.body.appendChild(dlg);
-  dlg.querySelector('.exp-ok').onclick=function(){
-    var fromIso=(document.getElementById('slExpF_iso')||{}).value||null;
-    var toIso=(document.getElementById('slExpT_iso')||{}).value||null;
-    dlg.remove();
-    if(type==='pdf') window.slExportPdf(fromIso,toIso);
-    else window.slExportExcel(fromIso,toIso);
-  };
-  dlg.querySelector('.exp-cancel').onclick=function(){dlg.remove();};
+    '<div style="font-size:.8rem;color:var(--text3);text-align:center">השאר ריק לייצוא כל הנתונים</div>',
+    '<button data-act="sl-export-go" data-type="'+esc(type)+'" style="flex:1;padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'+
+    '<button data-act="modal-close" style="flex:1;padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
+};
+
+/*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
+ *  ⭐ וקריאה אחריה הייתה מחזירה `null` על טווח שהמשתמש בחר. */
+window.slExportConfirm = function(type) {
+  var fromIso=(document.getElementById('slExpF_iso')||{}).value||null;
+  var toIso=(document.getElementById('slExpT_iso')||{}).value||null;
+  closeModal();
+  if(type==='pdf') window.slExportPdf(fromIso,toIso);
+  else window.slExportExcel(fromIso,toIso);
 };
 
 window.slExportExcel = async function(fromIso,toIso) {
@@ -9819,7 +9718,7 @@ window.slRenderSupervision = async function() {
   window._slData=null;
   // סדרי שינה מחוקים לא נספרים בהשגחה (תאום של atSupNav)
   var data=(await slLoadData()).filter(function(r){ return !(r && r.deleted); });
-  var students=getStudents();
+  var students=ysSortStudents(getStudents());
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=slLiveTreats(await slLoadTreats());
 
@@ -9866,7 +9765,11 @@ window.slRenderSupervision = async function() {
     });
   });
 
-  var rows=Object.entries(stats).filter(function(e){return e[1].absent>0||e[1].lateMin>0;})
+  /*  ⛔ הרשימה נבנית מסדר התלמידים ⛔ ולא מ-`Object.entries` — ⚠️ מפתח שנראה
+   *  כמספר שלם מסודר ב-JS **מספרית** לפני כל שאר המפתחות, ⭐ ולכן השוויון
+   *  בין שני תלמידים עם אותו מספר חיסורים נשבר לפי המזהה. */
+  var rows=students.map(function(s){return [String(s.id), stats[s.id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
@@ -9893,16 +9796,14 @@ window.slRenderSupervision = async function() {
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
     html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
-    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" onclick="var p=this.nextElementSibling,open=p.style.display!==\'none\';p.style.display=open?\'none\':\'block\';this.querySelector(\'.sl-sup-chev\').style.transform=open?\'rotate(0deg)\':\'rotate(90deg)\'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
     html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    /*  ⛔ אתר `stopPropagation` — ⛔ אינו מומר לדלגציה (סבב 68, כלל ברזל 27) —
-     *  דלגציה ב-`document` רצה אחרי בועת האלמנט, והשורה העוטפת הייתה נפתחת. */
-    html+='<button onclick="event.stopPropagation();window.slSupDetail('+idArg(sid)+')" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<button data-act="sl-sup-detail" data-id="'+esc(sid)+'" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sl-sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -9914,7 +9815,7 @@ window.slRenderSupervision = async function() {
     html+='<select aria-label="סוג הטיפול" id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       slCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input aria-label="הערה (אופציונלי)" id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button onclick="window.slAddTreat('+idArg(sid)+')" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button data-act="sl-add-treat" data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
@@ -9927,7 +9828,7 @@ window.slRenderSupervision = async function() {
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span style="color:var(--text3);font-size:.76rem">'+esc(t.by_name)+'</span>'+
-          '<button onclick="window.slDeleteTreat('+idArg(t.id)+')" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
+          '<button data-act="sl-del-treat" data-id="'+esc(t.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.8rem;padding:0 4px">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -9965,22 +9866,12 @@ window.slAddTreat = async function(sid) {
 };
 
 window.slDeleteTreat = function(id) {
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','sl-del-treat');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:340px;width:100%;padding:28px 24px;text-align:center;direction:rtl;box-shadow:0 8px 32px rgba(0,0,0,.18)">'+
-    '<div style="font-size:2rem;margin-bottom:10px">🗑️</div>'+
-    '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:8px">מחיקת טיפול</div>'+
-    '<div style="color:var(--text2);font-size:.88rem;margin-bottom:22px">האם למחוק את הטיפול?<br>פעולה זו אינה הפיכה.</div>'+
-    '<div style="display:flex;gap:10px;justify-content:center">'+
-    '<button onclick="window.slDeleteTreatConfirmed('+idArg(id)+')" style="padding:9px 24px;background:#e53e3e;color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">מחק</button>'+
-    '<button data-act="dlg-close" style="padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>'+
-    '</div></div>';
-  document.body.appendChild(dlg);
+  ask('🗑️ מחיקת טיפול', 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.', 'מחק')
+    .then(function (yes) { if (yes) window.slDeleteTreatConfirmed(id); });
 };
 
 window.slDeleteTreatConfirmed = async function(id) {
-  document.querySelectorAll('[data-dlg=sl-del-treat]').forEach(function(d){d.remove();});
+  closeModal();
   var treats=await slLoadTreats();
   // ראה atDeleteTreatConfirmed — tombstone, לא הסרה פיזית.
   var ts=Date.now(), by=ysWho(), found=false;
@@ -10020,27 +9911,17 @@ window.slSupDetail = function(sid) {
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
       rows+='<span style="color:'+col+';font-weight:700;flex:1">'+esc(lbl)+esc(noteStr)+'</span>';
-      rows+='<button onclick="window.slSupEditMarkDlg('+idArg(r.recId)+','+idArg(sid)+',\''+r.mark+'\')" '+
+      rows+='<button data-act="sl-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         'style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:2px 8px;font-family:Heebo;font-size:.76rem;cursor:pointer;color:var(--navy)">✏️ ערוך</button>';
       rows+='</div>';
     });
   }
 
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','sl-supdetail');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:820;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:82vh;display:flex;flex-direction:column;direction:rtl;overflow:hidden">'+
-    '<div style="display:flex;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--navy);color:#fff;border-radius:14px 14px 0 0">'+
-      '<span style="font-weight:700;font-size:.97rem;flex:1">📋 פירוט חודשי — '+name+'</span>'+
-      '<button data-act="dlg-close" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:7px;padding:4px 10px;font-family:Heebo;cursor:pointer;font-size:.88rem">✕ סגור</button>'+
-    '</div>'+
-    '<div style="flex:1;overflow-y:auto;padding:14px 18px">'+rows+'</div>'+
-  '</div>';
-  document.body.appendChild(dlg);
+  openModal('📋 פירוט חודשי — '+name,
+    '<div style="max-height:60vh;overflow-y:auto">'+rows+'</div>','');
 };
 
 window.slSupEditMarkDlg = function(recId, sid, curMark) {
-  var prev=document.querySelector('[data-dlg="sl-supedmark"]');if(prev)prev.remove();
   var CODES=[
     {c:'p',  lbl:'✓ נוכח',   col:'#276749'},
     {c:'l',  lbl:'⏰ איחור',  col:'#dd6b20'},
@@ -10052,18 +9933,12 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
   ];
   var btns=CODES.map(function(cd){
     var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
-    return '<button onclick="window.slEditMark('+idArg(recId)+','+idArg(sid)+',\''+cd.c+'\')" '+
+    return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
-  var dlg=document.createElement('div');
-  dlg.setAttribute('data-dlg','sl-supedmark');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(10,20,50,.4);z-index:830;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)';
-  dlg.innerHTML='<div style="background:#fff;border-radius:13px;padding:22px;max-width:340px;width:100%;direction:rtl;border-top:4px solid var(--navy)">'+
-    '<div style="font-weight:700;font-size:.94rem;color:var(--navy);margin-bottom:14px">✏️ עדכן סימון</div>'+
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+btns+'</div>'+
-    '<button data-act="dlg-close" style="width:100%;padding:8px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>'+
-  '</div>';
-  document.body.appendChild(dlg);
+  openModal('✏️ עדכן סימון',
+    '<div style="display:flex;flex-wrap:wrap;gap:8px">'+btns+'</div>',
+    '<button data-act="modal-close" style="flex:1;padding:8px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>');
 };
 
 window.slEditMark = async function(recId, sid, newCode) {
@@ -10076,10 +9951,7 @@ window.slEditMark = async function(recId, sid, newCode) {
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
   await slSaveData(data);
-  ['sl-supedmark','sl-supdetail'].forEach(function(n){
-    var d=document.querySelector('[data-dlg="'+n+'"]');
-    if(d) d.remove();
-  });
+  closeModal();
   slRenderTodaySessions();
   window.slRenderArchive();
   window.slRenderSupervision();

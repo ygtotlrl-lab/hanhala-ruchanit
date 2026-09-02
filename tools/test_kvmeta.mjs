@@ -54,8 +54,18 @@ noneIn(/YS_KV_UPDATED_AT/, SRC,
 /* ⛔ ושתי הרשימות — צד הדחיפה וצד המשיכה — נגזרות ממקור אחד (סבב 63).
    ⚠️ זה בדיוק ההפרש שנמצא: הדחיפה עברה לעמודה והמשיכה נשארה על המפה
    המתה, ⛔ ומכשיר שערך הגדרה הפך חירש לשינוי שלה ממכשיר אחר. */
-someIn(/var\s+YS_SETTINGS_LWW_KEYS\s*=\s*\[[^\]]*'ys_reasons'[^\]]*'ys_absence_reasons'[^\]]*'ys_cls_years'[^\]]*\]/, SRC,
-   '1ב · ⭐ `YS_SETTINGS_LWW_KEYS` מוגדר ומכסה את שלושת מפתחות ההגדרות');
+/*  ⛔ נמדדת ההצטלבות בין שתי הרשימות ⛔ ולא שמות מוקלדים (סבב 80) — ⚠️ רשימת
+ *  שמות בשער נופלת על כל מפתח שנוסף או שירד, ⭐ גם כשההפרש שהיא נועדה
+ *  לתפוס אינו קיים כלל. */
+const _lwwArr = /var\s+YS_SETTINGS_LWW_KEYS\s*=\s*\[([^\]]*)\]/.exec(SRC);
+const _lwwKeys = _lwwArr ? (_lwwArr[1].match(/'([^']+)'/g) || []).map(x => x.slice(1, -1)) : [];
+const _pushKeys = (SRC.match(/\{\s*key:\s*'([^']+)',\s*get:/g) || [])
+  .map(x => /'([^']+)'/.exec(x)[1]);
+const _missing = _lwwKeys.filter(k => _pushKeys.indexOf(k) === -1);
+ok(_lwwKeys.length >= 2 && _missing.length === 0,
+   '1ב · ⭐ כל מפתח ב-`YS_SETTINGS_LWW_KEYS` נמצא גם ברשימת הדחיפה — נמדדו '
+   + _lwwKeys.length + ' מפתחות, ' + _missing.length + ' חסרים בדחיפה (' + (_missing.join(',') || 'אין')
+   + ') והצפוי לפחות 2 ואפס חסרים; ⛔ מפתח שנשמט מצד אחד — הוסיפו אותו לשתי הרשימות');
 
 /* ── ב. הנכשל-סגור, על הפונקציה האמיתית ברתמת vm ───────────────────────── */
 const fn = /async function ysCfgUpdatedAt\(key\) \{[\s\S]*?\n\}/.exec(SRC);

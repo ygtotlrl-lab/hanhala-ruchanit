@@ -117,8 +117,11 @@ console.log('  — מוטציות —');
     bare(mut) > 0 && /function\s+getAttendance/.test(mut));
 }
 {
-  const mut = SRC.replace("return out.concat(['ys_students', 'ys_attend_sessions'",
-                          "return out.concat(['ys_students', 'ys_attend', 'ys_attend_sessions'");
+  /*  ⛔ המוטציה שותלת מקור חדש ⛔ ולא מוסיפה לרשימת מפתחות (סבב 80) —
+   *  ⚠️ שלושה-עשר מקורות ה-`kv` ירדו עם הטבלה שהופלה, ⭐ ומקורות הגיבוי
+   *  כאן הם `out.push` של טבלאות. */
+  const mut = SRC.replace("    out.push({ kind: 'table', name: 'ys_settings'",
+                          "    out.push({ kind: 'table', name: 'ys_attend', order: 'key' });\n    out.push({ kind: 'table', name: 'ys_settings'");
   const b = /sources: function \(\) \{([\s\S]*?)\n  \}\n\};/.exec(mut);
   ok('22 · מוטציה: החזרת המפתח למקורות הגיבוי מפילה את טענה 13',
     !!b && bare(b[1]) === 1);

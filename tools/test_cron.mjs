@@ -35,16 +35,20 @@ import { fileURLToPath } from 'node:url';
    האחיות מחייב עדכון כאן באותו סבב (כלל ברזל 8 סעיף 3). */
 const APP = {
   name: 'hanhala-ruchanit',
-  keys: ['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
-         'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg', 'ys_sleep_treats',
-         'ys_reasons', 'ys_absence_reasons', 'ys_approvals', 'ys_perms',
-         'ys_cls_years', 'ys_settings_meta',
-         // סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
+  keys: [// סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
          'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows',
          // סבב 39 — שכבת השורות של השינה, אב ובן.
-         'ys_sleep_sessions_rows', 'ys_sleep_marks_rows'],
+         'ys_sleep_sessions_rows', 'ys_sleep_marks_rows',
+         // סבב 80 — ההגדרות, שירשו את שלושה-עשר מפתחות ה-`kv`.
+         'ys_settings'],
   prefixes: [''],
-  legacyKeys: [],
+  /*  ⛔ שלושה-עשר מפתחות שהאפליקציה **חדלה לכתוב** בסבב 80 ⛔ ואינם
+      יורדים מרשימת-ההיתר — ⚠️ לכל אחד מהם יש עדיין עותקי גיבוי במסד,
+      ⭐ ומפתח שיוצא מהרשימה אינו מתפנה לעולם. */
+  legacyKeys: ['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
+               'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg',
+               'ys_sleep_treats', 'ys_reasons', 'ys_absence_reasons',
+               'ys_approvals', 'ys_perms', 'ys_cls_years', 'ys_settings_meta'],
   sisterKeys: [
     // schar-limud
     'sl_students', 'sl_transactions', 'sl_settings', 'sl_lists',
@@ -58,8 +62,8 @@ const APP = {
     'ramataviv_tb_entries', 'ramataviv_tb_archive',
   ],
   migration: 'migrations/004_backup_retention_cron.sql',
-  allowlistMigration: 'migrations/014_backup_allowlist_drop_wa_phone.sql',
-  migrationDoc: 'hanhala-ruchanit/migrations/014_backup_allowlist_drop_wa_phone.sql',
+  allowlistMigration: 'migrations/019_backup_allowlist_add_ys_settings.sql',
+  migrationDoc: 'hanhala-ruchanit/migrations/019_backup_allowlist_add_ys_settings.sql',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

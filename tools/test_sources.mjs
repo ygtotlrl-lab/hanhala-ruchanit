@@ -28,7 +28,7 @@ import { dirname, join } from 'node:path';
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף (סבב 72) — ⚠️ המיפוי היה
  *  חד-כיווני ב-`check-capabilities` בלבד, ⛔ ומי שערך שער כאן לא ראה
  *  אותו. ⭐ הבודק גוזר את המיפוי מכאן, ⛔ ואינו מחזיק רשימה משלו. */
-export const ROWS = [102];
+export const ROWS = [104];
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   name: 'hanhala-ruchanit',
@@ -39,7 +39,10 @@ const APP = {
      הורצו ואומתו, ⛔ והקיום נמדד מול `information_schema` ולא הוסק
      מכך שהדגל נדלק. */
   tables: ['ys_sessions', 'ys_marks', 'ys_students_rows',
-           'ys_sleep_sessions', 'ys_sleep_marks'],
+           'ys_sleep_sessions', 'ys_sleep_marks',
+           /* ⭐ סבב 80 — ההגדרות ירשו את שלושה-עשר מפתחות ה-`kv`,
+              ⛔ שטבלתם הופלה ב-`018`. */
+           'ys_settings'],
   /* דגלים שמותר להם לשער מקור — ⛔ מקור מאחורי דגל אינו נדרש להיות
      ב-`tables`, מפני שהוא אינו נשלף עד שהדגל יידלק.
      ⭐ ריק מסבב 63: `YS_SLEEP_ROWS` נמחק כשהטבלאות אומתו, ⛔ ואין כאן
