@@ -915,22 +915,39 @@ window._ysHebNone=function(src){
 
 // ---- הפונקציה המרכזית ----
 // מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
+/*  ⛔ מטמון הגזירה — ⚠️ `formatToParts` וארבע גזירות הגימטריה רצות בכל
+ *  קריאה, ⭐ ובמסך ההשגחה הגזירה חוזרת פעם לכל רשומה: אלפי קריאות על
+ *  עשרות תאריכים שונים בלבד. ⛔ **והמפרמט עצמו כבר נשמר** — ⚠️ מה שחוזר
+ *  על עצמו הוא הגזירה, ⛔ ולא בניית המפרמט.
+ *  ⛔ **המפתח הוא היום המקומי** — ⚠️ הגזירה מעגנת בצהריים מקומיים, ⛔ ולכן
+ *  שעה ודקה אינן משנות את התוצאה: מפתח שכולל אותן אינו פוגע לעולם.
+ *  ⛔ **והתשובה מוחזרת כעותק רדוד** — ⚠️ קורא שיכתוב לשדה היה מרעיל את
+ *  המטמון לכל שאר הקוראים, ⭐ והעתקה של עשרה שדות זולה מהגזירה בסדר גודל.
+ *  ⛔ **והמטמון מתרוקן בתקרה** — ⚠️ מפה שגדלה בלי גבול היא דליפה בסשן ארוך. */
+window._ysHebCache={};
+window._ysHebCacheN=0;
 window.ysHebDate=function(d){
   if(d===undefined||d===null) d=new Date();
   if(!window._ysIsDate(d)){ window._ysBadDate('ysHebDate',d); return window._ysHebNone('bad-input'); }
+  var ck=d.getFullYear()+'|'+d.getMonth()+'|'+d.getDate();
+  var hit=window._ysHebCache[ck];
+  if(hit) return Object.assign({},hit);
   // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
   var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
   var r=window.ysIntlHeb(nd),src='intl';
   if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
   if(!r||!r.hy){ return window._ysHebNone('none'); }
   var names=window.ysHebMonthNames(r.hy);
-  return {
+  var out={
     year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
     dayLabel:window.ysHebDayLabel(r.day),
     yearLabel:window.ysHebYearLabel(r.hy),
     yearLabelFull:window.ysHebYearLabelFull(r.hy),
     leap:window.ysHebIsLeap(r.hy), ok:true, src:src
   };
+  if(window._ysHebCacheN>=4000){ window._ysHebCache={}; window._ysHebCacheN=0; }
+  window._ysHebCache[ck]=out; window._ysHebCacheN++;
+  return Object.assign({},out);
 };
 
 // ---- צרכני התצוגה — כולם יושבים על ysHebDate ----
@@ -1286,11 +1303,25 @@ var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת �
 var MSG_NO_CRYPTO    = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לאימות הסיסמה';
 // סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
-
-// ---- מגבלת זמן לשאילתות אימות ----
-// supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
-// ה-fetch לא מצליח ולא נכשל — והספינר היה מסתובב לנצח בלי שום הודעה.
+/* ═══ עוזרי הרשת — מודול משותף (סבב 84) ═══════════════════════════════════
+   ⛔ שלוש הפונקציות ישבו **בין** בלוקים חתומים, ⚠️ ולכן אף `sha256` לא מדד
+      אותן — ⭐ והן נסחפו בשקט בעוד שהטבלה מצהירה עליהן «זהה בית-לבית»:
+      `isNetErr` נכתב בשורה אחת באחת ובשש בשלוש, ריווח `withTimeout` נבדל
+      בשתיים, ו-`errMsg` בשורה אחת בשתיים.
+   ⛔ אין לתת להן קידומת פרויקט — ⚠️ השם הזהה הוא מה שמאפשר להשוות ביניהן
+      בין ארבעת הריפו, ⛔ ושם עם קידומת מחזיר אותן למצב שאיש אינו מודד בו.
+   ⛔ **ו-`MSG_OFFLINE` נקרא מבחוץ** — ⚠️ נוסחו נבדל בגיוס בהחלטה, ⭐ והבלוק
+      מפנה אליו ⛔ ואינו מכיל אותו.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ═══════════════════════════════════════════════════════════════════════ */
 var NET_TIMEOUT_MS = 8000;
+function isNetErr(e) {
+  if (!navigator.onLine) return true;
+  var m = ((e && (e.message || e.details || '')) + '').toLowerCase();
+  return m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1 ||
+         m.indexOf('failed to') !== -1 || m.indexOf('timeout') !== -1;
+}
 function withTimeout(p, ms) {
   return Promise.race([
     Promise.resolve(p),
@@ -1299,23 +1330,27 @@ function withTimeout(p, ms) {
     })
   ]);
 }
-// זיהוי כשל רשת (להבדיל משגיאת שרת/אימות)
-function isNetErr(e) {
-  if (!navigator.onLine) return true;
-  var m = ((e && (e.message || e.details || '')) + '').toLowerCase();
-  return m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1 ||
-         m.indexOf('failed to') !== -1 || m.indexOf('timeout') !== -1;
+function errMsg(e) {
+  return isNetErr(e) ? MSG_OFFLINE : ('שגיאה: ' + ((e && (e.message || e.code)) || e));
 }
-// ---- עוזרי רשת משותפים לשלושת הפרויקטים (סבב 8) ----
-// אותם שמות ואותה התנהגות ב-hanhala-ruchanit, schar-limud ו-yoman-avoda:
-// isNetErr / withTimeout / guardOnline / errMsg. אין לתת להם קידומת פרויקט.
+/* ═══════════════ סוף מודול עוזרי הרשת ══════════════════════════════════ */
+/* ═══ שער מצב הרשת — מודול משותף (סבב 84) ═════════════════════════════════
+   ⛔ מודול נפרד ⛔ ולא חלק מעוזרי הרשת — ⚠️ הוא חי בשלוש אפליקציות ואינו
+      קיים בגיוס, ⭐ ובלוק אחד לשתי רמות קיום הוא בלוק שאינו זהה.
+   ⛔ **ובגיוס הוא מוצהר חסר ומנומק** — ⚠️ שם ארבעה אתרים שומרים על מצב
+      הרשת בהודעה **ייעודית** לכתיבת משתמש, ⛔ והודעה כללית במקומה הייתה
+      מוחקת בדיוק את מה שהמשתמש צריך לדעת.
+   ⛔ שינוי כאן — שלוש האפליקציות **ושלושת עותקי השער**, באותו סבב.
+   ═══════════════════════════════════════════════════════════════════════ */
 function guardOnline() {
   if (!navigator.onLine) { toast(MSG_OFFLINE, 3000); return false; }
   return true;
 }
-function errMsg(e) {
-  return isNetErr(e) ? MSG_OFFLINE : ('שגיאה: ' + ((e && (e.message || e.code)) || e));
-}
+/* ═══════════════ סוף מודול שער מצב הרשת ════════════════════════════════ */
+
+// ---- מגבלת זמן לשאילתות אימות ----
+// supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
+// ה-fetch לא מצליח ולא נכשל — והספינר היה מסתובב לנצח בלי שום הודעה.
 // אימות מחדש שקט אחרי כניסה אופליין — כשהרשת חוזרת
 async function ysRevalidateOfflineLogin() {
   if (!AUTH.user || !AUTH.offlineLogin) return;
