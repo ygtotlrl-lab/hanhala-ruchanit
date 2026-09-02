@@ -1361,7 +1361,7 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v91'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+var YS_APP_VER = 'hanhala-ruchanit-v92'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -7422,12 +7422,6 @@ function atCachedCfg() {
   try { var lc=lsGet('ys_attend_cfg'); if(lc){ var p=JSON.parse(lc); if(p){ window._atCfg=p; return p; } } } catch(e){}
   return null;
 }
-async function atLoadCfg() {
-  if (window._atCfg) return window._atCfg;
-  try { var v=await ysCfgGet('ys_attend_cfg'); if(v){window._atCfg=v;return v;} } catch(e){}
-  var c=atCachedCfg(); if(c) return c;
-  window._atCfg = atDefaultCfg(); return window._atCfg;
-}
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
   lsSet('ys_attend_cfg',JSON.stringify(cfg));
@@ -7544,7 +7538,7 @@ window.loadAttend = async function() {
    *  ⛔ ולכן החיווי היחיד הוא זה של הלשונית עצמה. */
   _ysStaleMark(el, false);
   /*  ⛔ העותק נקרא ⛔ ואינו נכתב כברירת מחדל — ⚠️ `_atCfg=atDefaultCfg()`
-   *  היה מסמן «נטען», ⭐ ו-`atLoadCfg` לא הייתה מנסה את הרשת שוב לעולם. */
+   *  היה מסמן «נטען», ⭐ והמשיכה שאחריו לא הייתה מחליפה ערך שכבר «יש». */
   atCachedCfg();
   ysCachedArr('_atData','ys_attend_sessions');
   _atPaintReg();
@@ -7757,8 +7751,11 @@ function atRenderTodaySessions() {
 }
 
 // עריכת סדר קיים
+/*  ⛔ הרשומה נקראת מהמטמון ⛔ ואין המתנה לרשת — ⚠️ הכפתור שנלחץ צויר
+ *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
+ *  משהה את פתיחת הסדר עד שהרשת עונה. */
 window.atEditSession = async function(recId) {
-  var data=await atLoadData();
+  var data=ysCachedArr('_atData','ys_attend_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   // אתחל סימונים מהרשומה הקיימת
@@ -7943,7 +7940,13 @@ window.atOpenSession = async function(sessId, sessName) {
   window._atPendingRec=rec;
   window._atCurrentSessionId=rec.id;
 
-  // כותרת הסדר הפתוח
+  _atMountOpenSession(sessName, dateHeb);
+};
+/*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
+ *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
+ *  מסך רישום על סדר שכבר קיים במכשיר אחר. ⛔ ולכן ההמתנה אינה במסלול
+ *  הציור — ⚠️ ההרכבה עצמה סינכרונית. */
+function _atMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
     '<span style="font-weight:700;font-size:1rem">'+sessName+'</span>'+
@@ -7952,7 +7955,7 @@ window.atOpenSession = async function(sessId, sessName) {
   document.getElementById('at-reg-picker').style.display='none';
   document.getElementById('at-reg-list').style.display='block';
   window.atRenderStudents();
-};
+}
 
 // שמירה מקומית מיידית של הסימונים לתוך רשומת הסשן האמיתית (ללא רשת)
 function atSaveLocalNow() {
@@ -8229,13 +8232,22 @@ window.atCloseSession = async function() {
 /* ══════════════════════════════════════════════════════════════════════════
    נוכחות — ארכיון הסדרים ומחיקתם
    ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ עד כאן הארכיון המתין למשיכה לפני הציור
+ *  הראשון, ⛔ ולכן ניווט אליו נראה תקוע עד שהרשת חזרה. ⛔ וקורא שמסר
+ *  רשומות מקבל אותן כפי שהן — ⚠️ הוא כבר סינן, ⭐ ורענון היה דורס אותו. */
 window.atRenderArchive = async function(records) {
   var el=document.getElementById('at-arc-list');
   if(!el) return;
-  if(!records) records=await atLoadData();
+  if(records){ _atPaintArchive(el, records, ''); return; }
+  _atPaintArchive(el, ysCachedArr('_atData','ys_attend_sessions')||[], '');
+  var _okArc=await _atPullSessions();
+  _atPaintArchive(el, ysCachedArr('_atData','ys_attend_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+function _atPaintArchive(el, records, warn) {
+  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
+    el.innerHTML=warnHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
@@ -8347,8 +8359,8 @@ window.atRenderArchive = async function(records) {
     html+='</div></div>'; // תוכן השנה ועטיפת השנה
   });
   html+='</div>';
-  el.innerHTML=html;
-};
+  el.innerHTML=warnHtml+html;
+}
 
 window.atArcFilter = async function(all) {
   var data=await atLoadData();
@@ -8853,8 +8865,15 @@ function atCheckAlert() {
 }
 
 // -------- הגדרות מודול --------
+/*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ ההגדרות יושבות על הדיסק, ⭐ ואין סיבה
+ *  שמסך ההגדרות ימתין לרשת כדי לצייר אותן. */
 window.renderAttendSettings = async function() {
-  await atLoadCfg();
+  atCachedCfg();
+  _atPaintSettings();
+  await _atPullCfg();
+  _atPaintSettings();
+};
+function _atPaintSettings() {
   var cfg=window._atCfg||atDefaultCfg();
   var sc=document.getElementById('at-cfg-sessions');
   var tc=document.getElementById('at-cfg-treats');
@@ -8875,7 +8894,7 @@ window.renderAttendSettings = async function() {
       '</div>';
     }).join('');
   }
-};
+}
 
 window.atAddSession = function() {
   var sc=document.getElementById('at-cfg-sessions');
@@ -9021,12 +9040,6 @@ function slCachedCfg() {
   if (window._slCfg) return window._slCfg;
   try { var lc=lsGet('ys_sleep_cfg'); if(lc){ var p=JSON.parse(lc); if(p){ window._slCfg=_slCleanCfg(p); return window._slCfg; } } } catch(e){}
   return null;
-}
-async function slLoadCfg() {
-  if (window._slCfg) return window._slCfg;
-  try { var v=await ysCfgGet('ys_sleep_cfg'); if(v){window._slCfg=_slCleanCfg(v);return window._slCfg;} } catch(e){}
-  var c=slCachedCfg(); if(c) return c;
-  window._slCfg = slDefaultCfg(); return window._slCfg;
 }
 async function slSaveCfg(cfg) {
   window._slCfg=cfg;
@@ -9284,8 +9297,11 @@ function slRenderTodaySessions() {
   el.innerHTML=html;
 }
 
+/*  ⛔ הרשומה נקראת מהמטמון ⛔ ואין המתנה לרשת — ⚠️ הכפתור שנלחץ צויר
+ *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
+ *  משהה את פתיחת הסדר עד שהרשת עונה. */
 window.slEditSession = async function(recId) {
-  var data=await slLoadData();
+  var data=ysCachedArr('_slData','ys_sleep_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   window._slMarks={};window._slPending={};window._slCleared={};
@@ -9389,6 +9405,13 @@ window.slOpenSession = async function(sessId, sessName) {
   window._slPendingRec=rec;
   window._slCurrentSessionId=rec.id;
 
+  _slMountOpenSession(sessName, dateHeb);
+};
+/*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
+ *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
+ *  מסך רישום על סדר שכבר קיים במכשיר אחר. ⛔ ולכן ההמתנה אינה במסלול
+ *  הציור — ⚠️ ההרכבה עצמה סינכרונית. */
+function _slMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
     '<span style="font-weight:700;font-size:1rem">'+sessName+'</span>'+
@@ -9397,7 +9420,7 @@ window.slOpenSession = async function(sessId, sessName) {
   document.getElementById('sl-reg-picker').style.display='none';
   document.getElementById('sl-reg-list').style.display='block';
   window.slRenderStudents();
-};
+}
 
 // שמירה מקומית מיידית (ללא רשת)
 function slSaveLocalNow() {
@@ -9673,13 +9696,22 @@ window.slCloseSession = async function() {
 /* ══════════════════════════════════════════════════════════════════════════
    שינה — ארכיון הסדרים ומחיקתם
    ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ עד כאן הארכיון המתין למשיכה לפני הציור
+ *  הראשון, ⛔ ולכן ניווט אליו נראה תקוע עד שהרשת חזרה. ⛔ וקורא שמסר
+ *  רשומות מקבל אותן כפי שהן — ⚠️ הוא כבר סינן, ⭐ ורענון היה דורס אותו. */
 window.slRenderArchive = async function(records) {
   var el=document.getElementById('sl-arc-list');
   if(!el) return;
-  if(!records) records=await slLoadData();
+  if(records){ _slPaintArchive(el, records, ''); return; }
+  _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], '');
+  var _okArc=await _slPullSessions();
+  _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+};
+function _slPaintArchive(el, records, warn) {
+  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
-    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
+    el.innerHTML=warnHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
@@ -9787,8 +9819,8 @@ window.slRenderArchive = async function(records) {
     html+='</div></div>';
   });
   html+='</div>';
-  el.innerHTML=html;
-};
+  el.innerHTML=warnHtml+html;
+}
 
 window.slArcFilter = async function(all) {
   var data=await slLoadData();
@@ -10219,8 +10251,15 @@ window.slEditMark = async function(recId, sid, newCode) {
 };
 
 // -------- הגדרות מודול שינה (טיפולים בלבד) --------
+/*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ ההגדרות יושבות על הדיסק, ⭐ ואין סיבה
+ *  שמסך ההגדרות ימתין לרשת כדי לצייר אותן. */
 window.renderSleepSettings = async function() {
-  await slLoadCfg();
+  slCachedCfg();
+  _slPaintSettings();
+  await _slPullCfg();
+  _slPaintSettings();
+};
+function _slPaintSettings() {
   var cfg=window._slCfg||slDefaultCfg();
   var tc=document.getElementById('sl-cfg-treats');
   if(tc){
@@ -10231,7 +10270,7 @@ window.renderSleepSettings = async function() {
       '</div>';
     }).join('');
   }
-};
+}
 
 window.slAddTreatRow = function() {
   var tc=document.getElementById('sl-cfg-treats');
