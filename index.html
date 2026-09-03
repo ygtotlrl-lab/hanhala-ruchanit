@@ -2723,12 +2723,15 @@ async function savePerms() {
    נכתבת כמות שהיא ונועלת את המשתמש בחוץ בלי שום דרך לגלות זאת.
    ══════════════════════════════════════════════════════════════════════════ */
 // מגן שליחה כפולה: מחזיר את מצב הכפתור לקדמותו כשהפעולה נגמרת.
-function ysBusy(btn, on) {
+/*  ⛔ התווית היא פרמטר עם ברירת מחדל ⛔ ולא מחרוזת קבועה (סבב 89) — ⚠️ יש
+ *  פעולות רשת שאינן שמירה, ⭐ ו«שומר…» עליהן מתאר למשתמש פעולה שאינה
+ *  מתרחשת: ⛔ ברירת המחדל משאירה את כל אתרי הקריאה הקיימים כמות שהם. */
+function ysBusy(btn, on, label) {
   if (!btn) return;
   if (on) {
     if (btn._ysTxt === undefined) btn._ysTxt = btn.innerHTML;
     btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
-    btn.innerHTML = '⏳ שומר…';
+    btn.innerHTML = label || '⏳ שומר…';
   } else {
     btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
     if (btn._ysTxt !== undefined) { btn.innerHTML = btn._ysTxt; btn._ysTxt = undefined; }
@@ -2761,6 +2764,12 @@ async function changeMyPassword(btn) {
   finally { ysBusy(btn, false); }
 }
 async function _changeMyPasswordInner() {
+  /*  ⛔⛔ המשתמש נלכד **בכניסה** ⛔ ואינו נקרא מהגלובלי אחרי ההמתנות — ⚠️ בין
+   *  אימות הסיסמה הנוכחית לכתיבת הטביעה יש שלוש נסיעות לרשת, ⭐ ונעילת
+   *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
+   *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
+  var _u = AUTH.user;
+  if (!_u || !_u.id) { toast('❌ אין משתמש מחובר'); return; }
   var oldPass = document.getElementById('pw-old').value.trim();
   var newPass = document.getElementById('pw-new').value.trim();
   var newPass2El = document.getElementById('pw-new2');
@@ -2774,7 +2783,7 @@ async function _changeMyPasswordInner() {
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', AUTH.user.id).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', _u.id).maybeSingle()); }
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
@@ -2790,14 +2799,17 @@ async function _changeMyPasswordInner() {
    *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
    *  נכשל בקול ⛔ ואינו מדווח «עודכנה» על סיסמה שלא השתנתה. */
   var upd;
-  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id)); }
+    /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
+   *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
+  if (!AUTH.user || AUTH.user.id !== _u.id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
+  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', _u.id)); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
-    ysUsersCacheSave({ id: AUTH.user.id, username: AUTH.user.username, full_name: AUTH.user.full_name,
-                       role: AUTH.user.role, active: true,
+    ysUsersCacheSave({ id: _u.id, username: _u.username, full_name: _u.full_name,
+                       role: _u.role, active: true,
                        pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
   } catch (e3) {}
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
@@ -7831,7 +7843,7 @@ function atFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
-    btn.addEventListener('click',function(){window.atOpenSession(s.id,s.name);});
+    btn.addEventListener('click',function(){window.atOpenSession(s.id,s.name,this);});
     el.appendChild(btn);
   });
 }
@@ -8126,12 +8138,18 @@ function slAdoptSession(rec) {
 /* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
 
 // פתיחת סדר חדש
-window.atOpenSession = async function(sessId, sessName) {
+window.atOpenSession = async function(sessId, sessName, btn) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
   if(window._atCurrentSessionId){toast('⚠️ סגור את הסדר הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
+  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה (סבב 89) — ⚠️ הנימוק המדוד: הפתיחה
+   *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
+   *  ⛔ לא היה חיווי, ⚠️ ולחיצה שנייה בזמן ההמתנה שלחה בקשה נוספת.
+   *  ⛔ והשחרור יושב ב-`finally` — ⚠️ כל יציאה מוקדמת מחזירה את הכפתור. */
+  ysBusy(btn, true, '⏳ בודק…');
+  try {
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   var allData=await atLoadData();
   allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
@@ -8179,12 +8197,15 @@ window.atOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  await atLoadData(); // ודא ש-window._atData טעון
   // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (atMarkDirty)
+  /*  ⛔ ואין כאן קריאת טעינה שנייה (סבב 89) — ⚠️ `_atData` כבר הוצב למעלה
+   *  מתוצאת המשיכה הטרייה, ⭐ והקריאה החוזרת החזירה את אותו מערך מהמטמון:
+   *  ⛔ שורה שנראתה כמו הגנה ⛔ ולא הגנה על דבר. */
   window._atPendingRec=rec;
   window._atCurrentSessionId=rec.id;
 
   _atMountOpenSession(sessName, dateHeb);
+  } finally { ysBusy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -9442,7 +9463,7 @@ function slFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
-    btn.addEventListener('click',function(){window.slOpenSession(s.id,s.name);});
+    btn.addEventListener('click',function(){window.slOpenSession(s.id,s.name,this);});
     el.appendChild(btn);
   });
 }
@@ -9601,12 +9622,15 @@ window.slEditSession = async function(recId) {
   window.slRenderStudents();
 };
 
-window.slOpenSession = async function(sessId, sessName) {
+window.slOpenSession = async function(sessId, sessName, btn) {
   console.log('[slOpenSession] called', sessId, sessName);
   if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
+  // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
+  ysBusy(btn, true, '⏳ בודק…');
+  try {
   var allData=await slLoadData();
   allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
   var existing=atFindLiveSession(allData,sessName,dateIso);
@@ -9649,12 +9673,13 @@ window.slOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  await slLoadData(); // ודא ש-window._slData טעון
   // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (slMarkDirty)
+  // ⛔ ואין כאן קריאת טעינה שנייה — ר' הנימוק ב-atOpenSession
   window._slPendingRec=rec;
   window._slCurrentSessionId=rec.id;
 
   _slMountOpenSession(sessName, dateHeb);
+  } finally { ysBusy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
