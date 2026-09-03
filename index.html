@@ -61,6 +61,9 @@ if ('serviceWorker' in navigator) {
       document.body.appendChild(bar);
     }
 
+    /*  ⛔ שם המטמון נקרא מיד עם הרישום — ⚠️ `ysLoginDetails` סינכרונית,
+     *  ⭐ והכניסה תמיד מאוחרת לטעינת הדף. */
+    try { ysAppVerBoot(); } catch (eV) { console.warn('[ver] boot', eV); }
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('SW registered:', reg.scope);
 
@@ -1422,7 +1425,33 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v96'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה (סבב 89) — ⚠️ הנימוק המדוד:
+ *  אותו ערך היה כתוב כאן וגם ב-`CACHE_NAME` שב-`sw.js`, ⛔ והוא נסחף
+ *  **13 גרסאות**: ⭐ `sw_version` ביומן הכניסה דיווח v96 בעוד שהקוד שרץ
+ *  היה v109, ⚠️ וכל רשומת כניסה מאז נשאה גרסה שגויה.
+ *  ⭐ **שם המטמון החי הוא הערך** — ⛔ הוא נוצר מ-`CACHE_NAME` עצמו, ⚠️ ולכן
+ *  זו קריאה מהמקום שבו הערך נקבע ⛔ ולא מקור שני.
+ *  ⛔ **ובזמן עדכון עשויים לחיות שני מטמונים** — ⚠️ הנבחר הוא בעל המספר
+ *  הגבוה, ⭐ שהוא הגרסה שהופעלה.
+ *  ⛔ **וכשל מחזיר מחרוזת ריקה** ⛔ ולא ערך מוקלד — ⚠️ «לא ידוע» עדיף על
+ *  גרסה שגויה שנרשמת כעובדה. */
+var YS_APP_VER = '';
+var YS_VER_PREFIX = 'hanhala-ruchanit-';
+async function ysAppVerBoot() {
+  try {
+    if (!self.caches || !caches.keys) return YS_APP_VER;
+    var names = await caches.keys();
+    var mine = (names || []).filter(function (n) { return String(n).indexOf(YS_VER_PREFIX) === 0; });
+    if (!mine.length) return YS_APP_VER;
+    mine.sort(function (a, b) {
+      var na = parseInt(String(a).replace(/^.*-v/, ''), 10) || 0;
+      var nb = parseInt(String(b).replace(/^.*-v/, ''), 10) || 0;
+      return na - nb;
+    });
+    YS_APP_VER = mine[mine.length - 1];
+  } catch (e) { console.warn('[ver] ysAppVerBoot', e); }
+  return YS_APP_VER;
+}
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2183,6 +2212,13 @@ window.saveAbsenceReasons = async function() {
   lsSet('ys_absence_reasons', JSON.stringify(reasons));
   ysSettingsTouch('ys_absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  toast('✅ הסיבות נשמרו');
   try {
     var r = await ysCfgSet('ys_absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
@@ -2190,7 +2226,6 @@ window.saveAbsenceReasons = async function() {
     await ysCfgSet('ys_last_changed', ts);
     console.log('[absence-reasons] ys_last_changed updated:', ts);
   } catch(e) { console.error('[absence-reasons] save error:', e); }
-  toast('✅ הסיבות נשמרו');
 };
 function saveAbsenceReasons() { window.saveAbsenceReasons(); }
 
@@ -2464,13 +2499,38 @@ var DOM_ACTIONS = {
   'sync-now-status':   function () { syncNowFromStatus(); },
   'hw-restore':        function (el) { hwRestoreClick(el); },
 };
+/*  ⛔⛔ **פעולה מגיבה מיד** (סבב 89) — ⚠️ הנימוק המדוד: עשרה מסלולים
+ *  שמופעלים מלחיצה המתינו לרשת **לפני** כל חיווי — ⭐ המשתמש לחץ, הנתון
+ *  נשמר לדיסק, ⛔ והוא לא ראה שזה קרה ⚠️ ולחץ שוב. ⭐ והחיווי יושב
+ *  **בנקודת הניתוב האחת** ⛔ ולא בעשרה מסלולים: ⚠️ מטפל שיתווסף מקבל
+ *  אותו מעצמו, ⛔ ואין נקודת הפעלה שנייה.
+ *  ⛔ **והחיווי מותנה בכך שהמטפל החזיר הבטחה** — ⚠️ מטפל סינכרוני מחזיר
+ *  `undefined` ⛔ ואינו מהבהב: ⭐ «⏳» על פעולה מיידית הוא רעש שמלמד
+ *  להתעלם ממנו.
+ *  ⛔ **ורק על `BUTTON`** — ⚠️ `disabled` על `div` אינו חוסם דבר,
+ *  ⭐ והחלפת תוכנו הייתה מוחקת סימון או אייקון. */
 document.addEventListener('click', function (ev) {
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
   if (!el) return;
   var fn = DOM_ACTIONS[el.getAttribute('data-act')];
   if (!fn) return;
   ev.preventDefault();
-  fn(el);
+  /*  ⛔ לחיצה שנייה בזמן שהראשונה באוויר נחסמת — ⚠️ הכפתור מושבת,
+   *  ⭐ אך הדגל נדרש גם עבור אלמנט שאינו כפתור. */
+  if (el._actBusy) return;
+  var out;
+  try { out = fn(el); }
+  catch (e) { console.error('[act] ' + el.getAttribute('data-act'), e); return; }
+  if (!out || typeof out.then !== 'function') return;   // פעולה סינכרונית — אין למה להמתין
+  el._actBusy = true;
+  var isBtn = el.tagName === 'BUTTON';
+  if (isBtn) ysBusy(el, true, '⏳ שומר…');
+  out.then(function () {}, function (e) {
+    console.error('[act] ' + el.getAttribute('data-act'), e);
+  }).then(function () {
+    el._actBusy = false;
+    if (isBtn) ysBusy(el, false);
+  });
 });
 
 function moveUser(id, dir) {
@@ -5813,8 +5873,11 @@ function ysHebYearWin(hy) {
 }
 /*  ⛔ חלון היום שבו רושמים — ⚠️ לשונית הרישום מציגה את סדרי **היום**,
  *  ⭐ ולכן זה כל מה שהיא צריכה מהענן. */
-function ysTodayWin() {
-  var t = _ysWinIso(new Date());
+/*  ⛔ **והתאריך הוא פרמטר** (סבב 89) — ⚠️ בדיקת הכפילות בפתיחת סדר צריכה
+ *  את **היום שנבחר בבורר**, ⭐ שאינו בהכרח היום: ⛔ ברירת המחדל משאירה את
+ *  שני אתרי הקריאה הקיימים כמות שהם. */
+function ysDayWin(iso) {
+  var t = iso ? String(iso) : _ysWinIso(new Date());
   return { col: 'date_iso', from: t, to: t };
 }
 /* שחזור רשומת ה-`kv` משתי הטבלאות — ההיפוך המדויק של `ysSessionRow`
@@ -7802,7 +7865,7 @@ window.loadAttend = async function() {
 
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
    *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
-  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysTodayWin())]);
+  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysDayWin())]);
   _atPaintReg();
   window.atShowTab(window._atView||'reg');
   _ysStaleMark(el, !(_okAt[0]&&_okAt[1]));
@@ -8106,14 +8169,6 @@ function atFindLiveSession(data, sessName, dateIso, exceptId) {
    האופליין ממשיך לעבוד, והבדיקה רק מדויקת יותר כשיש רשת.
    ⛔ המיזוג הוא `_ysSessionsMerge` ולא דריסה (סבב 36) — דריסה בענן הייתה
    מוחקת סדר מקומי שטרם עלה, בדיוק לפני שהמשתמש ממשיך לסמן בו. */
-async function ysFreshSessions(kvKey, cur) {
-  var local = Array.isArray(cur) ? cur : [];
-  try {
-    var remote = await ysCloudGet(kvKey);
-    if (Array.isArray(remote)) return _ysSessionsMerge(remote, local, kvKey);
-  } catch (e) {}
-  return local;
-}
 
 /* אימוץ סדר קיים במקום יצירת שני. ⚠️ הסימונים הקיימים נטענים תחילה, וכל
    סימון שהמשתמש כבר סימן גובר עליהם — ⛔ ולא אימוץ בלי טעינה (סבב 36):
@@ -8151,8 +8206,18 @@ window.atOpenSession = async function(sessId, sessName, btn) {
   ysBusy(btn, true, '⏳ בודק…');
   try {
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
-  var allData=await atLoadData();
-  allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
+  /*  ⛔⛔ משיכה **אחת** ⛔ ומסוננת ליום שנבחר (סבב 89) — ⚠️ הנימוק המדוד:
+   *  כאן היו **שתי** משיכות מלאות בזו אחר זו של אותן טבלאות, ⭐ ואף אחת
+   *  מהן בלי חלון: ⛔ 359 סדרים ו-18,329 סימונים בכל אחת — ⚠️ 18,688 שורות
+   *  כפול שתיים, ⭐ לפתיחת סדר אחד. ⛔ ובדיקת הכפילות צריכה **יום אחד**,
+   *  ⚠️ שהוא 248 שורות.
+   *  ⛔ **והבדיקה עצמה נשארת** — ⭐ היא מכריעה אם נוצרת רשומה שנייה לאותו
+   *  סדר, ⚠️ ומה שהצטמצם הוא היקף המשיכה ⛔ ולא המדיניות.
+   *  ⛔ **וכשל משיכה נופל-חזרה למצב המקומי** ⛔ ואינו פותח סדר בעיוורון —
+   *  ⚠️ המיזוג החלוני שומר על רשומות שמחוץ לחלון, ⭐ ולכן `_atData` נשאר
+   *  שלם גם אחרי משיכה מסוננת. */
+  await _atPullSessions(ysDayWin(dateIso));
+  var allData=window._atData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     openModal('📋 סדר כבר מולא',
@@ -9070,13 +9135,20 @@ window.atEditMark = async function(recId, sid, newCode) {
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
-  await atSaveData(data);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  var _p=atSaveData(data);
   closeModal();
   // רענן את כל הלשוניות
   atRenderTodaySessions();
   window.atRenderArchive();
   window.atRenderSupervision();
   toast('✅ סימון עודכן');
+  await _p;
 };
 
 // -------- התראת כניסה --------
@@ -9425,7 +9497,7 @@ window.loadSleep = async function() {
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
 
-  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysTodayWin())]);
+  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysDayWin())]);
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
   _ysStaleMark(el, !(_okSl[0]&&_okSl[1]));
@@ -9631,8 +9703,9 @@ window.slOpenSession = async function(sessId, sessName, btn) {
   // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
   ysBusy(btn, true, '⏳ בודק…');
   try {
-  var allData=await slLoadData();
-  allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
+  // ⛔ ר' הנימוק ב-atOpenSession — משיכה אחת מסוננת ליום שנבחר
+  await _slPullSessions(ysDayWin(dateIso));
+  var allData=window._slData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     openModal('📋 דו"ח כבר מולא',
@@ -10513,12 +10586,19 @@ window.slEditMark = async function(recId, sid, newCode) {
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
-  await slSaveData(data);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  var _p=slSaveData(data);
   closeModal();
   slRenderTodaySessions();
   window.slRenderArchive();
   window.slRenderSupervision();
   toast('✅ סימון עודכן');
+  await _p;
 };
 
 // -------- הגדרות מודול שינה (טיפולים בלבד) --------
