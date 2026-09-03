@@ -45,6 +45,16 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 
 const START = 'שלב ב — מקור הקריאה עובר לטבלאות (סבב 55)';
 const END = '/* ═══ סוף שכבת השורות';
+/*  ⛔ העימוד עבר למודול המשותף (סבב 87) — ⚠️ הוא יושב מחוץ לבלוק שנחתך
+ *  כאן, ⭐ ולכן הוא נטען לסביבה בנפרד: ⛔ רתמה שאין בה `_ysRowsPaged`
+ *  מודדת קוד שאינו רץ. */
+const PAGED_START = '/* ═══ משיכה מסוננת בשרת — מודול משותף';
+const PAGED_END = '/* ═══════════════ סוף מודול משיכה מסוננת בשרת';
+function extractPaged(src) {
+  const i = src.indexOf(PAGED_START), j = src.indexOf(PAGED_END);
+  if (i < 0 || j < 0) return null;
+  return src.slice(i, j);
+}
 function extract(src) {
   const i = src.indexOf(START), j = src.indexOf(END);
   if (i < 0 || j < 0 || j < i) return null;
@@ -63,6 +73,8 @@ function run(block, tables, kvValue, opts) {
           //    PostgREST, ולכן טענת «העמוד השני נמשך» נמדדת ולא מוצהרת.
           const q = {
             order() { return q; },
+            gte() { return q; },
+            lte() { return q; },
             range(a, b) {
               log.sel.push(t + ':' + a);
               const v = tables[t];
@@ -93,7 +105,7 @@ function run(block, tables, kvValue, opts) {
     log
   };
   vm.createContext(ctx);
-  vm.runInContext(block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
+  vm.runInContext(PAGED_USE + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
   return { api: ctx.__api, log, ctx };
 }
 
@@ -166,6 +178,10 @@ async function scenarios(block, label) {
 }
 
 const block = extract(SRC);
+const PAGED = extractPaged(SRC);
+/*  ⛔ המוטציה על המודול המשותף מוחלפת כאן ⛔ ולא בגוף `run` — ⚠️ הרתמה
+ *  קוראת אותו בכל תרחיש, ⭐ ומשתנה אחד הוא נקודת ההחלפה היחידה. */
+let PAGED_USE = PAGED;
 console.log('— סבב 55: מקור הקריאה —');
 assert(!!block, '1 · בלוק מעבר הקריאה מחולץ מ-index.html');
 if (!block) { process.exit(1); }
@@ -239,9 +255,20 @@ await mut('if (r.deleted) rec.deleted = true;', '',
 await mut('if (!r || !r.ok || !Array.isArray(r.data)) return null;', 'if (!r || !r.ok || !Array.isArray(r.data)) return [];',
   (x) => !x || x.onError !== null,
   '⛔ החזרת מערך ריק בכשל הופכת «אין ראיה» ל«הענן ריק»');
-await mut('if (res.data.length < YS_ROWS_PAGE) return out;', 'return out;',
-  (x) => !x || x.paged !== 1200,
-  '⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
+/*  ⛔ המוטציה הזו נוגעת במודול המשותף ⛔ ולא בשכבת השורות — ⚠️ העימוד עבר
+ *  לשם, ⭐ והמוטציה חייבת לרוץ על הקוד שבאמת מבצע אותו. */
+{
+  const b = PAGED.replace('if (res.data.length < YS_ROWS_PAGE) return out;', 'return out;');
+  if (b === PAGED) bad('מוטציה לא הוחלה: ⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
+  else {
+    PAGED_USE = b;
+    let res = null;
+    try { res = await scenarios(block); } catch (e) { res = null; }
+    PAGED_USE = PAGED;
+    assert(!res || res.paged !== 1200,
+      'מוטציה: ⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
+  }
+}
 await mut('_ysRowSet(rec, \'createdBy\', r.created_by);', '',
   (x) => !x || !(x.rebuild && x.rebuild[0] && x.rebuild[0].createdBy === 'u1'),
   '⛔ השמטת שדה אב נתפסת');

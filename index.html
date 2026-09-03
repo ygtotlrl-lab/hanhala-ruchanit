@@ -97,6 +97,10 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
+  /*  ⛔ מרחק הטוסט מתחתית המסך — ⚠️ הערך היחיד שנבדל בשכבת הטוסט:
+   *  סרגל ניווט תחתון בגובה 64 פיקסלים, ⛔ ורק מתחת ל-800px. */
+  --toast-bottom:26px;
+
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
@@ -216,8 +220,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .rc .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .empty{text-align:center;padding:56px 20px;color:var(--text3)}
 .ld{text-align:center;padding:44px;color:var(--text3)}
-#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
-#toast.on{opacity:1}
 @media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
 /* === MOBILE - גישת יומן עבודה === */
 @media(max-width:800px){
@@ -270,6 +272,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 /* ===== ניווט תחתון — מובייל בלבד ===== */
 .bottom-nav{display:none}
 @media(max-width:800px){
+  /*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
+  :root{--toast-bottom:80px}
   body{padding-bottom:64px}
   .bottom-nav{
     display:flex;
@@ -350,6 +354,20 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy)}
 
+/* ═══ שכבת הטוסט — CSS משותף (סבב 87ב) ════════════════════════════════════
+   זהה בית-לבית בארבע האפליקציות. ⛔ הכללים אינם נשענים על משתני-הצבע של
+   אף אפליקציה — ⚠️ הם נבדלים ביניהן, ⭐ ולכן הצבעים כתובים במפורש.
+   ⛔ מיכל אחד ובתוכו `div` לכל הודעה — ⚠️ הנימוק המדוד: בשלוש מהן היה
+      אלמנט **קבוע** אחד, ⛔ והודעה שנייה דרסה את הראשונה: ⭐ «נשמר»
+      ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד.
+   ⛔ ו-`--toast-bottom` הוא הערך היחיד שנבדל — ⚠️ לשתיים מהן יש סרגל
+      תחתון קבוע, ⭐ ולטוסט שיושב מתחתיו אין מי שיראה אותו. */
+#toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:999;display:grid;gap:8px;justify-items:center;pointer-events:none;padding:0 14px}
+.toast{background:#1a1a1a;color:#fff;border-radius:99px;padding:10px 20px;font-size:.86rem;font-weight:600;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:92vw;text-align:center;animation:toastUp .2s ease-out}
+.toast.bad{background:#b91c1c;color:#fff}
+.toast.good{background:#15803d;color:#fff}
+@keyframes toastUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
    הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים לא נשענים על
@@ -784,7 +802,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </main>
 
 
-<div id="toast"></div>
+<div id="toasts"></div>
 <script>
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1327,6 +1345,47 @@ function errMsg(e) {
   return isNetErr(e) ? MSG_OFFLINE : ('שגיאה: ' + ((e && (e.message || e.code)) || e));
 }
 /* ═══════════════ סוף מודול עוזרי הרשת ══════════════════════════════════ */
+/* ═══ משיכה מסוננת בשרת — מודול משותף (סבב 87) ════════════════════════════
+   ⛔ מסך מושך **רק את החלון שהוא מציג** — ⚠️ הנימוק המדוד: מסך ההשגחה מציג
+      חודש עברי אחד ⛔ ומשך **18,085 סימונים** בכל כניסה אליו, ⭐ ואת כולם
+      סינן בדפדפן. ⛔ סינון שרץ אחרי ההורדה אינו חוסך דבר — ⚠️ הרשת כבר
+      שילמה, ⭐ והמסך ממתין לה.
+   ⛔ שלושה מסלולים מושכים **מלא**, ⛔ ואין לצמצם אותם — ⚠️ הסנכרון והמיזוג,
+      שמנוע ההכרעה שלו חייב את כל הרשומות ⛔ אחרת «אין אצלי» נקרא «נמחקה» ·
+      הגיבוי היומי, ⛔ שמגבה טבלה ולא חלון · והחלון החם, ⚠️ שהוא מנגנון
+      פינוי נפרד. ⭐ ולכן `win` הוא פרמטר **אופציונלי** — ⛔ מי שאינו מעביר
+      אותו מקבל בדיוק את ההתנהגות הקודמת.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ `mkQuery` היא פונקציה ⛔ ולא בונה מוכן — ⚠️ בונה PostgREST נצרך בשליחה,
+      ⭐ וכל עמוד חייב אחד טרי משלו.
+   ⛔ שליפה בעמודים ולא בבקשה אחת — ⚠️ גוף תשובה שגדל עם הנתונים נחתך,
+      ⛔ ו-PostgREST יודע להגביל את מספר השורות (`db-max-rows`): ⭐ ביום
+      שיוגדר, התשובה תיחתך **בשקט**. ⛔ ותשובה חלקית שנראית שלמה גרועה
+      מ«אין ראיה» — ⚠️ ולכן עמוד שנכשל מחזיר `null` ⛔ ולא את מה שהספיק.
+   ⛔ ותקרת בטיחות ללולאה שתלויה בגודל התשובה — ⚠️ מסד שמחזיר עמוד מלא
+      לנצח תולה את הדף.
+   ═══════════════════════════════════════════════════════════════════════ */
+var YS_ROWS_PAGE = 1000;
+var YS_ROWS_CAP = 500000;
+async function _ysRowsPaged(mkQuery, order, win) {
+  var out = [], from = 0;
+  for (;;) {
+    var q = mkQuery();
+    if (win && win.col) {
+      if (win.from) q = q.gte(win.col, win.from);
+      if (win.to) q = q.lte(win.col, win.to);
+    }
+    if (order) q = q.order(order, { ascending: true });
+    var res = await withTimeout(q.range(from, from + YS_ROWS_PAGE - 1));
+    if (!res || res.error || !Array.isArray(res.data)) return null;
+    out = out.concat(res.data);
+    if (res.data.length < YS_ROWS_PAGE) return out;
+    from += YS_ROWS_PAGE;
+    if (from > YS_ROWS_CAP) return out;
+  }
+}
+/* ═══════════════ סוף מודול משיכה מסוננת בשרת ═══════════════════════════ */
 /* ═══ שער מצב הרשת — מודול משותף (סבב 84) ═════════════════════════════════
    ⛔ מודול נפרד ⛔ ולא חלק מעוזרי הרשת — ⚠️ הוא חי בשלוש אפליקציות ואינו
       קיים בגיוס, ⭐ ובלוק אחד לשתי רמות קיום הוא בלוק שאינו זהה.
@@ -2175,65 +2234,6 @@ window.addAbsenceReason = function(type) {
   inp.focus();
 };
 
-/* ── LS_TOAST — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-/*  ⛔ הארגומנט השני של `toast` נבדל בין הריפו — ⚠️ בשלוש הוא **משך** בזמן,
- *  ⛔ ובגיוס הוא **שם מחלקה**: ⭐ ולכן הערך יושב כאן, ⛔ וגוף `lsToast` זהה
- *  בית-לבית בארבעתן. */
-var LS_TOAST = { arg: function (dur) { return dur || 5000; } };
-/* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
-   ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
-      ⚠️ `esc` לשלוש צורות — והיא הגנת ה-HTML היחידה שיש; `openModal` לשלוש,
-      ⛔ ובאחת מהן נעדרה נעילת הגלילה לגמרי; ו-`lsToast` לשתיים.
-   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ מיכל אחד ומסלול סגירה יחיד — ⚠️ מסלול נפרד לכל דיאלוג הוא בדיוק מה
-      שנשבר בשקט; ⭐ והכותרת ב-`textContent` ⛔ ולא ב-HTML, מפני שהיא מגיעה
-      גם משם שהמשתמש הקליד. ⛔ וגוף `ask` ב-`textContent` אף הוא — ⚠️ דיאלוג
-      שדורש HTML עובר ב-`openModal`.
-   ⛔ ו-`locked` על ה-`body` אינה קישוט — ⚠️ בלעדיה הדף שמאחורי המודאל נגלל
-      מתחתיו, ⭐ והמשתמש מאבד את מקומו ברשימה שממנה פתח אותו; ⛔ וההסרה
-      מותנית בכך שהדיאלוג השני סגור — ⚠️ אחרת סגירת אחד משחררת את השני.
-   ⚠️ `askResolve` יחיד — ⛔ אין תמיכה בשני דיאלוגי אישור פתוחים בו-זמנית,
-      וגם אין בכך צורך: `#ask` הוא אלמנט יחיד ב-DOM.
-   ═══════════════════════════════════════════════════════════════════════ */
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
-}
-function openModal(title, body, foot) {
-  var ttl = document.getElementById('modal-title');
-  if (!ttl) return;
-  ttl.textContent = title || '';
-  document.getElementById('modal-body').innerHTML = body || '';
-  document.getElementById('modal-foot').innerHTML = foot || '';
-  document.getElementById('modal').classList.add('open');
-  document.body.classList.add('locked');
-}
-function closeModal() {
-  var m = document.getElementById('modal');
-  if (!m) return;
-  m.classList.remove('open');
-  document.getElementById('modal-body').innerHTML = '';
-  document.getElementById('modal-foot').innerHTML = '';
-  if (!document.getElementById('ask').classList.contains('open')) document.body.classList.remove('locked');
-}
-var askResolve = null;
-function ask(title, text, yesLabel) {
-  document.getElementById('ask-title').textContent = title || '';
-  document.getElementById('ask-body').textContent = text || '';
-  document.getElementById('ask-yes').textContent = yesLabel || 'אישור';
-  document.getElementById('ask').classList.add('open');
-  document.body.classList.add('locked');
-  return new Promise(function (res) { askResolve = res; });
-}
-function closeAsk(v) {
-  document.getElementById('ask').classList.remove('open');
-  if (!document.getElementById('modal').classList.contains('open')) document.body.classList.remove('locked');
-  if (askResolve) { askResolve(v); askResolve = null; }
-}
-function lsToast(msg, dur) { try { toast(msg, LS_TOAST.arg(dur)); } catch (e) {} }
-/* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 function modalOpen() {
   var m = document.getElementById('modal');
   return !!(m && m.classList.contains('open'));
@@ -2934,10 +2934,6 @@ var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.ad
  *  ⚠️ הערך במקרה זהה ל-`LS_SUCCESS_MUTE_MS`, ⛔ אך הוא מושג אחר
  *  לגמרי (משך תצוגה מול חלון השתקה), ⛔ ואין לאחד ביניהם. */
 var TOAST_DEFAULT_MS = 2800;
-var tt;function toast(msg,dur){
-  // שער סבב 11 — אין טוסט הצלחה אחרי כישלון שמירה מקומית. אין להסיר.
-  if(typeof lsGuardToast==='function'&&!lsGuardToast(msg))return;
-  var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},dur||TOAST_DEFAULT_MS)}
 
 /* ══════════════════════════════════════════════════════════════════════════
    מדיניות האחסון המקומי — `LS_CFG` ועֵד הדחיפה
@@ -3922,17 +3918,17 @@ var BK_CFG = {
        עוד, ⭐ והסרתם היא פעולת מנהל: ⚠️ רשימת-ההיתר של הפינוי יושבת
        במיגרציה שכבר רצה, ⛔ ומפתח גיבוי שיצא מהרשימה אינו מתפנה לעולם. */
     var out = [
-      { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id' },
-      { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id' },
-      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id' }
+      { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id', ts: 'updated_at' }
     ];
     /* ⭐ שני מקורות השינה חזרו לרשימה (סבב 63) — הטבלאות נוצרו ואומתו.
        ⚠️ ומחרוזות המפתח נשארות בגוף הפונקציה: `test_cron` גוזר
        מכאן את תרומת האפליקציה לרשימת-ההיתר של `004`, ⛔ ומפתח שאינו שם
        אינו מתפנה לעולם (כלל ברזל 20). */
     out.push(
-      { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id' },
-      { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id' }
+      { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
     );
     /*  ⛔ שלושה-עשר מקורות `kind:'kv'` ירדו (סבב 80) — ⚠️ **טבלת `kv` כבר
         אינה קיימת במסד**: `018` הפילה אותה, ⛔ וגיבוי ממקור שאינו קיים
@@ -3941,7 +3937,7 @@ var BK_CFG = {
         עד **שש פעמים באותו יום** — הריצה החוזרת של גיבוי שלא סומן כהושלם.
         ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`ys_settings` בסבב 78,
         ⭐ והמקור החדש הוא הטבלה ההיא. */
-    out.push({ kind: 'table', name: 'ys_settings', key: 'ys_settings', order: 'key' });
+    out.push({ kind: 'table', name: 'ys_settings', key: 'ys_settings', order: 'key', ts: 'updated_at' });
     return out;
   }
 };
@@ -4053,6 +4049,73 @@ async function logFlush() {
   return sent;
 }
 
+/*  ⛔⛔ שלוש שכבות הגיבוי (סבב 87ג) — ⭐ **עוגן** מלא אחת לשבוע, ⚠️ **דיפ**
+ *  בכל שאר הימים (רק שורות שהחותמת שלהן חדשה מהעוגן), ⛔ **והפינוי הקיים**
+ *  אוכף את התקרות. ⚠️ הנימוק המדוד: גיבוי מלא בכל לילה של טבלה בת עשרות
+ *  אלפי שורות הוא מגה-בייטים ביום, ⭐ ועוגן שבועי ודיפים קטנים נותנים את
+ *  אותה יכולת שחזור בשבריר. */
+var BK_ANCHOR_MS = 7 * 24 * 60 * 60 * 1000;
+var BK_ANCHOR_PREFIX = 'ANCHOR:';
+var BK_DIFF_PREFIX = 'DIFF:';
+/*  ⛔ חותמת המים של העוגן — ⚠️ נשמרת כמחרוזת, ⭐ ומושווית בשרת בטיפוס
+ *  העמודה: ⛔ `bigint` ו-`timestamptz` שניהם עוברים ב-`gte` כמות שהם. */
+function _bkMarkKey(bkey) { return 'bk_wm_' + bkey; }
+function _bkSetMark(bkey, v) {
+  if (v == null) return;
+  lsSet(_bkMarkKey(bkey), String(v));
+  lsSet('bk_anch_' + bkey, String(Date.now()));
+}
+/*  ⛔ המקסימום נגזר מהשורות ⛔ ואינו נשאל מהשרת — ⚠️ מספר מושווה מספרית
+ *  ומחרוזת לקסיקוגרפית: ⭐ חותמת ISO ממוינת נכון כמחרוזת, ⛔ ו-`bigint`
+ *  היה נשבר בהשוואת מחרוזות. */
+function _bkMaxTs(rows, col) {
+  var mx = null;
+  for (var i = 0; i < rows.length; i++) {
+    var v = rows[i] ? rows[i][col] : null;
+    if (v == null) continue;
+    if (mx === null) { mx = v; continue; }
+    if (typeof v === 'number' ? v > mx : String(v) > String(mx)) mx = v;
+  }
+  return mx;
+}
+/*  ⛔ איזו שכבה רצה היום — ⚠️ עוגן כשאין חותמת מים, כשאין חותמת עוגן,
+ *  או כשעברו שבעה ימים; ⭐ ובכל שאר הימים דיפ מעל חותמת המים. */
+function _bkLayer(bkey, s) {
+  var wm = lsGet(_bkMarkKey(bkey), '');
+  var at = parseInt(lsGet('bk_anch_' + bkey, '0'), 10) || 0;
+  if (!s || !s.ts || !wm || !at || (Date.now() - at) >= BK_ANCHOR_MS)
+    return { diff: false, prefix: BK_ANCHOR_PREFIX, key: bkey, win: null };
+  return { diff: true, prefix: BK_DIFF_PREFIX, key: bkey,
+           win: { col: s.ts, from: wm } };
+}
+/*  ⛔⛔ הקריאה בעימוד, ⛔ ואימות מול מונה השרת — ⚠️ תשובה שנחתכה נראית
+ *  בדיוק כמו תשובה שלמה, ⭐ והדרך היחידה לדעת היא לשאול את השרת כמה שורות
+ *  יש: ⛔ אי-התאמה מחזירה `null` ⛔ ונכשלת בקול, ⚠️ ואינה שומרת חצי גיבוי. */
+async function _bkReadRows(c, s, win) {
+  var sel = s.cols || '*';
+  var rows = await _ysRowsPaged(function () {
+    var q = c.from(s.name).select(sel);
+    if (s.eq) q = q.eq(s.eq[0], s.eq[1]);
+    return q;
+  }, s.order || null, win);
+  if (!rows) return null;
+  try {
+    var cq = c.from(s.name).select(sel, { count: 'exact', head: true });
+    if (s.eq) cq = cq.eq(s.eq[0], s.eq[1]);
+    if (win && win.col) {
+      if (win.from) cq = cq.gte(win.col, win.from);
+      if (win.to) cq = cq.lte(win.col, win.to);
+    }
+    var cr = await withTimeout(cq);
+    if (!cr || cr.error || typeof cr.count !== 'number') return null;
+    if (cr.count !== rows.length) {
+      console.error('[bk] הגיבוי נחתך — ' + s.name + ': נמדדו ' + rows.length +
+                    ' שורות והשרת מדווח ' + cr.count);
+      return null;
+    }
+  } catch (e) { return null; }
+  return rows;
+}
 /* ── הגיבוי היומי ──────────────────────────────────────────────────────── */
 // מחזירה true רק כשכל המקורות גובו (או דולגו כבלתי-משתנים) בהצלחה.
 async function bkMaybeDaily() {
@@ -4080,6 +4143,13 @@ async function bkMaybeDaily() {
       //    כאן היא רשימת-ההיתר של הגריעה — בלי תלות בהצלחת המקור.
       var bkey = pre + (s.key || s.name);
       dailyKeys.push(bkey);
+      /*  ⛔ שתי השכבות נכנסות לרשימת-ההיתר של הגריעה (סבב 87ג) — ⚠️ מפתח
+       *  שאינו שם אינו מתפנה לעולם, ⭐ ו-`ANCHOR:`/`DIFF:` הם מפתחות
+       *  חדשים: ⛔ בלעדיהם הם היו נצברים בלי גבול. */
+      if (s.kind !== 'kv') {
+        dailyKeys.push(BK_ANCHOR_PREFIX + bkey);
+        dailyKeys.push(BK_DIFF_PREFIX + bkey);
+      }
       /* ⭐ דגל-יום פר-מקור (סבב 62) — מקור שכבר גובה היום מדולג, גם
          כשהדגל הגלובלי לא נכתב. ⛔ בלעדיו מקור אחד שנכשל החזיק את כל
          השאר בלולאה: הדגל הגלובלי נכתב רק כשכולם הצליחו, ולכן כל עלייה
@@ -4093,24 +4163,26 @@ async function bkMaybeDaily() {
         if (!res || res.error) { ok = false; failed.push(bkey); continue; }
         val = (res.data && res.data.value != null) ? String(res.data.value) : null;
       } else {
-        // ⛔ `cols` ולא `*` בטבלאות שיש בהן סוד (סבב 30) — `kv_backup`
-        //    קריאה ל-`anon`, וגיבוי גורף של טבלת משתמשים היה מעתיק לשם
-        //    סיסמאות וטביעות. מי שאין לו סוד מגדיר `cols` ריק ומקבל `*`.
-        var q = c.from(s.name).select(s.cols || '*');
-        // ⭐ `eq`/`order` פר-מקור (סבב 35) — סינון פר-מוסד וסדר דטרמיניסטי,
-        //    כדי שהחתימה הדיפרנציאלית לא תוטרד משינוי סדר-שורות אקראי.
-        if (s.eq) q = q.eq(s.eq[0], s.eq[1]);
-        if (s.order) q = q.order(s.order);
-        var rt = await q;
-        if (!rt || rt.error || !Array.isArray(rt.data)) { ok = false; failed.push(bkey); continue; }
-        var rows = rt.data;
+        /*  ⛔⛔ שכבת הגיבוי — עוגן שבועי מלא, ודיפרנציאלי בכל שאר הימים
+         *  (סבב 87ג): ⚠️ הנימוק המדוד — הקריאה הייתה בקשה **אחת** בלי
+         *  עימוד, ⛔ ו-Supabase מחזיר 1,000 שורות כברירת מחדל **בלי
+         *  שגיאה**: ⭐ `ys_marks_rows` גובתה 1,000 מתוך 18,085, ⛔ כלומר
+         *  94.5% ממנה מעולם לא גובו — ⚠️ והכשל היה שקט לחלוטין. */
+        var layer = _bkLayer(bkey, s);
+        var rows = await _bkReadRows(c, s, layer.win);
+        if (rows === null) { ok = false; failed.push(bkey); continue; }
+        bkey = layer.prefix + bkey;
         // ⛔ שדה-סוד בשורות טבלה מסונן לפני הסריאליזציה (השלמת סבב 35) —
         //    שורה שמפתחה (`secretField`, ברירת מחדל `key`) ברשימת הסודות
         //    אינה מגיעה לגיבוי, גם כשהיא עדיין קיימת במקור.
         if (secrets.length) rows = rows.filter(function (r) {
           return secrets.indexOf(r && r[s.secretField || 'key']) === -1;
         });
+        /*  ⛔ דיפרנציאלי ריק אינו נכתב ⛔ ואינו כישלון — ⚠️ יום שלא השתנה
+         *  בו דבר הוא המצב הרגיל, ⭐ ועותק ריק בכל לילה מציף את הפינוי. */
+        if (layer.diff && !rows.length) { same++; continue; }
         val = JSON.stringify(rows);
+        if (!layer.diff && s.ts) _bkSetMark(layer.key, _bkMaxTs(rows, s.ts));
       }
       // מקור שאין לו ערך בענן — אין מה לגבות, וזה אינו כישלון.
       if (val == null) continue;
@@ -5382,12 +5454,16 @@ function ysUpdateQueueBadge() {
   } catch(e) {}
 }
 // ממזג שני מערכי סדרים לפי מזהה רשומה (פריטים מקומיים בלבד מתווספים בסוף)
-function _ysSessionsMerge(cloudArr, localArr, logKey) {
+/*  ⛔ `keepLocal` נדלק כשהצד המרוחק הוא **חלון** ⛔ ולא הטבלה — ⚠️ רשומה
+ *  מקומית שמחוץ לחלון לא נשאלה כלל, ⭐ והיעדרותה אינה עדות: ⛔ בלי הדגל
+ *  היא הייתה נופלת כ«שריד בלי חותמת», ⚠️ ומשיכת חודש אחד הייתה גורפת
+ *  מהדיסק את כל השאר. */
+function _ysSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
   // משודרג: מיזוג ברמת רשומה עם updatedAt + tombstones (היה: הוספה-בלבד לפי id).
   // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection) — אך מתועדת.
   if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
   if (!Array.isArray(localArr)) return cloudArr;
-  return ysMergeWithDropLog(localArr, cloudArr, function(r){ return r && r.id; }, false, logKey || 'sessions');
+  return ysMergeWithDropLog(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, logKey || 'sessions');
 }
 /* ⛔ שליחת פריט מהתור — ⚠️ שכבת השורות מחזירה `{ok}` והכתיבה להגדרות
    מחזירה `{error}`, ⭐ והתור מכיר חוזה אחד בלבד: ⛔ החזרת `{ok:false}`
@@ -5700,48 +5776,58 @@ var YS_ROWS_READ_KEYS = { ys_attend_sessions: 'attend', ys_students: 'students' 
    בדיוק כמו נוכחות ותלמידים. */
 YS_ROWS_READ_KEYS.ys_sleep_sessions = 'sleep';
 
-/* ⛔ שליפה בעמודים ולא בבקשה אחת (סבב 55) — טבלת הסימונים מחזיקה 15,767
-   שורות, וזה אותו שיקול בדיוק שהוליד את `YS_ROWS_CHUNK` בכתיבה (סבב 36):
-   גוף בקשה בסדר גודל כזה נדחה או נחתך. ⚠️ ובנוסף PostgREST יודע להגביל
-   את מספר השורות בתשובה (`db-max-rows`) — ⚠️ **נמדד ב-26.8 שהפרויקט הזה
-   אינו מגדיר אותו**, ⛔ אבל זו הגדרת שרת ולא חוזה: ביום שבו תוגדר,
-   התשובה תיחתך **בשקט**, וקורא שמקבל חצי מהסימונים אינו יודע שקיבל חצי.
-   ⛔ תשובה חלקית שנראית שלמה גרועה מ«ריק אינו ראיה».
-   ⛔ ולכן עמוד שנכשל מחזיר `null` ולא מה שהספיק להגיע — נפילה-חזרה
-   ל-`kv` עדיפה על תמונה חסרה. */
-var YS_ROWS_PAGE = 1000;
-async function _ysRowsPaged(table, cols, order) {
-  var out = [], from = 0;
-  for (;;) {
-    var q = SB.from(table).select(cols);
-    if (order) q = q.order(order, { ascending: true });
-    var res = await withTimeout(q.range(from, from + YS_ROWS_PAGE - 1));
-    if (!res || res.error || !Array.isArray(res.data)) return null;
-    out = out.concat(res.data);
-    if (res.data.length < YS_ROWS_PAGE) return out;
-    from += YS_ROWS_PAGE;
-    // ⛔ תקרת בטיחות (סבב 55) — לולאה שתלויה בגודל התשובה חייבת גבול
-    //    עליון משלה, אחרת מסד שמחזיר עמוד מלא לנצח תולה את הדף.
-    if (from > 500000) return out;
-  }
+/*  ⛔ החלון שהמסך מציג, בגבולות ISO — ⚠️ חודש עברי הוא טווח גרגוריאני
+ *  **רציף**, ⭐ ולכן `.gte`/`.lte` על `date_iso` מכסים אותו בדיוק ⛔ ואין
+ *  צורך לרדת לרשימת ימים. ⛔ והמנוע הוא `_hcG` ⛔ ולא חשבון ידני — ⚠️ שני
+ *  מנועי תאריך הם שני לוחות. */
+function _ysWinIso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+         '-' + String(d.getDate()).padStart(2, '0');
+}
+function ysHebMonthWin(hy, mi) {
+  var b = window._hcBase(hy);
+  if (!b || !b.ml || !b.ml.length) return null;
+  var i = Math.max(0, Math.min(mi, b.ml.length - 1));
+  return { col: 'date_iso', from: _ysWinIso(window._hcG(hy, i, 1)),
+           to: _ysWinIso(window._hcG(hy, i, b.ml[i])) };
+}
+function ysHebYearWin(hy) {
+  var b = window._hcBase(hy);
+  if (!b || !b.ml || !b.ml.length) return null;
+  var last = b.ml.length - 1;
+  return { col: 'date_iso', from: _ysWinIso(window._hcG(hy, 0, 1)),
+           to: _ysWinIso(window._hcG(hy, last, b.ml[last])) };
+}
+/*  ⛔ חלון היום שבו רושמים — ⚠️ לשונית הרישום מציגה את סדרי **היום**,
+ *  ⭐ ולכן זה כל מה שהיא צריכה מהענן. */
+function ysTodayWin() {
+  var t = _ysWinIso(new Date());
+  return { col: 'date_iso', from: t, to: t };
 }
 /* שחזור רשומת ה-`kv` משתי הטבלאות — ההיפוך המדויק של `ysSessionRow`
    ו-`ysMarkRows`. ⛔ שדה שערכו `null` בטבלה אינו נכתב לרשומה (סבב 55) —
    ב-`kv` הוא פשוט **נעדר**, ו-`null` מפורש היה משנה את צורת הרשומה ומזליג
    הפרש לתוך מנוע המיזוג. */
 function _ysRowSet(rec, k, v) { if (v !== null && v !== undefined) rec[k] = v; }
-async function ysRowsGetSessions(kind) {
+/*  ⛔ החלון חל על **שתי** הטבלאות באותם גבולות — ⚠️ הסימון נושא `date_iso`
+ *  משלו ⛔ ולא רק את מזהה הסדר: ⭐ נמדד במסד ש-0 מ-18,085 הסימונים נבדלים
+ *  מתאריך הסדר שלהם, ⛔ ולכן חלון על שתיהן מחזיר בדיוק את אותן זוגות.
+ *  ⚠️ וסינון הסדרים לבדם היה משאיר את **כל** הסימונים על הקו. */
+async function ysRowsGetSessions(kind, win) {
   kind = kind || 'attend';
   var cfg = YS_ROWS_KINDS[kind];
   if (!cfg || !YS_ROWS || !SB) return { ok: false, data: null };
   try {
-    var rs = await _ysRowsPaged(cfg.parent,
-      'client_id,session,date_iso,date_heb,filled_by,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at',
-      'client_id');
-    if (!rs) return { ok: false, data: null };
+    var scols = 'client_id,session,date_iso,date_heb,filled_by,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at';
     var mcols = 'session_client_id,student_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
-    var rm = await _ysRowsPaged(cfg.child, mcols, 'client_id');
-    if (!rm) return { ok: false, data: null };
+    /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
+     *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
+    var both = await Promise.all([
+      _ysRowsPaged(function () { return SB.from(cfg.parent).select(scols); }, 'client_id', win),
+      _ysRowsPaged(function () { return SB.from(cfg.child).select(mcols); }, 'client_id', win)
+    ]);
+    var rs = both[0], rm = both[1];
+    if (!rs || !rm) return { ok: false, data: null };
     var byId = {}, out = [];
     rs.forEach(function (r) {
       if (!r || r.client_id == null) return;
@@ -5786,7 +5872,11 @@ async function ysRowsGetSessions(kind) {
 async function ysRowsGetStudents() {
   if (!YS_ROWS || !SB) return { ok: false, data: null };
   try {
-    var rs = await _ysRowsPaged('ys_students_rows', 'client_id,updated_at,deleted,data', 'client_id');
+    /*  ⛔ המצבה נמשכת מלאה ⛔ ואין לה חלון — ⚠️ אין בטבלה עמודת תאריך,
+     *  ⭐ והיא 71 שורות: ⛔ חלון על מפתח שאינו תאריך הוא מנגנון שני. */
+    var rs = await _ysRowsPaged(function () {
+      return SB.from('ys_students_rows').select('client_id,updated_at,deleted,data');
+    }, 'client_id', null);
     if (!rs) return { ok: false, data: null };
     var out = [];
     rs.forEach(function (r) {
@@ -5796,10 +5886,10 @@ async function ysRowsGetStudents() {
     return { ok: true, data: out };
   } catch (e) { return { ok: false, data: null }; }
 }
-async function ysRowsGet(kvKey) {
+async function ysRowsGet(kvKey, win) {
   var k = YS_ROWS_READ_KEYS[kvKey];
   if (!YS_ROWS_READ || !k) return { ok: false, data: null };
-  return (k === 'students') ? ysRowsGetStudents() : ysRowsGetSessions(k);
+  return (k === 'students') ? ysRowsGetStudents() : ysRowsGetSessions(k, win);
 }
 /* ⭐ משפך הקריאה היחיד — מערך או `null`, ⛔ ואין נפילה-חזרה ל-`kv`:
    ⚠️ המפתח שיש לו טבלה נקרא **ממנה בלבד**, ⛔ ומפתח הגדרות נקרא
@@ -5808,14 +5898,18 @@ async function ysRowsGet(kvKey) {
    להיות רשת ביטחון והפכה למקור אמת שני.
    ⛔ וכשל רשת מחזיר `null` ⛔ ולא מערך ריק — ⚠️ «אין ראיה» אינו «הענן ריק»,
    ⭐ ומיזוג מול מערך ריק היה מוחק את מה שלא הספיק לעלות. */
-async function ysCloudGet(kvKey) {
+/*  ⛔ החלון עובר עד לשאילתה ⛔ ואינו נעצר במשפך — ⚠️ מסלול שמוסר חלון
+ *  ומקבל טבלה מלאה משלם על הרשת פעמיים: ⭐ פעם בהורדה ופעם בסינון. */
+async function ysCloudGet(kvKey, win) {
   if (!YS_ROWS_READ_KEYS[kvKey]) return ysCfgGet(kvKey);
   var r = null;
-  try { r = await ysRowsGet(kvKey); } catch (e) { r = null; }
+  try { r = await ysRowsGet(kvKey, win); } catch (e) { r = null; }
   if (!r || !r.ok || !Array.isArray(r.data)) return null;
-  if (r.data.length) {
-    // ⛔ הראיה העננית נרשמת במשפך ולא באתרי הקריאה (סבב 56) — נקודה אחת
-    //    היא מה שמונע שער דיסק שמפנה על סמך משיכה שאיש לא רשם.
+  /*  ⛔ הראיה העננית נרשמת במשפך ולא באתרי הקריאה — ⚠️ נקודה אחת היא מה
+   *  שמונע שער דיסק שמפנה על סמך משיכה שאיש לא רשם. ⛔ ורק משיכה **מלאה**
+   *  היא ראיה — ⚠️ משיכת חלון אינה אומרת דבר על מה שמחוצה לו, ⭐ ורישומה
+   *  היה מתיר פינוי של רשומה שמעולם לא נמדדה בענן. */
+  if (!win && r.data.length) {
     try { hwNoteCloud(kvKey, r.data); } catch (e1) { }
   }
   return r.data;
@@ -5856,26 +5950,6 @@ function ysCfgGet(key, res) {
 /* ── DEV_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 var DEV_CFG = { key: 'ys_device_id' };
 
-/* ═══ מזהה מכשיר — מודול משותף (סבב 40) ═══════════════════════════════════
-   ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ═══════════════════════════════════════════════════════════════════════ */
-var _deviceIdMem = null;
-function getDeviceId() {
-  var id = lsGet(DEV_CFG.key, null);
-  if (!id) {
-    id = _deviceIdMem || _randDeviceId();
-    lsSetRaw(DEV_CFG.key, id);
-  }
-  _deviceIdMem = id;
-  return id;
-}
-function _randDeviceId() {
-  var c = 'abcdefghijklmnopqrstuvwxyz0123456789', id = '';
-  for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
-  return id;
-}
-/* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
 
 // ⚠️ `ysSyncLog` היא **מעטפת דקה** מעל מודול הגיבוי והיומן המשותף
 // (סבב 30) — הליבה עברה לשם ומשותפת לארבע האפליקציות.
@@ -5940,6 +6014,26 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
 //    `keepUnversionedLocal` — רשומה מקומית-בלבד ממשיכה להיות מוכרעת בדיוק
 //    כפי שהייתה.
+/* ═══ מזהה מכשיר — מודול משותף (סבב 40) ═══════════════════════════════════
+   ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
+      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ═══════════════════════════════════════════════════════════════════════ */
+var _deviceIdMem = null;
+function getDeviceId() {
+  var id = lsGet(DEV_CFG.key, null);
+  if (!id) {
+    id = _deviceIdMem || _randDeviceId();
+    lsSetRaw(DEV_CFG.key, id);
+  }
+  _deviceIdMem = id;
+  return id;
+}
+function _randDeviceId() {
+  var c = 'abcdefghijklmnopqrstuvwxyz0123456789', id = '';
+  for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
+  return id;
+}
+/* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
 /* ═══ מיזוג רשומות — מודול משותף (סבב 38) ════════════════════════════════
    ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
@@ -6011,6 +6105,87 @@ function mergeCore(local, remote, opts) {
   return out;
 }
 /* ═══════════════ סוף מודול המיזוג ══════════════════════════════════════ */
+/* ── LS_TOAST — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+/*  ⛔ החתימה `toast(msg, dur, kind)` זהה בארבעתן (סבב 87) — ⚠️ ומה שנשאר
+ *  נבדל הוא **שם המחלקה** בלבד: ⭐ המשך הוא ערך משותף שיושב בבלוק, ⛔ ולכן
+ *  גוף `lsToast` זהה בית-לבית בארבעתן. */
+var LS_TOAST = { kind: '' };
+/* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
+   ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
+      ⚠️ `esc` לשלוש צורות — והיא הגנת ה-HTML היחידה שיש; `openModal` לשלוש,
+      ⛔ ובאחת מהן נעדרה נעילת הגלילה לגמרי; ו-`lsToast` לשתיים.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ מיכל אחד ומסלול סגירה יחיד — ⚠️ מסלול נפרד לכל דיאלוג הוא בדיוק מה
+      שנשבר בשקט; ⭐ והכותרת ב-`textContent` ⛔ ולא ב-HTML, מפני שהיא מגיעה
+      גם משם שהמשתמש הקליד. ⛔ וגוף `ask` ב-`textContent` אף הוא — ⚠️ דיאלוג
+      שדורש HTML עובר ב-`openModal`.
+   ⛔ ו-`locked` על ה-`body` אינה קישוט — ⚠️ בלעדיה הדף שמאחורי המודאל נגלל
+      מתחתיו, ⭐ והמשתמש מאבד את מקומו ברשימה שממנה פתח אותו; ⛔ וההסרה
+      מותנית בכך שהדיאלוג השני סגור — ⚠️ אחרת סגירת אחד משחררת את השני.
+   ⚠️ `askResolve` יחיד — ⛔ אין תמיכה בשני דיאלוגי אישור פתוחים בו-זמנית,
+      וגם אין בכך צורך: `#ask` הוא אלמנט יחיד ב-DOM.
+   ═══════════════════════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function openModal(title, body, foot) {
+  var ttl = document.getElementById('modal-title');
+  if (!ttl) return;
+  ttl.textContent = title || '';
+  document.getElementById('modal-body').innerHTML = body || '';
+  document.getElementById('modal-foot').innerHTML = foot || '';
+  document.getElementById('modal').classList.add('open');
+  document.body.classList.add('locked');
+}
+function closeModal() {
+  var m = document.getElementById('modal');
+  if (!m) return;
+  m.classList.remove('open');
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-foot').innerHTML = '';
+  if (!document.getElementById('ask').classList.contains('open')) document.body.classList.remove('locked');
+}
+var askResolve = null;
+function ask(title, text, yesLabel) {
+  document.getElementById('ask-title').textContent = title || '';
+  document.getElementById('ask-body').textContent = text || '';
+  document.getElementById('ask-yes').textContent = yesLabel || 'אישור';
+  document.getElementById('ask').classList.add('open');
+  document.body.classList.add('locked');
+  return new Promise(function (res) { askResolve = res; });
+}
+function closeAsk(v) {
+  document.getElementById('ask').classList.remove('open');
+  if (!document.getElementById('modal').classList.contains('open')) document.body.classList.remove('locked');
+  if (askResolve) { askResolve(v); askResolve = null; }
+}
+/*  ⛔ `div` לכל הודעה, ⛔ ולא אלמנט קבוע אחד — ⚠️ הנימוק המדוד: בשלוש
+ *  מהן הטוסט היה אלמנט יחיד, ⭐ והודעה שנייה דרסה את הראשונה: ⛔ «נשמר»
+ *  ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד, ⚠️ ומי שקרא את המסך לא ידע
+ *  שהייתה שנייה. ⛔ `kind` הוא שם מחלקה ⛔ ולא משך — ⚠️ ומי שאין לו ערך
+ *  מוסר `null`; ⭐ והמשך יושב ב-`TOAST_DEFAULT_MS`, ⛔ הערך היחיד שנבדל. */
+function toast(msg, dur, kind) {
+  // שער סבב 11 — אין טוסט הצלחה אחרי כישלון שמירה מקומית. אין להסיר.
+  if (typeof lsGuardToast === 'function' && !lsGuardToast(msg)) return;
+  var box = document.getElementById('toasts');
+  if (!box) return;
+  var el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(function () {
+    el.style.transition = 'opacity .25s'; el.style.opacity = '0';
+    setTimeout(function () { el.remove(); }, 260);
+  }, dur || TOAST_DEFAULT_MS);
+}
+/*  ⛔ משך הודעת האחסון ⛔ ואינו ברירת המחדל של הטוסט — ⚠️ היא מדווחת על
+   כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
+var LS_TOAST_MS = 5000;
+function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind); } catch (e) {} }
+/* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
@@ -7393,11 +7568,14 @@ function _ysStaleMark(el, bad) {
  *  פתיחה של האפליקציה המטמון היה ריק והמסך חזר לחיווי הטעינה. ⛔ והשמירה
  *  **ממזגת ואינה דורסת** — ⚠️ רשומה שנרשמה אופליין וטרם עלתה אינה בענן,
  *  ⭐ ודריסה הייתה מוחקת אותה מהדיסק. */
-async function _atPullSessions() {
-  var v = null; try { v = await ysCloudGet('ys_attend_sessions'); } catch (e) {}
+/*  ⛔ הקורא מוסר את החלון שהוא מציג — ⚠️ ובלעדיו נמשכת הטבלה כולה:
+ *  ⭐ מסלול שאין לו חלון מוצהר מוסר `null` במפורש ⛔ ולא משמיט ארגומנט,
+ *  ⚠️ שהשמטה נקראת «לא נשאלתי» ⛔ והצהרה נקראת «נמדד ואין». */
+async function _atPullSessions(win) {
+  var v = null; try { v = await ysCloudGet('ys_attend_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
   var loc = _ysDiskArr('ys_attend_sessions');
-  var out = loc ? _ysSessionsMerge(v, loc, 'ys_attend_sessions') : v;
+  var out = loc ? _ysSessionsMerge(v, loc, 'ys_attend_sessions', !!win) : v;
   window._atData = out; _ysAtDiskSave(out);
   return true;
 }
@@ -7424,6 +7602,16 @@ window._atSaveTimer = null;
 window._atView = 'reg';
 window._atSupHY = null;            // חודש נצפה בהשגחה
 window._atSupMI = null;
+/*  ⛔ אתחול החודש הנצפה בנקודה אחת — ⚠️ עד כאן הוא ישב **בתוך** הציור,
+ *  ⛔ והמשיכה שקדמה לו לא ידעה איזה חודש להביא: ⭐ שתי נקודות אתחול הן
+ *  שתי תשובות לשאלה «איזה חודש», ⚠️ והן נבדלות בדיוק במסך שטרם צויר. */
+function _atSupMonth() {
+  if (window._atSupHY === null) {
+    var ch = window._hcH(new Date());
+    window._atSupHY = ch.hy; window._atSupMI = ch.mi;
+  }
+  return window._atSupHY;
+}
 
 function atDefaultCfg() {
   return {
@@ -7570,7 +7758,7 @@ window.loadAttend = async function() {
 
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
    *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
-  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions()]);
+  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysTodayWin())]);
   _atPaintReg();
   window.atShowTab(window._atView||'reg');
   _ysStaleMark(el, !(_okAt[0]&&_okAt[1]));
@@ -8264,7 +8452,7 @@ window.atRenderArchive = async function(records) {
   if(!el) return;
   if(records){ _atPaintArchive(el, records, ''); return; }
   _atPaintArchive(el, ysCachedArr('_atData','ys_attend_sessions')||[], '');
-  var _okArc=await _atPullSessions();
+  var _okArc=await _atPullSessions(ysHebYearWin(window._hcH(new Date()).hy));
   _atPaintArchive(el, ysCachedArr('_atData','ys_attend_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _atPaintArchive(el, records, warn) {
@@ -8577,7 +8765,7 @@ window.atRenderSupervision = async function() {
   else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
    *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
-  var okA=await Promise.all([_atPullSessions(), _atPullTreats()]);
+  var okA=await Promise.all([_atPullSessions(ysHebMonthWin(_atSupMonth(), window._atSupMI)), _atPullTreats()]);
   /*  ⛔ כשל משיכה מסומן גלוי ⛔ ולא בשקט — ⚠️ מסך שמציג נתון ישן בלי לומר
    *  זאת הוא הכשל השקט עצמו: ⭐ המשגיח מחליט על סמך מה שהוא רואה. */
   _atSupPaint(el, ysCachedArr('_atData','ys_attend_sessions')||[],
@@ -8592,11 +8780,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=atLiveTreats(rawTreats);
 
-  // אתחל חודש נצפה אם לא מוגדר
-  if(window._atSupHY===null){
-    var ch=window._hcH(new Date());
-    window._atSupHY=ch.hy;window._atSupMI=ch.mi;
-  }
+  _atSupMonth();
   var hy=window._atSupHY,mi=window._atSupMI;
   var mNames=window._hcMN(hy);
   var mLabel=mNames[mi]+' '+window._hcYL(hy);
@@ -9009,11 +9193,11 @@ window._slData = null;
 window._slTreats = null;
 /*  ⛔ אותו זוג בדיוק כמו בנוכחות (סבב 85) — ⚠️ שני המסכים הם אותו דפוס,
  *  ⛔ ותיקון באחד בלבד היה משאיר את השני תקוע על «⏳ טוען...». */
-async function _slPullSessions() {
-  var v = null; try { v = await ysCloudGet('ys_sleep_sessions'); } catch (e) {}
+async function _slPullSessions(win) {
+  var v = null; try { v = await ysCloudGet('ys_sleep_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
   var loc = _ysDiskArr('ys_sleep_sessions');
-  var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions') : v;
+  var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions', !!win) : v;
   window._slData = out; lsSetArray('ys_sleep_sessions', out, _ysRecTs);
   return true;
 }
@@ -9039,6 +9223,15 @@ window._slSaveTimer = null;
 window._slView = 'reg';
 window._slSupHY = null;
 window._slSupMI = null;
+/*  ⛔ אותו אתחול בשינה — ⚠️ שני המסכים זהים בית-לבית אחרי החלפת הקידומת,
+ *  ⭐ והנקודה היחידה שנבדלת היא שם המצב. */
+function _slSupMonth() {
+  if (window._slSupHY === null) {
+    var ch = window._hcH(new Date());
+    window._slSupHY = ch.hy; window._slSupMI = ch.mi;
+  }
+  return window._slSupHY;
+}
 
 function slDefaultCfg() {
   return {
@@ -9179,7 +9372,7 @@ window.loadSleep = async function() {
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
 
-  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions()]);
+  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysTodayWin())]);
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
   _ysStaleMark(el, !(_okSl[0]&&_okSl[1]));
@@ -9728,7 +9921,7 @@ window.slRenderArchive = async function(records) {
   if(!el) return;
   if(records){ _slPaintArchive(el, records, ''); return; }
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], '');
-  var _okArc=await _slPullSessions();
+  var _okArc=await _slPullSessions(ysHebYearWin(window._hcH(new Date()).hy));
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _slPaintArchive(el, records, warn) {
@@ -10024,7 +10217,7 @@ window.slRenderSupervision = async function() {
   var cT=ysCachedArr('_slTreats','ys_sleep_treats');
   if(cD&&cT) _slSupPaint(el,cD,cT,'');
   else el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text2)">⏳ טוען...</div>';
-  var okS=await Promise.all([_slPullSessions(), _slPullTreats()]);
+  var okS=await Promise.all([_slPullSessions(ysHebMonthWin(_slSupMonth(), window._slSupMI)), _slPullTreats()]);
   _slSupPaint(el, ysCachedArr('_slData','ys_sleep_sessions')||[],
                   ysCachedArr('_slTreats','ys_sleep_treats')||[],
                   (okS[0]&&okS[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
@@ -10037,10 +10230,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   // טיפולים מחוקים (tombstones) לא מוצגים ולא נספרים
   var treats=slLiveTreats(rawTreats);
 
-  if(window._slSupHY===null){
-    var ch=window._hcH(new Date());
-    window._slSupHY=ch.hy;window._slSupMI=ch.mi;
-  }
+  _slSupMonth();
   var hy=window._slSupHY,mi=window._slSupMI;
   var mNames=window._hcMN(hy);
   var mLabel=mNames[mi]+' '+window._hcYL(hy);
