@@ -2353,16 +2353,21 @@ function sortUsersByOrder(data) {
    ⛔ ורק מטפל אחד רץ. ⚠️ `check-capabilities` ממשיך להפיל כל אתר שסומן
    `data-act` ונושא `stopPropagation` באותה שורה — ⛔ הצירוף הזה נשאר אסור.
    ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔⛔ מטפל שקורא לפונקציה אסינכרונית **מחזיר את ההבטחה** (סבב 89) — ⛔ ואין
+ *  להסיר את ה-`return` מפני שהערך «אינו בשימוש»: ⚠️ הנימוק המדוד — נקודת
+ *  הניתוב משביתה את הכפתור **לפי ההבטחה שחזרה**, ⭐ ובלי ההחזרה הענף כולו
+ *  היה קוד מת: ⛔ עשרים ושלושה מטפלים לא החזירו דבר, ⚠️ והחיווי שנכתב
+ *  בניתוב לא רץ באף אחד מהם — ⛔ המסך לא הגיב, והמשתמש לחץ שוב. */
 var DOM_ACTIONS = {
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
   'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
-  'user-toggle': function (el) { toggleUserActive(el.getAttribute('data-id'),
+  'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
   'st-pick':     function (el) { window.selectSearchStudent(el.getAttribute('data-id')); },
   'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
-  'st-history':  function (el) { window.openStatusHistory(el.getAttribute('data-id')); },
+  'st-history':  function (el) { return window.openStatusHistory(el.getAttribute('data-id')); },
   /*  ⛔ ניווט ⛔ ופתיחת מסך עוברים בדלגציה (סבב 79) — ⚠️ המסכים כאן נבנים
    *  מחדש בכל רינדור, ⛔ ומאזין פר-אלמנט היה צריך חיווט מחדש בכל פעם.
    *  ⭐ `page-nav` הוא `page` ועוד סימון הכפתור הפעיל — ⛔ שני שמות ולא
@@ -2388,19 +2393,21 @@ var DOM_ACTIONS = {
                    closeModal();
                  },
   'year-transition-confirm': function () { window.doYearTransition(); closeModal(); },
-  'at-resume-go':     function (el) { window.atEditSession(el.getAttribute('data-id')); closeModal(); },
+  'at-resume-go':     function (el) { var p = window.atEditSession(el.getAttribute('data-id'));
+                                    closeModal(); return p; },
   'at-status-cancel': function (el) { window.atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'at-export-go':     function (el) { window.atExportConfirm(el.getAttribute('data-type')); },
+  'at-export-go':     function (el) { return window.atExportConfirm(el.getAttribute('data-type')); },
   'at-mark-edit':     function (el) { window.atSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'at-mark-set':      function (el) { window.atEditMark(el.getAttribute('data-rec'),
+  'at-mark-set':      function (el) { return window.atEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-resume-go':     function (el) { window.slEditSession(el.getAttribute('data-id')); closeModal(); },
+  'sl-resume-go':     function (el) { var p = window.slEditSession(el.getAttribute('data-id'));
+                                    closeModal(); return p; },
   'sl-status-cancel': function (el) { window.slCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
   'sl-export-go':     function (el) { window.slExportConfirm(el.getAttribute('data-type')); },
   'sl-mark-edit':     function (el) { window.slSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-mark-set':      function (el) { window.slEditMark(el.getAttribute('data-rec'),
+  'sl-mark-set':      function (el) { return window.slEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
   /*  ⛔ בורר התאריך העברי מנותב כאן — ⚠️ הלוח נבנה מחדש בכל ניווט חודש,
    *  ⭐ ומאזין פר-תא היה צריך חיווט מחדש בכל פעם. */
@@ -2427,23 +2434,23 @@ var DOM_ACTIONS = {
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
                         if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
                       },
-  'at-edit-session':  function (el) { window.atEditSession(el.getAttribute('data-id')); },
+  'at-edit-session':  function (el) { return window.atEditSession(el.getAttribute('data-id')); },
   'at-del-session':   function (el) { window.atDeleteSession(el.getAttribute('data-id')); },
   'at-sup-detail':    function (el) { window.atSupDetail(el.getAttribute('data-id')); },
   'at-set-mark':      function (el) { window.atSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
   'at-clear-mark':    function (el) { window.atClearMark(el.getAttribute('data-id')); },
   'at-confirm-late':  function (el) { window.atConfirmLate(el.getAttribute('data-id')); },
-  'at-add-treat':     function (el) { window.atAddTreat(el.getAttribute('data-id')); },
+  'at-add-treat':     function (el) { return window.atAddTreat(el.getAttribute('data-id')); },
   'at-del-treat':     function (el) { window.atDeleteTreat(el.getAttribute('data-id')); },
-  'sl-edit-session':  function (el) { window.slEditSession(el.getAttribute('data-id')); },
+  'sl-edit-session':  function (el) { return window.slEditSession(el.getAttribute('data-id')); },
   'sl-del-session':   function (el) { window.slDeleteSession(el.getAttribute('data-id')); },
   'sl-sup-detail':    function (el) { window.slSupDetail(el.getAttribute('data-id')); },
   'sl-set-mark':      function (el) { window.slSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
   'sl-clear-mark':    function (el) { window.slClearMark(el.getAttribute('data-id')); },
   'sl-confirm-late':  function (el) { window.slConfirmLate(el.getAttribute('data-id')); },
-  'sl-add-treat':     function (el) { window.slAddTreat(el.getAttribute('data-id')); },
+  'sl-add-treat':     function (el) { return window.slAddTreat(el.getAttribute('data-id')); },
   'sl-del-treat':     function (el) { window.slDeleteTreat(el.getAttribute('data-id')); },
   'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
   'settings-home':   function () { window.showSettingsHome(); },
@@ -2461,7 +2468,7 @@ var DOM_ACTIONS = {
   'status-form':         function (el) { window.openStatusForm(el.getAttribute('data-kind')); },
   'ep-save':             function (el) { saveEp(el.getAttribute('data-ep')); },
   'ep-close':            function (el) { closeEp(el.getAttribute('data-ep')); },
-  'absence-reasons-save': function () { window.saveAbsenceReasons(); },
+  'absence-reasons-save': function () { return window.saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
                             var id = el.getAttribute('data-id');
                             if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
@@ -2470,29 +2477,29 @@ var DOM_ACTIONS = {
   'student-status-save':  function () { window.saveStudentStatus(window._currentStatusType); },
   'manage-list-open':     function () { window.openManageListDlg(); },
   'students-print':       function () { window.printStudents(); },
-  'users-render':         function () { window.renderUsersList(); },
+  'users-render':         function () { return window.renderUsersList(); },
   'hc-toggle':            function () { window._hcToggle(); },
-  'sl-settings-save':     function () { window.slSaveSettingsCfg(); },
-  'at-settings-save':     function () { window.atSaveSettingsCfg(); },
-  'sl-session-close':     function () { window.slCloseSession(); },
-  'at-session-close':     function () { window.atCloseSession(); },
+  'sl-settings-save':     function () { return window.slSaveSettingsCfg(); },
+  'at-settings-save':     function () { return window.atSaveSettingsCfg(); },
+  'sl-session-close':     function () { return window.slCloseSession(); },
+  'at-session-close':     function () { return window.atCloseSession(); },
   'at-session-add':       function () { window.atAddSession(); },
   'sl-treat-row-add':     function () { window.slAddTreatRow(); },
   'at-treat-row-add':     function () { window.atAddTreatRow(); },
   /*  ⛔ מסך הכניסה והמשתמשים — ⚠️ `user-save` ו-`mypass-change` מקבלים את
    *  הכפתור שנלחץ, ⛔ ולכן `this` שהיה ב-`onclick` הוא ה-`el` שכאן. */
-  'login':            function () { doLogin(); },
+  'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
-  'user-menu-toggle': function () { toggleUserMenu(); },
+  'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
-  'user-save':        function (el) { saveUser(el); },
+  'user-save':        function (el) { return saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
-  'mypass-change':    function (el) { changeMyPassword(el); },
-  'switch-confirm':   function () { confirmSwitch(); },
+  'mypass-change':    function (el) { return changeMyPassword(el); },
+  'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
-  'perms-save':       function () { savePerms(); },
+  'perms-save':       function () { return savePerms(); },
   'ls-sweep-now':      function () { lsSweepNow(); },
   'ls-refresh-status': function () { lsRefreshStatus(); },
   'ls-restore-all':    function () { lsRestoreAll(); },
