@@ -2216,68 +2216,6 @@ window.addAbsenceReason = function(type) {
   inp.focus();
 };
 
-/* ── LS_TOAST — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-/*  ⛔ החתימה `toast(msg, dur, kind)` זהה בארבעתן (סבב 87) — ⚠️ ומה שנשאר
- *  נבדל הוא **שם המחלקה** בלבד: ⭐ המשך הוא ערך משותף שיושב בבלוק, ⛔ ולכן
- *  גוף `lsToast` זהה בית-לבית בארבעתן. */
-var LS_TOAST = { kind: '' };
-/* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
-   ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
-      ⚠️ `esc` לשלוש צורות — והיא הגנת ה-HTML היחידה שיש; `openModal` לשלוש,
-      ⛔ ובאחת מהן נעדרה נעילת הגלילה לגמרי; ו-`lsToast` לשתיים.
-   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ מיכל אחד ומסלול סגירה יחיד — ⚠️ מסלול נפרד לכל דיאלוג הוא בדיוק מה
-      שנשבר בשקט; ⭐ והכותרת ב-`textContent` ⛔ ולא ב-HTML, מפני שהיא מגיעה
-      גם משם שהמשתמש הקליד. ⛔ וגוף `ask` ב-`textContent` אף הוא — ⚠️ דיאלוג
-      שדורש HTML עובר ב-`openModal`.
-   ⛔ ו-`locked` על ה-`body` אינה קישוט — ⚠️ בלעדיה הדף שמאחורי המודאל נגלל
-      מתחתיו, ⭐ והמשתמש מאבד את מקומו ברשימה שממנה פתח אותו; ⛔ וההסרה
-      מותנית בכך שהדיאלוג השני סגור — ⚠️ אחרת סגירת אחד משחררת את השני.
-   ⚠️ `askResolve` יחיד — ⛔ אין תמיכה בשני דיאלוגי אישור פתוחים בו-זמנית,
-      וגם אין בכך צורך: `#ask` הוא אלמנט יחיד ב-DOM.
-   ═══════════════════════════════════════════════════════════════════════ */
-function esc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
-}
-function openModal(title, body, foot) {
-  var ttl = document.getElementById('modal-title');
-  if (!ttl) return;
-  ttl.textContent = title || '';
-  document.getElementById('modal-body').innerHTML = body || '';
-  document.getElementById('modal-foot').innerHTML = foot || '';
-  document.getElementById('modal').classList.add('open');
-  document.body.classList.add('locked');
-}
-function closeModal() {
-  var m = document.getElementById('modal');
-  if (!m) return;
-  m.classList.remove('open');
-  document.getElementById('modal-body').innerHTML = '';
-  document.getElementById('modal-foot').innerHTML = '';
-  if (!document.getElementById('ask').classList.contains('open')) document.body.classList.remove('locked');
-}
-var askResolve = null;
-function ask(title, text, yesLabel) {
-  document.getElementById('ask-title').textContent = title || '';
-  document.getElementById('ask-body').textContent = text || '';
-  document.getElementById('ask-yes').textContent = yesLabel || 'אישור';
-  document.getElementById('ask').classList.add('open');
-  document.body.classList.add('locked');
-  return new Promise(function (res) { askResolve = res; });
-}
-function closeAsk(v) {
-  document.getElementById('ask').classList.remove('open');
-  if (!document.getElementById('modal').classList.contains('open')) document.body.classList.remove('locked');
-  if (askResolve) { askResolve(v); askResolve = null; }
-}
-/*  ⛔ משך הודעת האחסון ⛔ ואינו ברירת המחדל של הטוסט — ⚠️ היא מדווחת על
-   כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
-var LS_TOAST_MS = 5000;
-function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind); } catch (e) {} }
-/* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 function modalOpen() {
   var m = document.getElementById('modal');
   return !!(m && m.classList.contains('open'));
@@ -5928,26 +5866,6 @@ function ysCfgGet(key, res) {
 /* ── DEV_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 var DEV_CFG = { key: 'ys_device_id' };
 
-/* ═══ מזהה מכשיר — מודול משותף (סבב 40) ═══════════════════════════════════
-   ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ═══════════════════════════════════════════════════════════════════════ */
-var _deviceIdMem = null;
-function getDeviceId() {
-  var id = lsGet(DEV_CFG.key, null);
-  if (!id) {
-    id = _deviceIdMem || _randDeviceId();
-    lsSetRaw(DEV_CFG.key, id);
-  }
-  _deviceIdMem = id;
-  return id;
-}
-function _randDeviceId() {
-  var c = 'abcdefghijklmnopqrstuvwxyz0123456789', id = '';
-  for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
-  return id;
-}
-/* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
 
 // ⚠️ `ysSyncLog` היא **מעטפת דקה** מעל מודול הגיבוי והיומן המשותף
 // (סבב 30) — הליבה עברה לשם ומשותפת לארבע האפליקציות.
@@ -6012,6 +5930,26 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
 //    `keepUnversionedLocal` — רשומה מקומית-בלבד ממשיכה להיות מוכרעת בדיוק
 //    כפי שהייתה.
+/* ═══ מזהה מכשיר — מודול משותף (סבב 40) ═══════════════════════════════════
+   ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
+      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ═══════════════════════════════════════════════════════════════════════ */
+var _deviceIdMem = null;
+function getDeviceId() {
+  var id = lsGet(DEV_CFG.key, null);
+  if (!id) {
+    id = _deviceIdMem || _randDeviceId();
+    lsSetRaw(DEV_CFG.key, id);
+  }
+  _deviceIdMem = id;
+  return id;
+}
+function _randDeviceId() {
+  var c = 'abcdefghijklmnopqrstuvwxyz0123456789', id = '';
+  for (var i = 0; i < 8; i++) id += c.charAt(Math.floor(Math.random() * c.length));
+  return id;
+}
+/* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
 /* ═══ מיזוג רשומות — מודול משותף (סבב 38) ════════════════════════════════
    ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
@@ -6083,6 +6021,68 @@ function mergeCore(local, remote, opts) {
   return out;
 }
 /* ═══════════════ סוף מודול המיזוג ══════════════════════════════════════ */
+/* ── LS_TOAST — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
+/*  ⛔ החתימה `toast(msg, dur, kind)` זהה בארבעתן (סבב 87) — ⚠️ ומה שנשאר
+ *  נבדל הוא **שם המחלקה** בלבד: ⭐ המשך הוא ערך משותף שיושב בבלוק, ⛔ ולכן
+ *  גוף `lsToast` זהה בית-לבית בארבעתן. */
+var LS_TOAST = { kind: '' };
+/* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
+   ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
+      ⚠️ `esc` לשלוש צורות — והיא הגנת ה-HTML היחידה שיש; `openModal` לשלוש,
+      ⛔ ובאחת מהן נעדרה נעילת הגלילה לגמרי; ו-`lsToast` לשתיים.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ מיכל אחד ומסלול סגירה יחיד — ⚠️ מסלול נפרד לכל דיאלוג הוא בדיוק מה
+      שנשבר בשקט; ⭐ והכותרת ב-`textContent` ⛔ ולא ב-HTML, מפני שהיא מגיעה
+      גם משם שהמשתמש הקליד. ⛔ וגוף `ask` ב-`textContent` אף הוא — ⚠️ דיאלוג
+      שדורש HTML עובר ב-`openModal`.
+   ⛔ ו-`locked` על ה-`body` אינה קישוט — ⚠️ בלעדיה הדף שמאחורי המודאל נגלל
+      מתחתיו, ⭐ והמשתמש מאבד את מקומו ברשימה שממנה פתח אותו; ⛔ וההסרה
+      מותנית בכך שהדיאלוג השני סגור — ⚠️ אחרת סגירת אחד משחררת את השני.
+   ⚠️ `askResolve` יחיד — ⛔ אין תמיכה בשני דיאלוגי אישור פתוחים בו-זמנית,
+      וגם אין בכך צורך: `#ask` הוא אלמנט יחיד ב-DOM.
+   ═══════════════════════════════════════════════════════════════════════ */
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function openModal(title, body, foot) {
+  var ttl = document.getElementById('modal-title');
+  if (!ttl) return;
+  ttl.textContent = title || '';
+  document.getElementById('modal-body').innerHTML = body || '';
+  document.getElementById('modal-foot').innerHTML = foot || '';
+  document.getElementById('modal').classList.add('open');
+  document.body.classList.add('locked');
+}
+function closeModal() {
+  var m = document.getElementById('modal');
+  if (!m) return;
+  m.classList.remove('open');
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-foot').innerHTML = '';
+  if (!document.getElementById('ask').classList.contains('open')) document.body.classList.remove('locked');
+}
+var askResolve = null;
+function ask(title, text, yesLabel) {
+  document.getElementById('ask-title').textContent = title || '';
+  document.getElementById('ask-body').textContent = text || '';
+  document.getElementById('ask-yes').textContent = yesLabel || 'אישור';
+  document.getElementById('ask').classList.add('open');
+  document.body.classList.add('locked');
+  return new Promise(function (res) { askResolve = res; });
+}
+function closeAsk(v) {
+  document.getElementById('ask').classList.remove('open');
+  if (!document.getElementById('modal').classList.contains('open')) document.body.classList.remove('locked');
+  if (askResolve) { askResolve(v); askResolve = null; }
+}
+/*  ⛔ משך הודעת האחסון ⛔ ואינו ברירת המחדל של הטוסט — ⚠️ היא מדווחת על
+   כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
+var LS_TOAST_MS = 5000;
+function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind); } catch (e) {} }
+/* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
