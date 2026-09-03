@@ -61,6 +61,9 @@ if ('serviceWorker' in navigator) {
       document.body.appendChild(bar);
     }
 
+    /*  ⛔ שם המטמון נקרא מיד עם הרישום — ⚠️ `ysLoginDetails` סינכרונית,
+     *  ⭐ והכניסה תמיד מאוחרת לטעינת הדף. */
+    try { ysAppVerBoot(); } catch (eV) { console.warn('[ver] boot', eV); }
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
       console.log('SW registered:', reg.scope);
 
@@ -1422,7 +1425,33 @@ async function ysRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-var YS_APP_VER = 'hanhala-ruchanit-v96'; // ⚠️ לעדכן יחד עם CACHE_NAME ב-sw.js
+/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה (סבב 89) — ⚠️ הנימוק המדוד:
+ *  אותו ערך היה כתוב כאן וגם ב-`CACHE_NAME` שב-`sw.js`, ⛔ והוא נסחף
+ *  **13 גרסאות**: ⭐ `sw_version` ביומן הכניסה דיווח v96 בעוד שהקוד שרץ
+ *  היה v109, ⚠️ וכל רשומת כניסה מאז נשאה גרסה שגויה.
+ *  ⭐ **שם המטמון החי הוא הערך** — ⛔ הוא נוצר מ-`CACHE_NAME` עצמו, ⚠️ ולכן
+ *  זו קריאה מהמקום שבו הערך נקבע ⛔ ולא מקור שני.
+ *  ⛔ **ובזמן עדכון עשויים לחיות שני מטמונים** — ⚠️ הנבחר הוא בעל המספר
+ *  הגבוה, ⭐ שהוא הגרסה שהופעלה.
+ *  ⛔ **וכשל מחזיר מחרוזת ריקה** ⛔ ולא ערך מוקלד — ⚠️ «לא ידוע» עדיף על
+ *  גרסה שגויה שנרשמת כעובדה. */
+var YS_APP_VER = '';
+var YS_VER_PREFIX = 'hanhala-ruchanit-';
+async function ysAppVerBoot() {
+  try {
+    if (!self.caches || !caches.keys) return YS_APP_VER;
+    var names = await caches.keys();
+    var mine = (names || []).filter(function (n) { return String(n).indexOf(YS_VER_PREFIX) === 0; });
+    if (!mine.length) return YS_APP_VER;
+    mine.sort(function (a, b) {
+      var na = parseInt(String(a).replace(/^.*-v/, ''), 10) || 0;
+      var nb = parseInt(String(b).replace(/^.*-v/, ''), 10) || 0;
+      return na - nb;
+    });
+    YS_APP_VER = mine[mine.length - 1];
+  } catch (e) { console.warn('[ver] ysAppVerBoot', e); }
+  return YS_APP_VER;
+}
 function ysLoginDetails(username) {
   // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
@@ -2183,6 +2212,13 @@ window.saveAbsenceReasons = async function() {
   lsSet('ys_absence_reasons', JSON.stringify(reasons));
   ysSettingsTouch('ys_absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  toast('✅ הסיבות נשמרו');
   try {
     var r = await ysCfgSet('ys_absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
@@ -2190,7 +2226,6 @@ window.saveAbsenceReasons = async function() {
     await ysCfgSet('ys_last_changed', ts);
     console.log('[absence-reasons] ys_last_changed updated:', ts);
   } catch(e) { console.error('[absence-reasons] save error:', e); }
-  toast('✅ הסיבות נשמרו');
 };
 function saveAbsenceReasons() { window.saveAbsenceReasons(); }
 
@@ -2318,16 +2353,21 @@ function sortUsersByOrder(data) {
    ⛔ ורק מטפל אחד רץ. ⚠️ `check-capabilities` ממשיך להפיל כל אתר שסומן
    `data-act` ונושא `stopPropagation` באותה שורה — ⛔ הצירוף הזה נשאר אסור.
    ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔⛔ מטפל שקורא לפונקציה אסינכרונית **מחזיר את ההבטחה** (סבב 89) — ⛔ ואין
+ *  להסיר את ה-`return` מפני שהערך «אינו בשימוש»: ⚠️ הנימוק המדוד — נקודת
+ *  הניתוב משביתה את הכפתור **לפי ההבטחה שחזרה**, ⭐ ובלי ההחזרה הענף כולו
+ *  היה קוד מת: ⛔ עשרים ושלושה מטפלים לא החזירו דבר, ⚠️ והחיווי שנכתב
+ *  בניתוב לא רץ באף אחד מהם — ⛔ המסך לא הגיב, והמשתמש לחץ שוב. */
 var DOM_ACTIONS = {
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
   'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
-  'user-toggle': function (el) { toggleUserActive(el.getAttribute('data-id'),
+  'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
   'st-pick':     function (el) { window.selectSearchStudent(el.getAttribute('data-id')); },
   'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
-  'st-history':  function (el) { window.openStatusHistory(el.getAttribute('data-id')); },
+  'st-history':  function (el) { return window.openStatusHistory(el.getAttribute('data-id')); },
   /*  ⛔ ניווט ⛔ ופתיחת מסך עוברים בדלגציה (סבב 79) — ⚠️ המסכים כאן נבנים
    *  מחדש בכל רינדור, ⛔ ומאזין פר-אלמנט היה צריך חיווט מחדש בכל פעם.
    *  ⭐ `page-nav` הוא `page` ועוד סימון הכפתור הפעיל — ⛔ שני שמות ולא
@@ -2353,19 +2393,21 @@ var DOM_ACTIONS = {
                    closeModal();
                  },
   'year-transition-confirm': function () { window.doYearTransition(); closeModal(); },
-  'at-resume-go':     function (el) { window.atEditSession(el.getAttribute('data-id')); closeModal(); },
+  'at-resume-go':     function (el) { var p = window.atEditSession(el.getAttribute('data-id'));
+                                    closeModal(); return p; },
   'at-status-cancel': function (el) { window.atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'at-export-go':     function (el) { window.atExportConfirm(el.getAttribute('data-type')); },
+  'at-export-go':     function (el) { return window.atExportConfirm(el.getAttribute('data-type')); },
   'at-mark-edit':     function (el) { window.atSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'at-mark-set':      function (el) { window.atEditMark(el.getAttribute('data-rec'),
+  'at-mark-set':      function (el) { return window.atEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-resume-go':     function (el) { window.slEditSession(el.getAttribute('data-id')); closeModal(); },
+  'sl-resume-go':     function (el) { var p = window.slEditSession(el.getAttribute('data-id'));
+                                    closeModal(); return p; },
   'sl-status-cancel': function (el) { window.slCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
   'sl-export-go':     function (el) { window.slExportConfirm(el.getAttribute('data-type')); },
   'sl-mark-edit':     function (el) { window.slSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-mark-set':      function (el) { window.slEditMark(el.getAttribute('data-rec'),
+  'sl-mark-set':      function (el) { return window.slEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
   /*  ⛔ בורר התאריך העברי מנותב כאן — ⚠️ הלוח נבנה מחדש בכל ניווט חודש,
    *  ⭐ ומאזין פר-תא היה צריך חיווט מחדש בכל פעם. */
@@ -2392,23 +2434,23 @@ var DOM_ACTIONS = {
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
                         if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
                       },
-  'at-edit-session':  function (el) { window.atEditSession(el.getAttribute('data-id')); },
+  'at-edit-session':  function (el) { return window.atEditSession(el.getAttribute('data-id')); },
   'at-del-session':   function (el) { window.atDeleteSession(el.getAttribute('data-id')); },
   'at-sup-detail':    function (el) { window.atSupDetail(el.getAttribute('data-id')); },
   'at-set-mark':      function (el) { window.atSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
   'at-clear-mark':    function (el) { window.atClearMark(el.getAttribute('data-id')); },
   'at-confirm-late':  function (el) { window.atConfirmLate(el.getAttribute('data-id')); },
-  'at-add-treat':     function (el) { window.atAddTreat(el.getAttribute('data-id')); },
+  'at-add-treat':     function (el) { return window.atAddTreat(el.getAttribute('data-id')); },
   'at-del-treat':     function (el) { window.atDeleteTreat(el.getAttribute('data-id')); },
-  'sl-edit-session':  function (el) { window.slEditSession(el.getAttribute('data-id')); },
+  'sl-edit-session':  function (el) { return window.slEditSession(el.getAttribute('data-id')); },
   'sl-del-session':   function (el) { window.slDeleteSession(el.getAttribute('data-id')); },
   'sl-sup-detail':    function (el) { window.slSupDetail(el.getAttribute('data-id')); },
   'sl-set-mark':      function (el) { window.slSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
   'sl-clear-mark':    function (el) { window.slClearMark(el.getAttribute('data-id')); },
   'sl-confirm-late':  function (el) { window.slConfirmLate(el.getAttribute('data-id')); },
-  'sl-add-treat':     function (el) { window.slAddTreat(el.getAttribute('data-id')); },
+  'sl-add-treat':     function (el) { return window.slAddTreat(el.getAttribute('data-id')); },
   'sl-del-treat':     function (el) { window.slDeleteTreat(el.getAttribute('data-id')); },
   'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
   'settings-home':   function () { window.showSettingsHome(); },
@@ -2426,7 +2468,7 @@ var DOM_ACTIONS = {
   'status-form':         function (el) { window.openStatusForm(el.getAttribute('data-kind')); },
   'ep-save':             function (el) { saveEp(el.getAttribute('data-ep')); },
   'ep-close':            function (el) { closeEp(el.getAttribute('data-ep')); },
-  'absence-reasons-save': function () { window.saveAbsenceReasons(); },
+  'absence-reasons-save': function () { return window.saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
                             var id = el.getAttribute('data-id');
                             if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
@@ -2435,42 +2477,67 @@ var DOM_ACTIONS = {
   'student-status-save':  function () { window.saveStudentStatus(window._currentStatusType); },
   'manage-list-open':     function () { window.openManageListDlg(); },
   'students-print':       function () { window.printStudents(); },
-  'users-render':         function () { window.renderUsersList(); },
+  'users-render':         function () { return window.renderUsersList(); },
   'hc-toggle':            function () { window._hcToggle(); },
-  'sl-settings-save':     function () { window.slSaveSettingsCfg(); },
-  'at-settings-save':     function () { window.atSaveSettingsCfg(); },
-  'sl-session-close':     function () { window.slCloseSession(); },
-  'at-session-close':     function () { window.atCloseSession(); },
+  'sl-settings-save':     function () { return window.slSaveSettingsCfg(); },
+  'at-settings-save':     function () { return window.atSaveSettingsCfg(); },
+  'sl-session-close':     function () { return window.slCloseSession(); },
+  'at-session-close':     function () { return window.atCloseSession(); },
   'at-session-add':       function () { window.atAddSession(); },
   'sl-treat-row-add':     function () { window.slAddTreatRow(); },
   'at-treat-row-add':     function () { window.atAddTreatRow(); },
   /*  ⛔ מסך הכניסה והמשתמשים — ⚠️ `user-save` ו-`mypass-change` מקבלים את
    *  הכפתור שנלחץ, ⛔ ולכן `this` שהיה ב-`onclick` הוא ה-`el` שכאן. */
-  'login':            function () { doLogin(); },
+  'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
-  'user-menu-toggle': function () { toggleUserMenu(); },
+  'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
-  'user-save':        function (el) { saveUser(el); },
+  'user-save':        function (el) { return saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
-  'mypass-change':    function (el) { changeMyPassword(el); },
-  'switch-confirm':   function () { confirmSwitch(); },
+  'mypass-change':    function (el) { return changeMyPassword(el); },
+  'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
-  'perms-save':       function () { savePerms(); },
+  'perms-save':       function () { return savePerms(); },
   'ls-sweep-now':      function () { lsSweepNow(); },
   'ls-refresh-status': function () { lsRefreshStatus(); },
   'ls-restore-all':    function () { lsRestoreAll(); },
   'sync-now-status':   function () { syncNowFromStatus(); },
   'hw-restore':        function (el) { hwRestoreClick(el); },
 };
+/*  ⛔⛔ **פעולה מגיבה מיד** (סבב 89) — ⚠️ הנימוק המדוד: עשרה מסלולים
+ *  שמופעלים מלחיצה המתינו לרשת **לפני** כל חיווי — ⭐ המשתמש לחץ, הנתון
+ *  נשמר לדיסק, ⛔ והוא לא ראה שזה קרה ⚠️ ולחץ שוב. ⭐ והחיווי יושב
+ *  **בנקודת הניתוב האחת** ⛔ ולא בעשרה מסלולים: ⚠️ מטפל שיתווסף מקבל
+ *  אותו מעצמו, ⛔ ואין נקודת הפעלה שנייה.
+ *  ⛔ **והחיווי מותנה בכך שהמטפל החזיר הבטחה** — ⚠️ מטפל סינכרוני מחזיר
+ *  `undefined` ⛔ ואינו מהבהב: ⭐ «⏳» על פעולה מיידית הוא רעש שמלמד
+ *  להתעלם ממנו.
+ *  ⛔ **ורק על `BUTTON`** — ⚠️ `disabled` על `div` אינו חוסם דבר,
+ *  ⭐ והחלפת תוכנו הייתה מוחקת סימון או אייקון. */
 document.addEventListener('click', function (ev) {
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
   if (!el) return;
   var fn = DOM_ACTIONS[el.getAttribute('data-act')];
   if (!fn) return;
   ev.preventDefault();
-  fn(el);
+  /*  ⛔ לחיצה שנייה בזמן שהראשונה באוויר נחסמת — ⚠️ הכפתור מושבת,
+   *  ⭐ אך הדגל נדרש גם עבור אלמנט שאינו כפתור. */
+  if (el._actBusy) return;
+  var out;
+  try { out = fn(el); }
+  catch (e) { console.error('[act] ' + el.getAttribute('data-act'), e); return; }
+  if (!out || typeof out.then !== 'function') return;   // פעולה סינכרונית — אין למה להמתין
+  el._actBusy = true;
+  var isBtn = el.tagName === 'BUTTON';
+  if (isBtn) ysBusy(el, true, '⏳ שומר…');
+  out.then(function () {}, function (e) {
+    console.error('[act] ' + el.getAttribute('data-act'), e);
+  }).then(function () {
+    el._actBusy = false;
+    if (isBtn) ysBusy(el, false);
+  });
 });
 
 function moveUser(id, dir) {
@@ -2723,12 +2790,15 @@ async function savePerms() {
    נכתבת כמות שהיא ונועלת את המשתמש בחוץ בלי שום דרך לגלות זאת.
    ══════════════════════════════════════════════════════════════════════════ */
 // מגן שליחה כפולה: מחזיר את מצב הכפתור לקדמותו כשהפעולה נגמרת.
-function ysBusy(btn, on) {
+/*  ⛔ התווית היא פרמטר עם ברירת מחדל ⛔ ולא מחרוזת קבועה (סבב 89) — ⚠️ יש
+ *  פעולות רשת שאינן שמירה, ⭐ ו«שומר…» עליהן מתאר למשתמש פעולה שאינה
+ *  מתרחשת: ⛔ ברירת המחדל משאירה את כל אתרי הקריאה הקיימים כמות שהם. */
+function ysBusy(btn, on, label) {
   if (!btn) return;
   if (on) {
     if (btn._ysTxt === undefined) btn._ysTxt = btn.innerHTML;
     btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
-    btn.innerHTML = '⏳ שומר…';
+    btn.innerHTML = label || '⏳ שומר…';
   } else {
     btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
     if (btn._ysTxt !== undefined) { btn.innerHTML = btn._ysTxt; btn._ysTxt = undefined; }
@@ -2761,6 +2831,12 @@ async function changeMyPassword(btn) {
   finally { ysBusy(btn, false); }
 }
 async function _changeMyPasswordInner() {
+  /*  ⛔⛔ המשתמש נלכד **בכניסה** ⛔ ואינו נקרא מהגלובלי אחרי ההמתנות — ⚠️ בין
+   *  אימות הסיסמה הנוכחית לכתיבת הטביעה יש שלוש נסיעות לרשת, ⭐ ונעילת
+   *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
+   *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
+  var _u = AUTH.user;
+  if (!_u || !_u.id) { toast('❌ אין משתמש מחובר'); return; }
   var oldPass = document.getElementById('pw-old').value.trim();
   var newPass = document.getElementById('pw-new').value.trim();
   var newPass2El = document.getElementById('pw-new2');
@@ -2774,7 +2850,7 @@ async function _changeMyPasswordInner() {
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', AUTH.user.id).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', _u.id).maybeSingle()); }
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
@@ -2790,14 +2866,17 @@ async function _changeMyPasswordInner() {
    *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
    *  נכשל בקול ⛔ ואינו מדווח «עודכנה» על סיסמה שלא השתנתה. */
   var upd;
-  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', AUTH.user.id)); }
+    /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
+   *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
+  if (!AUTH.user || AUTH.user.id !== _u.id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
+  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', _u.id)); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
-    ysUsersCacheSave({ id: AUTH.user.id, username: AUTH.user.username, full_name: AUTH.user.full_name,
-                       role: AUTH.user.role, active: true,
+    ysUsersCacheSave({ id: _u.id, username: _u.username, full_name: _u.full_name,
+                       role: _u.role, active: true,
                        pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
   } catch (e3) {}
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
@@ -5801,8 +5880,11 @@ function ysHebYearWin(hy) {
 }
 /*  ⛔ חלון היום שבו רושמים — ⚠️ לשונית הרישום מציגה את סדרי **היום**,
  *  ⭐ ולכן זה כל מה שהיא צריכה מהענן. */
-function ysTodayWin() {
-  var t = _ysWinIso(new Date());
+/*  ⛔ **והתאריך הוא פרמטר** (סבב 89) — ⚠️ בדיקת הכפילות בפתיחת סדר צריכה
+ *  את **היום שנבחר בבורר**, ⭐ שאינו בהכרח היום: ⛔ ברירת המחדל משאירה את
+ *  שני אתרי הקריאה הקיימים כמות שהם. */
+function ysDayWin(iso) {
+  var t = iso ? String(iso) : _ysWinIso(new Date());
   return { col: 'date_iso', from: t, to: t };
 }
 /* שחזור רשומת ה-`kv` משתי הטבלאות — ההיפוך המדויק של `ysSessionRow`
@@ -7790,7 +7872,7 @@ window.loadAttend = async function() {
 
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
    *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
-  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysTodayWin())]);
+  var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysDayWin())]);
   _atPaintReg();
   window.atShowTab(window._atView||'reg');
   _ysStaleMark(el, !(_okAt[0]&&_okAt[1]));
@@ -7831,7 +7913,7 @@ function atFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
-    btn.addEventListener('click',function(){window.atOpenSession(s.id,s.name);});
+    btn.addEventListener('click',function(){window.atOpenSession(s.id,s.name,this);});
     el.appendChild(btn);
   });
 }
@@ -8094,14 +8176,6 @@ function atFindLiveSession(data, sessName, dateIso, exceptId) {
    האופליין ממשיך לעבוד, והבדיקה רק מדויקת יותר כשיש רשת.
    ⛔ המיזוג הוא `_ysSessionsMerge` ולא דריסה (סבב 36) — דריסה בענן הייתה
    מוחקת סדר מקומי שטרם עלה, בדיוק לפני שהמשתמש ממשיך לסמן בו. */
-async function ysFreshSessions(kvKey, cur) {
-  var local = Array.isArray(cur) ? cur : [];
-  try {
-    var remote = await ysCloudGet(kvKey);
-    if (Array.isArray(remote)) return _ysSessionsMerge(remote, local, kvKey);
-  } catch (e) {}
-  return local;
-}
 
 /* אימוץ סדר קיים במקום יצירת שני. ⚠️ הסימונים הקיימים נטענים תחילה, וכל
    סימון שהמשתמש כבר סימן גובר עליהם — ⛔ ולא אימוץ בלי טעינה (סבב 36):
@@ -8126,15 +8200,31 @@ function slAdoptSession(rec) {
 /* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
 
 // פתיחת סדר חדש
-window.atOpenSession = async function(sessId, sessName) {
+window.atOpenSession = async function(sessId, sessName, btn) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
   if(window._atCurrentSessionId){toast('⚠️ סגור את הסדר הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
+  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה (סבב 89) — ⚠️ הנימוק המדוד: הפתיחה
+   *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
+   *  ⛔ לא היה חיווי, ⚠️ ולחיצה שנייה בזמן ההמתנה שלחה בקשה נוספת.
+   *  ⛔ והשחרור יושב ב-`finally` — ⚠️ כל יציאה מוקדמת מחזירה את הכפתור. */
+  ysBusy(btn, true, '⏳ בודק…');
+  try {
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
-  var allData=await atLoadData();
-  allData=window._atData=await ysFreshSessions('ys_attend_sessions',allData);
+  /*  ⛔⛔ משיכה **אחת** ⛔ ומסוננת ליום שנבחר (סבב 89) — ⚠️ הנימוק המדוד:
+   *  כאן היו **שתי** משיכות מלאות בזו אחר זו של אותן טבלאות, ⭐ ואף אחת
+   *  מהן בלי חלון: ⛔ 359 סדרים ו-18,329 סימונים בכל אחת — ⚠️ 18,688 שורות
+   *  כפול שתיים, ⭐ לפתיחת סדר אחד. ⛔ ובדיקת הכפילות צריכה **יום אחד**,
+   *  ⚠️ שהוא 248 שורות.
+   *  ⛔ **והבדיקה עצמה נשארת** — ⭐ היא מכריעה אם נוצרת רשומה שנייה לאותו
+   *  סדר, ⚠️ ומה שהצטמצם הוא היקף המשיכה ⛔ ולא המדיניות.
+   *  ⛔ **וכשל משיכה נופל-חזרה למצב המקומי** ⛔ ואינו פותח סדר בעיוורון —
+   *  ⚠️ המיזוג החלוני שומר על רשומות שמחוץ לחלון, ⭐ ולכן `_atData` נשאר
+   *  שלם גם אחרי משיכה מסוננת. */
+  await _atPullSessions(ysDayWin(dateIso));
+  var allData=window._atData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     openModal('📋 סדר כבר מולא',
@@ -8179,12 +8269,15 @@ window.atOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  await atLoadData(); // ודא ש-window._atData טעון
   // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (atMarkDirty)
+  /*  ⛔ ואין כאן קריאת טעינה שנייה (סבב 89) — ⚠️ `_atData` כבר הוצב למעלה
+   *  מתוצאת המשיכה הטרייה, ⭐ והקריאה החוזרת החזירה את אותו מערך מהמטמון:
+   *  ⛔ שורה שנראתה כמו הגנה ⛔ ולא הגנה על דבר. */
   window._atPendingRec=rec;
   window._atCurrentSessionId=rec.id;
 
   _atMountOpenSession(sessName, dateHeb);
+  } finally { ysBusy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -9049,13 +9142,20 @@ window.atEditMark = async function(recId, sid, newCode) {
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
-  await atSaveData(data);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  var _p=atSaveData(data);
   closeModal();
   // רענן את כל הלשוניות
   atRenderTodaySessions();
   window.atRenderArchive();
   window.atRenderSupervision();
   toast('✅ סימון עודכן');
+  await _p;
 };
 
 // -------- התראת כניסה --------
@@ -9404,7 +9504,7 @@ window.loadSleep = async function() {
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
 
-  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysTodayWin())]);
+  var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysDayWin())]);
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
   _ysStaleMark(el, !(_okSl[0]&&_okSl[1]));
@@ -9442,7 +9542,7 @@ function slFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
-    btn.addEventListener('click',function(){window.slOpenSession(s.id,s.name);});
+    btn.addEventListener('click',function(){window.slOpenSession(s.id,s.name,this);});
     el.appendChild(btn);
   });
 }
@@ -9601,14 +9701,18 @@ window.slEditSession = async function(recId) {
   window.slRenderStudents();
 };
 
-window.slOpenSession = async function(sessId, sessName) {
+window.slOpenSession = async function(sessId, sessName, btn) {
   console.log('[slOpenSession] called', sessId, sessName);
   if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
 
-  var allData=await slLoadData();
-  allData=window._slData=await ysFreshSessions('ys_sleep_sessions',allData);
+  // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
+  ysBusy(btn, true, '⏳ בודק…');
+  try {
+  // ⛔ ר' הנימוק ב-atOpenSession — משיכה אחת מסוננת ליום שנבחר
+  await _slPullSessions(ysDayWin(dateIso));
+  var allData=window._slData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
     openModal('📋 דו"ח כבר מולא',
@@ -9649,12 +9753,13 @@ window.slOpenSession = async function(sessId, sessName) {
     open:true
   };
 
-  await slLoadData(); // ודא ש-window._slData טעון
   // מניעת רישומי רפאים: הרשומה תישמר רק בסימון הראשון בפועל (slMarkDirty)
+  // ⛔ ואין כאן קריאת טעינה שנייה — ר' הנימוק ב-atOpenSession
   window._slPendingRec=rec;
   window._slCurrentSessionId=rec.id;
 
   _slMountOpenSession(sessName, dateHeb);
+  } finally { ysBusy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -10488,12 +10593,19 @@ window.slEditMark = async function(recId, sid, newCode) {
   rec.marks[sid].s=newCode;
   if(newCode!=='l') rec.marks[sid].min=0;
   rec.updatedAt=Date.now();
-  await slSaveData(data);
+  /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
+   *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
+   *  היא הושלמה ברגע שההבטחה חזרה: ⛔ ההמתנה שאחריה היא **הרשת בלבד**,
+   *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
+   *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
+   *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
+  var _p=slSaveData(data);
   closeModal();
   slRenderTodaySessions();
   window.slRenderArchive();
   window.slRenderSupervision();
   toast('✅ סימון עודכן');
+  await _p;
 };
 
 // -------- הגדרות מודול שינה (טיפולים בלבד) --------

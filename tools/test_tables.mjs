@@ -314,8 +314,14 @@ async function t3() {
 const DUP_GUARD = [
   [/function atFindLiveSession\(data, sessName, dateIso, exceptId\)/,
     '6א · כלל הכפילות מוגדר פעם אחת (`atFindLiveSession`)'],
-  [/allData=window\._atData=await ysFreshSessions\('ys_attend_sessions',allData\);/,
-    '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן ולא מול הזיכרון בלבד'],
+  /*  ⛔ המשיכה מסוננת ליום שנבחר (סבב 89) — ⚠️ עד כאן היו כאן **שתי**
+   *  משיכות מלאות בזו אחר זו, ⭐ 18,688 שורות כפול שתיים לפתיחת סדר אחד:
+   *  ⛔ והבדיקה צריכה יום אחד — 248 שורות. ⚠️ והטענה מודדת **את החלון**
+   *  ⛔ ולא את עצם המשיכה: ⭐ קריאה בלי חלון היא בדיוק מה שהצטמצם. */
+  [/await _atPullSessions\(ysDayWin\(dateIso\)\);/,
+    '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן, ⛔ ובחלון של יום אחד'],
+  [/await _slPullSessions\(ysDayWin\(dateIso\)\);/,
+    '6ב2 · ואותו חלון במודול השינה'],
   [/var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,/,
     '6ג · ⛔ הבדיקה חוזרת ב-`atMarkDirty` — נקודת היצירה בפועל'],
   [/var _slDup=atFindLiveSession\(window\._slData,window\._slPendingRec\.session,/,
@@ -390,7 +396,12 @@ async function t4() {
     /    var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,\n\s*window\._atPendingRec\.date_iso,window\._atPendingRec\.id\);\n/,
     '    var _atDup=null;\n');
   assert(mutDup !== SRC, '5ח · המוטציה אכן מסירה את בדיקת הכפילות');
-  assert(!DUP_GUARD[2][0].test(mutDup),
+  /*  ⛔ הטענה נשלפת **לפי התווית** ⛔ ולא לפי מקומה במערך (סבב 89) —
+   *  ⚠️ הוספת שורה ל-`DUP_GUARD` הזיזה את האינדקס, ⭐ והמוטציה בדקה
+   *  טענה אחרת: ⛔ מוטציה שמפילה טענה שאינה זו שנקבה בשמה אינה אכיפה. */
+  const g6c = DUP_GUARD.find((x) => x[1].indexOf('6ג ') === 0);
+  assert(!!g6c, '5ט0 · טענת 6ג אותרה ב-`DUP_GUARD` לפי תוויתה');
+  assert(!g6c[0].test(mutDup),
     '5ט · ⛔ מוטציה שמסירה את בדיקת הכפילות נתפסת — טענת 6ג הייתה נכשלת');
 
   /*  ו. החזרת הדילוג על מפתח לא-מספרי ב-`ysMarkRows` (סבב 37א) — זה
