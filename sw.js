@@ -5,7 +5,7 @@
  *  ⚠️ מסבב 42ג כל הלוגיקה יושבת במודול המשותף שלמטה — זהה בית-לבית
  *  בארבע האפליקציות. ⛔ מה שנבדל יושב ב-SW_CFG בלבד.
  */
-var CACHE_NAME = 'hanhala-ruchanit-v100'; // ⚠️ לעדכן יחד עם YS_APP_VER ב-index.html
+var CACHE_NAME = 'hanhala-ruchanit-v101'; // ⚠️ לעדכן יחד עם YS_APP_VER ב-index.html
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [

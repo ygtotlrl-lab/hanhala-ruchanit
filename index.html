@@ -97,6 +97,10 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
+  /*  ⛔ מרחק הטוסט מתחתית המסך — ⚠️ הערך היחיד שנבדל בשכבת הטוסט:
+   *  סרגל ניווט תחתון בגובה 64 פיקסלים, ⛔ ורק מתחת ל-800px. */
+  --toast-bottom:26px;
+
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
@@ -216,8 +220,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .rc .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .empty{text-align:center;padding:56px 20px;color:var(--text3)}
 .ld{text-align:center;padding:44px;color:var(--text3)}
-#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
-#toast.on{opacity:1}
 @media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
 /* === MOBILE - גישת יומן עבודה === */
 @media(max-width:800px){
@@ -270,6 +272,8 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 /* ===== ניווט תחתון — מובייל בלבד ===== */
 .bottom-nav{display:none}
 @media(max-width:800px){
+  /*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
+  :root{--toast-bottom:80px}
   body{padding-bottom:64px}
   .bottom-nav{
     display:flex;
@@ -350,6 +354,20 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy)}
 
+/* ═══ שכבת הטוסט — CSS משותף (סבב 87ב) ════════════════════════════════════
+   זהה בית-לבית בארבע האפליקציות. ⛔ הכללים אינם נשענים על משתני-הצבע של
+   אף אפליקציה — ⚠️ הם נבדלים ביניהן, ⭐ ולכן הצבעים כתובים במפורש.
+   ⛔ מיכל אחד ובתוכו `div` לכל הודעה — ⚠️ הנימוק המדוד: בשלוש מהן היה
+      אלמנט **קבוע** אחד, ⛔ והודעה שנייה דרסה את הראשונה: ⭐ «נשמר»
+      ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד.
+   ⛔ ו-`--toast-bottom` הוא הערך היחיד שנבדל — ⚠️ לשתיים מהן יש סרגל
+      תחתון קבוע, ⭐ ולטוסט שיושב מתחתיו אין מי שיראה אותו. */
+#toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:999;display:grid;gap:8px;justify-items:center;pointer-events:none;padding:0 14px}
+.toast{background:#1a1a1a;color:#fff;border-radius:99px;padding:10px 20px;font-size:.86rem;font-weight:600;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:92vw;text-align:center;animation:toastUp .2s ease-out}
+.toast.bad{background:#b91c1c;color:#fff}
+.toast.good{background:#15803d;color:#fff}
+@keyframes toastUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
    הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים לא נשענים על
@@ -784,7 +802,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </main>
 
 
-<div id="toast"></div>
+<div id="toasts"></div>
 <script>
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2916,16 +2934,6 @@ var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.ad
  *  ⚠️ הערך במקרה זהה ל-`LS_SUCCESS_MUTE_MS`, ⛔ אך הוא מושג אחר
  *  לגמרי (משך תצוגה מול חלון השתקה), ⛔ ואין לאחד ביניהם. */
 var TOAST_DEFAULT_MS = 2800;
-/*  ⛔ חתימה אחת בארבע האפליקציות — `toast(msg, dur, kind)` — ⚠️ הנימוק
- *  המדוד: עד כאן הארגומנט השני היה **משך** בשלוש ו**שם מחלקה** בגיוס,
- *  ⛔ ואותה שורה משותפת בדיוק — `toast(MSG_STALE_CODE, 6000)` — פעלה
- *  בשלוש ⭐ ובגיוס ייצרה `class="toast 6000"`: ⚠️ בלי מחלקת צבע, ובלי
- *  ששת השניות. ⛔ `kind` הוא שם מחלקה ⛔ ולא משך — ⚠️ ומי שאין לו ערך
- *  מוסר `null`. */
-var tt;function toast(msg,dur,kind){
-  // שער סבב 11 — אין טוסט הצלחה אחרי כישלון שמירה מקומית. אין להסיר.
-  if(typeof lsGuardToast==='function'&&!lsGuardToast(msg))return;
-  var t=document.getElementById('toast');t.textContent=msg;t.className='on'+(kind?' '+kind:'');clearTimeout(tt);tt=setTimeout(function(){t.className=''},dur||TOAST_DEFAULT_MS)}
 
 /* ══════════════════════════════════════════════════════════════════════════
    מדיניות האחסון המקומי — `LS_CFG` ועֵד הדחיפה
@@ -6077,6 +6085,25 @@ function closeAsk(v) {
   document.getElementById('ask').classList.remove('open');
   if (!document.getElementById('modal').classList.contains('open')) document.body.classList.remove('locked');
   if (askResolve) { askResolve(v); askResolve = null; }
+}
+/*  ⛔ `div` לכל הודעה, ⛔ ולא אלמנט קבוע אחד — ⚠️ הנימוק המדוד: בשלוש
+ *  מהן הטוסט היה אלמנט יחיד, ⭐ והודעה שנייה דרסה את הראשונה: ⛔ «נשמר»
+ *  ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד, ⚠️ ומי שקרא את המסך לא ידע
+ *  שהייתה שנייה. ⛔ `kind` הוא שם מחלקה ⛔ ולא משך — ⚠️ ומי שאין לו ערך
+ *  מוסר `null`; ⭐ והמשך יושב ב-`TOAST_DEFAULT_MS`, ⛔ הערך היחיד שנבדל. */
+function toast(msg, dur, kind) {
+  // שער סבב 11 — אין טוסט הצלחה אחרי כישלון שמירה מקומית. אין להסיר.
+  if (typeof lsGuardToast === 'function' && !lsGuardToast(msg)) return;
+  var box = document.getElementById('toasts');
+  if (!box) return;
+  var el = document.createElement('div');
+  el.className = 'toast' + (kind ? ' ' + kind : '');
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(function () {
+    el.style.transition = 'opacity .25s'; el.style.opacity = '0';
+    setTimeout(function () { el.remove(); }, 260);
+  }, dur || TOAST_DEFAULT_MS);
 }
 /*  ⛔ משך הודעת האחסון ⛔ ואינו ברירת המחדל של הטוסט — ⚠️ היא מדווחת על
    כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
