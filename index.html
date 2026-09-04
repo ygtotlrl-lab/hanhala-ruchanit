@@ -65,7 +65,7 @@ if ('serviceWorker' in navigator) {
      *  ⭐ והכניסה תמיד מאוחרת לטעינת הדף. */
     try { ysAppVerBoot(); } catch (eV) { console.warn('[ver] boot', eV); }
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
-      console.log('SW registered:', reg.scope);
+      console.log('[sw] registered:', reg.scope);
 
       if (reg.waiting && navigator.serviceWorker.controller) { showUpdateBanner(reg); }
 
@@ -85,7 +85,7 @@ if ('serviceWorker' in navigator) {
       checkForUpdate();
       setInterval(checkForUpdate, 30 * 60 * 1000);
     }).catch(function(err) {
-      console.log('SW registration failed:', err);
+      console.warn('[sw] registration failed:', err);
     });
   });
 }
@@ -8713,7 +8713,6 @@ window.atShowExportDialog = function(type) {
 };
 
 window.atExportConfirm = async function(type) {
-  console.log('[dbg] atExportConfirm called, type='+type);
   var fromIso=(document.getElementById('expF_iso')||{}).value||null;
   var toIso=(document.getElementById('expT_iso')||{}).value||null;
   /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
@@ -8724,20 +8723,15 @@ window.atExportConfirm = async function(type) {
 };
 
 window.atExportExcel = async function(fromIso,toIso) {
-  console.log('[dbg] atExportExcel called');
   try {
-    console.log('[Excel] 1 loading data');
     var data=await atLoadData();
-    console.log('[Excel] 2 data loaded, rows=', data&&data.length);
     var students=getStudents();
-    console.log('[Excel] 3 students=', students&&students.length);
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
-    console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
@@ -8756,7 +8750,6 @@ window.atExportExcel = async function(fromIso,toIso) {
         xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(rec.filled_by_name||'')+'</Row>';
       });
     });
-    console.log('[Excel RTL] 5 building XML wrapper');
     var xml='<?xml version="1.0" encoding="UTF-8"?>';
     xml+='<?mso-application progid="Excel.Sheet"?>';
     xml+='<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
@@ -8771,7 +8764,6 @@ window.atExportExcel = async function(fromIso,toIso) {
     xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="110"/>';
     xml+=xmlRows;
     xml+='</Table></Worksheet></Workbook>';
-    console.log('[Excel] 6 creating blob, xml length=', xml.length);
     var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
@@ -9677,7 +9669,6 @@ window.slEditSession = async function(recId) {
 };
 
 window.slOpenSession = async function(sessId, sessName, btn) {
-  console.log('[slOpenSession] called', sessId, sessName);
   if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
