@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -7422,7 +7422,7 @@ window.importStudentsFromFile = function(input) {
       var rows;
       if (isCsv) {
         // CSV: קריאה ישירה כטקסט, פיצול לשורות ועמודות
-        var text = e.target.result.replace(/^﻿/,''); // הסרת BOM אם קיים
+        var text = e.target.result.replace(/^\uFEFF/,''); // הסרת BOM אם קיים
         rows = text.split(/\r?\n/).map(function(line){ return line.split(','); });
       } else {
         var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
@@ -7520,7 +7520,7 @@ window.confirmDeleteAll = function() {
 
 window.downloadImportTemplate = function() {
   // CSV + BOM, עמודות בסדר הפוך (שיעור | שם פרטי | שם משפחה) כדי שנראה נכון ב-LTR
-  var BOM = '﻿';
+  var BOM = '\uFEFF';
   var rows = [
     [H(1513,1497,1506,1493,1512), H(1513,1501,32,1508,1512,1496,1497), H(1513,1501,32,1502,1513,1508,1495,1492)],
     [H(1513,1497,1506,1493,1512,32,1488,39), H(1497,1493,1505,1507), H(1499,1492,1503)]
@@ -10240,7 +10240,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="120"/><Column ss:Width="110"/>';
     xml+=xmlRows;
     xml+='</Table></Worksheet></Workbook>';
-    var blob=new Blob(['﻿'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
     a.href=url; a.download='shinah-'+new Date().toISOString().split('T')[0]+'.xls';
