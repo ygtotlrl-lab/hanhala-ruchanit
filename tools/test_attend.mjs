@@ -26,6 +26,11 @@ import { fileURLToPath } from 'node:url';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 const SQL = readFileSync(join(ROOT, 'migrations/004_backup_retention_cron.sql'), 'utf8');
@@ -108,6 +113,7 @@ ok('19 · ⛔ אין אזכור מחוץ לפרקי הסבבים' +
 ok('20 · ⭐ ושורת הפער נמחקה — הפער נסגר בסבב 39',
   bare(DOC.slice(0, r38 === -1 ? DOC.length : r38)) === 0);
 
+if (RUN_MUT) {
 /* ── ה. מוטציות ────────────────────────────────────────────────────────── */
 console.log('  — מוטציות —');
 {
@@ -154,6 +160,8 @@ console.log('  — מוטציות —');
   ok('נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו מפיל את טענות ההיעדר',
     added !== SRC && (added.match(/ys_attend\b(?!_)/g) || []).length ===
                      (SRC.match(/ys_attend\b(?!_)/g) || []).length);
+}
+
 }
 
 console.log((fail ? '✗' : '✓') + ` סבב 38 (ys_attend) — ${pass} טענות עברו, ${fail} נכשלו`);

@@ -35,6 +35,11 @@ const APP = {
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
 
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
@@ -242,6 +247,13 @@ async function mut(find, repl, key, name) {
   let res = null;
   try { res = await scenarios(b); } catch (e) { res = null; }
   assert(key(res), 'מוטציה: ' + name);
+}
+/*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
+ *  המלאה בלבד: ⛔ הרמה המהירה עוצרת כאן עם קוד היציאה של הטענות
+ *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
+if (!RUN_MUT) {
+  console.log('\n⏭ test_read: המוטציות רצות ברמה המלאה (--full)');
+  process.exit(failed ? 1 : 0);
 }
 await mut('if ((Number(m.updated_at) || 0) < rec.updatedAt) return;', '',
   (x) => !x || !!(x.staleMark && x.staleMark['st-1']),

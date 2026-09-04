@@ -29,6 +29,11 @@ import vm from 'node:vm';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(here, '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
@@ -134,6 +139,7 @@ ok(/tb_subs_meta/.test(sql),
    '16 · ⚠️ הקובץ רושם במפורש ש-`tb_subs_meta` אינו אותו מקרה — חותמת ' +
    'פר-תת-מפתח אינה ניתנת להחלפה בחותמת פר-שורה');
 
+if (RUN_MUT) {
 /* ── מוטציות ───────────────────────────────────────────────────────────── */
 console.log('  — מוטציות —');
 /* ⛔ המוטציות אינן נכתבות לעץ (הלקח של סבב 42ג) — מוטציה שנכתבת לעץ
@@ -170,6 +176,8 @@ ok(!/revoke all on function/.test(sql.replace(/revoke all on function[^\n]*\n/, 
     (added.match(/ys_settings_meta\b/g) || []).length === (SRC.match(/ys_settings_meta\b/g) || []).length &&
     (added.match(/updated_at\b/g) || []).length === (SRC.match(/updated_at\b/g) || []).length,
     'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו משנה את מסלול החותמת הנמדד');
+}
+
 }
 
 console.log((fail ? '✗' : '✓') + ' סבב 62 (`updated_at` ל-kv) — ' + pass + ' טענות עברו, ' + fail + ' נכשלו\n');

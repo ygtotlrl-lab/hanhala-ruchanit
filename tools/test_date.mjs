@@ -33,6 +33,11 @@ import vm from 'node:vm';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
@@ -199,6 +204,7 @@ assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === '
          '⛔ וכתיבה לתשובה אינה מרעילה את המטמון — נמדד שהקריאה הבאה נקייה');
 }
 
+if (RUN_MUT) {
 /* ── 2ג. מוטציה על המטמון — הסרת פגיעת המטמון מחזירה את הגזירה לכל קריאה ─ */
 {
   const HIT = '  if(hit) return Object.assign({},hit);';
@@ -253,6 +259,8 @@ if (mutated === CAL) {
          'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו מפיל את שער הקלט');
   assert(Hn.api.heb('2025-03-05').src === 'bad-input',
          'נ2 · ⛔ וגם דחיית הקלט הפגום נשמרת בו');
+}
+
 }
 
 console.log(failed ? `\n✗ סבב 57 (התאריך העברי) — ${failed} טענות נכשלו`
