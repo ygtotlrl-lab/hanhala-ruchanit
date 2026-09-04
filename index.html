@@ -95,8 +95,8 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/vfs_fonts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -989,6 +989,24 @@ function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
+/*  ⛔ רישום הגופן ל-PDF יושב כאן ⛔ ובנקודה אחת — ⚠️ שלושה מסלולי ייצוא
+ *  רשמו אותו כל אחד לעצמו, ⭐ ושלוש נקודות רישום הן שלושה מקומות לשכוח
+ *  בהם כשה-API משתנה. ⛔ **וה-API הוא `addVirtualFileSystem`/`addFonts`** —
+ *  ⚠️ השמה ל-`pdfMake.vfs` הייתה הדרך עד 0.2, ⛔ והיא אינה קיימת מ-0.3:
+ *  ⭐ היא נכשלת **בשקט** ומחזירה את הדוח לגופן שאין בו עברית. */
+function ysPdfFont() {
+  if (typeof pdfMake === 'undefined' || !window._alefFontB64) return 'Roboto';
+  try {
+    if (!window._ysPdfFontDone) {
+      pdfMake.addVirtualFileSystem({ 'Alef-Regular.ttf': window._alefFontB64 });
+      pdfMake.addFonts({ Alef: { normal: 'Alef-Regular.ttf', bold: 'Alef-Regular.ttf',
+                                 italics: 'Alef-Regular.ttf', bolditalics: 'Alef-Regular.ttf' } });
+      window._ysPdfFontDone = true;
+    }
+    return 'Alef';
+  } catch (e) { console.warn('[pdf] רישום הגופן נכשל', e); return 'Roboto'; }
+}
+window._ysPdfFontDone = false;
 window._alefFontB64=null;
 (function(){
   fetch('https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf')
@@ -7550,38 +7568,22 @@ window.printStudents = function() {
     var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     if (!pRows.length) pRows = [['-','-','-']];
     if (!aRows.length) aRows = [['-','-','-']];
-    var fontName = 'Roboto';
-    if (window._alefFontB64) {
-      pdfMake.vfs = pdfMake.vfs || {};
-      pdfMake.vfs['Alef-Regular.ttf'] = window._alefFontB64;
-      pdfMake.fonts = pdfMake.fonts || {};
-      pdfMake.fonts['Alef'] = {normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName = 'Alef';
-    }
-    // עוזר תמונת RTL על canvas (עוקף את ה-bidi של pdfmake)
-    function rtlImg(text, opts) {
-      var scale=2, W=opts.w||515, H=opts.h||28;
-      var c=document.createElement('canvas');
-      c.width=W*scale; c.height=H*scale;
-      var ctx=c.getContext('2d');
-      ctx.scale(scale,scale);
-      ctx.clearRect(0,0,W,H);
-      ctx.direction='rtl'; ctx.textBaseline='middle'; ctx.textAlign='center';
-      ctx.fillStyle=opts.color||'#333';
-      ctx.font=(opts.bold?'bold ':'')+String(opts.fs||12)+'px '+(opts.fontName||'Arial')+',Arial,sans-serif';
-      ctx.fillText(text, W/2, H/2);
-      return {image:c.toDataURL('image/png'),width:W,alignment:'center',margin:opts.margin||[0,0,0,0]};
-    }
-    // רושם את גופן המסמך לשימוש ב-canvas
-    if(window._alefFontB64&&typeof FontFace!=='undefined'){try{var _hf=false;document.fonts.forEach(function(f){if(f.family==='Alef')_hf=true;});if(!_hf){var _b=atob(window._alefFontB64),_ab=new ArrayBuffer(_b.length),_v=new Uint8Array(_ab);for(var _i=0;_i<_b.length;_i++)_v[_i]=_b.charCodeAt(_i);document.fonts.add(new FontFace('Alef',_ab));}}catch(_e){}}
-    var subtitleImg = rtlImg('דוח נוכחות — '+today, {fs:11,color:'#555',h:22,fontName:fontName,margin:[0,0,0,14]});
-    var summaryImg = rtlImg('סהכ: '+students.length+' | נוכחים: '+present.length+' | אינם נוכחים: '+absent.length, {fs:13,bold:true,color:'#333',h:28,fontName:fontName,margin:[0,0,0,20]});
+    var fontName = ysPdfFont();
+    /*  ⛔ שתי השורות האלה היו **תמונת canvas** עד סבב 91 — ⚠️ מעקף ל-bidi
+     *  של pdfmake 0.2, ⭐ ומחירו היה שהכותרת והסיכום אינם ניתנים לחיפוש
+     *  בקובץ. ⛔ מ-0.3 ה-bidi בספרייה עצמה, ⛔ ואין עוד סיבה לתמונה. */
+    var subtitleTxt = {text:'דוח'+NB+'נוכחות'+NB+'—'+NB+today, fontSize:11, color:'#555',
+                       alignment:'center', margin:[0,0,0,14], direction:'ltr'};
+    var summaryTxt  = {text:'סה״כ:'+NB+students.length+NB+'|'+NB+'נוכחים:'+NB+present.length+NB+
+                             '|'+NB+'אינם'+NB+'נוכחים:'+NB+absent.length,
+                       fontSize:13, bold:true, color:'#333', alignment:'center',
+                       margin:[0,0,0,20], direction:'ltr'};
     var docDef = {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
         {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
-        subtitleImg,
-        summaryImg,
+        subtitleTxt,
+        summaryTxt,
         {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#276749', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
         {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
@@ -8785,13 +8787,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
-    var fontName='Roboto';
-    if(typeof pdfMake!=='undefined'&&window._alefFontB64){
-      pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
-      pdfMake.fonts=pdfMake.fonts||{};
-      pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName='Alef';
-    }
+    var fontName=ysPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
     function cell(s,opts){return Object.assign({text:nb(String(s)),alignment:'right'},opts||{});}
     var hdrRow=[
@@ -10252,13 +10248,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
-    var fontName='Roboto';
-    if(typeof pdfMake!=='undefined'&&window._alefFontB64){
-      pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
-      pdfMake.fonts=pdfMake.fonts||{};
-      pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName='Alef';
-    }
+    var fontName=ysPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
     function cell(s,opts){return Object.assign({text:nb(String(s==null?'':s)),alignment:'right'},opts||{});}
     var hdrRow=[
