@@ -31,8 +31,8 @@ import vm from 'node:vm';
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   app: 'hanhala-ruchanit',
-  names: ['ysRecTs', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
-  vars: ['var PEND_KV_PREFIX = '],
+  names: ['ysRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
+  vars: ['var PEND_KV_PREFIX = ', 'var TOMBSTONE_TTL_MS = ', 'var _tombPrunePending = '],
   globals: { PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:', PK_AT_TREAT: 'at-treat:', PK_SL_TREAT: 'sl-treat:', PK_STUDENT: 'student:' },
   offlineFn: 'ysVerifyOffline',
   // ⭐ סבב 38 — כלל ההכרעה עבר לליבה המשותפת, ולכן גם המוטציה מכוונת
@@ -51,7 +51,8 @@ const APP = {
    *  מאלה שמעליהם, ⛔ ולכן הם יושבים בקבוצה משלהם ואינם מתמזגים בהם. */
   core: {
     app: 'hanhala-ruchanit',
-    names: ['ysRecTs', '_mergePick', 'mergeCore', 'ysMergeRecords'],
+    names: ['ysRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords'],
+    vars: ['var TOMBSTONE_TTL_MS = ', 'var _tombPrunePending = '],
     globals: {},
     wrapFn: 'ysMergeRecords',
     // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות מרוחקת הוכרעה מאז ומתמיד
@@ -252,6 +253,11 @@ function coreBuild(src) {
   const ctx = Object.assign({ console, Number, String, Array, Object, isFinite, Date, JSON, Math },
                             C.globals || {});
   vm.createContext(ctx);
+  /*  ⛔ ההצהרות קודמות לפונקציות (סבב 93) — ⚠️ מודול גריעת ה-tombstones
+   *  נשען על דגל ברמת הקובץ, ⭐ ופונקציה שנחתכת בלעדיו זורקת
+   *  `ReferenceError` בתוך הרתמה: ⛔ הכשל נראה כשבירה של מנוע המיזוג
+   *  ⚠️ ואינו כזה. */
+  for (const v of (C.vars || [])) vm.runInContext(cutVar(v, src), ctx);
   vm.runInContext(C.names.map((x) => cut(x, src)).join('\n'), ctx);
   return ctx;
 }
