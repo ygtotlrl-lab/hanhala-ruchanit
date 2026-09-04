@@ -30,6 +30,11 @@ import vm from 'node:vm';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
@@ -166,6 +171,7 @@ const nc = run(SRC, { dev: 'D', noCrypto: true });
 assert(nc.added.length === 3 && new Set(nc.added.map((s) => String(s.id))).size === 3,
   '12 · ⚠️ בלי `crypto` הנפילה-חזרה עדיין נותנת שלושה מזהים שונים');
 
+if (RUN_MUT) {
 /* ── 5 · שלוש מוטציות ──────────────────────────────────────────────────── */
 const FN = cutAssign('importStudentsFromFile', SRC);
 
@@ -213,6 +219,8 @@ assert(NC_REN !== FN && !/\bnid\b/.test(NC_REN),
   assert(p.added.length === 3 && sp.size === 3 && p.marked.length === 3 && p.pushed &&
          q.added.every((s) => !sp.has(String(s.id))),
     'נ2 · ⭐ שם מקומי שהוחלף בעקביות ⛔ אינו מפיל — נמדד מקור המזהה, לא שמו');
+}
+
 }
 
 console.log(failed ? `\n✗ סבב 37 (ייבוא) — ${failed} טענות נכשלו`

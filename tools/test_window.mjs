@@ -30,6 +30,11 @@ import vm from 'node:vm';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
@@ -183,6 +188,7 @@ assert(raw === 2, '⛔ שתי כתיבות גולמיות בלבד: apply של �
 assert((SRC.match(/_ysAtDiskSave\(/g) || []).length >= 6,
   'חמשת אתרי הכתיבה + ההגדרה עוברים דרך המשפך');
 
+if (RUN_MUT) {
 /* ── מוטציות ───────────────────────────────────────────────────────────── */
 function mutFails(label, mutSrc, re) {
   assert(!re.test(mutSrc), 'מוטציה — ' + label + ' מפילה את הטענה');
@@ -223,6 +229,8 @@ mutFails('הסרת הראיה העננית', SRC.replace('try { hwNoteCloud(kvKe
   assert(counter !== SRC, 'מוטציית-הנגד אכן שינתה את המקור');
   assert(STATIC.every(([re]) => re.test(counter)),
     '⭐ מוטציית-נגד — הצהרה חדשה וחיה ⛔ אינה מפילה אף טענה סטטית');
+}
+
 }
 
 console.log(failed ? `\n❌ בדיקת סבב 56 נכשלה (${failed})` : '\n✅ בדיקת סבב 56 עברה');

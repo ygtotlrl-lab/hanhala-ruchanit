@@ -28,6 +28,11 @@ import { fileURLToPath } from 'node:url';
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
  *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
 export const ROWS = [];
+
+/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+ *  ⟵ שחזור, ⭐ ושני שערים לבדם היו 70% מזמן הסט: ⛔ הן רצות ברמה המלאה
+ *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
+const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 const M009 = fs.readFileSync(path.join(ROOT, 'migrations/009_sleep_structured_tables.sql'), 'utf8');
@@ -198,6 +203,7 @@ if (MOD) {
     rA.ok && rA.n === 1);
 }
 
+if (RUN_MUT) {
 /* ── ד. מוטציות ────────────────────────────────────────────────────────── */
 console.log('  — מוטציות —');
 {
@@ -252,6 +258,8 @@ if (MOD) {
     added !== SRC &&
     (added.match(/ys_sleep_marks\b/g) || []).length === (SRC.match(/ys_sleep_marks\b/g) || []).length &&
     (added.match(/ys_sleep_sessions\b/g) || []).length === (SRC.match(/ys_sleep_sessions\b/g) || []).length);
+}
+
 }
 
 console.log(`\n${fail ? '✗' : '✓'} סבב 39 (שכבת השורות של השינה) — ${pass} טענות עברו, ${fail} נכשלו`);
