@@ -25,7 +25,8 @@
 הכל בקובץ אחד: `index.html`. אין build.
 
 ```bash
-node tools/check-js.mjs   # חובה לפני כל push
+node tools/check-js.mjs          # מהירה — בזמן העבודה
+node tools/check-js.mjs --full   # מלאה — חובה לפני כל push
 ```
 
 <!-- SHARED:start id="readme-gate" -->
@@ -33,7 +34,8 @@ node tools/check-js.mjs   # חובה לפני כל push
 ומריץ את כל שערי האחידות ואת חבילות בדיקות הסבבים.
 <!-- SHARED:end -->
 
-⚠️ קידום `CACHE_NAME` ב-`sw.js` חובה בכל שינוי קוד, ו-`YS_APP_VER` מיושר אליו.
+⚠️ קידום `CACHE_NAME` ב-`sw.js` חובה בכל שינוי קוד — ⛔ והוא מזהה הגרסה
+היחיד: ⭐ המספר שהמסך מציג נגזר משם המטמון החי, ⛔ ואינו ליטרל שני.
 
 ### PDF
 **pdfmake** (⛔ לא html2pdf — בעיות RTL), `cdnjs` בגרסה נעוצה `0.2.7`.
