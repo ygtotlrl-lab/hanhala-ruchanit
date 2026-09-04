@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -65,7 +65,7 @@ if ('serviceWorker' in navigator) {
      *  ⭐ והכניסה תמיד מאוחרת לטעינת הדף. */
     try { ysAppVerBoot(); } catch (eV) { console.warn('[ver] boot', eV); }
     navigator.serviceWorker.register('./sw.js').then(function(reg) {
-      console.log('SW registered:', reg.scope);
+      console.log('[sw] registered:', reg.scope);
 
       if (reg.waiting && navigator.serviceWorker.controller) { showUpdateBanner(reg); }
 
@@ -85,7 +85,7 @@ if ('serviceWorker' in navigator) {
       checkForUpdate();
       setInterval(checkForUpdate, 30 * 60 * 1000);
     }).catch(function(err) {
-      console.log('SW registration failed:', err);
+      console.warn('[sw] registration failed:', err);
     });
   });
 }
@@ -95,8 +95,8 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
 </script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/vfs_fonts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
@@ -501,7 +501,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 </div>
 
-</div>
 </div>
 <div class="pg" id="pg-attend">
   <div class="inner">
@@ -989,6 +988,24 @@ function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
+/*  ⛔ רישום הגופן ל-PDF יושב כאן ⛔ ובנקודה אחת — ⚠️ שלושה מסלולי ייצוא
+ *  רשמו אותו כל אחד לעצמו, ⭐ ושלוש נקודות רישום הן שלושה מקומות לשכוח
+ *  בהם כשה-API משתנה. ⛔ **וה-API הוא `addVirtualFileSystem`/`addFonts`** —
+ *  ⚠️ השמה ל-`pdfMake.vfs` הייתה הדרך עד 0.2, ⛔ והיא אינה קיימת מ-0.3:
+ *  ⭐ היא נכשלת **בשקט** ומחזירה את הדוח לגופן שאין בו עברית. */
+function ysPdfFont() {
+  if (typeof pdfMake === 'undefined' || !window._alefFontB64) return 'Roboto';
+  try {
+    if (!window._ysPdfFontDone) {
+      pdfMake.addVirtualFileSystem({ 'Alef-Regular.ttf': window._alefFontB64 });
+      pdfMake.addFonts({ Alef: { normal: 'Alef-Regular.ttf', bold: 'Alef-Regular.ttf',
+                                 italics: 'Alef-Regular.ttf', bolditalics: 'Alef-Regular.ttf' } });
+      window._ysPdfFontDone = true;
+    }
+    return 'Alef';
+  } catch (e) { console.warn('[pdf] רישום הגופן נכשל', e); return 'Roboto'; }
+}
+window._ysPdfFontDone = false;
 window._alefFontB64=null;
 (function(){
   fetch('https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf')
@@ -3758,9 +3775,7 @@ window.lsSweepVerified = lsSweepVerified;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
 
 var MSG_STALE_CODE = '⚠️ הגרסה הזו מיושנת — יש לעדכן';
-/* ══════════════════════════════════════════════════════════════════════════
-   קוד מיושן מול סכימה שהשתנתה
-   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══ האזנת הסכימה — מודול משותף (סבב 91) ═════════════════════════════════
 /*  ⛔ **שלוש תשובות מסד מעידות שהקוד ישן מהסכימה** — טבלה שאינה קיימת
  *  (`42P01`) · עמודה שאינה קיימת (`42703`) · ו-404 על טבלה: ⚠️ שלושתן
  *  **אינן שגיאת רשת**, ⛔ וניסיון חוזר עליהן אינו יכול להצליח לעולם.
@@ -3833,9 +3848,9 @@ function sbWatch(c) {
   };
   return c;
 }
-/* ══ סוף קוד מיושן ═════════════════════════════════════════════════════ */
+/* ═══════════════ סוף מודול האזנת הסכימה ════════════════════════════════ */
 
-/* ═══ "מידע טכני" — קיפול מסכי האחסון (תצוגה בלבד, סבב 15) ═══════════════
+/* ═══ מידע טכני — מודול משותף (סבב 91) ════════════════════════════════════
    המודול המשותף של סבב 14 לא נגוע: הרכיב הזה רק עוטף את lsStatusHTML
    בשורה מקופלת אחת בתחתית ההגדרות, סגורה כברירת מחדל. כפתורי הפינוי
    הידני אינם מוצגים (מוסתרים ב-CSS — .tech-info .ls-status button);
@@ -3884,7 +3899,7 @@ function techInfoMount() {
 }
 window.techInfoToggle = techInfoToggle;
 window.techInfoMount = techInfoMount;
-/* ═══ סוף רכיב "מידע טכני" ═══════════════════════════════════════════════ */
+/* ═══════════════ סוף מודול מידע טכני ═══════════════════════════════════ */
 /* ── SYNC_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 var SYNC_CFG = {
   lastSync: function () { return _ysLastSyncAt || 0; },
@@ -7422,7 +7437,7 @@ window.importStudentsFromFile = function(input) {
       var rows;
       if (isCsv) {
         // CSV: קריאה ישירה כטקסט, פיצול לשורות ועמודות
-        var text = e.target.result.replace(/^﻿/,''); // הסרת BOM אם קיים
+        var text = e.target.result.replace(/^\uFEFF/,''); // הסרת BOM אם קיים
         rows = text.split(/\r?\n/).map(function(line){ return line.split(','); });
       } else {
         var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
@@ -7520,7 +7535,7 @@ window.confirmDeleteAll = function() {
 
 window.downloadImportTemplate = function() {
   // CSV + BOM, עמודות בסדר הפוך (שיעור | שם פרטי | שם משפחה) כדי שנראה נכון ב-LTR
-  var BOM = '﻿';
+  var BOM = '\uFEFF';
   var rows = [
     [H(1513,1497,1506,1493,1512), H(1513,1501,32,1508,1512,1496,1497), H(1513,1501,32,1502,1513,1508,1495,1492)],
     [H(1513,1497,1506,1493,1512,32,1488,39), H(1497,1493,1505,1507), H(1499,1492,1503)]
@@ -7550,38 +7565,22 @@ window.printStudents = function() {
     var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     if (!pRows.length) pRows = [['-','-','-']];
     if (!aRows.length) aRows = [['-','-','-']];
-    var fontName = 'Roboto';
-    if (window._alefFontB64) {
-      pdfMake.vfs = pdfMake.vfs || {};
-      pdfMake.vfs['Alef-Regular.ttf'] = window._alefFontB64;
-      pdfMake.fonts = pdfMake.fonts || {};
-      pdfMake.fonts['Alef'] = {normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName = 'Alef';
-    }
-    // עוזר תמונת RTL על canvas (עוקף את ה-bidi של pdfmake)
-    function rtlImg(text, opts) {
-      var scale=2, W=opts.w||515, H=opts.h||28;
-      var c=document.createElement('canvas');
-      c.width=W*scale; c.height=H*scale;
-      var ctx=c.getContext('2d');
-      ctx.scale(scale,scale);
-      ctx.clearRect(0,0,W,H);
-      ctx.direction='rtl'; ctx.textBaseline='middle'; ctx.textAlign='center';
-      ctx.fillStyle=opts.color||'#333';
-      ctx.font=(opts.bold?'bold ':'')+String(opts.fs||12)+'px '+(opts.fontName||'Arial')+',Arial,sans-serif';
-      ctx.fillText(text, W/2, H/2);
-      return {image:c.toDataURL('image/png'),width:W,alignment:'center',margin:opts.margin||[0,0,0,0]};
-    }
-    // רושם את גופן המסמך לשימוש ב-canvas
-    if(window._alefFontB64&&typeof FontFace!=='undefined'){try{var _hf=false;document.fonts.forEach(function(f){if(f.family==='Alef')_hf=true;});if(!_hf){var _b=atob(window._alefFontB64),_ab=new ArrayBuffer(_b.length),_v=new Uint8Array(_ab);for(var _i=0;_i<_b.length;_i++)_v[_i]=_b.charCodeAt(_i);document.fonts.add(new FontFace('Alef',_ab));}}catch(_e){}}
-    var subtitleImg = rtlImg('דוח נוכחות — '+today, {fs:11,color:'#555',h:22,fontName:fontName,margin:[0,0,0,14]});
-    var summaryImg = rtlImg('סהכ: '+students.length+' | נוכחים: '+present.length+' | אינם נוכחים: '+absent.length, {fs:13,bold:true,color:'#333',h:28,fontName:fontName,margin:[0,0,0,20]});
+    var fontName = ysPdfFont();
+    /*  ⛔ שתי השורות האלה היו **תמונת canvas** עד סבב 91 — ⚠️ מעקף ל-bidi
+     *  של pdfmake 0.2, ⭐ ומחירו היה שהכותרת והסיכום אינם ניתנים לחיפוש
+     *  בקובץ. ⛔ מ-0.3 ה-bidi בספרייה עצמה, ⛔ ואין עוד סיבה לתמונה. */
+    var subtitleTxt = {text:'דוח'+NB+'נוכחות'+NB+'—'+NB+today, fontSize:11, color:'#555',
+                       alignment:'center', margin:[0,0,0,14], direction:'ltr'};
+    var summaryTxt  = {text:'סה״כ:'+NB+students.length+NB+'|'+NB+'נוכחים:'+NB+present.length+NB+
+                             '|'+NB+'אינם'+NB+'נוכחים:'+NB+absent.length,
+                       fontSize:13, bold:true, color:'#333', alignment:'center',
+                       margin:[0,0,0,20], direction:'ltr'};
     var docDef = {
       pageSize:'A4', pageMargins:[40,40,40,40],
       content:[
         {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
-        subtitleImg,
-        summaryImg,
+        subtitleTxt,
+        summaryTxt,
         {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#276749', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
         {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
@@ -8713,7 +8712,6 @@ window.atShowExportDialog = function(type) {
 };
 
 window.atExportConfirm = async function(type) {
-  console.log('[dbg] atExportConfirm called, type='+type);
   var fromIso=(document.getElementById('expF_iso')||{}).value||null;
   var toIso=(document.getElementById('expT_iso')||{}).value||null;
   /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
@@ -8724,20 +8722,15 @@ window.atExportConfirm = async function(type) {
 };
 
 window.atExportExcel = async function(fromIso,toIso) {
-  console.log('[dbg] atExportExcel called');
   try {
-    console.log('[Excel] 1 loading data');
     var data=await atLoadData();
-    console.log('[Excel] 2 data loaded, rows=', data&&data.length);
     var students=getStudents();
-    console.log('[Excel] 3 students=', students&&students.length);
     if(!data||!data.length){toast('אין נתונים לייצוא');return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
-    console.log('[Excel] 4 building XML rows, sorted=', sorted.length);
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
@@ -8756,7 +8749,6 @@ window.atExportExcel = async function(fromIso,toIso) {
         xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(rec.filled_by_name||'')+'</Row>';
       });
     });
-    console.log('[Excel RTL] 5 building XML wrapper');
     var xml='<?xml version="1.0" encoding="UTF-8"?>';
     xml+='<?mso-application progid="Excel.Sheet"?>';
     xml+='<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"';
@@ -8771,7 +8763,6 @@ window.atExportExcel = async function(fromIso,toIso) {
     xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="110"/>';
     xml+=xmlRows;
     xml+='</Table></Worksheet></Workbook>';
-    console.log('[Excel] 6 creating blob, xml length=', xml.length);
     var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
@@ -8793,13 +8784,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
-    var fontName='Roboto';
-    if(typeof pdfMake!=='undefined'&&window._alefFontB64){
-      pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
-      pdfMake.fonts=pdfMake.fonts||{};
-      pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName='Alef';
-    }
+    var fontName=ysPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
     function cell(s,opts){return Object.assign({text:nb(String(s)),alignment:'right'},opts||{});}
     var hdrRow=[
@@ -9677,7 +9662,6 @@ window.slEditSession = async function(recId) {
 };
 
 window.slOpenSession = async function(sessId, sessName, btn) {
-  console.log('[slOpenSession] called', sessId, sessName);
   if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
@@ -10240,7 +10224,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     xml+='<Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="160"/><Column ss:Width="70"/><Column ss:Width="70"/><Column ss:Width="120"/><Column ss:Width="110"/>';
     xml+=xmlRows;
     xml+='</Table></Worksheet></Workbook>';
-    var blob=new Blob(['﻿'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
+    var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
     a.href=url; a.download='shinah-'+new Date().toISOString().split('T')[0]+'.xls';
@@ -10261,13 +10245,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
-    var fontName='Roboto';
-    if(typeof pdfMake!=='undefined'&&window._alefFontB64){
-      pdfMake.vfs=pdfMake.vfs||{};pdfMake.vfs['Alef-Regular.ttf']=window._alefFontB64;
-      pdfMake.fonts=pdfMake.fonts||{};
-      pdfMake.fonts['Alef']={normal:'Alef-Regular.ttf',bold:'Alef-Regular.ttf',italics:'Alef-Regular.ttf',bolditalics:'Alef-Regular.ttf'};
-      fontName='Alef';
-    }
+    var fontName=ysPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
     function cell(s,opts){return Object.assign({text:nb(String(s==null?'':s)),alignment:'right'},opts||{});}
     var hdrRow=[
