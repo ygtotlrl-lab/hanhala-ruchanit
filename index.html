@@ -1128,11 +1128,9 @@ function ysApplyPerms(p) {
   return changed;
 }
 
-// ---- מעבר מ-hash ל-plaintext: הוסר (יולי 2026) ----
-// ה-IIFE שהיה כאן רץ בכל טעינת דף, אצל כל מבקר, עוד לפני הכניסה: הוא בדק אם
-// ל-admin יש את הסיסמה '123456' ואם לא — כתב אותה. `.single()` מחזיר data:null
-// גם כשאין התאמה, ולכן כל סיסמה אחרת הפעילה את ה-update והמנהל לא היה יכול
-// להחליף סיסמה כלל. המיגרציה סיימה את תפקידה מזמן — אין להחזיר אותה.
+// ⛔ אין מסלול שכותב סיסמה מקוד שרץ מעצמו בכל טעינת דף, ⛔ ואין להוסיף אחד —
+// `.single()` מחזירה `data:null` גם כשאין התאמה, ולכן כל סיסמה שאינה ברירת
+// המחדל מפעילה את הכתיבה, והמנהל אינו יכול להחליף סיסמה כלל.
 
 // ---- כניסה ----
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2171,9 +2169,6 @@ function showSettingsModule(mod) {
   });
   var target = document.getElementById('settings-'+mod);
   if (target) target.style.display = '';
-  // סבב 17: עטיפת ה-setTimeout(…, 0) הוסרה. כל האלמנטים שהרינדור כותב אליהם
-  // סטטיים ב-HTML, והצגת המודול היא שינוי `display` סינכרוני — לא היה כאן שום
-  // דבר להמתין לו, והדחייה רק פיצלה את החיווט לשני תורים.
   if (mod === 'system') { renderUsersList(); renderPermsTable(); statusAreaMount(); bkStatusMount(); hwRestoreMount(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') window.renderAttendSettings();
@@ -2883,7 +2878,6 @@ async function _changeMyPasswordInner() {
 
 
 // hebrewDate כבר כולל את שם היום — כאן רק שם נרדף (בעבר שוכפל "יום X, יום X,")
-// showPage הישן הוחלף במערכת auth - ראה למעלה
 
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
 function saveEp(n){closeEp('ep-'+n);toast(MSG_SAVED)}
@@ -2970,11 +2964,6 @@ async function loadDash(){
 //    לעולם אינו מוצג, וכפתור "📊 הצג" (btn-rpt) שבתוכו אינו ניתן ללחיצה.
 //    loadR נשארת מחוברת אליו רק כדי שהתשתית תהיה שלמה כשהמסך ייפתח.
 //
-// מה היה כאן: שאילתות ל-`SB.from('attendance')` ו-`SB.from('students')` —
-// **טבלאות Supabase נטושות**. האפליקציה עברה מזמן לאחסון `kv`, הטבלאות האלה
-// אינן מתעדכנות מאף מסלול כתיבה בקוד, והדוח שנבנה מהן היה תמיד ריק. הן הוסרו
-// כאן (סבב 7ב) כדי שלא יישאר קוד שמצביע על מקור נתונים לא אמיתי.
-//
 // ⛔ **אין להחזיר שאילתות ל-`students` / `attendance`** (סבב 7ב) — הן אינן מקור אמת.
 //
 // ⚠️ **מקור הנתונים הנכון הוא `kv` בלבד**, דרך הגישונים הקיימים:
@@ -3044,7 +3033,7 @@ var LS_CFG = {
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sleep_treats'),    verify: _ysVerify('ys_sleep_treats') }
   ],
 
-  // כלל ג: כל עוד יש משהו בתור האופליין — לא מפנים כלום בשלב ב.
+  // כלל ג: כל עוד יש משהו בתור האופליין — לא מפנים כלום, בשני השלבים.
   pending: function () {
     try {
       var q = JSON.parse(lsGet('ys_offline_queue') || '[]');
@@ -3361,6 +3350,16 @@ function lsSweep(reason, needBytes) {
   var need = Number(needBytes) || 0, freed = 0, i;
   lsLog('פינוי התחיל', reason, 0);
 
+  // ⛔ כלל ג נאכף לפני **שני** השלבים (סבב 96ג): יש **משהו** בתור שטרם עלה
+  // לענן ⇒ אי אפשר לדעת מה כבר בטוח שם, ולא מפנים דבר. ⚠️ שלב א הוא
+  // המסוכן מבין השניים דווקא — הוא מוחק **מפתח שלם**, ומפתח שנכתב
+  // מקומית-תחילה ופונה לפני שנדחף אינו חוזר משום מקום. ⛔ ומחסום אחד
+  // לשני השלבים ולא שניים: תנאי שנכפל הוא תנאי שאחד מעותקיו יתיישן.
+  if (LS_CFG.pending && LS_CFG.pending()) {
+    lsLog('פינוי דולג', 'יש נתונים שטרם סונכרנו — לא מפנים דבר', 0);
+    return 0;
+  }
+
   // ── שלב א: מטמונים שניתן לשחזר מהענן ──
   var sized = [];
   (LS_CFG.tier1 || []).forEach(function (k) {
@@ -3377,12 +3376,6 @@ function lsSweep(reason, needBytes) {
   if (need && freed >= need) return freed;
 
   // ── שלב ב: רשומות ישנות מסונכרנות ──
-  // כלל ג נאכף כאן, לפני הכול: אם יש **משהו** בתור שטרם עלה לענן, אי אפשר
-  // לדעת מה כבר בטוח שם — ולכן שלב ב מדולג לגמרי.
-  if (LS_CFG.pending && LS_CFG.pending()) {
-    lsLog('פינוי ב׳ דולג', 'יש נתונים שטרם סונכרנו — לא מפנים דבר', 0);
-    return freed;
-  }
   var through = lsGlobalWitness();
   var specs = (LS_CFG.tier2 || []).slice();
   // מפתח בלי עֵד מקומי אך עם מסלול אימות מול הענן אינו מפונה כאן — האימות
@@ -3488,7 +3481,7 @@ function lsGlobalWitness() {
 }
 /* עֵד הסנכרון של מפתח בודד: משלו אם הוגדר, אחרת הגלובלי. **מפתח שהגדיר
    `syncedThrough` משלו אינו נופל חזרה לגלובלי** — עֵד של מערך אחד אינו
-   מעיד על אחר. (זו ההתנהגות שהייתה כאן מאז סבב 11; היא רק עברה לעוזר.) */
+   מעיד על אחר. */
 function lsSpecWitness(spec, through) {
   if (spec && typeof spec.syncedThrough === 'function') {
     try { return Number(spec.syncedThrough()) || 0; } catch (e) { return 0; }
@@ -6899,7 +6892,6 @@ function saveStudents(s){
 function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=JSON.parse(lsGet('ys_reasons')||'null');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
 function getApprovals(){try{var v=JSON.parse(lsGet('ys_approvals')||'{}');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
-  // הוחלף במערכת auth החדשה
   return !AUTH.user;
 }
 
