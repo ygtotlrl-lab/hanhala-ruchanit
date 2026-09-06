@@ -2057,8 +2057,16 @@ function saveStudentStatus(type) {
   _migrateStudentLegacy(s);
   /*  ⛔ חותמת לפריט ⛔ ולא לרשומה בלבד — ⚠️ בלעדיה המיזוג פר-פריט אינו יכול
    *  להכריע, ⭐ ומיזוג ברמת הרשומה היה מחליף את המערך כולו. */
-  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null,
-                   createdBy: ysWho(), updatedAt: Date.now()});
+  var nw = {id: Date.now(), type: type, reason: reason, from: from, to: to || null,
+            createdBy: ysWho(), updatedAt: Date.now()};
+  /*  ⛔ היעדרות באותו ערך אינה נכתבת פעמיים — ⚠️ **וההשוואה על הערך**
+   *  ⛔ ולא על ה-`id`: ⭐ המזהה נגזר מהשעון, ולכן שתי לחיצות הן שני
+   *  מזהים ופריט אחד — ⛔ והמסך היה מציג אותה היעדרות פעמיים,
+   *  ⚠️ והמחיקה מסירה אחת מהן בלבד. */
+  if (s.absences.some(function (a) { return a && !a.deleted && ysAbsValueKey(a) === ysAbsValueKey(nw); })) {
+    toast('⚠️ היעדרות זהה כבר רשומה לתלמיד'); return;
+  }
+  s.absences.push(nw);
   s.present = false;
   s.updatedAt = Date.now();
 
@@ -2258,8 +2266,12 @@ function getAbsenceReasons() { return window.getAbsenceReasons(); }
 window.saveAbsenceReasons = async function() {
   var reasons = {approved:[], suspended:[], left:[]};
   ['approved','suspended','left'].forEach(function(type) {
+    /*  ⛔ ערך שכבר נאסף אינו נאסף שוב — ⚠️ שתי שורות באותו טקסט הן פריט
+     *  אחד, ⭐ והרשימה מזינה בורר: ⛔ אפשרות כפולה בו אינה ניתנת להבחנה. */
     document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
-      if (inp.value.trim()) reasons[type].push(inp.value.trim());
+      var v = inp.value.trim();
+      if (!v || reasons[type].indexOf(v) >= 0) return;
+      reasons[type].push(v);
     });
   });
   lsSet('ys_absence_reasons', JSON.stringify(reasons));
@@ -6479,6 +6491,16 @@ function ysPendingFor(kvKey) {
  *  התלמיד מוחק היעדרות שמכשיר אחר הרגע הוסיף — ⚠️ וזה קורה גם במוסד יחיד.
  *  ⭐ **ולפריטים כבר יש `id` ו-`deleted`**, ⛔ ומה שחסר היה החותמת.
  *  ⛔ **והענן הוא בסיס הסדר ומנצח בשוויון** — ⚠️ כמו בכל מיזוג כאן. */
+/*  ⭐ הבדל מכוון: פריט היעדרות שנרשם לפני שהחותמת פר-פריט נכנסה נושא
+ *  `ts=0` ⛔ ומפסיד לכל עריכה שנושאת חותמת — ⚠️ אין לו חותמת מקורית,
+ *  ⛔ ואין לחתום אותו ב-`Date.now()` בטעינה או בהגירה: ⭐ מכשיר שרק פתח
+ *  את המסך היה הופך לחדש ביותר ⛔ ודורס עריכה אמיתית של מכשיר אחר.
+ *  ⚠️ ההפסד הוא המחיר, ⭐ והוא נגמר מאליו בעריכה הראשונה של הפריט. */
+/*  ⭐ מפתח הערך של היעדרות — ⛔ הסוג, הסיבה והטווח, ⛔ ולא ה-`id`
+ *  ולא מי רשם אותה: ⚠️ אותה היעדרות שנרשמה בשני מכשירים היא פריט אחד. */
+function ysAbsValueKey(a) {
+  return [a && a.type || '', a && a.reason || '', a && a.from || '', a && a.to || ''].join('\u0001');
+}
 function ysMergeAbsences(loc, rem, base) {
   var L = Array.isArray(loc) ? loc : [], R = Array.isArray(rem) ? rem : [];
   var by = {}, order = [], out = [];
@@ -6493,7 +6515,31 @@ function ysMergeAbsences(loc, rem, base) {
    *  ברמת הרשומה, ⭐ בדיוק כפי שהתנהג עד כאן. */
   var baseArr = Array.isArray(base && base.absences) ? base.absences : [];
   baseArr.forEach(function (a) { if (a && typeof a === 'object' && a.id == null) out.push(a); });
-  return out;
+  /*  ⛔ ופריט אינו מופיע פעמיים באותה רשימה — ⚠️ שני מכשירים שרשמו את אותה
+   *  היעדרות יצרו שני `id`, ⭐ ומיזוג לפי `id` משאיר את שניהם: ⛔ הניצחון
+   *  לחותמת החדשה, ⚠️ ובשוויון למזהה הקטן — ⭐ שההכרעה תהיה זהה בשני
+   *  המכשירים ⛔ ולא תלויה בסדר שבו כל אחד מהם צבר.
+   *  ⛔ **והמפסיד יורד בסימון ולא בהיעדר** — ⚠️ מכשיר שעדיין מחזיק אותו
+   *  היה מחזיר אותו במיזוג הבא · ⛔ **והסימון נושא את חותמת המנצח**
+   *  ⛔ ולא `Date.now()` — ⚠️ חותמת שנוצרת בזמן המיזוג נבדלת בין שני
+   *  מכשירים, ⭐ והם היו מכריעים הפוך זה מזה בלי סוף. */
+  var win = {};
+  out.forEach(function (a) {
+    if (!a || a.deleted || a.id == null) return;
+    var vk = ysAbsValueKey(a), w = win[vk];
+    if (!w) { win[vk] = a; return; }
+    if (ysRecTs(a) > ysRecTs(w) ||
+        (ysRecTs(a) === ysRecTs(w) && String(a.id) < String(w.id))) win[vk] = a;
+  });
+  return out.map(function (a) {
+    if (!a || a.deleted || a.id == null) return a;
+    var w = win[ysAbsValueKey(a)];
+    if (w === a) return a;
+    var d = {};
+    Object.keys(a).forEach(function (kk) { d[kk] = a[kk]; });
+    d.deleted = true; d.updatedAt = ysRecTs(w);
+    return d;
+  });
 }
 /*  ⛔ הזוג של רשומת התלמיד — ⚠️ שאר השדות מוכרעים ברמת הרשומה, ⭐ ומערך
  *  ההיעדרויות פר-פריט. */
@@ -9395,6 +9441,9 @@ window.atSaveSettingsCfg = async function() {
       var nameInp=row.querySelector('[data-sess-name]');
       var timeInp=row.querySelector('[data-sess-time]');
       var name=(nameInp?nameInp.value.trim():''); if(!name) return;
+      /*  ⛔ סדר באותו שם אינו נאסף פעמיים — ⚠️ השם הוא הזהות כאן,
+       *  ⭐ והשורה השנייה הייתה מקבלת את **אותו** `id` מהקיים. */
+      if(newSess.some(function(x){return x.name===name;})) return;
       var startTime=(timeInp?timeInp.value.trim():'');
       var existing=oldSessions.find(function(s){return s.name===name;});
       var entry={id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name};
@@ -9407,8 +9456,12 @@ window.atSaveSettingsCfg = async function() {
   var tc=document.getElementById('at-cfg-treats');
   if(tc){
     var newTreats=[];
+    // ⛔ טיפול באותו שם אינו נאסף פעמיים — הרשימה מזינה בורר, ושתי אפשרויות
+    //    זהות בו אינן ניתנות להבחנה
     tc.querySelectorAll('input').forEach(function(inp){
-      if(inp.value.trim()) newTreats.push(inp.value.trim());
+      var v=inp.value.trim();
+      if(!v||newTreats.indexOf(v)>=0) return;
+      newTreats.push(v);
     });
     cfg.treats=newTreats;
   }
@@ -10765,8 +10818,11 @@ window.slSaveSettingsCfg = async function() {
   var tc=document.getElementById('sl-cfg-treats');
   if(tc){
     var newTreats=[];
+    // ⛔ וגם כאן — טיפול באותו שם אינו נאסף פעמיים, מאותה סיבה בדיוק
     tc.querySelectorAll('input').forEach(function(inp){
-      if(inp.value.trim()) newTreats.push(inp.value.trim());
+      var v=inp.value.trim();
+      if(!v||newTreats.indexOf(v)>=0) return;
+      newTreats.push(v);
     });
     cfg.treats=newTreats;
   }
