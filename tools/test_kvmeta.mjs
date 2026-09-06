@@ -89,21 +89,27 @@ async function callWith(row) {
       })
     })
   };
-  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
+  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, Number, console };
   vm.createContext(ctx);
   vm.runInContext(fn[0] + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   return ctx.__f('k');
 }
 
+/*  ⛔ החותמת היא `bigint` — ⚠️ מספר מילישניות שהמכשיר ייצר, ⭐ ולא
+ *  מחרוזת ISO: ⛔ ומחרוזת שנשארה במסלול היא בדיוק מה שהטענה הבאה מפילה. */
 const T = Date.parse('2026-08-26T10:00:00Z');
-ok(await callWith({ data: { updated_at: '2026-08-26T10:00:00Z' } }) === T,
+ok(await callWith({ data: { updated_at: T } }) === T,
    '3 · חותמת תקינה מוחזרת כמילישניות');
 /* ⛔ ארבעת מצבי חוסר-הראיה — כולם 0, ולא «חדש» ולא זריקה. */
 ok(await callWith({ error: { message: 'x' } }) === 0, '4 · ⛔ שגיאה ⇒ 0 (נכשל סגור)');
 ok(await callWith('throw') === 0,                     '5 · ⛔ זריקה ⇒ 0');
 ok(await callWith({ data: null }) === 0,              '6 · ⛔ מפתח שאינו קיים ⇒ 0');
-ok(await callWith({ data: { updated_at: 'לא-תאריך' } }) === 0,
-   '7 · ⛔ ערך שאינו תאריך ⇒ 0 — ⚠️ `Date.parse` מחזיר NaN, וללא הבדיקה הוא היה זולג להשוואה');
+ok(await callWith({ data: { updated_at: 'לא-מספר' } }) === 0,
+   '7 · ⛔ ערך שאינו מספר ⇒ 0 — ⚠️ `Number` מחזיר NaN, וללא הבדיקה הוא היה זולג להשוואה');
+/*  ⛔ ומחרוזת ISO היא בדיוק הצורה הישנה — ⚠️ `Number` עליה הוא NaN,
+ *  ⭐ ולכן היא נקראת «אין ראיה» ⛔ ואינה נקראת כחותמת. */
+ok(await callWith({ data: { updated_at: '2026-08-26T10:00:00Z' } }) === 0,
+   '7ב · ⛔ מחרוזת ISO ⇒ 0 — ⚠️ הטיפוס הישן אינו נקרא כחותמת');
 
 /* ── ג. החיווט — הדגל הוא שקובע מאיפה נקראת החותמת ─────────────────────── */
 someIn(/rts\s*=\s*await ysCfgUpdatedAt\(sk\.key\)/, SRC,
@@ -149,8 +155,10 @@ console.log('  — מוטציות —');
 {
   const mutated = fn[0].replace('if (!r || r.error || !r.data || !r.data.updated_at) return 0;',
                                 'if (!r || !r.data) return 0;');
-  const SB = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ error: { message: 'x' }, data: { updated_at: '2026-01-01T00:00:00Z' } }) }) }) }) };
-  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
+  /*  ⛔ החותמת שבתשובה היא **מספר** — ⚠️ כך היא חוזרת מהמסד: ⭐ מחרוזת
+   *  כאן הייתה נקראת NaN, ⛔ והמוטציה הייתה «עוברת» מסיבה שאינה הנמדדת. */
+  const SB = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ error: { message: 'x' }, data: { updated_at: 1767225600000 } }) }) }) }) };
+  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, Number, console };
   vm.createContext(ctx);
   vm.runInContext(mutated + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   ok(await ctx.__f('k') !== 0,
