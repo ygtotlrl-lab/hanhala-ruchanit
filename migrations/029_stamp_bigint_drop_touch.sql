@@ -30,10 +30,18 @@
 -- ⛔ **נמדד לפני ההמרה:** ⚠️ 11 שורות ב-`ys_settings` · 6 ב-`ys_users`.
 -- ============================================================================
 
-drop trigger if exists ys_settings_touch on public.ys_settings;
-drop function if exists public.ys_touch_updated_at();
+drop trigger if exists ys_settings_touch  on public.ys_settings;
+drop trigger if exists ys_users_touch     on public.ys_users;
+-- ⛔ שני הטריגרים האלה נוצרו בריפו הזה על טבלאות שהן של היומן — ⚠️ ולכן
+--    הגריעה שלהם כאן: ⭐ מי שיצר הוא שגורע, ⛔ והריפו שבבעלותו הטבלאות
+--    גורע אותם אף הוא: ⚠️ `if exists` הופך את השני לחסר-פעולה.
+drop trigger if exists kv_rishon_touch    on public.kv_rishon;
+drop trigger if exists kv_ramataviv_touch on public.kv_ramataviv;
 
--- ⛔ `cascade` — ⚠️ גורע את `ys_users_touch` ואת `sl_users_touch` יחד איתה.
+drop function if exists public.ys_touch_updated_at();
+drop function if exists public.kv_touch_updated_at();
+
+-- ⛔ `cascade` — ⚠️ גורע את `sl_users_touch` שנשען עליה, ⭐ אם הוא עדיין קיים.
 drop function if exists public.users_touch_updated_at() cascade;
 
 do $$

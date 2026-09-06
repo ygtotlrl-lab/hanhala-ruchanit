@@ -89,7 +89,7 @@ async function callWith(row) {
       })
     })
   };
-  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
+  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, Number, console };
   vm.createContext(ctx);
   vm.runInContext(fn[0] + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   return ctx.__f('k');
@@ -155,8 +155,10 @@ console.log('  — מוטציות —');
 {
   const mutated = fn[0].replace('if (!r || r.error || !r.data || !r.data.updated_at) return 0;',
                                 'if (!r || !r.data) return 0;');
-  const SB = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ error: { message: 'x' }, data: { updated_at: '2026-01-01T00:00:00Z' } }) }) }) }) };
-  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, console };
+  /*  ⛔ החותמת שבתשובה היא **מספר** — ⚠️ כך היא חוזרת מהמסד: ⭐ מחרוזת
+   *  כאן הייתה נקראת NaN, ⛔ והמוטציה הייתה «עוברת» מסיבה שאינה הנמדדת. */
+  const SB = { from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ error: { message: 'x' }, data: { updated_at: 1767225600000 } }) }) }) }) };
+  const ctx = { SB, withTimeout: (p) => p, Date, isFinite, Number, console };
   vm.createContext(ctx);
   vm.runInContext(mutated + '\nthis.__f = ysCfgUpdatedAt;', ctx);
   ok(await ctx.__f('k') !== 0,
