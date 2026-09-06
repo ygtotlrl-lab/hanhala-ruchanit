@@ -1272,13 +1272,13 @@ function ysIsMissingFpCol(err) {
 // בדיוק הנכון — סיסמה גלויה על הדיסק אינה תחליף לטביעה.
 function ysUserSlim(u) {
   // ⛔ שדות מפורשים בלבד (סבב 22) — **`password_hash` אינו ביניהם, ולעולם לא יהיה.**
-  return { id: u.id, username: u.username, full_name: u.full_name,
+  return { client_id: u.client_id, username: u.username, full_name: u.full_name,
            role: u.role, active: u.active,
            pass_salt: u.pass_salt || null, pass_fp: u.pass_fp || null };
 }
 function ysUsersCacheSlimList(rows) {
   return (Array.isArray(rows) ? rows : [])
-    .filter(function (u) { return u && u.active === true && u.id !== undefined && u.id !== null; })
+    .filter(function (u) { return u && u.active === true && u.client_id != null; })
     .map(ysUserSlim);
 }
 // החלפת המטמון כולו — נקראת אחרי משיכה מוצלחת של רשימת המשתמשים.
@@ -1296,7 +1296,7 @@ function ysUsersCacheSave(user) {
   try {
     if (!user || user.active !== true) return;
     var rest = ysUsersCacheSlimList(ysUsersCacheGet())
-      .filter(function (u) { return String(u.id) !== String(user.id); });
+      .filter(function (u) { return String(u.client_id) !== String(user.client_id); });
     rest.push(ysUserSlim(user));
     lsSet('ys_users_cache', JSON.stringify(rest));
   } catch (e) { ysWriteFail('ysUsersCacheSave', e); }
@@ -1323,8 +1323,8 @@ async function ysVerifyOffline(cu, pass) {
 // רשימת הצוות למכשיר של מי שטרם נכנס.
 async function ysRefreshUsersCache() {
   try {
-    if (!AUTH.user || AUTH.user.id === undefined || AUTH.user.id === null) return;
-    var res = await SB.from('ys_users').select('id,username,full_name,role,active,pass_salt,pass_fp')
+    if (!AUTH.user || AUTH.user.client_id == null) return;
+    var res = await SB.from('ys_users').select('client_id,username,full_name,role,active,pass_salt,pass_fp')
       .eq('active', true);
     if (!res.error && Array.isArray(res.data)) ysUsersCacheSaveAll(res.data);
   } catch(e) {}
@@ -1464,7 +1464,7 @@ function guardOnline() {
 async function ysRevalidateOfflineLogin() {
   if (!AUTH.user || !AUTH.offlineLogin) return;
   try {
-    var res = await SB.from('ys_users').select('*').eq('id', AUTH.user.id).eq('active', true).maybeSingle();
+    var res = await SB.from('ys_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
     if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
     if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק'); doLogout(); return; }
     AUTH.user = res.data;
@@ -2087,17 +2087,17 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div style="padding:8px 16px;font-size:.75rem;color:#aaa">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
-  try { res = await withTimeout(SB.from('ys_users').select('id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  try { res = await withTimeout(SB.from('ys_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = sortUsersByOrder(data);
-  var currentId = AUTH.user ? String(AUTH.user.id) : '';
-  var others = data.filter(function(u){return String(u.id)!==currentId;});
+  var currentId = AUTH.user ? String(AUTH.user.client_id) : '';
+  var others = data.filter(function(u){return String(u.client_id)!==currentId;});
   if (!others.length) { othersEl.innerHTML=''; return; }
   var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
   othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
     others.map(function(u){
-      return '<button data-uid="'+esc(u.id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:var(--navy-ink);display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
+      return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:var(--navy-ink);display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
 }
 function closeUserMenu() {
@@ -2135,7 +2135,7 @@ async function confirmSwitch() {
   var res=null, netFail=false;
   try {
     // ⭐ סבב 40 — לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
-    res=await withTimeout(SB.from('ys_users').select('*').eq('id',window._ysSwitchId).eq('active',true).single());
+    res=await withTimeout(SB.from('ys_users').select('*').eq('client_id',window._ysSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -2151,7 +2151,7 @@ async function confirmSwitch() {
     var cache=ysUsersCacheGet();
     var cu=null;
     try {
-      cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.id)===String(window._ysSwitchId);});
+      cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.client_id)===String(window._ysSwitchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
     if(!cu){errEl.textContent=MSG_OFF_UNKNOWN;return;}
     var verdict=await ysVerifyOffline(cu,pass);
@@ -2641,15 +2641,15 @@ async function renderUsersList() {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeStyle = u.active ? '' : 'opacity:.5;';
-    return '<div class="ur" style="'+activeStyle+'" data-row-id="'+u.id+'">' +
+    return '<div class="ur" style="'+activeStyle+'" data-row-id="'+u.client_id+'">' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small style="color:var(--text3);font-weight:400">@'+esc(u.username)+'</small></div>' +
       '<span class="ur-role '+roleClass+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
-        '<button data-uid="'+u.id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
+        '<button data-uid="'+u.client_id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
-        '<button data-act="user-up" data-id="'+esc(u.id)+'" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
-        '<button data-act="user-down" data-id="'+esc(u.id)+'" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
-        '<button data-act="user-toggle" data-id="'+esc(u.id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+        '<button data-act="user-up" data-id="'+esc(u.client_id)+'" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
+        '<button data-act="user-down" data-id="'+esc(u.client_id)+'" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
+        '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -2686,7 +2686,7 @@ function openAddUser() {
 }
 function openEditUser(u) {
   openUserModal('ערוך משתמש');
-  document.getElementById('um-id').value = u.id;
+  document.getElementById('um-id').value = u.client_id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
@@ -2752,35 +2752,17 @@ async function _saveUserInner() {
   var res;
   try {
     res = await writeUser(id, obj);
-    // נפילה-חזרה לחלון שבין דחיפת הקוד להרצת המיגרציה: בלי זה **כל**
-    // שמירת משתמש הייתה נכשלת עד שהעמודות ייווצרו. המשתמש נשמר, והכניסה
-    // האופליין שלו תיפתח כשתיווצר לו טביעה בשינוי הסיסמה הבא.
-    if (res && res.error && ysIsMissingFpCol(res.error)) {
-      delete obj.pass_salt; delete obj.pass_fp; noFp = true;
-      res = await writeUser(id, obj);
-    }
   } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
+  /*  ⚠️ הנפילה-חזרה על עמודות הטביעה יושבת בבלוק המשותף — ⛔ והדגל שהיא
+   *  מחזירה הוא מה שמבדיל «נשמר» מ«נשמר בלי הכנה לכניסה ללא רשת». */
+  if (res._noFp) noFp = true;
   closeModal();
   toast(noFp ? '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת' : '✅ משתמש נשמר!');
   ysRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
 
-/* ─────────────────────── כתיבת משתמש — הפונקציה האחת ─────────────────────
-   ⛔ **כל כתיבה לטבלת המשתמשים עוברת כאן** — ⚠️ הטבלה אינה ב-`PUSH_TABLES`,
-   ⭐ שהמראה המקומית מסירה ממנה את הסיסמה: ⛔ דחיפה גורפת שלה הייתה כותבת
-   אותה חזרה ריקה לכל המשתמשים.
-   ⛔ **והכתיבה דורשת רשת** — ⚠️ אין רשת ⇒ נכשל ברעש ⛔ ולא «נשמר»: ⭐ מה
-   שאינו נדחף לא יעלה לענן בשום מסלול אחר.
-   ⚠️ `insert` ליצירה ו-`update` לעריכה — ⛔ ואין להחליף ביניהם: ⭐ המזהה
-   הוא `SERIAL` שהמסד מקצה, ⛔ ו-`upsert` על אובייקט חלקי היה נופל על
-   `NOT NULL` לפני שההתנגשות מפעילה את `ON CONFLICT`. */
-async function writeUser(id, obj) {
-  return await withTimeout(id
-    ? SB.from('ys_users').update(obj).eq('id', id)
-    : SB.from('ys_users').insert(obj));
-}
 
 async function toggleUserActive(id, current) {
   // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
@@ -2912,7 +2894,7 @@ async function _changeMyPasswordInner() {
    *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
    *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
   var _u = AUTH.user;
-  if (!_u || !_u.id) { toast('❌ אין משתמש מחובר'); return; }
+  if (!_u || !_u.client_id) { toast('❌ אין משתמש מחובר'); return; }
   var oldPass = document.getElementById('pw-old').value.trim();
   var newPass = document.getElementById('pw-new').value.trim();
   var newPass2El = document.getElementById('pw-new2');
@@ -2926,7 +2908,7 @@ async function _changeMyPasswordInner() {
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('ys_users').select('id,active,pass_salt,pass_fp').eq('id', _u.id).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('ys_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
   catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
   if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
   if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
@@ -2944,14 +2926,14 @@ async function _changeMyPasswordInner() {
   var upd;
     /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
    *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
-  if (!AUTH.user || AUTH.user.id !== _u.id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
-  try { upd = await writeUser(_u.id, updObj); }
+  if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
+  try { upd = await writeUser(_u.client_id, updObj); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
-    ysUsersCacheSave({ id: _u.id, username: _u.username, full_name: _u.full_name,
+    ysUsersCacheSave({ client_id: _u.client_id, username: _u.username, full_name: _u.full_name,
                        role: _u.role, active: true,
                        pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
   } catch (e3) {}
@@ -5300,6 +5282,7 @@ function schedulePush() {
 
 
 
+
 /* ── חלון החודש העברי — עוזר פרטי ל-HW_CFG ─────────────────────────────── */
 /* ⚠️ החלון כאן הוא **חודש עברי נוכחי + הקודם לו**, ולא טווח ימים קבוע:
    כל המסכים כאן מוצגים בלוח העברי, וסדר נמצא לפי החודש שבו הוא נרשם.
@@ -5647,7 +5630,7 @@ var _YS_Q_KEY = 'ys_offline_queue';
    ⛔ ולא `client_id` — ⚠️ מיפתוח לפי מזהה שנוצר במכשיר היה יוצר שתי שורות
    לאותה הגדרה, ⛔ ומיזוג בין שתיהן הוא הכרעה בלי מפתח. */
 function _ysCfgSetRaw(key, value) {
-  return SB.from('ys_settings').upsert({key: key, value: JSON.stringify(value)}, {onConflict: 'key'});
+  return SB.from('ys_settings').upsert({key: key, value: JSON.stringify(value), updated_at: Date.now()}, {onConflict: 'key'});
 }
 
 // קידום חותמת השינוי הגלובלית. המכשירים האחרים משווים **רק** מול
@@ -6218,7 +6201,7 @@ async function ysCfgUpdatedAt(key) {
   try {
     var r = await withTimeout(SB.from('ys_settings').select('updated_at').eq('key', key).maybeSingle());
     if (!r || r.error || !r.data || !r.data.updated_at) return 0;
-    var t = Date.parse(r.data.updated_at);
+    var t = Number(r.data.updated_at);
     return isFinite(t) ? t : 0;
   } catch (e) { return 0; }
 }
@@ -6468,6 +6451,70 @@ function tombBoot() { _tombPrunePending = true; }
  *  נבדל הוא **שם המחלקה** בלבד: ⭐ המשך הוא ערך משותף שיושב בבלוק, ⛔ ולכן
  *  גוף `lsToast` זהה בית-לבית בארבעתן. */
 var LS_TOAST = { kind: '' };
+/*  ⛔ הדבר היחיד שנבדל בין שלוש האפליקציות שיש בהן כניסה — ⚠️ הלקוח,
+ *  שם הטבלה, הודעת הניתוק, ומה נעשה **אחרי** שהתשובה חזרה: ⭐ הכתיבה
+ *  עצמה זהה בית-לבית. */
+var USER_CFG = {
+  ready: function () { return !!SB && navigator.onLine; },
+  /*  ⛔ ההודעה נקראת בזמן הקריאה ⛔ ולא בזמן ההשמה — ⚠️ הקבוע מוצהר
+   *  במקום אחר בקובץ בכל אפליקציה, ⭐ וקריאה בהשמה נותנת `undefined`
+   *  באחת מהן בשקט. */
+  offMsg: function () { return MSG_OFFLINE; },
+  from: function () { return SB.from('ys_users'); },
+  run: function (q) { return withTimeout(q); },
+  missingFp: ysIsMissingFpCol,
+  /*  ⛔ התשובה מוחזרת כפי שהיא — ⚠️ הקוראים בודקים `res.error` בעצמם
+   *  ומרעננים את המטמון: ⭐ ריענון מכאן היה רץ גם על החלפת דגל `active`,
+   *  ⛔ שהקורא שלה מרענן ממילא. */
+  after: function (res) { return res; }
+};
+
+/* ═══ כתיבת משתמש — מודול משותף (סבב 103) ═════════════════════════════════
+   ⛔ שינוי כאן — שלוש האפליקציות שיש בהן כניסה **ושלושת עותקי השער**,
+      באותו סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשניים.
+   ⛔ **כל כתיבה לטבלת המשתמשים עוברת כאן** — ⚠️ הטבלה אינה ב-`PUSH_TABLES`,
+      ⭐ שהמראה המקומית מסירה ממנה את הסוד: ⛔ דחיפה גורפת שלה הייתה כותבת
+      אותו חזרה ריק לכל המשתמשים.
+   ⛔ **והכתיבה דורשת רשת** — ⚠️ אין רשת ⇒ נדחה ברעש ⛔ ולא «נשמר»: ⭐ מה
+      שאינו נכתב כאן אינו עולה לענן בשום מסלול אחר.
+   ⛔ **`upsert` ליצירה, `update` לעריכה, ⛔ ואין להחליף ביניהם** — ⚠️ שדות
+      החובה נבדקים על השורה המועמדת **לפני** ש-`ON CONFLICT` מופעל, ⭐ ולכן
+      `upsert` עם אובייקט חלקי נופל על `not null` במקום לעדכן. ⚠️ וביצירה
+      השורה מלאה **והמזהה נוצר במכשיר**, ⛔ ולכן ניסיון חוזר אחרי תשובה
+      שאבדה ברשת מעדכן ⛔ ואינו מכפיל.
+   ⛔ **והתשובה מוחזרת ⛔ ואינה נזרקת** — ⚠️ supabase-js אינו זורק בכשל,
+      ⭐ ו-`USER_CFG.after` הוא שמכריע מה נעשה ב-`res.error`. */
+function _writeUserSend(body, key) {
+  var q = key == null
+    ? USER_CFG.from().upsert(body, { onConflict: 'client_id' })
+    : USER_CFG.from().update(body).eq('client_id', key);
+  /*  ⛔ `.select()` בשני המסלולים — ⚠️ הקורא צריך את השורה **כפי שנשמרה**
+   *  ולא כפי שנשלחה: ⭐ בלעדיה המטמון נכתב מהמטען, ⛔ ועמודה שהמסד מילא
+   *  אינה מגיעה אליו לעולם. */
+  return USER_CFG.run(q.select());
+}
+
+function writeUser(id, row) {
+  if (!USER_CFG.ready()) return Promise.reject(new Error(USER_CFG.offMsg()));
+  var key = (id == null || id === '') ? null : String(id);
+  var body = Object.assign({}, row);
+  body.updated_at = Date.now();
+  body.client_id = (key == null) ? (body.client_id || newClientId()) : key;
+  return _writeUserSend(body, key).then(function (res) {
+    /*  ⛔ נפילה-חזרה לחלון שבין דחיפת הקוד להרצת המיגרציה — ⚠️ בלעדיה
+     *  **כל** שמירת משתמש נכשלת עד שהעמודות ייווצרו: ⭐ המשתמש נשמר,
+     *  והכניסה האופליין שלו תיפתח בשינוי הסיסמה הבא. */
+    if (!(res && res.error && USER_CFG.missingFp(res.error))) return res;
+    var b2 = Object.assign({}, body);
+    delete b2.pass_salt; delete b2.pass_fp;
+    return _writeUserSend(b2, key).then(function (r) {
+      if (r && !r.error) r._noFp = true;
+      return r;
+    });
+  }).then(function (res) { return USER_CFG.after(res, body); });
+}
+/* ═══════════════ סוף מודול כתיבת משתמש ══════════════════════════════════ */
+
 /* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
    ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
       ⚠️ `esc` לשלוש צורות — והיא הגנת ה-HTML היחידה שיש; `openModal` לשלוש,
@@ -6603,6 +6650,7 @@ function uniqHas(list, val, keyFn) {
   return list.some(function (v) { return uniqKeyOf(v, keyFn) === k; });
 }
 /* ═══════════════ סוף מודול כיווץ רשימת ערכים ═══════════════════════════ */
+
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
@@ -7099,7 +7147,7 @@ document.addEventListener('click', function(e) {
 // **מדווח** מה חסר ומפנה ליצירת המשתמש הראשון ידנית; הוא אינו מייצר סוד.
 async function ensureFirstAdmin() {
   try {
-    var {data, error} = await SB.from('ys_users').select('id').limit(1);
+    var {data, error} = await SB.from('ys_users').select('client_id').limit(1);
     var tableError = error && (
       error.code === '42P01' ||
       (error.message && error.message.indexOf('ys_users') !== -1)
@@ -8616,7 +8664,7 @@ window.atOpenSession = async function(sessId, sessName, btn) {
     session:sessName,
     date_iso:dateIso,
     date_heb:dateHeb,
-    filled_by:AUTH.user?AUTH.user.id:'',
+    filled_by:AUTH.user?AUTH.user.client_id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
@@ -9384,7 +9432,7 @@ window.atAddTreat = async function(sid) {
     date_heb:window._hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
-    by:AUTH.user?AUTH.user.id:'',
+    by:AUTH.user?AUTH.user.client_id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
     created_at:now.toISOString(),
     updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נחשבת legacy ונופלת
@@ -10092,7 +10140,7 @@ window.slOpenSession = async function(sessId, sessName, btn) {
     session:sessName,
     date_iso:dateIso,
     date_heb:dateHeb,
-    filled_by:AUTH.user?AUTH.user.id:'',
+    filled_by:AUTH.user?AUTH.user.client_id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
@@ -10835,7 +10883,7 @@ window.slAddTreat = async function(sid) {
     date_heb:window._hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
-    by:AUTH.user?AUTH.user.id:'',
+    by:AUTH.user?AUTH.user.client_id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
     created_at:now.toISOString(),
     updatedAt:now.getTime() // ראה atAddTreat

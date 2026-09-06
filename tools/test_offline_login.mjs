@@ -83,6 +83,21 @@ function grabVar(name) {
   return `var ${name} = ${m[1]}`;
 }
 
+/*  ⛔ אובייקט רב-שורות נחתך בהתאמת סוגריים ⛔ ולא בשורה אחת — ⚠️ `grabVar`
+ *  לוקח את שארית השורה בלבד, ⭐ ו-`USER_CFG` נפרס על פני עשרות שורות:
+ *  ⛔ חיתוך בשורה אחת מייצר `var X = {;` שאינו מתפרסר. */
+function grabObj(name) {
+  const at = SRC.indexOf('var ' + name + ' = {');
+  if (at < 0) throw new Error(`לא נמצא האובייקט ${name}`);
+  let i = SRC.indexOf('{', at), depth = 0;
+  for (let j = i; j < SRC.length; j++) {
+    if (SRC[j] === '{') depth++;
+    else if (SRC[j] === '}') { depth--; if (!depth) return SRC.slice(at, j + 1); }
+  }
+  throw new Error(`האובייקט ${name} אינו סגור`);
+}
+
+const OBJS = ['USER_CFG'];
 const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
@@ -90,15 +105,18 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   /* ⛔ מגן השליחה הכפולה ושתי הפנימיות שלו (סבב 67) — המעטפות קוראות
    * להן, ורתמה שאינה מחלצת אותן נופלת ב-ReferenceError. */
   'ysBusy', '_saveUserInner', '_changeMyPasswordInner',
-  /* ⛔ נקודת המעבר האחת אל טבלת המשתמשים (סבב 102) — ⚠️ שלושת אתרי
-   * הכתיבה עוברים בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
-  'writeUser'];
-const VARS = ['YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
+  /* ⛔ נקודת המעבר האחת אל טבלת המשתמשים — ⚠️ שלושת אתרי הכתיבה עוברים
+   * בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. ⛔ ואיתה שתי
+   * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
+   * המזהה שהיא קוראת לו ביצירה. */
+  'writeUser', '_writeUserSend', 'newClientId'];
+const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO'];
 
-const CODE = VARS.map(grabVar).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
+const CODE = VARS.map(grabVar).join(';\n') + ';\n' +
+  OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
 let LS, DOM, SBLOG, TOASTS, LOGINLOG;
@@ -125,9 +143,13 @@ function makeSB(state) {
     from(table) {
       const q = { table, _f: [], _op: 'select', _payload: null, _cols: null };
       const api = {
-        select(cols) { q._op = 'select'; q._cols = cols; return api; },
+        /*  ⛔ `select` אינו קובע את הפעולה — ⚠️ הוא נקרא **גם אחרי** כתיבה
+         *  כדי לבקש את השורה כפי שנשמרה: ⭐ קביעת `_op` כאן הייתה הופכת
+         *  כל כתיבה לקריאה בשקט. */
+        select(cols) { q._cols = cols; return api; },
         update(p) { q._op = 'update'; q._payload = p; return api; },
         insert(p) { q._op = 'insert'; q._payload = p; return api; },
+        upsert(p) { q._op = 'upsert'; q._payload = p; return api; },
         eq(c, v) { q._f.push(['eq', c, v]); return api; },
         is(c, v) { q._f.push(['is', c, v]); return api; },
         maybeSingle() { q._single = 'maybe'; return api.then.bind(api); },
@@ -142,7 +164,7 @@ function makeSB(state) {
         if (state.netFail) throw new Error('Failed to fetch');
         // רשת "חצי מחוברת": שאילתה ממוקדת (‎.eq('id')‎) עוברת, משיכת הרשימה
         // המלאה נכשלת. זה מה שמבודד את `ysUsersCacheSave(u)` מהרענון.
-        if (state.listSelectFail && q._op === 'select' && !q._f.some((f) => f[1] === 'id')) {
+        if (state.listSelectFail && q._op === 'select' && !q._f.some((f) => f[1] === 'client_id')) {
           return { data: null, error: { message: 'server error' } };
         }
         if (state.missingCols && q._payload &&
@@ -158,7 +180,15 @@ function makeSB(state) {
           else if (kind === 'is' && val === null) rows = rows.filter((r) => r[col] === null || r[col] === undefined);
         }
         if (q._op === 'update') { rows.forEach((r) => Object.assign(r, q._payload)); return { data: rows, error: null }; }
-        if (q._op === 'insert') { state.tables[table].push(Object.assign({ id: Date.now() }, q._payload)); return { data: null, error: null }; }
+        if (q._op === 'insert') { state.tables[table].push(Object.assign({}, q._payload)); return { data: null, error: null }; }
+        /*  ⛔ `upsert` הוא מסלול היצירה — ⚠️ המזהה נוצר במכשיר, ⭐ ולכן
+         *  ניסיון חוזר על אותו `client_id` מעדכן ⛔ ואינו מכפיל. */
+        if (q._op === 'upsert') {
+          const arr = state.tables[table] || (state.tables[table] = []);
+          const hit = arr.find((r) => String(r.client_id) === String(q._payload.client_id));
+          if (hit) Object.assign(hit, q._payload); else arr.push(Object.assign({}, q._payload));
+          return { data: [Object.assign({}, q._payload)], error: null };
+        }
         const out = rows.map((r) => Object.assign({}, r));
         if (q._single === 'maybe') return { data: out[0] || null, error: null };
         if (q._single === 'one') return out.length === 1 ? { data: out[0], error: null } : { data: null, error: { message: 'no rows' } };
@@ -233,10 +263,10 @@ async function waitFor(pred, label, ms = 5000) {
 const sec = (t) => console.log('\n──────────────────────────────────── ' + t);
 
 const USERS = () => ([
-  { id: 1, username: 'admin',  password_hash: '111111', full_name: 'מנהל',  role: 'admin',  active: true, pass_salt: null, pass_fp: null },
-  { id: 2, username: 'moshe',  password_hash: '222222', full_name: 'משה',   role: 'senior', active: true, pass_salt: null, pass_fp: null },
-  { id: 3, username: 'yosef',  password_hash: '333333', full_name: 'יוסף',  role: 'junior', active: true, pass_salt: null, pass_fp: null },
-  { id: 4, username: 'old',    password_hash: '444444', full_name: 'ישן',   role: 'junior', active: false, pass_salt: null, pass_fp: null },
+  { client_id: '1', username: 'admin',  password_hash: '111111', full_name: 'מנהל',  role: 'admin',  active: true, pass_salt: null, pass_fp: null },
+  { client_id: '2', username: 'moshe',  password_hash: '222222', full_name: 'משה',   role: 'senior', active: true, pass_salt: null, pass_fp: null },
+  { client_id: '3', username: 'yosef',  password_hash: '333333', full_name: 'יוסף',  role: 'junior', active: true, pass_salt: null, pass_fp: null },
+  { client_id: '4', username: 'old',    password_hash: '444444', full_name: 'ישן',   role: 'junior', active: false, pass_salt: null, pass_fp: null },
 ]);
 
 /* ── 1. גזירת הטביעה ───────────────────────────────────────────────────── */
@@ -273,8 +303,8 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
   T('2ג. ⛔ אין password_hash באף רשומה', !c.some((u) => 'password_hash' in u));
-  T('2ד. יש id/username/full_name/role/active', c.length > 0 && c.every((u) =>
-    'id' in u && 'username' in u && 'full_name' in u && 'role' in u && 'active' in u));
+  T('2ד. יש client_id/username/full_name/role/active', c.length > 0 && c.every((u) =>
+    'client_id' in u && 'username' in u && 'full_name' in u && 'role' in u && 'active' in u));
   T('2ה. יש pass_salt/pass_fp', c.length > 0 && c.every((u) => 'pass_salt' in u && 'pass_fp' in u));
   T('2ו. ⛔ המחרוזת password_hash אינה בשום מפתח localStorage',
     !Object.values(LS).some((v) => String(v).indexOf('password_hash') !== -1));
@@ -284,25 +314,25 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
 {
   // מטמון ישן בפורמט של סבב 21 (רשומה אחת, עם סיסמה גלויה)
   const S = boot({ tables: { ys_users: USERS() } });
-  LS.ys_users_cache = JSON.stringify([{ id: 2, username: 'moshe', password_hash: '222222',
+  LS.ys_users_cache = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
-  S.ysUsersCacheSave({ id: 1, username: 'admin', password_hash: '111111', full_name: 'מנהל',
+  S.ysUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
                        role: 'admin', active: true, pass_salt: 'aa', pass_fp: 'bb' });
   const c = JSON.parse(LS.ys_users_cache);
   eq('2ח. הרשומה הישנה שרדה לצד החדשה', c.length, 2);
   T('2ט. ⭐ password_hash של הרשומה הישנה **נמחק מהדיסק בפועל**',
     !c.some((u) => 'password_hash' in u) && String(LS.ys_users_cache).indexOf('222222') === -1);
-  eq('2י. הרשומה הישנה נותרה בלי טביעה', c.find((u) => u.id === 2).pass_fp, null);
-  eq('2יא. אין כפילות בעדכון חוזר של אותו id',
-    (S.ysUsersCacheSave({ id: 1, username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
+  eq('2י. הרשומה הישנה נותרה בלי טביעה', c.find((u) => u.client_id === '2').pass_fp, null);
+  eq('2יא. אין כפילות בעדכון חוזר של אותו client_id',
+    (S.ysUsersCacheSave({ client_id: '1', username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
                           pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.ys_users_cache).length), 2);
-  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.ys_users_cache).find((u) => u.id === 1).pass_fp, 'dd');
+  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.ys_users_cache).find((u) => u.client_id === '1').pass_fp, 'dd');
 }
 {
   const S = boot({ tables: { ys_users: USERS() } });
   S.ysUsersCacheSaveAll('לא-מערך');
   eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.ys_users_cache, undefined);
-  S.ysUsersCacheSave({ id: 9, username: 'x', full_name: 'x', role: 'junior', active: false });
+  S.ysUsersCacheSave({ client_id: '9', username: 'x', full_name: 'x', role: 'junior', active: false });
   eq('2יד. משתמש לא-פעיל אינו נשמר', LS.ys_users_cache, undefined);
 }
 
@@ -318,7 +348,7 @@ sec('3. רענון מהענן');
 {
   const state = { tables: { ys_users: USERS() } };
   const S = boot(state, {});
-  S.AUTH.user = { id: 3, role: 'junior' };
+  S.AUTH.user = { client_id: '3', role: 'junior' };
   await S.ysRefreshUsersCache();
   const sel = SBLOG.find((q) => q.op === 'select');
   T('3ג. ⛔ password_hash אינו מבוקש בשאילתה כלל', sel.cols.indexOf('password_hash') === -1);
@@ -332,18 +362,18 @@ sec('4. אימות אופליין מול הטביעה');
 {
   const S = boot({ tables: { ys_users: [] } });
   const made = await S.ysMakePassFp('654321');
-  const cu = { id: 5, username: 'a', active: true, pass_salt: made.salt, pass_fp: made.fp };
+  const cu = { client_id: '5', username: 'a', active: true, pass_salt: made.salt, pass_fp: made.fp };
   eq('4א. סיסמה נכונה ⇒ ok', await S.ysVerifyOffline(cu, '654321'), 'ok');
   eq('4ב. סיסמה שגויה ⇒ bad', await S.ysVerifyOffline(cu, '654322'), 'bad');
   eq('4ג. בלי טביעה ⇒ no-fp',
-    await S.ysVerifyOffline({ id: 6, active: true, pass_salt: null, pass_fp: null }, '654321'), 'no-fp');
+    await S.ysVerifyOffline({ client_id: '6', active: true, pass_salt: null, pass_fp: null }, '654321'), 'no-fp');
   eq('4ד. משתמש לא-פעיל ⇒ bad', await S.ysVerifyOffline(Object.assign({}, cu, { active: false }), '654321'), 'bad');
   eq('4ה. null ⇒ bad', await S.ysVerifyOffline(null, '654321'), 'bad');
 }
 {
   const S = boot({ tables: { ys_users: [] } }, { noCrypto: true });
   eq('4ו. בלי crypto ⇒ no-crypto (ולא ok!)',
-    await S.ysVerifyOffline({ id: 5, active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
+    await S.ysVerifyOffline({ client_id: '5', active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
 }
 
 /*  ⭐ סבב 40 — זריעת טביעות לשורות הענן.
@@ -354,7 +384,7 @@ sec('4. אימות אופליין מול הטביעה');
  *  החי: כל ששת המשתמשים מחזיקים מלח וטביעה.                          */
 async function seedFp(S, rows, pwByUser = { 1: '111111', 2: '222222', 3: '333333', 4: '444444' }) {
   for (const r of rows) {
-    const made = await S.ysMakePassFp(pwByUser[r.id] || r.password_hash);
+    const made = await S.ysMakePassFp(pwByUser[r.client_id] || r.password_hash);
     if (made) { r.pass_salt = made.salt; r.pass_fp = made.fp; }
   }
   return rows;
@@ -368,8 +398,8 @@ async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
   const rows = [];
   for (const u of USERS()) {
     if (!u.active) continue;
-    const made = await seed.ysMakePassFp(pwByUser[u.id]);
-    rows.push({ id: u.id, username: u.username, full_name: u.full_name, role: u.role,
+    const made = await seed.ysMakePassFp(pwByUser[u.client_id]);
+    rows.push({ client_id: u.client_id, username: u.username, full_name: u.full_name, role: u.role,
                 active: true, pass_salt: made.salt, pass_fp: made.fp });
   }
   return rows;
@@ -409,7 +439,7 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
   T('5יא. ...ונרשם כ-unknown_user_offline', r.log.indexOf('unknown_user_offline') !== -1);
 }
 {
-  const noFp = CACHED.map((u) => (u.id === 3 ? Object.assign({}, u, { pass_salt: null, pass_fp: null }) : u));
+  const noFp = CACHED.map((u) => (u.client_id === '3' ? Object.assign({}, u, { pass_salt: null, pass_fp: null }) : u));
   const r = await offlineLogin('yosef', '333333', noFp);
   eq('5יב. משתמש בלי טביעה ⇒ נדחה', r.user, null);
   T('5יג. ⭐ ...עם הודעת «טרם הוכן» ולא «סיסמה שגויה»',
@@ -433,7 +463,7 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
 }
 {
   // מטמון בפורמט הישן של סבב 21 — סיסמה גלויה, בלי טביעה
-  const legacy = [{ id: 3, username: 'yosef', password_hash: '333333', full_name: 'יוסף', role: 'junior', active: true }];
+  const legacy = [{ client_id: '3', username: 'yosef', password_hash: '333333', full_name: 'יוסף', role: 'junior', active: true }];
   const r = await offlineLogin('yosef', '333333', legacy);
   eq('5יט. ⛔ מטמון ישן: סיסמה גלויה **אינה** מתקבלת כטביעה', r.user, null);
   T('5כ. ...ומוצגת הודעת «טרם הוכן»', r.err.indexOf('טרם הוכן') !== -1);
@@ -487,7 +517,7 @@ sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' };
+  S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = ''; DOM._m['um-name'].value = 'חדש';
   DOM._m['um-username'].value = 'hadash'; DOM._m['um-role'].value = 'junior';
   DOM._m['um-pass'].value = '567890';
@@ -500,7 +530,7 @@ sec('8. saveUser / changeMyPassword');
   const rows = USERS();
   rows[1].pass_salt = 'ישן'; rows[1].pass_fp = 'טביעה-ישנה';
   const S = boot({ tables: { ys_users: rows } }, { noCrypto: true });
-  S.AUTH.user = { id: 1, role: 'admin' };
+  S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = '2'; DOM._m['um-name'].value = 'משה';
   DOM._m['um-username'].value = 'moshe'; DOM._m['um-role'].value = 'senior';
   DOM._m['um-pass'].value = '888888';
@@ -517,7 +547,7 @@ sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
   const S = boot({ missingCols: true, tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' };
+  S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = '2'; DOM._m['um-name'].value = 'משה';
   DOM._m['um-username'].value = 'moshe'; DOM._m['um-role'].value = 'senior';
   DOM._m['um-pass'].value = '777777';
@@ -530,12 +560,12 @@ sec('8. saveUser / changeMyPassword');
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
   await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
-  S.AUTH.user = { id: 2, username: 'moshe', full_name: 'משה', role: 'senior', active: true };
+  S.AUTH.user = { client_id: '2', username: 'moshe', full_name: 'משה', role: 'senior', active: true };
   DOM._m['pw-old'].value = '222222'; DOM._m['pw-new'].value = '246810';
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
-  const c = JSON.parse(LS.ys_users_cache).find((u) => u.id === 2);
+  const c = JSON.parse(LS.ys_users_cache).find((u) => u.client_id === '2');
   eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.ysPassFp('246810', c.pass_salt), c.pass_fp);
   T('8יב. ⛔ ואין password_hash במטמון', String(LS.ys_users_cache).indexOf('password_hash') === -1);
 }
@@ -550,55 +580,55 @@ async function doSwitch(targetId, pass, opts = {}) {
   S._ysSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.ys_users_cache = JSON.stringify(opts.cache || CACHED);
-  S.AUTH.user = { id: 1, username: 'admin', role: 'admin', active: true };
+  S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
   await S.confirmSwitch();
   return { S, err: DOM._m['switch-err'].textContent, user: S.AUTH.user };
 }
 {
-  const r = await doSwitch(3, '333333', { offline: true });
-  T('9א. ⭐ מעבר-משתמש אופליין עובד שוב (נשבר בסבב 21)', r.user.id === 3);
+  const r = await doSwitch('3', '333333', { offline: true });
+  T('9א. ⭐ מעבר-משתמש אופליין עובד שוב (נשבר בסבב 21)', r.user.client_id === '3');
   eq('9ב. ...בלי הודעת שגיאה', r.err, '');
   T('9ג. ...ומסומן אופליין', r.S.AUTH.offlineLogin === true);
 }
 {
-  const r = await doSwitch(3, '999999', { offline: true });
-  eq('9ד. סיסמה שגויה במעבר אופליין ⇒ המשתמש לא הוחלף', r.user.id, 1);
+  const r = await doSwitch('3', '999999', { offline: true });
+  eq('9ד. סיסמה שגויה במעבר אופליין ⇒ המשתמש לא הוחלף', r.user.client_id, '1');
   T('9ה. ...עם הודעת סיסמה שגויה', r.err.indexOf('שגויה') !== -1);
 }
 {
-  const r = await doSwitch(99, '123456', { offline: true });
-  eq('9ו. יעד שאינו במטמון ⇒ לא הוחלף', r.user.id, 1);
+  const r = await doSwitch('99', '123456', { offline: true });
+  eq('9ו. יעד שאינו במטמון ⇒ לא הוחלף', r.user.client_id, '1');
   T('9ז. ...עם הודעת «נדרש חיבור» ולא «סיסמה שגויה»',
     r.err.indexOf('אינו בעותק המקומי') !== -1 && r.err.indexOf('שגויה') === -1);
 }
 {
-  const noFp = CACHED.map((u) => (u.id === 3 ? Object.assign({}, u, { pass_salt: null, pass_fp: null }) : u));
-  const r = await doSwitch(3, '333333', { offline: true, cache: noFp });
-  eq('9ח. יעד בלי טביעה ⇒ לא הוחלף', r.user.id, 1);
+  const noFp = CACHED.map((u) => (u.client_id === '3' ? Object.assign({}, u, { pass_salt: null, pass_fp: null }) : u));
+  const r = await doSwitch('3', '333333', { offline: true, cache: noFp });
+  eq('9ח. יעד בלי טביעה ⇒ לא הוחלף', r.user.client_id, '1');
   T('9ט. ...עם הודעת «טרם הוכן»', r.err.indexOf('טרם הוכן') !== -1);
 }
 {
-  const r = await doSwitch(2, '222222');
-  await waitFor(() => !!JSON.parse(LS.ys_users_cache || '[]').find((u) => String(u.id) === '2'),
+  const r = await doSwitch('2', '222222');
+  await waitFor(() => !!JSON.parse(LS.ys_users_cache || '[]').find((u) => String(u.client_id) === '2'),
                 'רענון המטמון על המשתמש החדש');
-  T('9י. מעבר מקוון עובד', r.user.id === 2);
+  T('9י. מעבר מקוון עובד', r.user.client_id === '2');
   const c = JSON.parse(LS.ys_users_cache);
   T('9יא. ⭐ המטמון רוענן על המשתמש **החדש** (הבאג של סבב 21)',
-    !!c.find((u) => String(u.id) === '2'));
+    !!c.find((u) => String(u.client_id) === '2'));
   T('9יב. ⛔ ואין בו password_hash', String(LS.ys_users_cache).indexOf('password_hash') === -1);
 }
 {
   // ⭐ בידוד תיקון סבב 21: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
   // `ysRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
   // ולכן רק `ysUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
-  const r = await doSwitch(2, '222222', { listSelectFail: true, cache: [] });
+  const r = await doSwitch('2', '222222', { listSelectFail: true, cache: [] });
   await waitFor(() => JSON.parse(LS.ys_users_cache || '[]').length === 1,
                 'שמירת היעד מהשורה שבידינו');
-  T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.id === 2);
+  T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.client_id === '2');
   const c = JSON.parse(LS.ys_users_cache || '[]');
   T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם (באג סבב 21)',
-    c.length === 1 && String(c[0].id) === '2');
+    c.length === 1 && String(c[0].client_id) === '2');
   T('9טו. ⛔ וגם השורה הזו נכנסה בלי password_hash',
     String(LS.ys_users_cache).indexOf('password_hash') === -1 &&
     String(LS.ys_users_cache).indexOf('222222') === -1);
@@ -609,7 +639,7 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
 {
   const rows = USERS();
   const S = boot({ tables: { ys_users: rows } });
-  S.AUTH.user = { id: 1, role: 'admin' };
+  S.AUTH.user = { client_id: '1', role: 'admin' };
   await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
