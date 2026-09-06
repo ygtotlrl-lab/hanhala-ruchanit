@@ -2063,7 +2063,7 @@ function saveStudentStatus(type) {
    *  ⛔ ולא על ה-`id`: ⭐ המזהה נגזר מהשעון, ולכן שתי לחיצות הן שני
    *  מזהים ופריט אחד — ⛔ והמסך היה מציג אותה היעדרות פעמיים,
    *  ⚠️ והמחיקה מסירה אחת מהן בלבד. */
-  if (s.absences.some(function (a) { return a && !a.deleted && ysAbsValueKey(a) === ysAbsValueKey(nw); })) {
+  if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, ysAbsValueKey)) {
     toast('⚠️ היעדרות זהה כבר רשומה לתלמיד'); return;
   }
   s.absences.push(nw);
@@ -2270,7 +2270,7 @@ window.saveAbsenceReasons = async function() {
      *  אחד, ⭐ והרשימה מזינה בורר: ⛔ אפשרות כפולה בו אינה ניתנת להבחנה. */
     document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
       var v = inp.value.trim();
-      if (!v || reasons[type].indexOf(v) >= 0) return;
+      if (!v || uniqHas(reasons[type], v)) return;
       reasons[type].push(v);
     });
   });
@@ -6431,6 +6431,34 @@ function toast(msg, dur, kind) {
 var LS_TOAST_MS = 5000;
 function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind); } catch (e) {} }
 /* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
+/* ═══ כיווץ רשימת ערכים — מודול משותף (סבב 101) ═══════════════════════════
+   ⛔ שני פריטים באותו ערך הם פריט אחד — ⚠️ **והכיווץ הוא בכתיבה ובמיזוג
+      כאחד**: ⭐ `uniqHas` מונעת את הכפילות שמכאן ואילך, ⛔ ו-`uniqList`
+      מסלקת את מה שכבר נכתב פעמיים.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ ושתיהן מכריעות לפי **אותה זהות** — ⚠️ שני מימושים לאותה טענה נבדלים
+      בשקט, ⭐ ואז המסך מראה פעמיים את מה שהמיזוג מכווץ לאחד.
+   ⛔ והראשון שורד — ⚠️ הסדר של הצד שניצח הוא סדר המסך, ⭐ ומי שדורש
+      שהחדש ינצח ממיין לפני הקריאה. */
+function uniqKeyOf(v, keyFn) { return String(keyFn ? keyFn(v) : v); }
+function uniqList(list, keyFn) {
+  if (!Array.isArray(list)) return list;
+  var seen = {}, out = [];
+  list.forEach(function (v) {
+    var k = uniqKeyOf(v, keyFn);
+    if (seen[k]) return;
+    seen[k] = 1;
+    out.push(v);
+  });
+  return out;
+}
+function uniqHas(list, val, keyFn) {
+  if (!Array.isArray(list)) return false;
+  var k = uniqKeyOf(val, keyFn);
+  return list.some(function (v) { return uniqKeyOf(v, keyFn) === k; });
+}
+/* ═══════════════ סוף מודול כיווץ רשימת ערכים ═══════════════════════════ */
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
@@ -6523,18 +6551,20 @@ function ysMergeAbsences(loc, rem, base) {
    *  היה מחזיר אותו במיזוג הבא · ⛔ **והסימון נושא את חותמת המנצח**
    *  ⛔ ולא `Date.now()` — ⚠️ חותמת שנוצרת בזמן המיזוג נבדלת בין שני
    *  מכשירים, ⭐ והם היו מכריעים הפוך זה מזה בלי סוף. */
+  /*  ⛔ הכיווץ עובר במודול המשותף — ⚠️ **והרשימה ממוינת לפניו**: ⭐ הוא
+   *  שומר את **הראשון** בכל ערך, ⛔ וכאן הניצחון לחותמת החדשה: ⚠️ ובשוויון
+   *  למזהה הקטן, ⭐ שההכרעה תהיה זהה בשני המכשירים ⛔ ולא תלויה בסדר שבו
+   *  כל אחד מהם צבר. */
+  var ranked = out.filter(function (a) { return a && !a.deleted && a.id != null; })
+    .sort(function (a, b) {
+      return (ysRecTs(b) - ysRecTs(a)) || (String(a.id) < String(b.id) ? -1 : 1);
+    });
   var win = {};
-  out.forEach(function (a) {
-    if (!a || a.deleted || a.id == null) return;
-    var vk = ysAbsValueKey(a), w = win[vk];
-    if (!w) { win[vk] = a; return; }
-    if (ysRecTs(a) > ysRecTs(w) ||
-        (ysRecTs(a) === ysRecTs(w) && String(a.id) < String(w.id))) win[vk] = a;
-  });
+  uniqList(ranked, ysAbsValueKey).forEach(function (a) { win[ysAbsValueKey(a)] = a; });
   return out.map(function (a) {
     if (!a || a.deleted || a.id == null) return a;
     var w = win[ysAbsValueKey(a)];
-    if (w === a) return a;
+    if (!w || String(w.id) === String(a.id)) return a;
     var d = {};
     Object.keys(a).forEach(function (kk) { d[kk] = a[kk]; });
     d.deleted = true; d.updatedAt = ysRecTs(w);
@@ -9443,7 +9473,7 @@ window.atSaveSettingsCfg = async function() {
       var name=(nameInp?nameInp.value.trim():''); if(!name) return;
       /*  ⛔ סדר באותו שם אינו נאסף פעמיים — ⚠️ השם הוא הזהות כאן,
        *  ⭐ והשורה השנייה הייתה מקבלת את **אותו** `id` מהקיים. */
-      if(newSess.some(function(x){return x.name===name;})) return;
+      if(uniqHas(newSess, {name:name}, function(x){return x.name;})) return;
       var startTime=(timeInp?timeInp.value.trim():'');
       var existing=oldSessions.find(function(s){return s.name===name;});
       var entry={id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name};
@@ -9460,7 +9490,7 @@ window.atSaveSettingsCfg = async function() {
     //    זהות בו אינן ניתנות להבחנה
     tc.querySelectorAll('input').forEach(function(inp){
       var v=inp.value.trim();
-      if(!v||newTreats.indexOf(v)>=0) return;
+      if(!v||uniqHas(newTreats, v)) return;
       newTreats.push(v);
     });
     cfg.treats=newTreats;
@@ -10821,7 +10851,7 @@ window.slSaveSettingsCfg = async function() {
     // ⛔ וגם כאן — טיפול באותו שם אינו נאסף פעמיים, מאותה סיבה בדיוק
     tc.querySelectorAll('input').forEach(function(inp){
       var v=inp.value.trim();
-      if(!v||newTreats.indexOf(v)>=0) return;
+      if(!v||uniqHas(newTreats, v)) return;
       newTreats.push(v);
     });
     cfg.treats=newTreats;
