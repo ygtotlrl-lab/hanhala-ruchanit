@@ -2055,7 +2055,10 @@ function saveStudentStatus(type) {
 
   if (!Array.isArray(s.absences)) s.absences = [];
   _migrateStudentLegacy(s);
-  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null, createdBy: ysWho()});
+  /*  ⛔ חותמת לפריט ⛔ ולא לרשומה בלבד — ⚠️ בלעדיה המיזוג פר-פריט אינו יכול
+   *  להכריע, ⭐ ומיזוג ברמת הרשומה היה מחליף את המערך כולו. */
+  s.absences.push({id: Date.now(), type: type, reason: reason, from: from, to: to || null,
+                   createdBy: ysWho(), updatedAt: Date.now()});
   s.present = false;
   s.updatedAt = Date.now();
 
@@ -6425,12 +6428,14 @@ function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind)
 // ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — בענף האובייקטים
 //    הליבה מקבלת מערכי-זוגות ולא את `remote` המקורי, ובלעדיו רשומה
 //    מקומית בלי חותמת הייתה נופלת דווקא כשאין בכלל צד מרוחק.
-function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending) {
+/*  ⛔ `mergePair` הוא פרמטר סופי ואופציונלי — ⚠️ הוא נדרש לרשומה שנושאת
+ *  **מערך פריטים** בשדה, ⭐ ושאר הקוראים אינם מוסרים אותו ואינם משתנים. */
+function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending, mergePair) {
   if (remote == null && local == null) return local;
   var keepLocal = !!keepUnversionedLocal || remote == null;
   if (Array.isArray(remote) || Array.isArray(local)) {
     return tombPruneMerged(mergeCore(local, remote, {
-      getKey: getKey, ts: ysRecTs, isPending: isPending, onDrop: onDrop,
+      getKey: getKey, ts: ysRecTs, isPending: isPending, onDrop: onDrop, mergePair: mergePair,
       keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
     }));
   }
@@ -6463,11 +6468,48 @@ function ysPendingFor(kvKey) {
   return function (k) { return pendHas(pfx + k); };
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   מיזוג ההיעדרויות שברשומת התלמיד
+   ══════════════════════════════════════════════════════════════════════════ */
+/*  ⛔ מערך פריטים בתוך רשומה ממוזגת הוא **נקודת מיזוג בפני עצמה** — ⚠️ ולכן
+ *  הוא יושב כאן, מעל שכבת הסנכרון של התלמידים, ⭐ ולא בתוך מנוע הרשומות:
+ *  ⛔ המנוע מכריע רשומה, ⚠️ והזוג מכריע את הפריטים שבתוכה. */
+/*  ⛔⛔ היעדרויות הן **מערך פריטים בתוך רשומת התלמיד** — ⚠️ ולכן נקודת מיזוג
+ *  בפני עצמה: ⭐ מיזוג ברמת הרשומה מחליף את המערך כולו, ⛔ ומכשיר שערך את
+ *  התלמיד מוחק היעדרות שמכשיר אחר הרגע הוסיף — ⚠️ וזה קורה גם במוסד יחיד.
+ *  ⭐ **ולפריטים כבר יש `id` ו-`deleted`**, ⛔ ומה שחסר היה החותמת.
+ *  ⛔ **והענן הוא בסיס הסדר ומנצח בשוויון** — ⚠️ כמו בכל מיזוג כאן. */
+function ysMergeAbsences(loc, rem, base) {
+  var L = Array.isArray(loc) ? loc : [], R = Array.isArray(rem) ? rem : [];
+  var by = {}, order = [], out = [];
+  R.concat(L).forEach(function (a) {
+    if (!a || typeof a !== 'object' || a.id == null) return;
+    var k = String(a.id);
+    if (!(k in by)) { by[k] = a; order.push(k); return; }
+    if (ysRecTs(a) > ysRecTs(by[k])) by[k] = a;   // שוויון → מי שכבר נבחר, כלומר הענן
+  });
+  order.forEach(function (k) { out.push(by[k]); });
+  /*  ⛔ פריט בלי `id` אינו ניתן למיזוג פר-פריט — ⚠️ הוא נשאר מהצד שניצח
+   *  ברמת הרשומה, ⭐ בדיוק כפי שהתנהג עד כאן. */
+  var baseArr = Array.isArray(base && base.absences) ? base.absences : [];
+  baseArr.forEach(function (a) { if (a && typeof a === 'object' && a.id == null) out.push(a); });
+  return out;
+}
+/*  ⛔ הזוג של רשומת התלמיד — ⚠️ שאר השדות מוכרעים ברמת הרשומה, ⭐ ומערך
+ *  ההיעדרויות פר-פריט. */
+function ysStudentPair(loc, rem, k, pend) {
+  var base = (pend || ysRecTs(loc) > ysRecTs(rem)) ? loc : rem;   // שוויון → הענן
+  var out = {};
+  Object.keys(base).forEach(function (kk) { out[kk] = base[kk]; });
+  out.absences = ysMergeAbsences(loc.absences, rem.absences, base);
+  return out;
+}
+
 // עוזר: מיזוג עם איסוף רשומות שנפלו + לוג dropped_legacy לשחזור ידני
-function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey) {
+function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey, mergePair) {
   var dropped = [];
   var merged = ysMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); },
-                              ysPendingFor(logKey));
+                              ysPendingFor(logKey), mergePair);
   if (dropped.length) {
     console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sync_log)');
     ysSyncLog('dropped_legacy', logKey, dropped.length, { records: dropped });
@@ -6521,7 +6563,8 @@ async function ysPushToCloud() {
     var localSt = _ysStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await ysCloudGet('ys_students'); } catch(e1) {}
-    var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students');
+    var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students',
+                                      ysStudentPair);
     _ysStudentsSaveRaw(mergedSt);
     var r = await ysRowsPushStudents(mergedSt);
     if (r && r.ok) pendConfirmPush(PK_STUDENT, _t0);
@@ -7241,7 +7284,7 @@ function _migrateStudentLegacy(s) {
   if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1) {
     if (!Array.isArray(s.absences)) s.absences = [];
     var legacyId = s.statusFrom ? new Date(s.statusFrom).getTime() : (Date.now() - 1);
-    s.absences.unshift({id: legacyId, type: s.status, reason: s.statusReason||'', from: s.statusFrom||new Date().toISOString(), to: s.statusTo||null});
+    s.absences.unshift({id: legacyId, type: s.status, reason: s.statusReason||'', from: s.statusFrom||new Date().toISOString(), to: s.statusTo||null, updatedAt: legacyId});
     s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
     return true;
   }

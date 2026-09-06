@@ -123,12 +123,9 @@ const APP = {
     ysRowsGetSessions:'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
     ysRowsGet:        'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
   },
-  /*  ⛔ מיזוג בצורת מפה — ⚠️ אין כאן ערך שהוא מפת מפתחות שמפתח נמחק בה:
-   *  ⭐ הערכים המשותפים הם מערכי רשומות עם `deleted` ברמת הרשומה, ⛔ והמפות
-   *  היחידות שמפתח יורד מהן הן מצב מסך בזיכרון ⚠️ שאינו נדחף · ⛔ **וההיעדר
-   *  מוצהר ריק** ⛔ ואינו נשמט: ⚠️ שדה חסר נקרא «לא נשאל», ⭐ וריק «נמדד ואין».
-   */
-  keyMaps: [],
+  /*  ⛔ רשומת התלמיד נושאת את מערך ההיעדרויות — ⚠️ ולפריטים `id`
+   *  ו-`deleted`, ⭐ ולכן הם ממוזגים פר-פריט. */
+  mergePoints: ['ysStudentPair'],
   /*  ⛔ מפתחות ההגדרה שהקוד מבקש — ⚠️ כל מפתח כאן נדרש ב-`ysCfgGet`,
    *  ⛔ וכל מפתח שנדרש שם חייב להיות כאן: ⭐ והמדידה מול המסד עצמו היא
    *  פעולת מנהל. */
@@ -2171,21 +2168,78 @@ function keyMapMerges() {
   }
   return out;
 }
-/*  ⛔ מחיקת מפתח בערך משותף (סבב 98) — ⚠️ **שני צדדים**: ⭐ כל מיזוג-מפה
- *  שנמצא בקוד מוצהר ב-`APP.keyMaps`, ⛔ וכל הצהרה נושאת אתר בפועל —
- *  ⚠️ הצהרה שאין לה אתר היא בעצמה השארית שהשורה באה לסלק · ⛔ **וגוף
- *  המיזוג מתייעץ בסימון מחיקה** — ⚠️ איחוד שאינו בודק אותו מחזיר מפתח
- *  שנמחק בענן, ⭐ שהיעדר נקרא «אין לי» ולא «נמחק». */
-function keyMergeGaps() {
-  const found = keyMapMerges();
-  const declared = APP.keyMaps || [];
+/*  ⛔ מיזוג רשומה שנושאת **מערך פריטים** בשדה (סבב 99) — ⚠️ הנמדד הוא
+ *  `mergePair` שמפורש לתוך `mergeCore`/`mergeRecords`, ⭐ ובגופו שדה מערך
+ *  שממוזג פר-פריט: ⛔ העתקת שדות של הרשומה המנצחת לבדה **מחליפה את המערך
+ *  כולו**, ⚠️ ומקור אחר עם חותמת חדשה יותר מוחק עבודה שלא נגעו בה. */
+function arrayMergePairs() {
   const out = [];
-  for (const f of found) {
-    if (!declared.includes(f.name)) out.push(`מיזוג-מפה שאינו מוצהר ב-APP.keyMaps: ${f.name}`);
+  /*  ⛔ פונקציית הזוג מזוהה **בחתימתה ובגופה** ⛔ ולא בשמה — ⚠️ ברובן היא
+   *  אנונימית ומועברת למנוע: ⭐ ארבעה פרמטרים, ובגוף בחירת בסיס לפי חותמת
+   *  והעתקת שדותיו — ⛔ וזו בדיוק הצורה שמחליפה מערך שלם. */
+  const PAIR = /function\s*[A-Za-z_$][\w$]*\s*\(\s*([\w$]+)\s*,\s*([\w$]+)\s*,\s*[\w$]+\s*,\s*[\w$]+\s*\)\s*\{|function\s*\(\s*([\w$]+)\s*,\s*([\w$]+)\s*,\s*[\w$]+\s*,\s*[\w$]+\s*\)\s*\{/g;
+  /*  ⭐ שם ההצהרה הוא הפונקציה הנקובה שעוטפת — ⛔ לזוג אנונימי אין שם. */
+  const named = [...src.matchAll(/function\s+([A-Za-z_$][\w$]*)\s*\([^)]*\)\s*\{/g)]
+    .map((m) => ({ name: m[1], at: m.index, end: m.index + m[0].length - 1 }));
+  for (const m of src.matchAll(PAIR)) {
+    const b = braceBodyAt(src, m.index + m[0].length - 1);
+    if (!/Object\.keys\(\s*base\s*\)/.test(b)) continue;
+    const loc = m[1] || m[3], rem = m[2] || m[4];
+    let owner = null;
+    for (const n of named) {
+      if (n.at > m.index) break;
+      if (braceBodyAt(src, n.end).length + n.end >= m.index) owner = n.name;
+    }
+    out.push({ name: owner || 'anonymous', body: b, loc: loc, rem: rem });
+  }
+  return out;
+}
+/*  ⛔ מיזוג מכל — מפה ומערך (סבב 99) — ⚠️ **שני צדדים ושתי צורות**:
+ *  ⭐ כל מיזוג-מפה וכל זוג-רשומה שנמצאו בקוד מוצהרים ב-`APP.mergePoints`,
+ *  ⛔ וכל הצהרה נושאת אתר בפועל — ⚠️ הצהרה שאין לה אתר היא בעצמה השארית
+ *  שהשורה באה לסלק · ⛔ **וגוף המיזוג מתייעץ בסימון מחיקה** — ⚠️ איחוד
+ *  שאינו בודק אותו מחזיר מפתח שנמחק בענן · ⛔ **וזוג-רשומה שאינו ממזג
+ *  אף שדה מערך פר-פריט מפיל** — ⚠️ הוא מעתיק את שדות הבסיס בלבד, ⭐ וזה
+ *  בדיוק מיזוג ברמת המכל.
+ *  ⛔ **ואפליקציה שמצהירה ריק ויש בה מבנה כזה מפילה אף היא** — ⚠️ ⭕ הוא
+ *  «אין כאן מבנה», ⛔ ולא «יש ולא טופל». */
+function mergePointGaps() {
+  const maps = keyMapMerges();
+  const pairs = arrayMergePairs();
+  const declared = APP.mergePoints || [];
+  const out = [];
+  for (const f of maps) {
+    if (!declared.includes(f.name)) out.push(`מיזוג-מפה שאינו מוצהר ב-APP.mergePoints: ${f.name}`);
     else if (!/[Dd]eleted/.test(f.body)) out.push(`מיזוג-מפה שאינו בודק סימון מחיקה: ${f.name}`);
   }
+  for (const p of pairs) {
+    if (!declared.includes(p.name)) { out.push(`זוג-רשומה שאינו מוצהר ב-APP.mergePoints: ${p.name}`); continue; }
+    /*  ⛔ קריאת מיזוג שנוגעת **בשני הצדדים** — ⚠️ זה מה שמבדיל מיזוג
+     *  פר-פריט מהעתקת שדות של הבסיס, ⭐ שהיא ההחלפה שהשורה אוסרת.
+     *  ⛔ **והמדידה על ההוראה כולה** ⛔ ולא בחלון סוגריים — ⚠️ ארגומנט
+     *  שהוא בעצמו קריאה סוגר את הסוגר, ⭐ ומדידה כזו מפספסת אותו.
+     *  ⛔⛔ **והתוצאה נדרשת להיכתב לשדה של הרשומה היוצאת** — ⚠️ הנימוק
+     *  המדוד: מדידה שספרה **קריאת מיזוג** בלבד עברה על זוג שקרא ומיזג
+     *  ⛔ והשליך את התוצאה, ⭐ ואז המערך הוחלף כולו בדיוק כמקודם. */
+    const stmts = p.body.split(';');
+    const two = (st) => /[Mm]erge\w*\s*\(/.test(st) &&
+      new RegExp(`\\b${p.loc}\\.[\\w$]+`).test(st) &&
+      new RegExp(`\\b${p.rem}\\.[\\w$]+`).test(st);
+    /*  ⭐ משתנה מקומי שנטען מקריאת מיזוג דו-צדדית — ⛔ התוצאה עוברת דרכו. */
+    const via = stmts.filter(two)
+      .map((st) => (/(?:var|let|const)\s+([A-Za-z_$][\w$]*)\s*=/.exec(st) || [])[1])
+      .filter(Boolean);
+    const used = stmts.some((st) => {
+      const a = /\bout\.[\w$]+\s*=([\s\S]*)$/.exec(st);
+      if (!a) return false;
+      return two(st) || via.some((n) => new RegExp(`\\b${n}\\b`).test(a[1]));
+    });
+    if (!used)
+      out.push(`זוג-רשומה שאינו ממזג שדה מערך פר-פריט: ${p.name}`);
+  }
+  const found = maps.concat(pairs);
   for (const n of declared) {
-    if (!found.some((f) => f.name === n)) out.push(`הצהרה ב-APP.keyMaps בלי אתר בפועל: ${n}`);
+    if (!found.some((f) => f.name === n)) out.push(`הצהרה ב-APP.mergePoints בלי אתר בפועל: ${n}`);
   }
   return out;
 }
@@ -2468,8 +2522,8 @@ const MATRIX = [
   /*  ⛔ מחיקת מפתח בערך משותף (סבב 98) — ⚠️ **שני צדדים**: ⭐ כל מיזוג-מפה
    *  שנמצא בקוד מוצהר, ⛔ וכל הצהרה נושאת אתר בפועל — ⚠️ והגוף מתייעץ
    *  בסימון מחיקה: ⛔ איחוד עיוור מחזיר מפתח שנמחק בענן. */
-  { row: 135, name: 'מחיקת מפתח בערך משותף',
-    probe: () => keyMergeGaps().length === 0 },
+  { row: 135, name: 'מיזוג מכל — מפה ומערך',
+    probe: () => mergePointGaps().length === 0 },
   { row: 136, name: 'דפוס עמודות אחיד',
     probe: () => colPatternGaps().length === 0 },
   /*  ⛔ שם טבלת הגיבוי נקרא מהקבוע ⛔ ולא מנוכחות המחרוזת — ⚠️ המחרוזת
