@@ -55,7 +55,7 @@ const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
 
 /* מסיר הערות SQL — הטענות המבניות אמורות לחול על הקוד, לא על התיעוד.
    ⛔ בלי זה כל טענה כאן הייתה עוברת על סמך משפט בהערה (סבב 36) — בדיוק
-   סוג הראיה שכלל ברזל 8 סעיף 6 פוסל. */
+   סוג הראיה שנפסל. */
 const sqlCode = (s) => s.split('\n').filter((l) => !/^\s*--/.test(l)).join('\n');
 const C5 = sqlCode(M5), C6 = sqlCode(M6);
 
@@ -103,7 +103,7 @@ function t1() {
       '1מ · RLS מופעל על ' + t);
   });
   assert(!/grant[^;]*\bdelete\b[^;]*to anon/i.test(C5) && !/grant[^;]*truncate[^;]*to anon/i.test(C5),
-    '1נ · ⛔ אפס DELETE ואפס TRUNCATE ל-anon (כלל ברזל 10 סעיף 9)');
+    '1נ · ⛔ אפס DELETE ואפס TRUNCATE ל-anon');
 
   // 006 — העברה אידמפוטנטית שאינה נוגעת ב-kv.
   assert((C6.match(/on conflict \(client_id\) do nothing/g) || []).length === 3,
@@ -292,7 +292,7 @@ async function t3() {
 
   const h3 = harness(extract(SRC), { remote: [{ client_id: '111', updated_at: 900 }], pending: true });
   const r3 = await h3.sandbox.ysRowsPushSessions([SESS]);
-  assert(r3.n === 1, '4נ · ⛔ רשומה מסומנת ⏳ נדחפת תמיד (כלל ברזל 6)');
+  assert(r3.n === 1, '4נ · ⛔ רשומה מסומנת ⏳ נדחפת תמיד');
 
   const h4 = harness(extract(SRC), { failOn: 'ys_marks' });
   const r4 = await h4.sandbox.ysRowsPushSessions([SESS]);

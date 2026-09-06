@@ -3361,10 +3361,17 @@ function lsSweep(reason, needBytes) {
   }
 
   // ── שלב א: מטמונים שניתן לשחזר מהענן ──
+  // ⛔ העֵד נבדק **פר-פריט**, בתוך המערך (סבב 96ד) — ⚠️ ולא בכניסה
+  // לרשימה: שלב א מוחק מפתח **שלם**, ומפתח שנכתב מקומית-תחילה ולא נדחף
+  // אינו חוזר משום מקום. ⭐ ולכן כל פריט נושא `syncedThrough` משלו, בדיוק
+  // כמו ב-tier2, ⛔ ומחסום `pending()` שלמעלה אינו מחליף אותו: «התור ריק»
+  // הוא ראיה על **התור** ⛔ ולא על המפתח.
+  var through = lsGlobalWitness();
   var sized = [];
-  (LS_CFG.tier1 || []).forEach(function (k) {
-    var v = lsGet(k, null);
-    if (v != null) sized.push({ k: k, b: lsEntryBytes(k, v) });
+  (LS_CFG.tier1 || []).forEach(function (spec) {
+    if (!lsSpecWitness(spec, through)) return;
+    var v = lsGet(spec.key, null);
+    if (v != null) sized.push({ k: spec.key, b: lsEntryBytes(spec.key, v) });
   });
   sized.sort(function (a, b) { return b.b - a.b; });   // הגדול קודם — מפנה מהר
   var hit = [];
@@ -3376,7 +3383,6 @@ function lsSweep(reason, needBytes) {
   if (need && freed >= need) return freed;
 
   // ── שלב ב: רשומות ישנות מסונכרנות ──
-  var through = lsGlobalWitness();
   var specs = (LS_CFG.tier2 || []).slice();
   // מפתח בלי עֵד מקומי אך עם מסלול אימות מול הענן אינו מפונה כאן — האימות
   // אסינכרוני ולכן הוא רץ ב-`lsBootDeferred`, אחרי העלייה. מדווח כדי

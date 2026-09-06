@@ -119,7 +119,7 @@ ok('1ד · ⚠️ אינדקס האב **אינו** ייחודי — התנגשו
   !/create unique index if not exists ys_sleep_sessions_session_date/.test(M009));
 ok('1ה · ⚠️ ואינדקס הבן **כן** ייחודי — הוא מפתח הזהות',
   /create unique index if not exists ys_sleep_marks_session_student/.test(M009));
-ok('1ו · ⛔ `revoke` ואז `grant` לשתי הטבלאות (כלל ברזל 10 סעיף 9)',
+ok('1ו · ⛔ `revoke` ואז `grant` לשתי הטבלאות',
   /revoke all on public\.ys_sleep_sessions from anon, authenticated/.test(M009) &&
   /revoke all on public\.ys_sleep_marks from anon, authenticated/.test(M009) &&
   !/grant[^;]*\bdelete\b[^;]*to anon/i.test(M009));
