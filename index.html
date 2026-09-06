@@ -90,9 +90,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-<script>
-if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProperty('--force-mobile','1');var s=document.createElement('style');s.textContent='@media all{'+['.inner{padding:14px!important}','.mods-wrap{padding:14px!important}','.hero{padding:18px 14px 24px!important}','.hero-title{font-size:1.3rem!important}','.stats{grid-template-columns:repeat(2,1fr)!important}','.stat{padding:12px 8px!important}','.stat .n{font-size:1.5rem!important}','header{height:60px!important;padding:0 12px!important}','.logo{width:46px!important;height:46px!important}','.hdiv{display:none!important}','.htxt{font-size:.78rem!important}','.htxt strong{font-size:.88rem!important}','nav{gap:2px!important;overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}','nav::-webkit-scrollbar{display:none!important}','.nb{padding:8px 10px!important;font-size:.78rem!important;gap:4px!important;min-height:44px!important;flex-shrink:0!important;white-space:nowrap!important}','.mods{grid-template-columns:1fr!important;gap:10px!important}','.mod{padding:16px 14px!important;gap:12px!important;width:100%!important}','.mod-ic{width:48px!important;height:48px!important;font-size:1.4rem!important;border-radius:10px!important}','.mod-name{font-size:1rem!important}','.mod-desc{font-size:.82rem!important}','.mods-lbl{font-size:.75rem!important;margin-bottom:12px!important}','.ptitle{font-size:1.1rem!important;margin-bottom:16px!important}','table{font-size:.82rem!important}','th{padding:9px 10px!important;font-size:.78rem!important}','td{padding:8px 10px!important}','.btn{padding:10px 16px!important;font-size:.84rem!important;min-height:44px!important}','.md{padding:20px 16px!important;max-width:calc(100vw - 28px)!important}','body{padding-bottom:64px!important}','.bottom-nav{display:flex!important;position:fixed!important;bottom:0!important;left:0!important;right:0!important;height:64px!important}','.hide-mobile{display:none!important}'].join('')+'}';document.head.appendChild(s);}
-</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
@@ -105,12 +102,26 @@ if(location.search.indexOf('apk=1')!==-1){document.documentElement.style.setProp
   --toast-bottom:26px;
 
 --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+/*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
+ *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
+ *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0d151d; --bg2:#131e29;
+    --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
+    --border:#24333f;
+    --navy:#3a7dd6; --navy2:#24487f; --navy3:#12233d;
+    --gold:#e0bd63;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
+    --shadow2:0 12px 40px rgba(0,0,0,.5);
+  }
+}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 body.locked{overflow:hidden}
 header{background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px rgba(0,0,0,.22);position:sticky;top:0;z-index:100}
 .hl{display:flex;align-items:center;gap:16px}
-.logo{width:60px;height:60px;object-fit:contain;border-radius:14px;background:white;padding:3px;}
+.logo{width:60px;height:60px;object-fit:contain;border-radius:14px;background:var(--bg2);padding:3px;}
 .hdiv{width:1px;height:48px;background:rgba(255,255,255,.2)}
 .htxt{color:rgba(255,255,255,.9);font-size:.88rem;line-height:1.5}
 .htxt strong{display:block;font-size:1rem;color:#fff;font-weight:700}
@@ -120,7 +131,7 @@ nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .nb.on{background:rgba(255,255,255,.20);color:#fff;font-weight:600}
 main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .pg{display:none;overflow-x:hidden}.pg.on{display:block}
-#pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,#eef2fa,#f8f9ff 50%,#e8f0fb)}
+#pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,var(--bg),var(--bg) 50%,var(--bg))}
 .hero{background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));color:#fff;padding:36px 40px 46px;position:relative;overflow:hidden}
 .hero-date{font-size:.83rem;opacity:.72;margin-bottom:6px}
 .hero-title{font-size:1.65rem;font-weight:700;margin-bottom:4px}
@@ -128,7 +139,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:16px 20px;text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
-.stat:hover{background:#eef2fa}
+.stat:hover{background:var(--bg)}
 .stat .n{font-size:1.9rem;font-weight:700;color:var(--navy)}
 .stat .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .mods-wrap{padding:28px 40px 40px}
@@ -139,7 +150,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy));border-radius:0 12px 12px 0;transition:width .22s}
 .mod:hover{border-color:var(--color,var(--navy));box-shadow:var(--shadow2);transform:translateY(-2px)}
 .mod:hover::before{width:6px}
-.mod-ic{width:48px;height:48px;border-radius:10px;background:var(--icbg,#eef2fa);display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:transform .22s}
+.mod-ic{width:48px;height:48px;border-radius:10px;background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;transition:transform .22s}
 .mod:hover .mod-ic{transform:scale(1.08)}
 .mod-info{flex:1}
 .mod-name{font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
@@ -147,61 +158,61 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
-.back:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa}
+.back:hover{border-color:var(--navy);color:var(--navy);background:var(--bg)}
 .gear{background:none;border:1.5px solid var(--border);color:var(--text3);border-radius:50%;width:34px;height:34px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.gear:hover{border-color:var(--navy);color:var(--navy);background:#eef2fa;transform:rotate(30deg)}
+.gear:hover{border-color:var(--navy);color:var(--navy);background:var(--bg);transform:rotate(30deg)}
 .gap{flex:1}
 .ep{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);display:none}
 .ep.open{display:block}
 .ep h4{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:14px}
-.ep textarea{width:100%;padding:10px 14px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.9rem;resize:vertical;min-height:60px}
+.ep textarea{width:100%;padding:10px 14px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.9rem;resize:vertical;min-height:60px}
 .ep textarea:focus{outline:none;border-color:var(--navy)}
 .ep-act{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}
 .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:2px solid var(--navy);border-radius:30px;padding:9px 20px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
-.btn.out{background:#fff;color:var(--navy);border-color:var(--navy)}
-.btn.out:hover{background:#eef2fa}
+.btn.out{background:var(--bg2);color:var(--navy);border-color:var(--navy)}
+.btn.out:hover{background:var(--bg)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy),var(--navy2))}
 th{color:#fff;font-weight:600;padding:12px 16px;text-align:right;font-size:.86rem}
 td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:#eef2fa}
+tr:hover td{background:var(--bg)}
 
 
 
 
 
 
-.ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:#fff;color:var(--text2);transition:all .15s}
+.ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:var(--bg2);color:var(--text2);transition:all .15s}
 .ab:hover{border-color:var(--navy);color:var(--navy)}
 .ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
 
 
 .sw{position:relative;width:100%}
-#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:#fff;border:1.5px solid var(--navy);border-radius:14px;box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
+#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--bg2);border:1.5px solid var(--navy);border-radius:14px;box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
 #search-dropdown.open{display:block}
 @keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.sd-item{padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #f0f4fa;transition:background .12s}
+.sd-item{padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);transition:background .12s}
 .sd-item:last-child{border-bottom:none}
 .sd-item:first-child{border-radius:13px 13px 0 0}
 .sd-item:last-child:first-child{border-radius:13px}
-.sd-item:hover,.sd-item:focus{background:#eef2fa;outline:none}
+.sd-item:hover,.sd-item:focus{background:var(--bg);outline:none}
 .sd-name{font-weight:600;font-size:.88rem;color:var(--text)}
 .sd-name mark{background:#fff3cd;border-radius:2px;padding:0 1px;color:inherit;font-weight:700}
 .sd-cls{background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.76rem;white-space:nowrap;flex-shrink:0}
-.sw input{width:100%;padding:9px 16px 9px 36px;background:#fff;border:1.5px solid var(--navy);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem;transition:border-color .2s,box-shadow .2s}
+.sw input{width:100%;padding:9px 16px 9px 36px;background:var(--bg2);border:1.5px solid var(--navy);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem;transition:border-color .2s,box-shadow .2s}
 .sw input::placeholder{color:var(--text3)}
 .sw input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
-input[type=date],input[type=month]{padding:8px 12px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
+input[type=date],input[type=month]{padding:8px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy)}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:600}
 
 
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
-.modal-box{background:#fff;border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy);max-height:85vh;overflow-y:auto}
+.modal-box{background:var(--bg2);border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy);max-height:85vh;overflow-y:auto}
 .modal-overlay.open{display:flex}
 .mdl-x{background:none;border:none;font-size:1.1rem;line-height:1;cursor:pointer;color:var(--text2);padding:2px 6px}
 .mdl-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -211,7 +222,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .hidden{display:none!important}
 
 #modal-body label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
-#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
+#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
 #modal-body input:focus{outline:none;border-color:var(--navy)}
 .cs{text-align:center;padding:70px 40px;background:var(--bg2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
 .cs .ci{font-size:3.2rem;margin-bottom:14px;opacity:.6}
@@ -223,104 +234,141 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .rc .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .empty{text-align:center;padding:56px 20px;color:var(--text3)}
 .ld{text-align:center;padding:44px;color:var(--text3)}
-@media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
-/* === MOBILE - גישת יומן עבודה === */
-@media(max-width:800px){
-  /* קונטיינר - padding קטן כמו .app ביומן עבודה */
-  .inner{padding:14px}
-  .mods-wrap{padding:14px}
-  .hero{padding:18px 14px 24px}
-  .hero-title{font-size:1.3rem}
+/* ⛔ מובייל-תחילה: שתי הרשתות מצטמצמות בברירת המחדל ⛔ ואינן מורחבות
+   בשאילתה — ⚠️ ההרחבה היא מה שנכתב כשאילתה. */
+.mods{grid-template-columns:repeat(2,1fr)}
+.stats{grid-template-columns:repeat(2,1fr)}
+/* קונטיינר - padding קטן כמו .app ביומן עבודה */
+.inner{padding:14px}
+.mods-wrap{padding:14px}
+.hero{padding:18px 14px 24px}
+.hero-title{font-size:1.3rem}
 
-  /* סטטיסטיקות */
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .stat{padding:12px 8px}
-  .stat .n{font-size:1.5rem}
+/* סטטיסטיקות */
+.stats{grid-template-columns:repeat(2,1fr)}
+.stat{padding:12px 8px}
+.stat .n{font-size:1.5rem}
 
-  /* כותרת עליונה */
-  header{height:60px;padding:0 12px}
-  .logo{width:46px;height:46px}
-  .hdiv{display:none}
-  .htxt{font-size:.78rem}
-  .htxt strong{font-size:.88rem}
+/* כותרת עליונה */
+header{height:60px;padding:0 12px}
+.logo{width:46px;height:46px}
+.hdiv{display:none}
+.htxt{font-size:.78rem}
+.htxt strong{font-size:.88rem}
 
-  /* nav - גלילה אופקית כמו יומן עבודה */
-  nav{gap:2px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  nav::-webkit-scrollbar{display:none}
-  .nb{padding:8px 10px;font-size:.78rem;gap:4px;min-height:44px;flex-shrink:0;white-space:nowrap}
+/* nav - גלילה אופקית כמו יומן עבודה */
+nav{gap:2px;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+.nb{padding:8px 10px;font-size:.78rem;gap:4px;min-height:44px;flex-shrink:0;white-space:nowrap}
 
-  /* מודולים - עמודה אחת, רוחב מלא, כמו יומן עבודה */
-  .mods{grid-template-columns:1fr;gap:10px}
-  .mod{padding:16px 14px;gap:12px;width:100%}
-  .mod-ic{width:48px;height:48px;font-size:1.4rem;border-radius:10px}
-  .mod-name{font-size:1rem}
-  .mod-desc{font-size:.82rem}
-  .mods-lbl{font-size:.75rem;margin-bottom:12px}
+/* מודולים - עמודה אחת, רוחב מלא, כמו יומן עבודה */
+.mods{grid-template-columns:1fr;gap:10px}
+.mod{padding:16px 14px;gap:12px;width:100%}
+.mod-ic{width:48px;height:48px;font-size:1.4rem;border-radius:10px}
+.mod-name{font-size:1rem}
+.mod-desc{font-size:.82rem}
+.mods-lbl{font-size:.75rem;margin-bottom:12px}
 
-  /* דפים פנימיים */
-  .ptitle{font-size:1.1rem;margin-bottom:16px}
-  table{font-size:.82rem}
-  th{padding:9px 10px;font-size:.78rem}
-  td{padding:8px 10px}
-  .btn{padding:10px 16px;font-size:.84rem;min-height:44px}
-  .md{padding:20px 16px;max-width:calc(100vw - 28px)}
-}
-@media(max-width:480px){
+/* דפים פנימיים */
+.ptitle{font-size:1.1rem;margin-bottom:16px}
+table{font-size:.82rem}
+th{padding:9px 10px;font-size:.78rem}
+td{padding:8px 10px}
+.btn{padding:10px 16px;font-size:.84rem;min-height:44px}
 
-  .nb{padding:7px 9px}
-  header{height:56px}
-  .logo{width:40px;height:40px}
-}
+.nb{padding:7px 9px}
+header{height:56px}
+.logo{width:40px;height:40px}
 
 /* ===== ניווט תחתון — מובייל בלבד ===== */
 .bottom-nav{display:none}
-@media(max-width:800px){
-  /*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
-  :root{--toast-bottom:80px}
-  body{padding-bottom:64px}
-  .bottom-nav{
-    display:flex;
-    position:fixed;
-    bottom:0;left:0;right:0;
-    height:64px;
-    background:linear-gradient(135deg,#0f2347,#1a3a6b);
-    border-top:1px solid rgba(255,255,255,.15);
-    z-index:200;
-    align-items:center;
-    justify-content:space-around;
-    box-shadow:0 -2px 12px rgba(0,0,0,.25);
-    padding:0 4px;
-    padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  .bn{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    flex:1;height:100%;gap:3px;
-    background:none;border:none;
-    color:rgba(255,255,255,.6);
-    font-family:Heebo;font-size:.62rem;font-weight:500;
-    cursor:pointer;transition:all .18s;
-    padding:4px 2px;border-radius:8px;
-    -webkit-tap-highlight-color:transparent;
-  }
-  .bn .bn-ic{font-size:1.35rem;line-height:1}
-  .bn.on{color:#fff}
-  .bn.on .bn-ic{transform:scale(1.15)}
-  .bn:active{background:rgba(255,255,255,.1)}
-  /* הסתר nav עליון במובייל */
-  nav{display:none}
-  /* הסתר מפריד אבל הצג טקסט במובייל */
-  .hdiv{display:none}
-  .htxt{display:flex;font-size:.65rem}
-  .htxt strong{font-size:.75rem}
-  .htxt span{font-size:.52rem}
-  header{justify-content:space-between;padding:0 14px}
-  .hl{gap:10px}
+/*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
+:root{--toast-bottom:80px}
+body{padding-bottom:64px}
+.bottom-nav{
+  display:flex;
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:64px;
+  background:linear-gradient(135deg,#0f2347,#1a3a6b);
+  border-top:1px solid rgba(255,255,255,.15);
+  z-index:200;
+  align-items:center;
+  justify-content:space-around;
+  box-shadow:0 -2px 12px rgba(0,0,0,.25);
+  padding:0 4px;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.bn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;height:100%;gap:3px;
+  background:none;border:none;
+  color:rgba(255,255,255,.6);
+  font-family:Heebo;font-size:.62rem;font-weight:500;
+  cursor:pointer;transition:all .18s;
+  padding:4px 2px;border-radius:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.bn .bn-ic{font-size:1.35rem;line-height:1}
+.bn.on{color:#fff}
+.bn.on .bn-ic{transform:scale(1.15)}
+.bn:active{background:rgba(255,255,255,.1)}
+/* הסתר nav עליון במובייל */
+nav{display:none}
+/* הסתר מפריד אבל הצג טקסט במובייל */
+.hdiv{display:none}
+.htxt{display:flex;font-size:.65rem}
+.htxt strong{font-size:.75rem}
+.htxt span{font-size:.52rem}
+header{justify-content:space-between;padding:0 14px}
+.hl{gap:10px}
+/* ⛔ שלוש ההרחבות — ⚠️ הן מבטלות את ברירת המחדל הצרה, ⛔ ואינן מוסיפות
+   לה: ⭐ כל ערך כאן הוא מה שחל מעל נקודת השבירה שלו. */
+@media (min-width:640px){
+  .nb{padding:8px 10px}
+  header{height:60px}
+  .logo{width:46px;height:46px}
+}
+@media (min-width:900px){
+  :root{--toast-bottom:26px}
+  body{padding-bottom:0}
+  .inner{padding:26px 40px}
+  .mods-wrap{padding:28px 40px 40px}
+  .hero{padding:36px 40px 46px}
+  .hero-title{font-size:1.65rem}
+  .stat{padding:16px 20px}
+  .stat .n{font-size:1.9rem}
+  header{height:76px;padding:0 24px}
+  .logo{width:60px;height:60px}
+  .hdiv{display:block}
+  .htxt{display:block;font-size:.88rem}
+  .htxt strong{font-size:1rem}
+  .htxt span{font-size:inherit}
+  .hl{gap:16px}
+  nav{display:flex;gap:3px;flex-wrap:wrap;overflow-x:visible;scrollbar-width:auto}
+  .nb{padding:7px 12px;font-size:.82rem;gap:6px;min-height:auto;flex-shrink:1}
+  .bottom-nav{display:none}
+  .mods{grid-template-columns:repeat(2,1fr);gap:14px}
+  .mod{padding:24px 20px;gap:14px;width:auto}
+  .mod-ic{font-size:1.5rem}
+  .mod-name{font-size:.95rem}
+  .mod-desc{font-size:.78rem}
+  .mods-lbl{font-size:.8rem;margin-bottom:18px}
+  .ptitle{font-size:1.3rem;margin-bottom:22px}
+  table{font-size:inherit}
+  th{padding:12px 16px;font-size:.86rem}
+  td{padding:11px 16px;font-size:.9rem}
+  .btn{padding:9px 20px;font-size:.88rem;min-height:auto}
+}
+@media (min-width:1200px){
+  .mods{grid-template-columns:repeat(3,1fr)}
+  .stats{grid-template-columns:repeat(4,1fr)}
 }
 
 /* ===== כניסה ===== */
 #auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
 #auth-screen.hidden{display:none}
-.auth-box{background:#fff;border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+.auth-box{background:var(--bg2);border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
 .auth-logo{width:72px;height:72px;margin:0 auto 14px;border-radius:12px;overflow:hidden;background:#f0f4fa;display:flex;align-items:center;justify-content:center}
 .auth-logo img{width:100%;height:100%;object-fit:contain}
 .auth-title{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:4px}
@@ -333,11 +381,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .auth-btn{width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px;font-family:Heebo;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:6px;transition:background .2s}
 .auth-btn:active{background:var(--navy2)}
 .auth-err{color:#e53e3e;font-size:.82rem;margin-top:8px;min-height:18px}
-.auth-spinner{display:none;margin:10px auto 0;width:28px;height:28px;border:3px solid #dde3ef;border-top-color:var(--navy);border-radius:50%;animation:auth-spin .7s linear infinite}
+.auth-spinner{display:none;margin:10px auto 0;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:auth-spin .7s linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
-#pg-settings .ss{background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
+#pg-settings .ss{background:var(--bg2);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
 #pg-settings .ss-t{font-size:.95rem;font-weight:700;color:var(--navy);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.ur{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f0f4fa}
+.ur{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)}
 .ur:last-child{border-bottom:none}
 .ur-name{flex:1;font-weight:600;font-size:.88rem}
 .ur-role{font-size:.74rem;padding:3px 9px;border-radius:20px;font-weight:600}
@@ -345,15 +393,15 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .role-senior{background:#dbeafe;color:#1e40af}
 .role-junior{background:#dcfce7;color:#166534}
 .ua{display:flex;gap:5px}
-.ua button{border:1px solid var(--border);background:#fff;border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
+.ua button{border:1px solid var(--border);background:var(--bg2);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
 .ua button:hover{border-color:var(--navy);color:var(--navy)}
 .ua button.del:hover{border-color:#e53e3e;color:#e53e3e}
 .pt{width:100%;border-collapse:collapse;font-size:.8rem}
 .pt th{background:var(--navy);color:#fff;padding:7px 8px;font-weight:600;text-align:center}
 .pt th:first-child{text-align:right}
-.pt td{padding:7px 8px;border-bottom:1px solid #f0f4fa;text-align:center}
+.pt td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center}
 .pt td:first-child{text-align:right;font-weight:500}
-.pt tr:hover td{background:#f8faff}
+.pt tr:hover td{background:var(--bg)}
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy)}
 
@@ -436,11 +484,11 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <span style="font-size:.95rem">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" style="display:none;position:absolute;left:0;top:50px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);min-width:190px;z-index:300;overflow:hidden;direction:rtl">
-      <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:#1a3a6b;border-bottom:1px solid #eee"></div>
-      <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:#888;border-bottom:1px solid #eee"></div>
-      <div id="user-menu-others" style="border-bottom:1px solid #eee"></div>
-      <button data-act="menu-mypass" style="width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid #eee;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#1a3a6b;font-weight:600">שינוי הסיסמה שלי 🔑</button>
+    <div id="user-menu" style="display:none;position:absolute;left:0;top:50px;background:var(--bg2);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);min-width:190px;z-index:300;overflow:hidden;direction:rtl">
+      <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:var(--navy);border-bottom:1px solid var(--border)"></div>
+      <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:var(--text3);border-bottom:1px solid var(--border)"></div>
+      <div id="user-menu-others" style="border-bottom:1px solid var(--border)"></div>
+      <button data-act="menu-mypass" style="width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:var(--navy);font-weight:600">שינוי הסיסמה שלי 🔑</button>
       <button data-act="menu-logout" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#e53e3e;font-weight:600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
@@ -461,7 +509,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
-      <button class="mod" data-pg="students" style="--color:#1a3a6b;--icbg:#eef2fa" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="mod" data-pg="students" style="--color:var(--navy);--icbg:#eef2fa" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
       <button class="mod" data-pg="attend" style="--color:#1a7a4a;--icbg:#eaf7f0" data-act="page" data-page="attend"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
       <button class="mod" data-pg="sleep" style="--color:#6b3a9a;--icbg:#f3eefa" data-act="page" data-page="sleep"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
       <button class="mod" data-pg="exams" style="--color:#a07830;--icbg:#fff8e8" data-act="page" data-page="exams"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
@@ -482,7 +530,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <button class="btn sm out" id="ct-a" data-act="filter-class" data-cls="a" style="font-size:.78rem;padding:5px 10px">שיעור א'</button>
 <button class="btn sm out" id="ct-b" data-act="filter-class" data-cls="b" style="font-size:.78rem;padding:5px 10px">שיעור ב'</button>
 <button class="btn sm out" id="ct-g" data-act="filter-class" data-cls="g" style="font-size:.78rem;padding:5px 10px">שיעור ג'</button>
-<button class="btn sm out" id="ct-inactive" data-act="filter-class" data-cls="inactive" style="font-size:.78rem;padding:5px 10px;color:#888">לא פעילים</button>
+<button class="btn sm out" id="ct-inactive" data-act="filter-class" data-cls="inactive" style="font-size:.78rem;padding:5px 10px;color:var(--text3)">לא פעילים</button>
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div style="display:flex;justify-content:center;margin:0 0 14px">
@@ -490,7 +538,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 </div>
 
 <!-- Summary Bar -->
-<div id="st-summary" style="display:flex;gap:16px;margin:10px 0;font-size:0.9em;background:#f0f4ff;padding:8px 14px;border-radius:8px;flex-wrap:wrap"></div>
+<div id="st-summary" style="display:flex;gap:16px;margin:10px 0;font-size:0.9em;background:var(--bg);padding:8px 14px;border-radius:8px;flex-wrap:wrap"></div>
 
 <!-- Students Table -->
 <div id="students-list-wrap">
@@ -627,31 +675,31 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div id="settings-home">
       <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin-top:8px">
-        <button data-act="settings-module" data-mod="students" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="students" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">👥</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מצבת תלמידים</span>
         </button>
-        <button data-act="settings-module" data-mod="attend" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="attend" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">✅</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">סדרים</span>
         </button>
-        <button data-act="settings-module" data-mod="sleep" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="sleep" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">🌙</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">זמן שינה</span>
         </button>
-        <button data-act="settings-module" data-mod="exams" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="exams" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📝</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">מבחנים</span>
         </button>
-        <button data-act="settings-module" data-mod="files" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="files" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📁</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">תיקים אישיים</span>
         </button>
-        <button data-act="settings-module" data-mod="reports" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="reports" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📊</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">דוחות</span>
         </button>
-        <button data-act="settings-module" data-mod="system" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="system" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">⚙️</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy)">הגדרות מערכת</span>
         </button>
@@ -692,13 +740,13 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <div class="ss">
         <div style="display:flex;flex-direction:column;gap:16px">
           <!-- סדרים -->
-          <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
             <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">📋 רשימת סדרים</div>
             <div id="at-cfg-sessions" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-session-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף סדר</button>
           </div>
           <!-- טיפולים -->
-          <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
             <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
             <div id="at-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -712,7 +760,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss">
-        <div style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:16px;max-width:400px">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;max-width:400px">
           <div style="font-weight:700;color:var(--navy);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
           <div id="sl-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
           <button data-act="sl-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -1308,6 +1356,19 @@ var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת �
 var MSG_NO_CRYPTO    = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לאימות הסיסמה';
 // סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
+/* ═══ סולם נקודות השבירה — מודול משותף (סבב 97) ═══════════════════════════
+   ⭐ הסולם הוא מקור האמת היחיד לנקודות השבירה בארבע האפליקציות, ⛔ והוא
+   מוצהר כאן פעם אחת: ⚠️ שאילתה שערכה אינו ברשימה מפילה בשער.
+   ⛔ **וכיוון אחד — `min-width`** — ⚠️ עירוב `min` ו-`max` באותו קובץ
+   מאפשר לשני כללים לחול יחד על אותו רוחב, ⭐ וכלל שנראה מבוטל חל בכל זאת.
+   ⛔ **ומה שמתחת לנקודה הראשונה הוא ברירת המחדל** ⛔ ולא שאילתה —
+   ⚠️ שאילתת `max-width` שמתארת מסך צר היא בסיס שנכתב הפוך.
+   ⛔ **ואין ל-CSS גישה לקבוע** — ⚠️ המספרים חוזרים בשאילתות עצמן,
+   ⭐ והשער הוא מה שמשווה ביניהם לרשימה שכאן: ⛔ הקבוע הוא ההצהרה,
+   ⚠️ והשאילתה היא המימוש. */
+var BP_SCALE = [360, 480, 640, 900, 1200];
+window.BP_SCALE = BP_SCALE;
+/* ═══════════════ סוף מודול סולם נקודות השבירה ═════════════════════════ */
 /* ═══ עוזרי הרשת — מודול משותף (סבב 84) ═══════════════════════════════════
    ⛔ שלוש הפונקציות ישבו **בין** בלוקים חתומים, ⚠️ ולכן אף `sha256` לא מדד
       אותן — ⭐ והן נסחפו בשקט בעוד שהטבלה מצהירה עליהן «זהה בית-לבית»:
@@ -1811,7 +1872,7 @@ window._hcDraw=function(pfx){
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
   var selH=selIso?window._hcH(new Date(selIso)):null;
   var todH=window._hcH(new Date());
-  var bs='border:none;background:none;cursor:pointer;font-size:1.15rem;color:#1a3a6b;padding:2px 10px;line-height:1';
+  var bs='border:none;background:none;cursor:pointer;font-size:1.15rem;color:var(--navy);padding:2px 10px;line-height:1';
   var maxMi=(b.ml.length-1);
   var hasPrev=v.mi>0||!!window._hcBase(v.hy-1),hasNext=v.mi<maxMi||!!window._hcBase(v.hy+1);
   // בגריד RTL: DOM[0]=ימין=ראשון, DOM[6]=שמאל=שבת
@@ -1821,12 +1882,12 @@ window._hcDraw=function(pfx){
   // כותרת ניווט — חץ ימני=חודש הקודם, שמאלי=הבא
   h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" style="'+bs+(hasPrev?'':';opacity:.25;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>';
-  h+='<span style="font-weight:700;font-size:.95rem;color:#1a3a6b">'+window._hcMN(v.hy)[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
+  h+='<span style="font-weight:700;font-size:.95rem;color:var(--navy)">'+window._hcMN(v.hy)[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" style="'+bs+(hasNext?'':';opacity:.25;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>';
   h+='</div>';
   // כותרת ימים: DOM[0]=ימין=א׳(ראשון) → DOM[6]=שמאל=ש׳(שבת)
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px);text-align:center;margin-bottom:3px">';
-  ['א','ב','ג','ד','ה','ו','ש'].forEach(function(x){h+='<div style="font-size:.72rem;font-weight:700;color:#999;padding:2px 0">'+x+'</div>';});
+  ['א','ב','ג','ד','ה','ו','ש'].forEach(function(x){h+='<div style="font-size:.72rem;font-weight:700;color:var(--text3);padding:2px 0">'+x+'</div>';});
   h+='</div>';
   // תאים
   h+='<div style="display:grid;grid-template-columns:repeat(7,34px)">';
@@ -1834,7 +1895,7 @@ window._hcDraw=function(pfx){
   for(var d=1;d<=mlen;d++){
     var isSel=selH&&selH.hy===v.hy&&selH.mi===v.mi&&selH.day===d;
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
-    var bg=isSel?'#1a3a6b':isToday?'#dbeafe':'transparent';
+    var bg=isSel?'var(--navy)':isToday?'var(--bg)':'transparent';
     var fg=isSel?'#fff':isToday?'#1e40af':'#1a1a1a';
     var fw=isSel||isToday?'700':'400';
     h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
@@ -1909,15 +1970,15 @@ window._hcBuild=function(pfx,initH,tv){
   }else{label='בחר תאריך עברי';}
   var iso='';
   if(initH){var g=window._hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
-  var trg='display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;border:1.5px solid #d8e2f0;border-radius:10px;background:#f4f8ff;font-family:Heebo;font-size:.92rem;color:#1a3a6b;font-weight:600;box-sizing:border-box;transition:border-color .15s';
+  var trg='display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);font-family:Heebo;font-size:.92rem;color:var(--navy);font-weight:600;box-sizing:border-box;transition:border-color .15s';
   return '<div style="position:relative">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" style="'+trg+'">'+
       '<span id="'+pfx+'_lbl">'+label+'</span>'+
       '<span style="font-size:.8rem;opacity:.5;margin-right:4px">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:#fff;border:1.5px solid #d8e2f0;border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
-    (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:#888;white-space:nowrap">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid #d8e2f0;border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
+    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
+    (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:var(--text3);white-space:nowrap">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
 document.addEventListener('mousedown',function(e){
@@ -1949,7 +2010,7 @@ function openStatusForm(type) {
 
   var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px';
-  var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:#fff;box-sizing:border-box';
+  var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:var(--bg2);box-sizing:border-box';
 
   window._currentStatusType = type;
   openModal(typeIcons[type]+' '+typeLabels[type]+' — '+window._statusStudentName,
@@ -1963,7 +2024,7 @@ function openStatusForm(type) {
         window._hcBuild('sfmF', todayHeb, defaultTime) +
       '</div>' +
       '<div>' +
-        '<button id="sfmT_btn" data-act="hc-toggle" type="button" style="padding:7px 14px;border:1.5px solid #d8e2f0;border-radius:8px;background:#f4f8ff;color:#1a3a6b;font-family:Heebo;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px">+ הוסף תאריך סיום</button>' +
+        '<button id="sfmT_btn" data-act="hc-toggle" type="button" style="padding:7px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);color:var(--navy);font-family:Heebo;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px">+ הוסף תאריך סיום</button>' +
         '<div id="sfmT_wrap" style="display:none">' +
           '<label style="'+lbl+'">תאריך סיום</label>' +
           window._hcBuild('sfmT', null, '') +
@@ -1971,7 +2032,7 @@ function openStatusForm(type) {
       '</div>' +
     '</div>',
     '<button data-act="student-status-save" style="background:'+typeColors[type]+';color:#fff;border:none;padding:10px 24px;border-radius:10px;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer">שמור</button>' +
-    '<button data-act="modal-close" style="background:none;border:1.5px solid #ddd;color:#666;padding:10px 18px;border-radius:10px;font-family:Heebo;font-size:.92rem;cursor:pointer">ביטול</button>');
+    '<button data-act="modal-close" style="background:none;border:1.5px solid #ddd;color:var(--text2);padding:10px 18px;border-radius:10px;font-family:Heebo;font-size:.92rem;cursor:pointer">ביטול</button>');
 }
 
 function saveStudentStatus(type) {
@@ -2023,7 +2084,7 @@ async function toggleUserMenu() {
   var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
   othersEl.innerHTML = '<div style="padding:8px 16px 4px;font-size:.72rem;color:#aaa">'+label+'</div>' +
     others.map(function(u){
-      return '<button data-uid="'+esc(u.id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:#1a3a6b;display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
+      return '<button data-uid="'+esc(u.id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" style="width:100%;padding:9px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.86rem;color:var(--navy);display:flex;align-items:center;gap:8px"><span style=\"opacity:.6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
 }
 function closeUserMenu() {
@@ -2042,12 +2103,12 @@ function switchUser(id, name) {
   var enterTxt = H(1499,1504,1497,1505,1492);
   window._ysSwitchId = id;
   openModal(String.fromCharCode(128100) + ' ' + H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513),
-    '<div style="font-weight:700;font-size:1rem;color:#1a3a6b;margin-bottom:4px;text-align:center" id="switch-name"></div>'+
-    '<div style="font-size:.8rem;color:#888;margin-bottom:16px;text-align:center">'+subTitle+'</div>'+
-    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px">'+
+    '<div style="font-weight:700;font-size:1rem;color:var(--navy);margin-bottom:4px;text-align:center" id="switch-name"></div>'+
+    '<div style="font-size:.8rem;color:var(--text3);margin-bottom:16px;text-align:center">'+subTitle+'</div>'+
+    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px">'+
     '<div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px"></div>',
-    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button>'+
-    '<button data-act="switch-confirm" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button>');
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button>'+
+    '<button data-act="switch-confirm" style="flex:1;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button>');
   document.getElementById('switch-name').textContent = name;
   var sp = document.getElementById('switch-pass');
   sp.addEventListener('keydown', function (e) { if (e.key === 'Enter') confirmSwitch(); });
@@ -2277,10 +2338,10 @@ document.addEventListener('keydown', function (e) {
 
 function showConstruction() {
   openModal('\uD83C\uDFD7\uFE0F ' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492),
-    '<p style="color:#4a5568;font-size:.88rem;line-height:1.6;text-align:center">' +
+    '<p style="color:var(--text2);font-size:.88rem;line-height:1.6;text-align:center">' +
       H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) +
       '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p>',
-    '<button data-act="modal-close" style="flex:1;background:#1a3a6b;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.95rem;font-family:Heebo;cursor:pointer">' + H(1492,1489,1504,1514,1497) + '</button>');
+    '<button data-act="modal-close" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.95rem;font-family:Heebo;cursor:pointer">' + H(1492,1489,1504,1514,1497) + '</button>');
 }
 
 function showDenied() {
@@ -2793,7 +2854,7 @@ function ysBusy(btn, on, label) {
 }
 
 function myPasswordModal() {
-  var fld = 'border:2px solid #d8e2f0;border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
+  var fld = 'border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
   var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
   openModal('🔑 שינוי הסיסמה שלי',
     '<label style="' + lbl + '" for="pw-old">סיסמה נוכחית</label>' +
@@ -2803,8 +2864,8 @@ function myPasswordModal() {
     '<label style="' + lbl + '" for="pw-new2">אימות סיסמה חדשה</label>' +
     '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
     '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;text-align:right"></div>',
-    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid #d8e2f0;border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
-    '<button id="pw-save" data-act="mypass-change" style="flex:1;padding:10px;background:#1a3a6b;color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
+    '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
+    '<button id="pw-save" data-act="mypass-change" style="flex:1;padding:10px;background:var(--navy);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
   document.getElementById('pw-old').focus();
 }
 
@@ -6446,8 +6507,8 @@ async function ysPushToCloud() {
     }
   }
 
-  // ⛔ הגיבוי היומי **הוסר מכאן** (סבב 30, השלמה) — וזו הנקודה שהשביתה
-  //    אותו ל-25 יום: הוא נתלה במסלול הדחיפה, ולכן רץ רק כשמישהו כתב
+  // ⛔ אין לתלות את הגיבוי היומי במסלול הדחיפה — ⚠️ תלייה כזו השביתה
+  //    אותו ל-25 יום: הוא רץ רק כשמישהו כתב
   //    אחד מארבעת המפתחות. בתקופה שבה הנתונים סטטיים (חופשה) אין דחיפה,
   //    אין גיבוי, ואין שום סימן — בדיוק כשתקלה עוברת בלי שיבחינו בה.
   //    נקודת ההפעלה היא `bkBoot()` ב-`loadDash()`, לצד `lsBoot()`.
@@ -6944,18 +7005,18 @@ function renderStudents(){
     var filtInactive=inactiveSts.filter(function(s){
       return !search||s.name.toLowerCase().indexOf(search)>=0;
     });
-    if(sumEl){sumEl.innerHTML='<span style="color:#888;font-size:.85rem">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
+    if(sumEl){sumEl.innerHTML='<span style="color:var(--text3);font-size:.85rem">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
     var tbody=document.getElementById('students-tbody');
     if(!tbody)return;
     if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
-      var bg=i%2===0?'#fff':'#f9fafb';
+      var bg=i%2===0?'var(--bg2)':'var(--bg)';
       // ⛔ `cycle` הוא השדה היחיד ⛔ ואין נפילה-חזרה לכתיב הישן — ⚠️ נמדד
       //    במסד שכל רשומה שנשאה את הישן נושאת גם את החדש, ⭐ ולכן הנפילה
       //    לא נבחרה מעולם; ⛔ ושני שדות לאותו מושג הם שני מקורות אמת.
       var yr=s.cycle||'';
-      var badge=yr?'<span style="background:#f0f4fa;color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
-      return '<div style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
+      var badge=yr?'<span style="background:var(--bg);color:#555;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">מחזור '+esc(yr)+'</span>':'';
+      return '<div style="background:'+bg+';border-bottom:1px solid var(--border);padding:8px 10px;display:flex;align-items:center;gap:10px;opacity:.8">'+
         '<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">'+
           '<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>'+
           '<div style="display:flex;align-items:center;gap:6px">'+badge+'</div>'+
@@ -6981,23 +7042,23 @@ function renderStudents(){
   if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
     '<span style="color:#38a169;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x2705; נוכחים: '+present+'</span>'+
     '<span style="color:#e53e3e;display:inline-flex;align-items:center;line-height:1;gap:4px">&#x274C; אינם נוכחים: '+absent+'</span>'+
-    '<span style="color:#666;display:inline-flex;align-items:center;line-height:1">סה"כ: '+activeSts.length+'</span>';}
+    '<span style="color:var(--text2);display:inline-flex;align-items:center;line-height:1">סה"כ: '+activeSts.length+'</span>';}
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var bg=i%2===0?'#fff':'#f9fafb';
+    var bg=i%2===0?'var(--bg2)':'var(--bg)';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
     var isPresent=getActiveAbsences(s).length===0;
     var presIcon=isPresent
       ?'<span style="display:inline-flex;align-items:center;gap:5px;background:#f0fff4;color:#276749;border:1.5px solid #9ae6b4;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2713; נוכח</span>'
       :'<span style="display:inline-flex;align-items:center;gap:5px;background:#fff5f5;color:#c53030;border:1.5px solid #feb2b2;padding:5px 14px;border-radius:999px;font-size:.83rem;font-weight:600;white-space:nowrap">&#x2715; אינו נוכח</span>';
     var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" style="background:var(--navy);color:#fff;border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.2rem;font-weight:300;display:inline-flex;align-items:center;justify-content:center;line-height:1" title="עריכת סטטוס">+</button>';
-    html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid #eee;padding:8px 10px;display:flex;align-items:center;gap:10px">';
+    html+='<div id="st-row-'+s.id+'" style="background:'+bg+';border-bottom:1px solid var(--border);padding:8px 10px;display:flex;align-items:center;gap:10px">';
     html+='<div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0">';
     html+='<span style="font-weight:600;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div style="display:flex;align-items:center;gap:6px">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" style="background:#f0f4fa;border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" style="background:var(--bg);border:none;cursor:pointer;font-size:1rem;color:var(--navy);width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.78rem;white-space:nowrap">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
@@ -7087,7 +7148,7 @@ window.openManageListDlg = function(){
   ];
   var rows=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
-      'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:#fff;border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy)')+';cursor:pointer;text-align:right;direction:rtl">'+
+      'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:var(--bg2);border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy)')+';cursor:pointer;text-align:right;direction:rtl">'+
       '<span style="font-size:1.25rem;width:28px;text-align:center">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
@@ -7205,7 +7266,7 @@ function openAttendanceEdit(sid) {
 
 window.openStatusPickerModal = function() {
   openModal(window._statusStudentName,
-    '<div style="font-size:.82rem;color:#888;margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
+    '<div style="font-size:.82rem;color:var(--text3);margin-bottom:20px">בחר סטאטוס היעדרות:</div>' +
     '<div style="display:flex;flex-direction:column;gap:10px">' +
       '<button data-act="status-form" data-kind="approved" style="display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:12px;border:2px solid #9ae6b4;background:#f0fff4;cursor:pointer;font-family:Heebo;font-size:.95rem;font-weight:600;color:#276749;text-align:right">' +
         '<span style="font-size:1.5rem">✅</span><div>אישור</div>' +
@@ -7255,11 +7316,11 @@ window.openCurrentStatusModal = function() {
         '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" style="background:#e53e3e;color:#fff;border:none;border-radius:7px;padding:4px 10px;font-family:Heebo;font-size:.78rem;font-weight:600;cursor:pointer">בטל</button>' +
       '</div>' +
       (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + a.reason + '</div>' : '') +
-      '<div style="font-size:.78rem;color:#888;line-height:1.7">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
+      '<div style="font-size:.78rem;color:var(--text3);line-height:1.7">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
   openModal(s.name, absencesHtml +
-    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>', '');
+    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--bg2);color:var(--navy);font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>', '');
 };
 
 // רענון לשונית ההשגחה הפעילה (נוכחות/שינה) — כדי שתלמיד שחזר לנוכח ירד מהרשימה מיד
@@ -7330,7 +7391,7 @@ function studentFormHtml(sid){
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
     /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
      *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:#fff;color:#1a3a6b;font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--bg2);color:var(--navy);font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
 }
 // -------- היסטוריית הסטטוסים --------
 /*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
@@ -7393,14 +7454,14 @@ window.openStatusHistory = async function (sid) {
         '<span style="font-size:1.1rem">' + (TI[a.type] || '📋') + '</span>' +
         '<span style="font-weight:700;font-size:.9rem;color:' + (cancelled ? '#777' : (TC[a.type] || '#333')) + '">' +
           esc(TL[a.type] || a.type || '—') + '</span>' +
-        (cancelled ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:#eee;color:#777">בוטל</span>' : '') +
+        (cancelled ? '<span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--border);color:#777">בוטל</span>' : '') +
       '</div>' +
       (a.reason ? '<div style="font-size:.82rem;color:#555;margin-bottom:3px">סיבה: ' + esc(a.reason) + '</div>' : '') +
-      '<div style="font-size:.78rem;color:#888;line-height:1.7">' +
+      '<div style="font-size:.78rem;color:var(--text3);line-height:1.7">' +
         'מ: ' + esc(fmt(a.from)) + '<br>' +
         'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
       '</div>' +
-      '<div style="font-size:.75rem;color:#999;margin-top:5px">' +
+      '<div style="font-size:.75rem;color:var(--text3);margin-top:5px">' +
         'נרשם ע״י: ' + esc(a.createdBy || '—') +
         (cancelled ? ' · בוטל ע״י: ' + esc(a.deletedBy || '—') : '') +
       '</div>' +
@@ -7945,7 +8006,7 @@ function atFillSessionBtns() {
   atSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
@@ -8101,7 +8162,7 @@ function atRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=atSummaryHtml(cnts);
-    html+='<div data-act="at-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div data-act="at-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -8177,8 +8238,8 @@ window.atEditSession = async function(recId) {
    `date_iso`, ובארבעה מהם **שתי הרשומות חיות**. המנהל אישר שזו תקלה ולא
    שימוש מכוון — אין מצב שאותו סדר מתקיים פעמיים ביום.
 
-   ⚠️ דיאלוג הכפילות ב-`atOpenSession` כבר היה כאן, ובכל זאת נוצרו
-      הכפילויות — ולכן מה שנסגר הוא שני החורים שאיפשרו אותן:
+   ⚠️ דיאלוג הכפילות ב-`atOpenSession` אינו מספיק לבדו — ⛔ הכפילויות
+      נוצרו על אפו, ולכן שני החורים שמתחתיו סגורים אף הם:
       א. הבדיקה רצה מול `window._atData` **כפי שהוא בזיכרון**, ו-`atLoadData`
          מחזירה את העותק הטעון בלי לגעת ברשת. מכשיר שטען את היום לפני
          שמכשיר אחר פתח את הסדר פשוט לא ראה אותו.
@@ -8396,7 +8457,7 @@ function atShowOverrideDialog(sid, student) {
   var typeClr=TC[a.type]||'#1a3a6b';
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
-  var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var datesHtml='<div style="font-size:.78rem;color:var(--text3);line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div style="font-size:.85rem;color:'+typeClr+';font-weight:700;margin-bottom:8px">'+esc(typeLbl)+'</div>'+
     reasonHtml+
@@ -8480,13 +8541,13 @@ window.atRenderStudents = function() {
     else unmarked.push(s);
   });
 
-  var bs='padding:6px 11px;border:2px solid #d8e2f0;border-radius:7px;font-family:Heebo;font-size:.8rem;cursor:pointer;font-weight:700;transition:all .15s;';
+  var bs='padding:6px 11px;border:2px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.8rem;cursor:pointer;font-weight:700;transition:all .15s;';
   function mkBtn(sid,code,label){
     var cur=(window._atMarks[sid]||{}).s;
     var isOn=(cur===code);
     var col=AT_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
-      'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
+      'background:var(--bg2);color:var(--text2);border-color:var(--border);');
     return '<button data-act="at-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
@@ -8515,7 +8576,7 @@ window.atRenderStudents = function() {
         'oninput="window.atSetLateMin('+idArg(s.id)+',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
-        '<span style="font-size:.74rem;color:#888">דק׳</span>'+
+        '<span style="font-size:.74rem;color:var(--text3)">דק׳</span>'+
         (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'#f9fafb':'#fff';
@@ -8668,7 +8729,7 @@ function _atPaintArchive(el, records, warn) {
       html+='<div style="margin-bottom:12px">';
       // כותרת חודש
       html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
-        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
+        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg);border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
         '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
       '</div>';
       html+='<div id="'+mId+'" style="display:'+(isMonthCur?'block':'none')+';padding-right:8px">';
@@ -8702,13 +8763,13 @@ function _atPaintArchive(el, records, warn) {
           Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=atSummaryHtml(cnts);
           var sId=uid();
-          html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg2)">';
           var _mk2=ysMarks(rec);
           var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -8720,7 +8781,7 @@ function _atPaintArchive(el, records, warn) {
             var sn=_s2.name;
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var col=ARC_COL[m2.s]||'#888';
-            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.82rem">'+
               '<span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+'</span></div>';
           });
           html+=rows.join('')+'</div></div>';
@@ -8770,7 +8831,7 @@ window.atShowExportDialog = function(type) {
     +'<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
     +'<div style="font-size:.8rem;color:var(--text3);text-align:center">השאר ריק לייצוא כל הנתונים</div>',
      '<button data-act="at-export-go" data-type="'+esc(type)+'" style="flex:1;padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'
-    +'<button data-act="modal-close" style="flex:1;padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
+    +'<button data-act="modal-close" style="flex:1;padding:9px 24px;background:var(--bg);color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
 };
 
 window.atExportConfirm = async function(type) {
@@ -8939,7 +9000,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
 
   // כותרת ניווט
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
     '<button data-act="at-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
@@ -9005,15 +9066,15 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
-    html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    html+='<button data-act="at-sup-detail" data-id="'+esc(sid)+'" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<span style="color:var(--text2)">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    html+='<button data-act="at-sup-detail" data-id="'+esc(sid)+'" style="background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -9033,7 +9094,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
       html+=stuTreats.slice().reverse().map(function(t){
         var hd=t.date_heb;
         var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
-        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem">'+
           '<span style="color:var(--text2)">'+dl+'</span>'+
           '<span style="font-weight:600">'+esc(t.type)+'</span>'+
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
@@ -9120,7 +9181,7 @@ window.atSupDetail = function(sid) {
       var dowStr='יום '+atDow(r.date_iso);
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(ARC_LBL_DET[r.mark]||r.mark);
       var col=ARC_COL_DET[r.mark]||'#888';
-      rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:.83rem;direction:rtl">';
+      rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.83rem;direction:rtl">';
       rows+='<span style="min-width:54px;color:var(--text2)">'+(dowStr)+'</span>';
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
@@ -9146,7 +9207,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
     {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
   ];
   var btns=CODES.map(function(cd){
-    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
+    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--bg2);color:'+cd.col;
     return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
@@ -9215,7 +9276,7 @@ function atCheckAlert() {
   if(!alerts.length) return;
 
   var list=alerts.slice(0,10).map(function(s){
-    return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid #eee">'+esc(s.name)+
+    return '<div style="padding:5px 0;font-size:.85rem;border-bottom:1px solid var(--border)">'+esc(s.name)+
       (s.absent>=20?'<span style="color:#e53e3e;margin-right:6px"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span style="color:#b7791f;margin-right:6px"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
@@ -9223,7 +9284,7 @@ function atCheckAlert() {
   openModal('⚠️ התראת חיסורים',
     '<p style="font-size:.85rem;color:var(--text2);margin-bottom:14px;text-align:center">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
     '<div style="max-height:220px;overflow-y:auto">'+list+'</div>',
-    '<button data-act="modal-close" style="flex:1;background:#1a3a6b;color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>');
+    '<button data-act="modal-close" style="flex:1;background:var(--navy);color:#fff;border:none;border-radius:9px;padding:10px 32px;font-family:Heebo;font-size:.92rem;cursor:pointer">הבנתי</button>');
 }
 
 // -------- הגדרות מודול --------
@@ -9560,7 +9621,7 @@ function slFillSessionBtns() {
   slSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:#eef2fa;border:2px solid var(--border);border-radius:10px;'+
+    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy);cursor:pointer;transition:all .18s';
     btn.onmouseover=function(){this.style.background='#dbe4f7';};
     btn.onmouseout=function(){this.style.background='#eef2fa';};
@@ -9657,7 +9718,7 @@ function slRenderTodaySessions() {
     var cnts={};
     Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
     var summary=slSummaryHtml(cnts);
-    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:#f4f8ff;border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
+    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:9px 14px;cursor:pointer">'+
       '<span style="font-weight:700;font-size:.88rem;color:var(--navy);min-width:60px">'+esc(rec.session)+'</span>'+
       pendTag(PK_SL_SESS+rec.id)+
       '<div style="flex:1;font-size:.8rem;display:flex;gap:5px;flex-wrap:wrap;direction:rtl">'+summary+'</div>'+
@@ -9858,7 +9919,7 @@ function slShowOverrideDialog(sid, student) {
   var typeClr=TC[a.type]||'#1a3a6b';
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div style="font-size:.82rem;color:#555;margin-bottom:5px">סיבה: '+a.reason+'</div>':'';
-  var datesHtml='<div style="font-size:.78rem;color:#888;line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var datesHtml='<div style="font-size:.78rem;color:var(--text3);line-height:1.8">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div style="font-size:.85rem;color:'+typeClr+';font-weight:700;margin-bottom:8px">'+esc(typeLbl)+'</div>'+
     reasonHtml+datesHtml+
@@ -9936,13 +9997,13 @@ window.slRenderStudents = function() {
     else unmarked.push(s);
   });
 
-  var bs='padding:6px 11px;border:2px solid #d8e2f0;border-radius:7px;font-family:Heebo;font-size:.8rem;cursor:pointer;font-weight:700;transition:all .15s;';
+  var bs='padding:6px 11px;border:2px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.8rem;cursor:pointer;font-weight:700;transition:all .15s;';
   function mkBtn(sid,code,label){
     var cur=(window._slMarks[sid]||{}).s;
     var isOn=(cur===code);
     var col=SL_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
-      'background:#f8fafd;color:var(--text2);border-color:#d8e2f0;');
+      'background:var(--bg2);color:var(--text2);border-color:var(--border);');
     return '<button data-act="sl-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
@@ -9971,7 +10032,7 @@ window.slRenderStudents = function() {
         'oninput="window.slSetLateMin('+idArg(s.id)+',this.value)" '+
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
         'style="width:54px;padding:3px 6px;border:1.5px solid #dd6b20;border-radius:6px;font-family:Heebo;font-size:.82rem;text-align:center">'+
-        '<span style="font-size:.74rem;color:#888">דק׳</span>'+
+        '<span style="font-size:.74rem;color:var(--text3)">דק׳</span>'+
         (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" style="padding:3px 10px;background:#dd6b20;color:#fff;border:none;border-radius:5px;font-family:Heebo;font-size:.75rem;cursor:pointer;font-weight:700">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
@@ -10130,7 +10191,7 @@ function _slPaintArchive(el, records, warn) {
       var mName=window._hcMN(hy)[mi];
       html+='<div style="margin-bottom:12px">';
       html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
-        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:#dde8fb;border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
+        'style="display:flex;align-items:center;gap:8px;padding:8px 13px;background:var(--bg);border-radius:7px;cursor:pointer;font-weight:700;font-size:.87rem;color:var(--navy);margin-bottom:6px;user-select:none">'+
         '<span style="flex:1">📆 '+mName+'</span><span style="font-size:.72rem;opacity:.55">▾</span>'+
       '</div>';
       html+='<div id="'+mId+'" style="display:'+(isMonthCur?'block':'none')+';padding-right:8px">';
@@ -10163,13 +10224,13 @@ function _slPaintArchive(el, records, warn) {
           Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=slSummaryHtml(cnts);
           var sId=uid();
-          html+='<div style="background:#fff;border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:#fafbfd">';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg2)">';
           var _mk2=ysMarks(rec);
           var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -10182,7 +10243,7 @@ function _slPaintArchive(el, records, warn) {
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var noteStr=m2.note?(' — '+m2.note):'';
             var col=ARC_COL[m2.s]||'#888';
-            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+            return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:.82rem">'+
               '<span>'+sn+'</span><span style="color:'+col+';font-weight:600">'+lbl+noteStr+'</span></div>';
           });
           html+=rows.join('')+'</div></div>';
@@ -10232,7 +10293,7 @@ window.slShowExportDialog = function(type) {
     '<div style="margin-bottom:22px"><div style="font-size:.85rem;font-weight:600;color:var(--text2);margin-bottom:6px">עד תאריך</div>'+window._hcBuild('slExpT',null)+'</div>'+
     '<div style="font-size:.8rem;color:var(--text3);text-align:center">השאר ריק לייצוא כל הנתונים</div>',
     '<button data-act="sl-export-go" data-type="'+esc(type)+'" style="flex:1;padding:9px 24px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ייצא</button>'+
-    '<button data-act="modal-close" style="flex:1;padding:9px 24px;background:#f4f6fa;color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
+    '<button data-act="modal-close" style="flex:1;padding:9px 24px;background:var(--bg);color:var(--navy);border:1.5px solid var(--border);border-radius:9px;font-family:Heebo;font-size:.92rem;font-weight:700;cursor:pointer">ביטול</button>');
 };
 
 /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
@@ -10392,7 +10453,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!window._hcBase(hy+1);
 
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
     '<button data-act="sl-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy)">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
@@ -10453,15 +10514,15 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:#fff;border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
     html+='<div style="display:flex;gap:8px;align-items:center;font-size:.82rem;flex-wrap:wrap">';
     html+='<span style="color:#0e7490">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span style="color:#dd6b20">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
-    html+='<span style="color:#666">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    html+='<button data-act="sl-sup-detail" data-id="'+esc(sid)+'" style="background:#eef2fa;border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
+    html+='<span style="color:var(--text2)">טיפולים: <b>'+stuTreats.length+'</b></span>';
+    html+='<button data-act="sl-sup-detail" data-id="'+esc(sid)+'" style="background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:3px 9px;font-family:Heebo;font-size:.78rem;cursor:pointer;color:var(--navy);font-weight:700">🔍 פירוט</button>';
     html+='</div>';
     html+='<span class="sl-sup-chev" style="font-size:1rem;color:var(--text3);transition:transform .2s;transform:rotate(0deg);margin-right:2px">›</span>';
     html+='</div>';
@@ -10480,7 +10541,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
       html+=stuTreats.slice().reverse().map(function(t){
         var hd=t.date_heb;
         var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
-        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee;font-size:.82rem">'+
+        return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem">'+
           '<span style="color:var(--text2)">'+dl+'</span>'+
           '<span style="font-weight:600">'+esc(t.type)+'</span>'+
           (t.note?'<span style="color:var(--text2)">— '+esc(t.note)+'</span>':'')+
@@ -10564,7 +10625,7 @@ window.slSupDetail = function(sid) {
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(SL_LBL_DET[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
       var col=SL_COL_DET[r.mark]||'#888';
-      rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:.83rem;direction:rtl">';
+      rows+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.83rem;direction:rtl">';
       rows+='<span style="min-width:54px;color:var(--text2)">'+dowStr+'</span>';
       rows+='<span style="min-width:90px;color:#333">'+hbr+'</span>';
       rows+='<span style="min-width:60px;font-weight:600;color:var(--navy)">'+esc(r.session)+'</span>';
@@ -10590,7 +10651,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
     {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
   ];
   var btns=CODES.map(function(cd){
-    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:#fff;color:'+cd.col;
+    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--bg2);color:'+cd.col;
     return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
