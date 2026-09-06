@@ -2071,7 +2071,7 @@ function saveStudentStatus(type) {
   s.updatedAt = Date.now();
 
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   ysRefreshApprovalMarks(sid); // רענון סדרים פתוחים של היום
   renderStudents();
   closeModal();
@@ -2751,17 +2751,13 @@ async function _saveUserInner() {
   }
   var res;
   try {
-    res = await withTimeout(id
-      ? SB.from('ys_users').update(obj).eq('id', id)
-      : SB.from('ys_users').insert(obj));
+    res = await writeUser(id, obj);
     // נפילה-חזרה לחלון שבין דחיפת הקוד להרצת המיגרציה: בלי זה **כל**
     // שמירת משתמש הייתה נכשלת עד שהעמודות ייווצרו. המשתמש נשמר, והכניסה
     // האופליין שלו תיפתח כשתיווצר לו טביעה בשינוי הסיסמה הבא.
     if (res && res.error && ysIsMissingFpCol(res.error)) {
       delete obj.pass_salt; delete obj.pass_fp; noFp = true;
-      res = await withTimeout(id
-        ? SB.from('ys_users').update(obj).eq('id', id)
-        : SB.from('ys_users').insert(obj));
+      res = await writeUser(id, obj);
     }
   } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
@@ -2771,10 +2767,25 @@ async function _saveUserInner() {
   renderUsersList();
 }
 
+/* ─────────────────────── כתיבת משתמש — הפונקציה האחת ─────────────────────
+   ⛔ **כל כתיבה לטבלת המשתמשים עוברת כאן** — ⚠️ הטבלה אינה ב-`PUSH_TABLES`,
+   ⭐ שהמראה המקומית מסירה ממנה את הסיסמה: ⛔ דחיפה גורפת שלה הייתה כותבת
+   אותה חזרה ריקה לכל המשתמשים.
+   ⛔ **והכתיבה דורשת רשת** — ⚠️ אין רשת ⇒ נכשל ברעש ⛔ ולא «נשמר»: ⭐ מה
+   שאינו נדחף לא יעלה לענן בשום מסלול אחר.
+   ⚠️ `insert` ליצירה ו-`update` לעריכה — ⛔ ואין להחליף ביניהם: ⭐ המזהה
+   הוא `SERIAL` שהמסד מקצה, ⛔ ו-`upsert` על אובייקט חלקי היה נופל על
+   `NOT NULL` לפני שההתנגשות מפעילה את `ON CONFLICT`. */
+async function writeUser(id, obj) {
+  return await withTimeout(id
+    ? SB.from('ys_users').update(obj).eq('id', id)
+    : SB.from('ys_users').insert(obj));
+}
+
 async function toggleUserActive(id, current) {
   // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
   var res;
-  try { res = await withTimeout(SB.from('ys_users').update({active: !current}).eq('id', id)); }
+  try { res = await writeUser(id, {active: !current}); }
   catch (e) { toast(MSG_OFFLINE); return; }
   if (res && res.error) {
     toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
@@ -2934,7 +2945,7 @@ async function _changeMyPasswordInner() {
     /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
    *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
   if (!AUTH.user || AUTH.user.id !== _u.id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
-  try { upd = await withTimeout(SB.from('ys_users').update(updObj).eq('id', _u.id)); }
+  try { upd = await writeUser(_u.id, updObj); }
   catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
@@ -5066,7 +5077,7 @@ function sessBoot() {
    ממנה את עֵד הפינוי (סבב 51) — הוא `_ysPushedAt` פר-מפתח. */
 var PL_CFG = {
   every:  3000,
-  active: function () { return true; },
+  active: function () { return sessActive(); },
   seen:   function () { return _ysLastTs; },
   note:   function (ts) { _ysLastTs = ts; },
   ok:     function () { _ysMarkSynced(); },
@@ -5159,6 +5170,133 @@ function plBoot() {
   return true;
 }
 /* ═══════════════ סוף מנגנון המשיכה ══════════════════════════════════════ */
+
+/* ── PUSH_CFG — הדבר היחיד שנבדל בין האפליקציות ────────────────────────── */
+/* ⛔ `ys_users` **אינה כאן ואינה נדחפת לעולם** — ⚠️ המראה מחזיקה טביעות ולא
+   סיסמאות, ⭐ ודחיפת-מצב שלה הייתה כותבת סיסמה ריקה לכל המשתמשים:
+   ⛔ מסלולה הוא `writeUser`, שדורש רשת.
+   ⚠️ הסדרים לפני המצבה — ⛔ הסימון מפנה לתלמיד, ⭐ והמצבה היא מה שהוא
+   מצביע אליו. */
+var PUSH_TABLES = ['ys_attend_sessions', 'ys_sleep_sessions', 'ys_students'];
+var PUSH_CFG = {
+  tables: PUSH_TABLES,
+  chunk:  500,
+  delay:  400,
+  dirty:  function (t, ctx) { return ysPushDirty(t, ctx); },
+  key:    function (t, row) {
+    var c = YS_ROWS_KINDS[YS_ROWS_READ_KEYS[t]];
+    return (c && row && row.id != null) ? (c.pk + row.id) : null;
+  },
+  send:   function (t, rows) { return ysSendRecs(t, rows); },
+  mark:   function (t) { _ysMarkPushed(t); },
+  run:    function () { ysPushToCloud(); },
+};
+/* ═══ שכבת הדחיפה — מודול משותף (סבב 102) ═════════════════════════════════
+   ⛔ שלוש שכבות נפרדות — **מנה · טבלה · טבלאות** — ⚠️ וכל אחת פונקציה
+      משלה: ⭐ שכבות שמעורבבות בפונקציה אחת אינן ניתנות לחתימה ואינן
+      ניתנות למדידה, ⛔ ולכן אותו תפקיד נכתב בארבע צורות בלי שאיש מדד.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ המנה היא `PUSH_CFG.chunk` — ⚠️ הדחיפה הראשונה במכשיר נוגעת בכל
+      הרשומות, ⭐ ובקשה לשורה היא אלפי בקשות רשת: ⛔ **ומנה שנכשלה נדחפת
+      שוב שורה-שורה** — ⚠️ כתיבת מנה היא הכל-או-כלום, ⭐ ושורה פגומה אחת
+      חוסמת את כל התקינות שאיתה.
+   ⛔ ו«אין ראיה» אינו «אין מה לדחוף» — ⚠️ `dirty` שמחזירה `null` מדלגת על
+      הטבלה **בלי לסמן את עֵד הפינוי**, ⭐ ומערך ריק מסמן אותו: ⛔ סימון על
+      טבלה שלא נמשכה היה מתיר לפנות מהדיסק רשומה שמעולם לא עלתה. */
+var _pushTimer = null;
+
+/*  ⛔ שכבה 1 — **מנה אחת ותו לא** — ⚠️ היא אינה יודעת מה מלוכלך ואינה
+ *  נוגעת בסימון ה-⏳: ⭐ כל מה שהיא עושה הוא כתיבה אחת, ⛔ וכשל שלה הוא
+ *  זריקה — ⚠️ תשובה שנושאת `error` אינה זורקת מעצמה, ⭐ והבודקת היחידה
+ *  שלה היא כאן. */
+function pushRow(t, rows) {
+  return Promise.resolve(PUSH_CFG.send(t, rows)).then(function (res) {
+    if (res && res.error) throw res.error;
+    return rows.length;
+  });
+}
+
+/*  ⛔ שכבה 2 — **טבלה אחת**: המנות, סימוני ה-⏳, ועֵד הדחיפה — ⚠️ «אין ראיה»
+ *  אינו הצלחה: ⭐ לא נדחף דבר ⛔ ואין לזקוף זאת כדחיפה שעברה · ⚠️ וכשל רשת
+ *  אינו ראיה לכלום ולכן הסימון נשאר וננסה שוב, ⭐ וכשל סמכותי (ולידציה ·
+ *  מפתח זר · הרשאה · סכימה) יחזור על עצמו לנצח: ⛔ הסימון יורד כדי לא
+ *  להבטיח שליחה חוזרת שלא תקרה, ⚠️ והסיבה נרשמת ואינה נבלעת. */
+function pushTable(t, ctx) {
+  return Promise.resolve(PUSH_CFG.dirty(t, ctx)).then(function (rows) {
+    if (!rows) return { ok: false, still: [], n: 0 };
+    if (!rows.length) { PUSH_CFG.mark(t); return { ok: true, still: [], n: 0 }; }
+    var still = [], n = 0, bad = 0, i = 0;
+    function won(row) {
+      var k = PUSH_CFG.key(t, row);
+      n++;
+      if (k != null) pendClear(k);
+    }
+    function lost(row, e) {
+      var k = PUSH_CFG.key(t, row);
+      console.warn('[push] ' + t, e && (e.message || e));
+      if (isNetErr(e)) { if (k != null) still.push(k); }
+      else { bad++; if (k != null) pendFailed(k); }
+    }
+    /*  ⛔ הנפילה-חזרה פר-שורה — ⚠️ המנה כולה נדחתה ואיננו יודעים מי בה
+     *  פגומה, ⭐ ולכן כל שורה נשלחת לבדה: ⛔ כך הפגומה מבודדת ⚠️ ואינה
+     *  חוסמת את התקינות שנשלחו איתה. */
+    function solo(part, j) {
+      if (j >= part.length) return Promise.resolve();
+      var row = part[j];
+      return pushRow(t, [row]).then(function () { won(row); },
+                                    function (e) { lost(row, e); })
+        .then(function () { return solo(part, j + 1); });
+    }
+    function batch() {
+      if (i >= rows.length) return Promise.resolve();
+      var part = rows.slice(i, i + PUSH_CFG.chunk);
+      i += part.length;
+      return pushRow(t, part).then(function () { part.forEach(won); },
+                                   function () { return solo(part, 0); })
+        .then(batch);
+    }
+    return batch().then(function () {
+      /*  ⭐ «באמת נכתב משהו לענן» נמדד כאן — ⛔ בלי קידום החותמת הדחיפה
+       *  נשארת בלתי-נראית לכל מכשיר אחר לנצח: ⚠️ הם מושכים רק כשהיא
+       *  מתקדמת. */
+      if (n) plTouch();
+      /*  ⭐ עֵד הפינוי פר-מפתח — ⛔ רק כשלא נשארה שורה בכשל רשת: ⚠️ «עברנו
+       *  על כל המלוכלכות והענן קיבל את כולן» הוא בדיוק התנאי שמתיר לפנות
+       *  מהדיסק רשומה ישנה של אותה טבלה. */
+      if (!still.length) PUSH_CFG.mark(t);
+      return { ok: !still.length && !bad, still: still, n: n };
+    });
+  });
+}
+
+/*  ⛔ שכבה 3 — **הטבלאות**, בסדר שמוצהר ב-`PUSH_CFG.tables` — ⚠️ הסדר הוא
+ *  מה ששומר על המפתח הזר: ⭐ האב נכתב לפני הבן, ⛔ ואין תלות סדר בין
+ *  שורות של אותה טבלה · ⚠️ וכשל בטבלה אחת אינו עוצר את הבאות אחריה. */
+function pushDirty(ctx) {
+  var acc = [], ok = true, n = 0, i = 0;
+  function step() {
+    if (i >= PUSH_CFG.tables.length) return Promise.resolve({ ok: ok, still: acc, n: n });
+    return pushTable(PUSH_CFG.tables[i++], ctx).then(function (r) {
+      acc = acc.concat(r.still);
+      n += r.n;
+      if (!r.ok) ok = false;
+      return step();
+    });
+  }
+  return step();
+}
+
+/*  ⛔ המתזמן — ⚠️ משפך הכתיבה המקומית היחיד, ⭐ ולכן זו נקודת הדריכה של
+ *  מודול הניסיון החוזר · ⛔ **וההשהיה מתחילה מחדש בכל כתיבה** — ⚠️ שתי
+ *  שמירות רצופות הן מחזור סנכרון אחד ⛔ ולא שניים, ⭐ והרשומה כבר מסומנת
+ *  ⏳ לפני ההשהיה. */
+function schedulePush() {
+  rtyNote();
+  if (_pushTimer) clearTimeout(_pushTimer);
+  _pushTimer = setTimeout(function () { _pushTimer = null; PUSH_CFG.run(); }, PUSH_CFG.delay);
+}
+/* ═══════════════ סוף מודול שכבת הדחיפה ══════════════════════════════════ */
 
 
 
@@ -5617,8 +5755,8 @@ function _ysSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
 async function _ysQueueSend(key, value) {
   var kind = YS_ROWS_READ_KEYS[key];
   if (!kind) return _ysCfgSetRaw(key, value);
-  var r = (kind === 'students') ? await ysRowsPushStudents(value)
-                                : await ysRowsPushSessions(value, kind);
+
+  var r = await pushTable(key, value);
   return (r && r.ok) ? {} : { error: { message: 'rows:' + key } };
 }
 async function ysFlushQueue() {
@@ -5715,7 +5853,7 @@ var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
-      `ysRowsPushSessions` (סבב 39) — שני עותקים של מסלול הכתיבה הם שתי
+      מסלול הנוכחות — שני עותקים של מסלול הכתיבה הם שתי
       הזדמנויות שאחד מהם ייסחף, בדיוק הלקח של איחוד מנועי המיזוג בסבב 38.
    ⚠️ `note` קיים בשינה בלבד — נמדד: סימון שינה הוא `{s,min,note}` וסימון
       נוכחות `{s,min}`. ⛔ ואין להוסיף `note` גם לנוכחות «לשם אחידות»
@@ -5846,50 +5984,56 @@ async function ysRowsUpsert(table, rows) {
   return true;
 }
 
-/* דחיפת הסדרים והסימונים. מחזירה `{ok, n}`; ⛔ הקוראים אינם רשאים לגזור
-   ממנה הצלחה או כישלון של הסנכרון (סבב 36) — ר' כותרת הבלוק.
+/* בחירת מה לדחוף. ⛔ הסדרים נבחרים מול מפת החותמות המרוחקת, ⚠️ ורשומה
+   מסומנת ⏳ נחשבת תמיד «לדחיפה»: ⛔ בלי הסעיף הזה היא נשארת מסומנת לנצח
+   ⛔ ולעולם אינה נדחפת.
+   ⚠️ **והמצבה נדחפת בשלמותה, בלי מפת חותמות משלה** — ⭐ 71 שורות זולות
+   מכדי להצדיק משיכה נוספת בכל עלייה.
+   ⛔ ו-`null` הוא «אין ראיה» ⛔ ולא «אין מה לדחוף» — ⚠️ שכבת השורות כבויה
+   או שאין קלט, ⭐ ואז אין לסמן את עֵד הפינוי. */
+async function ysPushDirty(key, arr) {
+  if (!YS_ROWS || !Array.isArray(arr)) return null;
+  var kind = YS_ROWS_READ_KEYS[key];
+  if (!kind) return null;
+  if (kind === 'students') return arr;
+  var cfg = YS_ROWS_KINDS[kind];
+  if (!cfg) return null;
+  var map = await ysRowsRemoteLoad(kind);
+  var dirty = [];
+  arr.forEach(function (rec) {
+    if (!rec || rec.id == null) return;
+    var ts = Math.round(Number(_ysRecTs(rec)) || 0);
+    var known = map ? map[String(rec.id)] : undefined;
+    if (map === null || known === undefined || ts > known || pendHas(cfg.pk + rec.id)) dirty.push(rec);
+  });
+  return dirty;
+}
+
+/* הכתיבה עצמה, למנה שהשכבה המשותפת מסרה.
    ⚠️ האב נכתב **לפני** הבן, כדי שלא ייווצר רגע שבו יש סימון בלי הסדר שלו;
       ⛔ ואין כאן מפתח זר פיזי (סבב 36) — רשומות מגיעות ממכשירים אופליין
       בסדר לא ידוע, ו-`FK` היה דוחה סימון שהקדים את האב שלו. */
-async function ysRowsPushSessions(arr, kind) {
-  kind = kind || 'attend';
+async function ysSendRecs(key, recs) {
+  var kind = YS_ROWS_READ_KEYS[key];
+  if (kind === 'students') {
+    var stRows = [];
+    recs.forEach(function (rec) { var r = ysStudentRow(rec); if (r) stRows.push(r); });
+    if (!stRows.length) return {};
+    if (!(await ysRowsUpsert('ys_students_rows', stRows))) return { error: { message: 'ys_students_rows' } };
+    return {};
+  }
   var cfg = YS_ROWS_KINDS[kind];
-  if (!cfg || !YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
-  try {
-    var map = await ysRowsRemoteLoad(kind);
-    var dirty = [];
-    arr.forEach(function (rec) {
-      if (!rec || rec.id == null) return;
-      var ts = Math.round(Number(_ysRecTs(rec)) || 0);
-      var known = map ? map[String(rec.id)] : undefined;
-      if (map === null || known === undefined || ts > known || pendHas(cfg.pk + rec.id)) dirty.push(rec);
-    });
-    if (!dirty.length) return { ok: true, n: 0 };
-    var sRows = [], mRows = [];
-    dirty.forEach(function (rec) {
-      var r = ysSessionRow(rec);
-      if (r) { sRows.push(r); mRows = mRows.concat(ysMarkRows(rec, kind)); }
-    });
-    if (!sRows.length) return { ok: true, n: 0 };
-    if (!(await ysRowsUpsert(cfg.parent, sRows))) return { ok: false, n: 0 };
-    if (!(await ysRowsUpsert(cfg.child, mRows)))  return { ok: false, n: 0 };
-    if (!_ysRowsRemote[kind]) _ysRowsRemote[kind] = {};
-    sRows.forEach(function (r) { _ysRowsRemote[kind][r.client_id] = r.updated_at; });
-    return { ok: true, n: sRows.length };
-  } catch (e) { return { ok: false, n: 0 }; }
-}
-
-/* דחיפת המצבה. 71 שורות — נדחפות בשלמותן, ⚠️ ובלי מפת חותמות משלהן:
-   הן זולות מכדי להצדיק משיכה נוספת בכל עלייה. */
-async function ysRowsPushStudents(arr) {
-  if (!YS_ROWS || !Array.isArray(arr) || !arr.length) return { ok: false, n: 0 };
-  try {
-    var rows = [];
-    arr.forEach(function (rec) { var r = ysStudentRow(rec); if (r) rows.push(r); });
-    if (!rows.length) return { ok: true, n: 0 };
-    if (!(await ysRowsUpsert('ys_students_rows', rows))) return { ok: false, n: 0 };
-    return { ok: true, n: rows.length };
-  } catch (e) { return { ok: false, n: 0 }; }
+  var sRows = [], mRows = [];
+  recs.forEach(function (rec) {
+    var r = ysSessionRow(rec);
+    if (r) { sRows.push(r); mRows = mRows.concat(ysMarkRows(rec, kind)); }
+  });
+  if (!sRows.length) return {};
+  if (!(await ysRowsUpsert(cfg.parent, sRows))) return { error: { message: cfg.parent } };
+  if (!(await ysRowsUpsert(cfg.child, mRows)))  return { error: { message: cfg.child } };
+  if (!_ysRowsRemote[kind]) _ysRowsRemote[kind] = {};
+  sRows.forEach(function (r) { _ysRowsRemote[kind][r.client_id] = r.updated_at; });
+  return {};
 }
 /* ══════════════════════════════════════════════════════════════════════════
    שלב ב — מקור הקריאה עובר לטבלאות (סבב 55)
@@ -6642,7 +6786,7 @@ async function ysPushToCloud() {
     var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students',
                                       ysStudentPair);
     _ysStudentsSaveRaw(mergedSt);
-    var r = await ysRowsPushStudents(mergedSt);
+    var r = await pushTable('ys_students', mergedSt);
     if (r && r.ok) pendConfirmPush(PK_STUDENT, _t0);
     else if (mergedSt.length) { _ysQueueAdd('ys_students', mergedSt); ysUpdateQueueBadge(); }
     ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
@@ -6749,7 +6893,7 @@ async function ysPullFromCloud() {
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
       var mergedS = ysMergeWithDropLog(_ysStudentsRaw(), s, function(r){ return r.id; }, false, 'ys_students');
       _ysStudentsSaveRaw(mergedS);
-      if (pullMigrated) scheduleYsPush();
+      if (pullMigrated) schedulePush();
     }
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await ysCfgGet('ys_approvals');
@@ -6877,12 +7021,6 @@ window.addEventListener('offline', function() {
   ysUpdateQueueBadge();
 });
 
-// דחיפה מושהית
-var _ysPushTimer = null;
-function scheduleYsPush() {
-  if (_ysPushTimer) clearTimeout(_ysPushTimer);
-  _ysPushTimer = setTimeout(function() { ysPushToCloud(); }, 400);
-}
 // ============ סוף סנכרון הענן ============
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -7229,7 +7367,7 @@ window.setStudentInactive = function(sid){
   if(!s.cycle) s.cycle=ysCycleFor(s.cls);
   s.updatedAt=Date.now();
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   renderStudents();
   toast('✅ '+s.name+' סומן כלא פעיל');
 };
@@ -7240,7 +7378,7 @@ window.setStudentActive = function(sid){
   if(!s){toast('⚠️ תלמיד לא נמצא');return;}
   s.active=true;
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   renderStudents();
   toast('✅ '+s.name+' הוחזר לפעיל');
 };
@@ -7325,7 +7463,7 @@ window.doYearTransition = function(){
     }
   });
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   filterClass('all');
   toast('✅ מעבר שנתי הושלם — '+changed+' תלמידים עודכנו');
 };
@@ -7371,7 +7509,7 @@ function _runLegacyMigration() {
   var students = getStudents();
   var changed = false;
   students.forEach(function(s) { if (_migrateStudentLegacy(s)) changed = true; });
-  if (changed) { saveStudents(students); scheduleYsPush(); }
+  if (changed) { saveStudents(students); schedulePush(); }
 }
 
 
@@ -7464,7 +7602,7 @@ window.cancelStudentStatus = function() {
   s.present = true;
   s.updatedAt = Date.now();
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
   ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
@@ -7485,7 +7623,7 @@ window.cancelSingleAbsence = function(absenceId) {
   if (stillActive.length === 0) s.present = true;
   s.updatedAt = Date.now();
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   ysRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
   renderStudents();
   ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
@@ -7638,7 +7776,7 @@ function saveStudent(){
   //    **בסדר האלפביתי** ולא זה שנוסף; הסימון נכתב על רשומה אחרת, ושלוש
   //    נקודות הקריאה (`pendTag`, בחירת מה לדחוף, שער הפינוי) לא ראו אותו.
   pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : newId));
-  scheduleYsPush();
+  schedulePush();
   closeModal();
   renderStudents();
 }
@@ -7729,7 +7867,7 @@ window.importStudentsFromFile = function(input) {
           //    במונה, אינו נחשב «לדחיפה», ושער הפינוי רשאי לפנות תלמיד
           //    שטרם עלה לענן. כל שאר מסלולי כתיבת התלמידים כבר מסמנים.
           addedIds.forEach(function(id){ pendMark(PK_STUDENT + id); });
-          scheduleYsPush();
+          schedulePush();
           renderStudents();
         }
       }
@@ -7772,7 +7910,7 @@ window.confirmDeleteAll = function() {
   // saveStudents([]) הפיל את התלמידים החיים בלי tombstone, ולכן המיזוג הבא
   // החזיר את כולם מהענן תוך פחות משנייה. אותה ליבה כמו מחיקת תלמיד בודד.
   var n = ysTombstoneStudents(getStudents().map(function(s){ return s.id; }));
-  scheduleYsPush();
+  schedulePush();
   renderStudents();
   toast(n ? ('🗑️ ' + n + ' תלמידים נמחקו') : 'אין תלמידים למחיקה');
 };
@@ -7998,14 +8136,14 @@ async function atSaveData(data) {
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
        לערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
-    var _rAt=await ysRowsPushSessions(data);
+    var _rAt=await pushTable('ys_attend_sessions',data);
     /* ⛔ כתיבה שנכשלה חוזרת לתור ⛔ ואינה נשכחת — ⚠️ בלי זה רשומה שנכתבה
        אופליין הייתה יושבת על הדיסק עד העריכה הבאה, ⭐ ואם לא הייתה כזו —
        לנצח: ⛔ הדחיפה היחידה שהייתה מנסה שוב היא זו שהמשתמש יזם. */
     if(!(_rAt&&_rAt.ok)&&ysCount(data)) { _ysQueueAdd('ys_attend_sessions',data); ysUpdateQueueBadge(); }
     // ⚠️ רק כתיבה שהצליחה היא ראיה — ⭐ ואותה עדות בדיוק מזינה את הסימון ⏳
     //    ואת עֵד הפינוי; ר' `_ysPushedAt`.
-    if(_rAt&&_rAt.ok) { pendConfirmPush(PK_AT_SESS,_t0); _ysMarkPushed('ys_attend_sessions'); }
+    if(_rAt&&_rAt.ok) pendConfirmPush(PK_AT_SESS,_t0);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
@@ -8599,7 +8737,7 @@ window.atCancelStudentStatusFromReg = function(sid) {
   s.present=true;
   s.updatedAt=Date.now();
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   // הסר auto-mark מהרישום הנוכחי, החזר ל"לא סומן"
   delete window._atMarks[sid];
   delete window._atCleared[sid];
@@ -9636,9 +9774,9 @@ async function slSaveData(data) {
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
        לערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
-    var _rSl=await ysRowsPushSessions(data,'sleep');
+    var _rSl=await pushTable('ys_sleep_sessions',data);
     if(!(_rSl&&_rSl.ok)&&ysCount(data)) { _ysQueueAdd('ys_sleep_sessions',data); ysUpdateQueueBadge(); }
-    if(_rSl&&_rSl.ok) { pendConfirmPush(PK_SL_SESS,_t0); _ysMarkPushed('ys_sleep_sessions'); }
+    if(_rSl&&_rSl.ok) pendConfirmPush(PK_SL_SESS,_t0);
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
   } catch (e) { ysWriteFail('slSaveData', e); }
@@ -10069,7 +10207,7 @@ window.slCancelStudentStatusFromReg = function(sid) {
   s.present=true;
   s.updatedAt=Date.now();
   saveStudents(students);
-  scheduleYsPush();
+  schedulePush();
   delete window._slMarks[sid];
   delete window._slCleared[sid];
   delete window._slPending[sid];

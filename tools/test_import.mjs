@@ -104,7 +104,7 @@ function run(src, opts) {
     getStudents: () => (o.existing || []).slice(),
     saveStudents: (arr) => { saved.push(arr.slice()); return o.writeFails ? false : true; },
     pendMark: (k) => { marked.push(k); },
-    scheduleYsPush: () => { summary.pushed = true; },
+    schedulePush: () => { summary.pushed = true; },
     renderStudents: () => {},
     /*  ⛔ הסיכום עובר ב-`openModal` מסבב 80 — ⚠️ עד אז הוא מילא שלושה
      *  אלמנטים מוצהרים והציג מיכל משלו; ⭐ הרתמה לוכדת את הקריאה עצמה,
