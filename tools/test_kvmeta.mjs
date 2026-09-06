@@ -129,8 +129,8 @@ ok(/revoke all on function public\.kv_touch_updated_at\(\) from public, anon, au
    '13 · ⛔ `revoke execute` על הפונקציה — היא אינה יורשת הרשאות');
 ok(/revoke all on public\.kv\s+from anon, authenticated/.test(sql) &&
    /grant select, insert, update on public\.kv\s+to anon, authenticated/.test(sql),
-   '14 · ⛔ REVOKE לפני GRANT — אין DELETE/TRUNCATE (כלל ברזל 10 סעיף 9)');
-/* ⛔ מבנה בלבד — כלל ברזל 10 סעיף 7. */
+   '14 · ⛔ REVOKE לפני GRANT — אין DELETE/TRUNCATE');
+/* ⛔ מבנה בלבד — מיגרציה שנוגעת בנתונים אינה אידמפוטנטית. */
 ok(!/^\s*(update|delete|insert)\s/im.test(sql.replace(/^\s*--.*$/gm, '')),
    '15 · ⛔ המיגרציה אינה נוגעת בנתונים — מבנה בלבד');
 
