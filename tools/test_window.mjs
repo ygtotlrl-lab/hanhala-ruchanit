@@ -271,32 +271,31 @@ function mirrorHarness(store) {
   vm.runInContext(
     [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES'),
      srcVar('YS_MIRROR_TABLES'), srcVar('YS_MIRROR_STREAMS'), srcVar('YS_ROWS_KINDS'),
-     srcVar('YS_SPLIT_MIGRATE'), srcVar('YS_SETTINGS_MIGRATE')].join('\n') + '\n' +
+    ].join('\n') + '\n' +
     ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
      'mirrorBoot', '_ysRowSet', 'ysSessionRow', 'ysMarkRows',
      'ysStudentRow', '_ysRecTs', 'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame',
-     '_ysSplitRecs', 'ysMirrorPutRecs', 'ysMirrorWriteRecs', '_ysIsRecArr',
-     '_ysCfgRows', 'ysCfgLocalGet', 'ysCfgLocalSet', 'ysMirrorSplitMigrate',
+     '_ysSplitRecs', 'ysMirrorPutRecs', 'ysMirrorWriteRecs',
+     '_ysCfgRows', 'ysCfgLocalGet', 'ysCfgLocalSet',
      '_ysDiskArr', '_ysStudentsRaw', '_ysStudentsSaveRaw', '_ysStDiskSave',
      'getStudents'].map(srcFn).join('\n'), ctx);
   return ctx;
 }
 {
-  /*  ⛔ ההגירה של סבב 116 — ⚠️ מראה של **רשומות** הופכת למראה של **שורות**,
-   *  ⭐ והזיהוי בצורה: שורה נושאת `client_id` ורשומה נושאת `id`. */
+  /*  ⛔ המראה מחזיקה **שורות** — ⚠️ והרשומה מורכבת מהן בקריאה: ⭐ ההגירה
+   *  שהמירה את הצורה ירדה בסבב שאחרי זה שהריץ אותה. */
   const store = {};
-  const stu = [{ id: 1, name: 'אברהם', cls: 'a' }, { id: 2, name: 'יצחק', cls: 'b', deleted: true }];
-  const at = [{ id: 's1', updatedAt: 5, marks: { 1: { s: 'p', min: 0 } } }];
-  store['ys_mirror_students'] = JSON.stringify(stu);
-  store['ys_mirror_attend_sessions'] = JSON.stringify(at);
+  const h0 = mirrorHarness(store);
+  h0.ysMirrorPutRecs('ys_students_rows',
+    [{ id: 1, name: 'אברהם', cls: 'a' }, { id: 2, name: 'יצחק', cls: 'b', deleted: true }]);
+  h0.ysMirrorPutRecs('ys_sessions', [{ id: 's1', updatedAt: 5, marks: { 1: { s: 'p', min: 0 } } }]);
   const h = mirrorHarness(store);
-  h.ysMirrorSplitMigrate();
   assert(JSON.parse(store['ys_mirror_sessions']).length === 1 &&
          JSON.parse(store['ys_mirror_marks']).length === 1 &&
          JSON.parse(store['ys_mirror_students_rows']).length === 2,
-    '⭐ ההגירה פירקה את הרשומות לשורות בשלוש הטבלאות');
+    '⭐ הכתיבה מפרקת את הרשומות לשורות בשלוש הטבלאות');
   assert(!('ys_mirror_attend_sessions' in store) && !('ys_mirror_students' in store),
-    '⛔ ואפס מפתח כפול — הישנים ירדו אחרי שהחדשים נכתבו');
+    '⛔ ואפס מפתח בצורה הישנה');
   h.mirrorLoad();
   assert(h.MIRROR.ys_students_rows.length === 2 && h.MIRROR.ys_sessions.length === 1,
     '⭐ הטעינה ממפתחת בשם הטבלה');
@@ -311,8 +310,8 @@ function mirrorHarness(store) {
   assert(JSON.parse(store['ys_mirror_students_rows'])[0].client_id === '3',
     '⛔ הכתיבה יורדת למפתח המראה בלבד, כשורה');
   const before2 = JSON.stringify(store);
-  h.ysMirrorSplitMigrate();
-  assert(JSON.stringify(store) === before2, '⛔ ריצה שנייה של ההגירה אינה משנה דבר');
+  h.mirrorLoad();
+  assert(JSON.stringify(store) === before2, '⛔ וטעינה אינה כותבת דבר');
 }
 {
   /*  ⛔ המיפוי 1:1 ל-`PUSH_TABLES` ועוד `noPush` — ⚠️ מפתח מראה שאינו אחד

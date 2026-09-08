@@ -2963,7 +2963,7 @@ async function refreshDashStats() {
 async function loadDash(){
   // ⭐ שכבת המראה ראשונה — ⛔ ההגירה והטעינה לפני כל קורא: ⚠️ קורא שרץ
   //    לפניה מקבל `undefined` ונופל לברירת המחדל.
-  try { ysMirrorSplitMigrate(); mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
+  try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של ysPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
@@ -5854,56 +5854,6 @@ function ysCfgLocalSet(key, value) {
   rows.push({ key: String(key), value: value, updated_at: Date.now() });
   MIRROR.ys_settings = rows;
   return mirrorSave('ys_settings');
-}
-/* ── הגירה מקומית חד-פעמית: מראה של רשומות ⟵ מראה של שורות (סבב 116) ─────
-   ⛔ **קוראת · כותבת · ורק אז מוחקת** — ⚠️ מכשיר שנסגר באמצע אינו מאבד
-      דבר, ⭐ וריצה שנייה אינה משנה דבר: ⛔ הזיהוי הוא **בצורה** ולא בדגל,
-      ⚠️ ששורה נושאת `client_id` ורשומה נושאת `id`.
-   ⛔ ורצה **לפני** הטעינה — ⚠️ טעינה שקדמה לה קוראת רשומות כשורות. */
-var YS_SPLIT_MIGRATE = [
-  { t: 'ys_sessions',       old: 'ys_mirror_attend_sessions' },
-  { t: 'ys_sleep_sessions', old: null },
-  { t: 'ys_students_rows',  old: 'ys_mirror_students' }
-];
-var YS_SETTINGS_MIGRATE = ['ys_reasons', 'ys_approvals', 'ys_absence_reasons',
-                           'ys_attend_cfg', 'ys_sleep_cfg'];
-function _ysIsRecArr(v) {
-  if (!Array.isArray(v) || !v.length) return false;
-  var f = v[0];
-  return !!f && typeof f === 'object' && f.client_id === undefined && f.id !== undefined;
-}
-function ysMirrorSplitMigrate() {
-  YS_SPLIT_MIGRATE.forEach(function (m) {
-    var st = YS_MIRROR_STREAMS[m.t], newK = mirrorKey(m.t), raw = null;
-    try { raw = m.old ? lsGet(m.old, null) : null; } catch (e) { raw = null; }
-    if (raw == null) { try { raw = lsGet(newK, null); } catch (e) { raw = null; } }
-    if (raw == null) return;
-    var v = null;
-    try { v = JSON.parse(raw); } catch (e) { v = null; }
-    if (!_ysIsRecArr(v)) { if (m.old) { try { localStorage.removeItem(m.old); } catch (e2) {} } return; }
-    var r = _ysSplitRecs(m.t, v, false);
-    if (!mirrorWrite(m.t, r.sRows)) return;
-    if (st.child && !mirrorWrite(st.child, r.mRows)) return;
-    if (m.old) { try { localStorage.removeItem(m.old); } catch (e3) { ysWriteFail('ysMirrorSplitMigrate', e3); } }
-  });
-  var rows = [], moved = 0;
-  YS_SETTINGS_MIGRATE.forEach(function (k) {
-    var raw = null;
-    try { raw = lsGet(k, null); } catch (e) { raw = null; }
-    if (raw == null) return;
-    try { rows.push({ key: k, value: JSON.parse(raw), updated_at: 0 }); moved++; }
-    catch (e) { }
-  });
-  if (!moved) return;
-  var cur = null;
-  try { var c = lsGet(mirrorKey('ys_settings'), null); cur = c == null ? null : JSON.parse(c); } catch (e) { cur = null; }
-  var have = {};
-  (Array.isArray(cur) ? cur : []).forEach(function (r) { if (r && r.key != null) have[String(r.key)] = 1; });
-  var out = (Array.isArray(cur) ? cur : []).concat(rows.filter(function (r) { return !have[r.key]; }));
-  if (!mirrorWrite('ys_settings', out)) return;
-  YS_SETTINGS_MIGRATE.forEach(function (k) {
-    try { localStorage.removeItem(k); } catch (e) { ysWriteFail('ysMirrorSplitMigrate', e); }
-  });
 }
 /*  ⛔ מצבות הסימון של סדר אחד — ⚠️ מפה של `מזהה_תלמיד ⟵ חותמת המחיקה`,
  *  ⭐ והיא מה שמונע מסימון שנמחק לחזור מהענן. */
