@@ -338,12 +338,15 @@ function mutFails(label, mutSrc, re) {
 mutFails('כיבוי החלון', SRC.replace('HW_CFG = {\n  enabled: true,',
   'HW_CFG = {\n  enabled: false,'),
   /HW_CFG = \{\s*\n\s*enabled: true,/);
+/*  ⛔ העוגן הוא הכתיבה האחת (סבב 117) — ⚠️ שער הדיסק עבר ל-`mirrorSave`,
+ *  ⭐ ומוטציה שנשארה נעולה על משפך הנוכחות הפסיקה להחליף דבר: ⛔ ואז
+ *  היא נראית כאכיפה ואינה אוכפת. */
 mutFails('הסרת שער הדיסק מהמשפך',
-  SRC.replace("return lsSetArray('ys_attend_sessions', hwDiskFilter('ys_attend_sessions', rows), _ysRecTs);",
-              "return lsSetArray('ys_attend_sessions', rows, _ysRecTs);"),
-  /function _ysAtDiskSave\(rows\) \{\s*\n\s*return lsSetArray\('ys_attend_sessions', hwDiskFilter\(/);
-mutFails('הסרת הראיה העננית', SRC.replace('try { hwNoteCloud(kvKey, r.data); }', '{ }'),
-  /try \{ hwNoteCloud\(kvKey, r\.data\); \}/);
+  SRC.replace('return lsSetArray(k, MIRROR_CFG.clean(t, hwDiskFilter(k, MIRROR[t] || [])), MIRROR_CFG.ts);',
+              'return lsSetArray(k, MIRROR_CFG.clean(t, MIRROR[t] || []), MIRROR_CFG.ts);'),
+  /function mirrorSave\(t\) \{[\s\S]{0,120}?hwDiskFilter\(/);
+mutFails('הסרת הראיה העננית', SRC.replace('try { hwNoteCloud(mirrorKey(kvKey), r.data); }', '{ }'),
+  /try \{ hwNoteCloud\(mirrorKey\(kvKey\), r\.data\); \}/);
 
 /*  מוטציית חלון: «החודש הנוכחי בלבד» — ⛔ חייבת להוציא את החודש הקודם. */
 {
