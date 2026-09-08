@@ -318,10 +318,11 @@ function mirrorHarness(store) {
    *  משניהם, או טבלה שנדחפת ואין לה מראה, ⭐ שניהם שוברים את השכבה. */
   const h = mirrorHarness({});
   const keys = h.mirrorTables();
-  const want = h.PUSH_TABLES.concat(h.MIRROR_CFG.noPush).slice().sort().join('|');
+  const noPush = h.MIRROR_CFG.noPush.map(function (r) { return r.t; });
+  const want = h.PUSH_TABLES.concat(noPush).slice().sort().join('|');
   assert(keys.length === 7 && keys.slice().sort().join('|') === want,
     '⭐ מפתחות המראה = PUSH_TABLES + noPush (' + keys.join('|') + ')');
-  assert(h.MIRROR_CFG.noPush.length === 4, '⛔ וארבע טבלאות אינן בשכבת הדחיפה');
+  assert(noPush.length === 4, '⛔ וארבע טבלאות אינן בשכבת הדחיפה');
   assert(h.mirrorKey('ys_sessions') === 'ys_mirror_sessions',
     '⭐ מפתח האחסון נגזר משם הטבלה, בלי כפל תחילית');
 }

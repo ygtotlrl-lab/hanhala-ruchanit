@@ -3043,18 +3043,21 @@ var TOAST_DEFAULT_MS = 2800;
 /*  ⛔ שבע טבלאות המראה (סבב 116) — ⚠️ **כל אחת היא טבלה במסד**, ⭐ והפירוק
  *  לשורות נעשה בקריאה ובכתיבה כאחת: ⛔ מפתח מקומי שאין לו מקבילה בענן
  *  הוא מבנה שמנוע המיזוג אינו מכריע עליו.
- *  ⚠️ **ומה שאינו נדחף בשכבת הדחיפה מוכרז ב-`noPush`**: ⛔ שתי טבלאות
- *  הסימונים נדחפות **עם האב** ב-`ysSendRecs` ואין להן מסלול משלהן;
- *  ⛔ `ys_settings` נדחפת פר-מפתח ב-`ysCfgSet`; ⚠️ ו-`ys_users` לעולם אינה
- *  נדחפת — ⭐ המראה מסירה ממנה את הסיסמה, ⛔ ודחיפה גורפת הייתה כותבת
- *  אותה חזרה ריקה. */
+ *  ⚠️ **ומה שאינו נדחף בשכבת הדחיפה מוכרז ב-`noPush`** — ⛔ **מה נכנס**:
+ *  שם הטבלה, המסלול שדוחף אותה, וסוג התוספת שלו על הלולאה; ⛔ **מה מפיל**:
+ *  מסלול שאין לו גוף, סוג שאינו אחד משלושה, ומסלול שאינו מוסיף דבר.
+ *  ⭐ **ולמה זה קיים**: מסלול שאינו מוסיף על הלולאה הוא לולאה שנכתבה
+ *  פעמיים, ⛔ ושורותיו מסתכנות בכך שלא יעלו כלל. */
 var YS_MIRROR_TABLES = ['ys_sessions', 'ys_marks', 'ys_sleep_sessions',
                         'ys_sleep_marks', 'ys_students_rows', 'ys_settings', 'ys_users'];
 var MIRROR_CFG = {
   prefix: 'ys_mirror_',
   app:    'ys_',
   tables: function () { return YS_MIRROR_TABLES; },
-  noPush: ['ys_marks', 'ys_sleep_marks', 'ys_settings', 'ys_users'],
+  noPush: [{ t: 'ys_marks',       via: 'ysSendRecs', adds: 'parent' },
+           { t: 'ys_sleep_marks', via: 'ysSendRecs', adds: 'parent' },
+           { t: 'ys_settings',    via: 'ysCfgSet',   adds: 'queue'  },
+           { t: 'ys_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _ysRecTs(r); },
   clean:  function (t, rows) { return rows; },
