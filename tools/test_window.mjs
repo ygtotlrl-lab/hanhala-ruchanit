@@ -273,7 +273,7 @@ function mirrorHarness(store) {
      srcVar('YS_MIRROR_TABLES'), srcVar('YS_MIRROR_STREAMS'), srcVar('YS_ROWS_KINDS'),
      srcVar('YS_SPLIT_MIGRATE'), srcVar('YS_SETTINGS_MIGRATE')].join('\n') + '\n' +
     ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
-     'mirrorKeysMigrate', 'mirrorBoot', '_ysRowSet', 'ysSessionRow', 'ysMarkRows',
+     'mirrorBoot', '_ysRowSet', 'ysSessionRow', 'ysMarkRows',
      'ysStudentRow', '_ysRecTs', 'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame',
      '_ysSplitRecs', 'ysMirrorPutRecs', 'ysMirrorWriteRecs', '_ysIsRecArr',
      '_ysCfgRows', 'ysCfgLocalGet', 'ysCfgLocalSet', 'ysMirrorSplitMigrate',

@@ -113,7 +113,7 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   /*  ⛔ שכבת המראה (סבב 116) — ⚠️ `_doLoginInner` טוענת ממנה את המשתמשים
    *  בשורה הראשונה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
   'mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
-  'mirrorWrite', 'mirrorKeysMigrate', '_ysRecTs'];
+  'mirrorWrite', '_ysRecTs'];
 const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */

@@ -37,7 +37,7 @@ const APP = {
   stream: 'ys_sessions',
   child: 'ys_marks',
   names: ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
-          'mirrorWrite', 'mirrorKeysMigrate', 'mirrorBoot',
+          'mirrorWrite', 'mirrorBoot',
           'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame', '_ysSplitRecs',
           'ysMirrorPutRecs', 'ysMirrorWriteRecs', '_ysCfgRows', 'ysCfgLocalGet',
           'ysCfgLocalSet', '_ysIsRecArr', 'ysMirrorSplitMigrate', 'ysMarkTombs',

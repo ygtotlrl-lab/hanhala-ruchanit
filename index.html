@@ -1525,10 +1525,9 @@ async function doLogin() {
 }
 
 async function _doLoginInner() {
-  /*  ⛔ ההגירה וטעינת המראה רצות כאן ⛔ ולא בפונקציית העלייה — ⚠️ העלייה
-   *  רצה **אחרי** הכניסה, ⭐ והקורא הראשון של המראה הוא מסלול הכניסה
+  /*  ⛔ טעינת המראה רצה כאן ⛔ ולא בפונקציית העלייה — ⚠️ העלייה רצה
+   *  **אחרי** הכניסה, ⭐ והקורא הראשון של המראה הוא מסלול הכניסה
    *  האופליין עצמו: ⛔ טעינה שרצה אחריו הייתה מגיעה מאוחר מדי. */
-  mirrorKeysMigrate();
   mirrorLoadOne(YS_USERS_TABLE);
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
@@ -3060,7 +3059,6 @@ var MIRROR_CFG = {
   ts:     function (r) { return _ysRecTs(r); },
   clean:  function (t, rows) { return rows; },
   adopt:  function (r) { return r; },
-  legacy: function (t) { return t; },
   fail:   function (where, e) { ysWriteFail(where, e); },
 };
 var LS_CFG = {
@@ -5680,22 +5678,9 @@ function mirrorSave(t) {
 function mirrorWrite(t, rows) {
   return lsSetArray(mirrorKey(t), MIRROR_CFG.clean(t, rows || []), MIRROR_CFG.ts);
 }
-/*  ⭐ הגירת מפתח חד-פעמית ואידמפוטנטית — ⛔ כותבים לחדש לפני שמוחקים את
- *  הישן: ⚠️ כתיבה שנכשלה משאירה את הישן במקומו, ⭐ והמכשיר נטען ממנו
- *  בעלייה הבאה · ⛔ ומפתח חדש שכבר קיים אינו נדרס. */
-function mirrorKeysMigrate() {
-  mirrorTables().forEach(function (t) {
-    var newK = mirrorKey(t), oldK = MIRROR_CFG.legacy(t);
-    if (!oldK || oldK === newK) return;
-    var raw = lsGet(oldK, null);
-    if (raw == null) return;
-    if (lsGet(newK, null) == null && !lsSet(newK, raw)) { MIRROR_CFG.fail('mirrorKeysMigrate', new Error(newK)); return; }
-    try { localStorage.removeItem(oldK); } catch (e) { MIRROR_CFG.fail('mirrorKeysMigrate', e); }
-  });
-}
-/*  ⛔ נקודת ההפעלה האחת — ⚠️ הגירה ואז טעינה: ⭐ טעינה שקדמה להגירה קוראת
- *  מפתח שהרגע עבר, ⛔ ומקבלת ריק. */
-function mirrorBoot() { mirrorKeysMigrate(); mirrorLoad(); }
+/*  ⛔ נקודת ההפעלה האחת — ⚠️ ההגירה של סבב 114 ירדה בסבב 116, ⭐ אחרי
+ *  שהמפתחות הישנים כבר אינם על אף מכשיר שנטען מאז. */
+function mirrorBoot() { mirrorLoad(); }
 /* ═══════════════ סוף מודול שכבת המראה ═══════════════════════════════════ */
 /* ── פירוק המראה לשורות והרכבתה בחזרה (סבב 116) ──────────────────────────
    ⛔ **הפירוק בכתיבה וההרכבה בקריאה, ומאותן שלוש הפונקציות** — ⚠️ `ysSessionRow`
