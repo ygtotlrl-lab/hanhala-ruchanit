@@ -41,6 +41,21 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 const REP = reporter();
+/*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
+ *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה המהירה, ⛔ ופחות ממנה הוא
+ *  כשל — ⚠️ והמונה נקרא מהרתמה המשותפת, ⛔ שהיא המדווחת כאן. */
+const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
+const EXPECTED = 20;
+let RAN = 0;
+process.on('exit', () => {
+  RAN += REP.st.pass + REP.st.fail;
+  console.log(`רצו ${RAN} מתוך ${EXPECTED}`);
+  if (RAN < EXPECTED) {
+    console.error(`❌ ${GATE_ID}: רצו ${RAN} טענות מתוך ${EXPECTED} מוצהרות — ` +
+      'מה עושים: ודא `await` בקריאה הראשית, ⛔ ויציאה שאינה קודמת להמתנה.');
+    process.exitCode = 1;
+  }
+});
 const { ok, eq, sect } = REP;
 const { fn, decl } = extract(SRC);
 
