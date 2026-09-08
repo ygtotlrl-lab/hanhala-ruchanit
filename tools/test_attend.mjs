@@ -157,8 +157,10 @@ console.log('  — מוטציות —');
     !!b && keysBlock && bare(b[1]) !== bare(keysBlock[0]));
 }
 {
-  const mut = SQL.replace("    'ys_students_rows', 'ys_sessions'",
-                          "    'ys_students_rows', 'ys_attend', 'ys_sessions'");
+  /*  ⛔ העוגן הוא טקסט המיגרציה שכבר רצה — ⚠️ שמות המפתחות שם הם שמות
+   *  ה-`kv` ההיסטוריים, ⛔ ומיגרציה שרצה אינה נערכת. */
+  const mut = SQL.replace("    'ys_students', 'ys_attend_sessions'",
+                          "    'ys_students', 'ys_attend', 'ys_attend_sessions'");
   const k = /function public\.bk_retention_keys\(\)[\s\S]*?\$\$;/.exec(mut);
   ok('24 · מוטציה: החזרתו לרשימת-ההיתר לבדה מפילה את טענות 15 ו-16',
     !!k && bare(k[0]) === 1);

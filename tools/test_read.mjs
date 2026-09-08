@@ -148,7 +148,7 @@ function run(block, tables, kvValue, opts) {
     log
   };
   vm.createContext(ctx);
-  vm.runInContext(PAGED_USE + '\n' + ASM.map((n) => cutFn(SRC, n)).join('\n') + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
+  vm.runInContext(PAGED_USE + '\n' + ASM_USE + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
   return { api: ctx.__api, log, ctx };
 }
 
@@ -225,6 +225,11 @@ const PAGED = extractPaged(SRC);
 /*  ⛔ המוטציה על המודול המשותף מוחלפת כאן ⛔ ולא בגוף `run` — ⚠️ הרתמה
  *  קוראת אותו בכל תרחיש, ⭐ ומשתנה אחד הוא נקודת ההחלפה היחידה. */
 let PAGED_USE = PAGED;
+/*  ⛔ ההרכבה המשותפת נטענת כטקסט אחד — ⚠️ המוטציות נוגעות בה בדיוק כמו
+ *  בבלוק, ⭐ שמחציתן מכוונות לכלל שיושב בה: ⛔ מוטציה שאינה מוחלת היא
+ *  שער שמאשר את עצמו. */
+const ASM_TEXT = ASM.map((n) => cutFn(SRC, n)).join('\n');
+let ASM_USE = ASM_TEXT;
 console.log('— סבב 55: מקור הקריאה —');
 assert(!!block, '1 · בלוק מעבר הקריאה מחולץ מ-index.html');
 if (!block) { process.exit(1); }
@@ -280,10 +285,14 @@ assert(/if \(!YS_ROWS_READ_KEYS\[kvKey\]\) return ysCfgGet\(kvKey\);/.test(block
 
 console.log('— מוטציות —');
 async function mut(find, repl, key, name) {
-  const b = block.replace(find, repl);
-  if (b === block) { bad('מוטציה לא הוחלה: ' + name); return; }
+  const inAsm = ASM_TEXT.indexOf(find) >= 0;
+  const b = inAsm ? block : block.replace(find, repl);
+  const a = inAsm ? ASM_TEXT.replace(find, repl) : ASM_TEXT;
+  if (b === block && a === ASM_TEXT) { bad('מוטציה לא הוחלה: ' + name); return; }
   let res = null;
+  ASM_USE = a;
   try { res = await scenarios(b); } catch (e) { res = null; }
+  ASM_USE = ASM_TEXT;
   assert(key(res), 'מוטציה: ' + name);
 }
 /*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
@@ -293,7 +302,7 @@ if (!RUN_MUT) {
   console.log('\n⏭ test_read: המוטציות רצות ברמה המלאה (--full)');
   process.exit(failed ? 1 : 0);
 }
-await mut('if ((Number(m.updated_at) || 0) < rec.updatedAt) return;', '',
+await mut('if (staleIsDeleted && mt < rec.updatedAt) return;', '',
   (x) => !x || !!(x.staleMark && x.staleMark['st-1']),
   '⛔ ביטול כלל החותמת מחזיר סימון שנמחק');
 await mut('if (!m || m.deleted) return;', 'if (!m) return;',
