@@ -244,7 +244,7 @@ if (MOD) {
       (x) => x.updated_at === 1000 && x.deleted === false));
 
   const h3 = harness(MOD);
-  await h3.sandbox.pushTable('ys_attend_sessions', [ATTEND]);
+  await h3.sandbox.pushTable('ys_sessions', [ATTEND]);
   ok('3י · ⭐ ומסלול הנוכחות לא נשבר — עדיין כותב לטבלאות שלו',
     h3.calls.map((c) => c.table).join(',') === 'ys_sessions,ys_marks');
 
@@ -255,7 +255,7 @@ if (MOD) {
      הייתה ריקה ממילא. */
   const h4 = harness(MOD, { remoteBy: { ys_sleep_sessions: [{ client_id: 'dup', updated_at: 1000 }] } });
   await h4.sandbox.pushTable('ys_sleep_sessions', [{ ...SLEEP, id: 'dup' }]);
-  const rA = await h4.sandbox.pushTable('ys_attend_sessions', [{ ...ATTEND, id: 'dup' }]);
+  const rA = await h4.sandbox.pushTable('ys_sessions', [{ ...ATTEND, id: 'dup' }]);
   ok('3יא · ⛔ מפה נפרדת לכל מסלול — סדר נוכחות שמזההו זהה לסדר שינה עדיין נדחף',
     rA.ok && rA.n === 1);
 }
@@ -284,7 +284,7 @@ if (MOD) {
                  .replace('_ysRowsRemote[kind] = map;', '_ysRowsRemote.attend = map;');
   const hm = harness(mut, { remoteBy: { ys_sleep_sessions: [{ client_id: 'dup', updated_at: 1000 }] } });
   await hm.sandbox.pushTable('ys_sleep_sessions', [{ ...SLEEP, id: 'dup' }]);
-  const rr = await hm.sandbox.pushTable('ys_attend_sessions', [{ ...ATTEND, id: 'dup' }]);
+  const rr = await hm.sandbox.pushTable('ys_sessions', [{ ...ATTEND, id: 'dup' }]);
   ok('4ג · מוטציה: מפת חותמות משותפת מדלגת על דחיפה — טענה 3יא נופלת',
     rr.ok && rr.n === 0);
 }

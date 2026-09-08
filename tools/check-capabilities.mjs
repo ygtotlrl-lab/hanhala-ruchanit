@@ -140,6 +140,7 @@ const APP = {
     'test_lock': 'raw — מריץ את מודול הנעילה בארגז חול',
     'test_manifest': 'raw — מודד את `manifest.json` ואת התגיות שמצביעות עליו',
     'test_matrix': 'raw — מודד את טקסט הטבלה ואת שמות השורות',
+    'test_mirror_split': 'raw — חותך פונקציות מהמקור ומריץ אותן, והשמות הם מחרוזות',
     'test_merge_pending': 'raw — מריץ את ליבת המיזוג בארגז חול',
     'test_offline_login': 'raw — מריץ את מסלול הכניסה בארגז חול',
     'test_roles': 'raw — מריץ את שכבת ההרשאות בארגז חול',
@@ -183,7 +184,7 @@ const APP = {
   },
   /*  ⛔ רשומת התלמיד נושאת את מערך ההיעדרויות — ⚠️ ולפריטים `id`
    *  ו-`deleted`, ⭐ ולכן הם ממוזגים פר-פריט. */
-  mergePoints: ['ysStudentPair'],
+  mergePoints: ['ysStudentPair', 'ysMergeMarks', 'ysSessionPairFor'],
   /*  ⛔ הכתיבות לרשימת ערכים — ⚠️ כל אחת עוברת ב-`uniqHas` שבמודול
    *  המשותף לפני הכתיבה, ⭐ וההשוואה על **הערך** ⛔ ולא על מזהה. */
   listAdds: ['saveStudentStatus', 'saveAbsenceReasons', 'atSaveSettingsCfg', 'slSaveSettingsCfg'],
@@ -195,8 +196,11 @@ const APP = {
   },
   /*  ⛔ המכווץ של כל נקודת מיזוג — ⚠️ `null` אומר «אין ברשימה ערכים
    *  שיכולים לחזור», ⛔ והנימוק יושב לצידו ⛔ ואינו נשמט. */
-  listCollapse: { ysStudentPair: 'uniqList' },
-  listCollapseWhy: {},
+  listCollapse: { ysStudentPair: 'uniqList',
+                  ysMergeMarks: null,
+                  ysSessionPairFor: null },
+  listCollapseWhy: { ysMergeMarks: 'הסימונים הם **מפה** לפי מזהה תלמיד ⛔ ולא רשימת ערכים — ⚠️ שני סימונים לאותו תלמיד אינם יכולים להתקיים במפה אחת',
+                     ysSessionPairFor: 'הזוג מעביר את המפה ל-`ysMergeMarks` ⛔ ואינו מכווץ בעצמו — ⚠️ הכיווץ יושב במקום אחד' },
   /*  ⛔ החותמת שנושא כל פריט במערך — ⚠️ שדה בגוף הפריט, ⛔ או פונקציה
    *  שכותבת אותה למפת חותמות לצידו: ⭐ שתי הצורות חותמת פר-פריט,
    *  ⚠️ **והרשימה אינה נשמטת** — ⭐ שדה חסר נקרא «לא נשאל», וריק נקרא
@@ -305,11 +309,11 @@ const APP = {
     /*  ⛔ ערך ולא דגל (סבב 78) — ⚠️ הדגל נמחק, ⭐ ומה שנמדד הוא **היעדר
      *  כתיבת ערך שלם** למפתח שיש לו טבלה: ⛔ דגל כבוי שנשאר בקוד מעיד על
      *  כוונה, ⚠️ ואילו כתיבה שנשארה מעידה על שני מקורות אמת. */
-    125: (c) => !/ysCfgSet\('(?:ys_students|ys_attend_sessions|ys_sleep_sessions)'/.test(c.src)
+    125: (c) => !/ysCfgSet\('(?:ys_students|ys_sessions|ys_sleep_sessions)'/.test(c.src)
           /*  ⚠️ נמדד על המקור ⛔ ולא על הקוד המולבן — ⭐ שם הטבלה הוא
            *  מחרוזת, ⛔ וההלבנה מרוקנת אותה. */
-          && /await pushTable\('ys_attend_sessions',data\)/.test(c.src)
-          && /await pushTable\('ys_students', mergedSt\)/.test(c.src),
+          && /await pushTable\('ys_sessions',data\)/.test(c.src)
+          && /await pushTable\('ys_students_rows', mergedSt\)/.test(c.src),
     /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (סבב 67) — עד הסבב הזה ה-probe
      *  מדד `fnBody('changeMyPassword')` בלבד, ⚠️ והפונקציה אכן הייתה שם:
      *  שלמה, נכונה, ובלי שום קורא ובלי שדות ב-DOM. ⛔ שער שמאשר ✅ על קוד
@@ -356,6 +360,7 @@ const APP = {
     'test_lock':          'text',
     'test_manifest':      'behavior — מריץ את `check-docs`, שהוא עצמו שואל את היסטוריית ה-git',
     'test_matrix':        'text',
+    'test_mirror_split':  'text',
     'test_md':            'text',
     'test_merge_pending': 'text',
     'test_offline_login': 'behavior — מריץ את עצמו על עותק מוטט, והטענה היא שהשער האמיתי נופל',
@@ -390,18 +395,19 @@ const APP = {
   /*  ⛔ טבלאות שכבת המראה (סבב 114) — ⚠️ **מה נכנס**: כל טבלה שיש לה
    *  מפתח ב-`MIRROR`. ⛔ **ומה מפיל**: טבלה שנדחפת ואין לה מפתח,
    *  ⛔ ומפתח שאינו נדחף ואינו מוכרז ב-`MIRROR_CFG.noPush`. */
-  mirrorTables: ['ys_attend_sessions', 'ys_sleep_sessions', 'ys_students'],
+  /*  ⛔ הגירה מקומית שנשארת בכוונה (סבב 116) — ⚠️ **מה נכנס**: שם פונקציה
+   *  או שם מפתח של הגירה שסבבה חלף ⛔ ואין להסירה. ⛔ **ומה מפיל**: שם
+   *  שאין לו אתר בפועל, ⛔ והכרזה בלי נימוק. ⭐ **ולמה היא קיימת**: יש
+   *  הגירה שהמכשירים לא בהכרח עברו, ⚠️ ומחיקתה מאבדת נתון. */
+  migrateKeep: {},
+  mirrorTables: ['ys_sessions', 'ys_marks', 'ys_sleep_sessions', 'ys_sleep_marks',
+                 'ys_students_rows', 'ys_settings', 'ys_users'],
   /*  ⛔ המפתחות המקומיים שאינם טבלה (סבב 114) — ⚠️ **מה נכנס**: מפתח
    *  `ls*` שנכתב בשם מפורש ואינו טבלה שיש לה מראה. ⛔ **ומה מפיל**: מפתח
    *  כזה בלי הצהרה, ⛔ והצהרה שאין לה אתר. ⭐ **ולמה היא קיימת**: שמונה
    *  מהם הם **שורות בטבלת ההגדרות האחת** ⛔ ולא טבלאות משלהם, ⚠️ ומי
    *  שיראה אותם שטוחים ינסה להכניס אותם לשכבת המראה. */
   flatKeys: {
-    ys_absence_reasons: 'שורת הגדרות — ערך שלם ב-`ys_settings`, LWW ברמת המפתח',
-    ys_approvals:       'שורת הגדרות — ערך שלם ב-`ys_settings`',
-    ys_reasons:         'שורת הגדרות — ערך שלם ב-`ys_settings`',
-    ys_attend_cfg:      'שורת הגדרות — תצורת מודול הנוכחות',
-    ys_sleep_cfg:       'שורת הגדרות — תצורת מודול השינה',
     ys_attend_treats:   'שורת הגדרות — רשימת הטיפולים של הנוכחות',
     ys_sleep_treats:    'שורת הגדרות — רשימת הטיפולים של השינה',
     ys_settings_meta:   'מפת חותמות פר-מפתח הגדרות — מטא ולא נתון',
@@ -443,6 +449,7 @@ const APP = {
     '169|מפתח אחסון בלי קורא': 'src',
     '33|שער מריץ את כל טענותיו': 'tools',
     '84|שכבת המראה': 'src',
+    '170|הגירה מקומית שהושלמה': 'mixed',
     '155|מראת המשתמשים': 'src',
     '154|מודל ההרשאות': 'src',
     '23|שער סורק קוד מולבן': 'tools',
@@ -451,7 +458,7 @@ const APP = {
     '87|פריסה במסכי טלפון וטאבלט': 'src',
     '88|ערכת נושא — בהיר וכהה': 'src',
     '165|הערה שמתארת מצב שחלף': 'mixed',
-    '170|שאילתת `@media` מתה': 'src',
+    '171|שאילתת `@media` מתה': 'src',
     '101|ספרייה חיצונית — גרסה מוצהרת': 'src',
     '102|ייצוא והנפקה — דרך מוצהרת': 'src',
     '89|המסמך מתפרסר נקי': 'src',
@@ -504,7 +511,7 @@ const APP = {
     '56|חלון חם במכשיר': 'src',
     '56|שחזור מקומי מהענן': 'src',
     '153|מסך שינוי סיסמה עצמי': 'src',
-    '177|מטמון-CDN מראש עם ריפוי עצמי': 'src',
+    '178|מטמון-CDN מראש עם ריפוי עצמי': 'src',
     '57|מנוע מיזוג — ⏳ שובר שוויון': 'src',
     '159|חסימת משתמש מושבת בכניסה אופליין': 'src',
     '58|מודול מזהי רשומות': 'src',
@@ -514,16 +521,16 @@ const APP = {
     '103|מעטפת WebView חתומה': 'tools',
     '159|אימות מול טביעה בענן': 'mixed',
     '120|בניית APK אחידה עם שער חתימה': 'src',
-    '177|מודול ה-service worker': 'src',
+    '178|מודול ה-service worker': 'src',
     '61|ניסיון חוזר בתור הסנכרון': 'src',
     '62|מנגנון משיכה אחיד': 'src',
     '65|נעילת חוסר-פעילות': 'src',
     '66|מודל הסשן — בזיכרון בלבד': 'src',
-    '176|בדיקת עדכון תקופתית ל-service worker': 'src',
+    '177|בדיקת עדכון תקופתית ל-service worker': 'src',
     '85|פסק זמן אחיד לקריאות רשת': 'src',
     '86|מאזיני מצב רשת': 'src',
     '145|גריעת tombstones לפי גיל': 'src',
-    '175|עדכון אוטומטי — בדיקה מחזורית': 'src',
+    '176|עדכון אוטומטי — בדיקה מחזורית': 'src',
     '118|גשר שיתוף': 'src',
     '68|העברת מזהה ל-DOM': 'src',
     '69|מיון אחד לכל התצוגות': 'src',
@@ -686,7 +693,7 @@ const CAPS = {
   mirror: {
     name: 'מודול שכבת המראה',
     docRows: ['שכבת המראה'],
-    block: { sha: 'a225de590a04faa8', lines: 59,
+    block: { sha: '18903e2a62e32760', lines: 49,
              start: '/* ═══ שכבת המראה — מודול משותף (סבב 114)',
              end:   '/* ═══════════════ סוף מודול שכבת המראה' },
     hooks: [{ fn: 'mirrorBoot', at: 'boot' }],
@@ -3849,6 +3856,46 @@ function listIn(text, name) {
   const m = new RegExp(name + ':?\\s*=?\\s*\\[([^\\]]*)\\]').exec(text || '');
   return m ? m[1].split(',').map((x) => x.trim().replace(/'/g, '')).filter(Boolean) : [];
 }
+/*  ⛔ הגירה מקומית חד-פעמית (סבב 116) — ⚠️ **מה נכנס**: אתר שמוחק מפתח
+ *  `localStorage` ובאותו הקשר גם קורא אותו, ⭐ או שמוחק מפתח בשמו המפורש.
+ *  ⛔ **ומה מפיל**: אתר בלי הצהרת הסבב שבו רץ, ⛔ והצהרה שסבבה חלף.
+ *  ⭐ **ולמה היא קיימת**: הגירה שנשארת היא קוד שרץ בכל עלייה לנצח,
+ *  ⚠️ ומסתירה את המפתח שהיא מוחקת מכל סריקת «מפתח בלי קורא». */
+function localMigrationGaps() {
+  const out = [];
+  const keep = APP.migrateKeep || {};
+  const round = Number((/עודכן לאחרונה: סבב (\d+)/.exec(readOnce(APP.docs)) || [])[1]) || 0;
+  const seen = new Set();
+  /*  ⛔ הגירה מזוהה בשם הפונקציה או במפתח המפורש — ⚠️ מודול האחסון מוחק
+   *  מפתח שנמסר לו במשתנה, ⭐ ואינו הגירה: ⛔ סריקה גורפת של כל מחיקה
+   *  הייתה דורשת ממנו להצהיר סבב שאין לו. */
+  const sites = [];
+  for (const m of src.matchAll(/(?:localStorage\.removeItem|lsRemove)\s*\(\s*('[^']+')?/g)) {
+    const fn = enclosingNamedFn(m.index);
+    if (m[1]) sites.push({ name: m[1].slice(1, -1), at: m.index, fn: fn });
+    else if (fn && /migrate/i.test(fn.name)) sites.push({ name: fn.name, at: fn.start, fn: fn });
+  }
+  for (const s of sites) {
+    if (seen.has(s.name)) continue;
+    seen.add(s.name);
+    if (Object.prototype.hasOwnProperty.call(keep, s.name)) {
+      if (!String(keep[s.name]).trim()) out.push('הגירה מוכרזת בלי נימוק: ' + s.name);
+      continue;
+    }
+    /*  ⛔ הסבב מוצהר בהערה הצמודה ⛔ ולא בפרק הסבב — ⚠️ פרק סבב נגזם,
+     *  ⭐ וההערה נשארת ליד הקוד שהיא מתארת. */
+    const near = src.slice(Math.max(0, s.at - 900), s.at + 400);
+    const at = [...near.matchAll(/\(סבב (\d+)\)/g)].map((x) => Number(x[1]));
+    if (!at.length) { out.push('הגירה מקומית בלי הצהרת סבב: ' + s.name); continue; }
+    const last = Math.max(...at);
+    if (round && last < round - 1)
+      out.push('הגירה מקומית שסבבה חלף: ' + s.name + ' — הוצהרה בסבב ' + last +
+               ' והסבב הוא ' + round);
+  }
+  for (const k of Object.keys(keep))
+    if (!seen.has(k)) out.push('הצהרה ב-migrateKeep בלי אתר בפועל: ' + k);
+  return out;
+}
 function mirrorLayerGaps() {
   const tabs = APP.mirrorTables;
   if (!tabs) return [];            // אפליקציה בלי שכבת מראה — מוכרזת ⭕
@@ -3980,7 +4027,7 @@ const MATRIX = [
   /*  ⛔ שאילתת `@media` מתה (סבב 97) — ⚠️ **גוף בלי כלל בלבד**:
    *  ⭐ נקודת שבירה שאינה בסולם נמדדת בשורת הפריסה, ⛔ ומדידה שנייה
    *  לאותו ערך הייתה טענה כפולה. */
-  { row: 170, name: 'שאילתת `@media` מתה',
+  { row: 171, name: 'שאילתת `@media` מתה',
     probe: () => deadMediaSites().length === 0 },
   /*  ⛔ ספרייה חיצונית — גרסה מוצהרת (סבב 91) — ⚠️ קישור בלי גרסה, תג בלי
    *  הצהרה, והצהרה בלי תג — ⭐ שלושתם אותה טענה משני צדדיה. */
@@ -4244,7 +4291,7 @@ const MATRIX = [
   { row: 56, name: 'שחזור מקומי מהענן',
     probe: () => callSites('hwRestoreMount').length > 0 },
   { row: 153, name: 'מסך שינוי סיסמה עצמי', app: true },
-  { row: 177, name: 'מטמון-CDN מראש עם ריפוי עצמי',
+  { row: 178, name: 'מטמון-CDN מראש עם ריפוי עצמי',
     probe: () => fileHas('sw.js', /CDN_ASSETS/) && fileHas('sw.js', /ensureCdnCached/) },
   { row: 55, name: 'גיבוי יומי מטבלאות מובנות',
     exempt: 'התא מצהיר שהגיבוי **קורא** מטבלאות מובנות, וזו עובדת מסד ולא ' +
@@ -4337,7 +4384,7 @@ const MATRIX = [
    *  הליבה המשותפת שנמצאה וחתימתה תואמת (`present.swcore`), ו-`SW_CFG`
    *  שמוגדר ב-`sw.js` מעליה. ⛔ ליבה בלי `SW_CFG` היא קוד שהועתק ולא
    *  מודול — הפרמטרים הם מה שמאפשר לליבה להיות זהה בית-לבית.        */
-  { row: 177, name: 'מודול ה-service worker',
+  { row: 178, name: 'מודול ה-service worker',
     probe: () => present.swcore === true && fileHas('sw.js', /var\s+SW_CFG\s*=/) },
   /*  ⭐ סבב 44 — ניסיון חוזר בתור הסנכרון. ה-probe דורש את **שני**
    *  התנאים: הליבה שנמצאה וחתימתה תואמת (`present.retry`), ו-`RTY_CFG`
@@ -4379,7 +4426,7 @@ const MATRIX = [
   /*  ⛔ ושלוש התשובות שמעידות על סכימה ישנה — ⚠️ הסיווג, הבאנר, ועצירת
    *  הניסיון החוזר נמדדים כאן יחד: ⭐ סיווג בלי עצירה משאיר את הלולאה
    *  רצה, ⛔ ועצירה בלי באנר משאירה את המשתמש מול מסך שקט. */
-  { row: 176, name: 'בדיקת עדכון תקופתית ל-service worker',
+  { row: 177, name: 'בדיקת עדכון תקופתית ל-service worker',
     probe: () => hasCode(/\breg\s*\.\s*update\s*\(/) &&
                  hasCode(/setInterval\(\s*\w+\s*,\s*30\s*\*\s*60\s*\*\s*1000\s*\)/) &&
                  hasSrc(/'42P01'/) && hasSrc(/'42703'/) && hasCode(/s === 404/) &&
@@ -4397,6 +4444,8 @@ const MATRIX = [
   { row: 169, name: 'מפתח אחסון בלי קורא',
     probe: () => storeKeyGaps().length === 0 },
   { row: 84, name: 'שכבת המראה', probe: () => mirrorLayerGaps().length === 0 },
+  { row: 170, name: 'הגירה מקומית שהושלמה',
+    probe: () => localMigrationGaps().length === 0 },
   { row: 85, name: 'פסק זמן אחיד לקריאות רשת',
     probe: () => hasCode(/var\s+NET_TIMEOUT_MS\s*=\s*8000\s*;/) },
   /*  ⚠️ **ה-probe הזה קורא את המקור הגולמי ולא את הקוד המטוקן** — שם
@@ -4438,7 +4487,7 @@ const MATRIX = [
   /*  ⛔ מנגנון זיהוי אחד (סבב 90ג) — ⚠️ הענף השני נמדד ואינו קיים באף אחת
    *  מהארבע: ⭐ ביומן ירדה משיכת `raw.githubusercontent` השעתית, ⛔ ורשימת
    *  היתר שאין לה מקרה בפועל היא בעצמה השארית שהשורה באה לסלק. */
-  { row: 175, name: 'עדכון אוטומטי — בדיקה מחזורית',
+  { row: 176, name: 'עדכון אוטומטי — בדיקה מחזורית',
     probe: () => /setInterval\s*\(\s*checkForUpdates?\s*,/.test(code) &&
                  /reg\.update\s*\(/.test(code) && !hasCode(/\bRAW_URL\b/) },
   /*  ⭐ סבב 56 — מקור הקריאה. ⚠️ **שורה תיאורית ולא ✅/❌**: היא מודדת
@@ -4574,8 +4623,7 @@ const GATES = {
   64: { claim: 'כתיבת משתמש' },
   132: { claim: 'בעלות הסכימה המשותפת' },
   144: { claim: '`kv_rishon`' },
-  171: { claim: 'ז. עמודה בלי קורא' },
-  173: { claim: 'ח. הגדרה שהוחלפה' },
+  172: { claim: 'ז. עמודה בלי קורא' },
   4: { claim: ['canonIds', 'CANON', 'הסדר הקנוני'] },
   1: { claim: 'שם האפליקציה' },
   3: { claim: ['DOC_MAX_LINES', 'DOC_MAX_SHARED'] },
@@ -4622,7 +4670,7 @@ const GATES = {
   42: { claim: 'הערה ריקה' },
   44: { claim: 'COUNT_NOTE' },
   45: { manual: 'עדכון הסימון הוא התנהגות סשן שאינה בעץ — ⛔ נאכף רק בתוצאתו' },
-  178: { claim: 'CACHE_NAME' },
+  179: { claim: 'CACHE_NAME' },
   38: { manual: 'מספר בדיווח הוא התנהגות סשן שאינה בעץ — ⛔ אין קובץ שאפשר למדוד בו את הדיווח, ⚠️ ונאכף בתוצאתו בלבד' },
   22: { claims: { test_readonly: 'drift', 'check-capabilities': 'writeGateGaps' } },
   28: { claim: 'measure-gap',
@@ -4686,8 +4734,9 @@ const GATES = {
   164: { claim: '⏳' },
   49: { manual: 'התאמת הערה למציאות אינה ניתנת לאכיפה מכנית' },
   166: { claim: 'כל קובץ בעץ מוזכר במקום אחר' },
-  172: { claim: 'ד. רשימת-היתר' },
-  174: { manual: 'מצב הענפים המרוחקים אינו נראה מעותק העבודה' },
+  174: { claim: 'ח. הגדרה שהוחלפה' },
+  173: { claim: 'ד. רשימת-היתר' },
+  175: { manual: 'מצב הענפים המרוחקים אינו נראה מעותק העבודה' },
   /*  ⛔ «קורא סביר יופתע» אינו נגזר מהטקסט (סבב 96) — ⚠️ **מתי** נכתבת
    *  הערה הוא שיקול דעת, ⭐ ומה שכן נאכף הוא **תוכנה**: בלי היסטוריה,
    *  בלי ספירה שתסחף, «למה ולא מה». ⛔ והקיום נאכף בתוצאתו בלבד. */

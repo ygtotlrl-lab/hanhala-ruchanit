@@ -62,7 +62,7 @@ process.on('exit', () => {
 const ok = (name, cond) => { RAN++; if (cond) { pass++; console.log('  ok   ' + name); }
   else { fail++; console.log('  FAIL ' + name); } };
 
-/* `ys_attend` כמילה שלמה — ⛔ ולא `ys_attend_sessions`/`_cfg`/`_treats`. */
+/* `ys_attend` כמילה שלמה — ⛔ ולא `ys_sessions`/`_cfg`/`_treats`. */
 const BARE = /ys_attend(?![_A-Za-z0-9])/g;
 const bare = (s) => (s.match(BARE) || []).length;
 
@@ -78,8 +78,8 @@ ok('6 · `recordTime` נמחקה', !/recordTime/.test(SRC));
 ok('7 · אין צעד דחיפה למפתח', !/step\('ys_attend'/.test(SRC));
 
 /* ── ב. מה ש⛔ לא נגע ───────────────────────────────────────────────────── */
-ok('8 · ⛔ `ys_attend_sessions` שרד — הנוכחית האמיתית',
-  SRC.indexOf("'ys_attend_sessions'") !== -1);
+ok('8 · ⛔ `ys_sessions` שרד — הנוכחית האמיתית',
+  SRC.indexOf("'ys_sessions'") !== -1);
 ok('9 · ⛔ `_ysSessionsMerge` שרד', /function\s+_ysSessionsMerge/.test(SRC));
 ok('10 · ⛔ `ysMarks` שרד', /function\s+ysMarks/.test(SRC));
 ok('11 · ⛔ ענף האובייקטים של `ysMergeRecords` שרד — `ys_approvals` נשען עליו',
@@ -157,8 +157,8 @@ console.log('  — מוטציות —');
     !!b && keysBlock && bare(b[1]) !== bare(keysBlock[0]));
 }
 {
-  const mut = SQL.replace("    'ys_students', 'ys_attend_sessions'",
-                          "    'ys_students', 'ys_attend', 'ys_attend_sessions'");
+  const mut = SQL.replace("    'ys_students_rows', 'ys_sessions'",
+                          "    'ys_students_rows', 'ys_attend', 'ys_sessions'");
   const k = /function public\.bk_retention_keys\(\)[\s\S]*?\$\$;/.exec(mut);
   ok('24 · מוטציה: החזרתו לרשימת-ההיתר לבדה מפילה את טענות 15 ו-16',
     !!k && bare(k[0]) === 1);

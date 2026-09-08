@@ -90,7 +90,7 @@ const APP = {
           'test_schema_source.mjs', 'test_hotwin.mjs', 'test_cron.mjs',
           'test_tables.mjs', 'test_merge_pending.mjs', 'test_matrix.mjs', 'test_ids.mjs',
           'test_import.mjs', 'test_attend.mjs',
-          'test_sleep_rows.mjs'],
+          'test_sleep_rows.mjs', 'test_mirror_split.mjs'],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

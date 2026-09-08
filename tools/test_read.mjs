@@ -26,7 +26,7 @@ const APP = {
   /*  ⚠️ רצפת הטענות — ⛔ פחות מזה פירושו שהתהליך נסגר באמצע. */
   expected: 19,
   // המפתחות שעברו לטבלאות, ואתרי הקריאה שחייבים לעבור דרך המשפך.
-  keys: ['ys_attend_sessions', 'ys_students', 'ys_sleep_sessions'],
+  keys: ['ys_sessions', 'ys_students_rows', 'ys_sleep_sessions'],
   funnel: 'ysCloudGet',
   rawGet: 'ysCfgGet',
   minCallSites: 6,
@@ -79,6 +79,20 @@ const END = '/* ═══ סוף שכבת השורות';
  *  מודדת קוד שאינו רץ. */
 const PAGED_START = '/* ═══ משיכה מסוננת בשרת — מודול משותף';
 const PAGED_END = '/* ═══════════════ סוף מודול משיכה מסוננת בשרת';
+/*  ⛔ ההרכבה משותפת למראה ולענן (סבב 116) — ⚠️ היא יושבת מעל הבלוק
+ *  שנחתך כאן, ⭐ ולכן היא נטענת בנפרד: ⛔ רתמה בלעדיה מודדת קוד שאינו רץ. */
+const ASM = ['_ysRowSet', 'ysRecsFromRows'];
+function cutFn(src, name) {
+  const re = new RegExp('\\n(async )?function ' + name + '\\s*\\(', 'g');
+  const m = re.exec(src);
+  if (!m) throw new Error('הפונקציה ' + name + ' לא נמצאה');
+  let i = src.indexOf('{', m.index + m[0].length - 1), d = 0;
+  for (; i < src.length; i++) {
+    if (src[i] === '{') d++;
+    else if (src[i] === '}') { d--; if (!d) return src.slice(m.index + 1, i + 1); }
+  }
+  throw new Error('הפונקציה ' + name + ' אינה סגורה');
+}
 function extractPaged(src) {
   const i = src.indexOf(PAGED_START), j = src.indexOf(PAGED_END);
   if (i < 0 || j < 0) return null;
@@ -134,7 +148,7 @@ function run(block, tables, kvValue, opts) {
     log
   };
   vm.createContext(ctx);
-  vm.runInContext(PAGED_USE + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
+  vm.runInContext(PAGED_USE + '\n' + ASM.map((n) => cutFn(SRC, n)).join('\n') + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
   return { api: ctx.__api, log, ctx };
 }
 
@@ -153,35 +167,35 @@ async function scenarios(block, label) {
   // א. שחזור מלא
   {
     const { api, log } = run(block, { ys_sessions: [SESS()], ys_marks: [MARK(), MARK({ student_id: 'st-2', status: 'l', minutes: 10 })] }, null);
-    const out = await api.ysCloudGet('ys_attend_sessions');
+    const out = await api.ysCloudGet('ys_sessions');
     res.rebuild = out;
     res.kvTouched = log.kv;
   }
   // ב. סימון מחוק ⇐ מדולג
   {
     const { api } = run(block, { ys_sessions: [SESS()], ys_marks: [MARK({ deleted: true })] }, null);
-    res.delMark = (await api.ysCloudGet('ys_attend_sessions'))[0].marks;
+    res.delMark = (await api.ysCloudGet('ys_sessions'))[0].marks;
   }
   // ג. סימון שחותמתו ישנה מהאב ⇐ מדולג (סימון שנמחק מהמפה)
   {
     const { api } = run(block, { ys_sessions: [SESS({ updated_at: 2000 })], ys_marks: [MARK({ updated_at: 1000 }), MARK({ student_id: 'st-9', updated_at: 2000 })] }, null);
-    res.staleMark = (await api.ysCloudGet('ys_attend_sessions'))[0].marks;
+    res.staleMark = (await api.ysCloudGet('ys_sessions'))[0].marks;
   }
   // ד. סדר מחוק ⇐ tombstone נשמר
   {
     const { api } = run(block, { ys_sessions: [SESS({ deleted: true })], ys_marks: [] }, null);
-    res.tomb = (await api.ysCloudGet('ys_attend_sessions'))[0];
+    res.tomb = (await api.ysCloudGet('ys_sessions'))[0];
   }
   // ה. כשל טבלה ⇐ `null` — «אין ראיה», ולא «הענן ריק»
   {
     const { api, log } = run(block, { ys_sessions: 'error' }, [{ id: 'KV' }]);
-    res.onError = await api.ysCloudGet('ys_attend_sessions');
+    res.onError = await api.ysCloudGet('ys_sessions');
     res.onErrorKv = log.kv;
   }
   // ו. טבלה ריקה ⇐ מערך ריק — «נמדד ואין», והמיזוג מכריע לפיו
   {
     const { api, log } = run(block, { ys_sessions: [], ys_marks: [] }, [{ id: 'KV' }]);
-    res.onEmpty = await api.ysCloudGet('ys_attend_sessions');
+    res.onEmpty = await api.ysCloudGet('ys_sessions');
     res.onEmptyKv = log.kv;
   }
   // ז. מפתח הגדרות ⇐ `ys_settings`, בלי לגעת בטבלאות הרשומות
@@ -195,13 +209,13 @@ async function scenarios(block, label) {
     const many = [];
     for (let i = 0; i < 1200; i++) many.push(MARK({ student_id: 'st-' + i }));
     const { api } = run(block, { ys_sessions: [SESS()], ys_marks: many }, null);
-    const out = await api.ysCloudGet('ys_attend_sessions');
+    const out = await api.ysCloudGet('ys_sessions');
     res.paged = out[0] ? Object.keys(out[0].marks).length : 0;
   }
   // ח. המצבה — `data` מועתקת כמות שהיא
   {
     const { api } = run(block, { ys_students_rows: [{ client_id: 'x', updated_at: 5, deleted: false, data: { id: 'x', name: 'ב' } }] }, null);
-    res.students = await api.ysCloudGet('ys_students');
+    res.students = await api.ysCloudGet('ys_students_rows');
   }
   return res;
 }
