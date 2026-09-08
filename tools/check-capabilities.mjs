@@ -140,6 +140,7 @@ const APP = {
     'test_lock': 'raw — מריץ את מודול הנעילה בארגז חול',
     'test_manifest': 'raw — מודד את `manifest.json` ואת התגיות שמצביעות עליו',
     'test_matrix': 'raw — מודד את טקסט הטבלה ואת שמות השורות',
+    'test_mirror_split': 'raw — חותך פונקציות מהמקור ומריץ אותן, והשמות הם מחרוזות',
     'test_merge_pending': 'raw — מריץ את ליבת המיזוג בארגז חול',
     'test_offline_login': 'raw — מריץ את מסלול הכניסה בארגז חול',
     'test_roles': 'raw — מריץ את שכבת ההרשאות בארגז חול',
@@ -183,7 +184,7 @@ const APP = {
   },
   /*  ⛔ רשומת התלמיד נושאת את מערך ההיעדרויות — ⚠️ ולפריטים `id`
    *  ו-`deleted`, ⭐ ולכן הם ממוזגים פר-פריט. */
-  mergePoints: ['ysStudentPair'],
+  mergePoints: ['ysStudentPair', 'ysMergeMarks', 'ysSessionPairFor'],
   /*  ⛔ הכתיבות לרשימת ערכים — ⚠️ כל אחת עוברת ב-`uniqHas` שבמודול
    *  המשותף לפני הכתיבה, ⭐ וההשוואה על **הערך** ⛔ ולא על מזהה. */
   listAdds: ['saveStudentStatus', 'saveAbsenceReasons', 'atSaveSettingsCfg', 'slSaveSettingsCfg'],
@@ -195,8 +196,11 @@ const APP = {
   },
   /*  ⛔ המכווץ של כל נקודת מיזוג — ⚠️ `null` אומר «אין ברשימה ערכים
    *  שיכולים לחזור», ⛔ והנימוק יושב לצידו ⛔ ואינו נשמט. */
-  listCollapse: { ysStudentPair: 'uniqList' },
-  listCollapseWhy: {},
+  listCollapse: { ysStudentPair: 'uniqList',
+                  ysMergeMarks: null,
+                  ysSessionPairFor: null },
+  listCollapseWhy: { ysMergeMarks: 'הסימונים הם **מפה** לפי מזהה תלמיד ⛔ ולא רשימת ערכים — ⚠️ שני סימונים לאותו תלמיד אינם יכולים להתקיים במפה אחת',
+                     ysSessionPairFor: 'הזוג מעביר את המפה ל-`ysMergeMarks` ⛔ ואינו מכווץ בעצמו — ⚠️ הכיווץ יושב במקום אחד' },
   /*  ⛔ החותמת שנושא כל פריט במערך — ⚠️ שדה בגוף הפריט, ⛔ או פונקציה
    *  שכותבת אותה למפת חותמות לצידו: ⭐ שתי הצורות חותמת פר-פריט,
    *  ⚠️ **והרשימה אינה נשמטת** — ⭐ שדה חסר נקרא «לא נשאל», וריק נקרא
@@ -305,11 +309,11 @@ const APP = {
     /*  ⛔ ערך ולא דגל (סבב 78) — ⚠️ הדגל נמחק, ⭐ ומה שנמדד הוא **היעדר
      *  כתיבת ערך שלם** למפתח שיש לו טבלה: ⛔ דגל כבוי שנשאר בקוד מעיד על
      *  כוונה, ⚠️ ואילו כתיבה שנשארה מעידה על שני מקורות אמת. */
-    125: (c) => !/ysCfgSet\('(?:ys_students|ys_attend_sessions|ys_sleep_sessions)'/.test(c.src)
+    125: (c) => !/ysCfgSet\('(?:ys_students|ys_sessions|ys_sleep_sessions)'/.test(c.src)
           /*  ⚠️ נמדד על המקור ⛔ ולא על הקוד המולבן — ⭐ שם הטבלה הוא
            *  מחרוזת, ⛔ וההלבנה מרוקנת אותה. */
-          && /await pushTable\('ys_attend_sessions',data\)/.test(c.src)
-          && /await pushTable\('ys_students', mergedSt\)/.test(c.src),
+          && /await pushTable\('ys_sessions',data\)/.test(c.src)
+          && /await pushTable\('ys_students_rows', mergedSt\)/.test(c.src),
     /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (סבב 67) — עד הסבב הזה ה-probe
      *  מדד `fnBody('changeMyPassword')` בלבד, ⚠️ והפונקציה אכן הייתה שם:
      *  שלמה, נכונה, ובלי שום קורא ובלי שדות ב-DOM. ⛔ שער שמאשר ✅ על קוד
@@ -356,6 +360,7 @@ const APP = {
     'test_lock':          'text',
     'test_manifest':      'behavior — מריץ את `check-docs`, שהוא עצמו שואל את היסטוריית ה-git',
     'test_matrix':        'text',
+    'test_mirror_split':  'text',
     'test_md':            'text',
     'test_merge_pending': 'text',
     'test_offline_login': 'behavior — מריץ את עצמו על עותק מוטט, והטענה היא שהשער האמיתי נופל',
@@ -390,18 +395,14 @@ const APP = {
   /*  ⛔ טבלאות שכבת המראה (סבב 114) — ⚠️ **מה נכנס**: כל טבלה שיש לה
    *  מפתח ב-`MIRROR`. ⛔ **ומה מפיל**: טבלה שנדחפת ואין לה מפתח,
    *  ⛔ ומפתח שאינו נדחף ואינו מוכרז ב-`MIRROR_CFG.noPush`. */
-  mirrorTables: ['ys_attend_sessions', 'ys_sleep_sessions', 'ys_students'],
+  mirrorTables: ['ys_sessions', 'ys_marks', 'ys_sleep_sessions', 'ys_sleep_marks',
+                 'ys_students_rows', 'ys_settings', 'ys_users'],
   /*  ⛔ המפתחות המקומיים שאינם טבלה (סבב 114) — ⚠️ **מה נכנס**: מפתח
    *  `ls*` שנכתב בשם מפורש ואינו טבלה שיש לה מראה. ⛔ **ומה מפיל**: מפתח
    *  כזה בלי הצהרה, ⛔ והצהרה שאין לה אתר. ⭐ **ולמה היא קיימת**: שמונה
    *  מהם הם **שורות בטבלת ההגדרות האחת** ⛔ ולא טבלאות משלהם, ⚠️ ומי
    *  שיראה אותם שטוחים ינסה להכניס אותם לשכבת המראה. */
   flatKeys: {
-    ys_absence_reasons: 'שורת הגדרות — ערך שלם ב-`ys_settings`, LWW ברמת המפתח',
-    ys_approvals:       'שורת הגדרות — ערך שלם ב-`ys_settings`',
-    ys_reasons:         'שורת הגדרות — ערך שלם ב-`ys_settings`',
-    ys_attend_cfg:      'שורת הגדרות — תצורת מודול הנוכחות',
-    ys_sleep_cfg:       'שורת הגדרות — תצורת מודול השינה',
     ys_attend_treats:   'שורת הגדרות — רשימת הטיפולים של הנוכחות',
     ys_sleep_treats:    'שורת הגדרות — רשימת הטיפולים של השינה',
     ys_settings_meta:   'מפת חותמות פר-מפתח הגדרות — מטא ולא נתון',
@@ -686,7 +687,7 @@ const CAPS = {
   mirror: {
     name: 'מודול שכבת המראה',
     docRows: ['שכבת המראה'],
-    block: { sha: 'a225de590a04faa8', lines: 59,
+    block: { sha: 'e24ccf7a71f8cb4a', lines: 62,
              start: '/* ═══ שכבת המראה — מודול משותף (סבב 114)',
              end:   '/* ═══════════════ סוף מודול שכבת המראה' },
     hooks: [{ fn: 'mirrorBoot', at: 'boot' }],

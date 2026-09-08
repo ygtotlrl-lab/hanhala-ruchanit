@@ -29,7 +29,7 @@ const APP = {
   expected: 11,
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: true,/, 'החלון החם פעיל (HW_CFG.enabled=true, סבב 56)'],
-    [/key: mirrorKey\('ys_attend_sessions'\),/, 'מפרט החלון קיים ל-ys_attend_sessions (סבב 56)'],
+    [/key: mirrorKey\('ys_sessions'\),/, 'מפרט החלון קיים ל-ys_sessions (סבב 56)'],
     [/hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/, 'שער הדיסק מחווט למשפך הכתיבה של שכבת המראה (סבב 114)'],
     [/try \{ hwBoot\(\); \}/, 'hwBoot מחווטת מפונקציית העלייה'],
     [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],

@@ -37,7 +37,7 @@ const APP = {
   file: 'index.html',
   /*  ⛔ הסדרים לפני המצבה — ⚠️ הסימון מפנה לתלמיד, ⭐ והמצבה היא מה
    *  שהוא מצביע אליו. */
-  tables: ['ys_attend_sessions', 'ys_sleep_sessions', 'ys_students'],
+  tables: ['ys_sessions', 'ys_sleep_sessions', 'ys_students_rows'],
   /*  ⛔ טבלת מפתח-ערך — ⚠️ נכתבת בשלמותה, ⭐ ואין בה רשומות לדחוף בלולאה. */
   kvTables: ['ys_settings'],
   /*  ⛔ טבלת המשתמשים — ⚠️ המראה מסירה ממנה את הסיסמה, ⭐ ודחיפת-מצב שלה

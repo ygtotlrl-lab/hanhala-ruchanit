@@ -181,7 +181,7 @@ function diskHarness(rows, seen) {
     HW_CFG: {
       enabled: true, admin: () => true,
       specs: [{
-        key: 'ys_attend_sessions',
+        key: 'ys_sessions',
         inWindow: (r) => !r.old,
         idOf: (r) => r.id, ts: (r) => r.ts,
         isPending: (r) => !!r.pending,
@@ -193,14 +193,14 @@ function diskHarness(rows, seen) {
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(MODS + '\nthis.__api = { hwDiskFilter, hwNoteCloud };', ctx);
-  ctx.__api.hwNoteCloud('ys_attend_sessions', seen);
+  ctx.__api.hwNoteCloud('ys_sessions', seen);
   return ctx.__api;
 }
 const memory = [{ id: 'a', ts: 100, old: true }, { id: 'b', ts: 200, old: true, pending: true },
                 { id: 'c', ts: 300 }];
 const before = memory.length;
 const api2 = diskHarness(memory, [{ id: 'a', ts: 100 }, { id: 'b', ts: 200 }]);
-const kept = api2.hwDiskFilter('ys_attend_sessions', memory);
+const kept = api2.hwDiskFilter('ys_sessions', memory);
 assert(kept.length === 2 && !kept.some((r) => r.id === 'a'),
   'רשומה ישנה, לא-מסומנת ובעלת ראיה עננית — יורדת מהדיסק');
 assert(kept.some((r) => r.id === 'b'), '⛔ רשומה מסומנת ⏳ נשארת על הדיסק גם כשהיא מחוץ לחלון');
@@ -210,7 +210,7 @@ assert(memory.length === before, '⛔ מערך הזיכרון לא השתנה �
 /* ── 3. החיווט הסטטי ───────────────────────────────────────────────────── */
 const STATIC = [
   [/HW_CFG = \{\s*\n\s*enabled: true,/, 'HW_CFG.enabled = true'],
-  [/key: mirrorKey\('ys_attend_sessions'\),/, "מפרט החלון קיים ל-ys_attend_sessions"],
+  [/key: mirrorKey\('ys_sessions'\),/, "מפרט החלון קיים ל-ys_sessions"],
   [/function mirrorSave\(t\) \{[\s\S]{0,200}?hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/,
    'משפך הכתיבה לדיסק עובר דרך hwDiskFilter'],
   [/try \{ hwNoteCloud\(mirrorKey\(kvKey\), r\.data\); \}/, 'הראיה העננית נרשמת במשפך הקריאה (ysCloudGet)'],
@@ -260,7 +260,8 @@ function mirrorHarness(store) {
     lsSet: (k, v) => { store[k] = String(v); return true; },
     lsSetArray: (k, arr) => { store[k] = JSON.stringify(arr); return true; },
     hwDiskFilter: (k, rows) => rows,
-    _ysRecTs: () => 0,
+    PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:',
+    TOMBSTONE_TTL_MS: 90 * 86400000, Math,
     ysWriteFail: () => {},
     getDefaultStudents: () => [{ id: 0, name: 'ברירת מחדל', cls: 'a' }],
     HE: new Intl.Collator('he'),
@@ -268,50 +269,61 @@ function mirrorHarness(store) {
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(
-    [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES')].join('\n') + '\n' +
-    ['mirrorKey', 'mirrorTables', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
-     'mirrorKeysMigrate', 'mirrorBoot',
-     '_ysDiskArr', '_ysStudentsRaw', '_ysStudentsSaveRaw', 'getStudents'].map(srcFn).join('\n'), ctx);
+    [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES'),
+     srcVar('YS_MIRROR_TABLES'), srcVar('YS_MIRROR_STREAMS'), srcVar('YS_ROWS_KINDS'),
+     srcVar('YS_SPLIT_MIGRATE'), srcVar('YS_SETTINGS_MIGRATE')].join('\n') + '\n' +
+    ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
+     'mirrorKeysMigrate', 'mirrorBoot', '_ysRowSet', 'ysSessionRow', 'ysMarkRows',
+     'ysStudentRow', '_ysRecTs', 'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame',
+     '_ysSplitRecs', 'ysMirrorPutRecs', 'ysMirrorWriteRecs', '_ysIsRecArr',
+     '_ysCfgRows', 'ysCfgLocalGet', 'ysCfgLocalSet', 'ysMirrorSplitMigrate',
+     '_ysDiskArr', '_ysStudentsRaw', '_ysStudentsSaveRaw', '_ysStDiskSave',
+     'getStudents'].map(srcFn).join('\n'), ctx);
   return ctx;
 }
 {
+  /*  ⛔ ההגירה של סבב 116 — ⚠️ מראה של **רשומות** הופכת למראה של **שורות**,
+   *  ⭐ והזיהוי בצורה: שורה נושאת `client_id` ורשומה נושאת `id`. */
   const store = {};
   const stu = [{ id: 1, name: 'אברהם', cls: 'a' }, { id: 2, name: 'יצחק', cls: 'b', deleted: true }];
-  const at = [{ id: 's1', updatedAt: 5 }];
-  store['ys_students'] = JSON.stringify(stu);
-  store['ys_attend_sessions'] = JSON.stringify(at);
+  const at = [{ id: 's1', updatedAt: 5, marks: { 1: { s: 'p', min: 0 } } }];
+  store['ys_mirror_students'] = JSON.stringify(stu);
+  store['ys_mirror_attend_sessions'] = JSON.stringify(at);
   const h = mirrorHarness(store);
-  h.mirrorKeysMigrate();
-  assert(store['ys_mirror_students'] === JSON.stringify(stu) &&
-         store['ys_mirror_attend_sessions'] === JSON.stringify(at),
-    '⭐ ההגירה כתבה את המפתחות החדשים בתוכן שהיה');
-  assert(!('ys_students' in store) && !('ys_attend_sessions' in store),
-    '⛔ ואפס מפתח כפול — השטוחים ירדו');
+  h.ysMirrorSplitMigrate();
+  assert(JSON.parse(store['ys_mirror_sessions']).length === 1 &&
+         JSON.parse(store['ys_mirror_marks']).length === 1 &&
+         JSON.parse(store['ys_mirror_students_rows']).length === 2,
+    '⭐ ההגירה פירקה את הרשומות לשורות בשלוש הטבלאות');
+  assert(!('ys_mirror_attend_sessions' in store) && !('ys_mirror_students' in store),
+    '⛔ ואפס מפתח כפול — הישנים ירדו אחרי שהחדשים נכתבו');
   h.mirrorLoad();
-  assert(h.MIRROR.ys_students.length === 2 && h.MIRROR.ys_attend_sessions.length === 1,
+  assert(h.MIRROR.ys_students_rows.length === 2 && h.MIRROR.ys_sessions.length === 1,
     '⭐ הטעינה ממפתחת בשם הטבלה');
   assert(h.MIRROR.ys_sleep_sessions === null,
     '⛔ מפתח שאינו על הדיסק הוא `null` ⛔ ולא מערך ריק');
   assert(h.getStudents().length === 1 && h.getStudents()[0].name === 'אברהם',
     '⚠️ הנתונים נקראים — המצבה מהמראה, בלי המחוקים');
-  assert(h._ysDiskArr('ys_attend_sessions') === h.MIRROR.ys_attend_sessions,
-    '⭐ קריאת הדיסק למפתח שיש לו מראה עוברת במראה');
+  const back = h._ysDiskArr('ys_sessions');
+  assert(back.length === 1 && back[0].marks['1'].s === 'p',
+    '⭐ קריאת הדיסק מרכיבה את הרשומה מהשורות');
   h._ysStudentsSaveRaw([{ id: 3, name: 'יעקב', cls: 'g' }]);
-  assert(!('ys_students' in store) && JSON.parse(store['ys_mirror_students'])[0].id === 3,
-    '⛔ הכתיבה יורדת למפתח המראה בלבד');
+  assert(JSON.parse(store['ys_mirror_students_rows'])[0].client_id === '3',
+    '⛔ הכתיבה יורדת למפתח המראה בלבד, כשורה');
   const before2 = JSON.stringify(store);
-  h.mirrorKeysMigrate();
+  h.ysMirrorSplitMigrate();
   assert(JSON.stringify(store) === before2, '⛔ ריצה שנייה של ההגירה אינה משנה דבר');
 }
 {
-  /*  ⛔ המיפוי 1:1 ל-`PUSH_TABLES` — ⚠️ מפתח מראה שאינו טבלה שנדחפת, או
-   *  טבלה שנדחפת ואין לה מראה, ⭐ שניהם שוברים את השכבה. */
+  /*  ⛔ המיפוי 1:1 ל-`PUSH_TABLES` ועוד `noPush` — ⚠️ מפתח מראה שאינו אחד
+   *  משניהם, או טבלה שנדחפת ואין לה מראה, ⭐ שניהם שוברים את השכבה. */
   const h = mirrorHarness({});
   const keys = h.mirrorTables();
-  assert(keys.length === 3 && keys.join('|') === h.PUSH_TABLES.join('|'),
-    '⭐ מפתחות המראה = PUSH_TABLES (' + keys.join('|') + ')');
-  assert(h.MIRROR_CFG.noPush.length === 0, '⛔ ואין טבלה שאינה נדחפת');
-  assert(h.mirrorKey('ys_attend_sessions') === 'ys_mirror_attend_sessions',
+  const want = h.PUSH_TABLES.concat(h.MIRROR_CFG.noPush).slice().sort().join('|');
+  assert(keys.length === 7 && keys.slice().sort().join('|') === want,
+    '⭐ מפתחות המראה = PUSH_TABLES + noPush (' + keys.join('|') + ')');
+  assert(h.MIRROR_CFG.noPush.length === 4, '⛔ וארבע טבלאות אינן בשכבת הדחיפה');
+  assert(h.mirrorKey('ys_sessions') === 'ys_mirror_sessions',
     '⭐ מפתח האחסון נגזר משם הטבלה, בלי כפל תחילית');
 }
 

@@ -48,7 +48,7 @@ const APP = {
   tag: (r) => r && r.name,
   pendKey: (id) => 'student:' + id,
   merge: (sb, local, remote) => sb.ysMergeRecords(local, remote, (r) => r && r.id, true, null,
-                                                  sb.ysPendingFor('ys_students')),
+                                                  sb.ysPendingFor('ys_students_rows')),
   /*  ⭐ שכבת ליבת המיזוג (סבב 72) — ⚠️ השמות, המעטפת והרשומה נבדלים
    *  מאלה שמעליהם, ⛔ ולכן הם יושבים בקבוצה משלהם ואינם מתמזגים בהם. */
   core: {

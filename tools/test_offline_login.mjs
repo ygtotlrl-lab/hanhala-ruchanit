@@ -97,7 +97,7 @@ function grabObj(name) {
   throw new Error(`האובייקט ${name} אינו סגור`);
 }
 
-const OBJS = ['USER_CFG'];
+const OBJS = ['USER_CFG', 'MIRROR_CFG'];
 const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
@@ -110,18 +110,32 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
    * המזהה שהיא קוראת לו ביצירה. */
   'writeUser', '_writeUserSend', 'newClientId',
-  /*  ⛔ ההגירה של מפתח המראה (סבב 113) — ⚠️ `_doLoginInner` קוראת לה
+  /*  ⛔ שכבת המראה (סבב 116) — ⚠️ `_doLoginInner` טוענת ממנה את המשתמשים
    *  בשורה הראשונה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
-  'ysUsersMirrorMigrate'];
+  'mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
+  'mirrorWrite', 'mirrorKeysMigrate', '_ysRecTs'];
 const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
-  /*  ⛔ שם מפתח המראה (סבב 113) — ⚠️ שלושת אתרי הכתיבה נוקבים בו,
-   *  ⭐ ורתמה בלעדיו כותבת ל-`undefined`. */
-  'YS_USERS_KEY', 'YS_USERS_KEY_LEGACY'];
+  /*  ⛔ שם טבלת המשתמשים במראה (סבב 116) — ⚠️ שלושת אתרי הכתיבה נוקבים
+   *  בו, ⭐ ומפתח האחסון נגזר ממנו. */
+  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES'];
 
-const CODE = VARS.map(grabVar).join(';\n') + ';\n' +
+/*  ⛔ מערך רב-שורות נחתך אף הוא בהתאמת סוגריים — ⚠️ `YS_MIRROR_TABLES`
+ *  נפרס על שתי שורות, ⭐ ו-`grabVar` לוקח את שארית השורה בלבד. */
+function grabArr(name) {
+  const at = SRC.indexOf('var ' + name + ' = [');
+  if (at < 0) throw new Error(`לא נמצא המערך ${name}`);
+  let depth = 0;
+  for (let j = SRC.indexOf('[', at); j < SRC.length; j++) {
+    if (SRC[j] === '[') depth++;
+    else if (SRC[j] === ']') { depth--; if (!depth) return SRC.slice(at, j + 1); }
+  }
+  throw new Error(`המערך ${name} אינו סגור`);
+}
+
+const CODE = ['YS_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(grabVar).join(';\n') + ';\n' +
   OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
@@ -225,6 +239,10 @@ function boot(state, opts = {}) {
       removeItem: (k) => { delete LS[k]; },
     },
     lsSet: (k, v) => { LS[k] = String(v); return true; },
+    /*  ⛔ שכבת המראה כותבת דרך `lsSetArray` ומסננת ב-`hwDiskFilter` — ⚠️ הרתמה
+     *  מדמה את שניהם, ⭐ שהנמדד כאן הוא **מה נכתב** ⛔ ולא הפינוי. */
+    lsSetArray: (k, arr) => { LS[k] = JSON.stringify(arr); return true; },
+    hwDiskFilter: (k, rows) => rows,
     /*  ⛔ הקריאה מהאחסון עוברת גם היא במודול (סבב 67) — `lsGet` החליף
      *  את `localStorage.getItem` בכל אתר שמחוץ למודול, ורתמה בלי
      *  הדמה הזו קוראת `undefined` במקום את המטמון. */
@@ -264,7 +282,7 @@ let ok = 0, bad = 0;
  *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה המהירה, ⛔ ופחות ממנה הוא
  *  כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
 const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
-const EXPECTED = 106;
+const EXPECTED = 103;
 let RAN = 0;
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
  *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
@@ -358,6 +376,9 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   const S = boot({ tables: { ys_users: USERS() } });
   LS.ys_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
+  /*  ⛔ המראה נטענת לזיכרון לפני הקריאה (סבב 116) — ⚠️ `ysUsersCacheGet`
+   *  קוראת מ-`MIRROR`, ⭐ ומסלול הכניסה טוען אותה בשורתו הראשונה. */
+  S.mirrorLoadOne(S.YS_USERS_TABLE);
   S.ysUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
                        role: 'admin', active: true, pass_salt: 'aa', pass_fp: 'bb' });
   const c = JSON.parse(LS.ys_mirror_users);
@@ -386,31 +407,25 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
    ⛔ מה יישבר בלעדיו: שינוי שם מפתח שלא הגר את התוכן נועל בחוץ כל
    מכשיר שאין לו רשת — ⚠️ בדיוק במצב שבו המראה נועדה לעזור.
    ──────────────────────────────────────────────────────────────────────── */
-sec('2י. הגירת מפתח מראת המשתמשים');
+sec('2י. מראת המשתמשים בשכבת המראה');
 {
   const S = boot({ tables: { ys_users: USERS() } });
-  const rows = JSON.stringify([{ client_id: '1', username: 'a', full_name: 'א', role: 'admin',
-                                 active: true, pass_salt: 'aa', pass_fp: 'bb' },
-                               { client_id: '2', username: 'b', full_name: 'ב', role: 'manager',
-                                 active: true, pass_salt: 'cc', pass_fp: 'dd' }]);
-  LS.ys_users_cache = rows;
+  const rows = [{ client_id: '1', username: 'a', full_name: 'א', role: 'admin',
+                  active: true, pass_salt: 'aa', pass_fp: 'bb' },
+                { client_id: '2', username: 'b', full_name: 'ב', role: 'manager',
+                  active: true, pass_salt: 'cc', pass_fp: 'dd' }];
   delete LS.ys_mirror_users;
-  T('2י1. ההגירה רצה פעם אחת ומחזירה true', S.ysUsersMirrorMigrate() === true);
-  eq('2י2. התוכן עבר בשלמותו', LS.ys_mirror_users, rows);
-  eq('2י3. ⛔ והמפתח הישן ירד', LS.ys_users_cache, undefined);
-  T('2י4. ⛔ הרצה שנייה אינה עושה דבר', S.ysUsersMirrorMigrate() === false);
-  eq('2י5. ⭐ וכל הפעילים במראה — לא רק האחרון',
+  S.ysUsersCacheSaveAll(rows);
+  eq('2י1. ⭐ המפתח נגזר משם הטבלה', S.mirrorKey(S.YS_USERS_TABLE), 'ys_mirror_users');
+  eq('2י2. התוכן נכתב תחתיו', JSON.parse(LS.ys_mirror_users).length, 2);
+  S.MIRROR[S.YS_USERS_TABLE] = null;
+  S.mirrorLoadOne(S.YS_USERS_TABLE);
+  eq('2י3. ⛔ וטעינת טבלה אחת מחזירה אותו לזיכרון',
+     (S.ysUsersCacheGet() || []).length, 2);
+  eq('2י4. ⭐ וכל הפעילים במראה — לא רק האחרון',
      JSON.parse(LS.ys_mirror_users).length, 2);
-  T('2י6. ⭐ ומשתמש שאינו הראשון נמצא בה',
+  T('2י5. ⭐ ומשתמש שאינו הראשון נמצא בה',
     !!JSON.parse(LS.ys_mirror_users).find((u) => u.username === 'b'));
-}
-{
-  const S = boot({ tables: { ys_users: USERS() } });
-  LS.ys_users_cache = '[]';
-  LS.ys_mirror_users = '[{"client_id":"9"}]';
-  T('2י7. ⛔ מפתח חדש שכבר קיים אינו נדרס', S.ysUsersMirrorMigrate() === false);
-  eq('2י8. ⚠️ והישן נשאר על מקומו — מחיקה היא רק אחרי כתיבה שהצליחה',
-     LS.ys_users_cache, '[]');
 }
 
 /* ── 3. ysRefreshUsersCache ────────────────────────────────────────────── */
@@ -657,6 +672,7 @@ async function doSwitch(targetId, pass, opts = {}) {
   S._ysSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.ys_mirror_users = JSON.stringify(opts.cache || CACHED);
+  S.mirrorLoadOne(S.YS_USERS_TABLE);
   S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
   await S.confirmSwitch();
