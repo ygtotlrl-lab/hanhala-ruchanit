@@ -2963,7 +2963,7 @@ async function refreshDashStats() {
 async function loadDash(){
   // ⭐ שכבת המראה ראשונה — ⛔ ההגירה והטעינה לפני כל קורא: ⚠️ קורא שרץ
   //    לפניה מקבל `undefined` ונופל לברירת המחדל.
-  try { ysMirrorSplitMigrate(); mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
+  try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של ysPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
@@ -3043,18 +3043,21 @@ var TOAST_DEFAULT_MS = 2800;
 /*  ⛔ שבע טבלאות המראה (סבב 116) — ⚠️ **כל אחת היא טבלה במסד**, ⭐ והפירוק
  *  לשורות נעשה בקריאה ובכתיבה כאחת: ⛔ מפתח מקומי שאין לו מקבילה בענן
  *  הוא מבנה שמנוע המיזוג אינו מכריע עליו.
- *  ⚠️ **ומה שאינו נדחף בשכבת הדחיפה מוכרז ב-`noPush`**: ⛔ שתי טבלאות
- *  הסימונים נדחפות **עם האב** ב-`ysSendRecs` ואין להן מסלול משלהן;
- *  ⛔ `ys_settings` נדחפת פר-מפתח ב-`ysCfgSet`; ⚠️ ו-`ys_users` לעולם אינה
- *  נדחפת — ⭐ המראה מסירה ממנה את הסיסמה, ⛔ ודחיפה גורפת הייתה כותבת
- *  אותה חזרה ריקה. */
+ *  ⚠️ **ומה שאינו נדחף בשכבת הדחיפה מוכרז ב-`noPush`** — ⛔ **מה נכנס**:
+ *  שם הטבלה, המסלול שדוחף אותה, וסוג התוספת שלו על הלולאה; ⛔ **מה מפיל**:
+ *  מסלול שאין לו גוף, סוג שאינו אחד משלושה, ומסלול שאינו מוסיף דבר.
+ *  ⭐ **ולמה זה קיים**: מסלול שאינו מוסיף על הלולאה הוא לולאה שנכתבה
+ *  פעמיים, ⛔ ושורותיו מסתכנות בכך שלא יעלו כלל. */
 var YS_MIRROR_TABLES = ['ys_sessions', 'ys_marks', 'ys_sleep_sessions',
                         'ys_sleep_marks', 'ys_students_rows', 'ys_settings', 'ys_users'];
 var MIRROR_CFG = {
   prefix: 'ys_mirror_',
   app:    'ys_',
   tables: function () { return YS_MIRROR_TABLES; },
-  noPush: ['ys_marks', 'ys_sleep_marks', 'ys_settings', 'ys_users'],
+  noPush: [{ t: 'ys_marks',       via: 'ysSendRecs', adds: 'parent' },
+           { t: 'ys_sleep_marks', via: 'ysSendRecs', adds: 'parent' },
+           { t: 'ys_settings',    via: 'ysCfgSet',   adds: 'queue'  },
+           { t: 'ys_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _ysRecTs(r); },
   clean:  function (t, rows) { return rows; },
@@ -3106,7 +3109,7 @@ var LS_CFG = {
   // `plTick` מציבה בו את חותמת הענן גם ב**משיכה** ("ראיתי את מצב
   // הענן"), ולכן פינוי שנשען עליו היה יכול למחוק מהדיסק רשומה שמעולם לא
   // עלתה. כל מפתח ב-tier2 מביא עֵד דחיפה משלו (`_ysPushedAt`), בדיוק
-  // כמו `_tbPushedAt` ב-yoman. **אין להחזיר לכאן את `_ysLastTs`.**
+  // **ואין להחזיר לכאן את `_ysLastTs`.**
   syncedThrough: function () { return 0; }
 };
 
@@ -4030,11 +4033,8 @@ window.statusAreaMount = statusAreaMount;
    הדיפרנציאלי — רובם סטטיים ואינם נכתבים שוב.
    ⛔ `ys_users` אינה כאן (סבב 30) — היא מחזיקה סיסמאות בטקסט גלוי, ו-
    `kv_backup` קריאה ל-`anon`; גיבוי שלה היה מעתיק את הסוד למקום שני.
-   ⭐ סבב 35: מודול הגיבוי תומך מעכשיו גם במקורות `kind:'table'` (עם
-   `eq`/`order`/`key`) — הדפוס שכבר רץ ב-yoman על `tb_entries`. כאן אין
-   עדיין טבלאות מובנות (שורת הנתונים בטבלאות מובנות שבמטריצה), ולכן אין מקור כזה ברשימה;
-   כשמעבר הטבלאות ייפתח (שלב ב), מוסיפים כאן מקור `kind:'table'` בלבד —
-   בלי לגעת במודול המשותף. */
+   ⛔ ומקור טבלה נוסף כאן בלבד (`kind:'table'` עם `eq`/`order`/`key`) —
+   ⚠️ ולא במודול המשותף: ⭐ הוא זהה בארבע האפליקציות. */
 var BK_CFG = {
   client: function () { return SB; },
   flagKey: 'ys_last_backup',
@@ -5855,56 +5855,6 @@ function ysCfgLocalSet(key, value) {
   MIRROR.ys_settings = rows;
   return mirrorSave('ys_settings');
 }
-/* ── הגירה מקומית חד-פעמית: מראה של רשומות ⟵ מראה של שורות (סבב 116) ─────
-   ⛔ **קוראת · כותבת · ורק אז מוחקת** — ⚠️ מכשיר שנסגר באמצע אינו מאבד
-      דבר, ⭐ וריצה שנייה אינה משנה דבר: ⛔ הזיהוי הוא **בצורה** ולא בדגל,
-      ⚠️ ששורה נושאת `client_id` ורשומה נושאת `id`.
-   ⛔ ורצה **לפני** הטעינה — ⚠️ טעינה שקדמה לה קוראת רשומות כשורות. */
-var YS_SPLIT_MIGRATE = [
-  { t: 'ys_sessions',       old: 'ys_mirror_attend_sessions' },
-  { t: 'ys_sleep_sessions', old: null },
-  { t: 'ys_students_rows',  old: 'ys_mirror_students' }
-];
-var YS_SETTINGS_MIGRATE = ['ys_reasons', 'ys_approvals', 'ys_absence_reasons',
-                           'ys_attend_cfg', 'ys_sleep_cfg'];
-function _ysIsRecArr(v) {
-  if (!Array.isArray(v) || !v.length) return false;
-  var f = v[0];
-  return !!f && typeof f === 'object' && f.client_id === undefined && f.id !== undefined;
-}
-function ysMirrorSplitMigrate() {
-  YS_SPLIT_MIGRATE.forEach(function (m) {
-    var st = YS_MIRROR_STREAMS[m.t], newK = mirrorKey(m.t), raw = null;
-    try { raw = m.old ? lsGet(m.old, null) : null; } catch (e) { raw = null; }
-    if (raw == null) { try { raw = lsGet(newK, null); } catch (e) { raw = null; } }
-    if (raw == null) return;
-    var v = null;
-    try { v = JSON.parse(raw); } catch (e) { v = null; }
-    if (!_ysIsRecArr(v)) { if (m.old) { try { localStorage.removeItem(m.old); } catch (e2) {} } return; }
-    var r = _ysSplitRecs(m.t, v, false);
-    if (!mirrorWrite(m.t, r.sRows)) return;
-    if (st.child && !mirrorWrite(st.child, r.mRows)) return;
-    if (m.old) { try { localStorage.removeItem(m.old); } catch (e3) { ysWriteFail('ysMirrorSplitMigrate', e3); } }
-  });
-  var rows = [], moved = 0;
-  YS_SETTINGS_MIGRATE.forEach(function (k) {
-    var raw = null;
-    try { raw = lsGet(k, null); } catch (e) { raw = null; }
-    if (raw == null) return;
-    try { rows.push({ key: k, value: JSON.parse(raw), updated_at: 0 }); moved++; }
-    catch (e) { }
-  });
-  if (!moved) return;
-  var cur = null;
-  try { var c = lsGet(mirrorKey('ys_settings'), null); cur = c == null ? null : JSON.parse(c); } catch (e) { cur = null; }
-  var have = {};
-  (Array.isArray(cur) ? cur : []).forEach(function (r) { if (r && r.key != null) have[String(r.key)] = 1; });
-  var out = (Array.isArray(cur) ? cur : []).concat(rows.filter(function (r) { return !have[r.key]; }));
-  if (!mirrorWrite('ys_settings', out)) return;
-  YS_SETTINGS_MIGRATE.forEach(function (k) {
-    try { localStorage.removeItem(k); } catch (e) { ysWriteFail('ysMirrorSplitMigrate', e); }
-  });
-}
 /*  ⛔ מצבות הסימון של סדר אחד — ⚠️ מפה של `מזהה_תלמיד ⟵ חותמת המחיקה`,
  *  ⭐ והיא מה שמונע מסימון שנמחק לחזור מהענן. */
 function ysMarkTombs(t, sid) {
@@ -6154,7 +6104,7 @@ async function ysFlushQueue() {
   if (nOk > 0) {
     var ts = Date.now();
     // ⛔ כשל חותמת אינו נבלע (סבב 67) — `ys_last_changed` הוא האות
-    // היחיד ש-`ysAutoSync` במכשירים האחרים משווה מולו, ולכן חותמת
+    // היחיד שהפולינג במכשירים האחרים משווה מולו, ולכן חותמת
     // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
     // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
     try { await _ysCfgSetRaw('ys_last_changed', ts); if (!ctxStale(_ep)) _ysLastTs = ts; }
@@ -6184,7 +6134,7 @@ async function ysFlushQueue() {
    ⛔ והכתיבה לשורות **היא** שקובעת הצלחה — ⚠️ עֵד הפינוי (`_ysPushedAt`),
       אישור ה-⏳ ו-`ysTouchLastChanged` נשענים עליה: ⭐ עדות שנשענת על
       כתיבה אחרת מזו שקרתה היא ראיה למשהו שלא נמדד.
-   ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ `ysRowsPush` נכשלת סגור ומדלגת בשקט,
+   ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ `ysRowsUpsert` נכשלת סגור ומדלגת בשקט,
       ⛔ ובלי התור רשומה שנכתבה אופליין לא הייתה מנסה לעלות שוב לעולם.
 
    ⭐ שתי טבלאות, אב ובן: `ys_sessions` (מטא הסדר) ו-`ys_marks` (שורה
@@ -6575,9 +6525,9 @@ var DEV_CFG = { key: 'ys_device_id' };
 // (סבב 30) — הליבה עברה לשם ומשותפת לארבע האפליקציות.
 // ⛔ אין להחזיר לכאן מימוש עצמאי (סבב 30) — שני מימושים כמעט-זהים הם בדיוק
 //    מה שהסבב הזה בא לסלק, והם נסחפים בשקט זה מזה.
-// ⛔ ומעטפת ל-`bkMaybeDaily` הוסרה (סבב 30, השלמה) — `ysMaybeDailyBackup`
-//    אפשרה לקרוא לגיבוי מכל מקום, וכך הוא נתלה במסלול הדחיפה והושבת
-//    ל-25 יום. נקודת ההפעלה היחידה היא `bkBoot()` מ-`loadDash()`.
+// ⛔ ואין לעטוף כאן את `bkMaybeDaily` — עוטף מתיר לקרוא לגיבוי מכל מקום,
+//    והוא נתלה במסלול הדחיפה והושבת ל-25 יום. נקודת ההפעלה היחידה היא
+//    `bkBoot()` מ-`loadDash()`.
 function ysSyncLog(action, key, recordCount, details) {
   logAction(action, key, recordCount, details);
 }
@@ -6640,8 +6590,7 @@ function ysWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    `isPending` מכאן.** החותמת בענן נכתבת ע"י המכשיר שדחף, ולכן ברגע שמכשיר
 //    א' דוחף, הערך בענן נושא חותמת **מאוחרת יותר** מעריכה חדשה יותר שיושבת
 //    אצל מכשיר ב' וטרם עלתה — ומכשיר ב' היה מאמץ את גרסת א', כלומר מוחק את
-//    העריכה שלו **בשקט**. זו אותה הגנה בדיוק שקיימת ב-schar-limud (`slMerge`)
-//    וב-gius (`mergeRows`) מסבב 12, וכאן היא חסרה עד סבב 37.
+//    העריכה שלו **בשקט**.
 //    המחיר המודע: מכשיר שהיה מנותק זמן רב ידרוס בעלייתו עריכה מרוחקת חדשה
 //    יותר. זו העדפה מכוונת — הרשומה מסומנת ⏳ כל אותו זמן ומתריעה אחרי 24
 //    שעות, בעוד שעריכה שנמחקת בשקט אינה משאירה עקבות.
@@ -7553,12 +7502,10 @@ async function ysPullFromCloud() {
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
 
-// ⭐ סבב 51 — `ysAutoSync` והפולינג שלה הוחלפו במודול המשותף (`PL_CFG`
-//    ו-`plTick`). ההתנהגות זהה — קריאת שורת החותמת, ומשיכה מלאה רק
-//    כשהיא התקדמה — ומה שהשתנה הוא שהיא זהה בית-לבית בארבע האפליקציות.
-//    ⛔ אין להחזיר כאן `setInterval` (סבב 51) — נקודת ההפעלה היחידה היא
-//    `plBoot()` מ-`loadDash()`, ופולינג שרץ לפני הכניסה נגע ברשת בשביל
-//    משיכה ש-`ysApplyPerms` ממילא זורקת.
+// ⛔ אין להחזיר כאן `setInterval` (סבב 51) — הפולינג הוא המודול המשותף
+//    (`PL_CFG` ו-`plTick`), ונקודת ההפעלה היחידה היא `plBoot()`
+//    מ-`loadDash()`: ⚠️ פולינג שרץ לפני הכניסה נגע ברשת בשביל משיכה
+//    ש-`ysApplyPerms` ממילא זורקת.
 
 // טעינה ראשונית מהענן בעלייה — עם יצירה אוטומטית של טבלת kv אם חסרה
 setTimeout(async function() {

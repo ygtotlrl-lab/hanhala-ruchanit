@@ -28,7 +28,7 @@ import vm from 'node:vm';
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   /*  ⚠️ רצפת הטענות — ⛔ פחות מזה פירושו שהתהליך נסגר באמצע. */
-  expected: 15,
+  expected: 12,
   app: 'hanhala-ruchanit',
   /*  ⛔ שער פרטי להנהלה — ⚠️ **היא היחידה שרשומתה נושאת מפה של סימונים**:
    *  ⭐ בשלוש האחרות אין רשומה שמתפרקת לשורות בן, ⛔ ואין מה למדוד. */
@@ -40,7 +40,7 @@ const APP = {
           'mirrorWrite', 'mirrorBoot',
           'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame', '_ysSplitRecs',
           'ysMirrorPutRecs', 'ysMirrorWriteRecs', '_ysCfgRows', 'ysCfgLocalGet',
-          'ysCfgLocalSet', '_ysIsRecArr', 'ysMirrorSplitMigrate', 'ysMarkTombs',
+          'ysCfgLocalSet', 'ysMarkTombs',
           '_ysRowSet', 'ysSessionRow', 'ysMarkRows', 'ysStudentRow',
           '_ysRecTs', '_ysRecId', 'ysRecTs', 'tombStamp', 'prunePastTombstones',
           'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords',
@@ -49,8 +49,7 @@ const APP = {
           'lsSet', 'lsGet', 'uniqList', 'uniqKeyOf'],
   vars: ['var MIRROR = ', 'var YS_MIRROR_TABLES = ', 'var YS_MIRROR_STREAMS = ',
          'var YS_ROWS_KINDS = ', 'var PEND_KV_PREFIX = ', 'var TOMBSTONE_TTL_MS = ',
-         'var _tombPrunePending = ', 'var YS_SPLIT_MIGRATE = ',
-         'var YS_SETTINGS_MIGRATE = ', 'var MIRROR_CFG = ', 'var PUSH_TABLES = '],
+         'var _tombPrunePending = ', 'var MIRROR_CFG = ', 'var PUSH_TABLES = '],
   globals: { PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:', PK_STUDENT: 'student:',
              PK_AT_TREAT: 'at-treat:', PK_SL_TREAT: 'sl-treat:' },
 };
@@ -242,31 +241,6 @@ function caseSetup(localRecs) {
   const recs = sb.ysMirrorRecs('ys_sessions');
   assert(rows.every((r) => r.deleted === true) && Object.keys(recs[0].marks).length === 0,
     '3ו · ⛔ מקרה ד: סדר שנמחק — סימוניו מסומנים מחוקים ואינם יתומים');
-}
-
-/* ── 4 · ההגירה המקומית ────────────────────────────────────────────────── */
-{
-  const seed = {
-    ys_mirror_attend_sessions: JSON.stringify([rec(1, 800, { a: { s: 'p', min: 0 } })]),
-    ys_reasons: JSON.stringify(['x']),
-  };
-  const sb = harness(seed);
-  sb.ysMirrorSplitMigrate();
-  sb.mirrorLoad();
-  const first = JSON.stringify(sb._store);
-  assert(sb._store['ys_mirror_attend_sessions'] === undefined &&
-         sb._store['ys_reasons'] === undefined &&
-         JSON.parse(sb._store['ys_mirror_sessions']).length === 1 &&
-         sb.ysCfgLocalGet('ys_reasons')[0] === 'x',
-    '4א · ⛔ ההגירה קוראת · כותבת · ורק אז מוחקת — והמפתחות הישנים ירדו');
-  sb.ysMirrorSplitMigrate();
-  sb.mirrorLoad();
-  assert(JSON.stringify(sb._store) === first,
-    '4ב · ⛔ והיא אידמפוטנטית — ריצה שנייה אינה משנה דבר');
-  const sb2 = harness();
-  sb2.ysMirrorSplitMigrate();
-  assert(Object.keys(sb2._store).length === 0,
-    '4ג · ⚠️ ובמכשיר שאין בו מפתח ישן — אינה כותבת דבר');
 }
 
 /* ── מוטציה ומוטציית-נגד ───────────────────────────────────────────────── */
