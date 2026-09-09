@@ -488,13 +488,13 @@ header{justify-content:space-between;padding:0 14px}
 
 <!-- ===== מסך כניסה ===== -->
 <div id="auth-screen">
-  <div class="auth-box">
+  <div class="auth-box ksave">
     <div class="auth-logo"><img src="icons/icon-512.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
-    <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('auth-pass').focus()"></div>
-    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password" onkeydown="if(event.key==='Enter')window.doLogin()"></div>
-    <button class="auth-btn" id="auth-btn" data-act="login">כניסה למערכת</button>
+    <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
+    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
+    <button class="auth-btn" id="auth-btn" data-act="login" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
 
@@ -755,7 +755,7 @@ header{justify-content:space-between;padding:0 14px}
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
-      <div class="ss">
+      <div class="ss ksave">
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:8px">
           <div>
@@ -775,7 +775,7 @@ header{justify-content:space-between;padding:0 14px}
           </div>
         </div>
         <div style="margin-top:16px;text-align:left">
-          <button class="btn" data-act="absence-reasons-save">💾 שמור</button>
+          <button class="btn" data-act="absence-reasons-save" data-ksave>💾 שמור</button>
         </div>
       </div>
     </div>
@@ -783,7 +783,7 @@ header{justify-content:space-between;padding:0 14px}
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>✅ הגדרות סדרים</span></div>
-      <div class="ss">
+      <div class="ss ksave">
         <div style="display:flex;flex-direction:column;gap:16px">
           <!-- סדרים -->
           <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
@@ -799,20 +799,20 @@ header{justify-content:space-between;padding:0 14px}
           </div>
         </div>
         <div style="margin-top:16px;display:flex;justify-content:flex-end">
-          <button data-act="at-settings-save" class="btn">💾 שמור הגדרות</button>
+          <button data-act="at-settings-save" class="btn" data-ksave>💾 שמור הגדרות</button>
         </div>
       </div>
     </div>
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
-      <div class="ss">
+      <div class="ss ksave">
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;max-width:400px">
           <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
           <div id="sl-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
           <button data-act="sl-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
         </div>
         <div style="margin-top:16px;display:flex;justify-content:flex-end">
-          <button data-act="sl-settings-save" class="btn">💾 שמור הגדרות</button>
+          <button data-act="sl-settings-save" class="btn" data-ksave>💾 שמור הגדרות</button>
         </div>
       </div>
     </div>
@@ -848,7 +848,7 @@ header{justify-content:space-between;padding:0 14px}
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" data-act="user-add-open">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss" id="ss-perms">
+      <div class="ss ksave" id="ss-perms">
         <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
         <div style="overflow-x:auto">
           <table class="pt">
@@ -859,7 +859,7 @@ header{justify-content:space-between;padding:0 14px}
           </table>
         </div>
         <div style="margin-top:14px;text-align:left">
-          <button class="btn" data-act="perms-save">💾 שמור הרשאות</button>
+          <button class="btn" data-act="perms-save" data-ksave>💾 שמור הרשאות</button>
         </div>
       </div>
       <!-- אזור מצב (סבב 17) — שני האלמנטים האחרונים במסך, בסדר הזה -->
@@ -877,7 +877,7 @@ header{justify-content:space-between;padding:0 14px}
       כל דיאלוג בנה מיכל משלו וסגר אותו בדרך משלו, ⛔ ומיכל שהוחלף חלקית
       משאיר שני מסלולי סגירה.  -->
 <div id="modal" class="modal-overlay">
-  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-box ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="mdl-hd">
       <h3 id="modal-title"></h3>
       <button class="mdl-x" data-act="modal-close" aria-label="סגירה">✕</button>
@@ -2107,11 +2107,9 @@ function switchUser(id, name) {
     '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:8px">'+
     '<div id="switch-err" style="color:#e53e3e;font-size:.8rem;min-height:18px"></div>',
     '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">'+cancelTxt+'</button>'+
-    '<button data-act="switch-confirm" style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button>');
+    '<button data-act="switch-confirm" data-ksave style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">'+enterTxt+'</button>');
   document.getElementById('switch-name').textContent = name;
-  var sp = document.getElementById('switch-pass');
-  sp.addEventListener('keydown', function (e) { if (e.key === 'Enter') confirmSwitch(); });
-  sp.focus();
+  document.getElementById('switch-pass').focus();
 }
 
 async function confirmSwitch() {
@@ -2354,7 +2352,6 @@ function showDenied() {
     '<button class="btn" data-act="modal-close" style="flex:1">הבנתי</button>');
 }
 
-// Enter מטופל דרך onkeydown ב-HTML
 
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2703,7 +2700,7 @@ function userFormHtml() {
 function openUserModal(title) {
   openModal('👤 ' + title, userFormHtml(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
-    '<button class="btn" data-act="user-save">💾 שמור</button>');
+    '<button class="btn" data-act="user-save" data-ksave>💾 שמור</button>');
 }
 
 // ⛔ מעטפת מגן השליחה הכפולה (סבב 67) — `saveUser` כותבת לענן, ולחיצה
@@ -2862,7 +2859,7 @@ function myPasswordModal() {
     '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
     '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;text-align:right"></div>',
     '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
-    '<button id="pw-save" data-act="mypass-change" style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
+    '<button id="pw-save" data-act="mypass-change" data-ksave style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
   document.getElementById('pw-old').focus();
 }
 
@@ -6535,11 +6532,15 @@ async function ysCfgUpdatedAt(key) {
  *  בעוד ש-`single` מסמן שגיאה על היעדר שורה. ⛔ והדגל `res` הוא מה
  *  שמאפשר להבחין בין «אין ערך» ל«הענן לא ענה» — ⚠️ שניהם `null`,
  *  ⛔ ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל. */
+var BAD_VALUE = 'ערך פגום בענן';
 function ysCfgGet(key, res) {
   return withTimeout(SB.from('ys_settings').select('value').eq('key', key).maybeSingle()).then(function(r){
-    var v = null;
-    if (r && r.data) try { v = JSON.parse(r.data.value); } catch(e) { v = null; }
-    return res ? { ok: !(r && r.error), value: v } : v;
+    var v = null, bad = false;
+    /*  ⛔ «אין ערך» ו«ערך פגום» אינן אותה תשובה — ⚠️ שתיהן חזרו «אין»,
+     *  ⭐ ומי שקרא את המסך חיפש רשת שלא נפלה. */
+    if (r && r.data) try { v = JSON.parse(r.data.value); }
+      catch (pe) { bad = true; console.error('[sync] ' + BAD_VALUE + ' [' + key + ']:', pe); }
+    return res ? { ok: !bad && !(r && r.error), value: v, error: bad ? BAD_VALUE : null } : v;
   }, function(e){
     if (res) return { ok: false, value: null };
     throw e;
@@ -7096,6 +7097,35 @@ function uniqHas(list, val, keyFn) {
   return list.some(function (v) { return uniqKeyOf(v, keyFn) === k; });
 }
 /* ═══════════════ סוף מודול כיווץ רשימת ערכים ═══════════════════════════ */
+/* ═══ Enter שומר בשדה עריכה — מודול משותף (סבב 125) ═════════════════════
+   ⛔ שדה שנשמר בכפתור נשמר גם ב-`Enter` — ⚠️ **וההיקף הוא הטופס** (`.ksave`)
+      ⛔ ולא השדה: ⭐ שדה שנוסף לטופס קיים מקבל את המקש בלי שאיש ייגע בו,
+      ⚠️ ומטפל פר-שדה נשכח בשדה הבא שנוסף.
+   ⛔ והכפתור מסומן — ⚠️ `data-ksave` לשמירה ו-`data-kesc` לביטול: ⭐ בטופס
+      יושב יותר מכפתור אחד, ⛔ ובחירה לפי סדר הייתה מפעילה את הראשון.
+   ⛔ והניתוב הוא **מפת הפעולות** — ⚠️ הכפתור נמצא בתוך ההיקף והפעולה שלו
+      מופעלת: ⭐ מסלול שמירה שני מתיישן ברגע שהראשון משתנה.
+   ⛔ ו-`textarea` אינו נכנס — ⚠️ `Enter` בו הוא שורה חדשה.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה. */
+function ksFire(scope, attr) {
+  var b = scope.querySelector('[' + attr + ']');
+  if (!b || b.disabled) return false;
+  var act = b.getAttribute('data-act');
+  var fn = DOM_ACTIONS[act];
+  if (!fn) { console.error('[ks] כפתור ' + attr + ' בלי פעולה במפה: ' + act); return false; }
+  fn(b);
+  return true;
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' && e.key !== 'Escape') return;
+  var t = e.target;
+  if (!t || t.tagName !== 'INPUT' || !t.closest) return;
+  var scope = t.closest('.ksave');
+  if (!scope) return;
+  if (ksFire(scope, e.key === 'Enter' ? 'data-ksave' : 'data-kesc')) e.preventDefault();
+});
+/* ═══════════════ סוף מודול Enter שומר בשדה עריכה ════════════════════════ */
 
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
@@ -8288,7 +8318,7 @@ window.openStatusHistory = async function (sid) {
 
 function studentFormFoot(){
   return '<button class="btn out" data-act="modal-close">ביטול</button>'+
-         '<button class="btn" data-act="student-save">💾 שמור</button>';
+         '<button class="btn" data-act="student-save" data-ksave>💾 שמור</button>';
 }
 function openAddStudent(){
   if(checkLoginNeeded())return;
@@ -9915,12 +9945,12 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
     html+='<div style="margin-bottom:14px">';
     html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy-ink);margin-bottom:8px">➕ הוסף טיפול</div>';
-    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<div class="ksave" style="display:flex;gap:8px;flex-wrap:wrap">';
     var cfg=window._atCfg||atDefaultCfg();
     html+='<select aria-label="סוג הטיפול" id="at-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input aria-label="הערה (אופציונלי)" id="at-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button data-act="at-add-treat" data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy-fill);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button data-act="at-add-treat" data-ksave data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy-fill);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy-ink);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
@@ -11378,12 +11408,12 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     html+='<div style="display:none;padding:16px;border-top:1px solid var(--border)">';
     html+='<div style="margin-bottom:14px">';
     html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy-ink);margin-bottom:8px">➕ הוסף טיפול</div>';
-    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<div class="ksave" style="display:flex;gap:8px;flex-wrap:wrap">';
     var slCfg=window._slCfg||slDefaultCfg();
     html+='<select aria-label="סוג הטיפול" id="sl-treat-type-'+sid+'" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">'+
       slCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input aria-label="הערה (אופציונלי)" id="sl-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" style="flex:1;min-width:140px;padding:6px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:Heebo;font-size:.83rem">';
-    html+='<button data-act="sl-add-treat" data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy-fill);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
+    html+='<button data-act="sl-add-treat" data-ksave data-id="'+esc(sid)+'" style="padding:6px 16px;background:var(--navy-fill);color:#fff;border:none;border-radius:7px;font-family:Heebo;font-size:.83rem;cursor:pointer">שמור</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div style="font-weight:700;font-size:.85rem;color:var(--navy-ink);margin-bottom:8px">📋 היסטוריית טיפולים</div>';
