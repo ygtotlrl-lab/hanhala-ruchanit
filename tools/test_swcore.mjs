@@ -49,31 +49,32 @@ const APP = {
       ⛔ תא בלי `defect` חייב להישאר זהה אחרי האיחוד — הפרש הוא עצירה. */
   expects: {
     'nav-online':            'body:NET-OK|status:200',
-    'nav-offline-cached':    'body:CORE-ROOT|status:200',
-    'nav-offline-empty':     'body:html|status:503',
-    'nav-offline-query':     'body:CORE-ROOT|status:200',
-    'sub-cached-online':     'body:NET-OK|status:200',
+    'nav-offline-cached':    'body:CORE-INDEX|status:200',
+    'nav-offline-empty':     'body:html|status:200',
+    'nav-offline-query':     'body:CORE-INDEX|status:200',
+    'sub-cached-online':     'body:CORE-ASSET|status:200',
     'sub-cached-offline':    'body:CORE-ASSET|status:200',
-    'sub-missing-offline':   'network-error',
+    'sub-missing-offline':   'body:empty|status:504',
     'sub-404':               'body:NET-404|status:404',
     'sub-404-stored':        'not-stored',
     'supabase':              'passthrough',
-    'cdn-cached-online':     'body:NET-OK|status:200',
-    'version-probe':         'body:NET-OK|status:200',
+    'cdn-cached-online':     'body:CDN-0|status:200',
+    'version-probe':         'passthrough',
     'non-get':               'passthrough',
     'sweep-scope':           '%CACHE%,sister-app-v9',
   },
   defectCount: 0,
-  /*  ⚠️ ידיות המדיניות **נמדדו בסבב 40 ונשמרו** — ⛔ אינן ברירת מחדל
-   *  שנפלה מאליה, ואין לשנות אף אחת מהן «לשם אחידות» (סבב 42ג). */
+  /*  ⚠️ ידיות המדיניות **נמדדו** ברתמת קו-הבסיס — ⛔ אינן ברירת מחדל
+   *  שנפלה מאליה, ⭐ **ושבע מהן זהות בארבעתן**: ⚠️ מה שנבדל הוא
+   *  `prefix` ו-`cdnHosts` בלבד, ⛔ וכל סטייה נוספת מוצהרת בשמה. */
   cfg: {
     prefix: "'hanhala-ruchanit-'",
-    scoped: 'false',
-    navFallback: "'request'",
+    scoped: 'true',
+    navFallback: "'shell'",
     navIgnoreSearch: 'true',
-    subStrategy: "'network-first'",
-    subMiss: "'error'",
-    offlineStatus: '503',
+    subStrategy: "'cache-first'",
+    subMiss: "'504'",
+    offlineStatus: '200',
     skipWaiting: 'true',
   },
 };

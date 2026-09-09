@@ -5,7 +5,7 @@
  *  ⚠️ מסבב 42ג כל הלוגיקה יושבת במודול המשותף שלמטה — זהה בית-לבית
  *  בארבע האפליקציות. ⛔ מה שנבדל יושב ב-SW_CFG בלבד.
  */
-var CACHE_NAME = 'hanhala-ruchanit-v147'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
+var CACHE_NAME = 'hanhala-ruchanit-v148'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -50,18 +50,18 @@ var SW_OFFLINE_HTML =
 /*  ⚠️ SW_CFG — הדבר היחיד שנבדל בין ארבע האפליקציות (סבב 42ג). כל ידית
  *  כאן היא התנהגות **שנמדדה** ברתמת קו-הבסיס, ⛔ ולא ברירת מחדל שנפלה
  *  מאליה: שינוי שלה מפיל את `tools/test_sw.mjs`, וזה הרצוי.
- *  ⚠️ `navIgnoreSearch` נחוץ כאן ורק כאן: ה-APK טוען את האפליקציה עם
- *  '?apk=1', ובלעדיו בקשת הניווט אינה מוצאת את './' שבמטמון. */
+ *  ⛔ **ושתי ידיות בלבד נבדלות בין הארבע** — ⚠️ `prefix` שהוא זהות
+ *  האפליקציה, ⭐ ו-`cdnHosts` שהוא רשימת המארחים שהיא באמת טוענת:
+ *  ⛔ שאר הידיות זהות בארבעתן, ⚠️ ומי שסוטה בהן מצהיר את **שמה**. */
 var SW_CFG = {
   prefix: 'hanhala-ruchanit-',
-  skipHosts: [],
-  cdnHosts: [],
-  scoped: false,
-  navFallback: 'request',
+  cdnHosts: ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com'],
+  scoped: true,
+  navFallback: 'shell',
   navIgnoreSearch: true,
-  subStrategy: 'network-first',
-  subMiss: 'error',
-  offlineStatus: 503,
+  subStrategy: 'cache-first',
+  subMiss: '504',
+  offlineStatus: 200,
   skipWaiting: true,
   cdnTimeoutMs: 10000
 };
@@ -89,9 +89,6 @@ var SW_SUB_OPTS = { ignoreVary: true };
 function swSkip(url) {
   if (url.indexOf('http') !== 0) return true;
   if (url.indexOf('.supabase.co') !== -1) return true;
-  for (var i = 0; i < SW_CFG.skipHosts.length; i++) {
-    if (url.indexOf(SW_CFG.skipHosts[i]) !== -1) return true;
-  }
   return false;
 }
 
@@ -267,9 +264,9 @@ self.addEventListener('install', function (event) {
     }));
     return Promise.all(jobs);
   }).catch(function () {}));
-  /*  ⚠️ `skipWaiting` הוא ידית שנמדדה: ב-gius הוא נעדר **בכוונה** — הדף
-   *  מציג באנר «🔄 גרסה חדשה זמינה» והמשתמש מחליט מתי לעדכן. ⛔ אין
-   *  ליישר בלי החלטת מנהל (סבב 42ג) — זה משנה מתי גרסה חדשה נכנסת לתוקף. */
+  /*  ⛔ ההשתלטות מיידית בארבעתן — ⚠️ מסלול שמחכה ללחיצה מותיר מכשיר על
+   *  קוד ישן: ⭐ הבאנר נשאר למי שיש לו הקלדה לאבד, ⛔ והוא אינו התנאי
+   *  להשתלטות. */
   if (SW_CFG.skipWaiting) self.skipWaiting();
 });
 
