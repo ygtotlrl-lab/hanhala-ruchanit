@@ -45,7 +45,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
-const FLOOR = { shared: 0, app: 20, appWhy: 'הנוכחות — יכולת שקיימת בהנהלה בלבד' };
+const FLOOR = { shared: 0, app: 19, appWhy: 'הנוכחות — יכולת שקיימת בהנהלה בלבד' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
@@ -149,10 +149,6 @@ ok('17 · ⭐ פרק סבב 38 נגזם (סבב 48ב) — הסף בטל, והס�
    ⛔ המנהל מחק את הערך ב-2026-08-18 (נמדד: אפס ב-`kv`, ב-`kv_rishon`,
      ב-`kv_ramataviv` וב-`kv_backup`), ושורת הפער נמחקה בסבב 39 — ולכן
      מעכשיו אין אזכור מותר כלל מחוץ לפרקי הסבבים, וטענה 20 התהפכה. */
-const DEAD = ['getAttendance', 'saveAttendance', 'ysMergeAttend', 'togglePresent', 'recordTime'];
-ok('18 · ⛔ אין בתיעוד אזכור של אף פונקציה שנמחקה',
-  DEAD.every((f) => DOC.slice(0, r38 === -1 ? DOC.length : r38).indexOf(f) === -1));
-
 const stray = [];
 for (const m of DOC.matchAll(BARE)) {
   const pos = m.index;

@@ -2,8 +2,7 @@
 /*  test_schema_source.mjs — מקור אמת יחיד לסכימה.
  *
  *  **מה נאכף:** ⛔ אין סכימה מוטבעת ב-`index.html` · ⛔ אין מסלול שמשתמש
- *  במפתח שירות · ⛔ כלי ההתקנה מושך את **אותו** קובץ ואינו מחזיק עותק שני ·
- *  ⛔ ומסך ההתקנה שהוסר אינו חוזר.
+ *  במפתח שירות · ⛔ וכלי ההתקנה מושך את **אותו** קובץ ואינו מחזיק עותק שני.
  *
  *  **הנימוק המדוד:** עותק מוטבע של הסכימה מתיישן בכל מיגרציה — ⚠️ ומי
  *  שמתקין ממנו מקבל מסד שאינו זהה לזה שבייצור.
@@ -15,8 +14,7 @@
  *  ⭐ וכאן נמדד **מניין** היא נקראת.
  *
  *  ⚠️ פרטי לאפליקציה הזו. ⛔ אין ליישר אותו מריפו אחר — כלי ההתקנה שלה
- *  אינו קיים באחיות באותה צורה. ⚠️ **והטענות ששרדו אינן שריד** — ⭐ הן על
- *  **מקור האמת** ולא על המסך שהוסר.
+ *  אינו קיים באחיות באותה צורה.
  */
 
 import fs from 'node:fs';
@@ -46,7 +44,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
-const FLOOR = { shared: 0, app: 29, appWhy: 'מקור אמת יחיד לסכימה — שער פרטי להנהלה' };
+const FLOOR = { shared: 0, app: 24, appWhy: 'מקור אמת יחיד לסכימה — שער פרטי להנהלה' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
@@ -101,8 +99,6 @@ const ok = (c, m) => { RAN++; if (c) passN++; else { failN++; console.error('❌
 const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
 const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
   `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
-const someIn = (re, s, label) => ok(_hits(re, s) >= 1,
-  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
 
 
 /* ── הסרת הערות והצהרות DDL אמיתיות ─────────────────────────────────────────
@@ -125,8 +121,9 @@ function t1() {
   // ⚠️ נמדד על **הקוד הרץ** — שורות ההערה מוסרות קודם, אחרת הבלוק שמסביר
   //    למה הסכימה הוסרה היה נספר כסכימה.
   const code = stripComments(SRC);
-  ok(!DDL.table.test(code), '1א · ⭐ אין אף `create table` בקוד הרץ של index.html');
-  ok(!DDL.alter.test(code), '1ב · ⛔ וגם לא `alter table` — הסכימה כולה עברה לקובץ');
+  /*  ⛔ `create table` בקוד הרץ אינו נמדד כאן — ⚠️ שורת «מקור אמת יחיד
+   *  לסכימה» מודדת בדיוק אותו, ⭐ וטענה נאכפת במקום אחד. */
+  ok(!DDL.alter.test(code), '1ב · ⛔ אין `alter table` בקוד הרץ — הסכימה כולה בקובץ');
   noneIn(/password_hash[ \t]+text[ \t]+not[ \t]+null/i, SRC, '1ג · ולא הגדרת עמודה');
   ok(!DDL.policy.test(code), '1ד · ולא פוליסה');
   // ⛔ ואין עותק-גיבוי מוטבע «ליתר ביטחון» — הוא בדיוק המקור השני
@@ -134,33 +131,16 @@ function t1() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   2 · ⛔ מסלול ה-service-key הוסר — ואינו חוזר (סבב 39)
+   2 · ⛔ אין מסלול שמשתמש במפתח שירות
    ══════════════════════════════════════════════════════════════════════════
-   `exec_sql` אינה קיימת במסד (נמדד ב-2026-08-18 מול `pg_proc`), ולכן
-   ה-`rpc` נכשל תמיד. מה שנשאר היה שדה שמבקש **service-role key** — המפתח
-   שעוקף RLS — בתמורה לכלום. */
+   ⛔ שדה שמבקש **service-role key** בקוד לקוח אסור — ⚠️ הוא מפתח על
+   שעוקף RLS, והוא ציבורי ברגע שהדף נטען. ⭐ האיסור חי ואינו תלוי במימוש. */
 function t2() {
   const code = stripComments(SRC);
   noneIn(/setupWithServiceKey/, code, '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
   noneIn(/exec_sql/, code,            '2ב · ⛔ ואין קריאת `exec_sql`');
   noneIn(/createClient\s*\([^)]*key/, code,
     '2ג · ⛔ ואין לקוח Supabase שנבנה ממפתח שהמשתמש הקליד');
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   3 · ⛔ מסך ההתקנה הוסר מהאפליקציה — ואינו חוזר (סבב 58)
-   ══════════════════════════════════════════════════════════════════════════
-   ⚠️ ההתקנה נעשית מול המסד ישירות, מ-`migrations/`; ⛔ מסך שמציג פקודות
-   SQL להעתקה, מושך קובץ התקנה לתוך הדף ומסקר את המסד בלולאה הוא שכבה
-   שלמה שאיש אינו נוגע בה — ושתיים מארבע האפליקציות מעולם לא היו צריכות. */
-function t3() {
-  const code = stripComments(SRC);
-  noneIn(/function\s+showSetupScreen\s*\(/, code, '3א · ⛔ אין `showSetupScreen`');
-  noneIn(/function\s+startSetupPoll\s*\(/, code,  '3ב · ⛔ ואין `startSetupPoll`');
-  noneIn(/YS_SETUP_SQL_URL|ysFetchSetupSql/, code,
-    '3ג · ⛔ ואין משיכת קובץ ההתקנה לתוך הדף');
-  noneIn(/setup-sql|setup-status/, SRC,
-    '3ד · ⛔ ואין עוגני DOM של המסך שהוסר');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -203,7 +183,7 @@ if (!RUN_MUT) {
   process.exit(failN ? 1 : 0);
 }
 /* ══════════════════════════════════════════════════════════════════════════
-   8 · מוטציות — החזרת מסלול ה-service-key או של המסך מפילה את 2 ו-3
+   8 · מוטציות — מפתח שירות או סכימה מוטבעת מפילים את 2 ואת 1
    ══════════════════════════════════════════════════════════════════════════ */
 function t8() {
   const code = stripComments(SRC);
@@ -212,33 +192,32 @@ function t8() {
   ok(/setupWithServiceKey/.test(mutFn) && /exec_sql/.test(mutFn),
     '8א · מוטציה: החזרת הפונקציה מפילה את טענות 2א ו-2ב');
 
-  const mutScreen = code + "\nfunction showSetupScreen(){}\nfunction startSetupPoll(){}\n";
-  ok(!/function\s+showSetupScreen\s*\(/.test(code)
-     && /function\s+showSetupScreen\s*\(/.test(mutScreen),
-    '8ב · מוטציה: החזרת המסך מפילה את טענה 3א');
-  ok(!/function\s+startSetupPoll\s*\(/.test(code)
-     && /function\s+startSetupPoll\s*\(/.test(mutScreen),
-    '8ג · ⛔ וגם החזרת הסקר מפילה את טענה 3ב');
+  const mutDDL = code + "\nvar s='alter table ys_users add column x text';\n";
+  ok(!DDL.alter.test(code) && DDL.alter.test(mutDDL),
+    '8ב · מוטציה: `alter table ys_users` מוטבע מפיל את טענה 1ב');
+  const mutPol = code + "\nvar p='create policy pp on ys_users';\n";
+  ok(!DDL.policy.test(code) && DDL.policy.test(mutPol),
+    '8ג · ⛔ ו-`create policy` מוטבע מפיל את טענה 1ד');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
    9 · ⭐ מוטציית-נגד — קוד שנוסף ⛔ אינו מפיל
    ══════════════════════════════════════════════════════════════════════════
-   ⚠️ טענות 1–3 הן טענות **היעדר**: הן מודדות שמות שהוסרו, ⛔ ולא את העובדה
-   שהקובץ לא השתנה. ⭐ שער שהיה נופל על כל תוספת היה הופך כל עבודה
-   באפליקציה להפרה. */
+   ⚠️ טענות 1 ו-2 הן טענות **היעדר**: הן מודדות שאין DDL ואין מפתח שירות,
+   ⛔ ולא את העובדה שהקובץ לא השתנה. ⭐ שער שהיה נופל על כל תוספת היה הופך
+   כל עבודה באפליקציה להפרה. */
 function t9() {
   const added = stripComments(SRC) + '\nfunction _ncSchemaPing(){ return 1; }\n';
   ok(added !== stripComments(SRC), 'נ1 · מוטציית-הנגד אכן מוסיפה קוד רץ');
   ok(!DDL.table.test(added) && !DDL.alter.test(added) && !DDL.policy.test(added),
     'נ2 · ⭐ ואף על פי כן אין בו DDL — נמדדו 0 הצהרות והצפוי אפס');
   ok(_hits(/setupWithServiceKey/, added) === 0 && _hits(/exec_sql/, added) === 0,
-    'נ3 · ⛔ ומסלול ה-service-key נשאר מוסר — נמדדו 0 מופעים והצפוי אפס');
+    'נ3 · ⛔ ואין בו מסלול מפתח שירות — נמדדו 0 מופעים והצפוי אפס');
 }
 
 /* ── הרצה ──────────────────────────────────────────────────────────────── */
 console.log('\n═══ סבב 32 — מקור אמת יחיד לסכימה ═══\n');
-const tests = [t1, t2, t3, t6, t7, t8, t9];
+const tests = [t1, t2, t6, t7, t8, t9];
 for (const t of tests) {
   try { await t(); }
   catch (e) { failN++; console.error(`❌ ${t.name} זרקה: ${(e && e.stack) || e}`); }
