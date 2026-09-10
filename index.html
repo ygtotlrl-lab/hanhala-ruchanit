@@ -26,20 +26,26 @@
   /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בארבעתן,
    *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
   --stale-ink:#a3341f;
+  /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד בארבעתן,
+   *  ⭐ והגוון בלבד נבדל: ⛔ רכיב שמייצג את האפליקציה נגזר ממנו
+   *  ⛔ ולא מדיו הטקסט — ⚠️ ארבעה באנרים בארבעה גוונים נראו זהים.
+   *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
+  --brand:var(--navy-fill); --on-brand:#ffffff;
 
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
 @media (prefers-color-scheme:dark){
   :root{
     --stale-ink:#ffb4a2;
+    --on-brand:#ffffff;
+
     --bg:#0d151d; --bg2:#131e29;
     --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
     --border:#24333f;
     --navy-ink:#7fb2f0; --navy-fill:#1a3a6b;
     --navy2:#234a8a; --navy3:#0f2347;
-    --gold:#e0bd63;
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
     --shadow2:0 12px 40px rgba(0,0,0,.5);
   }
@@ -350,16 +356,16 @@ header{justify-content:space-between;padding:0 14px}
 }
 #updater.show{display:flex}
 #updater .in{
-  background:var(--text);color:var(--bg);border-radius:14px;padding:11px 12px 11px 16px;
+  background:var(--brand);color:var(--on-brand);border-radius:14px;padding:11px 12px 11px 16px;
   display:flex;align-items:center;gap:12px;box-shadow:var(--shadow2);
   font-size:14px;font-weight:700;max-width:520px;width:100%
 }
 #updater button{
-  margin-inline-start:auto;background:var(--bg);color:var(--text);border:0;border-radius:9px;
+  margin-inline-start:auto;background:var(--on-brand);color:var(--brand);border:0;border-radius:9px;
   padding:7px 14px;font-family:inherit;font-weight:700;cursor:pointer;font-size:13.5px;flex:none
 }
 #updater button.x{
-  margin-inline-start:0;background:none;color:var(--bg);opacity:.7;padding:0 4px;font-size:15px
+  margin-inline-start:0;background:none;color:var(--on-brand);opacity:.7;padding:0 4px;font-size:15px
 }
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
@@ -438,7 +444,7 @@ header{justify-content:space-between;padding:0 14px}
       <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:var(--navy-ink);border-bottom:1px solid var(--border)"></div>
       <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:var(--text3);border-bottom:1px solid var(--border)"></div>
       <div id="user-menu-others" style="border-bottom:1px solid var(--border)"></div>
-      <button data-act="menu-mypass" style="width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:var(--navy-ink);font-weight:600">שינוי הסיסמה שלי 🔑</button>
+      <button data-act="my-pass" style="width:100%;padding:12px 16px;background:none;border:none;border-bottom:1px solid var(--border);cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:var(--navy-ink);font-weight:600">שינוי הסיסמה שלי 🔑</button>
       <button data-act="menu-logout" style="width:100%;padding:12px 16px;background:none;border:none;cursor:pointer;text-align:right;font-family:Heebo;font-size:.88rem;color:#e53e3e;font-weight:600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
@@ -2466,17 +2472,17 @@ var DOM_ACTIONS = {
   'at-session-add':       function () { window.atAddSession(); },
   'sl-treat-row-add':     function () { window.slAddTreatRow(); },
   'at-treat-row-add':     function () { window.atAddTreatRow(); },
-  /*  ⛔ מסך הכניסה והמשתמשים — ⚠️ `user-save` ו-`mypass-change` מקבלים את
+  /*  ⛔ מסך הכניסה והמשתמשים — ⚠️ `user-save` ו-`my-pass-save` מקבלים את
    *  הכפתור שנלחץ, ⛔ ולכן `this` שהיה ב-`onclick` הוא ה-`el` שכאן. */
   'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
-  'menu-mypass':      function () { closeUserMenu(); myPasswordModal(); },
+  'my-pass':          function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function (el) { return saveUser(el); },
   'user-switch':      function (el) { window.switchUserEl(el); },
-  'mypass-change':    function (el) { return changeMyPassword(el); },
+  'my-pass-save':     function (el) { return changeMyPassword(el); },
   'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
   'perms-save':       function () { return savePerms(); },
@@ -2763,14 +2769,15 @@ async function savePerms() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   שינוי סיסמה אישית — המסך, ומגן השליחה הכפולה
+   שינוי סיסמה אישית — פותח ושומר
    ══════════════════════════════════════════════════════════════════════════
-   ⛔ כפתור שמפעיל כתיבה לרשת מושבת עד שהיא הסתיימה (סבב 67) — לחיצה
-   שנייה על אותו כפתור בזמן שהראשונה באוויר שולחת בקשה שנייה, ובכתיבת
-   משתמש היא יוצרת שורה כפולה או דורסת עדכון שטרם חזר.
-   ⛔ ושלושה שדות ולא שניים (סבב 67) — עד היום `changeMyPassword` הכירה
-   `pw-old` ו-`pw-new` בלבד, ⚠️ ולכן שגיאת הקלדה בסיסמה החדשה הייתה
-   נכתבת כמות שהיא ונועלת את המשתמש בחוץ בלי שום דרך לגלות זאת.
+   ⛔ פותח ושומר, ושתי פעולות במפה — ⚠️ מסך שנפתח ואין לו שמירה הוא חצי
+   יכולת, ⛔ ופעולה בלי מסך היא מטפל שאיש אינו מגיע אליו.
+   ⛔ ושלושה שדות ולא שניים — ⚠️ שגיאת הקלדה בסיסמה החדשה נכתבת כמות
+   שהיא, ⭐ ומאותו רגע המשתמש נעול בחוץ בלי דרך לגלות מה הוקלד בפועל.
+   ⛔ **וכפתור שמפעיל כתיבה לרשת מושבת עד שהיא הסתיימה** — ⚠️ לחיצה שנייה
+   בזמן שהראשונה באוויר שולחת בקשה שנייה, ⛔ ובכתיבת משתמש היא יוצרת שורה
+   כפולה או דורסת עדכון שטרם חזר.
    ══════════════════════════════════════════════════════════════════════════ */
 // מגן שליחה כפולה: מחזיר את מצב הכפתור לקדמותו כשהפעולה נגמרת.
 /*  ⛔ התווית היא פרמטר עם ברירת מחדל ⛔ ולא מחרוזת קבועה (סבב 89) — ⚠️ יש
@@ -2792,16 +2799,16 @@ function myPasswordModal() {
   var fld = 'border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
   var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
   openModal('🔑 שינוי הסיסמה שלי',
-    '<label style="' + lbl + '" for="pw-old">סיסמה נוכחית</label>' +
-    '<input type="password" id="pw-old" maxlength="6" inputmode="numeric" autocomplete="current-password" style="' + fld + '">' +
-    '<label style="' + lbl + '" for="pw-new">סיסמה חדשה (6 ספרות)</label>' +
-    '<input type="password" id="pw-new" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
-    '<label style="' + lbl + '" for="pw-new2">אימות סיסמה חדשה</label>' +
-    '<input type="password" id="pw-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
-    '<div id="pw-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;text-align:right"></div>',
+    '<label style="' + lbl + '" for="mp-cur">סיסמה נוכחית</label>' +
+    '<input type="password" id="mp-cur" maxlength="6" inputmode="numeric" autocomplete="current-password" style="' + fld + '">' +
+    '<label style="' + lbl + '" for="mp-new">סיסמה חדשה (6 ספרות)</label>' +
+    '<input type="password" id="mp-new" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+    '<label style="' + lbl + '" for="mp-new2">אימות סיסמה חדשה</label>' +
+    '<input type="password" id="mp-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" style="' + fld + '">' +
+    '<div id="mp-err" style="color:#e53e3e;font-size:.8rem;min-height:18px;text-align:right"></div>',
     '<button data-act="modal-close" style="flex:1;padding:10px;background:none;border:2px solid var(--border);border-radius:8px;font-family:Heebo;cursor:pointer">ביטול</button>' +
-    '<button id="pw-save" data-act="mypass-change" data-ksave style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
-  document.getElementById('pw-old').focus();
+    '<button id="mp-save" data-act="my-pass-save" data-ksave style="flex:1;padding:10px;background:var(--navy-fill);color:#fff;border:none;border-radius:8px;font-family:Heebo;font-weight:600;cursor:pointer">שמירה</button>');
+  document.getElementById('mp-cur').focus();
 }
 
 
@@ -2820,10 +2827,11 @@ async function _changeMyPasswordInner() {
    *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
   var _u = AUTH.user;
   if (!_u || !_u.client_id) { toast('❌ אין משתמש מחובר', null, 'bad'); return; }
-  var oldPass = document.getElementById('pw-old').value.trim();
-  var newPass = document.getElementById('pw-new').value.trim();
-  var newPass2El = document.getElementById('pw-new2');
-  var newPass2 = newPass2El ? newPass2El.value.trim() : newPass;
+  var c1 = document.getElementById('mp-cur');
+  var n1 = document.getElementById('mp-new');
+  var n2 = document.getElementById('mp-new2');
+  if (!c1 || !n1 || !n2) { uiNoDialog('_changeMyPasswordInner', 'mp-cur'); return; }
+  var oldPass = c1.value.trim(), newPass = n1.value.trim(), newPass2 = n2.value.trim();
   if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות', null, 'bad'); return; }
   if (!PASS_SIX_RE.test(newPass)) { toast(MSG_PASS_SIX, null, 'bad'); return; }
