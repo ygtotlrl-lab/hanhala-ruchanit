@@ -104,7 +104,7 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMi
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
   /* ⛔ מגן השליחה הכפולה — ⚠️ שני מסלולי פתיחת הסדר קוראים לו עם תווית
    * משלהם, ⭐ ורתמה שאינה מחלצת אותו נופלת ב-ReferenceError. */
-  'ysBusy',
+  'busy',
   /* ⛔ נקודת המעבר האחת אל טבלת המשתמשים — ⚠️ שלושת אתרי הכתיבה עוברים
    * בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. ⛔ ואיתה שתי
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
