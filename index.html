@@ -32,7 +32,7 @@
    *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
   --brand:var(--navy-fill); --on-brand:#ffffff;
 
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
@@ -41,7 +41,7 @@
     --stale-ink:#ffb4a2;
     --on-brand:#ffffff;
 
-    --bg:#0d151d; --bg2:#131e29;
+    --bg:#0d151d; --card:#131e29;
     --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
     --border:#24333f;
     --navy-ink:#7fb2f0; --navy-fill:#1a3a6b;
@@ -55,7 +55,7 @@ body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-hei
 body.locked{overflow:hidden}
 header{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--navy2));padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px rgba(0,0,0,.22);position:sticky;top:0;z-index:100}
 .hl{display:flex;align-items:center;gap:16px}
-.logo{width:60px;height:60px;object-fit:contain;border-radius:14px;background:var(--bg2);padding:3px;}
+.logo{width:60px;height:60px;object-fit:contain;border-radius:14px;background:var(--card);padding:3px;}
 .hdiv{width:1px;height:48px;background:rgba(255,255,255,.2)}
 .htxt{color:rgba(255,255,255,.9);font-size:.88rem;line-height:1.5}
 .htxt strong{display:block;font-size:1rem;color:#fff;font-weight:700}
@@ -70,7 +70,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .hero-date{font-size:.83rem;opacity:.72;margin-bottom:6px}
 .hero-title{font-size:1.65rem;font-weight:700;margin-bottom:4px}
 .hero-sub{font-size:.9rem;opacity:.8}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:16px 20px;text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
 .stat:hover{background:var(--bg)}
@@ -80,7 +80,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .mods-lbl{font-size:.8rem;font-weight:600;color:var(--text2);margin-bottom:18px;display:flex;align-items:center;gap:10px;text-transform:uppercase;letter-spacing:.05em}
 .mods-lbl::before{content:"";width:3px;height:16px;background:var(--navy-fill);border-radius:2px;display:inline-block}
 .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-.mod{background:var(--bg2);border:1.5px solid var(--border);border-radius:12px;padding:24px 20px;cursor:pointer;display:flex;align-items:flex-start;gap:14px;transition:all .22s;box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
+.mod{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:24px 20px;cursor:pointer;display:flex;align-items:flex-start;gap:14px;transition:all .22s;box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
 .mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 12px 12px 0;transition:width .22s}
 .mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow2);transform:translateY(-2px)}
 .mod:hover::before{width:6px}
@@ -96,7 +96,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy-fill);color:#fff;border:2px solid var(--navy-fill);border-radius:30px;padding:9px 20px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
-.btn.out{background:var(--bg2);color:var(--navy-ink);border-color:var(--navy-ink)}
+.btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
 .btn.sm{padding:5px 12px;font-size:.78rem}
@@ -113,13 +113,13 @@ tr:hover td{background:var(--bg)}
 
 
 
-.ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:var(--bg2);color:var(--text2);transition:all .15s}
+.ab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.8rem;font-family:Heebo;font-weight:500;background:var(--card);color:var(--text2);transition:all .15s}
 .ab:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
 .ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
 
 
 .sw{position:relative;width:100%}
-#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--bg2);border:1.5px solid var(--navy-ink);border-radius:14px;box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
+#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--navy-ink);border-radius:14px;box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
 #search-dropdown.open{display:block}
 @keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .sd-item{padding:9px 14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);transition:background .12s}
@@ -130,18 +130,18 @@ tr:hover td{background:var(--bg)}
 .sd-name{font-weight:600;font-size:.88rem;color:var(--text)}
 .sd-name mark{background:#fff3cd;border-radius:2px;padding:0 1px;color:inherit;font-weight:700}
 .sd-cls{background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.76rem;white-space:nowrap;flex-shrink:0}
-.sw input{width:100%;padding:9px 16px 9px 36px;background:var(--bg2);border:1.5px solid var(--navy-ink);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem;transition:border-color .2s,box-shadow .2s}
+.sw input{width:100%;padding:9px 16px 9px 36px;background:var(--card);border:1.5px solid var(--navy-ink);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.88rem;transition:border-color .2s,box-shadow .2s}
 .sw input::placeholder{color:var(--text3)}
 .sw input:focus{outline:none;border-color:var(--navy-ink);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
-input[type=date],input[type=month]{padding:8px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
+input[type=date],input[type=month]{padding:8px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.86rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy-ink)}
 .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.76rem;font-weight:600}
 
 
 
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
-.modal-box{background:var(--bg2);border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
+.modal-box{background:var(--card);border-radius:14px;padding:24px;width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
 .modal-overlay.open{display:flex}
 .mdl-x{background:none;border:none;font-size:1.1rem;line-height:1;cursor:pointer;color:var(--text2);padding:2px 6px}
 .mdl-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
@@ -151,14 +151,14 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .hidden{display:none!important}
 
 #modal-body label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
-#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:.88rem}
+#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:.88rem}
 #modal-body input:focus{outline:none;border-color:var(--navy-ink)}
-.cs{text-align:center;padding:70px 40px;background:var(--bg2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
+.cs{text-align:center;padding:70px 40px;background:var(--card);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
 .cs .ci{font-size:3.2rem;margin-bottom:14px;opacity:.6}
 .cs h3{font-size:1.15rem;font-weight:700;color:var(--navy-ink);margin-bottom:8px}
 .cs p{color:var(--text2);font-size:.9rem}
 .rs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
-.rc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.rc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
 .rc .n{font-size:1.65rem;font-weight:700;color:var(--navy-ink)}
 .rc .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .empty{text-align:center;padding:56px 20px;color:var(--text3)}
@@ -297,7 +297,7 @@ header{justify-content:space-between;padding:0 14px}
 /* ===== כניסה ===== */
 #auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy-fill),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
 #auth-screen.hidden{display:none}
-.auth-box{background:var(--bg2);border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
+.auth-box{background:var(--card);border-radius:18px;padding:36px 32px;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
 .auth-logo{width:72px;height:72px;margin:0 auto 14px;border-radius:12px;overflow:hidden;background:#f0f4fa;display:flex;align-items:center;justify-content:center}
 .auth-logo img{width:100%;height:100%;object-fit:contain}
 .auth-title{font-size:1.2rem;font-weight:700;color:var(--navy-ink);margin-bottom:4px}
@@ -312,7 +312,7 @@ header{justify-content:space-between;padding:0 14px}
 .auth-err{color:#e53e3e;font-size:.82rem;margin-top:8px;min-height:18px}
 .auth-spinner{display:none;margin:10px auto 0;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy-ink);border-radius:50%;animation:auth-spin .7s linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
-#pg-settings .ss{background:var(--bg2);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
+#pg-settings .ss{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid var(--border)}
 #pg-settings .ss-t{font-size:.95rem;font-weight:700;color:var(--navy-ink);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .ur{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)}
 .ur:last-child{border-bottom:none}
@@ -322,7 +322,7 @@ header{justify-content:space-between;padding:0 14px}
 .role-manager{background:#dbeafe;color:#1e40af}
 .role-junior{background:#dcfce7;color:#166534}
 .ua{display:flex;gap:5px}
-.ua button{border:1px solid var(--border);background:var(--bg2);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
+.ua button{border:1px solid var(--border);background:var(--card);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
 .ua button:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
 .ua button.del:hover{border-color:#e53e3e;color:#e53e3e}
 .pt{width:100%;border-collapse:collapse;font-size:.8rem}
@@ -369,16 +369,11 @@ header{justify-content:space-between;padding:0 14px}
 }
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
-   הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים יורשים צבע
+   הגדרות: בלוק "☁️ סנכרון", ואחריו שורות המצב הנוספות. הכללים יורשים צבע
    וגופן, ⛔ ואינם נשענים על אסימוני הגוון של אף אפליקציה — הם נבדלים
    ביניהן. ⚠️ **החריג היחיד הוא `--stale-ink`** (סבב 113): ⭐ הוא מוגדר
    בשם אחד בארבעתן, בערכה הבהירה ובכהה, ⛔ ולכן כלל שנשען עליו נשאר
    זהה בית-לבית. */
-.tech-info{margin-top:22px;font-size:12px;opacity:.7}
-.tech-info>summary{cursor:pointer;list-style:none;display:inline-block;padding:4px 2px}
-.tech-info>summary::-webkit-details-marker{display:none}
-.tech-info[open]{opacity:1}
-.tech-info .ls-status button{display:none!important}
 .sync-box{margin-top:22px;border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:12px 14px;background:rgba(0,0,0,.02)}
 .sync-box-ttl{font-weight:800;font-size:14px;margin-bottom:6px}
 .sync-line{font-size:13px;line-height:1.8;margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08)}
@@ -440,7 +435,7 @@ header{justify-content:space-between;padding:0 14px}
       <span style="font-size:.95rem">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" style="display:none;position:absolute;left:0;top:50px;background:var(--bg2);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);min-width:190px;z-index:300;overflow:hidden;direction:rtl">
+    <div id="user-menu" style="display:none;position:absolute;left:0;top:50px;background:var(--card);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);min-width:190px;z-index:300;overflow:hidden;direction:rtl">
       <div id="user-menu-name" style="padding:12px 16px;font-weight:700;font-size:.9rem;color:var(--navy-ink);border-bottom:1px solid var(--border)"></div>
       <div id="user-menu-role" style="padding:6px 16px 10px;font-size:.78rem;color:var(--text3);border-bottom:1px solid var(--border)"></div>
       <div id="user-menu-others" style="border-bottom:1px solid var(--border)"></div>
@@ -524,7 +519,7 @@ header{justify-content:space-between;padding:0 14px}
     <div id="at-view-reg" style="display:none">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
       <div id="at-reg-picker">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
           <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
             <div style="flex:2;min-width:200px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
@@ -584,7 +579,7 @@ header{justify-content:space-between;padding:0 14px}
     <div id="sl-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <div id="sl-view-reg" style="display:none">
       <div id="sl-reg-picker">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
           <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
             <div style="flex:2;min-width:200px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
@@ -630,31 +625,31 @@ header{justify-content:space-between;padding:0 14px}
     <div id="settings-home">
       <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px;margin-top:8px">
-        <button data-act="settings-module" data-mod="students" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="students" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">👥</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">מצבת תלמידים</span>
         </button>
-        <button data-act="settings-module" data-mod="attend" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="attend" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">✅</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">סדרים</span>
         </button>
-        <button data-act="settings-module" data-mod="sleep" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="sleep" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">🌙</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">זמן שינה</span>
         </button>
-        <button data-act="settings-module" data-mod="exams" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="exams" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📝</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">מבחנים</span>
         </button>
-        <button data-act="settings-module" data-mod="files" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="files" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📁</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">תיקים אישיים</span>
         </button>
-        <button data-act="settings-module" data-mod="reports" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="reports" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">📊</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">דוחות</span>
         </button>
-        <button data-act="settings-module" data-mod="system" style="background:var(--bg2);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
+        <button data-act="settings-module" data-mod="system" style="background:var(--card);border:2px solid var(--border);border-radius:14px;padding:20px 14px;cursor:pointer;font-family:Heebo;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all .2s;box-shadow:var(--shadow)">
           <span style="font-size:2rem">⚙️</span>
           <span style="font-size:.88rem;font-weight:600;color:var(--navy-ink)">הגדרות מערכת</span>
         </button>
@@ -695,13 +690,13 @@ header{justify-content:space-between;padding:0 14px}
       <div class="ss ksave">
         <div style="display:flex;flex-direction:column;gap:16px">
           <!-- סדרים -->
-          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
+          <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
             <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">📋 רשימת סדרים</div>
             <div id="at-cfg-sessions" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-session-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף סדר</button>
           </div>
           <!-- טיפולים -->
-          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
+          <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
             <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
             <div id="at-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -715,7 +710,7 @@ header{justify-content:space-between;padding:0 14px}
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss ksave">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;max-width:400px">
+        <div style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;max-width:400px">
           <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
           <div id="sl-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
           <button data-act="sl-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -773,7 +768,7 @@ header{justify-content:space-between;padding:0 14px}
       </div>
       <!-- אזור מצב (סבב 17) — שני האלמנטים האחרונים במסך, בסדר הזה -->
       <div id="sync-status-box"></div>
-      <div id="tech-info-box"></div>
+      <div id="status-extra-box"></div>
     </div>
 
   </div>
@@ -1901,7 +1896,7 @@ window._hcBuild=function(pfx,initH,tv){
       '<span style="font-size:.8rem;opacity:.5;margin-right:4px">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:var(--bg2);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
+    '<div id="'+pfx+'_pop" class="hc-pop" style="display:none;position:fixed;z-index:9999;background:var(--card);border:1.5px solid var(--border);border-radius:14px;box-shadow:0 10px 40px rgba(26,58,107,.22)"></div>'+
     (tv!==undefined?'<div style="margin-top:6px;display:flex;align-items:center;gap:6px"><span style="font-size:.8rem;color:var(--text3);white-space:nowrap">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:Heebo;font-size:.88rem;flex:1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
@@ -1934,7 +1929,7 @@ function openStatusForm(type) {
 
   var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'font-size:.8rem;font-weight:600;color:#555;display:block;margin-bottom:6px';
-  var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:var(--bg2);box-sizing:border-box';
+  var inp = 'width:100%;padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-family:Heebo;font-size:.88rem;background:var(--card);box-sizing:border-box';
 
   window._currentStatusType = type;
   openModal(typeIcons[type]+' '+typeLabels[type]+' — '+window._statusStudentName,
@@ -2486,9 +2481,6 @@ var DOM_ACTIONS = {
   'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
   'perms-save':       function () { return savePerms(); },
-  'ls-sweep-now':      function () { lsSweepNow(); },
-  'ls-refresh-status': function () { lsRefreshStatus(); },
-  'ls-restore-all':    function () { lsRestoreAll(); },
   'sync-now-status':   function () { syncNowFromStatus(); },
   'hw-restore':        function (el) { hwRestoreClick(el); },
 };
@@ -2517,22 +2509,7 @@ document.addEventListener('click', function (ev) {
   var fn = DOM_ACTIONS[el.getAttribute('data-act')];
   if (!fn) return;
   ev.preventDefault();
-  /*  ⛔ לחיצה שנייה בזמן שהראשונה באוויר נחסמת — ⚠️ הכפתור מושבת,
-   *  ⭐ אך הדגל נדרש גם עבור אלמנט שאינו כפתור. */
-  if (el._actBusy) return;
-  var out;
-  try { out = fn(el); }
-  catch (e) { console.error('[act] ' + el.getAttribute('data-act'), e); return; }
-  if (!out || typeof out.then !== 'function') return;   // פעולה סינכרונית — אין למה להמתין
-  el._actBusy = true;
-  var isBtn = el.tagName === 'BUTTON';
-  if (isBtn) ysBusy(el, true, '⏳ שומר…');
-  out.then(function () {}, function (e) {
-    console.error('[act] ' + el.getAttribute('data-act'), e);
-  }).then(function () {
-    el._actBusy = false;
-    if (isBtn) ysBusy(el, false);
-  });
+  actRun(el, fn);
 });
 
 /*  ⛔ מאזין המקלדת האחד של האפליקציה — ⚠️ הוא קורא לשני המסלולים
@@ -2775,22 +2752,6 @@ async function savePerms() {
    בזמן שהראשונה באוויר שולחת בקשה שנייה, ⛔ ובכתיבת משתמש היא יוצרת שורה
    כפולה או דורסת עדכון שטרם חזר.
    ══════════════════════════════════════════════════════════════════════════ */
-// מגן שליחה כפולה: מחזיר את מצב הכפתור לקדמותו כשהפעולה נגמרת.
-/*  ⛔ התווית היא פרמטר עם ברירת מחדל ⛔ ולא מחרוזת קבועה (סבב 89) — ⚠️ יש
- *  פעולות רשת שאינן שמירה, ⭐ ו«שומר…» עליהן מתאר למשתמש פעולה שאינה
- *  מתרחשת: ⛔ ברירת המחדל משאירה את כל אתרי הקריאה הקיימים כמות שהם. */
-function ysBusy(btn, on, label) {
-  if (!btn) return;
-  if (on) {
-    if (btn._ysTxt === undefined) btn._ysTxt = btn.innerHTML;
-    btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
-    btn.innerHTML = label || '⏳ שומר…';
-  } else {
-    btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
-    if (btn._ysTxt !== undefined) { btn.innerHTML = btn._ysTxt; btn._ysTxt = undefined; }
-  }
-}
-
 function myPasswordModal() {
   var fld = 'border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;font-size:1.1rem;text-align:center;letter-spacing:4px;width:100%;margin-bottom:10px';
   var lbl = 'display:block;text-align:right;font-family:Heebo;font-size:.82rem;color:#5a6a85;font-weight:600;margin-bottom:4px';
@@ -3030,7 +2991,11 @@ var MIRROR_CFG = {
   fail:   function (where, e) { ysWriteFail(where, e); },
 };
 var LS_CFG = {
-  app: 'hanhala',
+  /*  ⛔ קידומת המטמון — ⚠️ **מה נכנס**: הערך שב-`SW_CFG.prefix` שב-`sw.js`,
+   *  ⭐ **וזה המקור**: ⛔ סינון המטמון לפי קידומת האחסון הוא צירוף מקרי
+   *  ⛔ ולא מנגנון — ⚠️ שם אחסון שישתנה יחזיר רשימה ריקה, ⭐ וסימן דחייה
+   *  שנשען על מחרוזת ריקה מת בשקט: ⛔ הבאנר חוזר בכל טעינה בלי דרך לצאת. */
+  cachePrefix: 'hanhala-ruchanit-',
   logKey: 'ys_ls_log',
   hzPrefix: 'ys_ls_hz_',
   /*  ⛔ מפתח סימן הדחייה של באנר העדכון — ⚠️ **מה נכנס**: שם
@@ -3135,10 +3100,10 @@ var LS_SWEEP_TO    = 0.45;              // יעד הפינוי היזום
 var LS_LOG_MAX     = 12;                // אורך יומן הפינוי הנשמר
 
 // נוסח אחיד בארבע האפליקציות. סמלים: ✅ הצלחה / ⚠️ אזהרה / ❌ שגיאה, בתחילה.
-var MSG_LS_FULL   = '❌ האחסון במכשיר מלא — לא ניתן לשמור. פנו מקום בהגדרות ← אחסון מקומי.';
+var MSG_LS_FULL   = '❌ האחסון במכשיר מלא — לא ניתן לשמור. התחברו לרשת כדי שהנתונים יסונכרנו והמקום יתפנה.';
 var MSG_LS_BLOCK  = '❌ האחסון במכשיר חסום — לא ניתן לשמור במכשיר.';
-var MSG_LS_WARN   = '⚠️ האחסון המקומי מתמלא — כדאי לפנות מקום בהגדרות';
-var MSG_LS_CRIT   = '⚠️ האחסון המקומי כמעט מלא — פנו מקום בהגדרות מיד';
+var MSG_LS_WARN   = '⚠️ האחסון המקומי מתמלא — התחברו לרשת, והמקום יתפנה מעצמו';
+var MSG_LS_CRIT   = '⚠️ האחסון המקומי כמעט מלא — התחברו לרשת כדי שהמקום יתפנה';
 var MSG_LS_PRUNED = '⚠️ נתונים ישנים פונו מהמכשיר מחוסר מקום — הם שמורים בענן ויחזרו כשתהיה רשת';
 
 // כל האפליקציות שחולקות את ה-origin. הקידומת היא מה שמזהה מי תופס מה.
@@ -3673,7 +3638,6 @@ function lsBootDeferred() {
     var u = lsUsage();
     if (freed > 0) lsLog('פינוי נדחה הסתיים', lsFmtBytes(freed) + ' · נותרו ' + Math.round(u.pct * 100) + '%', freed);
     lsBootAlert(u);
-    try { lsRenderStatus(); } catch (e) { }
     return { usage: u, freed: freed };
   }
   return p.then(finish, function () { return finish(0); });
@@ -3708,103 +3672,24 @@ function lsBootAlert(u) {
   if (lsHorizonKeys().length) { try { lsToast(MSG_LS_PRUNED, 6000, 'bad'); } catch (e1) { } }
 }
 
-/* ── שורת המצב בהגדרות ─────────────────────────────────────────────────── */
-function lsStatusHTML() {
-  var u = lsUsage();
-  var pct = Math.min(100, Math.round(u.pct * 100));
-  var col = u.total >= LS_CRIT_BYTES ? '#b3261e' : (u.total >= LS_WARN_BYTES ? '#b26a00' : '#2e7d32');
-  var h = '<div class="ls-status" dir="rtl" style="font-size:13px;line-height:1.7">';
-  h += '<div style="display:flex;justify-content:space-between;font-weight:800;margin-bottom:4px">' +
-       '<span>נפח כולל בדומיין</span><span style="color:' + col + '">' + esc(lsFmtBytes(u.total)) +
-       ' / ' + esc(lsFmtBytes(u.quota)) + ' (' + pct + '%)</span></div>';
-  h += '<div style="background:rgba(128,128,128,.25);border-radius:6px;height:9px;overflow:hidden;margin-bottom:8px">' +
-       '<div style="width:' + pct + '%;height:100%;background:' + col + '"></div></div>';
-  h += '<div style="margin-bottom:8px">נשאר: <b>' + esc(lsFmtBytes(u.free)) + '</b></div>';
-
-  h += '<div style="font-weight:800;margin:10px 0 4px">פילוח לפי אפליקציה</div><table style="width:100%;border-collapse:collapse">';
-  u.apps.forEach(function (a) {
-    h += '<tr><td style="padding:2px 0">' + esc(a.name) + (a.id === LS_CFG.app ? ' <b>(זו)</b>' : '') +
-         '</td><td style="text-align:left;padding:2px 0">' + esc(lsFmtBytes(a.bytes)) +
-         ' <span style="opacity:.6">· ' + a.count + ' מפתחות</span></td></tr>';
-  });
-  if (!u.apps.length) h += '<tr><td>—</td><td></td></tr>';
-  h += '</table>';
-
-  h += '<div style="font-weight:800;margin:10px 0 4px">פילוח לפי מפתח (12 הגדולים)</div><table style="width:100%;border-collapse:collapse">';
-  u.keys.slice(0, 12).forEach(function (k) {
-    h += '<tr><td style="padding:2px 0;word-break:break-all">' + esc(k.key) +
-         '<span style="opacity:.6"> · ' + esc(lsAppOf(k.key).name) + '</span></td>' +
-         '<td style="text-align:left;padding:2px 0;white-space:nowrap">' + esc(lsFmtBytes(k.bytes)) + '</td></tr>';
-  });
-  if (!u.keys.length) h += '<tr><td>—</td><td></td></tr>';
-  h += '</table>';
-
-  var hz = lsHorizonKeys();
-  if (hz.length) {
-    h += '<div style="margin-top:10px;padding:8px;border-radius:8px;background:rgba(178,106,0,.12);color:#b26a00">' +
-         '⚠️ פונו רשומות ישנות מ-' + hz.length + ' מפתחות מחוסר מקום. הן שמורות בענן ויחזרו לתצוגה כשיש רשת.</div>';
-  }
-
-  var vs = lsVerifySpecs();
-  if (vs.length) {
-    h += '<div style="margin-top:10px;padding:8px;border-radius:8px;background:rgba(21,101,192,.12);color:#1565c0">' +
-         '☁️ במכשיר הזה אין עדות דחיפה מקומית עבור: ' +
-         esc(vs.map(function (s) { return s.label || s.key; }).join(', ')) +
-         '. פינוי שלהם נעשה רק אחרי אימות ישיר מול הענן — רשומה שאינה שם לא נמחקת.</div>';
-  }
-
-  var log = lsLogRead();
-  h += '<div style="font-weight:800;margin:10px 0 4px">יומן פינוי</div>';
-  if (!log.length) h += '<div style="opacity:.6">— טרם בוצע פינוי —</div>';
-  else {
-    h += '<div style="font-size:12px;opacity:.85">';
-    for (var i = log.length - 1; i >= 0; i--) {
-      var d = new Date(log[i].t);
-      h += '<div>' + esc(d.toLocaleDateString('he-IL')) + ' ' + esc(d.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })) +
-           ' — ' + esc(log[i].a) + (log[i].d ? ' · ' + esc(log[i].d) : '') +
-           (log[i].b ? ' · ' + esc(lsFmtBytes(log[i].b)) : '') + '</div>';
-    }
-    h += '</div>';
-  }
-
-  h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">' +
-       '<button type="button" data-act="ls-sweep-now">🧹 פנה מקום עכשיו</button>' +
-       '<button type="button" data-act="ls-refresh-status">↻ רענן</button>';
-  if (hz.length) h += '<button type="button" data-act="ls-restore-all">☁️ טען הכל מחדש מהענן</button>';
-  h += '</div></div>';
-  return h;
-}
-function lsRenderStatus() {
-  var el = document.getElementById('ls-status-box');
-  if (el) el.innerHTML = lsStatusHTML();
-}
-function lsRefreshStatus() { lsRenderStatus(); }
-// מחזירה Promise — הפינוי הידני עובר גם במסלול הסינכרוני וגם באימות מול
-// הענן, ולכן ההודעה למשתמש מחכה לשניהם.
-function lsSweepNow() {
-  var freed = lsSweepGuarded('פינוי ידני מההגדרות', 0);
-  lsRenderStatus();
-  var p = lsHasVerifiers() ? lsSweepVerified('פינוי ידני מההגדרות — אימות מול הענן', 0) : Promise.resolve(0);
-  function finish(extra) {
-    freed += Number(extra) || 0;
-    lsRenderStatus();
-    /*  ⛔ שתי הודעות ולא אחת — ⚠️ הסיווג נגזר מהמסלול: ⭐ פינוי שהצליח
-     *  הוא הודעה נייטרלית, ⛔ ו«אין מה לפנות» היא אזהרה. */
-    try {
-      if (freed > 0) lsToast('✅ פונו ' + lsFmtBytes(freed), 4000);
-      else lsToast('⚠️ אין מה לפנות — אין נתונים מסונכרנים וישנים דיים', 4000, 'bad');
-    } catch (e) { }
-    return freed;
-  }
-  return p.then(finish, function () { return finish(0); });
+/* ── שורת האזהרה בהגדרות ───────────────────────────────────────────────── */
+/*  ⛔ שורה אחת, ורק מעל הסף הקריטי — ⚠️ **מה נכנס**: הנפח שנמדד והמכסה,
+ *  ⛔ **ומה מפיל**: פירוט פר-מפתח וכפתור פינוי — ⭐ הראשון הוא תוכן
+ *  למפתח, ⚠️ והשני מסתיר שהפינוי אוטומטי: ⛔ מה שבידי המשתמש הוא לחבר
+ *  רשת, ⭐ שרשומה שעלתה לענן היא רשומה שהפינוי רשאי לגרוע. */
+function lsCritLineHTML() {
+  try {
+    var u = lsUsage();
+    if (u.total < LS_CRIT_BYTES) return '';
+    return '<div class="ls-crit-line">' + esc(MSG_LS_CRIT) + ' (' +
+           esc(lsFmtBytes(u.total)) + ' מתוך ' + esc(lsFmtBytes(u.quota)) + ')</div>';
+  } catch (e) { return ''; }
 }
 function lsRestoreAll() {
   lsClearHorizons();
-  lsRenderStatus();
   try { lsToast('✅ האופק נוקה — הנתונים הישנים יחזרו בסנכרון הבא', 4000); } catch (e) { }
 }
-window.lsSweepNow = lsSweepNow;
-window.lsRefreshStatus = lsRefreshStatus;
+window.lsCritLineHTML = lsCritLineHTML;
 window.lsRestoreAll = lsRestoreAll;
 window.lsSet = lsSet;
 window.lsGet = lsGet;
@@ -3891,57 +3776,51 @@ function sbWatch(c) {
   return c;
 }
 /* ═══════════════ סוף מודול האזנת הסכימה ════════════════════════════════ */
-
-/* ═══ מידע טכני — מודול משותף (סבב 91) ════════════════════════════════════
-   המודול המשותף של סבב 14 לא נגוע: הרכיב הזה רק עוטף את lsStatusHTML
-   בשורה מקופלת אחת בתחתית ההגדרות, סגורה כברירת מחדל. כפתורי הפינוי
-   הידני אינם מוצגים (מוסתרים ב-CSS — .tech-info .ls-status button);
-   המנגנון האוטומטי (lsBoot/lsSweep) הוא הדרך היחידה לפינוי.
-   חריג יחיד ומכוון: מעל LS_CRIT_BYTES מוצגת שורת מצב עדינה גם מחוץ
-   לרכיב — רשת הביטחון היחידה שמוצגת ביוזמת המערכת.
-
-   ⚠️ סבב 17: מצב הפתיחה נשמר ב-`_techInfoOpen` (זיכרון בלבד) ולא רק
-   ב-DOM. בגיוס מסך ההגדרות נבנה מחדש בכל `render()`, ולכן העוגן חוזר
-   ריק, ה-`details` הקודם כבר לא קיים — והרכיב היה נסגר בכל שמירה ובכל
-   ציור מושהה של ⏳. המצב חי בזיכרון בלבד בכוונה: זו העדפת תצוגה של
-   הרגע, לא נתון שראוי לצרוך ממנו מכסת אחסון. */
-var _techInfoOpen = false;
-function techInfoHTML() {
-  var crit = '';
-  try {
-    var u = lsUsage();
-    if (u.total >= LS_CRIT_BYTES) {
-      crit = '<div class="ls-crit-line">⚠️ האחסון המקומי כמעט מלא (' + esc(lsFmtBytes(u.total)) +
-             ' מתוך ' + esc(lsFmtBytes(u.quota)) + ') — פרטים ב"מידע טכני"</div>';
-    }
-  } catch (e) { }
-  return crit +
-    '<details class="tech-info" ontoggle="window.techInfoToggle&&window.techInfoToggle(this)">' +
-    '<summary>מידע טכני &rsaquo;</summary>' +
-    '<div id="ls-status-box"></div>' +
-    '</details>';
-}
-function techInfoToggle(el) {
-  if (!el) return;
-  _techInfoOpen = !!el.open;
-  if (el.open) { try { lsRenderStatus(); } catch (e) { } }
-}
-function techInfoMount() {
-  var box = document.getElementById('tech-info-box');
-  if (!box) return;
-  var prev = box.querySelector('details.tech-info');
-  if (prev) _techInfoOpen = !!prev.open;
-  box.innerHTML = techInfoHTML();
-  // פתיחה מחדש מפעילה `ontoggle` (גם כשהיא תכנותית), וזה מה שמרנדר את
-  // הפירוט — אין צורך לקרוא כאן ל-lsRenderStatus ואין טעם לרנדר פעמיים.
-  if (_techInfoOpen) {
-    var d = box.querySelector('details.tech-info');
-    if (d) d.open = true;
+/* ═══ כפתור עסוק והשומר שבניתוב — מודול משותף (סבב 135) ══════════════════
+   ⛔ **כפתור שמפעיל מסלול שממתין לרשת מושבת עד שהמסלול הסתיים** —
+   ⚠️ וההשבתה יושבת בנקודת הניתוב האחת ⛔ ולא באתר הקריאה: ⭐ מטפל
+   שמחזיר הבטחה מסמן «יש כאן המתנה», ⛔ ואין מה להצהיר בכל אתר בנפרד.
+   ⚠️ הנימוק המדוד: שני מימושים חיו זה לצד זה — ⭐ אחד עם תווית ואחד
+   עם ספינר, ⛔ ובשתיים לא היה אף אחד: לחיצה שנייה על «שמור» בזמן
+   שהראשונה באוויר שלחה בקשה שנייה, ⚠️ ובכתיבת משתמש היא יוצרת שורה
+   כפולה או דורסת עדכון שטרם חזר.
+   ⛔ **ומטפל סינכרוני אינו נכנס** — ⚠️ הוא נגמר לפני שהלחיצה השנייה
+   יכולה לנחות, ⭐ ואין «בזמן» שאפשר להשבית בו. */
+/*  ⛔ התווית היא פרמטר עם ברירת מחדל ⛔ ולא מחרוזת קבועה — ⚠️ יש פעולות
+ *  רשת שאינן שמירה, ⭐ ו«שומר…» עליהן מתאר למשתמש פעולה שאינה מתרחשת. */
+function busy(btn, on, label) {
+  if (!btn) return;
+  if (on) {
+    if (btn._busyTxt === undefined) btn._busyTxt = btn.innerHTML;
+    btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
+    btn.innerHTML = label || '⏳ שומר…';
+  } else {
+    btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
+    if (btn._busyTxt !== undefined) { btn.innerHTML = btn._busyTxt; btn._busyTxt = undefined; }
   }
 }
-window.techInfoToggle = techInfoToggle;
-window.techInfoMount = techInfoMount;
-/* ═══════════════ סוף מודול מידע טכני ═══════════════════════════════════ */
+/*  ⛔ הדגל נדרש גם לאלמנט שאינו כפתור — ⚠️ `disabled` אינו קיים על `div`
+ *  או על שורת טבלה, ⭐ ולחיצה שנייה עליהם הייתה נכנסת. */
+function actRun(el, fn) {
+  if (el._actBusy) return;
+  var out;
+  try { out = fn(el); }
+  catch (e) { console.error('[act] ' + el.getAttribute('data-act'), e); return; }
+  if (!out || typeof out.then !== 'function') return;
+  el._actBusy = true;
+  var isBtn = el.tagName === 'BUTTON';
+  if (isBtn) busy(el, true, '⏳ שומר…');
+  out.then(function () { }, function (e) {
+    console.error('[act] ' + el.getAttribute('data-act'), e);
+  }).then(function () {
+    el._actBusy = false;
+    if (isBtn) busy(el, false);
+  });
+}
+window.busy = busy;
+window.actRun = actRun;
+/* ═══════════════ סוף מודול כפתור עסוק ═══════════════════════════════════ */
+
 /* ── SYNC_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 var SYNC_CFG = {
   lastSync: function () { return _ysLastSyncAt || 0; },
@@ -3971,7 +3850,7 @@ function swBanner() { return document.getElementById('updater'); }
 function swVer() {
   if (typeof caches === 'undefined') return Promise.resolve('');
   return caches.keys().then(function (ks) {
-    return ks.filter(function (n) { return n.indexOf(LS_CFG.app) === 0; }).sort().join('|');
+    return ks.filter(function (n) { return n.indexOf(LS_CFG.cachePrefix) === 0; }).sort().join('|');
   }).catch(function () { return ''; });
 }
 function swBannerHide() { var el = swBanner(); if (el) el.classList.remove('show'); }
@@ -3996,7 +3875,7 @@ function swHideUpdate() {
  *  חוזר, והלחיצה הבאה חוזרת עליו. */
 function swApply(btn) {
   _swAccepted = true;
-  if (btn) { btn.disabled = true; btn.textContent = 'מעדכן…'; }
+  busy(btn, true, 'מעדכן…');
   if (!(_swReg && _swReg.waiting)) { swApplyFail(btn); return; }
   _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
   _swWait = setTimeout(function () { swApplyFail(btn); }, SW_APPLY_MS);
@@ -4006,7 +3885,7 @@ function swApply(btn) {
 function swApplyFail(btn) {
   _swWait = 0;
   if (_swReloaded) return;
-  if (btn) { btn.disabled = false; btn.textContent = 'עדכן עכשיו'; }
+  busy(btn, false);
   swBannerHide();
   toast('⚠️ העדכון לא הושלם — נסה שוב', 6000, 'bad');
 }
@@ -4063,7 +3942,9 @@ function syncLineHTML() {
     (_syncNowBusy ? 'מסנכרן…' : '🔄 סנכרן עכשיו') + '</button></div>' +
     '</div>';
 }
-function syncStatusHTML() { return pendStatusHTML() + syncLineHTML(); }
+/*  ⛔ שורת האזהרה נכנסת כאן ⛔ ולא ברכיב משלה — ⚠️ היא מוצגת מעל הסף
+ *  הקריטי בלבד, ⭐ ומקומה בבלוק שהמשתמש כבר פותח כדי לראות מצב. */
+function syncStatusHTML() { return pendStatusHTML() + syncLineHTML() + lsCritLineHTML(); }
 function syncStatusMount() {
   var box = document.getElementById('sync-status-box');
   if (!box) return;
@@ -4079,11 +3960,10 @@ function syncNowFromStatus() {
   Promise.resolve(p)['catch'](function () { })
     .then(function () { _syncNowBusy = false; syncStatusMount(); });
 }
-// נקודת החיווט היחידה של אזור המצב. כל מסך הגדרות קורא לה, והיא מרכיבה
-// את שני האלמנטים בסדר המחייב. בדיקת האחידות דורשת שתהיה לה קריאה חיה.
+// נקודת החיווט היחידה של אזור המצב. כל מסך הגדרות קורא לה, והיא מציירת
+// את בלוק הסנכרון. בדיקת האחידות דורשת שתהיה לה קריאה חיה.
 function statusAreaMount() {
   syncStatusMount();
-  techInfoMount();
 }
 window.syncStatusMount = syncStatusMount;
 window.syncNowFromStatus = syncNowFromStatus;
@@ -4153,7 +4033,7 @@ var BK_CFG = {
 var BK_TABLE = 'kv_backup';       // יומן הגיבויים — הכתיבה היא insert בלבד
 var BK_LOG_TABLE = 'sync_log';    // יומן הפעולות — insert בלבד
 var BK_LOG_MAX = 50;              // תקרת התור המקומי של היומן
-var BK_STALE_DAYS = 3;            // מעל זה — שורת התרעה ב«מידע טכני»
+var BK_STALE_DAYS = 3;            // מעל זה — שורת התרעה בשורות המצב
 var BK_RETENTION_DAYS = 30;       // עותק יומי נשמר 30 יום; ישן מזה נגרע
 var _bkRunning = false;           // נעילת ריצה (החליפה את הכתיבה-מראש)
 
@@ -4439,10 +4319,10 @@ async function _bkRetention(c, keys) {
   return n;
 }
 
-/* ── תצוגה: «גובה לאחרונה» בתוך «מידע טכני» ───────────────────────────── */
-// ⛔ הרכיב נתלה **אחרי** הבלוק הקפוא ואינו עורך אותו (סבב 30) — «מידע
-//    טכני» חתום ב-`check-status-area.mjs`, ועריכתו הייתה מחייבת שינוי
-//    בארבעת הריפו ובחתימות עבור שורת תצוגה אחת.
+/* ── תצוגה: «גובה לאחרונה» בשורות המצב הנוספות ────────────────────────── */
+// ⛔ הרכיב נתלה בעוגן שמחוץ לבלוק הקפוא ואינו עורך אותו (סבב 30) — בלוק
+//    «☁️ סנכרון» חתום ב-`check-status-area.mjs`, ⚠️ והוא כותב `innerHTML`
+//    בכל ציור: ⭐ עוגן נפרד הוא מה ששומר את השורה בחיים אחרי «סנכרן עכשיו».
 function bkLastAt() {
   var v = parseInt(lsGet(_bkCfg('atKey', ''), '0'), 10);
   return isFinite(v) ? v : 0;
@@ -4465,9 +4345,7 @@ function bkStatusHTML() {
     '</div>';
 }
 function bkStatusMount() {
-  var box = document.getElementById('tech-info-box');
-  if (!box) return;
-  var d = box.querySelector('details.tech-info');
+  var d = document.getElementById('status-extra-box');
   if (!d) return;
   var prev = d.querySelector('.bk-line');
   if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
@@ -5644,8 +5522,8 @@ async function hwPastLoad(key, filter) {
 }
 
 /* ── כפתור השחזור — נגישות ל-`lsRestoreAll` ────────────────────────────── */
-// ⛔ הרכיב נתלה אחרי הבלוק הקפוא ואינו עורך אותו (סבב 35) — אותה טכניקה
-//    של `bkStatusMount`: «מידע טכני» חתום ב-`check-status-area.mjs`,
+// ⛔ הרכיב נתלה בעוגן שמחוץ לבלוק הקפוא ואינו עורך אותו (סבב 35) — אותה
+//    טכניקה של `bkStatusMount`: בלוק «☁️ סנכרון» חתום ב-`check-status-area.mjs`,
 //    והכפתור מצטרף אליו מבחוץ.
 var _hwRestoreArmed = 0;
 function hwRestoreHTML() {
@@ -5658,9 +5536,7 @@ function hwRestoreMount() {
     if (!(typeof HW_CFG !== 'undefined' && HW_CFG &&
           typeof HW_CFG.admin === 'function' && HW_CFG.admin())) return;
   } catch (e) { return; }
-  var box = document.getElementById('tech-info-box');
-  if (!box) return;
-  var d = box.querySelector('details.tech-info');
+  var d = document.getElementById('status-extra-box');
   if (!d) return;
   var prev = d.querySelector('.hw-restore-line');
   if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
@@ -6028,7 +5904,7 @@ function _ysCfgSetRaw(key, value) {
    ══════════════════════════════════════════════════════════════════════════
    ⛔ `catch` ריק סביב **כתיבה** מסתיר כשל (סבב 68) — ⚠️ המשתמש רואה מסך
    שהתעדכן, והנתון לא ירד לדיסק ולא עלה לענן. ⭐ הפונקציה הזו אינה משנה
-   את הזרימה — היא רק **רושמת** ליומן הפינוי, שנקרא מ«מידע טכני ›».
+   את הזרימה — היא רק **רושמת** ליומן הפינוי ולקונסולה.
    ⚠️ **ו-`catch` ריק סביב תצוגה או קריאה נשאר כפי שהוא (סבב 68)** —
    «נסה להציג הודעה; נכשלת — אל תפיל את האפליקציה» הוא הדפוס הנכון,
    ⛔ ואין להחליף אותו ברישום שיציף את היומן.
@@ -7933,7 +7809,7 @@ function renderStudents(){
     if(!tbody)return;
     if(!filtInactive.length){tbody.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
-      var bg=i%2===0?'var(--bg2)':'var(--bg)';
+      var bg=i%2===0?'var(--card)':'var(--bg)';
       // ⛔ `cycle` הוא השדה היחיד ⛔ ואין נפילה-חזרה לכתיב הישן — ⚠️ נמדד
       //    במסד שכל רשומה שנשאה את הישן נושאת גם את החדש, ⭐ ולכן הנפילה
       //    לא נבחרה מעולם; ⛔ ושני שדות לאותו מושג הם שני מקורות אמת.
@@ -7970,7 +7846,7 @@ function renderStudents(){
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var bg=i%2===0?'var(--bg2)':'var(--bg)';
+    var bg=i%2===0?'var(--card)':'var(--bg)';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
     var isPresent=getActiveAbsences(s).length===0;
     var presIcon=isPresent
@@ -8070,7 +7946,7 @@ window.openManageListDlg = function(){
   ];
   var rows=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
-      'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:var(--bg2);border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy-ink)')+';cursor:pointer;text-align:right;direction:rtl">'+
+      'style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:var(--card);border:none;border-bottom:1px solid #f0f4fa;font-family:Heebo;font-size:.92rem;font-weight:600;color:'+(item.col||'var(--navy-ink)')+';cursor:pointer;text-align:right;direction:rtl">'+
       '<span style="font-size:1.25rem;width:28px;text-align:center">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
@@ -8242,7 +8118,7 @@ window.openCurrentStatusModal = function() {
     '</div>';
   }).join('');
   openModal(s.name, absencesHtml +
-    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--bg2);color:var(--navy-ink);font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>', '');
+    '<button data-act="status-picker-open" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--card);color:var(--navy-ink);font-family:Heebo;font-size:.92rem;font-weight:600;cursor:pointer;margin-top:4px">➕ הוסף סיבה נוספת</button>', '');
 };
 
 // רענון לשונית ההשגחה הפעילה (נוכחות/שינה) — כדי שתלמיד שחזר לנוכח ירד מהרשימה מיד
@@ -8313,7 +8189,7 @@ function studentFormHtml(sid){
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" style="width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;margin:6px 0 12px;direction:rtl">'+
     /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
      *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--bg2);color:var(--navy-ink);font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #1a3a6b;background:var(--card);color:var(--navy-ink);font-family:Heebo;font-size:.9rem;font-weight:600;cursor:pointer;margin-bottom:4px">📜 היסטוריית סטטוסים</button>' : '');
 }
 // -------- היסטוריית הסטטוסים --------
 /*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
@@ -9245,7 +9121,7 @@ window.atOpenSession = async function(sessId, sessName, btn) {
    *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
    *  ⛔ לא היה חיווי, ⚠️ ולחיצה שנייה בזמן ההמתנה שלחה בקשה נוספת.
    *  ⛔ והשחרור יושב ב-`finally` — ⚠️ כל יציאה מוקדמת מחזירה את הכפתור. */
-  ysBusy(btn, true, '⏳ בודק…');
+  busy(btn, true, '⏳ בודק…');
   try {
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   /*  ⛔⛔ משיכה **אחת** ⛔ ומסוננת ליום שנבחר (סבב 89) — ⚠️ הנימוק המדוד:
@@ -9312,7 +9188,7 @@ window.atOpenSession = async function(sessId, sessName, btn) {
   window._atCurrentSessionId=rec.id;
 
   _atMountOpenSession(sessName, dateHeb);
-  } finally { ysBusy(btn, false); }
+  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -9485,7 +9361,7 @@ window.atRenderStudents = function() {
     var isOn=(cur===code);
     var col=AT_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
-      'background:var(--bg2);color:var(--text2);border-color:var(--border);');
+      'background:var(--card);color:var(--text2);border-color:var(--border);');
     return '<button data-act="at-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
@@ -9701,13 +9577,13 @@ function _atPaintArchive(el, records, warn) {
           Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=atSummaryHtml(cnts);
           var sId=uid();
-          html+='<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="background:var(--card);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy-ink);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg2)">';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--card)">';
           var _mk2=ysMarks(rec);
           var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -9938,7 +9814,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
 
   // כותרת ניווט
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy-ink);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
     '<button data-act="at-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy-ink)">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
@@ -10004,7 +9880,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
@@ -10145,7 +10021,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
     {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
   ];
   var btns=CODES.map(function(cd){
-    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--bg2);color:'+cd.col;
+    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--card);color:'+cd.col;
     return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
@@ -10744,7 +10620,7 @@ window.slOpenSession = async function(sessId, sessName, btn) {
   if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה', null, 'bad');return;}
 
   // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
-  ysBusy(btn, true, '⏳ בודק…');
+  busy(btn, true, '⏳ בודק…');
   try {
   // ⛔ ר' הנימוק ב-atOpenSession — משיכה אחת מסוננת ליום שנבחר
   await _slPullSessions(ysDayWin(dateIso));
@@ -10795,7 +10671,7 @@ window.slOpenSession = async function(sessId, sessName, btn) {
   window._slCurrentSessionId=rec.id;
 
   _slMountOpenSession(sessName, dateHeb);
-  } finally { ysBusy(btn, false); }
+  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -10957,7 +10833,7 @@ window.slRenderStudents = function() {
     var isOn=(cur===code);
     var col=SL_COLORS[code]||{bg:'#eee',fg:'#333'};
     var style=bs+(isOn?'background:'+col.bg+';color:'+col.fg+';border-color:'+col.bg+';transform:scale(1.06);box-shadow:0 2px 6px rgba(0,0,0,.18);':
-      'background:var(--bg2);color:var(--text2);border-color:var(--border);');
+      'background:var(--card);color:var(--text2);border-color:var(--border);');
     return '<button data-act="sl-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" style="'+style+'">'+label+'</button>';
   }
   function mkClearBtn(sid){
@@ -11178,13 +11054,13 @@ function _slPaintArchive(el, records, warn) {
           Object.values(ysMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
           var summary=slSummaryHtml(cnts);
           var sId=uid();
-          html+='<div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
+          html+='<div style="background:var(--card);border:1.5px solid var(--border);border-radius:7px;overflow:hidden;margin-bottom:5px">';
           html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span style="font-weight:700;font-size:.87rem;color:var(--navy-ink);flex:1">'+esc(rec.session)+'</span>';
           html+='<div style="font-size:.8rem;display:flex;gap:5px;align-items:center;flex-wrap:wrap;direction:rtl">'+summary+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" style="background:none;border:none;color:#e53e3e;cursor:pointer;font-size:.82rem;padding:1px 5px">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg2)">';
+          html+='<div id="'+sId+'" style="display:none;padding:10px 14px;border-top:1px solid var(--border);background:var(--card)">';
           var _mk2=ysMarks(rec);
           var rows=ysSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -11407,7 +11283,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!window._hcBase(hy+1);
 
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy-ink);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
     '<button data-act="sl-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy-ink)">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
@@ -11468,7 +11344,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
@@ -11605,7 +11481,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
     {c:'a',  lbl:'ג מנוחה',  col:'#0e7490'}
   ];
   var btns=CODES.map(function(cd){
-    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--bg2);color:'+cd.col;
+    var active=cd.c===curMark?'border:2.5px solid '+cd.col+';background:'+cd.col+';color:#fff':'border:2px solid '+cd.col+';background:var(--card);color:'+cd.col;
     return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'style="'+active+';padding:7px 14px;border-radius:8px;font-family:Heebo;font-size:.85rem;font-weight:700;cursor:pointer;white-space:nowrap">'+cd.lbl+'</button>';
   }).join('');
