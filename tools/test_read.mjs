@@ -302,11 +302,11 @@ console.log('— טענות סטטיות —');
 const code = SRC;
 let direct = 0;
 for (const k of APP.keys) {
-  const re = new RegExp(APP.rawGet + "\\('" + k + "'\\)", 'g');
+  const re = new RegExp('(?<![\\w$.])' + APP.rawGet + "\\('" + k + "'\\)", 'g');
   direct += (code.match(re) || []).length;
 }
 assert(direct === 0, '6א · ⛔ אין קריאה ישירה ל-' + APP.rawGet + ' למפתח שעבר — משפך אחד');
-const sites = (code.match(new RegExp(APP.funnel + '\\(', 'g')) || []).length;
+const sites = (code.match(new RegExp('(?<![\\w$.])' + APP.funnel + '\\(', 'g')) || []).length;
 assert(sites >= APP.minCallSites, '6ב · ' + APP.funnel + ' משמשת ב-' + sites + ' אתרים (≥' + APP.minCallSites + ')');
 /*  ⛔ מה שנאכף כאן הוא **היעדר** הנפילה-חזרה (סבב 78) — ⚠️ שורה אחת
  *  שמחזירה ערך שלם כשהטבלה לא ענתה מחזירה את מקור האמת השני, ⛔ ובשקט. */
