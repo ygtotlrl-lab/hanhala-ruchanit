@@ -43,7 +43,7 @@ const APP = {
     'sup-chev': 'מחלקת אחיזה שנקראת מ-`data-chev` בהרכבה, ⛔ והעיצוב מוטבע בתגית',
     'sl-sup-chev': 'מחלקת אחיזה שנקראת מ-`data-chev` בהרכבה, ⛔ והעיצוב מוטבע בתגית',
   },
-  dynamicIds: ['at-tab-', 'at-view-', 'ep-', 'pg-', 'reasons-', 'settings-', 'sl-tab-', 'sl-view-'],
+  dynamicIds: ['at-tab-', 'at-view-', 'pg-', 'reasons-', 'settings-', 'sl-tab-', 'sl-view-'],
   dynamicClasses: ['role-admin', 'role-junior', 'role-manager'],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
@@ -75,7 +75,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
 /* ⚠️ פר-אפליקציה — הריצפה הפרטית של השער נבדלת בין הארבע לפי היכולת שכל אחת נושאת, והנימוק בשדה עצמו */
-const FLOOR = { shared: 24, app: 13, appWhy: 'מספר השערים והבודקים שהריפו נושא — כל שער פרטי מוסיף טענת תוכן' };
+const FLOOR = { shared: 24, app: 12, appWhy: 'מספר השערים והבודקים שהריפו נושא — כל שער פרטי מוסיף טענת תוכן' };
 /* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;

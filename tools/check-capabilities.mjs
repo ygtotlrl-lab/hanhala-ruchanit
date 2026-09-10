@@ -477,20 +477,20 @@ const APP = {
   enterFields: ['auth-user', 'auth-pass', 'switch-pass', 'um-name', 'um-username',
                 'um-pass', 'pw-old', 'pw-new', 'pw-new2', 'st-name', 'st-cycle',
                 "at-treat-note-'+sid+'", "at-treat-inp-'+i+'", "sl-treat-note-'+sid+'",
-                "sl-treat-inp-'+i+'", 'שם הסדר', 'שעת הסדר', 'שם הטיפול'],
+                "sl-treat-inp-'+i+'", 'שם הסדר', 'שעת הסדר', 'שם הטיפול', 'rm'],
   enterExempt: [
-    { field: 'search-st', why: 'חיפוש תלמיד — אין בטופס כפתור שמירה' },
-    { field: 'at-filler', why: 'שם הממלא נשמר עם הסימון, ואין לו כפתור' },
-    { field: 'sl-filler', why: 'שם הממלא נשמר עם הסימון, ואין לו כפתור' },
-    { field: 'rm', why: 'בורר חודש הדוח — אינו נשמר' },
-    { field: "'+pfx+'_t", why: 'שעה בתוך בורר התאריך — נקלטת בשינוי' },
-    { field: "at-min-'+s.id+'", why: 'דקות האיחור — כפתור האישור מופיע רק אחרי הקלדה' },
-    { field: "sl-min-'+s.id+'", why: 'דקות האיחור — כפתור האישור מופיע רק אחרי הקלדה' },
-    { field: "sl-note-'+s.id+'", why: 'הערת השינה נשמרת עם הסימון, ואין לה כפתור' },
+    { field: 'search-st', group: 'no-save', why: 'חיפוש תלמיד — אין בטופס כפתור שמירה' },
+    { field: 'at-filler', group: 'no-save', why: 'שם הממלא נשמר עם הסימון, ואין לו כפתור' },
+    { field: 'sl-filler', group: 'no-save', why: 'שם הממלא נשמר עם הסימון, ואין לו כפתור' },
+    { field: "'+pfx+'_t", group: 'no-save', why: 'שעה בתוך בורר התאריך — נקלטת בשינוי' },
+    { field: "at-min-'+s.id+'", group: 'no-save', why: 'דקות האיחור — כפתור האישור מופיע רק אחרי הקלדה' },
+    { field: "sl-min-'+s.id+'", group: 'no-save', why: 'דקות האיחור — כפתור האישור מופיע רק אחרי הקלדה' },
+    { field: "sl-note-'+s.id+'", group: 'no-save', why: 'הערת השינה נשמרת עם הסימון, ואין לה כפתור' },
   ],
-  ksaveActs: ['login', 'absence-reasons-save', 'at-settings-save', 'sl-settings-save',
+  ksaveActs: ['login', 'rpt-load', 'absence-reasons-save', 'at-settings-save', 'sl-settings-save',
               'perms-save', 'switch-confirm', 'user-save', 'mypass-change',
               'student-save', 'at-add-treat', 'sl-add-treat'],
+  actExempt: [],
   keydownExempt: [
     { site: "['pointerdown', 'keydown']", why: 'שומר המגע לעדכון הגרסה — אינו מסלול שמירה' },
     { site: "if (e.key !== 'Escape') return;", why: 'מסלול הסגירה היחיד של המודאל' },
@@ -501,6 +501,7 @@ const APP = {
   ],
   probeInput: {
     '80|`Enter` שומר בכל שדה עריכה': 'src',
+    '157|מבנה טופס הכניסה': 'src',
     '128|שם נגזר אינו נשמר ברשומה': 'src',
     '173|מפתח אחסון בלי קורא': 'src',
     '33|שער מריץ את כל טענותיו': 'tools',
@@ -974,6 +975,13 @@ const CAPS = {
              start: '/* ═══ Enter שומר בשדה עריכה — מודול משותף (סבב 125)',
              end:   '/* ═══════════════ סוף מודול Enter שומר בשדה עריכה' },
   },
+  kvval: {
+    name: 'מודול ערך מפתח-ערך',
+    docRows: ['ערך במפתח-ערך הוא JSON'],
+    block: { sha: '6c4f8dd8093932e7', lines: 23,
+             start: '/* ═══ ערך מפתח-ערך — מודול משותף (סבב 126)',
+             end:   '/* ═══════════════ סוף מודול ערך מפתח-ערך' },
+  },
   swcore: {
     name: 'מודול ה-service worker',
     docRows: ['ליבת `sw.js`'],
@@ -1025,7 +1033,7 @@ function orderGaps() {
 
 const BLOCK_ORDER = ['bp', 'neterr', 'rowswin', 'guardonline', 'storage', 'schemastale', 'techinfo', 'status', 'backup',
                      'pending', 'ids', 'retry', 'lock', 'sess', 'isAdmin', 'ctxguard', 'pull', 'push', 'hotwin', 'mirror',
-                     'devid', 'mergecore', 'tomb', 'writeUser', 'hebdate', 'uihelp', 'readnum', 'uniq', 'keysave'];
+                     'devid', 'mergecore', 'tomb', 'writeUser', 'hebdate', 'uihelp', 'readnum', 'uniq', 'keysave', 'kvval'];
 
 /*  ⛔ שמות השורות שבטבלה (סבב 106) — ⚠️ המרשמים שמתחת מצהירים **שם**
  *  ⛔ ולא מספר: ⭐ המספר משתנה בכל מספור מחדש, ⛔ והשם הוא מה שהקורא מחפש. */
@@ -1295,7 +1303,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
 /* ⚠️ פר-אפליקציה — הריצפה הפרטית של השער נבדלת בין הארבע לפי היכולת שכל אחת נושאת, והנימוק בשדה עצמו */
-const FLOOR = { shared: 155, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
+const FLOOR = { shared: 157, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
 /* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
@@ -4488,12 +4496,28 @@ function ksMarked(text, attr) {
   }
   return out;
 }
+/*  ⛔ כפתור שאינו במפת הפעולות הוא היקף שיצא מהמנגנון — ⚠️ **מה נכנס**:
+ *  כל `<button` שבמקור, ⭐ **ומה מפיל**: תגית בלי `data-act`. ⛔ **ולמה
+ *  החלון נחתך ב-`>` או ב-`<`, המוקדם מביניהם** — ⚠️ תגית אינה מכילה `<`,
+ *  ⛔ והתאמת תגית שלמה נשברת על גרש שנפתח במחרוזת אחת ונסגר באחרת. */
+function ksActlessButtons(text) {
+  const out = [];
+  for (const m of text.matchAll(/<button(?=[\s>])/g)) {
+    const w = text.slice(m.index, m.index + 300);
+    const gt = w.indexOf('>'), lt = w.indexOf('<', 1);
+    const end = Math.min(gt < 0 ? w.length : gt, lt < 0 ? w.length : lt);
+    const tag = w.slice(0, end);
+    if (!/data-act/.test(tag)) out.push(tag.replace(/\s+/g, ' ').trim());
+  }
+  return out;
+}
 function ksActionKeys() {
   const i = src.indexOf('var ' + APP.actMap);
   if (i < 0) return [];
   const j = src.indexOf('\ndocument.addEventListener', i);
   return [...src.slice(i, j < 0 ? i + 20000 : j).matchAll(/'([\w-]+)'\s*:/g)].map((m) => m[1]);
 }
+const KS_GROUPS = ['no-save', 'native-enter'];
 function keySaveGaps() {
   const out = [];
   const seen = new Set(ksInputKeys(src));
@@ -4507,6 +4531,24 @@ function keySaveGaps() {
   for (const [f, why] of exempt) {
     if (!seen.has(f)) out.push('שדה מוחרג שאין לו אתר במקור: ' + f);
     if (!why || !String(why).trim()) out.push('שדה מוחרג בלי נימוק: ' + f);
+  }
+  /*  ⛔ ההחרגה היא באחת משתי הקבוצות בלבד — ⚠️ `no-save` שדה בלי כפתור
+   *  שמירה, ⭐ ו-`native-enter` שדה שהדפדפן שולח בעצמו: ⛔ וכל נימוק
+   *  אחר הוא היקף שיצא מהמנגנון, ⚠️ ולא החרגה. */
+  for (const e of APP.enterExempt || []) {
+    if (KS_GROUPS.indexOf(e.group) < 0)
+      out.push('החרגה שאינה באחת משתי הקבוצות: ' + e.field + ' — ' + e.group);
+    if (e.group === 'native-enter' && src.indexOf('<form') < 0)
+      out.push('החרגה שמצהירה טופס מקורי ואין `<form>` במקור: ' + e.field);
+  }
+  const actless = ksActlessButtons(src), aex = APP.actExempt || [];
+  for (const t of actless)
+    if (!aex.some((e) => e.btn && t.indexOf(e.btn) >= 0))
+      out.push('כפתור שאינו במפת הפעולות: ' + t);
+  for (const e of aex) {
+    if (!e.why || !String(e.why).trim()) out.push('כפתור מוכרז בלי נימוק: ' + e.btn);
+    if (!actless.some((t) => t.indexOf(e.btn) >= 0))
+      out.push('כפתור מוכרז שאין לו אתר: ' + e.btn);
   }
   /*  ⛔ המנגנון עצמו — ⚠️ מאזין אחד שקורא את ההיקף, את שני הסימונים ואת
    *  מפת הפעולות: ⭐ מאזין שאיבד אחד מהם אינו מנתב דבר. */
@@ -4865,6 +4907,8 @@ const MATRIX = [
   { row: 56, name: 'שחזור מקומי מהענן',
     probe: () => callSites('hwRestoreMount').length > 0 },
   { row: 157, name: 'מסך שינוי סיסמה עצמי', app: true },
+  { row: 157, name: 'מבנה טופס הכניסה',
+    probe: () => src.indexOf('<form') < 0 },
   { row: 183, name: 'מטמון-CDN מראש עם ריפוי עצמי',
     probe: () => fileHas('sw.js', /CDN_ASSETS/) && fileHas('sw.js', /ensureCdnCached/) },
   { row: 55, name: 'גיבוי יומי מטבלאות מובנות',

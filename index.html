@@ -194,15 +194,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy-ink);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
 .back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--bg)}
-.gear{background:none;border:1.5px solid var(--border);color:var(--text3);border-radius:50%;width:34px;height:34px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.gear:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--bg);transform:rotate(30deg)}
 .gap{flex:1}
-.ep{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px;box-shadow:var(--shadow);display:none}
-.ep.open{display:block}
-.ep h4{font-size:.9rem;font-weight:700;color:var(--navy-ink);margin-bottom:14px}
-.ep textarea{width:100%;padding:10px 14px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.9rem;resize:vertical;min-height:60px}
-.ep textarea:focus{outline:none;border-color:var(--navy-ink)}
-.ep-act{display:flex;gap:10px;margin-top:12px;justify-content:flex-end}
 .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy-fill);color:#fff;border:2px solid var(--navy-fill);border-radius:30px;padding:9px 20px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .btn.out{background:var(--bg2);color:var(--navy-ink);border-color:var(--navy-ink)}
@@ -656,8 +648,7 @@ header{justify-content:space-between;padding:0 14px}
 </div>
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><button class="gear" data-gear="reports">⚙️</button><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" id="btn-rpt">📊 הצג</button></div>
-    <div class="ep" id="ep-reports"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">גיליונות חודשיים</textarea><div class="ep-act"><button class="btn out" data-act="ep-close" data-ep="ep-reports">סגור</button><button class="btn" data-act="ep-save" data-ep="reports">💾 שמור</button></div></div>
+    <div class="ptitle ksave"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>📊 הצג</button></div>
     <div id="rc"></div>
   </div>
 </div>
@@ -711,8 +702,8 @@ header{justify-content:space-between;padding:0 14px}
     </div>
   </div>
 </div>
-<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span><button class="gear" data-gear="exams">⚙️</button></div><div class="ep" id="ep-exams"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">מבחנים</textarea><div class="ep-act"><button class="btn out" data-act="ep-close" data-ep="ep-exams">סגור</button><button class="btn" data-act="ep-save" data-ep="exams">💾 שמור</button></div></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
-<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span><button class="gear" data-gear="files">⚙️</button></div><div class="ep" id="ep-files"><h4>⚙️ עריכת כותרות</h4><textarea aria-label="כותרת המסך">תיקים אישיים</textarea><div class="ep-act"><button class="btn out" data-act="ep-close" data-ep="ep-files">סגור</button><button class="btn" data-act="ep-save" data-ep="files">💾 שמור</button></div></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
 <!-- ===== דף הגדרות ===== -->
 <div class="pg" id="pg-settings">
   <div class="inner">
@@ -2515,8 +2506,12 @@ var DOM_ACTIONS = {
   'at-sup-nav':      function (el) { window.atSupNav(Number(el.getAttribute('data-dir'))); },
   'absence-reason-add':  function (el) { window.addAbsenceReason(el.getAttribute('data-kind')); },
   'status-form':         function (el) { window.openStatusForm(el.getAttribute('data-kind')); },
-  'ep-save':             function (el) { saveEp(el.getAttribute('data-ep')); },
-  'ep-close':            function (el) { closeEp(el.getAttribute('data-ep')); },
+  'user-edit':           function (el) { openEditUser({
+                           id: el.getAttribute('data-uid'),
+                           full_name: el.getAttribute('data-uname'),
+                           username: el.getAttribute('data-uusername'),
+                           role: el.getAttribute('data-urole') }); },
+  'rpt-load':            function () { loadR(); },
   'absence-reasons-save': function () { return window.saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
                             var id = el.getAttribute('data-id');
@@ -2629,7 +2624,7 @@ async function renderUsersList() {
       '<div class="ur-name">'+esc(u.full_name)+'<br><small style="color:var(--text3);font-weight:400">@'+esc(u.username)+'</small></div>' +
       '<span class="ur-role '+roleClass+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
-        '<button data-uid="'+u.client_id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
+        '<button data-act="user-edit" data-uid="'+u.client_id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
         '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
         '<button data-act="user-up" data-id="'+esc(u.client_id)+'" title="הזז למעלה" style="font-size:.9rem">⬆️</button>' +
         '<button data-act="user-down" data-id="'+esc(u.client_id)+'" title="הזז למטה" style="font-size:.9rem">⬇️</button>' +
@@ -2637,16 +2632,6 @@ async function renderUsersList() {
       '</div>' +
     '</div>';
   }).join('');
-  el.querySelectorAll('[data-uid]').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      openEditUser({
-        id: this.getAttribute('data-uid'),
-        full_name: this.getAttribute('data-uname'),
-        username: this.getAttribute('data-uusername'),
-        role: this.getAttribute('data-urole')
-      });
-    });
-  });
 }
 
 // ---- פתח מודל הוסף/ערוך משתמש ----
@@ -2934,8 +2919,6 @@ async function _changeMyPasswordInner() {
 
 // hebrewDate כבר כולל את שם היום — כאן רק שם נרדף (בעבר שוכפל "יום X, יום X,")
 
-function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
-function saveEp(n){closeEp('ep-'+n);toast(MSG_SAVED)}
 
 // רענון נתוני כרטיסי הסיכום בדף הבית
 async function refreshDashStats() {
@@ -3020,11 +3003,11 @@ async function loadDash(){
 // ⚠️ המסך חסום: 'reports' נמצא ב-UNDER_CONSTRUCTION, ולכן showPage מציג את
 //    דיאלוג "המודול בבנייה" ו**חוזר לפני** showPageInternal. כלומר pg-reports
 //    לעולם אינו מוצג, וכפתור "📊 הצג" (btn-rpt) שבתוכו אינו ניתן ללחיצה.
-//    loadR נשארת מחוברת אליו רק כדי שהתשתית תהיה שלמה כשהמסך ייפתח.
+//    loadR נשארת במפת הפעולות רק כדי שהתשתית תהיה שלמה כשהמסך ייפתח.
 //
 // ⛔ **אין להחזיר שאילתות ל-`students` / `attendance`** (סבב 7ב) — הן אינן מקור אמת.
 //
-// ⚠️ **מקור הנתונים הנכון הוא `kv` בלבד**, דרך הגישונים הקיימים:
+// ⚠️ **מקור הנתונים הנכון הוא הטבלאות המובנות**, דרך הגישונים הקיימים:
 //    • `ys_sessions` — רשומות הסדרים (`window._atData` / `atSaveData`).
 //      כל רשומה: `{id, date_iso, session, open, deleted, updatedAt, marks:{sid:{s,min}}}`.
 //      הסימונים ב-`marks`: `p` נוכח, `e`/`x` חיסור, `l` איחור (`min` דקות),
@@ -3046,7 +3029,6 @@ function loadR(){
   if (el) el.innerHTML = '<div class="empty">הדוח בבנייה — טרם אופיין</div>';
 }
 
-var _el_btn_rpt=document.getElementById('btn-rpt');if(_el_btn_rpt)_el_btn_rpt.addEventListener('click',function(){loadR()});
 
 // חתימה משותפת לשלושת הפרויקטים (סבב 8): toast(msg, dur) — dur באלפיות שנייה,
 // אופציונלי. ברירת המחדל נשארת של כל אפליקציה (כאן 2800) כדי לא לשנות התנהגות.
@@ -5115,7 +5097,7 @@ function ysSupervisionAccess() {
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה החותמת היא שורת `ys_last_changed` שבטבלת `kv` — ⛔ המפתח היחיד
+/* ⚠️ בהנהלה החותמת היא שורת `ys_last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
    שאינו נכנס לתור האופליין (סבב 51) — והיא נכתבת ממשפך אחד,
    `ysTouchLastChanged()`, שכל כותב ענן כאן כבר קורא לו.
    ⚠️ `ok()` הוא `_ysMarkSynced()` — חותמת **תצוגה** בלבד. ⛔ אין להזין
@@ -5132,7 +5114,7 @@ var PL_CFG = {
     return withTimeout(SB.from('ys_settings').select('value').eq('key', 'ys_last_changed').maybeSingle())
       .then(function (r) {
         if (!r || r.error) return { ok: false, ts: null };
-        return { ok: true, ts: r.data ? plNum(r.data.value) : null };
+        return { ok: true, ts: r.data ? plNum(kvParse('ys_last_changed', r.data.value).value) : null };
       }, function () { return { ok: false, ts: null }; });
   },
 };
@@ -6532,15 +6514,10 @@ async function ysCfgUpdatedAt(key) {
  *  בעוד ש-`single` מסמן שגיאה על היעדר שורה. ⛔ והדגל `res` הוא מה
  *  שמאפשר להבחין בין «אין ערך» ל«הענן לא ענה» — ⚠️ שניהם `null`,
  *  ⛔ ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל. */
-var BAD_VALUE = 'ערך פגום בענן';
 function ysCfgGet(key, res) {
   return withTimeout(SB.from('ys_settings').select('value').eq('key', key).maybeSingle()).then(function(r){
-    var v = null, bad = false;
-    /*  ⛔ «אין ערך» ו«ערך פגום» אינן אותה תשובה — ⚠️ שתיהן חזרו «אין»,
-     *  ⭐ ומי שקרא את המסך חיפש רשת שלא נפלה. */
-    if (r && r.data) try { v = JSON.parse(r.data.value); }
-      catch (pe) { bad = true; console.error('[sync] ' + BAD_VALUE + ' [' + key + ']:', pe); }
-    return res ? { ok: !bad && !(r && r.error), value: v, error: bad ? BAD_VALUE : null } : v;
+    var pr = r && r.data ? kvParse(key, r.data.value) : { ok: true, value: null, bad: false };
+    return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? KV_BAD : null } : pr.value;
   }, function(e){
     if (res) return { ok: false, value: null };
     throw e;
@@ -7127,6 +7104,30 @@ document.addEventListener('keydown', function (e) {
 });
 /* ═══════════════ סוף מודול Enter שומר בשדה עריכה ════════════════════════ */
 
+/* ═══ ערך מפתח-ערך — מודול משותף (סבב 126) ══════════════════════════════
+   ⛔ «אין ערך» ו«ערך פגום» אינן אותה תשובה — ⚠️ שתיהן חזרו «נכשל», ⭐ והמשתמש
+      חיפש רשת שלא נפלה.
+   ⛔ ולכן `null` הוא ערך שאינו קיים ⛔ ואינו כשל, ⚠️ וערך שאינו JSON הוא כשל
+      שנוקב בשם המפתח.
+   ⛔ והנוסח אחד בארבעתן — ⚠️ הודעה שנבדלת בין האפליקציות היא ארבעה חיפושים
+      לאותה תקלה.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה. */
+var KV_BAD = 'ערך פגום בענן';
+function kvParse(key, raw) {
+  if (raw === null || raw === undefined || raw === '') return { ok: true, value: null, bad: false };
+  try { return { ok: true, value: JSON.parse(raw), bad: false }; }
+  catch (e) {
+    /*  ⛔ ההודעה יוצאת מכאן ⛔ ולא מאתר הקריאה — ⚠️ כשל שאינו אומר מה קרה
+     *  שקול לכשל שקט, ⭐ ונקודת יציאה אחת היא מה שמשאיר את הנוסח אחד. */
+    console.error('[sync] ' + KV_BAD + ' [' + key + ']:', e);
+    toast('⚠️ ' + kvBadLabel(key), null, 'bad');
+    return { ok: false, value: null, bad: true };
+  }
+}
+function kvBadLabel(name) { return name + ' (' + KV_BAD + ')'; }
+/* ═══════════════ סוף מודול ערך מפתח-ערך ═════════════════════════════════ */
+
 
 // חיבור ההנהלה לליבה המשותפת (סבב 38). ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
@@ -7584,7 +7585,7 @@ setTimeout(async function() {
       return;
     }
     if (r.data) {
-      var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
+      var remoteTs = parseInt(kvParse('ys_last_changed', r.data.value).value) || 0;
       if (ctxStale(_ep)) return;
       _ysLastTs = remoteTs;
       await ysPullFromCloud();
