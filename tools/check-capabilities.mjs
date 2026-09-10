@@ -436,6 +436,7 @@ const APP = {
    *  מהם הם **שורות בטבלת ההגדרות האחת** ⛔ ולא טבלאות משלהם, ⚠️ ומי
    *  שיראה אותם שטוחים ינסה להכניס אותם לשכבת המראה. */
   flatKeys: {
+    ys_sw_dismissed: 'סימן דחיית באנר העדכון — נושא את שם המטמון שנדחה, ואינו בענן כלל',
     ys_attend_treats:   'שורת הגדרות — רשימת הטיפולים של הנוכחות',
     ys_sleep_treats:    'שורת הגדרות — רשימת הטיפולים של השינה',
     ys_settings_meta:   'מפת חותמות פר-מפתח הגדרות — מטא ולא נתון',
@@ -575,6 +576,7 @@ const APP = {
     '82|סיווג ההודעה נגזר מהמסלול': 'src',
     '182|מיכל באנר העדכון במקור': 'src',
     '182|הרענון מ-controllerchange בלבד': 'src',
+    '182|סימן דחיית הבאנר מתמיד': 'src',
     '100|רישום כשלי כתיבה': 'src',
     '56|חלון חם במכשיר': 'src',
     '56|שחזור מקומי מהענן': 'src',
@@ -995,7 +997,7 @@ const CAPS = {
   swreg: {
     name: 'מודול הרשמת ה-service worker',
     docRows: ['עדכון אוטומטי — בדיקה מחזורית'],
-    block: { sha: '05fb5278c9f10d84', lines: 75,
+    block: { sha: '7091572acb405049', lines: 97,
              start: '/* ═══ הרשמת service worker — מודול משותף (סבב 128)',
              end:   '/* ═══════════════ סוף מודול הרשמת service worker' },
   },
@@ -1320,7 +1322,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
 /* ⚠️ פר-אפליקציה — הריצפה הפרטית של השער נבדלת בין הארבע לפי היכולת שכל אחת נושאת, והנימוק בשדה עצמו */
-const FLOOR = { shared: 163, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
+const FLOOR = { shared: 164, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
 /* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
@@ -3576,6 +3578,48 @@ function swReloadGaps() {
   }
   return out;
 }
+/*  ⛔ סימן דחיית באנר העדכון (סבב 132) — ⚠️ **מה נכנס**: הבלוק החתום
+ *  בלבד, ⛔ **ומה מפיל**: סימן שאינו מגיע לדיסק · סימן שאינו נושא את
+ *  הגרסה · ומסלול הצגה שאינו נבדק מולו: ⭐ **סימן בזיכרון מתאפס בטעינה**,
+ *  ⛔ והבאנר חוזר בלי שדבר השתנה. */
+function swDismissGaps() {
+  const blk = grab(CAPS.swreg.block);
+  if (!blk) return ['מודול הרשמת ה-service worker לא נמצא'];
+  const txt = blk.text;
+  const out = [];
+  const bodyOf = (needle) => {
+    let hit = '';
+    const FN_HEAD = new RegExp('function\\s+[A-Za-z_$][\\w$]*\\s*\\([^)]*\\)\\s*' + OPEN_OBJ, 'g');
+    for (const m of txt.matchAll(FN_HEAD)) {
+      const b = balAt(txt, m.index + m[0].length - 1);
+      if (b && b.indexOf(needle) >= 0) hit = b;
+    }
+    return hit;
+  };
+  const rd = (txt.match(/lsGet\(\s*LS_CFG\.dismissKey/g) || []).length;
+  const wr = (txt.match(/lsSet\(\s*LS_CFG\.dismissKey/g) || []).length;
+  if (rd !== 1)
+    out.push(`קריאות סימן הדחייה מהדיסק: ${rd} ⛔ והצפוי אחת — ` +
+             'מחזירים את `lsGet` למסלול ההצגה');
+  if (wr !== 1)
+    out.push(`כתיבות סימן הדחייה לדיסק: ${wr} ⛔ והצפוי אחת — ` +
+             'מחזירים את `lsSet` למסלול הסגירה');
+  const show = bodyOf("classList.add('show')");
+  if (!show) out.push('אין מסלול שמציג את הבאנר ⛔ — מחזירים את `classList.add`');
+  else if (show.indexOf('lsGet(LS_CFG.dismissKey') < 0)
+    out.push('מסלול ההצגה אינו נבדק מול סימן הדחייה שבדיסק ⛔ — ' +
+             'מוסיפים בו את `lsGet(LS_CFG.dismissKey)`');
+  const wm = /lsSet\(\s*LS_CFG\.dismissKey\s*,\s*([^)]*)\)/.exec(txt);
+  if (wm && /^('|"|true\b|1\b)/.test(wm[1].trim()))
+    out.push(`סימן הדחייה נכתב כערך קבוע: ${wm[1].trim()} ⛔ והצפוי מזהה הגרסה — ` +
+             'כותבים את שם המטמון החי');
+  if (!/caches\s*\.\s*keys\s*\(/.test(txt))
+    out.push('מזהה הגרסה אינו נגזר משמות המטמון החיים ⛔ — קוראים `caches.keys()`');
+  const fail = bodyOf('toast(');
+  if (fail && !/classList\.remove|Hide\s*\(/.test(fail))
+    out.push('מסלול הכשל מותיר את הבאנר על המסך ⛔ — מורידים אותו לפני ההודעה');
+  return out;
+}
 function swUpdateGaps() {
   const out = [];
   const regs = [...src.matchAll(/serviceWorker\s*\.\s*register\s*\(/g)];
@@ -4581,6 +4625,20 @@ function mirrorLayerGaps() {
     if (!Object.prototype.hasOwnProperty.call(flat, k))
       out.push('מפתח מקומי שאינו טבלה ואינו מוכרז ב-flatKeys: ' + k);
   }
+  /*  ⛔ מפתח שנמסר דרך שדה ב-`LS_CFG` (סבב 132) — ⚠️ הבלוק החתום זהה
+   *  בארבעתן ⭐ והשם עצמו פר-אפליקציה: ⛔ ולכן אין ליטרל באתר הכתיבה,
+   *  ⚠️ והסריקה קוראת את הערך מהתצורה: ⛔ **ושדה שמשורשר אינו מפתח** —
+   *  ⚠️ הוא תחילית שמפתח נבנה ממנה, ⭐ ונמדד בשער המפתחות. */
+  const lsCfg = (/var\s+LS_CFG\s*=\s*\{([\s\S]*?)\n\};/.exec(src) || [])[1] || '';
+  for (const m of src.matchAll(/ls(?:Get|Set|SetArray|Remove)\(\s*LS_CFG\.([A-Za-z_$][\w$]*)\s*[,)]/g)) {
+    const v = new RegExp("(?<![\\w$.])" + m[1] + ":\\s*'([^']+)'").exec(lsCfg);
+    if (!v) { out.push('שדה `LS_CFG` בלי ערך מחרוזת: ' + m[1] + ' — מוסיפים לו ערך'); continue; }
+    const k = v[1];
+    if (!app || k.indexOf(app) !== 0) continue;
+    seen.add(k);
+    if (!Object.prototype.hasOwnProperty.call(flat, k))
+      out.push('מפתח מקומי שאינו טבלה ואינו מוכרז ב-flatKeys: ' + k);
+  }
   for (const k of Object.keys(flat)) {
     if (!seen.has(k)) out.push('מפתח מוכרז ב-flatKeys ואין לו אתר: ' + k);
     else if (!String(flat[k]).trim()) out.push('מפתח מוכרז בלי נימוק: ' + k);
@@ -5399,6 +5457,8 @@ const MATRIX = [
                  !/createElement\([^)]*\)[^;]{0,80}updater/.test(code) },
   { row: 182, name: 'הרענון מ-controllerchange בלבד',
     probe: () => swReloadGaps().length === 0 },
+  { row: 182, name: 'סימן דחיית הבאנר מתמיד',
+    probe: () => swDismissGaps().length === 0 },
   { row: 182, name: 'עדכון אוטומטי — בדיקה מחזורית',
     probe: () => /setInterval\s*\(\s*checkForUpdates?\s*,/.test(code) &&
                  /reg\.update\s*\(/.test(code) && !hasCode(/\bRAW_URL\b/) &&
