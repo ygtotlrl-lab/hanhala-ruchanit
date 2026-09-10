@@ -1396,7 +1396,7 @@ async function ysRevalidateOfflineLogin() {
   try {
     var res = await SB.from('ys_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
     if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
-    if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק'); doLogout(); return; }
+    if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק', null, 'bad'); doLogout(); return; }
     AUTH.user = res.data;
     AUTH.offlineLogin = false;
     ysUsersCacheSave(res.data);   // השורה כבר בידינו — אין צורך במשיכה נוספת
@@ -1586,7 +1586,7 @@ async function _doLoginInner() {
     ysUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
     ysLoginLog('login_ok', 'offline', ysLoginDetails(username));
     toast(serverErr ? '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך'
-                    : '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור');
+                    : '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור', null, 'bad');
   }
   var u = AUTH.user;
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
@@ -1936,14 +1936,14 @@ function openStatusForm(type) {
 
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
-  if (!reason) { toast('⚠️ יש לבחור סיבה'); return; }
+  if (!reason) { toast('⚠️ יש לבחור סיבה', null, 'bad'); return; }
   var from = window._hcGet('sfmF');
-  if (!from) { toast('⚠️ יש לבחור תאריך התחלה'); return; }
+  if (!from) { toast('⚠️ יש לבחור תאריך התחלה', null, 'bad'); return; }
   var toWrap = document.getElementById('sfmT_wrap');
   var toOpen = !!(toWrap && toWrap.style.display !== 'none');
   var to = toOpen ? window._hcGet('sfmT') : null;
   // שורת סיום פתוחה בלי תאריך נבחר — לא לשמור בשקט כאילו הכול תקין
-  if (toOpen && !to) { toast('⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום'); return; }
+  if (toOpen && !to) { toast('⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום', null, 'bad'); return; }
   var sid = window._statusSid;
 
   var students = getStudents();
@@ -1961,7 +1961,7 @@ function saveStudentStatus(type) {
    *  מזהים ופריט אחד — ⛔ והמסך היה מציג אותה היעדרות פעמיים,
    *  ⚠️ והמחיקה מסירה אחת מהן בלבד. */
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, ysAbsValueKey)) {
-    toast('⚠️ היעדרות זהה כבר רשומה לתלמיד'); return;
+    toast('⚠️ היעדרות זהה כבר רשומה לתלמיד', null, 'bad'); return;
   }
   s.absences.push(nw);
   s.present = false;
@@ -2345,7 +2345,7 @@ var DOM_ACTIONS = {
                  },
   'deact-st-confirm': function () {
                    var v = document.getElementById('deact-st-sel').value;
-                   if (!v) { toast('⚠️ יש לבחור תלמיד'); return; }
+                   if (!v) { toast('⚠️ יש לבחור תלמיד', null, 'bad'); return; }
                    window.setStudentInactive(parseInt(v));
                    closeModal();
                  },
@@ -2661,7 +2661,11 @@ async function _saveUserInner() {
    *  מחזירה הוא מה שמבדיל «נשמר» מ«נשמר בלי הכנה לכניסה ללא רשת». */
   if (res._noFp) noFp = true;
   closeModal();
-  toast(noFp ? '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת' : '✅ משתמש נשמר!');
+  /*  ⛔ שתי קריאות ולא שילוש בקריאה אחת — ⚠️ סיווג ההודעה נגזר מהמסלול,
+   *  ⭐ ושתי ההודעות כאן הן שני מסלולים: ⛔ קריאה אחת הייתה צובעת את שניהם
+   *  באותו צבע. */
+  if (noFp) toast('⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת', null, 'bad');
+  else toast('✅ משתמש נשמר!');
   ysRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
@@ -2673,7 +2677,7 @@ async function toggleUserActive(id, current) {
   try { res = await writeUser(id, {active: !current}); }
   catch (e) { toast(MSG_OFFLINE); return; }
   if (res && res.error) {
-    toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'));
+    toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'), null, 'bad');
     return;
   }
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין
@@ -2728,7 +2732,7 @@ async function savePerms() {
   if (res && res.error) {
     // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
     toast('❌ שמירת ההרשאות נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור') +
-          ' — הן יישלחו שוב כשהרשת תחזור');
+          ' — הן יישלחו שוב כשהרשת תחזור', null, 'bad');
     return;
   }
   // AUTH.perms + ys_perms_cache + רענון התצוגה — הכל דרך ysApplyPerms
@@ -2797,28 +2801,28 @@ async function _changeMyPasswordInner() {
    *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
    *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
   var _u = AUTH.user;
-  if (!_u || !_u.client_id) { toast('❌ אין משתמש מחובר'); return; }
+  if (!_u || !_u.client_id) { toast('❌ אין משתמש מחובר', null, 'bad'); return; }
   var oldPass = document.getElementById('pw-old').value.trim();
   var newPass = document.getElementById('pw-new').value.trim();
   var newPass2El = document.getElementById('pw-new2');
   var newPass2 = newPass2El ? newPass2El.value.trim() : newPass;
-  if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות'); return; }
-  if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות'); return; }
+  if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות', null, 'bad'); return; }
+  if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות', null, 'bad'); return; }
   // ⛔ אימות ולא נוחות (סבב 67) — שגיאת הקלדה בסיסמה החדשה נכתבת כמות
   // שהיא, ומרגע זה המשתמש נעול בחוץ בלי דרך לגלות מה הוקלד בפועל.
-  if (newPass !== newPass2) { toast('❌ שתי הסיסמאות החדשות אינן זהות'); return; }
+  if (newPass !== newPass2) { toast('❌ שתי הסיסמאות החדשות אינן זהות', null, 'bad'); return; }
   // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
   try { chk = await withTimeout(SB.from('ys_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
-  catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת'); return; }
-  if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת')); return; }
-  if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת', null, 'bad'); return; }
+  if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת'), null, 'bad'); return; }
+  if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה', null, 'bad'); return; }
   var vOld = await ysVerifyOffline(chk.data, oldPass);
-  if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP); return; }
-  if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO); return; }
-  if (vOld !== 'ok')        { toast('❌ הסיסמה הנוכחית שגויה'); return; }
+  if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP, null, 'bad'); return; }
+  if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
+  if (vOld !== 'ok')        { toast('❌ הסיסמה הנוכחית שגויה', null, 'bad'); return; }
   // סבב 22: הטביעה נגזרת בכל שינוי סיסמה. כישלון בגזירה **מאפס** את
   // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
   var made = await ysMakePassFp(newPass);
@@ -2829,10 +2833,10 @@ async function _changeMyPasswordInner() {
   var upd;
     /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
    *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
-  if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה'); return; }
+  if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה', null, 'bad'); return; }
   try { upd = await writeUser(_u.client_id, updObj); }
-  catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה'); return; }
-  if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת')); return; }
+  catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה', null, 'bad'); return; }
+  if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת'), null, 'bad'); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
@@ -2843,7 +2847,8 @@ async function _changeMyPasswordInner() {
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
    *  ⭐ והשדות חדלים להתקיים איתו. */
   closeModal();
-  toast(made ? '✅ סיסמה עודכנה!' : '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת');
+  if (made) toast('✅ סיסמה עודכנה!');
+  else toast('⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת', null, 'bad');
 }
 
 
@@ -3824,7 +3829,7 @@ function staleSchemaHalt(e) {
     if (!_staleBanner()) {
       try { window.addEventListener('load', _staleBanner); } catch (x) {}
     }
-    try { toast(MSG_STALE_CODE, 6000); } catch (x) {}
+    try { toast(MSG_STALE_CODE, 6000, 'bad'); } catch (x) {}
   }
   return true;
 }
@@ -6122,7 +6127,7 @@ async function ysFlushQueue() {
     catch(e){
       console.warn('[sync] חותמת ys_last_changed לא נכתבה:', e && e.message);
       try { ysSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
-      toast('⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים');
+      toast('⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים', null, 'bad');
     }
     toast('☁️ ' + nOk + ' רשומות סונכרנו בהצלחה');
   }
@@ -7461,7 +7466,7 @@ async function ysPushToCloud() {
       _ysPushWarned = true;
       toast(pushed === 0
         ? '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור'
-        : '⚠️ חלק מהנתונים לא סונכרנו (' + failed.join(', ') + ') — יישלחו שוב אוטומטית');
+        : '⚠️ חלק מהנתונים לא סונכרנו (' + failed.join(', ') + ') — יישלחו שוב אוטומטית', null, 'bad');
     }
   } else if (_ysPushWarned) {
     _ysPushWarned = false;
@@ -7968,7 +7973,7 @@ function ysCycleFor(cls, now) {
 window.setStudentInactive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
-  if(!s){toast('⚠️ תלמיד לא נמצא');return;}
+  if(!s){toast('⚠️ תלמיד לא נמצא', null, 'bad');return;}
   s.active=false;
   // ⚠️ המחזור נרשם רק כשאין לו ערך ⛔ ואינו נדרס — ⭐ תלמיד שהמנהל רשם לו
   //    מחזור ידנית והוחזר לפעיל וחזר והושבת היה מקבל את המחזור של השנה
@@ -7984,7 +7989,7 @@ window.setStudentInactive = function(sid){
 window.setStudentActive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
-  if(!s){toast('⚠️ תלמיד לא נמצא');return;}
+  if(!s){toast('⚠️ תלמיד לא נמצא', null, 'bad');return;}
   s.active=true;
   saveStudents(students);
   schedulePush();
@@ -8004,7 +8009,7 @@ var MANAGE_PICK = {
   'year':   function () { window.openYearTransitionDlg(); }
 };
 window.openManageListDlg = function(){
-  if(!isAdmin()){toast('⚠️ גישה למנהלים בלבד');return;}
+  if(!isAdmin()){toast('⚠️ גישה למנהלים בלבד', null, 'bad');return;}
   var ITEMS=[
     {icon:'➕',label:'הוסף תלמיד',k:'add'},
     {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
@@ -8417,7 +8422,7 @@ function ysTombstoneStudents(ids){
    ══════════════════════════════════════════════════════════════════════════ */
 window.importStudentsFromFile = function(input) {
   if (!input.files || !input.files[0]) return;
-  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב'); return; }
+  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב', null, 'bad'); return; }
   var file = input.files[0];
   input.value = ''; // אפשר לייבא את אותו קובץ שוב
   var isCsv = file.name.toLowerCase().endsWith('.csv');
@@ -8500,7 +8505,7 @@ window.importStudentsFromFile = function(input) {
         (body || '<div>הכל תקין!</div>') + '</div>',
         '<button class="btn" data-act="modal-close" style="flex:1">סגור</button>');
     } catch(err) {
-      toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err));
+      toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err), null, 'bad');
     }
   };
   if (isCsv) { reader.readAsText(file, 'UTF-8'); } else { reader.readAsArrayBuffer(file); }
@@ -8542,7 +8547,7 @@ window.downloadImportTemplate = function() {
 
 window.printStudents = function() {
   try {
-    if (typeof pdfMake === 'undefined') { toast('⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב'); return; }
+    if (typeof pdfMake === 'undefined') { toast('⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב', null, 'bad'); return; }
     toast('מייצר PDF...');
     var students = ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
@@ -8581,7 +8586,7 @@ window.printStudents = function() {
     pdfMake.createPdf(docDef).download('nochechut-'+new Date().toISOString().split('T')[0]+'.pdf');
   } catch(e) {
     console.error('[PDF:ERR]', e);
-    toast('⚠️ יצירת ה-PDF נכשלה: ' + (e && e.message ? e.message : e));
+    toast('⚠️ יצירת ה-PDF נכשלה: ' + (e && e.message ? e.message : e), null, 'bad');
   }
 }
 // ============ סוף מודול התלמידים ============
@@ -9182,9 +9187,9 @@ function slAdoptSession(rec) {
 // פתיחת סדר חדש
 window.atOpenSession = async function(sessId, sessName, btn) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
-  if(window._atCurrentSessionId){toast('⚠️ סגור את הסדר הנוכחי תחילה');return;}
+  if(window._atCurrentSessionId){toast('⚠️ סגור את הסדר הנוכחי תחילה', null, 'bad');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
-  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
+  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה', null, 'bad');return;}
 
   /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה (סבב 89) — ⚠️ הנימוק המדוד: הפתיחה
    *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
@@ -9310,7 +9315,7 @@ function atMarkDirty() {
                                  window._atPendingRec.date_iso,window._atPendingRec.id);
     if(_atDup){
       atAdoptSession(_atDup);
-      toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+      toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת', null, 'bad');
     } else if(!window._atData.some(function(r){return r&&idEq(r.id,window._atPendingRec.id);})) {
       window._atData.push(window._atPendingRec);
     }
@@ -9396,8 +9401,8 @@ window.atConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('at-min-'+sid);
   var val=readNum(inp, 0);
-  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
-  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
+  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות', null, 'bad');return;}
+  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור', null, 'bad');return;}
   window.atSetLateMin(sid,val);
   delete window._atPending[s];
   window.atRenderStudents();
@@ -9776,7 +9781,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
     toast('הייצוא הצליח');
-  } catch(e){console.error('[Excel ERROR]',e); toast('שגיאה בייצוא: '+e.message);}
+  } catch(e){console.error('[Excel ERROR]',e); toast('שגיאה בייצוא: '+e.message, null, 'bad');}
 };
 
 window.atExportPdf = async function(fromIso,toIso) {
@@ -9823,7 +9828,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
     pdfMake.createPdf(dd).download('sdariim-'+new Date().toISOString().split('T')[0]+'.pdf');
-  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
 };
 // -------- השגחה --------
 // ניווט חודשי
@@ -10038,7 +10043,7 @@ window.atDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast('⚠️ הטיפול לא נמצא'); window.atRenderSupervision(); return; }
+  if(!found){ toast('⚠️ הטיפול לא נמצא', null, 'bad'); window.atRenderSupervision(); return; }
   pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
   window.atRenderSupervision();
@@ -10102,7 +10107,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
 window.atEditMark = async function(recId, sid, newCode) {
   var data=await atLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
-  if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
+  if(!rec){toast('⚠️ רשומה לא נמצאה', null, 'bad');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
@@ -10684,9 +10689,9 @@ window.slEditSession = async function(recId) {
 };
 
 window.slOpenSession = async function(sessId, sessName, btn) {
-  if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה');return;}
+  if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה', null, 'bad');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
-  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה');return;}
+  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה', null, 'bad');return;}
 
   // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
   ysBusy(btn, true, '⏳ בודק…');
@@ -10789,7 +10794,7 @@ function slMarkDirty() {
                                  window._slPendingRec.date_iso,window._slPendingRec.id);
     if(_slDup){
       slAdoptSession(_slDup);
-      toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת');
+      toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת', null, 'bad');
     } else if(!window._slData.some(function(r){return r&&idEq(r.id,window._slPendingRec.id);})) {
       window._slData.push(window._slPendingRec);
     }
@@ -10870,8 +10875,8 @@ window.slConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('sl-min-'+sid);
   var val=readNum(inp, 0);
-  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
-  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
+  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות', null, 'bad');return;}
+  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור', null, 'bad');return;}
   window.slSetLateMin(sid,val);
   delete window._slPending[s];
   window.slRenderStudents();
@@ -11253,7 +11258,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
     toast('הייצוא הצליח');
-  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
 };
 
 window.slExportPdf = async function(fromIso,toIso) {
@@ -11301,7 +11306,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
     pdfMake.createPdf(dd).download('shinah-'+new Date().toISOString().split('T')[0]+'.pdf');
-  } catch(e){toast('שגיאה בייצוא: '+e.message);}
+  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
 };
 
 // -------- השגחה --------
@@ -11497,7 +11502,7 @@ window.slDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast('⚠️ הטיפול לא נמצא'); window.slRenderSupervision(); return; }
+  if(!found){ toast('⚠️ הטיפול לא נמצא', null, 'bad'); window.slRenderSupervision(); return; }
   pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await slSaveTreats(treats);
   window.slRenderSupervision();
@@ -11562,7 +11567,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
 window.slEditMark = async function(recId, sid, newCode) {
   var data=await slLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
-  if(!rec){toast('⚠️ רשומה לא נמצאה');return;}
+  if(!rec){toast('⚠️ רשומה לא נמצאה', null, 'bad');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
