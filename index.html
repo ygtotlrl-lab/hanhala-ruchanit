@@ -350,16 +350,16 @@ header{justify-content:space-between;padding:0 14px}
 }
 #updater.show{display:flex}
 #updater .in{
-  background:#1a1a1a;color:#fff;border-radius:14px;padding:11px 12px 11px 16px;
-  display:flex;align-items:center;gap:12px;box-shadow:0 6px 24px rgba(0,0,0,.28);
+  background:var(--text);color:var(--bg);border-radius:14px;padding:11px 12px 11px 16px;
+  display:flex;align-items:center;gap:12px;box-shadow:var(--shadow2);
   font-size:14px;font-weight:700;max-width:520px;width:100%
 }
 #updater button{
-  margin-inline-start:auto;background:#fff;color:#1a1a1a;border:0;border-radius:9px;
+  margin-inline-start:auto;background:var(--bg);color:var(--text);border:0;border-radius:9px;
   padding:7px 14px;font-family:inherit;font-weight:700;cursor:pointer;font-size:13.5px;flex:none
 }
 #updater button.x{
-  margin-inline-start:0;background:none;color:rgba(255,255,255,.7);padding:0 4px;font-size:15px
+  margin-inline-start:0;background:none;color:var(--bg);opacity:.7;padding:0 4px;font-size:15px
 }
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
@@ -1279,6 +1279,15 @@ var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 var MSG_OFF_UNKNOWN = '📴 אין חיבור — המשתמש הזה אינו בעותק המקומי שבמכשיר. נדרש חיבור לאינטרנט פעם אחת';
 var MSG_OFF_NO_FP   = '📴 אין חיבור — המשתמש הזה טרם הוכן לכניסה ללא רשת. נדרש חיבור לאינטרנט פעם אחת';
 var MSG_OFF_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לכניסה ללא רשת';
+// סבב 19: סיסמה בת שש ספרות בדיוק. ⛔ נאכף **רק במסלולי יצירה/שינוי**
+// ולא במסלול הכניסה — שם רק משווים מול הטביעה השמורה, ואכיפת פורמט
+// הייתה נועלת בחוץ כל משתמש שסיסמתו נקבעה לפני הסבב הזה.
+var PASS_SIX_RE = /^[0-9]{6}$/;
+var MSG_PASS_SIX = '⚠️ הסיסמה חייבת להיות שש ספרות';
+/*  ⛔ הודעה משלה לחסימת כתיבת המשתמש — ⚠️ `MSG_OFFLINE` הכללית אינה
+ *  אומרת **מה** נחסם, ⭐ וכתיבת משתמש היא המסלול היחיד שאין לו
+ *  «יסונכרן כשתחזור הרשת». */
+var MSG_OFF_USER_WRITE = '📴 אין חיבור — ניהול משתמשים דורש חיבור לאינטרנט';
 // ⭐ שתי הודעות חדשות (סבב 40) — מאז שהאימות המקוון עובר דרך הטביעה, שני
 // מצבי הכישלון האלה קיימים גם **עם** רשת. ⛔ אין לאחד אותם עם
 // `MSG_BAD_LOGIN` (סבב 40) — «אין למשתמש סיסמה מוגדרת» אינו «סיסמה
@@ -2642,7 +2651,7 @@ async function _saveUserInner() {
   if (!id && !pass) { errEl.textContent = 'יש להזין סיסמה עבור משתמש חדש'; return; }
   var noFp = false;
   if (pass) {
-    if (pass.length !== 6 || !/^\d+$/.test(pass)) { errEl.textContent = 'הסיסמה חייבת להיות 6 ספרות'; return; }
+    if (!PASS_SIX_RE.test(pass)) { errEl.textContent = MSG_PASS_SIX; return; }
     // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
     var made = await ysMakePassFp(pass);
     if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
@@ -2652,10 +2661,11 @@ async function _saveUserInner() {
       obj.pass_salt = null; obj.pass_fp = null; noFp = true;
     }
   }
+  if (!navigator.onLine) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   var res;
   try {
     res = await writeUser(id, obj);
-  } catch (e) { errEl.textContent = 'אין חיבור — המשתמש לא נשמר'; return; }
+  } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
   /*  ⚠️ הנפילה-חזרה על עמודות הטביעה יושבת בבלוק המשותף — ⛔ והדגל שהיא
    *  מחזירה הוא מה שמבדיל «נשמר» מ«נשמר בלי הכנה לכניסה ללא רשת». */
@@ -2673,9 +2683,10 @@ async function _saveUserInner() {
 
 async function toggleUserActive(id, current) {
   // supabase-js לא זורק — בלי בדיקת res.error מפורשת הטוסט הירוק הופיע גם כשהכתיבה נכשלה
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   var res;
   try { res = await writeUser(id, {active: !current}); }
-  catch (e) { toast(MSG_OFFLINE); return; }
+  catch (e) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (res && res.error) {
     toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'), null, 'bad');
     return;
@@ -2806,8 +2817,9 @@ async function _changeMyPasswordInner() {
   var newPass = document.getElementById('pw-new').value.trim();
   var newPass2El = document.getElementById('pw-new2');
   var newPass2 = newPass2El ? newPass2El.value.trim() : newPass;
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות', null, 'bad'); return; }
-  if (newPass.length !== 6 || !/^\d+$/.test(newPass)) { toast('❌ סיסמה חדשה חייבת להיות 6 ספרות', null, 'bad'); return; }
+  if (!PASS_SIX_RE.test(newPass)) { toast(MSG_PASS_SIX, null, 'bad'); return; }
   // ⛔ אימות ולא נוחות (סבב 67) — שגיאת הקלדה בסיסמה החדשה נכתבת כמות
   // שהיא, ומרגע זה המשתמש נעול בחוץ בלי דרך לגלות מה הוקלד בפועל.
   if (newPass !== newPass2) { toast('❌ שתי הסיסמאות החדשות אינן זהות', null, 'bad'); return; }
@@ -2835,7 +2847,7 @@ async function _changeMyPasswordInner() {
    *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
   if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה', null, 'bad'); return; }
   try { upd = await writeUser(_u.client_id, updObj); }
-  catch (e2) { toast('❌ אין חיבור — הסיסמה לא שונתה', null, 'bad'); return; }
+  catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת'), null, 'bad'); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
@@ -3937,7 +3949,11 @@ var SYNC_CFG = {
       מאזין ישיר שאיש אינו רואה.
    ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
       החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה. */
-var _swReg = null, _swAccepted = false, _swReloaded = false;
+/*  ⛔ תקרת ההמתנה להשתלטות — ⚠️ **מה נכנס**: המתנה אחת אחרי
+ *  `SKIP_WAITING`, ⛔ **ומה מפיל**: ערך קצר, שיורה לפני ההשתלטות
+ *  ויהפוך לרענון שני. */
+var SW_APPLY_MS = 10000;
+var _swReg = null, _swAccepted = false, _swReloaded = false, _swWait = 0;
 function swBanner() { return document.getElementById('updater'); }
 function swShowUpdate() {
   var el = swBanner();
@@ -3946,20 +3962,21 @@ function swShowUpdate() {
 }
 window.showAppUpdateBanner = swShowUpdate;
 function swHideUpdate() { var el = swBanner(); if (el) el.classList.remove('show'); }
-function swReload() {
-  if (_swReloaded) return;
-  _swReloaded = true;
-  location.reload();
-}
+/*  ⛔ הרענון אינו כאן — ⚠️ הוא ב-`controllerchange` בלבד: ⭐ טיימר שמרענן
+ *  בעצמו יורה לפני שהעובד החדש השתלט, ⛔ ואז `reg.waiting` שורד, הבאנר
+ *  חוזר, והלחיצה הבאה חוזרת עליו. */
 function swApply(btn) {
   _swAccepted = true;
   if (btn) { btn.disabled = true; btn.textContent = 'מעדכן…'; }
-  if (_swReg && _swReg.waiting) {
-    _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
-    setTimeout(swReload, 1500);
-    return;
-  }
-  swReload();
+  if (!(_swReg && _swReg.waiting)) { swApplyFail(btn); return; }
+  _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+  _swWait = setTimeout(function () { swApplyFail(btn); }, SW_APPLY_MS);
+}
+function swApplyFail(btn) {
+  _swWait = 0;
+  if (_swReloaded) return;
+  if (btn) { btn.disabled = false; btn.textContent = 'עדכן עכשיו'; }
+  toast('⚠️ העדכון לא הושלם — נסה שוב', 6000, 'bad');
 }
 function swRegister() {
   if (!('serviceWorker' in navigator)) return;
@@ -3971,6 +3988,7 @@ function swRegister() {
   });
   var hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (_swWait) { clearTimeout(_swWait); _swWait = 0; }
     if (_swReloaded || !hadController) return;
     if (!_swAccepted && touched) { swShowUpdate(); return; }
     _swReloaded = true;
@@ -6782,7 +6800,7 @@ var USER_CFG = {
   /*  ⛔ ההודעה נקראת בזמן הקריאה ⛔ ולא בזמן ההשמה — ⚠️ הקבוע מוצהר
    *  במקום אחר בקובץ בכל אפליקציה, ⭐ וקריאה בהשמה נותנת `undefined`
    *  באחת מהן בשקט. */
-  offMsg: function () { return MSG_OFFLINE; },
+  offMsg: function () { return MSG_OFF_USER_WRITE; },
   from: function () { return SB.from('ys_users'); },
   run: function (q) { return withTimeout(q); },
   missingFp: ysIsMissingFpCol,
