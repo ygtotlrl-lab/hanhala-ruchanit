@@ -1169,6 +1169,16 @@ async function ysMakePassFp(pass) {
   var fp = await ysPassFp(pass, salt);
   return fp ? { salt: salt, fp: fp } : null;
 }
+/*  ⛔ שדות הכתיבה לסיסמה — ⚠️ **מה נכנס**: סיסמה שהוקלדה, ⛔ **ומה מפיל**:
+ *  כשל גזירה — ⭐ והוא **מאפס את שני השדות** ואינו מדלג: ⚠️ טביעה ישנה
+ *  ששרדה שינוי סיסמה הייתה פותחת את הכניסה האופליין עם הסיסמה הקודמת,
+ *  לנצח. ⛔ **וכל מסלול שכותב סיסמה עובר כאן** — ⚠️ שתי גזירות מקומיות
+ *  הן שני מקומות שבהם האיפוס עלול להישכח. */
+async function ysPassFields(pass) {
+  var made = await ysMakePassFp(pass);
+  return made ? { pass_salt: made.salt, pass_fp: made.fp }
+              : { pass_salt: null, pass_fp: null };
+}
 // זיהוי תשובת שרת שאומרת "העמודות עדיין לא קיימות" — כלומר המיגרציה של
 // סבב 22 טרם הורצה. ⚠️ בלי הבדיקה הזו כל שמירת משתמש הייתה **נכשלת
 // לגמרי** בחלון שבין דחיפת הקוד להרצת המיגרציה. ר' הנפילה-חזרה בקוראים.
@@ -2652,14 +2662,11 @@ async function _saveUserInner() {
   var noFp = false;
   if (pass) {
     if (!PASS_SIX_RE.test(pass)) { errEl.textContent = MSG_PASS_SIX; return; }
-    // סבב 22: הטביעה נגזרת **כאן**, ליד הסיסמה, בכל יצירה ובכל שינוי.
-    var made = await ysMakePassFp(pass);
-    if (made) { obj.pass_salt = made.salt; obj.pass_fp = made.fp; }
-    else {
-      // ⛔ **חובה לאפס** ולא רק לוותר על כתיבה (סבב 22) — טביעה ישנה שנשארת הייתה
-      // ממשיכה לפתוח את הכניסה האופליין עם הסיסמה **הקודמת**, לנצח.
-      obj.pass_salt = null; obj.pass_fp = null; noFp = true;
-    }
+    // סבב 22: הטביעה נגזרת ליד הסיסמה, בכל יצירה ובכל שינוי — ⛔ ובנקודת
+    // הגזירה האחת, שהאיפוס בכשל יושב בה.
+    var made = await ysPassFields(pass);
+    obj.pass_salt = made.pass_salt; obj.pass_fp = made.pass_fp;
+    if (!made.pass_fp) noFp = true;
   }
   if (!navigator.onLine) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   var res;
@@ -2835,10 +2842,10 @@ async function _changeMyPasswordInner() {
   if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP, null, 'bad'); return; }
   if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
   if (vOld !== 'ok')        { toast('❌ הסיסמה הנוכחית שגויה', null, 'bad'); return; }
-  // סבב 22: הטביעה נגזרת בכל שינוי סיסמה. כישלון בגזירה **מאפס** את
-  // השדות — טביעה ישנה שנשארת פותחת את הכניסה האופליין עם הסיסמה הקודמת.
-  var made = await ysMakePassFp(newPass);
-  var updObj = { pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null };
+  // סבב 22: הטביעה נגזרת בכל שינוי סיסמה, ⛔ ובנקודת גזירה אחת — שתי
+  // גזירות מקומיות הן שני מקומות שבהם האיפוס בכשל עלול להישכח.
+  var made = await ysPassFields(newPass);
+  var updObj = { pass_salt: made.pass_salt, pass_fp: made.pass_fp };
   /*  ⛔ אין כאן נפילה-חזרה כשעמודות הטביעה חסרות — ⚠️ עד היום היא כתבה את
    *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
    *  נכשל בקול ⛔ ואינו מדווח «עודכנה» על סיסמה שלא השתנתה. */
@@ -2854,12 +2861,12 @@ async function _changeMyPasswordInner() {
   try {
     ysUsersCacheSave({ client_id: _u.client_id, username: _u.username, full_name: _u.full_name,
                        role: _u.role, active: true,
-                       pass_salt: made ? made.salt : null, pass_fp: made ? made.fp : null });
+                       pass_salt: made.pass_salt, pass_fp: made.pass_fp });
   } catch (e3) {}
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
    *  ⭐ והשדות חדלים להתקיים איתו. */
   closeModal();
-  if (made) toast('✅ סיסמה עודכנה!');
+  if (made.pass_fp) toast('✅ סיסמה עודכנה!');
   else toast('⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת', null, 'bad');
 }
 
@@ -3027,6 +3034,10 @@ var LS_CFG = {
   app: 'hanhala',
   logKey: 'ys_ls_log',
   hzPrefix: 'ys_ls_hz_',
+  /*  ⛔ מפתח סימן הדחייה של באנר העדכון — ⚠️ **מה נכנס**: שם
+   *  המטמון שנדחה, ⛔ **ומה מפיל**: שם בלי תחילית האפליקציה —
+   *  ⭐ ה-origin משותף לארבעתן, וסימן אחד היה נדרס בכל דחייה. */
+  dismissKey: 'ys_sw_dismissed',
 
   // שלב א — מטמונים שניתן לשחזר מהענן בכל רגע.
   // ⛔ מראת המשתמשים ו-`ys_perms_cache` אינם נכנסים לכאן —
@@ -3955,13 +3966,32 @@ var SYNC_CFG = {
 var SW_APPLY_MS = 10000;
 var _swReg = null, _swAccepted = false, _swReloaded = false, _swWait = 0;
 function swBanner() { return document.getElementById('updater'); }
+/*  ⛔ מזהה הגרסה נקרא משם המטמון החי — ⚠️ ואין לו ליטרל שני בדף: ⭐ הוא
+ *  מסונן בתחילית האפליקציה, ⛔ ובזמן התקנה יש שני שמות — הישן והחדש:
+ *  ⚠️ ולכן הסימן נושא את שניהם, ⭐ והוא משתנה בדיוק כשגרסה נוספת או יורדת. */
+function swVer() {
+  if (typeof caches === 'undefined') return Promise.resolve('');
+  return caches.keys().then(function (ks) {
+    return ks.filter(function (n) { return n.indexOf(LS_CFG.app) === 0; }).sort().join('|');
+  }).catch(function () { return ''; });
+}
+function swBannerHide() { var el = swBanner(); if (el) el.classList.remove('show'); }
+/*  ⛔ סימן הדחייה מתמיד ונושא את הגרסה שנדחתה — ⚠️ סימן בזיכרון מתאפס
+ *  בטעינה, ⭐ והבאנר חוזר בלי שדבר השתנה: ⛔ ועובד ממתין ששרד היה מציג
+ *  אותו בכל טעינה, בלי דרך לצאת. */
 function swShowUpdate() {
   var el = swBanner();
   if (!el) { console.error('[sw] אין מיכל לבאנר העדכון — #updater'); return; }
-  el.classList.add('show');
+  swVer().then(function (v) {
+    if (v && v === lsGet(LS_CFG.dismissKey, '')) return;
+    el.classList.add('show');
+  });
 }
 window.showAppUpdateBanner = swShowUpdate;
-function swHideUpdate() { var el = swBanner(); if (el) el.classList.remove('show'); }
+function swHideUpdate() {
+  swBannerHide();
+  swVer().then(function (v) { if (v) lsSet(LS_CFG.dismissKey, v); });
+}
 /*  ⛔ הרענון אינו כאן — ⚠️ הוא ב-`controllerchange` בלבד: ⭐ טיימר שמרענן
  *  בעצמו יורה לפני שהעובד החדש השתלט, ⛔ ואז `reg.waiting` שורד, הבאנר
  *  חוזר, והלחיצה הבאה חוזרת עליו. */
@@ -3972,10 +4002,13 @@ function swApply(btn) {
   _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
   _swWait = setTimeout(function () { swApplyFail(btn); }, SW_APPLY_MS);
 }
+/*  ⛔ עובד ממתין ששרד את הלחיצה הוא כשל ⛔ ולא מצב — ⚠️ הבאנר יורד
+ *  והכשל נאמר, ⭐ ולא נשאר על המסך ומזמין לחיצה נוספת. */
 function swApplyFail(btn) {
   _swWait = 0;
   if (_swReloaded) return;
   if (btn) { btn.disabled = false; btn.textContent = 'עדכן עכשיו'; }
+  swBannerHide();
   toast('⚠️ העדכון לא הושלם — נסה שוב', 6000, 'bad');
 }
 function swRegister() {
