@@ -102,9 +102,9 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMi
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
-  /* ⛔ מגן השליחה הכפולה ושתי הפנימיות שלו (סבב 67) — המעטפות קוראות
-   * להן, ורתמה שאינה מחלצת אותן נופלת ב-ReferenceError. */
-  'ysBusy', '_saveUserInner', '_changeMyPasswordInner',
+  /* ⛔ מגן השליחה הכפולה — ⚠️ שני מסלולי פתיחת הסדר קוראים לו עם תווית
+   * משלהם, ⭐ ורתמה שאינה מחלצת אותו נופלת ב-ReferenceError. */
+  'ysBusy',
   /* ⛔ נקודת המעבר האחת אל טבלת המשתמשים — ⚠️ שלושת אתרי הכתיבה עוברים
    * בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. ⛔ ואיתה שתי
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל

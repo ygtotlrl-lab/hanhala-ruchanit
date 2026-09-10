@@ -32,7 +32,7 @@
    *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
   --brand:var(--navy-fill); --on-brand:#ffffff;
 
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
@@ -151,14 +151,14 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .hidden{display:none!important}
 
 #modal-body label{display:block;color:var(--text2);font-size:.83rem;font-weight:600;margin-bottom:5px}
-#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.88rem}
+#modal-body input{width:100%;padding:10px 14px;margin-bottom:13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:.88rem}
 #modal-body input:focus{outline:none;border-color:var(--navy-ink)}
 .cs{text-align:center;padding:70px 40px;background:var(--bg2);border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow)}
 .cs .ci{font-size:3.2rem;margin-bottom:14px;opacity:.6}
 .cs h3{font-size:1.15rem;font-weight:700;color:var(--navy-ink);margin-bottom:8px}
 .cs p{color:var(--text2);font-size:.9rem}
 .rs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
-.rc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.rc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;box-shadow:var(--shadow)}
 .rc .n{font-size:1.65rem;font-weight:700;color:var(--navy-ink)}
 .rc .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .empty{text-align:center;padding:56px 20px;color:var(--text3)}
@@ -519,12 +519,12 @@ header{justify-content:space-between;padding:0 14px}
       <button id="at-tab-sup" data-act="at-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
-    <div id="at-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
+    <div id="at-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <!-- תצוגת רישום -->
     <div id="at-view-reg" style="display:none">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
       <div id="at-reg-picker">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
           <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
             <div style="flex:2;min-width:200px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
@@ -543,7 +543,7 @@ header{justify-content:space-between;padding:0 14px}
       </div>
       <!-- שלב ב׳: רשימת תלמידים -->
       <div id="at-reg-list" style="display:none">
-        <div style="background:var(--navy-fill);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+        <div style="background:var(--navy-fill);color:#fff;border-radius:var(--radius);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
           <div id="at-reg-header" style="flex:1;display:flex;align-items:center;gap:10px"></div>
           <button data-act="at-session-close" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ שמור וסגור</button>
         </div>
@@ -581,10 +581,10 @@ header{justify-content:space-between;padding:0 14px}
       <button id="sl-tab-arc" data-act="sl-tab" data-tab="arc" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
-    <div id="sl-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
+    <div id="sl-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <div id="sl-view-reg" style="display:none">
       <div id="sl-reg-picker">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:18px">
           <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:18px">
             <div style="flex:2;min-width:200px">
               <label style="font-size:.78rem;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">תאריך</label>
@@ -601,7 +601,7 @@ header{justify-content:space-between;padding:0 14px}
         <div id="sl-today-sessions"></div>
       </div>
       <div id="sl-reg-list" style="display:none">
-        <div style="background:var(--navy-fill);color:#fff;border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+        <div style="background:var(--navy-fill);color:#fff;border-radius:var(--radius);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
           <div id="sl-reg-header" style="flex:1;display:flex;align-items:center;gap:10px"></div>
           <button data-act="sl-session-close" style="padding:8px 20px;background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:8px;font-family:Heebo;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0">✅ שמור וסגור</button>
         </div>
@@ -695,13 +695,13 @@ header{justify-content:space-between;padding:0 14px}
       <div class="ss ksave">
         <div style="display:flex;flex-direction:column;gap:16px">
           <!-- סדרים -->
-          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
             <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">📋 רשימת סדרים</div>
             <div id="at-cfg-sessions" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-session-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף סדר</button>
           </div>
           <!-- טיפולים -->
-          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px">
+          <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px">
             <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
             <div id="at-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
             <button data-act="at-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -715,7 +715,7 @@ header{justify-content:space-between;padding:0 14px}
     <div id="settings-sleep" style="display:none">
       <div class="ptitle"><button data-act="settings-home" style="background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;display:inline-flex;align-items:center;line-height:1">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss ksave">
-        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;max-width:400px">
+        <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;max-width:400px">
           <div style="font-weight:700;color:var(--navy-ink);margin-bottom:12px;font-size:.92rem">🩺 סוגי טיפולים</div>
           <div id="sl-cfg-treats" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
           <button data-act="sl-treat-row-add" style="width:100%;background:none;border:1.5px dashed var(--border);color:var(--text2);border-radius:8px;padding:7px;font-family:Heebo;font-size:.82rem;cursor:pointer">+ הוסף טיפול</button>
@@ -2480,9 +2480,9 @@ var DOM_ACTIONS = {
   'my-pass':          function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
-  'user-save':        function (el) { return saveUser(el); },
+  'user-save':        function () { return saveUser(); },
   'user-switch':      function (el) { window.switchUserEl(el); },
-  'my-pass-save':     function (el) { return changeMyPassword(el); },
+  'my-pass-save':     function () { return changeMyPassword(); },
   'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { saveStudent(); },
   'perms-save':       function () { return savePerms(); },
@@ -2647,14 +2647,10 @@ function openUserModal(title) {
     '<button class="btn" data-act="user-save" data-ksave>💾 שמור</button>');
 }
 
-// ⛔ מעטפת מגן השליחה הכפולה (סבב 67) — `saveUser` כותבת לענן, ולחיצה
-// שנייה בזמן שהראשונה באוויר יוצרת משתמש כפול או דורסת עדכון שטרם חזר.
-async function saveUser(btn) {
-  ysBusy(btn, true);
-  try { return await _saveUserInner(); }
-  finally { ysBusy(btn, false); }
-}
-async function _saveUserInner() {
+/*  ⛔ מגן השליחה הכפולה יושב בנקודת הניתוב ⛔ ולא כאן — ⚠️ היא מחזירה את
+ *  ההבטחה, ⭐ והניתוב מנטרל את הכפתור עד שהסתיימה: ⛔ שומר שני הוא שתי
+ *  הכרעות על אותה ראיה, ⚠️ והשני שבהם משחרר כפתור שהראשון עוד מחזיק. */
+async function saveUser() {
   var id = document.getElementById('um-id').value;
   var fullName = document.getElementById('um-name').value.trim();
   var username = document.getElementById('um-username').value.trim();
@@ -2813,14 +2809,9 @@ function myPasswordModal() {
 
 
 // ---- שינוי סיסמה אישית ----
-// ⛔ המעטפת היא נקודת הכניסה היחידה מה-UI (סבב 67) — היא מחזיקה את מגן
-// השליחה הכפולה, והפנימית נשארת חשופה לבדיקות בדיוק כמו `_doLoginInner`.
-async function changeMyPassword(btn) {
-  ysBusy(btn, true);
-  try { return await _changeMyPasswordInner(); }
-  finally { ysBusy(btn, false); }
-}
-async function _changeMyPasswordInner() {
+/*  ⛔ מגן השליחה הכפולה יושב בנקודת הניתוב ⛔ ולא כאן — ⚠️ היא מחזירה את
+ *  ההבטחה, ⭐ והניתוב מנטרל את הכפתור עד שהסתיימה. */
+async function changeMyPassword() {
   /*  ⛔⛔ המשתמש נלכד **בכניסה** ⛔ ואינו נקרא מהגלובלי אחרי ההמתנות — ⚠️ בין
    *  אימות הסיסמה הנוכחית לכתיבת הטביעה יש שלוש נסיעות לרשת, ⭐ ונעילת
    *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
@@ -2830,7 +2821,7 @@ async function _changeMyPasswordInner() {
   var c1 = document.getElementById('mp-cur');
   var n1 = document.getElementById('mp-new');
   var n2 = document.getElementById('mp-new2');
-  if (!c1 || !n1 || !n2) { uiNoDialog('_changeMyPasswordInner', 'mp-cur'); return; }
+  if (!c1 || !n1 || !n2) { uiNoDialog('changeMyPassword', 'mp-cur'); return; }
   var oldPass = c1.value.trim(), newPass = n1.value.trim(), newPass2 = n2.value.trim();
   if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות', null, 'bad'); return; }
@@ -9625,7 +9616,7 @@ window.atRenderArchive = async function(records) {
   _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _atPaintArchive(el, records, warn) {
-  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
+  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML=warnHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
@@ -9947,12 +9938,12 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
 
   // כותרת ניווט
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy-ink);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
     '<button data-act="at-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy-ink)">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
@@ -10013,7 +10004,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
@@ -11107,7 +11098,7 @@ window.slRenderArchive = async function(records) {
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _slPaintArchive(el, records, warn) {
-  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
+  var warnHtml=warn?'<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML=warnHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין רשומות</div>';return;
@@ -11416,12 +11407,12 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!window._hcBase(hy+1);
 
   var navStyle='background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 10px;color:var(--navy-ink);';
-  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px">'+
+  var navHtml='<div style="display:flex;align-items:center;gap:6px;margin-bottom:16px;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 16px">'+
     '<button data-act="sl-sup-nav" data-dir="-1" style="'+navStyle+(hasPrev?'':'opacity:.3;cursor:default')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span style="flex:1;text-align:center;font-weight:700;font-size:.95rem;color:var(--navy-ink)">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" style="'+navStyle+(hasNext?'':'opacity:.3;cursor:default')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHtml='<div style="background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--radius);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div style="text-align:center;padding:30px;color:var(--text3)">אין נתונים עדיין</div>';return;
@@ -11477,7 +11468,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     var alert300=st.lateMin>=300?'<span style="background:#feebc8;color:#c05621;border-radius:5px;padding:1px 6px;font-size:.72rem;margin-right:4px">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
-    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
     html+='<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div style="width:22px;font-size:.82rem;font-weight:700;color:var(--text3)">'+esc(clsLabel)+'</div>';
     html+='<div style="flex:1"><div style="font-weight:700;font-size:.92rem">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div style="margin-top:3px">'+lastLabel+'</div>':'')+'</div>';
