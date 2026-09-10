@@ -98,7 +98,7 @@ function grabObj(name) {
 }
 
 const OBJS = ['USER_CFG', 'MIRROR_CFG'];
-const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
+const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',

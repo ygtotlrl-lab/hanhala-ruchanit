@@ -87,7 +87,7 @@ const APP = {
    *  שמחליף אותו הוא ששתי הפונקציות שלמטה גוזרות טביעה בכל יצירה. */
   passFpFillFn: null,
   userCreateFn: '_saveUserInner',
-  passFpMakeFn: 'ysMakePassFp',
+  passFpMakeFn: 'ysPassFields',
   /*  ⛔ נקודת המיון היחידה, ⛔ ושדות הסדר שמזהים משווה של ישות —
    *  ⚠️ מצבת התלמידים — שיעור ואז א״ב: ⭐ השם נבדל בין הארבע
    *  ⛔ והמנגנון אחד, ⚠️ ולכן ההצהרה כאן וה-probe משותף. */
