@@ -2087,10 +2087,6 @@ async function confirmSwitch() {
   toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name);
 }
 // סגור בלחיצה מחוץ
-document.addEventListener('click', function(e) {
-  var wrap = document.getElementById('user-avatar-wrap');
-  if (wrap && !wrap.contains(e.target)) closeUserMenu();
-});
 
 
 function showSettingsHome() {
@@ -2237,17 +2233,6 @@ function modalOpen() {
 }
 /*  ⛔ שלוש דרכי הסגירה מגיעות לאותה פונקציה (סבב 80) — כפתור ה-✕, לחיצה
  *  על הרקע, ו-`Escape`: ⚠️ שלוש דרכים אינן שלושה מסלולים. */
-document.addEventListener('click', function (e) {
-  if (!e.target) return;
-  if (e.target.id === 'modal') closeModal();
-  if (e.target.id === 'ask') closeAsk(false);
-});
-document.addEventListener('keydown', function (e) {
-  if (e.key !== 'Escape') return;
-  var a = document.getElementById('ask'), m = document.getElementById('modal');
-  if (a && a.classList.contains('open')) closeAsk(false);
-  else if (m && m.classList.contains('open')) closeModal();
-});
 
 function showConstruction() {
   openModal('\uD83C\uDFD7\uFE0F ' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492),
@@ -2492,7 +2477,16 @@ var DOM_ACTIONS = {
  *  להתעלם ממנו.
  *  ⛔ **ורק על `BUTTON`** — ⚠️ `disabled` על `div` אינו חוסם דבר,
  *  ⭐ והחלפת תוכנו הייתה מוחקת סימון או אייקון. */
+/*  ⛔ מאזין הקליק האחד של האפליקציה — ⚠️ ארבעה מסלולים בסדר מוצהר:
+ *  ⭐ סגירת התפריטים הצפים קודמת, שהיא חלה על כל לחיצה בדף; ⛔ ואז סגירת
+ *  הרקע, ⚠️ שאינה נושאת `data-act`; ⭐ ולבסוף הניתוב. */
 document.addEventListener('click', function (ev) {
+  var wrap = document.getElementById('user-avatar-wrap');
+  if (wrap && !wrap.contains(ev.target)) closeUserMenu();
+  var sw = document.getElementById('sw-inner');
+  var dd = document.getElementById('search-dropdown');
+  if (dd && sw && !sw.contains(ev.target)) dd.classList.remove('open');
+  if (modalBackdrop(ev)) return;
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
   if (!el) return;
   var fn = DOM_ACTIONS[el.getAttribute('data-act')];
@@ -2514,6 +2508,14 @@ document.addEventListener('click', function (ev) {
     el._actBusy = false;
     if (isBtn) ysBusy(el, false);
   });
+});
+
+/*  ⛔ מאזין המקלדת האחד של האפליקציה — ⚠️ הוא קורא לשני המסלולים
+ *  המשותפים בסדר מוצהר: ⭐ שמירה בשדה עריכה קודמת לסגירת המודאל,
+ *  ⛔ שאחרת `Escape` בשדה שבתוך מודאל היה סוגר אותו במקום לבטל את השדה. */
+document.addEventListener('keydown', function (e) {
+  if (ksKey(e)) return;
+  modalEsc(e);
 });
 
 function moveUser(id, dir) {
@@ -7024,6 +7026,22 @@ function toast(msg, dur, kind) {
    כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
 var LS_TOAST_MS = 5000;
 function lsToast(msg, dur, kind) { try { toast(msg, dur || LS_TOAST_MS, kind); } catch (e) {} }
+/*  ⛔ סגירת המודאל היא שני מסלולים שנקראים מהמאזין האחד — ⚠️ לחיצה על
+ *  הרקע ו-`Escape`: ⭐ המנגנון זהה בארבעתן, ⛔ ומאזין נפרד לכל אחד היה
+ *  מפזר את הסגירה על פני שלושה מקומות. */
+function modalBackdrop(e) {
+  if (!e.target) return false;
+  if (e.target.id === 'modal') { closeModal(); return true; }
+  if (e.target.id === 'ask') { closeAsk(false); return true; }
+  return false;
+}
+function modalEsc(e) {
+  if (e.key !== 'Escape') return false;
+  var a = document.getElementById('ask'), m = document.getElementById('modal');
+  if (a && a.classList.contains('open')) { closeAsk(false); return true; }
+  if (m && m.classList.contains('open')) { closeModal(); return true; }
+  return false;
+}
 /* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 /* ═══ קריאת ערך מספרי — מודול משותף (סבב 104) ═════════════════════════════
    ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: אחרת
@@ -7095,14 +7113,19 @@ function ksFire(scope, attr) {
   fn(b);
   return true;
 }
-document.addEventListener('keydown', function (e) {
-  if (e.key !== 'Enter' && e.key !== 'Escape') return;
+/*  ⛔ המודול אינו רושם מאזין משלו — ⚠️ הוא נקרא מהמאזין האחד שבאפליקציה:
+ *  ⭐ שני מאזינים לאותו אירוע הם שני מקומות שבהם מקש נתפס, ⛔ וסדר
+ *  ההרצה ביניהם אינו מוצהר. */
+function ksKey(e) {
+  if (e.key !== 'Enter' && e.key !== 'Escape') return false;
   var t = e.target;
-  if (!t || t.tagName !== 'INPUT' || !t.closest) return;
+  if (!t || t.tagName !== 'INPUT' || !t.closest) return false;
   var scope = t.closest('.ksave');
-  if (!scope) return;
-  if (ksFire(scope, e.key === 'Enter' ? 'data-ksave' : 'data-kesc')) e.preventDefault();
-});
+  if (!scope) return false;
+  if (!ksFire(scope, e.key === 'Enter' ? 'data-ksave' : 'data-kesc')) return false;
+  e.preventDefault();
+  return true;
+}
 /* ═══════════════ סוף מודול Enter שומר בשדה עריכה ════════════════════════ */
 
 /* ═══ ערך מפתח-ערך — מודול משותף (סבב 126) ══════════════════════════════
@@ -7665,11 +7688,6 @@ function selectSearchStudent(sid) {
 }
 
 // סגירת dropdown בלחיצה מחוץ לשדה החיפוש
-document.addEventListener('click', function(e) {
-  var sw = document.getElementById('sw-inner');
-  var dd = document.getElementById('search-dropdown');
-  if (dd && sw && !sw.contains(e.target)) dd.classList.remove('open');
-});
 // ============ סוף השלמת החיפוש ============
 
 /* ══════════════════════════════════════════════════════════════════════════
