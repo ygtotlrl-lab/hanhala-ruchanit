@@ -5,7 +5,7 @@
  *  ⚠️ מסבב 42ג כל הלוגיקה יושבת במודול המשותף שלמטה — זהה בית-לבית
  *  בארבע האפליקציות. ⛔ מה שנבדל יושב ב-SW_CFG בלבד.
  */
-var CACHE_NAME = 'hanhala-ruchanit-v156'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
+var CACHE_NAME = 'hanhala-ruchanit-v157'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -20,8 +20,8 @@ var CORE = [
 // בלי supabase (var SB=supabase.createClient זורק וכל הסקריפט המוטבע מת).
 var CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/vfs_fonts.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
 ];
 

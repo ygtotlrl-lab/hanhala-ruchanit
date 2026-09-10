@@ -169,7 +169,7 @@ const DOM_IDS = ['auth-user', 'auth-pass', 'auth-err', 'auth-spinner', 'auth-btn
   'user-avatar-wrap', 'hdr-username', 'user-menu-name', 'user-menu-role', 'hdr-role',
   'switch-user-modal', 'switch-pass', 'switch-err',
   'um-id', 'um-name', 'um-username', 'um-role', 'um-pass', 'um-err',
-  'pw-old', 'pw-new'];
+  'mp-cur', 'mp-new', 'mp-new2'];
 
 /* `SB` מדומה: שרשרת PostgREST עצלה שמסננת מעל טבלה בזיכרון. */
 function makeSB(state) {
@@ -278,6 +278,9 @@ function boot(state, opts = {}) {
      *  עם המיכלים שלהן, ⭐ והרתמה מדמה את היחידה שנשארה. */
     closeModal: () => {},
     openModal: () => {},
+    /*  ⛔ נפילת הדיאלוג מדומה ואינה מושתקת — ⚠️ שומר שקורא ערך משדה שאינו
+     *  ב-DOM נופל דרכה, ⭐ והרתמה מודדת שהמסלול נגמר ברעש ⛔ ולא בשקט. */
+    uiNoDialog: (fn, id) => { TOASTS.push('uiNoDialog:' + fn + ':' + id); },
     renderUsersList: () => {},
   };
   sandbox.window = sandbox;
@@ -697,7 +700,8 @@ sec('8. saveUser / changeMyPassword');
   const S = boot({ tables: { ys_users: rows } });
   await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
   S.AUTH.user = { client_id: '2', username: 'moshe', full_name: 'משה', role: 'senior', active: true };
-  DOM._m['pw-old'].value = '222222'; DOM._m['pw-new'].value = '246810';
+  DOM._m['mp-cur'].value = '222222'; DOM._m['mp-new'].value = '246810';
+  DOM._m['mp-new2'].value = '246810';
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
@@ -781,7 +785,8 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
   await waitFor(() => !!LS.ys_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
-  DOM._m['pw-old'].value = '111111'; DOM._m['pw-new'].value = '135790';
+  DOM._m['mp-cur'].value = '111111'; DOM._m['mp-new'].value = '135790';
+  DOM._m['mp-new2'].value = '135790';
   await S.changeMyPassword();
   const all = Object.entries(LS).map(([k, v]) => k + '=' + v).join('\n');
   T('10א. אף מפתח אינו מכיל את המחרוזת password_hash', all.indexOf('password_hash') === -1);
