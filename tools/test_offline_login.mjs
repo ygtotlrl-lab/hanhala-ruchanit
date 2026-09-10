@@ -120,7 +120,16 @@ const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'M
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
   /*  ⛔ שם טבלת המשתמשים במראה (סבב 116) — ⚠️ שלושת אתרי הכתיבה נוקבים
    *  בו, ⭐ ומפתח האחסון נגזר ממנו. */
-  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES'];
+  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES',
+  /*  ⛔ הודעת חסימת כתיבת המשתמש (סבב 131) — ⚠️ `USER_CFG.offMsg` מחזירה
+   *  אותה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
+  'MSG_OFF_USER_WRITE'];
+/*  ⛔ **מה נכנס** (סבב 131): שם שאינו קיים בהכרח במקור, ⛔ **ומה מפיל**:
+ *  אין — ⚠️ הוא נמשך רק כשהוא נמצא: ⭐ והמבנה קיים מפני שאפליקציה בלי
+ *  מסך שיוצר או משנה סיסמה אין לה מה להצהיר, ⛔ ורתמה שדורשת שם כזה
+ *  נופלת שם ב-`ReferenceError`. */
+const VARS_OPT = ['PASS_SIX_RE', 'MSG_PASS_SIX'];
+const hasVar = (name) => new RegExp('(?:^|\\n)var\\s+' + name + '\\s*=').test(SRC);
 
 /*  ⛔ מערך רב-שורות נחתך אף הוא בהתאמת סוגריים — ⚠️ `YS_MIRROR_TABLES`
  *  נפרס על שתי שורות, ⭐ ו-`grabVar` לוקח את שארית השורה בלבד. */
@@ -136,6 +145,7 @@ function grabArr(name) {
 }
 
 const CODE = ['YS_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(grabVar).join(';\n') + ';\n' +
+  VARS_OPT.filter(hasVar).map(grabVar).join(';\n') + ';\n' +
   OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
