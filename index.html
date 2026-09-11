@@ -25,23 +25,22 @@
   --toast-bottom:26px;
   /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בארבעתן,
    *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
-  --stale-ink:#a3341f;
   /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד בארבעתן,
    *  ⭐ והגוון בלבד נבדל: ⛔ רכיב שמייצג את האפליקציה נגזר ממנו
    *  ⛔ ולא מדיו הטקסט — ⚠️ ארבעה באנרים בארבעה גוונים נראו זהים.
    *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
   --brand:var(--navy-fill); --on-brand:#ffffff;
 
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
 @media (prefers-color-scheme:dark){
   :root{
-    --stale-ink:#ffb4a2;
     --on-brand:#ffffff;
 
-    --bg:#0d151d; --card:#131e29;
+    --bg:#0d151d; --card:#131e29; --card-2:#0d151d;
+    --brand-wash:rgba(255,255,255,.13);
     --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
     --border:#24333f;
     --navy-ink:#7fb2f0; --navy-fill:#1a3a6b;
@@ -61,7 +60,7 @@ header{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--nav
 .htxt strong{display:block;font-size:1rem;color:#fff;font-weight:700}
 nav{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end}
 .nb{background:none;border:none;color:rgba(255,255,255,.72);padding:7px 12px;border-radius:6px;cursor:pointer;font-family:Heebo;font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:6px;transition:all .18s;white-space:nowrap}
-.nb:hover{background:rgba(255,255,255,.13);color:#fff}
+.nb:hover{background:var(--brand-wash);color:var(--on-brand)}
 .nb.on{background:rgba(255,255,255,.20);color:#fff;font-weight:600}
 main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .pg{display:none;overflow-x:hidden}.pg.on{display:block}
@@ -73,7 +72,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:16px 20px;text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
-.stat:hover{background:var(--bg)}
+.stat:hover{background:var(--card-2)}
 .stat .n{font-size:1.9rem;font-weight:700;color:var(--navy-ink)}
 .stat .l{font-size:.76rem;color:var(--text2);margin-top:3px}
 .mods-wrap{padding:28px 40px 40px}
@@ -92,7 +91,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .inner{padding:26px 40px;max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:1.3rem;font-weight:700;color:var(--navy-ink);display:flex;align-items:center;gap:10px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 14px;font-size:.8rem;font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
-.back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--bg)}
+.back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy-fill);color:#fff;border:2px solid var(--navy-fill);border-radius:30px;padding:9px 20px;font-family:Heebo;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
@@ -100,13 +99,13 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
 .btn.sm{padding:5px 12px;font-size:.78rem}
-.btn.out:hover{background:var(--bg)}
+.btn.out:hover{background:var(--card-2)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy-fill),var(--navy2))}
 th{color:#fff;font-weight:600;padding:12px 16px;text-align:right;font-size:.86rem}
 td{padding:11px 16px;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--bg)}
+tr:hover td{background:var(--card-2)}
 
 
 
@@ -126,7 +125,7 @@ tr:hover td{background:var(--bg)}
 .sd-item:last-child{border-bottom:none}
 .sd-item:first-child{border-radius:13px 13px 0 0}
 .sd-item:last-child:first-child{border-radius:13px}
-.sd-item:hover,.sd-item:focus{background:var(--bg);outline:none}
+.sd-item:hover,.sd-item:focus{background:var(--card-2);outline:none}
 .sd-name{font-weight:600;font-size:.88rem;color:var(--text)}
 .sd-name mark{background:#fff3cd;border-radius:2px;padding:0 1px;color:inherit;font-weight:700}
 .sd-cls{background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:.76rem;white-space:nowrap;flex-shrink:0}
@@ -330,11 +329,11 @@ header{justify-content:space-between;padding:0 14px}
 .pt th:first-child{text-align:right}
 .pt td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:center}
 .pt td:first-child{text-align:right;font-weight:500}
-.pt tr:hover td{background:var(--bg)}
+.pt tr:hover td{background:var(--card-2)}
 .ps{border:1px solid var(--border);border-radius:6px;padding:3px 5px;font-family:Heebo;font-size:.76rem;cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy-ink)}
 
-/* ═══ שכבת הטוסט — CSS משותף (סבב 87ב) ════════════════════════════════════
+/* ═══ שכבת הטוסט — מודול משותף (סבב 87ב) ════════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. ⛔ הכללים אינם נשענים על משתני-הצבע של
    אף אפליקציה — ⚠️ הם נבדלים ביניהן, ⭐ ולכן הצבעים כתובים במפורש.
    ⛔ מיכל אחד ובתוכו `div` לכל הודעה — ⚠️ הנימוק המדוד: בשלוש מהן היה
@@ -367,26 +366,6 @@ header{justify-content:space-between;padding:0 14px}
 #updater button.x{
   margin-inline-start:0;background:none;color:var(--on-brand);opacity:.7;padding:0 4px;font-size:15px
 }
-/* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
-   זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
-   הגדרות: בלוק "☁️ סנכרון", ואחריו שורות המצב הנוספות. הכללים יורשים צבע
-   וגופן, ⛔ ואינם נשענים על אסימוני הגוון של אף אפליקציה — הם נבדלים
-   ביניהן. ⚠️ **החריג היחיד הוא `--stale-ink`** (סבב 113): ⭐ הוא מוגדר
-   בשם אחד בארבעתן, בערכה הבהירה ובכהה, ⛔ ולכן כלל שנשען עליו נשאר
-   זהה בית-לבית. */
-.sync-box{margin-top:22px;border:1px solid rgba(0,0,0,.12);border-radius:12px;padding:12px 14px;background:rgba(0,0,0,.02)}
-.sync-box-ttl{font-weight:800;font-size:14px;margin-bottom:6px}
-.sync-line{font-size:13px;line-height:1.8;margin-top:10px;padding-top:8px;border-top:1px solid rgba(0,0,0,.08)}
-.sync-line .sync-act{margin-top:8px}
-.sync-line button{font:inherit;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.18);background:rgba(0,0,0,.05);color:inherit;cursor:pointer}
-.sync-line button[disabled]{opacity:.5;cursor:default}
-/*  ⛔ הבאנר «הגיבוי לא רץ N ימים» נושא גוון משלו — ⚠️ שאר הבלוק יורש
-    צבע, ⭐ והוא הודעת אזהרה שחייבת להיקרא כאזהרה. ⛔ והגוון יושב
-    ב-`--stale-ink` ⛔ ולא כערך מוטבע: ⚠️ הוא מוגדר בערכה הבהירה ובכהה
-    בשם אחד, ⭐ ולכן הכלל עצמו זהה בארבע האפליקציות. */
-.bkStale{margin-top:4px;font-weight:700;color:var(--stale-ink)}
-/* ═══ סוף CSS אזור המצב ═════════════════════════════════════════════════ */
-.ls-crit-line{margin-top:18px;font-size:12px;font-weight:600;color:#b3261e}
 </style>
 </head>
 <body>
@@ -767,8 +746,6 @@ header{justify-content:space-between;padding:0 14px}
         </div>
       </div>
       <!-- אזור מצב (סבב 17) — שני האלמנטים האחרונים במסך, בסדר הזה -->
-      <div id="sync-status-box"></div>
-      <div id="status-extra-box"></div>
     </div>
 
   </div>
@@ -1706,10 +1683,22 @@ function showPage(pg) {
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
   showPageInternal(pg);
+  renderPage(pg);
+}
+/*  ⛔ ניתוב הציור בנקודה אחת — ⚠️ מעבר מסך ורענון שאחרי שמירה מציירים את
+ *  אותו מסך, ⭐ ושני מרשמים לאותו ציור נבדלים ביום שבו נוסף מסך. */
+function renderPage(pg) {
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
   if (pg === 'attend') window.loadAttend();
   if (pg === 'sleep') window.loadSleep();
+}
+/*  ⛔ נקודת הרענון של הצינור — ⚠️ **מה נכנס**: ציור המסך הפתוח,
+ *  ⛔ **ומה מפיל**: `showPage` — ⭐ הוא בודק הרשאה ומנווט, ⚠️ ורענון
+ *  אינו ניווט: ⛔ שמירה שמנווטת מוציאה את המשתמש מהמקום שבו הוא עומד. */
+function saveRefresh() {
+  var on = document.querySelector('.pg.on');
+  if (on && on.id) renderPage(String(on.id).replace(/^pg-/, ''));
 }
 
 
@@ -1988,11 +1977,8 @@ function saveStudentStatus(type) {
   s.updatedAt = Date.now();
 
   saveStudents(students);
-  schedulePush();
   ysRefreshApprovalMarks(sid); // רענון סדרים פתוחים של היום
-  renderStudents();
-  closeModal();
-  toast('✅ סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום'));
+  return '✅ סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום');
 }
 
 async function toggleUserMenu() {
@@ -2155,7 +2141,7 @@ function showSettingsModule(mod) {
   });
   var target = document.getElementById('settings-'+mod);
   if (target) target.style.display = '';
-  if (mod === 'system') { renderUsersList(); renderPermsTable(); statusAreaMount(); bkStatusMount(); hwRestoreMount(); }
+  if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') window.renderAttendSettings();
   if (mod === 'sleep') window.renderSleepSettings();
@@ -2455,7 +2441,7 @@ var DOM_ACTIONS = {
                             if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
                           },
   'status-picker-open':   function () { window.openStatusPickerModal(); },
-  'student-status-save':  function () { window.saveStudentStatus(window._currentStatusType); },
+  'student-status-save':  function () { return runSave(function () { return window.saveStudentStatus(window._currentStatusType); }); },
   'manage-list-open':     function () { window.openManageListDlg(); },
   'students-print':       function () { window.printStudents(); },
   'users-render':         function () { return window.renderUsersList(); },
@@ -2479,10 +2465,8 @@ var DOM_ACTIONS = {
   'user-switch':      function (el) { window.switchUserEl(el); },
   'my-pass-save':     function () { return changeMyPassword(); },
   'switch-confirm':   function () { return confirmSwitch(); },
-  'student-save':     function () { saveStudent(); },
+  'student-save':     function () { return runSave(saveStudent); },
   'perms-save':       function () { return savePerms(); },
-  'sync-now-status':   function () { syncNowFromStatus(); },
-  'hw-restore':        function (el) { hwRestoreClick(el); },
 };
 /*  ⛔⛔ **פעולה מגיבה מיד** (סבב 89) — ⚠️ הנימוק המדוד: עשרה מסלולים
  *  שמופעלים מלחיצה המתינו לרשת **לפני** כל חיווי — ⭐ המשתמש לחץ, הנתון
@@ -3086,6 +3070,9 @@ function _ysRecTs(r) {
   return 0;
 }
 
+/*  ⛔ שם המפתח הישן פר-אפליקציה — ⚠️ וההגירה שמוחקת אותו משותפת:
+ *  ⭐ הקבוע כאן הוא מה שמפריד בין הגוף הזהה לערך שנבדל. */
+var BK_AT_LEGACY_KEY = 'ys_last_backup_at';
 /* ══════════════════════════════════════════════════════════════════════════
    עמידות אחסון מקומי — מודול משותף (סבב 11).
    ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
@@ -3104,6 +3091,7 @@ var MSG_LS_FULL   = '❌ האחסון במכשיר מלא — לא ניתן לש
 var MSG_LS_BLOCK  = '❌ האחסון במכשיר חסום — לא ניתן לשמור במכשיר.';
 var MSG_LS_WARN   = '⚠️ האחסון המקומי מתמלא — התחברו לרשת, והמקום יתפנה מעצמו';
 var MSG_LS_CRIT   = '⚠️ האחסון המקומי כמעט מלא — התחברו לרשת כדי שהמקום יתפנה';
+var MSG_LS_RESTORED = '✅ האחסון התפנה — הנתונים הישנים חוזרים בסנכרון הזה';
 var MSG_LS_PRUNED = '⚠️ נתונים ישנים פונו מהמכשיר מחוסר מקום — הם שמורים בענן ויחזרו כשתהיה רשת';
 
 // כל האפליקציות שחולקות את ה-origin. הקידומת היא מה שמזהה מי תופס מה.
@@ -3323,6 +3311,19 @@ function lsClearHorizons() {
   ks.forEach(lsRemove);
   if (ks.length) lsLog('אופק הפינוי נוקה', ks.length + ' מפתחות', 0);
   return ks.length;
+}
+/*  ⛔ אופק הפינוי נוקה מהסנכרון — ⚠️ **מה נכנס**: ירידה מתחת לסף האזהרה,
+ *  ⛔ **ומה מפיל**: השארת האופק על כנו — ⭐ הסימן שהפינוי משאיר אומר «מכאן
+ *  ואילך יש לי, את הישן זרקתי», ⚠️ וכל עוד הוא עומד המשיכה אינה מחזירה את
+ *  הישן: ⛔ סימן שרק המשתמש יכול לנקות נשאר לנצח ביום שבו הכפתור יורד. */
+function lsHorizonRelease() {
+  try {
+    if (!lsHorizonKeys().length) return 0;
+    if (lsUsage().total >= LS_WARN_BYTES) return 0;
+    var n = lsClearHorizons();
+    if (n) { try { lsToast(MSG_LS_RESTORED, 5000, 'good'); } catch (e1) { } }
+    return n;
+  } catch (e) { return 0; }
 }
 // כתיבת מערך מכובדת-אופק. `tsOf(rec)` מחזירה חותמת זמן במילישניות.
 function lsSetArray(key, arr, tsOf) {
@@ -3643,11 +3644,19 @@ function lsBootDeferred() {
   return p.then(finish, function () { return finish(0); });
 }
 
+/*  ⛔ הגירה מקומית חד-פעמית (סבב 136) — ⚠️ חותמת «גובה לאחרונה»
+ *  הייתה נקראת בשורת המצב בלבד, ⛔ והשורה ירדה: ⭐ מפתח שנכתב
+ *  ואין לו קורא צורך את תקציב האחסון ⛔ ומאכיל את הפינוי האוטומטי.
+ *  ⛔ **והיא אידמפוטנטית** — ⚠️ מחיקה בלבד, ⭐ וריצה שנייה אינה משנה דבר. */
+function migrateBackupAtKey() {
+  try { lsRemove(BK_AT_LEGACY_KEY); } catch (e) { }
+}
 /* ── בדיקת העלייה ───────────────────────────────────────────────────────
    נקראת פעם אחת בכל עליית אפליקציה, לפני שהמשתמש מספיק לכתוב משהו.
    **סינכרונית בכוונה** — היא חייבת לרוץ לפני הטעינה. כשיש מפתחות שניתן
    לאמת מול הענן, ההתרעה נדחית יחד עם האימות (`lsBootDeferred`). */
 function lsBoot(opts) {
+  migrateBackupAtKey();
   var u = lsUsage(), swept = 0;
   if (u.total >= u.quota * LS_SWEEP_PCT) {
     swept = lsSweepGuarded('פינוי יזום בעלייה — ' + Math.round(u.pct * 100) + '% מהמכסה',
@@ -3672,25 +3681,7 @@ function lsBootAlert(u) {
   if (lsHorizonKeys().length) { try { lsToast(MSG_LS_PRUNED, 6000, 'bad'); } catch (e1) { } }
 }
 
-/* ── שורת האזהרה בהגדרות ───────────────────────────────────────────────── */
-/*  ⛔ שורה אחת, ורק מעל הסף הקריטי — ⚠️ **מה נכנס**: הנפח שנמדד והמכסה,
- *  ⛔ **ומה מפיל**: פירוט פר-מפתח וכפתור פינוי — ⭐ הראשון הוא תוכן
- *  למפתח, ⚠️ והשני מסתיר שהפינוי אוטומטי: ⛔ מה שבידי המשתמש הוא לחבר
- *  רשת, ⭐ שרשומה שעלתה לענן היא רשומה שהפינוי רשאי לגרוע. */
-function lsCritLineHTML() {
-  try {
-    var u = lsUsage();
-    if (u.total < LS_CRIT_BYTES) return '';
-    return '<div class="ls-crit-line">' + esc(MSG_LS_CRIT) + ' (' +
-           esc(lsFmtBytes(u.total)) + ' מתוך ' + esc(lsFmtBytes(u.quota)) + ')</div>';
-  } catch (e) { return ''; }
-}
-function lsRestoreAll() {
-  lsClearHorizons();
-  try { lsToast('✅ האופק נוקה — הנתונים הישנים יחזרו בסנכרון הבא', 4000); } catch (e) { }
-}
-window.lsCritLineHTML = lsCritLineHTML;
-window.lsRestoreAll = lsRestoreAll;
+window.lsHorizonRelease = lsHorizonRelease;
 window.lsSet = lsSet;
 window.lsGet = lsGet;
 window.lsUsage = lsUsage;
@@ -3820,12 +3811,50 @@ function actRun(el, fn) {
 window.busy = busy;
 window.actRun = actRun;
 /* ═══════════════ סוף מודול כפתור עסוק ═══════════════════════════════════ */
+/* ═══ צינור השמירה — מודול משותף (סבב 136) ═══════════════════════════════
+   ⛔ **כל שמירה מטופס עוברת בצינור אחד** — ⚠️ `runSave` מריצה, ו-`afterSave`
+      סוגרת מודאל · מרעננת · מודיעה · ומתזמנת דחיפה: ⭐ ארבעה שלבים בסדר
+      קבוע, ⛔ ולא ארבעה סדרים בכל אתר.
+   ⚠️ הנימוק המדוד: אותו רצף חי ב-11 אתרי שמירה בשלוש האפליקציות, ⛔ וכל
+      אחד השמיט ממנו שלב אחר — ⭐ אחד לא סגר מודאל, אחד לא הבחין בין מקוון
+      לאופליין, ⚠️ ואחד השאיר את ההודעה על «נשמר» גם כשלא הייתה רשת.
+   ⛔ **ו-`runSave` מחזירה את ההבטחה** — ⚠️ בלעדיה השומר שבניתוב אינו מנטרל
+      דבר: ⭐ מטפל סינכרוני נגמר לפני שהלחיצה השנייה נוחתת.
+   ⛔ **ו-`undefined` מהמטפל הוא «הוולידציה עצרה»** — ⚠️ המודאל נשאר פתוח
+      והמשתמש מתקן את מה שחסר, ⭐ וכל ערך אחר הוא הצלחה.
+   ⛔ **ו-`saveRefresh` פר-אפליקציה** — ⚠️ מה שנטען לזיכרון ומה שמצויר נבדל
+      בין הארבע, ⭐ והסדר שסביבו אינו.
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב. */
+function errToast(e) {
+  console.error('[save]', e);
+  toast((e && (e.message || e.error_description)) || 'שגיאה בשמירה', null, 'bad');
+}
+function afterSave(msg) {
+  closeModal();
+  saveRefresh();
+  /*  ⛔ בלי רשת ההודעה אומרת «במכשיר» — ⚠️ «נשמר» סתם נקרא «נשמר בענן»,
+   *  ⭐ וזו בדיוק ההטעיה שכתיבה מקומית-תחילה יוצרת. */
+  if (msg) toast(navigator.onLine ? msg : MSG_SAVED_LOCAL, null, 'good');
+  schedulePush();
+  return Promise.resolve();
+}
+function runSave(fn, msg) {
+  return Promise.resolve()
+    .then(fn)
+    .then(function (r) {
+      if (r === undefined) return;
+      /*  ⛔ מחרוזת מהמטפל היא ההודעה — ⚠️ יש שמירות שההודעה בהן נגזרת מהנתון
+       *  שנשמר, ⭐ והיא ידועה רק בתוך המטפל: ⛔ וההצהרה בניתוב נשארת
+       *  ברירת המחדל. */
+      return afterSave(typeof r === 'string' ? r : msg);
+    })
+    .catch(function (e) { errToast(e); });
+}
+window.errToast = errToast;
+window.afterSave = afterSave;
+window.runSave = runSave;
+/* ═══════════════ סוף צינור השמירה ═══════════════════════════════════════ */
 
-/* ── SYNC_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-var SYNC_CFG = {
-  lastSync: function () { return _ysLastSyncAt || 0; },
-  sync: function () { return ysSyncNow(); }
-};
 /* ═══ הרשמת service worker — מודול משותף (סבב 128) ══════════════════════
    ⛔ מנגנון זיהוי אחד — `reg.update()`: ⚠️ ואין מנגנון שני לאותה שאלה.
    ⛔ ההשתלטות הראשונה אינה עדכון — ⚠️ בביקור ראשון אין מבקר, ⭐ ו-`claim()`
@@ -3923,52 +3952,7 @@ function swRegister() {
 }
 window.addEventListener('load', swRegister);
 /* ═══════════════ סוף מודול הרשמת service worker ═════════════════════════ */
-/* ═══ אזור מצב — בלוק "☁️ סנכרון" — מודול משותף (סבב 17) ══════════════════
-   ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   `SYNC_CFG` — הדבר היחיד שנבדל בין האפליקציות — יושב מעל הבלוק. */
-function syncFmtTime(t) {
-  try { return new Date(t).toLocaleString('he-IL'); } catch (e) { return String(t); }
-}
-var _syncNowBusy = false;
-function syncLineHTML() {
-  var t = 0;
-  try { t = SYNC_CFG.lastSync() || 0; } catch (e) { t = 0; }
-  return '<div class="sync-line">' +
-    '<div>מצב חיבור: <b>' + (navigator.onLine ? 'מחובר' : 'מנותק') + '</b></div>' +
-    '<div>סנכרון אחרון: <b>' + (t ? esc(syncFmtTime(t)) : '— טרם הסתנכרן —') + '</b></div>' +
-    '<div class="sync-act"><button type="button"' + (_syncNowBusy ? ' disabled' : '') +
-    ' data-act="sync-now-status">' +
-    (_syncNowBusy ? 'מסנכרן…' : '🔄 סנכרן עכשיו') + '</button></div>' +
-    '</div>';
-}
-/*  ⛔ שורת האזהרה נכנסת כאן ⛔ ולא ברכיב משלה — ⚠️ היא מוצגת מעל הסף
- *  הקריטי בלבד, ⭐ ומקומה בבלוק שהמשתמש כבר פותח כדי לראות מצב. */
-function syncStatusHTML() { return pendStatusHTML() + syncLineHTML() + lsCritLineHTML(); }
-function syncStatusMount() {
-  var box = document.getElementById('sync-status-box');
-  if (!box) return;
-  box.innerHTML = '<div class="sync-box"><div class="sync-box-ttl">☁️ סנכרון</div>' +
-                  syncStatusHTML() + '</div>';
-}
-function syncNowFromStatus() {
-  if (_syncNowBusy) return;
-  _syncNowBusy = true;
-  syncStatusMount();
-  var p = null;
-  try { p = SYNC_CFG.sync(); } catch (e) { p = null; }
-  Promise.resolve(p)['catch'](function () { })
-    .then(function () { _syncNowBusy = false; syncStatusMount(); });
-}
-// נקודת החיווט היחידה של אזור המצב. כל מסך הגדרות קורא לה, והיא מציירת
-// את בלוק הסנכרון. בדיקת האחידות דורשת שתהיה לה קריאה חיה.
-function statusAreaMount() {
-  syncStatusMount();
-}
-window.syncStatusMount = syncStatusMount;
-window.syncNowFromStatus = syncNowFromStatus;
-window.statusAreaMount = statusAreaMount;
-/* ═══ סוף בלוק "☁️ סנכרון" ═══════════════════════════════════════════════ */
+
 
 /* ── BK_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
 /* ⚠️ `logQueueKey` נשאר `ys_login_log_queue` **בכוונה** (סבב 30) — זה המפתח
@@ -3984,7 +3968,6 @@ window.statusAreaMount = statusAreaMount;
 var BK_CFG = {
   client: function () { return SB; },
   flagKey: 'ys_last_backup',
-  atKey: 'ys_last_backup_at',
   logQueueKey: 'ys_login_log_queue',
   prefix: '',
   device: function () { try { return getDeviceId(); } catch (e) { return null; } },
@@ -4033,7 +4016,6 @@ var BK_CFG = {
 var BK_TABLE = 'kv_backup';       // יומן הגיבויים — הכתיבה היא insert בלבד
 var BK_LOG_TABLE = 'sync_log';    // יומן הפעולות — insert בלבד
 var BK_LOG_MAX = 50;              // תקרת התור המקומי של היומן
-var BK_STALE_DAYS = 3;            // מעל זה — שורת התרעה בשורות המצב
 var BK_RETENTION_DAYS = 30;       // עותק יומי נשמר 30 יום; ישן מזה נגרע
 var _bkRunning = false;           // נעילת ריצה (החליפה את הכתיבה-מראש)
 
@@ -4286,7 +4268,6 @@ async function bkMaybeDaily() {
     if (wrote) { try { await _bkRetention(c, dailyKeys); } catch (e2) { } }
     if (ok) {
       lsSet(flag, today);
-      lsSet(_bkVal(BK_CFG.atKey), String(Date.now()));
       logAction('backup', null, wrote, { date: today, scope: pre || null, wrote: wrote, unchanged: same });
     } else {
       /* ⛔ בלי כתיבת הדגל הגלובלי — ההזדמנות הבאה באותו יום תנסה שוב
@@ -4319,42 +4300,6 @@ async function _bkRetention(c, keys) {
   return n;
 }
 
-/* ── תצוגה: «גובה לאחרונה» בשורות המצב הנוספות ────────────────────────── */
-// ⛔ הרכיב נתלה בעוגן שמחוץ לבלוק הקפוא ואינו עורך אותו (סבב 30) — בלוק
-//    «☁️ סנכרון» חתום ב-`check-status-area.mjs`, ⚠️ והוא כותב `innerHTML`
-//    בכל ציור: ⭐ עוגן נפרד הוא מה ששומר את השורה בחיים אחרי «סנכרן עכשיו».
-function bkLastAt() {
-  var v = parseInt(lsGet(_bkCfg('atKey', ''), '0'), 10);
-  return isFinite(v) ? v : 0;
-}
-// ⚠️ מחזירה את מספר הימים רק כשהוא חצה את הסף, ו-0 אחרת — כדי שאתר
-//    הקריאה יהיה `if (bkStale())` ולא השוואה שמשוכפלת בכל מקום.
-//    מכשיר שטרם גיבה בכלל מחזיר 0: «— טרם גובה —» כבר אומר את זה, והתרעה
-//    בנוסף לו הייתה רעש בעלייה הראשונה.
-function bkStale() {
-  var t = bkLastAt();
-  if (!t) return 0;
-  var d = Math.floor((Date.now() - t) / 86400000);
-  return (d >= BK_STALE_DAYS) ? d : 0;
-}
-function bkStatusHTML() {
-  var t = bkLastAt(), st = bkStale();
-  return '<div class="sync-line bk-line"><div>גובה לאחרונה: <b>' +
-    (t ? esc(syncFmtTime(t)) : '— טרם גובה —') + '</b></div>' +
-    (st ? '<div class="bkStale">⚠️ הגיבוי לא רץ ' + st + ' ימים</div>' : '') +
-    '</div>';
-}
-function bkStatusMount() {
-  var d = document.getElementById('status-extra-box');
-  if (!d) return;
-  var prev = d.querySelector('.bk-line');
-  if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
-  var wrap = document.createElement('div');
-  wrap.innerHTML = bkStatusHTML();
-  var node = wrap.firstChild;
-  if (node) d.appendChild(node);
-}
-window.bkStatusMount = bkStatusMount;
 
 /* ── נקודת ההפעלה היחידה ─────────────────────────────────────────────── */
 // ⛔ זו הקריאה היחידה שקוד האפליקציה עושה למודול (סבב 30, השלמה) — היא
@@ -4663,24 +4608,6 @@ function pendRenderAlert() {
 }
 
 // פאנל להגדרות — מה בדיוק ממתין, ומאיזה גיל.
-function pendStatusHTML() {
-  var m = pendAll(), keys = Object.keys(m);
-  keys.sort(function (a, b) { return m[a] - m[b]; });
-  var h = '<div style="font-size:13px;line-height:1.8">';
-  h += '<div>מצב רשת: <b>' + (navigator.onLine ? 'מקוון' : 'לא מקוון') + '</b></div>';
-  h += '<div>פעולות ממתינות לסנכרון: <b>' + keys.length + '</b></div>';
-  if (!keys.length) { h += '<div style="color:#16a34a">✅ הכול מסונכרן</div></div>'; return h; }
-  h += '<div style="margin-top:6px;max-height:220px;overflow:auto">';
-  keys.slice(0, 60).forEach(function (k) {
-    var age = Date.now() - m[k], late = age > PEND_LATE_MS;
-    h += '<div style="display:flex;gap:8px;justify-content:space-between;border-bottom:1px solid rgba(0,0,0,.08);padding:3px 0">' +
-         '<span>' + esc(k) + '</span><span style="' + (late ? 'color:#b91c1c;font-weight:700' : 'opacity:.7') + '">' +
-         esc(pendFmtAge(age)) + '</span></div>';
-  });
-  if (keys.length > 60) h += '<div style="opacity:.7">…ועוד ' + (keys.length - 60) + '</div>';
-  h += '</div></div>';
-  return h;
-}
 
 // רענון תקופתי — הגיל מוצג בתגיות ובמונה, וסף ה-24 שעות חייב להיחצות
 // גם כשהמשתמש לא נגע בכלום.
@@ -5112,6 +5039,9 @@ function plTouch(ts) {
 
 function _plFull() {
   var done = function (v) { _plBusy = false; return v; };
+  /*  ⛔ שחרור האופק **לפני** המשיכה ⛔ ולא אחריה — ⚠️ הניקוי הוא שמתיר
+   *  לכתיבה שבסופה להחזיר את הישן, ⭐ וניקוי שאחריה ממתין למשיכה הבאה. */
+  try { lsHorizonRelease(); } catch (e0) { }
   try {
     return Promise.resolve(PL_CFG.pull()).then(
       function () { _plFullAt = Date.now(); return done(true); },
@@ -5384,7 +5314,6 @@ var HW_CFG = {
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
    ══════════════════════════════════════════════════════════════════════ */
 var HW_BOOT_DEFER_MS = 3000;      // כמו הפינוי הנדחה של סבב 14 — רשת אחרי עלייה
-var HW_RESTORE_ARM_MS = 8000;     // חלון האישור הדו-שלבי של כפתור השחזור
 var _hwCloudSeen = {};            // ראיה עננית בזיכרון בלבד: מפתח → {מזהה → חותמת}
 var _hwSweepBusy = false;
 var _hwSwept = 0;                 // כמה רשומות פונו בעלייה הזו — לתיעוד בלבד
@@ -5520,45 +5449,6 @@ async function hwPastLoad(key, filter) {
   });
   return { ok: true, rows: out };
 }
-
-/* ── כפתור השחזור — נגישות ל-`lsRestoreAll` ────────────────────────────── */
-// ⛔ הרכיב נתלה בעוגן שמחוץ לבלוק הקפוא ואינו עורך אותו (סבב 35) — אותה
-//    טכניקה של `bkStatusMount`: בלוק «☁️ סנכרון» חתום ב-`check-status-area.mjs`,
-//    והכפתור מצטרף אליו מבחוץ.
-var _hwRestoreArmed = 0;
-function hwRestoreHTML() {
-  return '<div class="sync-line hw-restore-line"><button type="button" ' +
-    'data-act="hw-restore">' +
-    '☁️ שחזר הכול מהענן</button></div>';
-}
-function hwRestoreMount() {
-  try {
-    if (!(typeof HW_CFG !== 'undefined' && HW_CFG &&
-          typeof HW_CFG.admin === 'function' && HW_CFG.admin())) return;
-  } catch (e) { return; }
-  var d = document.getElementById('status-extra-box');
-  if (!d) return;
-  var prev = d.querySelector('.hw-restore-line');
-  if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
-  var wrap = document.createElement('div');
-  wrap.innerHTML = hwRestoreHTML();
-  var node = wrap.firstChild;
-  if (node) d.appendChild(node);
-}
-// אישור דו-שלבי: הלחיצה הראשונה חומשת לחלון קצר, השנייה מבצעת.
-function hwRestoreClick(btn) {
-  var now = Date.now();
-  if (!_hwRestoreArmed || (now - _hwRestoreArmed) > HW_RESTORE_ARM_MS) {
-    _hwRestoreArmed = now;
-    if (btn) btn.textContent = '⚠️ בטוח? לחיצה נוספת משחזרת הכול';
-    return;
-  }
-  _hwRestoreArmed = 0;
-  try { lsRestoreAll(); } catch (e) { }
-  if (btn) btn.textContent = '☁️ שחזר הכול מהענן';
-}
-window.hwRestoreClick = hwRestoreClick;
-window.hwRestoreMount = hwRestoreMount;
 
 /* ── נקודת ההפעלה ──────────────────────────────────────────────────────── */
 // ⛔ נקודת ההפעלה היחידה היא `hwBoot()` מפונקציית העלייה (סבב 35, כלל
@@ -7552,18 +7442,16 @@ setTimeout(async function() {
   ysUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
 }, 1500);
 
-// אירוע online: ריקון תור האופליין כשהרשת חוזרת
+/*  ⛔ מה שנשאר כאן הוא **מה שהפולינג אינו מכסה** — ⚠️ התג ⏳ מצויר מהמאזין
+ *  המשותף, ⭐ וריקון התור נדרך מ-`RTY_CFG.flush` באותו אירוע: ⛔ שני אלה
+ *  היו כאן מסלול שני לאותה הכרעה.
+ *  ⛔ **ואימות הכניסה ושליחת יומן הכניסות אינם באף מסלול אחר** — ⚠️ משתמש
+ *  שהושבת בזמן שהמכשיר היה מנותק נשאר מחובר עד הטעינה הבאה, ⭐ ורשומות
+ *  היומן שנצברו אופליין נשלחות רק בכניסה מקוונת הבאה. */
 window.addEventListener('online', function() {
-  console.log('[ys-queue] network online — flushing queue');
-  ysUpdateQueueBadge();
-  ysFlushQueue();
-  // אימות מחדש שקט של כניסה אופליין — מתנתק אם המשתמש הושבת בינתיים
+  console.log('[ys-queue] network online — revalidating session');
   ysRevalidateOfflineLogin();
-  // שליחת רשומות login-log שהצטברו באופליין
   ysLoginLogFlush();
-});
-window.addEventListener('offline', function() {
-  ysUpdateQueueBadge();
 });
 
 // ============ סוף סנכרון הענן ============
@@ -8315,9 +8203,7 @@ function saveStudent(){
   //    **בסדר האלפביתי** ולא זה שנוסף; הסימון נכתב על רשומה אחרת, ושלוש
   //    נקודות הקריאה (`pendTag`, בחירת מה לדחוף, שער הפינוי) לא ראו אותו.
   pendMark(PK_STUDENT + (editingStudentId != null ? editingStudentId : newId));
-  schedulePush();
-  closeModal();
-  renderStudents();
+  return '✅ תלמיד נשמר';
 }
 
 
