@@ -43,6 +43,11 @@ const html = fs.readFileSync('index.html', 'utf8');
 const SRC = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)]
   .map((m) => m[1]).join('\n');
 
+/*  ⛔ ההודעות הן קבועים ⛔ ואינן ליטרל באתר התצוגה — ⚠️ הרתמה טוענת את
+ *  הצהרותיהן, ⭐ שאם לא כן מטפל שמציג הודעה זורק `ReferenceError`,
+ *  ⛔ והכשל נקרא ככשל התנהגות ולא כחוסר בסביבה. */
+const MSG_DECLS = (SRC.match(/^var MSG_[A-Z_0-9]* = '(?:[^'\\]|\\.)*';$/gm) || []).join('\n');
+
 function grab(name) {
   const re = new RegExp(`(?:^|\\n)(async\\s+)?function\\s+${name}\\s*\\(`);
   const m = re.exec(SRC);
@@ -285,7 +290,7 @@ function boot(state, opts = {}) {
   };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(CODE, sandbox);
+  vm.runInContext(MSG_DECLS + '\n' + CODE, sandbox);
   return sandbox;
 }
 

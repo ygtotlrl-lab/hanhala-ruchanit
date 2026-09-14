@@ -38,7 +38,7 @@
  *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ וכל גוון עומד ב-4.5 מולו:
  *  ⭐ גוון האיחור הוכהה מ-#dd6b20, ⛔ שנמדד 3.39 ונפל מהיחס. */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
@@ -61,28 +61,29 @@
     --navy2:#234a8a; --navy3:#0f2347;
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
     --shadow-lg:0 12px 40px rgba(0,0,0,.5);
+    --shadow-brand:rgba(0,0,0,.5); --shadow-brand-soft:rgba(0,0,0,.35);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 body.locked{overflow:hidden}
-header{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--navy2));padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px rgba(0,0,0,.22);position:sticky;top:0;z-index:100}
+header{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--navy2));padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px var(--sh-2);position:sticky;top:0;z-index:var(--z-2)}
 .hl{display:flex;align-items:center;gap:var(--sp-6)}
 .logo{width:60px;height:60px;object-fit:contain;border-radius:var(--r-5);background:var(--card);padding:var(--sp-2);}
-.hdiv{width:1px;height:48px;background:rgba(255,255,255,.2)}
-.htxt{color:rgba(255,255,255,.9);font-size:var(--fs-3);line-height:1.5}
-.htxt strong{display:block;font-size:var(--fs-4);color:#fff;font-weight:700}
+.hdiv{width:1px;height:48px;background:var(--fill-dark)}
+.htxt{color:var(--on-dark-2);font-size:var(--fs-3);line-height:var(--lh-3)}
+.htxt strong{display:block;font-size:var(--fs-4);color:var(--on-dark);font-weight:700}
 nav{display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
-.nb{background:none;border:none;color:rgba(255,255,255,.72);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-2);cursor:pointer;font-family:Heebo;font-size:var(--fs-3);font-weight:500;display:flex;align-items:center;gap:var(--sp-3);transition:all .18s;white-space:nowrap}
+.nb{background:none;border:none;color:var(--on-dark-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-2);cursor:pointer;font-family:Heebo;font-size:var(--fs-3);font-weight:500;display:flex;align-items:center;gap:var(--sp-3);transition:all var(--dur-3);white-space:nowrap}
 .nb:hover{background:var(--brand-wash);color:var(--on-brand)}
-.nb.on{background:rgba(255,255,255,.20);color:#fff;font-weight:600}
+.nb.on{background:var(--fill-dark);color:var(--on-dark);font-weight:600}
 main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .pg{display:none;overflow-x:hidden}.pg.on{display:block}
 #pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,var(--bg),var(--bg) 50%,var(--bg))}
-.hero{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--navy2));color:#fff;padding:var(--sp-7) var(--sp-7) var(--sp-7);position:relative;overflow:hidden}
-.hero-date{font-size:var(--fs-3);opacity:.72;margin-bottom:var(--sp-3)}
+.hero{background:linear-gradient(135deg,var(--navy3),var(--navy-fill),var(--navy2));color:var(--on-dark);padding:var(--sp-7) var(--sp-7) var(--sp-7);position:relative;overflow:hidden}
+.hero-date{font-size:var(--fs-3);opacity:var(--op-5);margin-bottom:var(--sp-3)}
 .hero-title{font-size:var(--fs-6);font-weight:700;margin-bottom:var(--sp-2)}
-.hero-sub{font-size:var(--fs-4);opacity:.8}
+.hero-sub{font-size:var(--fs-4);opacity:var(--op-6)}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:var(--sp-6) var(--sp-7);text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
@@ -90,24 +91,24 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .stat .n{font-size:var(--fs-6);font-weight:700;color:var(--navy-ink)}
 .stat .l{font-size:var(--fs-2);color:var(--text2);margin-top:var(--sp-2)}
 .mods-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
-.mods-lbl{font-size:var(--fs-3);font-weight:600;color:var(--text2);margin-bottom:var(--sp-6);display:flex;align-items:center;gap:var(--sp-5);text-transform:uppercase;letter-spacing:.05em}
+.mods-lbl{font-size:var(--fs-3);font-weight:600;color:var(--text2);margin-bottom:var(--sp-6);display:flex;align-items:center;gap:var(--sp-5);text-transform:uppercase;letter-spacing:var(--ls-1)}
 .mods-lbl::before{content:"";width:3px;height:16px;background:var(--navy-fill);border-radius:var(--r-1);display:inline-block}
 .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
-.mod{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);padding:var(--sp-7) var(--sp-7);cursor:pointer;display:flex;align-items:flex-start;gap:var(--sp-6);transition:all .22s;box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
-.mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 var(--r-5) var(--r-5) 0;transition:width .22s}
+.mod{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);padding:var(--sp-7) var(--sp-7);cursor:pointer;display:flex;align-items:flex-start;gap:var(--sp-6);transition:all var(--dur-3);box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
+.mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 var(--r-5) var(--r-5) 0;transition:width var(--dur-3)}
 .mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .mod:hover::before{width:6px}
-.mod-ic{width:48px;height:48px;border-radius:var(--r-4);background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:var(--fs-6);flex-shrink:0;transition:transform .22s}
+.mod-ic{width:48px;height:48px;border-radius:var(--r-4);background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:var(--fs-6);flex-shrink:0;transition:transform var(--dur-3)}
 .mod:hover .mod-ic{transform:scale(1.08)}
 .mod-info{flex:1}
 .mod-name{font-size:var(--fs-4);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
-.mod-desc{font-size:var(--fs-2);color:var(--text3);line-height:1.4}
+.mod-desc{font-size:var(--fs-2);color:var(--text3);line-height:var(--lh-3)}
 .inner{padding:var(--sp-7) var(--sp-7);max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
-.back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all .18s;white-space:nowrap;display:inline-flex;align-items:center;line-height:1}
+.back{background:none;border:1.5px solid var(--border);color:var(--text2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
 .back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
 .gap{flex:1}
-.btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:#fff;border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
+.btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:var(--on-dark);border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
 .btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
@@ -116,7 +117,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .btn.out:hover{background:var(--card-2)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy-fill),var(--navy2))}
-th{color:#fff;font-weight:600;padding:var(--sp-5) var(--sp-6);text-align:right;font-size:var(--fs-3)}
+th{color:var(--on-dark);font-weight:600;padding:var(--sp-5) var(--sp-6);text-align:right;font-size:var(--fs-3)}
 td{padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--border);font-size:var(--fs-4);vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--card-2)}
@@ -126,26 +127,26 @@ tr:hover td{background:var(--card-2)}
 
 
 
-.ab{padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);border:1.5px solid var(--border);cursor:pointer;font-size:var(--fs-3);font-family:Heebo;font-weight:500;background:var(--card);color:var(--text2);transition:all .15s}
+.ab{padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);border:1.5px solid var(--border);cursor:pointer;font-size:var(--fs-3);font-family:Heebo;font-weight:500;background:var(--card);color:var(--text2);transition:all var(--dur-2)}
 .ab:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
-.ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
+.ab.sp{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok);font-weight:600}
 
 
 .sw{position:relative;width:100%}
-#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-5);box-shadow:0 8px 28px rgba(26,58,107,.18);z-index:200;max-height:240px;overflow-y:auto;display:none;animation:ddFade .12s ease}
+#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);z-index:var(--z-3);max-height:240px;overflow-y:auto;display:none;animation:ddFade var(--dur-1) ease}
 #search-dropdown.open{display:block}
 @keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.sd-item{padding:var(--sp-4) var(--sp-6);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background .12s}
+.sd-item{padding:var(--sp-4) var(--sp-6);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background var(--dur-1)}
 .sd-item:last-child{border-bottom:none}
 .sd-item:first-child{border-radius:var(--r-5) var(--r-5) 0 0}
 .sd-item:last-child:first-child{border-radius:var(--r-5)}
 .sd-item:hover,.sd-item:focus{background:var(--card-2);outline:none}
 .sd-name{font-weight:600;font-size:var(--fs-3);color:var(--text)}
-.sd-name mark{background:#fff3cd;border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
-.sd-cls{background:#e8eaf6;color:#3f51b5;padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
-.sw input{width:100%;padding:var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-7);background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);transition:border-color .2s,box-shadow .2s}
+.sd-name mark{background:var(--warn-soft);border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
+.sd-cls{background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
+.sw input{width:100%;padding:var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-7);background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);transition:border-color var(--dur-3),box-shadow var(--dur-3)}
 .sw input::placeholder{color:var(--text3)}
-.sw input:focus{outline:none;border-color:var(--navy-ink);box-shadow:0 0 0 3px rgba(26,58,107,.1)}
+.sw input:focus{outline:none;border-color:var(--navy-ink);box-shadow:0 0 0 3px var(--shadow-brand-soft)}
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
 input[type=date],input[type=month]{padding:var(--sp-4) var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy-ink)}
@@ -153,10 +154,10 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 
 
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,50,.55);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
-.modal-box{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.25);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
+.modal-overlay{display:none;position:fixed;inset:0;background:var(--veil);z-index:var(--z-4);align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
+.modal-box{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.mdl-x{background:none;border:none;font-size:var(--fs-5);line-height:1;cursor:pointer;color:var(--text2);padding:var(--sp-1) var(--sp-3)}
+.mdl-x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text2);padding:var(--sp-1) var(--sp-3)}
 .mdl-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
 .mdl-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
 .mdl-ft{display:flex;gap:var(--sp-5);margin-top:var(--sp-6)}
@@ -167,7 +168,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 #modal-body input{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
 #modal-body input:focus{outline:none;border-color:var(--navy-ink)}
 .cs{text-align:center;padding:var(--sp-7) var(--sp-7);background:var(--card);border-radius:var(--r-5);border:1px solid var(--border);box-shadow:var(--shadow)}
-.cs .ci{font-size:var(--fs-7);margin-bottom:var(--sp-6);opacity:.6}
+.cs .ci{font-size:var(--fs-7);margin-bottom:var(--sp-6);opacity:var(--op-4)}
 .cs h3{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-4)}
 .cs p{color:var(--text2);font-size:var(--fs-4)}
 .rs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-5);margin-bottom:var(--sp-6)}
@@ -232,12 +233,12 @@ body{padding-bottom:var(--sp-7)}
   position:fixed;
   bottom:0;left:0;right:0;
   height:64px;
-  background:linear-gradient(135deg,#0f2347,#1a3a6b);
-  border-top:1px solid rgba(255,255,255,.15);
-  z-index:200;
+  background:linear-gradient(135deg,var(--navy3),var(--navy-fill));
+  border-top:1px solid var(--fill-dark);
+  z-index:var(--z-2);
   align-items:center;
   justify-content:space-around;
-  box-shadow:0 -2px 12px rgba(0,0,0,.25);
+  box-shadow:0 -2px 12px var(--sh-2);
   padding:0 var(--sp-2);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -245,16 +246,16 @@ body{padding-bottom:var(--sp-7)}
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   flex:1;height:100%;gap:var(--sp-2);
   background:none;border:none;
-  color:rgba(255,255,255,.6);
+  color:var(--on-dark-3);
   font-family:Heebo;font-size:var(--fs-1);font-weight:500;
-  cursor:pointer;transition:all .18s;
+  cursor:pointer;transition:all var(--dur-3);
   padding:var(--sp-2) var(--sp-1);border-radius:var(--r-3);
   -webkit-tap-highlight-color:transparent;
 }
-.bn .bn-ic{font-size:var(--fs-5);line-height:1}
-.bn.on{color:#fff}
+.bn .bn-ic{font-size:var(--fs-5);line-height:var(--lh-1)}
+.bn.on{color:var(--on-dark)}
 .bn.on .bn-ic{transform:scale(1.15)}
-.bn:active{background:rgba(255,255,255,.1)}
+.bn:active{background:var(--fill-dark)}
 /* הסתר nav עליון במובייל */
 nav{display:none}
 /* הסתר מפריד אבל הצג טקסט במובייל */
@@ -308,22 +309,22 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 }
 
 /* ===== כניסה ===== */
-#auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy-fill),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
+#auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy3),var(--navy-fill),var(--navy2));display:flex;align-items:center;justify-content:center;z-index:var(--z-7);flex-direction:column}
 #auth-screen.hidden{display:none}
-.auth-box{background:var(--card);border-radius:var(--r-6);padding:var(--sp-7) var(--sp-7);width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center}
-.auth-logo{width:72px;height:72px;margin:0 auto var(--sp-6);border-radius:var(--r-5);overflow:hidden;background:#f0f4fa;display:flex;align-items:center;justify-content:center}
+.auth-box{background:var(--card);border-radius:var(--r-6);padding:var(--sp-7) var(--sp-7);width:90%;max-width:340px;box-shadow:0 20px 60px var(--sh-3);text-align:center}
+.auth-logo{width:72px;height:72px;margin:0 auto var(--sp-6);border-radius:var(--r-5);overflow:hidden;background:var(--card-2);display:flex;align-items:center;justify-content:center}
 .auth-logo img{width:100%;height:100%;object-fit:contain}
 .auth-title{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-2)}
 .auth-sub{font-size:var(--fs-3);color:var(--text3);margin-bottom:var(--sp-7)}
 .auth-field{display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-6);text-align:right}
 .auth-field label{font-size:var(--fs-3);font-weight:600;color:var(--text2)}
-.auth-field input{border:2px solid var(--border);border-radius:var(--r-4);padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border .2s;direction:rtl}
-.auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:4px;font-size:var(--fs-5)}
+.auth-field input{border:2px solid var(--border);border-radius:var(--r-4);padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border var(--dur-3);direction:rtl}
+.auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
 .auth-field input:focus{border-color:var(--navy-ink)}
-.auth-btn{width:100%;background:var(--navy-fill);color:#fff;border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background .2s}
+.auth-btn{width:100%;background:var(--navy-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
 .auth-btn:active{background:var(--navy2)}
-.auth-err{color:#e53e3e;font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
-.auth-spinner{display:none;margin:var(--sp-5) auto 0;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy-ink);border-radius:var(--r-7);animation:auth-spin .7s linear infinite}
+.auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
+.auth-spinner{display:none;margin:var(--sp-5) auto 0;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy-ink);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
 #pg-settings .ss{background:var(--card);border-radius:var(--r-5);padding:var(--sp-6);margin-bottom:var(--sp-6);border:1px solid var(--border)}
 #pg-settings .ss-t{font-size:var(--fs-4);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-5);padding-bottom:var(--sp-4);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -331,15 +332,15 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .ur:last-child{border-bottom:none}
 .ur-name{flex:1;font-weight:600;font-size:var(--fs-3)}
 .ur-role{font-size:var(--fs-2);padding:var(--sp-2) var(--sp-4);border-radius:var(--r-6);font-weight:600}
-.role-admin{background:#fef3c7;color:#92400e}
-.role-manager{background:#dbeafe;color:#1e40af}
-.role-junior{background:#dcfce7;color:#166534}
+.role-admin{background:var(--warn-soft);color:var(--warn)}
+.role-manager{background:var(--info-soft);color:var(--info)}
+.role-junior{background:var(--ok-soft);color:var(--ok)}
 .ua{display:flex;gap:var(--sp-3)}
-.ua button{border:1px solid var(--border);background:var(--card);border-radius:var(--r-3);padding:var(--sp-3) var(--sp-4);cursor:pointer;font-size:var(--fs-2);font-family:Heebo;transition:all .15s}
+.ua button{border:1px solid var(--border);background:var(--card);border-radius:var(--r-3);padding:var(--sp-3) var(--sp-4);cursor:pointer;font-size:var(--fs-2);font-family:Heebo;transition:all var(--dur-2)}
 .ua button:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
-.ua button.del:hover{border-color:#e53e3e;color:#e53e3e}
+.ua button.del:hover{border-color:var(--bad);color:var(--bad)}
 .pt{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
-.pt th{background:var(--navy-fill);color:#fff;padding:var(--sp-4) var(--sp-4);font-weight:600;text-align:center}
+.pt th{background:var(--navy-fill);color:var(--on-dark);padding:var(--sp-4) var(--sp-4);font-weight:600;text-align:center}
 .pt th:first-child{text-align:right}
 .pt td{padding:var(--sp-4) var(--sp-4);border-bottom:1px solid var(--border);text-align:center}
 .pt td:first-child{text-align:right;font-weight:500}
@@ -355,15 +356,15 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
       ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד.
    ⛔ ו-`--toast-bottom` הוא הערך היחיד שנבדל — ⚠️ לשתיים מהן יש סרגל
       תחתון קבוע, ⭐ ולטוסט שיושב מתחתיו אין מי שיראה אותו. */
-#toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:999;display:grid;gap:var(--sp-4);justify-items:center;pointer-events:none;padding:0 var(--sp-6)}
-.toast{background:#1a1a1a;color:#fff;border-radius:var(--r-6);padding:var(--sp-5) var(--sp-7);font-size:var(--fs-3);font-weight:600;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:92vw;text-align:center;animation:toastUp .2s ease-out}
+#toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:var(--z-5);display:grid;gap:var(--sp-4);justify-items:center;pointer-events:none;padding:0 var(--sp-6)}
+.toast{background:var(--chip);color:var(--on-chip);border-radius:var(--r-6);padding:var(--sp-5) var(--sp-7);font-size:var(--fs-3);font-weight:600;line-height:var(--lh-3);box-shadow:0 6px 20px var(--sh-2);max-width:92vw;text-align:center;animation:toastUp var(--dur-3) ease-out}
 .toast.bad{background:var(--bad);color:var(--bad-soft)}
 .toast.good{background:var(--ok);color:var(--ok-soft)}
 @keyframes toastUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
 /* ================================================================= מעדכן */
 #updater{
-  position:fixed;inset-inline:0;z-index:10001;
+  position:fixed;inset-inline:0;z-index:var(--z-6);
   bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom) + 46px);
   display:none;justify-content:center;padding:var(--sp-5) var(--sp-6)}
 #updater.show{display:flex}
@@ -377,9 +378,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   padding:var(--sp-4) var(--sp-6);font-family:inherit;font-weight:700;cursor:pointer;font-size:var(--fs-3);flex:none
 }
 #updater button.x{
-  margin-inline-start:0;background:none;color:var(--on-brand);opacity:.7;padding:0 var(--sp-2);font-size:var(--fs-4)}
-/* ═══ סולמות הגודל, הריווח והרדיוס — מודול משותף (סבב 138) ═══════════════
-   ⛔ שלושה סולמות, ⛔ ואותן דרגות בארבע האפליקציות — ⚠️ כל ערך מספרי חזותי
+  margin-inline-start:0;background:none;color:var(--on-brand);opacity:var(--op-5);padding:0 var(--sp-2);font-size:var(--fs-4)}
+/* ═══ סולמות הערך החזותי — מודול משותף (סבב 141) ═════════════════════════
+   ⛔ שמונה סולמות, ⛔ ואותן דרגות בארבע האפליקציות — ⚠️ כל ערך חזותי
       נגזר מהם ⛔ ואינו נבחר לכל אתר בנפרד: ⭐ ערך שנבחר באתר הוא סולם שלא
       הוגדר, ⛔ ושני אתרים שנבדלים בפיקסל אחד הם שני ערכים שאיש לא הכריע
       ביניהם.
@@ -393,12 +394,27 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
    ⛔ **ואין כאן `!important`** — ⚠️ `display` ו-`color` נכתבים מ-JS בזמן
       ריצה, ⭐ וסגנון מוטבע שנכתב אחר כך חייב לגבור עליהן: ⛔ הקדימות באה
       מהמיקום — ⚠️ הבלוק יושב בסוף הגיליון, אחרי כל כלל אחר.
+   ⛔ **ו-`--z-*` הוא סדר ולא גודל** — ⚠️ הדרגה נבחרת לפי **תפקיד**
+      השכבה — תוכן · סרגל · תפריט · מודאל · טוסט · באנר · נעילה — ⭐ ולא
+      לפי המספר שהיה שם: ⛔ מספר שנבחר לכל אתר הוא מרוץ שאיש אינו מכריע בו.
+   ⛔ **והמשך נמדד בשניות ולא באלפיות** — ⚠️ והכתיב אחיד, בלי
+      אפס מוביל: ⭐ `.15s` ו-`0.15s` הם אותו ערך בשני כתיבים, ⛔ ושני כתיבים
+      הם שני חיפושים.
    ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב.
    ═══════════════════════════════════════════════════════════════════════ */
 :root{
 --fs-1:.65rem;--fs-2:.75rem;--fs-3:.85rem;--fs-4:.95rem;--fs-5:1.2rem;--fs-6:1.7rem;--fs-7:2.8rem;
 --sp-1:2px;--sp-2:4px;--sp-3:6px;--sp-4:8px;--sp-5:12px;--sp-6:16px;--sp-7:24px;
---r-1:4px;--r-2:6px;--r-3:8px;--r-4:10px;--r-5:14px;--r-6:20px;--r-7:999px
+--r-1:4px;--r-2:6px;--r-3:8px;--r-4:10px;--r-5:14px;--r-6:20px;--r-7:999px;
+--z-1:1;--z-2:10;--z-3:20;--z-4:30;--z-5:40;--z-6:50;--z-7:60;
+--dur-1:.12s;--dur-2:.15s;--dur-3:.2s;--dur-4:.3s;--dur-5:.6s;--dur-6:.7s;--ease:cubic-bezier(.2,.8,.3,1);
+--op-1:.3;--op-2:.4;--op-3:.5;--op-4:.6;--op-5:.7;--op-6:.8;--op-7:.85;
+--lh-1:1;--lh-2:1.3;--lh-3:1.45;--lh-4:1.6;--lh-5:1.75;--lh-6:2;
+--ls-1:.3px;--ls-2:1px;--ls-3:4px;--ls-n1:-.4px;--ls-n2:-1px;
+--chip:#1A1A1A;--on-chip:#FFFFFF;--veil:rgba(10,20,30,.5);--veil-deep:rgba(0,0,0,.75);
+--alert:#B3261E;--on-alert:#FFFFFF;
+--sh-1:rgba(0,0,0,.10);--sh-2:rgba(0,0,0,.22);--sh-3:rgba(0,0,0,.35);
+--on-dark:#FFFFFF;--on-dark-2:rgba(255,255,255,.9);--on-dark-3:rgba(255,255,255,.65);--fill-dark:rgba(255,255,255,.15)
 }
 .u-ai-c{align-items:center}
 .u-d-flex{display:flex}
@@ -519,12 +535,12 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-jc-sb{justify-content:space-between}
 .u-left-0{left:0}
 .u-left-50p{left:50%}
-.u-lh-1{line-height:1}
-.u-lh-13{line-height:1.3}
-.u-lh-16{line-height:1.6}
-.u-lh-17{line-height:1.7}
-.u-lh-18{line-height:1.8}
-.u-ls-4{letter-spacing:4px}
+.u-lh-1{line-height:var(--lh-1)}
+.u-lh-13{line-height:var(--lh-2)}
+.u-lh-16{line-height:var(--lh-4)}
+.u-lh-17{line-height:var(--lh-5)}
+.u-lh-18{line-height:var(--lh-5)}
+.u-ls-4{letter-spacing:var(--ls-3)}
 .u-m-0-0-6{margin:0 0 var(--sp-6)}
 .u-m-0-n7-n7{margin:0 calc(-1 * var(--sp-7)) calc(-1 * var(--sp-7))}
 .u-m-3-0-5{margin:var(--sp-3) 0 var(--sp-5)}
@@ -561,16 +577,16 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-mt-4{margin-top:var(--sp-4)}
 .u-mt-6{margin-top:var(--sp-6)}
 .u-mt-n4{margin-top:calc(-1 * var(--sp-4))}
-.u-op-25{opacity:.25}
-.u-op-3{opacity:.3}
-.u-op-45{opacity:.45}
-.u-op-5{opacity:.5}
-.u-op-55{opacity:.55}
-.u-op-6{opacity:.6}
-.u-op-7{opacity:.7}
-.u-op-75{opacity:.75}
-.u-op-8{opacity:.8}
-.u-op-85{opacity:.85}
+.u-op-25{opacity:var(--op-1)}
+.u-op-3{opacity:var(--op-1)}
+.u-op-45{opacity:var(--op-3)}
+.u-op-5{opacity:var(--op-3)}
+.u-op-55{opacity:var(--op-4)}
+.u-op-6{opacity:var(--op-4)}
+.u-op-7{opacity:var(--op-5)}
+.u-op-75{opacity:var(--op-6)}
+.u-op-8{opacity:var(--op-6)}
+.u-op-85{opacity:var(--op-7)}
 .u-ov-h{overflow:hidden}
 .u-ovx-a{overflow-x:auto}
 .u-ovy-a{overflow-y:auto}
@@ -629,11 +645,11 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-tf-translatex-50p{transform:translateX(-50%)}
 .u-top-50{top:50px}
 .u-tov-e{text-overflow:ellipsis}
-.u-tr-all-15s{transition:all .15s}
-.u-tr-all-2s{transition:all .2s}
-.u-tr-border-color-15s{transition:border-color .15s}
-.u-tr-box-shadow-15s-border-color-15s{transition:box-shadow .15s,border-color .15s}
-.u-tr-transform-2s{transition:transform .2s}
+.u-tr-all-15s{transition:all var(--dur-2)}
+.u-tr-all-2s{transition:all var(--dur-3)}
+.u-tr-border-color-15s{transition:border-color var(--dur-2)}
+.u-tr-box-shadow-15s-border-color-15s{transition:box-shadow var(--dur-2),border-color var(--dur-2)}
+.u-tr-transform-2s{transition:transform var(--dur-3)}
 .u-ty{--ty:var(--text);--ty-line:var(--border);--ty-bg:var(--card-2)}
 .u-ty-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
 .u-ty-left{--ty:var(--bad);--ty-line:var(--bad-line);--ty-bg:var(--bad-soft)}
@@ -658,8 +674,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-w-90{width:90px}
 .u-w-a{width:auto}
 .u-ws-nw{white-space:nowrap}
-.u-z-300{z-index:300}
-.u-z-9999{z-index:9999}
+.u-z-3{z-index:var(--z-3)}
+.u-z-5{z-index:var(--z-5)}
 /* ══ סוף המחלקות הפרטיות ═══════════════════════════════════════════════ */
 </style>
 </head>
@@ -703,13 +719,13 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
-  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-9999 u-sh-shadow u-pe-none u-ws-nw"></div>
+  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-5 u-sh-shadow u-pe-none u-ws-nw"></div>
   <div id="user-avatar-wrap" class="u-pos-rel u-d-none u-ai-c">
     <button data-act="user-menu-toggle" class="u-d-flex u-ai-c u-g-4 u-p-4-6 u-bg-brand-wash u-bd-15-solid-brand-edge u-r-6 u-cur-p u-ff-heebo u-fs-3 u-fw-600 u-c-on-brand u-ws-nw u-bf-blur-4 u-tr-all-2s">
       <span class="u-fs-4">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-300 u-ov-h u-dir-rtl">
+    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-3 u-ov-h u-dir-rtl">
       <div id="user-menu-name" class="u-p-5-6 u-fw-700 u-fs-4 u-c-navy-ink u-bb-1-solid-border"></div>
       <div id="user-menu-role" class="u-p-3-6-5 u-fs-2 u-c-text3 u-bb-1-solid-border"></div>
       <div id="user-menu-others" class="u-bb-1-solid-border"></div>
@@ -1363,7 +1379,7 @@ function ysApplyPerms(p) {
       }
       closeModal();
       showPage('home');
-      try { toast('🔒 ההרשאות שלך עודכנו — ' + lbl + ' אינו זמין עוד'); } catch (e3) {}
+      try { toast(MSG_PERMS_CHANGED_PRE + lbl + MSG_PERMS_CHANGED_POST); } catch (e3) {}
     }
   }
   return changed;
@@ -1546,40 +1562,150 @@ async function ysRefreshUsersCache() {
    הודעות ועוזרי רשת — נוסח משותף לארבע האפליקציות
    ══════════════════════════════════════════════════════════════════════════ */
 // **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
-// להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. שלוש ההודעות שלמטה חייבות להיות
-// **מילה במילה זהות** בשלושת הפרויקטים; אין לנסח וריאציה מקומית.
+// להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ ושתי ההודעות שלמטה נבדלות
+// בגיוס בהחלטת מנהל — ⚠️ ולכן הן פר-אפליקציה ואינן בבלוק החתום.
 var MSG_OFFLINE   = 'אין חיבור לאינטרנט — הפעולה לא בוצעה';
-var MSG_SAVED     = '✅ נשמר בהצלחה';
-// נוסח משותף לארבע האפליקציות (סבב 12 שלב 4). שמירה מקומית שטרם אושרה
-// בענן **חייבת** להיאמר אחרת משמירה שאושרה — אחרת "נשמר" נראה בדיוק אותו
-// דבר בשני המצבים, וזו ההטעיה שהסבב הזה בא למנוע.
-var MSG_SAVED_LOCAL = '✅ נשמר במכשיר — יסונכרן כשתחזור הרשת';
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
-// ---- שלוש הודעות אופליין פרטיות ל-hanhala (סבב 22) ----
-// כל אחת מתארת מצב **אחר** שבו האימות המקומי לא יכול להתבצע, ובכולן
-// הפעולה הנדרשת מהמשתמש זהה וכתובה במפורש: חיבור אחד. ⛔ אין לאחד אותן
-// עם `MSG_BAD_LOGIN` — «סיסמה שגויה» על מצב שאינו סיסמה שגויה הוא כשל שקט.
-var MSG_OFF_UNKNOWN = '📴 אין חיבור — המשתמש הזה אינו בעותק המקומי שבמכשיר. נדרש חיבור לאינטרנט פעם אחת';
-var MSG_OFF_NO_FP   = '📴 אין חיבור — המשתמש הזה טרם הוכן לכניסה ללא רשת. נדרש חיבור לאינטרנט פעם אחת';
-var MSG_OFF_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לכניסה ללא רשת';
-// סבב 19: סיסמה בת שש ספרות בדיוק. ⛔ נאכף **רק במסלולי יצירה/שינוי**
-// ולא במסלול הכניסה — שם רק משווים מול הטביעה השמורה, ואכיפת פורמט
-// הייתה נועלת בחוץ כל משתמש שסיסמתו נקבעה לפני הסבב הזה.
+// ⭐ תבנית שש הספרות — ⛔ נאכפת במסלולי יצירה ושינוי בלבד: ⚠️ אכיפה
+// במסלול הכניסה נועלת בחוץ סיסמה תקפה שנקבעה לפני התקן.
 var PASS_SIX_RE = /^[0-9]{6}$/;
 var MSG_PASS_SIX = '⚠️ הסיסמה חייבת להיות שש ספרות';
-/*  ⛔ הודעה משלה לחסימת כתיבת המשתמש — ⚠️ `MSG_OFFLINE` הכללית אינה
- *  אומרת **מה** נחסם, ⭐ וכתיבת משתמש היא המסלול היחיד שאין לו
- *  «יסונכרן כשתחזור הרשת». */
-var MSG_OFF_USER_WRITE = '📴 אין חיבור — ניהול משתמשים דורש חיבור לאינטרנט';
-// ⭐ שתי הודעות חדשות (סבב 40) — מאז שהאימות המקוון עובר דרך הטביעה, שני
-// מצבי הכישלון האלה קיימים גם **עם** רשת. ⛔ אין לאחד אותם עם
-// `MSG_BAD_LOGIN` (סבב 40) — «אין למשתמש סיסמה מוגדרת» אינו «סיסמה
-// שגויה», והודעה מאוחדת שולחת אותו לנסות סיסמאות שוב ושוב במקום לומר לו
-// את הדבר היחיד שיפתור: שמנהל יקבע לו סיסמה.
+// ⭐ מאז שהאימות המקוון עובר דרך הטביעה, מצב הכישלון הזה קיים גם **עם**
+// רשת. ⛔ אין לאחד אותו עם «סיסמה שגויה» — «אין למשתמש סיסמה מוגדרת»
+// אינו «סיסמה שגויה», והודעה מאוחדת שולחת אותו לנסות סיסמאות שוב ושוב
+// במקום לומר לו את הדבר היחיד שיפתור: שמנהל יקבע לו סיסמה.
 var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת במערכת — יש לקבוע לו סיסמה חדשה במסך ניהול המשתמשים';
-var MSG_NO_CRYPTO    = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לאימות הסיסמה';
-// סבב 17: נוסח אחיד לארבע האפליקציות (כאן הוא כבר היה כזה).
+/* ═══ מחרוזות ההודעה המשותפות — מודול משותף (סבב 141) ════════════════════
+   ⭐ הודעה שיותר מאפליקציה אחת אומרת יושבת כאן פעם אחת, ⛔ וגופה נחתם:
+   ⚠️ עד כאן הצהירה **הערה** «מילה במילה זהות», ⛔ ואיש לא מדד — ⭐ ונמדד
+   ששני שמות נשאו טקסט אחר, ⚠️ ושאחת-עשרה הודעות נכתבו כליטרל בשניים
+   ובשלושה ריפו בלי שם כלל.
+   ⛔ **והמשפחה תשתית ולא מפקד** — ⚠️ אפליקציה שאינה אומרת הודעה נושאת
+   אותה בכל זאת: ⭐ המושג חי בארבעתן, ⛔ ורשימה שנגזרת ממי שמציג אותה
+   היום משתנה עם המוצר ⛔ ואיש אינו מיישר אותה בחזרה.
+   ⚠️ **ומה שנבדל בהחלטה אינו כאן** — ⛔ `MSG_OFFLINE` ו-`MSG_BAD_LOGIN`
+   נבדלים בגיוס בהחלטת מנהל, ⭐ והם נשארים פר-אפליקציה עם נימוקם במקומם.
+   ⛔ **וכל הודעת חסימה מתארת מצב אחר** — ⚠️ אין לאחד אותן זו עם זו ולא עם
+   «סיסמה שגויה»: ⭐ הודעה מאוחדת שולחת את המשתמש להקליד שוב ושוב סיסמה
+   נכונה, ⛔ במקום לומר לו את הדבר היחיד שיפתור — חיבור אחד.
+   ═══════════════════════════════════════════════════════════════════════ */
+var MSG_SAVED = '✅ נשמר בהצלחה';
+var MSG_SAVED_LOCAL = '✅ נשמר במכשיר — יסונכרן כשתחזור הרשת';
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
+var MSG_STALE_CODE = '⚠️ הגרסה הזו מיושנת — יש לעדכן';
+var MSG_DELETE = 'מחק';
+var MSG_FILL_ALL = '⚠️ נא למלא את כל השדות';
+var MSG_LOAD_FAIL_PRE = '⚠️ טעינת הנתונים נכשלה (';
+var MSG_MY_PASS_TITLE = '🔑 שינוי הסיסמה שלי';
+var MSG_OFFLINE_LOGIN = '📴 כניסה במצב אופליין — הנתונים יסונכרנו כשהרשת תחזור';
+var MSG_PASS_CUR_BAD = '❌ הסיסמה הנוכחית שגויה';
+var MSG_PASS_MISMATCH = '⚠️ הסיסמאות החדשות אינן זהות';
+var MSG_PASS_UPDATE_FAIL = '❌ עדכון הסיסמה נכשל: ';
+var MSG_PASS_VERIFY_FAIL = '❌ לא ניתן לאמת את הסיסמה הנוכחית: ';
+var MSG_SERVER_ERR = 'שגיאת שרת';
+var MSG_SWITCHED_TO = 'הוחלף ל';
+var MSG_OFF_UNKNOWN = '📴 אין חיבור — המשתמש הזה אינו בעותק המקומי שבמכשיר. נדרש חיבור לאינטרנט פעם אחת';
+var MSG_OFF_NO_FP = '📴 אין חיבור — המשתמש הזה טרם הוכן לכניסה ללא רשת. נדרש חיבור לאינטרנט פעם אחת';
+var MSG_OFF_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לכניסה ללא רשת';
+var MSG_NO_CRYPTO = '❌ הדפדפן אינו תומך בהצפנה הנדרשת לאימות הסיסמה';
+var MSG_OFF_USER_WRITE = '📴 אין חיבור — ניהול משתמשים דורש חיבור לאינטרנט';
+/* ═══════════════ סוף מודול מחרוזות ההודעה ══════════════════════════════ */
+/* ══ הודעות פר-אפליקציה — מה שרק כאן נאמר ═══════════════════════════════
+   ⛔ ההודעה היא קבוע ⛔ ואינה ליטרל באתר התצוגה — ⚠️ טקסט שנכתב במקום
+   שבו הוא נאמר נכתב שוב במסך הבא, ⭐ ושני ניסוחים לאותו מצב הם שני
+   מסלולים בעיני הקורא.
+   ⚠️ **ומה שיותר מאפליקציה אחת אומרת אינו כאן** — ⛔ הוא בבלוק החתום,
+   ⭐ ששם החתימה היא מה שמודד את זהות הנוסח. */
+var MSG_PERMS_CHANGED_PRE = '🔒 ההרשאות שלך עודכנו — ';
+var MSG_PERMS_CHANGED_POST = ' אינו זמין עוד';
+var MSG_USER_DISABLED_OUT = '⚠️ המשתמש הושבת — מתנתק';
+var MSG_SERVER_DOWN_LOCAL = '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך';
+var MSG_OFFLINE_LOGIN_LATER = '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור';
+var MSG_PICK_REASON = '⚠️ יש לבחור סיבה';
+var MSG_PICK_START_DATE = '⚠️ יש לבחור תאריך התחלה';
+var MSG_PICK_END_DATE = '⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום';
+var MSG_ABSENCE_DUP = '⚠️ היעדרות זהה כבר רשומה לתלמיד';
+var MSG_REASONS_SAVED = '✅ הסיבות נשמרו';
+var MSG_ACCESS_LIMITED = '🔒 גישה מוגבלת';
+var MSG_PICK_STUDENT = '⚠️ יש לבחור תלמיד';
+var MSG_USER_SAVED_NO_FP = '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת';
+var MSG_USER_SAVED = '✅ משתמש נשמר!';
+var MSG_ACTION_FAILED = '❌ הפעולה נכשלה: ';
+var MSG_NO_LINK = 'אין חיבור';
+var MSG_USER_OFF = '🔴 משתמש הושבת';
+var MSG_USER_ON = '🟢 משתמש הופעל';
+var MSG_PERMS_SAVE_FAIL = '❌ שמירת ההרשאות נכשלה: ';
+var MSG_WILL_RESEND = ' — הן יישלחו שוב כשהרשת תחזור';
+var MSG_PERMS_SAVED = '✅ הרשאות נשמרו!';
+var MSG_NO_USER_SESSION = '❌ אין משתמש מחובר';
+var MSG_FILL_ALL_X = '❌ נא למלא את כל השדות';
+var MSG_PASS_MISMATCH_X = '❌ שתי הסיסמאות החדשות אינן זהות';
+var MSG_PASS_NEEDS_NET = '❌ אין חיבור — לא ניתן לשנות סיסמה כעת';
+var MSG_USER_SWITCHED_MID = '❌ המשתמש המחובר התחלף — הסיסמה לא שונתה';
+var MSG_PASS_UPDATED_X = '✅ סיסמה עודכנה!';
+var MSG_PASS_UPDATED_NO_FP = '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת';
+var MSG_UP_SLOW_FANOUT = '⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים';
+var MSG_ROWS_SYNCED = ' רשומות סונכרנו בהצלחה';
+var MSG_CLOUD_SYNC_FAIL = '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור';
+var MSG_SOME_UNSYNCED_PRE = '⚠️ חלק מהנתונים לא סונכרנו (';
+var MSG_SOME_UNSYNCED_POST = ') — יישלחו שוב אוטומטית';
+var MSG_STUDENT_MISSING = '⚠️ תלמיד לא נמצא';
+var MSG_MARKED_INACTIVE = ' סומן כלא פעיל';
+var MSG_MARKED_ACTIVE = ' הוחזר לפעיל';
+var MSG_ADMINS_ONLY = '⚠️ גישה למנהלים בלבד';
+var MSG_STUDENTS_ADMIN = '⚙️ ניהול רשימת תלמידים';
+var MSG_MARK_INACTIVE_TITLE = '😴 סמן תלמיד כלא פעיל';
+var MSG_YEAR_ROLL_TITLE = '🔄 מעבר שנתי';
+var MSG_YEAR_ROLL_C = '• שיעור ג\'';
+var MSG_YEAR_ROLL_A = '• שיעור א\' יישאר ריק לתלמידים חדשים';
+var MSG_YEAR_ROLL_DONE = '✅ מעבר שנתי הושלם — ';
+var MSG_STUDENTS_UPDATED = ' תלמידים עודכנו';
+var MSG_STATUS_REVERTED = '✅ הסטטוס בוטל ל-';
+var MSG_STATUS_HISTORY = '📜 היסטוריית סטטוסים';
+var MSG_LIB_LOADING = '⚠️ הספרייה עדיין נטענת, נסה שוב';
+var MSG_FILE_READ_FAIL = '❌ שגיאה בקריאת הקובץ: ';
+var MSG_WIPE_STUDENTS_TITLE = '⚠️ מחיקת כלל התלמידים';
+var MSG_WIPE_STUDENTS_BODY = 'פעולה זו תמחק לצמיתות את כל התלמידים מהמערכת. לא ניתן לשחזר לאחר האישור.';
+var MSG_WIPE_STUDENTS_OK = '🗑️ כן, מחק הכל';
+var MSG_STUDENTS_WIPED = ' תלמידים נמחקו';
+var MSG_NO_STUDENTS_WIPE = 'אין תלמידים למחיקה';
+var MSG_PDF_ENGINE_OFF = '⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב';
+var MSG_PDF_BUILDING = 'מייצר PDF...';
+var MSG_PDF_FAIL = '⚠️ יצירת ה-PDF נכשלה: ';
+var MSG_SESSION_OPEN_TODAY = '⏳ סדר פתוח מהיום';
+var MSG_CLOSE_SESSION_FIRST = '⚠️ סגור את הסדר הנוכחי תחילה';
+var MSG_PICK_DATE_FIRST = '⚠️ יש לבחור תאריך תחילה';
+var MSG_SESSION_DONE = '📋 סדר כבר מולא';
+var MSG_SESSION_OPEN_ELSEWHERE = '⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
+var MSG_NEED_MINUTES = '⚠️ יש להזין מספר דקות';
+var MSG_LATE_OVER_30 = '⚠️ מעל 30 דקות איחור יש לסמן כחיסור';
+var MSG_DEL_SESSION_TITLE = '🗑️ מחיקת סדר';
+var MSG_DEL_SESSION_BODY = 'הסדר יימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.';
+var MSG_ROW_DELETED = '🗑️ רשומה נמחקה';
+var MSG_EXPORT_PDF = '📄 ייצוא PDF';
+var MSG_EXPORT_XLS = '📊 ייצוא Excel';
+var MSG_NO_EXPORT_DATA = 'אין נתונים לייצוא';
+var MSG_NO_DATA_IN_RANGE = 'אין נתונים בטווח התאריכים שנבחר';
+var MSG_EXPORT_OK = 'הייצוא הצליח';
+var MSG_EXPORT_FAIL = 'שגיאה בייצוא: ';
+var MSG_CARE_SAVED = '✅ טיפול נשמר';
+var MSG_DEL_CARE_TITLE = '🗑️ מחיקת טיפול';
+var MSG_DEL_CARE_BODY = 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.';
+var MSG_CARE_MISSING = '⚠️ הטיפול לא נמצא';
+var MSG_DELETED_MARK = '🗑️ נמחק';
+var MSG_MONTH_DETAIL = '📋 פירוט חודשי — ';
+var MSG_EDIT_MARK = '✏️ עדכן סימון';
+var MSG_ROW_MISSING = '⚠️ רשומה לא נמצאה';
+var MSG_MARK_UPDATED = '✅ סימון עודכן';
+var MSG_ABSENCE_ALERT = '⚠️ התראת חיסורים';
+var MSG_SETTINGS_SAVED = '✅ הגדרות נשמרו';
+var MSG_SLEEP_OPEN = '⏳ בדיקת שינה פתוחה';
+var MSG_CLOSE_REPORT_FIRST = '⚠️ סגור את הדו"ח הנוכחי תחילה';
+var MSG_REPORT_DONE = '📋 דו"ח כבר מולא';
+var MSG_REPORT_OPEN_ELSEWHERE = '⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
+var MSG_DEL_ROW_TITLE = '🗑️ מחיקת רשומה';
+var MSG_DEL_ROW_BODY = 'הרשומה תימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.';
+/* ══ סוף הודעות פר-אפליקציה ═════════════════════════════════════════════ */
 /* ═══ סולם נקודות השבירה — מודול משותף (סבב 97) ═══════════════════════════
    ⭐ הסולם הוא מקור האמת היחיד לנקודות השבירה בארבע האפליקציות, ⛔ והוא
    מוצהר כאן פעם אחת: ⚠️ שאילתה שערכה אינו ברשימה מפילה בשער.
@@ -1688,7 +1814,7 @@ async function ysRevalidateOfflineLogin() {
   try {
     var res = await SB.from('ys_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
     if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
-    if (!res.data) { toast('⚠️ המשתמש הושבת — מתנתק', null, 'bad'); doLogout(); return; }
+    if (!res.data) { toast(MSG_USER_DISABLED_OUT, null, 'bad'); doLogout(); return; }
     AUTH.user = res.data;
     AUTH.offlineLogin = false;
     ysUsersCacheSave(res.data);   // השורה כבר בידינו — אין צורך במשיכה נוספת
@@ -1749,7 +1875,7 @@ async function doLogin() {
     console.error('[login] unexpected:', e);
     try {
       var el = document.getElementById('auth-err');
-      if (el) { el.style.color = '#e53e3e'; el.textContent = '❌ שגיאה בלתי צפויה בכניסה: ' + ((e && e.message) || e); }
+      if (el) { el.style.color = 'var(--bad)'; el.textContent = '❌ שגיאה בלתי צפויה בכניסה: ' + ((e && e.message) || e); }
       var sp = document.getElementById('auth-spinner'); if (sp) sp.style.display = 'none';
       var bt = document.getElementById('auth-btn');     if (bt) bt.disabled = false;
     } catch (e2) {}
@@ -1766,7 +1892,7 @@ async function _doLoginInner() {
   var errEl   = document.getElementById('auth-err');
   var spinner = document.getElementById('auth-spinner');
   var btn     = document.getElementById('auth-btn');
-  function showErr(msg){ errEl.style.color='#e53e3e'; errEl.textContent=msg; spinner.style.display='none'; btn.disabled=false; }
+  function showErr(msg){ errEl.style.color='var(--bad)'; errEl.textContent=msg; spinner.style.display='none'; btn.disabled=false; }
   function startLoad(){ errEl.textContent=''; spinner.style.display='block'; btn.disabled=true; }
   function stopLoad(){ spinner.style.display='none'; btn.disabled=false; }
   function dbg(msg){ console.log('[login] '+msg); }
@@ -1877,8 +2003,8 @@ async function _doLoginInner() {
     AUTH.offlineLogin = true;
     ysUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
     ysLoginLog('login_ok', 'offline', ysLoginDetails(username));
-    toast(serverErr ? '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך'
-                    : '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור', null, 'bad');
+    toast(serverErr ? MSG_SERVER_DOWN_LOCAL
+                    : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
   var u = AUTH.user;
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
@@ -2175,11 +2301,11 @@ window._hcToggle=function(){
   if(open){
     wr.style.display='block';
     btn.textContent='✕ הסר תאריך סיום';
-    btn.style.background='#fff5f5';btn.style.color='#c53030';btn.style.borderColor='#feb2b2';
+    btn.style.background='var(--bad-soft)';btn.style.color='var(--bad)';btn.style.borderColor='var(--bad-line)';
   } else {
     wr.style.display='none';
     btn.textContent='+ הוסף תאריך סיום';
-    btn.style.background='#f4f8ff';btn.style.color='#1a3a6b';btn.style.borderColor='#d8e2f0';
+    btn.style.background='var(--card-2)';btn.style.color='var(--navy-ink)';btn.style.borderColor='var(--border)';
     // ניקוי הערכים
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
@@ -2200,7 +2326,7 @@ window._hcBuild=function(pfx,initH,tv){
       '<span class="u-fs-3 u-op-5 u-mr-2">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-9999 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
+    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-5 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
     (tv!==undefined?'<div class="u-mt-3 u-d-flex u-ai-c u-g-3"><span class="u-fs-3 u-c-text3 u-ws-nw">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-fx-1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
@@ -2257,14 +2383,14 @@ function openStatusForm(type) {
 
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
-  if (!reason) { toast('⚠️ יש לבחור סיבה', null, 'bad'); return; }
+  if (!reason) { toast(MSG_PICK_REASON, null, 'bad'); return; }
   var from = window._hcGet('sfmF');
-  if (!from) { toast('⚠️ יש לבחור תאריך התחלה', null, 'bad'); return; }
+  if (!from) { toast(MSG_PICK_START_DATE, null, 'bad'); return; }
   var toWrap = document.getElementById('sfmT_wrap');
   var toOpen = uiShown(toWrap);
   var to = toOpen ? window._hcGet('sfmT') : null;
   // שורת סיום פתוחה בלי תאריך נבחר — לא לשמור בשקט כאילו הכול תקין
-  if (toOpen && !to) { toast('⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום', null, 'bad'); return; }
+  if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'bad'); return; }
   var sid = window._statusSid;
 
   var students = getStudents();
@@ -2282,7 +2408,7 @@ function saveStudentStatus(type) {
    *  מזהים ופריט אחד — ⛔ והמסך היה מציג אותה היעדרות פעמיים,
    *  ⚠️ והמחיקה מסירה אחת מהן בלבד. */
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, ysAbsValueKey)) {
-    toast('⚠️ היעדרות זהה כבר רשומה לתלמיד', null, 'bad'); return;
+    toast(MSG_ABSENCE_DUP, null, 'bad'); return;
   }
   s.absences.push(nw);
   s.present = false;
@@ -2493,7 +2619,7 @@ window.saveAbsenceReasons = async function() {
    *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
    *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
-  toast('✅ הסיבות נשמרו');
+  toast(MSG_REASONS_SAVED);
   try {
     var r = await ysCfgSet('ys_absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
@@ -2518,7 +2644,7 @@ window.renderAbsenceReasons = function() {
       inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
       var btn = document.createElement('button');
       btn.textContent = '✕';
-      btn.style.cssText = 'background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem';
+      btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
       btn.dataset.act = 'reason-row-del';
       row.appendChild(inp);
       row.appendChild(btn);
@@ -2537,7 +2663,7 @@ window.addAbsenceReason = function(type) {
   inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
   var btn = document.createElement('button');
   btn.textContent = '✕';
-  btn.style.cssText = 'background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1rem';
+  btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
   btn.dataset.act = 'reason-row-del';
   div.appendChild(inp);
   div.appendChild(btn);
@@ -2561,7 +2687,7 @@ function showConstruction() {
 }
 
 function showDenied() {
-  openModal('🔒 גישה מוגבלת',
+  openModal(MSG_ACCESS_LIMITED,
     '<p class="u-c-text2 u-fs-3 u-ta-c">אין לך הרשאה לאפשרות זו.<br>פנה למנהל המערכת.</p>',
     '<button class="u-fx-1 btn" data-act="modal-close">הבנתי</button>');
 }
@@ -2663,7 +2789,7 @@ var DOM_ACTIONS = {
                  },
   'deact-st-confirm': function () {
                    var v = document.getElementById('deact-st-sel').value;
-                   if (!v) { toast('⚠️ יש לבחור תלמיד', null, 'bad'); return; }
+                   if (!v) { toast(MSG_PICK_STUDENT, null, 'bad'); return; }
                    window.setStudentInactive(parseInt(v));
                    closeModal();
                  },
@@ -2839,7 +2965,7 @@ async function renderUsersList() {
   try { res = await withTimeout(SB.from('ys_users').select('*').order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
-    var em = (res && res.error && (res.error.message || res.error.code)) || 'אין חיבור';
+    var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
     el.innerHTML = '<div class="u-c-bad ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
       '<div class="u-fs-2 u-c-text3 u-mt-2">' + esc(em) + '</div>' +
       '<button data-act="users-render" class="u-mt-5 u-p-4-6 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fs-3 u-cur-p">נסה שוב</button></div>';
@@ -2948,7 +3074,7 @@ async function saveUser() {
   try {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
-  if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || 'שגיאת שרת'); return; }
+  if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
   /*  ⚠️ הנפילה-חזרה על עמודות הטביעה יושבת בבלוק המשותף — ⛔ והדגל שהיא
    *  מחזירה הוא מה שמבדיל «נשמר» מ«נשמר בלי הכנה לכניסה ללא רשת». */
   if (res._noFp) noFp = true;
@@ -2956,8 +3082,8 @@ async function saveUser() {
   /*  ⛔ שתי קריאות ולא שילוש בקריאה אחת — ⚠️ סיווג ההודעה נגזר מהמסלול,
    *  ⭐ ושתי ההודעות כאן הן שני מסלולים: ⛔ קריאה אחת הייתה צובעת את שניהם
    *  באותו צבע. */
-  if (noFp) toast('⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת', null, 'bad');
-  else toast('✅ משתמש נשמר!');
+  if (noFp) toast(MSG_USER_SAVED_NO_FP, null, 'bad');
+  else toast(MSG_USER_SAVED);
   ysRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
@@ -2970,13 +3096,13 @@ async function toggleUserActive(id, current) {
   try { res = await writeUser(id, {active: !current}); }
   catch (e) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (res && res.error) {
-    toast('❌ הפעולה נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור'), null, 'bad');
+    toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
   }
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין
   ysRefreshUsersCache();
   renderUsersList();
-  toast(current ? '🔴 משתמש הושבת' : '🟢 משתמש הופעל');
+  toast(current ? MSG_USER_OFF : MSG_USER_ON);
 }
 
 // ---- טבלת הרשאות ----
@@ -3024,8 +3150,8 @@ async function savePerms() {
   var res = await ysCfgSet('ys_perms', p);
   if (res && res.error) {
     // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
-    toast('❌ שמירת ההרשאות נכשלה: ' + (res.error.message || res.error.code || 'אין חיבור') +
-          ' — הן יישלחו שוב כשהרשת תחזור', null, 'bad');
+    toast(MSG_PERMS_SAVE_FAIL + (res.error.message || res.error.code || MSG_NO_LINK) +
+          MSG_WILL_RESEND, null, 'bad');
     return;
   }
   // AUTH.perms + ys_perms_cache + רענון התצוגה — הכל דרך ysApplyPerms
@@ -3034,7 +3160,7 @@ async function savePerms() {
   // **רק** מול ys_last_changed. בלי הקידום הזה עדכון הרשאות היה נשאר בלתי-נראה
   // להם עד היציאה-והכניסה הבאה — בדיוק מה שהמעבר לרענון החי בא לפתור.
   await ysTouchLastChanged();
-  toast('✅ הרשאות נשמרו!');
+  toast(MSG_PERMS_SAVED);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -3051,7 +3177,7 @@ async function savePerms() {
 function myPasswordModal() {
   var fld = 'u-bd-2-solid-border u-r-3 u-p-5 u-ff-heebo u-fs-5 u-ta-c u-ls-4 u-w-100p u-mb-5';
   var lbl = 'u-d-block u-ta-r u-ff-heebo u-fs-3 u-c-text2 u-fw-600 u-mb-2';
-  openModal('🔑 שינוי הסיסמה שלי',
+  openModal(MSG_MY_PASS_TITLE,
     '<label class="' + lbl + '" for="mp-cur">סיסמה נוכחית</label>' +
     '<input type="password" id="mp-cur" maxlength="6" inputmode="numeric" autocomplete="current-password" class="' + fld + '">' +
     '<label class="' + lbl + '" for="mp-new">סיסמה חדשה (6 ספרות)</label>' +
@@ -3074,30 +3200,30 @@ async function changeMyPassword() {
    *  חוסר-הפעילות או כניסה מחדש בחלון הזה היו מפנות את הכתיבה לשורה של
    *  משתמש **אחר**: ⛔ הסיסמה שהוקלדה כאן הייתה נכתבת על חשבונו. */
   var _u = AUTH.user;
-  if (!_u || !_u.client_id) { toast('❌ אין משתמש מחובר', null, 'bad'); return; }
+  if (!_u || !_u.client_id) { toast(MSG_NO_USER_SESSION, null, 'bad'); return; }
   var c1 = document.getElementById('mp-cur');
   var n1 = document.getElementById('mp-new');
   var n2 = document.getElementById('mp-new2');
   if (!c1 || !n1 || !n2) { uiNoDialog('changeMyPassword', 'mp-cur'); return; }
   var oldPass = c1.value.trim(), newPass = n1.value.trim(), newPass2 = n2.value.trim();
   if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
-  if (!oldPass || !newPass || !newPass2) { toast('❌ נא למלא את כל השדות', null, 'bad'); return; }
+  if (!oldPass || !newPass || !newPass2) { toast(MSG_FILL_ALL_X, null, 'bad'); return; }
   if (!PASS_SIX_RE.test(newPass)) { toast(MSG_PASS_SIX, null, 'bad'); return; }
   // ⛔ אימות ולא נוחות (סבב 67) — שגיאת הקלדה בסיסמה החדשה נכתבת כמות
   // שהיא, ומרגע זה המשתמש נעול בחוץ בלי דרך לגלות מה הוקלד בפועל.
-  if (newPass !== newPass2) { toast('❌ שתי הסיסמאות החדשות אינן זהות', null, 'bad'); return; }
+  if (newPass !== newPass2) { toast(MSG_PASS_MISMATCH_X, null, 'bad'); return; }
   // אותה משפחה כמו renderUsersList: `var {data}` בלע את השגיאה, וכשל רשת הוצג
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
   try { chk = await withTimeout(SB.from('ys_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
-  catch (e) { toast('❌ אין חיבור — לא ניתן לשנות סיסמה כעת', null, 'bad'); return; }
-  if (chk && chk.error) { toast('❌ לא ניתן לאמת את הסיסמה הנוכחית: ' + (chk.error.message || 'שגיאת שרת'), null, 'bad'); return; }
-  if (!chk || !chk.data) { toast('❌ הסיסמה הנוכחית שגויה', null, 'bad'); return; }
+  catch (e) { toast(MSG_PASS_NEEDS_NET, null, 'bad'); return; }
+  if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
+  if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
   var vOld = await ysVerifyOffline(chk.data, oldPass);
   if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP, null, 'bad'); return; }
   if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
-  if (vOld !== 'ok')        { toast('❌ הסיסמה הנוכחית שגויה', null, 'bad'); return; }
+  if (vOld !== 'ok')        { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
   // סבב 22: הטביעה נגזרת בכל שינוי סיסמה, ⛔ ובנקודת גזירה אחת — שתי
   // גזירות מקומיות הן שני מקומות שבהם האיפוס בכשל עלול להישכח.
   var made = await ysPassFields(newPass);
@@ -3108,10 +3234,10 @@ async function changeMyPassword() {
   var upd;
     /*  ⛔ המשתמש המחובר התחלף בזמן השינוי — ⚠️ נכשל-סגור: ⭐ עדיף שינוי
    *  שלא נעשה ⛔ מאשר סיסמה שנכתבה על חשבון זר. */
-  if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast('❌ המשתמש המחובר התחלף — הסיסמה לא שונתה', null, 'bad'); return; }
+  if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast(MSG_USER_SWITCHED_MID, null, 'bad'); return; }
   try { upd = await writeUser(_u.client_id, updObj); }
   catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
-  if (upd && upd.error) { toast('❌ עדכון הסיסמה נכשל: ' + (upd.error.message || 'שגיאת שרת'), null, 'bad'); return; }
+  if (upd && upd.error) { toast(MSG_PASS_UPDATE_FAIL + (upd.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
@@ -3122,8 +3248,8 @@ async function changeMyPassword() {
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
    *  ⭐ והשדות חדלים להתקיים איתו. */
   closeModal();
-  if (made.pass_fp) toast('✅ סיסמה עודכנה!');
-  else toast('⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת', null, 'bad');
+  if (made.pass_fp) toast(MSG_PASS_UPDATED_X);
+  else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');
 }
 
 
@@ -3502,16 +3628,16 @@ function lsAlert(msg) {
     el = document.createElement('div');
     el.id = 'ls-alert';
     el.setAttribute('role', 'alert');
-    el.style.cssText = 'position:fixed;z-index:2147483000;left:0;right:0;top:0;background:#b3261e;' +
-      'color:#fff;direction:rtl;text-align:center;font:700 14px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;' +
-      'padding:12px 46px;box-shadow:0 2px 14px rgba(0,0,0,.35)';
+    el.style.cssText = 'position:fixed;z-index:2147483000;left:0;right:0;top:0;background:var(--alert);' +
+      'color:var(--on-alert);direction:rtl;text-align:center;font:700 14px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;' +
+      'padding:12px 46px;box-shadow:0 2px 14px var(--sh-3)';
     var sp = document.createElement('span');
     sp.id = 'ls-alert-msg';
     var b = document.createElement('button');
     b.type = 'button';
     b.textContent = '✕';
     b.setAttribute('aria-label', 'סגור');
-    b.style.cssText = 'position:absolute;right:10px;top:9px;background:transparent;border:0;color:#fff;' +
+    b.style.cssText = 'position:absolute;right:10px;top:9px;background:transparent;border:0;color:var(--on-alert);' +
       'font:700 17px/1 sans-serif;cursor:pointer;padding:4px 8px';
     b.dataset.act = 'ls-alert-close';
     el.appendChild(sp); el.appendChild(b);
@@ -3995,7 +4121,6 @@ window.lsBootDeferred = lsBootDeferred;
 window.lsSweepVerified = lsSweepVerified;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
 
-var MSG_STALE_CODE = '⚠️ הגרסה הזו מיושנת — יש לעדכן';
 /* ═══ האזנת הסכימה — מודול משותף (סבב 91) ═════════════════════════════════
 /*  ⛔ **שלוש תשובות מסד מעידות שהקוד ישן מהסכימה** — טבלה שאינה קיימת
  *  (`42P01`) · עמודה שאינה קיימת (`42703`) · ו-404 על טבלה: ⚠️ שלושתן
@@ -4086,7 +4211,7 @@ function busy(btn, on, label) {
   if (!btn) return;
   if (on) {
     if (btn._busyTxt === undefined) btn._busyTxt = btn.innerHTML;
-    btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'wait';
+    btn.disabled = true; btn.style.opacity = 'var(--op-4)'; btn.style.cursor = 'wait';
     btn.innerHTML = label || '⏳ שומר…';
   } else {
     btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = '';
@@ -4826,18 +4951,18 @@ function pendEnsureStyle() {
   var s = document.createElement('style');
   s.id = 'pend-style';
   s.textContent =
-    '.pend-tag{display:inline-block;background:#fde68a;color:#78350f;border:1px solid #f59e0b;' +
-    'border-radius:999px;padding:0 7px;font-size:.68rem;font-weight:700;line-height:1.6;' +
+    '.pend-tag{display:inline-block;background:var(--warn-soft);color:var(--warn);border:1px solid var(--warn);' +
+    'border-radius:999px;padding:0 7px;font-size:.68rem;font-weight:700;line-height:var(--lh-4);' +
     'white-space:nowrap;vertical-align:middle;margin:0 4px}' +
-    '.pend-tag.late{background:#fecaca;color:#7f1d1d;border-color:#dc2626}' +
+    '.pend-tag.late{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}' +
     '#pend-bar{position:fixed;z-index:2147482000;left:0;right:0;bottom:0;padding:8px 12px;' +
-    'text-align:center;direction:rtl;font:600 13px/1.5 inherit;color:#3d2c00;background:#ffd88a;' +
-    'box-shadow:0 -2px 10px rgba(0,0,0,.18)}' +
-    '#pend-bar.late{background:#ffb4ab;color:#5c1a12}' +
+    'text-align:center;direction:rtl;font:600 13px/1.5 inherit;color:var(--warn);background:var(--warn-soft);' +
+    'box-shadow:0 -2px 10px var(--sh-1)}' +
+    '#pend-bar.late{background:var(--bad-soft);color:var(--bad)}' +
     '#pend-alert{position:fixed;z-index:2147483000;left:0;right:0;top:0;padding:10px 14px;' +
-    'direction:rtl;font:700 13px/1.6 inherit;color:#fff;background:#b91c1c;' +
-    'box-shadow:0 2px 10px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center;justify-content:center}' +
-    '#pend-alert button{background:rgba(255,255,255,.25);color:#fff;border:1px solid #fff;' +
+    'direction:rtl;font:700 13px/1.6 inherit;color:var(--on-alert);background:var(--alert);' +
+    'box-shadow:0 2px 10px var(--sh-2);display:flex;gap:10px;align-items:center;justify-content:center}' +
+    '#pend-alert button{background:var(--fill-dark);color:var(--on-dark);border:1px solid var(--on-dark);' +
     'border-radius:6px;padding:2px 10px;font:inherit;cursor:pointer}';
   (document.head || document.documentElement).appendChild(s);
 }
@@ -5078,16 +5203,16 @@ function _lkStyle() {
   var s = document.createElement('style');
   s.id = 'lk-css';
   s.textContent =
-    '#lk-warn{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9998;' +
+    '#lk-warn{position:fixed;inset:0;background:var(--veil-deep);z-index:var(--z-7);' +
     'display:flex;align-items:center;justify-content:center;font:inherit}' +
     '#lk-warn.lk-hidden{display:none}' +
-    '#lk-warn .lk-box{background:#fff;color:#1a2340;border-radius:14px;' +
+    '#lk-warn .lk-box{background:var(--card);color:var(--text);border-radius:14px;' +
     'padding:28px 24px;text-align:center;max-width:280px;width:90%}' +
     '#lk-warn .lk-ico{font-size:2rem;margin-bottom:6px}' +
     '#lk-warn .lk-ttl{font-weight:700;font-size:1.05rem;margin-bottom:8px}' +
-    '#lk-warn .lk-txt{font-size:.88rem;opacity:.75;margin-bottom:18px;line-height:1.6}' +
+    '#lk-warn .lk-txt{font-size:.88rem;opacity:var(--op-6);margin-bottom:18px;line-height:var(--lh-4)}' +
     '#lk-warn button{width:100%;border:0;border-radius:10px;padding:11px 16px;' +
-    'font:inherit;font-weight:600;cursor:pointer;background:#1a3a6b;color:#fff}';
+    'font:inherit;font-weight:600;cursor:pointer;background:var(--brand);color:var(--on-brand)}';
   (document.head || document.documentElement).appendChild(s);
 }
 function _lkWarnEl() {
@@ -6246,9 +6371,9 @@ async function ysFlushQueue() {
     catch(e){
       console.warn('[sync] חותמת ys_last_changed לא נכתבה:', e && e.message);
       try { ysSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
-      toast('⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים', null, 'bad');
+      toast(MSG_UP_SLOW_FANOUT, null, 'bad');
     }
-    toast('☁️ ' + nOk + ' רשומות סונכרנו בהצלחה');
+    toast('☁️ ' + nOk + MSG_ROWS_SYNCED);
   }
   lsSet(_YS_Q_KEY, JSON.stringify(failed));
   ysUpdateQueueBadge();
@@ -7142,7 +7267,7 @@ function toast(msg, dur, kind) {
   el.textContent = msg;
   box.appendChild(el);
   setTimeout(function () {
-    el.style.transition = 'opacity .25s'; el.style.opacity = '0';
+    el.style.transition = 'opacity var(--dur-4)'; el.style.opacity = '0';
     setTimeout(function () { el.remove(); }, 260);
   }, dur || TOAST_DEFAULT_MS);
 }
@@ -7584,8 +7709,8 @@ async function ysPushToCloud() {
     if (!_ysPushWarned) {
       _ysPushWarned = true;
       toast(pushed === 0
-        ? '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור'
-        : '⚠️ חלק מהנתונים לא סונכרנו (' + failed.join(', ') + ') — יישלחו שוב אוטומטית', null, 'bad');
+        ? MSG_CLOUD_SYNC_FAIL
+        : MSG_SOME_UNSYNCED_PRE + failed.join(', ') + MSG_SOME_UNSYNCED_POST, null, 'bad');
     }
   } else if (_ysPushWarned) {
     _ysPushWarned = false;
@@ -7842,14 +7967,14 @@ async function ensureFirstAdmin() {
     if (tableError) {
       if (e) {
         e.textContent = 'טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
-        e.style.color = '#b7791f';
+        e.style.color = 'var(--warn)';
       }
       return;
     }
     if (!error && (!data || data.length === 0)) {
       if (e) {
         e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
-        e.style.color = '#b7791f';
+        e.style.color = 'var(--warn)';
       }
     }
   } catch(e) { console.error('setup error:', e); }
@@ -8090,7 +8215,7 @@ function ysCycleFor(cls, now) {
 window.setStudentInactive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
-  if(!s){toast('⚠️ תלמיד לא נמצא', null, 'bad');return;}
+  if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=false;
   // ⚠️ המחזור נרשם רק כשאין לו ערך ⛔ ואינו נדרס — ⭐ תלמיד שהמנהל רשם לו
   //    מחזור ידנית והוחזר לפעיל וחזר והושבת היה מקבל את המחזור של השנה
@@ -8100,18 +8225,18 @@ window.setStudentInactive = function(sid){
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+' סומן כלא פעיל');
+  toast('✅ '+s.name+MSG_MARKED_INACTIVE);
 };
 
 window.setStudentActive = function(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
-  if(!s){toast('⚠️ תלמיד לא נמצא', null, 'bad');return;}
+  if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=true;
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+' הוחזר לפעיל');
+  toast('✅ '+s.name+MSG_MARKED_ACTIVE);
 };
 
 // -------- דיאלוג ניהול רשימה --------
@@ -8126,7 +8251,7 @@ var MANAGE_PICK = {
   'year':   function () { window.openYearTransitionDlg(); }
 };
 window.openManageListDlg = function(){
-  if(!isAdmin()){toast('⚠️ גישה למנהלים בלבד', null, 'bad');return;}
+  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'bad');return;}
   var ITEMS=[
     {icon:'➕',label:'הוסף תלמיד',k:'add'},
     {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
@@ -8141,7 +8266,7 @@ window.openManageListDlg = function(){
       '<span class="u-fs-5 u-w-28 u-ta-c">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
-  openModal('⚙️ ניהול רשימת תלמידים','<div class="u-m-0-n7-n7">'+rows+'</div>','');
+  openModal(MSG_STUDENTS_ADMIN,'<div class="u-m-0-n7-n7">'+rows+'</div>','');
 };
 
 // -------- דיאלוג: סמן תלמיד כלא פעיל --------
@@ -8150,7 +8275,7 @@ window.openDeactivateStudentDlg = function(){
   var opts=students.map(function(s){
     return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
-  openModal('😴 סמן תלמיד כלא פעיל',
+  openModal(MSG_MARK_INACTIVE_TITLE,
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="u-w-100p u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-mb-6 u-dir-rtl">'+
       '<option value="">-- בחר תלמיד --</option>'+opts+
     '</select>'+
@@ -8163,13 +8288,13 @@ window.openDeactivateStudentDlg = function(){
 window.openYearTransitionDlg = function(){
   var _gc=ysCycleFor('g');
   var gYr=_gc?(' (מחזור '+_gc+')'):'';
-  openModal('🔄 מעבר שנתי',
+  openModal(MSG_YEAR_ROLL_TITLE,
     '<div class="u-fs-3 u-c-text2 u-mb-6 u-lh-16">'+
       '<strong class="u-c-bad">⚠️ פעולה בלתי הפיכה!</strong><br>'+
-      '• שיעור ג\''+gYr+' → יועברו ל<strong>לא פעילים</strong><br>'+
+      MSG_YEAR_ROLL_C+gYr+' → יועברו ל<strong>לא פעילים</strong><br>'+
       '• שיעור ב\' → שיעור ג\'<br>'+
       '• שיעור א\' → שיעור ב\'<br>'+
-      '• שיעור א\' יישאר ריק לתלמידים חדשים'+
+      MSG_YEAR_ROLL_A+
     '</div>'+
     '<div class="u-fs-3 u-bg-bad-soft u-r-3 u-p-4-5 u-c-bad">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>'+
@@ -8195,7 +8320,7 @@ window.doYearTransition = function(){
   saveStudents(students);
   schedulePush();
   filterClass('all');
-  toast('✅ מעבר שנתי הושלם — '+changed+' תלמידים עודכנו');
+  toast(MSG_YEAR_ROLL_DONE+changed+MSG_STUDENTS_UPDATED);
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -8334,7 +8459,7 @@ window.cancelStudentStatus = function() {
   renderStudents();
   ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
   closeModal();
-  toast('✅ הסטטוס בוטל ל-' + s.name);
+  toast(MSG_STATUS_REVERTED + s.name);
 };
 
 window.cancelSingleAbsence = function(absenceId) {
@@ -8358,7 +8483,7 @@ window.cancelSingleAbsence = function(absenceId) {
     window.openCurrentStatusModal();
   } else {
     closeModal();
-    toast('✅ הסטטוס בוטל ל-' + s.name);
+    toast(MSG_STATUS_REVERTED + s.name);
   }
 };
 
@@ -8384,7 +8509,7 @@ function studentFormHtml(sid){
  *  ששרד את הפינוי ואת מה שהמכשיר הזה במקרה ראה, ⭐ וסטטוס שנרשם ממכשיר אחר
  *  ולא הגיע לכאן היה נעדר מהרשימה בלי שדבר יסמן שהוא חסר. */
 window.openStatusHistory = async function (sid) {
-  openModal('📜 היסטוריית סטטוסים',
+  openModal(MSG_STATUS_HISTORY,
     '<div class="u-p-7 u-ta-c u-c-text3 u-fs-3">טוען מהענן…</div>', '');
   var rows = null, failed = false;
   try { rows = await ysCloudGet('ys_students_rows'); } catch (e) { failed = true; }
@@ -8530,7 +8655,7 @@ function ysTombstoneStudents(ids){
    ══════════════════════════════════════════════════════════════════════════ */
 window.importStudentsFromFile = function(input) {
   if (!input.files || !input.files[0]) return;
-  if (typeof XLSX === 'undefined') { toast('⚠️ הספרייה עדיין נטענת, נסה שוב', null, 'bad'); return; }
+  if (typeof XLSX === 'undefined') { toast(MSG_LIB_LOADING, null, 'bad'); return; }
   var file = input.files[0];
   input.value = ''; // אפשר לייבא את אותו קובץ שוב
   var isCsv = file.name.toLowerCase().endsWith('.csv');
@@ -8613,7 +8738,7 @@ window.importStudentsFromFile = function(input) {
         (body || '<div>הכל תקין!</div>') + '</div>',
         '<button class="u-fx-1 btn" data-act="modal-close">סגור</button>');
     } catch(err) {
-      toast('❌ שגיאה בקריאת הקובץ: ' + (err.message||err), null, 'bad');
+      toast(MSG_FILE_READ_FAIL + (err.message||err), null, 'bad');
     }
   };
   if (isCsv) { reader.readAsText(file, 'UTF-8'); } else { reader.readAsArrayBuffer(file); }
@@ -8622,9 +8747,9 @@ window.importStudentsFromFile = function(input) {
 // ---- מחיקת כלל התלמידים ----
 window.openDeleteAllModal = function() {
   if (checkLoginNeeded()) return;
-  ask('⚠️ מחיקת כלל התלמידים',
-      'פעולה זו תמחק לצמיתות את כל התלמידים מהמערכת. לא ניתן לשחזר לאחר האישור.',
-      '🗑️ כן, מחק הכל').then(function (yes) { if (yes) window.confirmDeleteAll(); });
+  ask(MSG_WIPE_STUDENTS_TITLE,
+      MSG_WIPE_STUDENTS_BODY,
+      MSG_WIPE_STUDENTS_OK).then(function (yes) { if (yes) window.confirmDeleteAll(); });
 };
 
 window.confirmDeleteAll = function() {
@@ -8633,7 +8758,7 @@ window.confirmDeleteAll = function() {
   var n = ysTombstoneStudents(getStudents().map(function(s){ return s.id; }));
   schedulePush();
   renderStudents();
-  toast(n ? ('🗑️ ' + n + ' תלמידים נמחקו') : 'אין תלמידים למחיקה');
+  toast(n ? ('🗑️ ' + n + MSG_STUDENTS_WIPED) : MSG_NO_STUDENTS_WIPE);
 };
 
 window.downloadImportTemplate = function() {
@@ -8655,8 +8780,8 @@ window.downloadImportTemplate = function() {
 
 window.printStudents = function() {
   try {
-    if (typeof pdfMake === 'undefined') { toast('⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב', null, 'bad'); return; }
-    toast('מייצר PDF...');
+    if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
+    toast(MSG_PDF_BUILDING);
     var students = ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
@@ -8694,7 +8819,7 @@ window.printStudents = function() {
     pdfMake.createPdf(docDef).download('nochechut-'+new Date().toISOString().split('T')[0]+'.pdf');
   } catch(e) {
     console.error('[PDF:ERR]', e);
-    toast('⚠️ יצירת ה-PDF נכשלה: ' + (e && e.message ? e.message : e), null, 'bad');
+    toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'bad');
   }
 }
 // ============ סוף מודול התלמידים ============
@@ -8977,7 +9102,7 @@ window.loadAttend = async function() {
     /*  ⚠️ ההצעה אינה דורסת מודאל פתוח — ⛔ מיכל אחד, ⭐ ומי שכבר עומד
      *  בדיאלוג אחר לא ימצא אותו מוחלף מתחת לידיו. */
     if(_openRec && !modalOpen()) {
-      openModal('⏳ סדר פתוח מהיום',
+      openModal(MSG_SESSION_OPEN_TODAY,
         '<p class="u-fs-3 u-c-text2 u-ta-c">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">אחר כך</button>'+
         '<button data-act="at-resume-go" data-id="'+esc(_openRec.id)+'" class="u-fx-1 u-p-4 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">▶ המשך</button>');
@@ -9003,9 +9128,9 @@ function atFillSessionBtns() {
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all .18s';
-    btn.onmouseover=function(){this.style.background='#dbe4f7';};
-    btn.onmouseout=function(){this.style.background='#eef2fa';};
+      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
+    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
+    btn.onmouseout=function(){this.style.background='var(--card-2)';};
     btn.dataset.act='at-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
@@ -9286,9 +9411,9 @@ function slAdoptSession(rec) {
 // פתיחת סדר חדש
 window.atOpenSession = async function(sessId, sessName, btn) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
-  if(window._atCurrentSessionId){toast('⚠️ סגור את הסדר הנוכחי תחילה', null, 'bad');return;}
+  if(window._atCurrentSessionId){toast(MSG_CLOSE_SESSION_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
-  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה', null, 'bad');return;}
+  if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
   /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה (סבב 89) — ⚠️ הנימוק המדוד: הפתיחה
    *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
@@ -9311,7 +9436,7 @@ window.atOpenSession = async function(sessId, sessName, btn) {
   var allData=window._atData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
-    openModal('📋 סדר כבר מולא',
+    openModal(MSG_SESSION_DONE,
       '<p class="u-fs-3 u-c-text2 u-ta-c">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>'+
       '<button data-act="at-resume-go" data-id="'+esc(existing.id)+'" class="u-fx-1 u-p-4 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">ערוך</button>');
@@ -9414,7 +9539,7 @@ function atMarkDirty() {
                                  window._atPendingRec.date_iso,window._atPendingRec.id);
     if(_atDup){
       atAdoptSession(_atDup);
-      toast('⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת', null, 'bad');
+      toast(MSG_SESSION_OPEN_ELSEWHERE, null, 'bad');
     } else if(!window._atData.some(function(r){return r&&idEq(r.id,window._atPendingRec.id);})) {
       window._atData.push(window._atPendingRec);
     }
@@ -9471,7 +9596,7 @@ window.atCancelStudentStatusFromReg = function(sid) {
   atMarkDirty();
   window.atRenderStudents();
   renderStudents();
-  toast('✅ הסטטוס בוטל ל-'+s.name);
+  toast(MSG_STATUS_REVERTED+s.name);
 };
 
 // החלת סימון (אחרי אישור אם נדרש)
@@ -9498,8 +9623,8 @@ window.atConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('at-min-'+sid);
   var val=readNum(inp, 0);
-  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות', null, 'bad');return;}
-  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור', null, 'bad');return;}
+  if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'bad');return;}
+  if(val>30){toast(MSG_LATE_OVER_30, null, 'bad');return;}
   window.atSetLateMin(sid,val);
   delete window._atPending[s];
   window.atRenderStudents();
@@ -9785,7 +9910,7 @@ window.atArcFilter = async function(all) {
 };
 
 window.atDeleteSession = function(id) {
-  ask('🗑️ מחיקת סדר', 'הסדר יימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.', 'מחק')
+  ask(MSG_DEL_SESSION_TITLE, MSG_DEL_SESSION_BODY, MSG_DELETE)
     .then(function (yes) { if (yes) window.atDeleteSessionConfirmed(id); });
 };
 
@@ -9797,7 +9922,7 @@ window.atDeleteSessionConfirmed = async function(id) {
   await atSaveData(data);
   window.atRenderArchive();
   atRenderTodaySessions();   // רענן גם את רשימת הסדרים בלשונית רישום
-  toast('🗑️ רשומה נמחקה');
+  toast(MSG_ROW_DELETED);
 };
 
 // -------- ייצוא — דיאלוג סינון --------
@@ -9805,7 +9930,7 @@ window.atDeleteSessionConfirmed = async function(id) {
    נוכחות — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
 window.atShowExportDialog = function(type) {
-  openModal(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel',
+  openModal(type==='pdf'?MSG_EXPORT_PDF:MSG_EXPORT_XLS,
      '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+window._hcBuild('expF',null)+'</div>'
     +'<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
     +'<div class="u-fs-3 u-c-text3 u-ta-c">השאר ריק לייצוא כל הנתונים</div>',
@@ -9827,11 +9952,11 @@ window.atExportExcel = async function(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
-    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
-    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
+    if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -9871,19 +9996,19 @@ window.atExportExcel = async function(fromIso,toIso) {
     a.href=url; a.download='sdariim-'+new Date().toISOString().split('T')[0]+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-    toast('הייצוא הצליח');
-  } catch(e){console.error('[Excel ERROR]',e); toast('שגיאה בייצוא: '+e.message, null, 'bad');}
+    toast(MSG_EXPORT_OK);
+  } catch(e){console.error('[Excel ERROR]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
 window.atExportPdf = async function(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
-    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
-    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
+    if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName=ysPdfFont();
@@ -9919,7 +10044,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
     pdfMake.createPdf(dd).download('sdariim-'+new Date().toISOString().split('T')[0]+'.pdf');
-  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
+  } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 // -------- השגחה --------
 // ניווט חודשי
@@ -10116,11 +10241,11 @@ window.atAddTreat = async function(sid) {
   await atSaveTreats(treats);
   if(noteEl) noteEl.value='';
   window.atRenderSupervision();
-  toast('✅ טיפול נשמר');
+  toast(MSG_CARE_SAVED);
 };
 
 window.atDeleteTreat = function(id) {
-  ask('🗑️ מחיקת טיפול', 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.', 'מחק')
+  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE)
     .then(function (yes) { if (yes) window.atDeleteTreatConfirmed(id); });
 };
 
@@ -10134,11 +10259,11 @@ window.atDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast('⚠️ הטיפול לא נמצא', null, 'bad'); window.atRenderSupervision(); return; }
+  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); window.atRenderSupervision(); return; }
   pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
   window.atRenderSupervision();
-  toast('🗑️ נמחק');
+  toast(MSG_DELETED_MARK);
 };
 
 // -------- פירוט חודשי לתלמיד (🔍) --------
@@ -10170,7 +10295,7 @@ window.atSupDetail = function(sid) {
     });
   }
 
-  openModal('📋 פירוט חודשי — '+name,
+  openModal(MSG_MONTH_DETAIL+name,
     '<div class="u-maxh-60vh u-ovy-a">'+rows+'</div>','');
 };
 
@@ -10189,7 +10314,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
     return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' u-p-4-6 u-r-3 u-ff-heebo u-fs-3 u-fw-700 u-cur-p u-ws-nw">'+cd.lbl+'</button>';
   }).join('');
-  openModal('✏️ עדכן סימון',
+  openModal(MSG_EDIT_MARK,
     '<div class="u-d-flex u-fwr-wrap u-g-4">'+btns+'</div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>');
 };
@@ -10197,7 +10322,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
 window.atEditMark = async function(recId, sid, newCode) {
   var data=await atLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
-  if(!rec){toast('⚠️ רשומה לא נמצאה', null, 'bad');return;}
+  if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
@@ -10215,7 +10340,7 @@ window.atEditMark = async function(recId, sid, newCode) {
   atRenderTodaySessions();
   window.atRenderArchive();
   window.atRenderSupervision();
-  toast('✅ סימון עודכן');
+  toast(MSG_MARK_UPDATED);
   await _p;
 };
 
@@ -10259,7 +10384,7 @@ function atCheckAlert() {
       (s.lateMin>=300?'<span class="u-c-warn u-mr-3"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
   }).join('');
-  openModal('⚠️ התראת חיסורים',
+  openModal(MSG_ABSENCE_ALERT,
     '<p class="u-fs-3 u-c-text2 u-mb-6 u-ta-c">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
     '<div class="u-maxh-220 u-ovy-a">'+list+'</div>',
     '<button data-act="modal-close" class="u-fx-1 u-bg-navy-fill u-c-on-brand u-bd-none u-r-4 u-p-5-7 u-ff-heebo u-fs-4 u-cur-p">הבנתי</button>');
@@ -10355,7 +10480,7 @@ window.atSaveSettingsCfg = async function() {
   window._atCfg=null; // כפיית טעינה מחדש
   await atSaveCfg(cfg);
   window._atCfg=cfg;
-  toast('✅ הגדרות נשמרו');
+  toast(MSG_SETTINGS_SAVED);
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -10591,7 +10716,7 @@ window.loadSleep = async function() {
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
   try {
     if(_openRecSl && !modalOpen()) {
-      openModal('⏳ בדיקת שינה פתוחה',
+      openModal(MSG_SLEEP_OPEN,
         '<p class="u-fs-3 u-c-text2 u-ta-c">'+esc(_openRecSl.session)+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">אחר כך</button>'+
         '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.id)+'" class="u-fx-1 u-p-4 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">▶ המשך</button>');
@@ -10616,9 +10741,9 @@ function slFillSessionBtns() {
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all .18s';
-    btn.onmouseover=function(){this.style.background='#dbe4f7';};
-    btn.onmouseout=function(){this.style.background='#eef2fa';};
+      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
+    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
+    btn.onmouseout=function(){this.style.background='var(--card-2)';};
     btn.dataset.act='sl-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
@@ -10770,9 +10895,9 @@ window.slEditSession = async function(recId) {
 };
 
 window.slOpenSession = async function(sessId, sessName, btn) {
-  if(window._slCurrentSessionId){toast('⚠️ סגור את הדו"ח הנוכחי תחילה', null, 'bad');return;}
+  if(window._slCurrentSessionId){toast(MSG_CLOSE_REPORT_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
-  if(!dateIso){toast('⚠️ יש לבחור תאריך תחילה', null, 'bad');return;}
+  if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
   // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
   busy(btn, true, '⏳ בודק…');
@@ -10782,7 +10907,7 @@ window.slOpenSession = async function(sessId, sessName, btn) {
   var allData=window._slData||[];
   var existing=atFindLiveSession(allData,sessName,dateIso);
   if(existing){
-    openModal('📋 דו"ח כבר מולא',
+    openModal(MSG_REPORT_DONE,
       '<p class="u-fs-3 u-c-text2 u-ta-c">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>'+
       '<button data-act="sl-resume-go" data-id="'+esc(existing.id)+'" class="u-fx-1 u-p-4 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">ערוך</button>');
@@ -10875,7 +11000,7 @@ function slMarkDirty() {
                                  window._slPendingRec.date_iso,window._slPendingRec.id);
     if(_slDup){
       slAdoptSession(_slDup);
-      toast('⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת', null, 'bad');
+      toast(MSG_REPORT_OPEN_ELSEWHERE, null, 'bad');
     } else if(!window._slData.some(function(r){return r&&idEq(r.id,window._slPendingRec.id);})) {
       window._slData.push(window._slPendingRec);
     }
@@ -10931,7 +11056,7 @@ window.slCancelStudentStatusFromReg = function(sid) {
   slMarkDirty();
   window.slRenderStudents();
   renderStudents();
-  toast('✅ הסטטוס בוטל ל-'+s.name);
+  toast(MSG_STATUS_REVERTED+s.name);
 };
 
 window.slApplyMark = function(sid, code) {
@@ -10954,8 +11079,8 @@ window.slConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('sl-min-'+sid);
   var val=readNum(inp, 0);
-  if(!val||val<=0){toast('⚠️ יש להזין מספר דקות', null, 'bad');return;}
-  if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור', null, 'bad');return;}
+  if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'bad');return;}
+  if(val>30){toast(MSG_LATE_OVER_30, null, 'bad');return;}
   window.slSetLateMin(sid,val);
   delete window._slPending[s];
   window.slRenderStudents();
@@ -11245,7 +11370,7 @@ window.slArcFilter = async function(all) {
 };
 
 window.slDeleteSession = function(id) {
-  ask('🗑️ מחיקת רשומה', 'הרשומה תימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.', 'מחק')
+  ask(MSG_DEL_ROW_TITLE, MSG_DEL_ROW_BODY, MSG_DELETE)
     .then(function (yes) { if (yes) window.slDeleteSessionConfirmed(id); });
 };
 
@@ -11257,7 +11382,7 @@ window.slDeleteSessionConfirmed = async function(id) {
   await slSaveData(data);
   window.slRenderArchive();
   slRenderTodaySessions();
-  toast('🗑️ רשומה נמחקה');
+  toast(MSG_ROW_DELETED);
 };
 
 // -------- ייצוא --------
@@ -11265,7 +11390,7 @@ window.slDeleteSessionConfirmed = async function(id) {
    שינה — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
 window.slShowExportDialog = function(type) {
-  openModal(type==='pdf'?'📄 ייצוא PDF':'📊 ייצוא Excel',
+  openModal(type==='pdf'?MSG_EXPORT_PDF:MSG_EXPORT_XLS,
     '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+window._hcBuild('slExpF',null)+'</div>'+
     '<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+window._hcBuild('slExpT',null)+'</div>'+
     '<div class="u-fs-3 u-c-text3 u-ta-c">השאר ריק לייצוא כל הנתונים</div>',
@@ -11287,11 +11412,11 @@ window.slExportExcel = async function(fromIso,toIso) {
   try {
     var data=await slLoadData();
     var students=getStudents();
-    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
-    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
+    if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
@@ -11330,19 +11455,19 @@ window.slExportExcel = async function(fromIso,toIso) {
     a.href=url; a.download='shinah-'+new Date().toISOString().split('T')[0]+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-    toast('הייצוא הצליח');
-  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
+    toast(MSG_EXPORT_OK);
+  } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
 window.slExportPdf = async function(fromIso,toIso) {
   try {
     var data=await slLoadData();
     var students=getStudents();
-    if(!data||!data.length){toast('אין נתונים לייצוא');return;}
+    if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
     if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
-    if(!data.length){toast('אין נתונים בטווח התאריכים שנבחר');return;}
+    if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
     var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
     var NB=' ';
     var fontName=ysPdfFont();
@@ -11379,7 +11504,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
     pdfMake.createPdf(dd).download('shinah-'+new Date().toISOString().split('T')[0]+'.pdf');
-  } catch(e){toast('שגיאה בייצוא: '+e.message, null, 'bad');}
+  } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
 // -------- השגחה --------
@@ -11558,11 +11683,11 @@ window.slAddTreat = async function(sid) {
   await slSaveTreats(treats);
   if(noteEl) noteEl.value='';
   window.slRenderSupervision();
-  toast('✅ טיפול נשמר');
+  toast(MSG_CARE_SAVED);
 };
 
 window.slDeleteTreat = function(id) {
-  ask('🗑️ מחיקת טיפול', 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.', 'מחק')
+  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE)
     .then(function (yes) { if (yes) window.slDeleteTreatConfirmed(id); });
 };
 
@@ -11575,11 +11700,11 @@ window.slDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast('⚠️ הטיפול לא נמצא', null, 'bad'); window.slRenderSupervision(); return; }
+  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); window.slRenderSupervision(); return; }
   pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await slSaveTreats(treats);
   window.slRenderSupervision();
-  toast('🗑️ נמחק');
+  toast(MSG_DELETED_MARK);
 };
 
 // -------- פירוט חודשי לתלמיד --------
@@ -11612,7 +11737,7 @@ window.slSupDetail = function(sid) {
     });
   }
 
-  openModal('📋 פירוט חודשי — '+name,
+  openModal(MSG_MONTH_DETAIL+name,
     '<div class="u-maxh-60vh u-ovy-a">'+rows+'</div>','');
 };
 
@@ -11631,7 +11756,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
     return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' u-p-4-6 u-r-3 u-ff-heebo u-fs-3 u-fw-700 u-cur-p u-ws-nw">'+cd.lbl+'</button>';
   }).join('');
-  openModal('✏️ עדכן סימון',
+  openModal(MSG_EDIT_MARK,
     '<div class="u-d-flex u-fwr-wrap u-g-4">'+btns+'</div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>');
 };
@@ -11639,7 +11764,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
 window.slEditMark = async function(recId, sid, newCode) {
   var data=await slLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
-  if(!rec){toast('⚠️ רשומה לא נמצאה', null, 'bad');return;}
+  if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].s=newCode;
@@ -11656,7 +11781,7 @@ window.slEditMark = async function(recId, sid, newCode) {
   slRenderTodaySessions();
   window.slRenderArchive();
   window.slRenderSupervision();
-  toast('✅ סימון עודכן');
+  toast(MSG_MARK_UPDATED);
   await _p;
 };
 
@@ -11707,7 +11832,7 @@ window.slSaveSettingsCfg = async function() {
   window._slCfg=null;
   await slSaveCfg(cfg);
   window._slCfg=cfg;
-  toast('✅ הגדרות נשמרו');
+  toast(MSG_SETTINGS_SAVED);
 };
 // ==================== סוף מודול זמן שינה ====================
 
