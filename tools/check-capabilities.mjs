@@ -6751,7 +6751,8 @@ const GATES = {
   141: { claims: { 'check-capabilities': 'colPatternGaps', test_dbfacts: 'ה. דפוס עמודות אחיד' } },
   142: { claim: 'ו. טבלה מקבילה' },
   143: { claim: 'ב. חתימת סכימה' },
-  144: { claim: ['א. כל שאילתה נפתרת', 'ב. כל שאילתה מול הסכימה המוצהרת'] },
+  144: { claims: { test_dbscan: ['א. כל שאילתה נפתרת', 'ב. כל שאילתה מול הסכימה המוצהרת'],
+                    test_dbfacts: ['טו. מראת הסכימה', 'טז. שאריות במסד'] } },
   163: { claim: 'type=password' },
   78: { claim: 'aria-label' },
   /*  ⛔ מנוע התאריך העברי (סבב 107) — ⚠️ הנימוק הישן הצביע על `test_date`
@@ -7085,7 +7086,7 @@ if (CORE) {
   /*  ⛔ מודול משותף אינו שער (סבב 111) — ⚠️ הוא **נקרא** משערים ואינו רץ
    *  בעצמו, ⭐ ואינו אוכף שורה: ⛔ ו-`ROWS` ריק בו היה מצהיר שהוא שער
    *  שאינו מכסה דבר. ⚠️ **וההחרגה נמדדת** — ⛔ שם שאינו קיים מפיל. */
-  const MODULE_FILES = ['scope.mjs', 'whiten.mjs'];
+  const MODULE_FILES = ['db_schema.mjs', 'scope.mjs', 'whiten.mjs'];
   for (const f of MODULE_FILES)
     if (!fs.existsSync('tools/' + f)) fail(`מודול משותף מוכרז שאינו קיים: ${f} — נמדד שאינו ` +
       `בעץ והצפוי שיהיה. מסירים את השם מרשימת המודולים`);
