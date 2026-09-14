@@ -225,6 +225,7 @@ const APP = {
    *  ⛔ ו-`raw` בלי נימוק מפיל אף הוא. ⭐ הנימוק המדוד: 18 מ-22 שערים
    *  נפלו כשהמקור הולבן — ⛔ הנמדד בהם חי במחרוזות. */
   scanKind: {
+    'test_textscan': 'whiten',
     'test_codescan': 'whiten',
     'test_visual': 'raw — הערך החזותי יושב גם בתוך מחרוזת CSS שנכתבת מ-JS, וההלבנה מוחקת את מה שהוא מודד',
     'check-capabilities': 'whiten',
@@ -525,6 +526,7 @@ const APP = {
     'test_sleep_rows':    'text',
     'test_sources':       'text',
     'test_stage_a':       'text',
+    'test_textscan':      'text',
     'test_toolsid':      'text',
     'test_swcore':        'behavior — מריץ את עצמו ברתמה, ומודד `fetch` אמיתי',
     'test_tables':        'text',
@@ -839,6 +841,16 @@ const CAPS = {
              css: true,
              start: '/* ═══ סולמות הערך החזותי — מודול משותף (סבב 141)',
              end:   '/* ═══ סוף CSS הסולמות' },
+  },
+  /*  ⭐ סבב 141 — מחרוזות ההודעה. ⚠️ אין לו `hooks`: הוא **הצהרה**
+   *  ⛔ ולא מסלול — ⭐ מה שנאכף הוא שהטקסט יושב כאן פעם אחת, ⚠️ ושאין
+   *  לו ליטרל שני באתר התצוגה. */
+  msgs: {
+    name: 'מחרוזות ההודעה המשותפות',
+    docRows: ['מחרוזת למשתמש היא קבוע'],
+    block: { sha: '1c90fe9e3275d11d', lines: 35,
+             start: '/* ═══ מחרוזות ההודעה המשותפות — מודול משותף (סבב 141)',
+             end:   '/* ═══════════════ סוף מודול מחרוזות ההודעה' },
   },
   bp: {
     name: 'סולם נקודות השבירה',
@@ -1211,7 +1223,7 @@ function orderGaps() {
     .concat(BLOCK_ORDER.filter((k) => inFile.indexOf(k) < 0).map((k) => 'בסדר ואינו חתום: ' + k));
 }
 
-const BLOCK_ORDER = ['toastcss', 'bchartcss', 'scales', 'bp', 'neterr', 'rowswin', 'guardonline', 'storage', 'schemastale', 'busyguard', 'savepipe', 'swreg', 'backup',
+const BLOCK_ORDER = ['toastcss', 'bchartcss', 'scales', 'msgs', 'bp', 'neterr', 'rowswin', 'guardonline', 'storage', 'schemastale', 'busyguard', 'savepipe', 'swreg', 'backup',
                      'pending', 'ids', 'retry', 'lock', 'sess', 'isAdmin', 'ctxguard', 'pull', 'push', 'hotwin', 'mirror',
                      'devid', 'mergecore', 'tomb', 'writeUser', 'hebdate', 'uihelp', 'readnum', 'uniq', 'keysave', 'kvval', 'bchart'];
 
@@ -1536,7 +1548,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
 /* ⚠️ פר-אפליקציה — הריצפה הפרטית של השער נבדלת בין הארבע לפי היכולת שכל אחת נושאת, והנימוק בשדה עצמו */
-const FLOOR = { shared: 83, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
+const FLOOR = { shared: 84, app: 10, appWhy: 'כניסה — סשן · נעילה · הרשאות · כתיבת משתמש · שכבת המראה; ומעליהם מנוע התאריך העברי ושער מצב הרשת' };
 /* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
@@ -6617,6 +6629,7 @@ const GATES = {
    *  שמבחינה בין «אין ערך» ל«ערך פגום»: ⛔ שער אחד לשני הצדדים.  */
   151: { claims: { test_dbfacts: ['י. ערך במפתח-ערך', 'יא. ערך פגום נבדל'] } },
   180: { claim: 'ז. עמודה בלי קורא' },
+  191: { claim: 'ליטרל עברי באתר הודעה' },
   4: { claim: ['canonIds', 'CANON', 'הסדר הקנוני'] },
   1: { claim: 'שם האפליקציה' },
   3: { claim: ['DOC_MAX_LINES', 'DOC_MAX_SHARED'] },
