@@ -32,13 +32,13 @@
   --brand:var(--navy-fill); --on-brand:#ffffff;
 
 
---brand-edge:rgba(255,255,255,.4);--danger:#c53030;--danger-line:#feb2b2;--danger-bg:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-bg:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-bg:#f0fff4;--info:#2b6cb0;--info-bg:#ebf4ff;
+--brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
 /*  ⛔ גווני הסימון — ⚠️ שבעה קודים, ⭐ וכל אחד אסימון אחד: ⛔ הם ירדו
  *  משש מפות זהות שחיו בקוד, ⚠️ וכולן נשאו את אותם שבעה ליטרלים.
  *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ וכל גוון עומד ב-4.5 מולו:
  *  ⭐ גוון האיחור הוכהה מ-#dd6b20, ⛔ שנמדד 3.39 ונפל מהיחס. */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
+--navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
  *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
@@ -48,10 +48,10 @@
 
     --bg:#0d151d; --card:#131e29; --card-2:#0d151d;
     --brand-edge:rgba(255,255,255,.4);
-    --danger:#ff9d9d; --danger-line:#5c2323; --danger-bg:#2b1616;
-    --warn:#f2b56e;   --warn-line:#5c3c18;   --warn-bg:#2b2012;
-    --ok:#84dba6;     --ok-line:#1f4d35;     --ok-bg:#12251c;
-    --info:#93c3f7;   --info-bg:#111d2a;
+    --bad:#ff9d9d; --bad-line:#5c2323; --bad-soft:#2b1616;
+    --warn:#f2b56e;   --warn-line:#5c3c18;   --warn-soft:#2b2012;
+    --ok:#84dba6;     --ok-line:#1f4d35;     --ok-soft:#12251c;
+    --info:#93c3f7;   --info-soft:#111d2a;
     --brand-wash:rgba(255,255,255,.13);
     --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
     --border:#24333f;
@@ -60,7 +60,7 @@
     --navy-ink:#7fb2f0; --navy-fill:#1a3a6b;
     --navy2:#234a8a; --navy3:#0f2347;
     --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
-    --shadow2:0 12px 40px rgba(0,0,0,.5);
+    --shadow-lg:0 12px 40px rgba(0,0,0,.5);
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -95,7 +95,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
 .mod{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);padding:var(--sp-7) var(--sp-7);cursor:pointer;display:flex;align-items:flex-start;gap:var(--sp-6);transition:all .22s;box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
 .mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 var(--r-5) var(--r-5) 0;transition:width .22s}
-.mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow2);transform:translateY(-2px)}
+.mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow-lg);transform:translateY(-2px)}
 .mod:hover::before{width:6px}
 .mod-ic{width:48px;height:48px;border-radius:var(--r-4);background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:var(--fs-6);flex-shrink:0;transition:transform .22s}
 .mod:hover .mod-ic{transform:scale(1.08)}
@@ -108,7 +108,7 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:#fff;border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap}
-.btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
+.btn:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
 .btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
@@ -348,8 +348,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .ps:focus{border-color:var(--navy-ink)}
 
 /* ═══ שכבת הטוסט — מודול משותף (סבב 87ב) ════════════════════════════════════
-   זהה בית-לבית בארבע האפליקציות. ⛔ הכללים אינם נשענים על משתני-הצבע של
-   אף אפליקציה — ⚠️ הם נבדלים ביניהן, ⭐ ולכן הצבעים כתובים במפורש.
+   זהה בית-לבית בארבע האפליקציות. ⛔ שני סיווגי המצב נשענים על אסימוני
+   המצב — ⚠️ צמד הפוך שמתחלף יחד, ⭐ והנייטרלי כתוב במפורש: אין לו מצב.
    ⛔ מיכל אחד ובתוכו `div` לכל הודעה — ⚠️ הנימוק המדוד: בשלוש מהן היה
       אלמנט **קבוע** אחד, ⛔ והודעה שנייה דרסה את הראשונה: ⭐ «נשמר»
       ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד.
@@ -357,8 +357,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
       תחתון קבוע, ⭐ ולטוסט שיושב מתחתיו אין מי שיראה אותו. */
 #toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:999;display:grid;gap:var(--sp-4);justify-items:center;pointer-events:none;padding:0 var(--sp-6)}
 .toast{background:#1a1a1a;color:#fff;border-radius:var(--r-6);padding:var(--sp-5) var(--sp-7);font-size:var(--fs-3);font-weight:600;line-height:1.45;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:92vw;text-align:center;animation:toastUp .2s ease-out}
-.toast.bad{background:#b91c1c;color:#fff}
-.toast.good{background:#15803d;color:#fff}
+.toast.bad{background:var(--bad);color:var(--bad-soft)}
+.toast.good{background:var(--ok);color:var(--ok-soft)}
 @keyframes toastUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
 /* ================================================================= מעדכן */
@@ -369,7 +369,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 #updater.show{display:flex}
 #updater .in{
   background:var(--brand);color:var(--on-brand);border-radius:var(--r-5);padding:var(--sp-5) var(--sp-5) var(--sp-5) var(--sp-6);
-  display:flex;align-items:center;gap:var(--sp-5);box-shadow:var(--shadow2);
+  display:flex;align-items:center;gap:var(--sp-5);box-shadow:var(--shadow-lg);
   font-size:var(--fs-3);font-weight:700;max-width:520px;width:100%
 }
 #updater button{
@@ -430,18 +430,18 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-bd-1-solid-border{border:1px solid var(--border)}
 .u-bd-1-solid-warn-line{border:1px solid var(--warn-line)}
 .u-bd-15-dashed-border{border:1.5px dashed var(--border)}
-.u-bd-15-dashed-danger-line{border:1.5px dashed var(--danger-line)}
+.u-bd-15-dashed-bad-line{border:1.5px dashed var(--bad-line)}
 .u-bd-15-dashed-ok-line{border:1.5px dashed var(--ok-line)}
 .u-bd-15-dashed-warn-line{border:1.5px dashed var(--warn-line)}
 .u-bd-15-solid-border{border:1.5px solid var(--border)}
 .u-bd-15-solid-brand-edge{border:1.5px solid var(--brand-edge)}
-.u-bd-15-solid-danger-line{border:1.5px solid var(--danger-line)}
+.u-bd-15-solid-bad-line{border:1.5px solid var(--bad-line)}
 .u-bd-15-solid-navy-fill{border:1.5px solid var(--navy-fill)}
 .u-bd-15-solid-ok-line{border:1.5px solid var(--ok-line)}
 .u-bd-15-solid-warn{border:1.5px solid var(--warn)}
 .u-bd-15-solid-warn-line{border:1.5px solid var(--warn-line)}
 .u-bd-2-solid-border{border:2px solid var(--border)}
-.u-bd-2-solid-danger-line{border:2px solid var(--danger-line)}
+.u-bd-2-solid-bad-line{border:2px solid var(--bad-line)}
 .u-bd-2-solid-ok-line{border:2px solid var(--ok-line)}
 .u-bd-2-solid-warn-line{border:2px solid var(--warn-line)}
 .u-bd-none{border:none}
@@ -452,21 +452,21 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-bg-brand-wash{background:var(--brand-wash)}
 .u-bg-card{background:var(--card)}
 .u-bg-card-2{background:var(--card-2)}
-.u-bg-danger-bg{background:var(--danger-bg)}
-.u-bg-info-bg{background:var(--info-bg)}
+.u-bg-bad-soft{background:var(--bad-soft)}
+.u-bg-info-soft{background:var(--info-soft)}
 .u-bg-navy-fill{background:var(--navy-fill)}
 .u-bg-none{background:none}
-.u-bg-ok-bg{background:var(--ok-bg)}
+.u-bg-ok-soft{background:var(--ok-soft)}
 .u-bg-ty{background:var(--ty-bg)}
 .u-bg-ty-line{background:var(--ty-line);color:var(--ty)}
-.u-bg-warn-bg{background:var(--warn-bg)}
+.u-bg-warn-soft{background:var(--warn-soft)}
 .u-bot-72{bottom:72px}
 .u-bt-1-solid-border{border-top:1px solid var(--border)}
 .u-bt-15-solid-border{border-top:1.5px solid var(--border)}
 .u-bt-ty{border-top:2px solid var(--ty-line)}
 .u-bx-border-box{box-sizing:border-box}
 .u-c-at{color:var(--at)}
-.u-c-danger{color:var(--danger)}
+.u-c-bad{color:var(--bad)}
 .u-c-info{color:var(--info)}
 .u-c-navy-ink{color:var(--navy-ink)}
 .u-c-ok{color:var(--ok)}
@@ -476,7 +476,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-c-text3{color:var(--text3)}
 .u-c-ty{color:var(--ty)}
 .u-c-warn{color:var(--warn)}
-.u-clr-btn:hover{border-color:var(--danger);color:var(--danger)}
+.u-clr-btn:hover{border-color:var(--bad);color:var(--bad)}
 .u-cur-def{cursor:default}
 .u-cur-p{cursor:pointer}
 .u-d-block{display:block}
@@ -620,7 +620,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-r-7{border-radius:var(--r-7)}
 .u-r-radius{border-radius:var(--radius)}
 .u-sh-shadow{box-shadow:var(--shadow)}
-.u-sh-shadow2{box-shadow:var(--shadow2)}
+.u-sh-shadow-lg{box-shadow:var(--shadow-lg)}
 .u-ta-c{text-align:center}
 .u-ta-l{text-align:left}
 .u-ta-r{text-align:right}
@@ -635,20 +635,20 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-tr-box-shadow-15s-border-color-15s{transition:box-shadow .15s,border-color .15s}
 .u-tr-transform-2s{transition:transform .2s}
 .u-ty{--ty:var(--text);--ty-line:var(--border);--ty-bg:var(--card-2)}
-.u-ty-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-bg)}
-.u-ty-left{--ty:var(--danger);--ty-line:var(--danger-line);--ty-bg:var(--danger-bg)}
+.u-ty-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
+.u-ty-left{--ty:var(--bad);--ty-line:var(--bad-line);--ty-bg:var(--bad-soft)}
 .u-ty-off{--ty:var(--text3);--ty-line:var(--border);--ty-bg:var(--card-2)}
-.u-ty-suspended{--ty:var(--warn);--ty-line:var(--warn-line);--ty-bg:var(--warn-bg)}
+.u-ty-suspended{--ty:var(--warn);--ty-line:var(--warn-line);--ty-bg:var(--warn-soft)}
 .u-us-none{user-select:none}
-.u-v-color-danger{--color:var(--danger)}
+.u-v-color-bad{--color:var(--bad)}
 .u-v-color-info{--color:var(--info)}
 .u-v-color-navy-fill{--color:var(--navy-fill)}
 .u-v-color-ok{--color:var(--ok)}
 .u-v-color-warn{--color:var(--warn)}
-.u-v-icbg-danger-bg{--icbg:var(--danger-bg)}
-.u-v-icbg-info-bg{--icbg:var(--info-bg)}
-.u-v-icbg-ok-bg{--icbg:var(--ok-bg)}
-.u-v-icbg-warn-bg{--icbg:var(--warn-bg)}
+.u-v-icbg-bad-soft{--icbg:var(--bad-soft)}
+.u-v-icbg-info-soft{--icbg:var(--info-soft)}
+.u-v-icbg-ok-soft{--icbg:var(--ok-soft)}
+.u-v-icbg-warn-soft{--icbg:var(--warn-soft)}
 .u-w-100p{width:100%}
 .u-w-22{width:22px}
 .u-w-28{width:28px}
@@ -703,18 +703,18 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
-  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-bg u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-9999 u-sh-shadow u-pe-none u-ws-nw"></div>
+  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-9999 u-sh-shadow u-pe-none u-ws-nw"></div>
   <div id="user-avatar-wrap" class="u-pos-rel u-d-none u-ai-c">
     <button data-act="user-menu-toggle" class="u-d-flex u-ai-c u-g-4 u-p-4-6 u-bg-brand-wash u-bd-15-solid-brand-edge u-r-6 u-cur-p u-ff-heebo u-fs-3 u-fw-600 u-c-on-brand u-ws-nw u-bf-blur-4 u-tr-all-2s">
       <span class="u-fs-4">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow2 u-minw-190 u-z-300 u-ov-h u-dir-rtl">
+    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-300 u-ov-h u-dir-rtl">
       <div id="user-menu-name" class="u-p-5-6 u-fw-700 u-fs-4 u-c-navy-ink u-bb-1-solid-border"></div>
       <div id="user-menu-role" class="u-p-3-6-5 u-fs-2 u-c-text3 u-bb-1-solid-border"></div>
       <div id="user-menu-others" class="u-bb-1-solid-border"></div>
       <button data-act="my-pass" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-bb-1-solid-border u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-navy-ink u-fw-600">שינוי הסיסמה שלי 🔑</button>
-      <button data-act="menu-logout" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-danger u-fw-600">יציאה מהמערכת 🚪</button>
+      <button data-act="menu-logout" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-bad u-fw-600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
 </header>
@@ -728,18 +728,18 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   <div class="stats">
     <div class="stat"><div class="n" id="s-tot">-</div><div class="l">תלמידים רשומים</div></div>
     <div class="stat"><div class="u-c-ok n" id="s-pre">-</div><div class="l">נוכחים היום</div></div>
-    <div class="stat"><div class="u-c-danger n" id="s-abs">-</div><div class="l">חיסורים היום</div></div>
+    <div class="stat"><div class="u-c-bad n" id="s-abs">-</div><div class="l">חיסורים היום</div></div>
     <div class="stat"><div class="n" id="s-rate">-</div><div class="l">% נוכחות</div></div>
   </div>
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
-      <button class="u-v-color-navy-fill u-v-icbg-info-bg mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
-      <button class="u-v-color-ok u-v-icbg-ok-bg mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
-      <button class="u-v-color-info u-v-icbg-info-bg mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
-      <button class="u-v-color-warn u-v-icbg-warn-bg mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
-      <button class="u-v-color-danger u-v-icbg-danger-bg mod" data-pg="files" data-act="page" data-page="files"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
-      <button class="u-v-color-info u-v-icbg-info-bg mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="u-v-color-navy-fill u-v-icbg-info-soft mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="u-v-color-ok u-v-icbg-ok-soft mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
+      <button class="u-v-color-info u-v-icbg-info-soft mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
+      <button class="u-v-color-warn u-v-icbg-warn-soft mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
+      <button class="u-v-color-bad u-v-icbg-bad-soft mod" data-pg="files" data-act="page" data-page="files"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
+      <button class="u-v-color-info u-v-icbg-info-soft mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
 
     </div>
   </div>
@@ -788,7 +788,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
       <button id="at-tab-sup" data-act="at-tab" data-tab="sup" class="u-p-4-6 u-bd-none u-bb-3-solid-transparent u-bg-none u-ff-heebo u-fs-4 u-fw-600 u-c-text2 u-cur-p u-mb-n1">📋 השגחה</button>
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
-    <div id="at-pullStale" class="u-d-none u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn"></div>
+    <div id="at-pullStale" class="u-d-none u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn"></div>
     <!-- תצוגת רישום -->
     <div id="at-view-reg" class="u-d-none">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
@@ -822,8 +822,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
     <!-- תצוגת ארכיון -->
     <div id="at-view-arc" class="u-d-none">
       <div class="u-d-flex u-jc-fe u-g-4 u-mb-6">
-        <button data-act="at-export" data-fmt="excel" class="u-p-4-6 u-bg-ok-bg u-c-ok u-bd-15-solid-ok-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📊 Excel</button>
-        <button data-act="at-export" data-fmt="pdf" class="u-p-4-6 u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📄 PDF</button>
+        <button data-act="at-export" data-fmt="excel" class="u-p-4-6 u-bg-ok-soft u-c-ok u-bd-15-solid-ok-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📊 Excel</button>
+        <button data-act="at-export" data-fmt="pdf" class="u-p-4-6 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📄 PDF</button>
       </div>
       <div id="at-arc-list"></div>
     </div>
@@ -850,7 +850,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
       <button id="sl-tab-arc" data-act="sl-tab" data-tab="arc" class="u-p-4-6 u-bd-none u-bb-3-solid-transparent u-bg-none u-ff-heebo u-fs-4 u-fw-600 u-c-text2 u-cur-p u-mb-n1">📁 ארכיון</button>
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" class="u-p-4-6 u-bd-none u-bb-3-solid-transparent u-bg-none u-ff-heebo u-fs-4 u-fw-600 u-c-text2 u-cur-p u-mb-n1">📋 השגחה</button>
     </div>
-    <div id="sl-pullStale" class="u-d-none u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn"></div>
+    <div id="sl-pullStale" class="u-d-none u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn"></div>
     <div id="sl-view-reg" class="u-d-none">
       <div id="sl-reg-picker">
         <div class="u-bg-card u-bd-15-solid-border u-r-radius u-p-6 u-mb-6">
@@ -879,8 +879,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
     </div>
     <div id="sl-view-arc" class="u-d-none">
       <div class="u-d-flex u-jc-fe u-g-4 u-mb-6">
-        <button data-act="sl-export" data-fmt="excel" class="u-p-4-6 u-bg-ok-bg u-c-ok u-bd-15-solid-ok-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📊 Excel</button>
-        <button data-act="sl-export" data-fmt="pdf" class="u-p-4-6 u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📄 PDF</button>
+        <button data-act="sl-export" data-fmt="excel" class="u-p-4-6 u-bg-ok-soft u-c-ok u-bd-15-solid-ok-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📊 Excel</button>
+        <button data-act="sl-export" data-fmt="pdf" class="u-p-4-6 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-r-3 u-ff-heebo u-fs-3 u-cur-p">📄 PDF</button>
       </div>
       <div id="sl-arc-list"></div>
     </div>
@@ -947,9 +947,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
             <button data-act="absence-reason-add" data-kind="suspended" class="u-mt-4 u-bg-none u-bd-15-dashed-warn-line u-c-warn u-r-3 u-p-3-5 u-cur-p u-ff-heebo u-fs-3 u-w-100p">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="u-fw-600 u-c-danger u-mb-4 u-fs-3">🚪 לא שב</div>
+            <div class="u-fw-600 u-c-bad u-mb-4 u-fs-3">🚪 לא שב</div>
             <div id="reasons-left" class="u-d-flex u-fd-col u-g-3"></div>
-            <button data-act="absence-reason-add" data-kind="left" class="u-mt-4 u-bg-none u-bd-15-dashed-danger-line u-c-danger u-r-3 u-p-3-5 u-cur-p u-ff-heebo u-fs-3 u-w-100p">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="left" class="u-mt-4 u-bg-none u-bd-15-dashed-bad-line u-c-bad u-r-3 u-p-3-5 u-cur-p u-ff-heebo u-fs-3 u-w-100p">+ הוסף סיבה</button>
           </div>
         </div>
         <div class="u-mt-6 u-ta-l">
@@ -2200,7 +2200,7 @@ window._hcBuild=function(pfx,initH,tv){
       '<span class="u-fs-3 u-op-5 u-mr-2">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-9999 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow2 hc-pop"></div>'+
+    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-9999 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
     (tv!==undefined?'<div class="u-mt-3 u-d-flex u-ai-c u-g-3"><span class="u-fs-3 u-c-text3 u-ws-nw">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-fx-1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
@@ -2334,7 +2334,7 @@ function switchUser(id, name) {
     '<div class="u-fw-700 u-fs-4 u-c-navy-ink u-mb-2 u-ta-c" id="switch-name"></div>'+
     '<div class="u-fs-3 u-c-text3 u-mb-6 u-ta-c">'+subTitle+'</div>'+
     '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" class="u-bd-2-solid-border u-r-3 u-p-5 u-ff-heebo u-fs-5 u-ta-c u-ls-4 u-w-100p u-mb-4">'+
-    '<div id="switch-err" class="u-c-danger u-fs-3 u-minh-18"></div>',
+    '<div id="switch-err" class="u-c-bad u-fs-3 u-minh-18"></div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-5 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">'+cancelTxt+'</button>'+
     '<button data-act="switch-confirm" data-ksave class="u-fx-1 u-p-5 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">'+enterTxt+'</button>');
   document.getElementById('switch-name').textContent = name;
@@ -2840,7 +2840,7 @@ async function renderUsersList() {
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || 'אין חיבור';
-    el.innerHTML = '<div class="u-c-danger ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
+    el.innerHTML = '<div class="u-c-bad ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
       '<div class="u-fs-2 u-c-text3 u-mt-2">' + esc(em) + '</div>' +
       '<button data-act="users-render" class="u-mt-5 u-p-4-6 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fs-3 u-cur-p">נסה שוב</button></div>';
     return;
@@ -3058,7 +3058,7 @@ function myPasswordModal() {
     '<input type="password" id="mp-new" maxlength="6" inputmode="numeric" autocomplete="new-password" class="' + fld + '">' +
     '<label class="' + lbl + '" for="mp-new2">אימות סיסמה חדשה</label>' +
     '<input type="password" id="mp-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" class="' + fld + '">' +
-    '<div id="mp-err" class="u-c-danger u-fs-3 u-minh-18 u-ta-r"></div>',
+    '<div id="mp-err" class="u-c-bad u-fs-3 u-minh-18 u-ta-r"></div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-5 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>' +
     '<button id="mp-save" data-act="my-pass-save" data-ksave class="u-fx-1 u-p-5 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">שמירה</button>');
   document.getElementById('mp-cur').focus();
@@ -8012,7 +8012,7 @@ function renderStudents(){
           '<div class="u-d-flex u-ai-c u-g-3">'+badge+'</div>'+
         '</div>'+
         '<div class="u-fsh-0">'+
-          '<button data-act="st-activate" data-id="'+esc(s.id)+'" class="u-p-3-5 u-bg-ok-bg u-c-ok u-bd-15-solid-ok-line u-r-6 u-ff-heebo u-fs-2 u-fw-600 u-cur-p u-ws-nw">↩ החזר לפעיל</button>'+
+          '<button data-act="st-activate" data-id="'+esc(s.id)+'" class="u-p-3-5 u-bg-ok-soft u-c-ok u-bd-15-solid-ok-line u-r-6 u-ff-heebo u-fs-2 u-fw-600 u-cur-p u-ws-nw">↩ החזר לפעיל</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -8031,7 +8031,7 @@ function renderStudents(){
   });
   if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
     '<span class="u-c-ok u-d-iflex u-ai-c u-lh-1 u-g-2">&#x2705; נוכחים: '+present+'</span>'+
-    '<span class="u-c-danger u-d-iflex u-ai-c u-lh-1 u-g-2">&#x274C; אינם נוכחים: '+absent+'</span>'+
+    '<span class="u-c-bad u-d-iflex u-ai-c u-lh-1 u-g-2">&#x274C; אינם נוכחים: '+absent+'</span>'+
     '<span class="u-c-text2 u-d-iflex u-ai-c u-lh-1">סה"כ: '+activeSts.length+'</span>';}
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
@@ -8041,15 +8041,15 @@ function renderStudents(){
     var clsLabel=CLS_NAME[s.cls]||s.cls;
     var isPresent=getActiveAbsences(s).length===0;
     var presIcon=isPresent
-      ?'<span class="u-d-iflex u-ai-c u-g-3 u-bg-ok-bg u-c-ok u-bd-15-solid-ok-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2713; נוכח</span>'
-      :'<span class="u-d-iflex u-ai-c u-g-3 u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2715; אינו נוכח</span>';
+      ?'<span class="u-d-iflex u-ai-c u-g-3 u-bg-ok-soft u-c-ok u-bd-15-solid-ok-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2713; נוכח</span>'
+      :'<span class="u-d-iflex u-ai-c u-g-3 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2715; אינו נוכח</span>';
     var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" class="u-bg-navy-fill u-c-on-brand u-bd-none u-w-32 u-h-32 u-r-7 u-cur-p u-fs-5 u-fw-300 u-d-iflex u-ai-c u-jc-c u-lh-1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" class="'+bg+' u-bb-1-solid-border u-p-4-5 u-d-flex u-ai-c u-g-5">';
     html+='<div class="u-fx-1 u-d-flex u-fd-col u-g-2 u-minw-0">';
     html+='<span class="u-fw-600 u-fs-4 u-ov-h u-tov-e u-ws-nw">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div class="u-d-flex u-ai-c u-g-3">';
     html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" class="u-bg-bg u-bd-none u-cur-p u-fs-4 u-c-navy-ink u-w-28 u-h-28 u-r-3 u-d-iflex u-ai-c u-jc-c" title="פרטי תלמיד">&#x2630;</button>';
-    html+='<span class="u-bg-info-bg u-c-info u-p-1-4 u-r-5 u-fs-2 u-ws-nw">'+esc(clsLabel)+'</span>';
+    html+='<span class="u-bg-info-soft u-c-info u-p-1-4 u-r-5 u-fs-2 u-ws-nw">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
     html+='<div class="u-d-flex u-ai-c u-g-3 u-fsh-0">';
@@ -8132,7 +8132,7 @@ window.openManageListDlg = function(){
     {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
     {icon:'📥',label:'תבנית ייבוא',k:'tmpl'},
     {icon:'📤',label:'ייבוא תלמידים',k:'import'},
-    {icon:'🗑️',label:'מחק הכל',k:'delall',cls:'u-c-danger'},
+    {icon:'🗑️',label:'מחק הכל',k:'delall',cls:'u-c-bad'},
     {icon:'🔄',label:'מעבר שנתי',k:'year',cls:'u-c-warn'}
   ];
   var rows=ITEMS.map(function(item){
@@ -8154,7 +8154,7 @@ window.openDeactivateStudentDlg = function(){
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="u-w-100p u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-mb-6 u-dir-rtl">'+
       '<option value="">-- בחר תלמיד --</option>'+opts+
     '</select>'+
-    '<div class="u-fs-3 u-c-warn u-bg-warn-bg u-r-3 u-p-4-5">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
+    '<div class="u-fs-3 u-c-warn u-bg-warn-soft u-r-3 u-p-4-5">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>'+
     '<button data-act="deact-st-confirm" class="u-fx-1 u-p-4 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fw-600 u-cur-p">✅ אשר</button>');
 };
@@ -8165,15 +8165,15 @@ window.openYearTransitionDlg = function(){
   var gYr=_gc?(' (מחזור '+_gc+')'):'';
   openModal('🔄 מעבר שנתי',
     '<div class="u-fs-3 u-c-text2 u-mb-6 u-lh-16">'+
-      '<strong class="u-c-danger">⚠️ פעולה בלתי הפיכה!</strong><br>'+
+      '<strong class="u-c-bad">⚠️ פעולה בלתי הפיכה!</strong><br>'+
       '• שיעור ג\''+gYr+' → יועברו ל<strong>לא פעילים</strong><br>'+
       '• שיעור ב\' → שיעור ג\'<br>'+
       '• שיעור א\' → שיעור ב\'<br>'+
       '• שיעור א\' יישאר ריק לתלמידים חדשים'+
     '</div>'+
-    '<div class="u-fs-3 u-bg-danger-bg u-r-3 u-p-4-5 u-c-danger">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
+    '<div class="u-fs-3 u-bg-bad-soft u-r-3 u-p-4-5 u-c-bad">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>'+
-    '<button data-act="year-transition-confirm" class="u-fx-1 u-p-4 u-bg-warn-bg u-c-warn u-bd-15-solid-warn-line u-r-3 u-ff-heebo u-fw-700 u-cur-p">🔄 בצע מעבר שנתי</button>');
+    '<button data-act="year-transition-confirm" class="u-fx-1 u-p-4 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-3 u-ff-heebo u-fw-700 u-cur-p">🔄 בצע מעבר שנתי</button>');
 };
 
 window.doYearTransition = function(){
@@ -8257,13 +8257,13 @@ window.openStatusPickerModal = function() {
   openModal(window._statusStudentName,
     '<div class="u-fs-3 u-c-text3 u-mb-7">בחר סטאטוס היעדרות:</div>' +
     '<div class="u-d-flex u-fd-col u-g-5">' +
-      '<button data-act="status-form" data-kind="approved" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-ok-line u-bg-ok-bg u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-ok u-ta-r">' +
+      '<button data-act="status-form" data-kind="approved" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-ok-line u-bg-ok-soft u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-ok u-ta-r">' +
         '<span class="u-fs-6">✅</span><div>אישור</div>' +
       '</button>' +
-      '<button data-act="status-form" data-kind="suspended" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-warn-line u-bg-warn-bg u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-warn u-ta-r">' +
+      '<button data-act="status-form" data-kind="suspended" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-warn-line u-bg-warn-soft u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-warn u-ta-r">' +
         '<span class="u-fs-6">⚠️</span><div>השעיה</div>' +
       '</button>' +
-      '<button data-act="status-form" data-kind="left" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-danger-line u-bg-danger-bg u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-danger u-ta-r">' +
+      '<button data-act="status-form" data-kind="left" class="u-d-flex u-ai-c u-g-5 u-p-6-6 u-r-5 u-bd-2-solid-bad-line u-bg-bad-soft u-cur-p u-ff-heebo u-fs-4 u-fw-600 u-c-bad u-ta-r">' +
         '<span class="u-fs-6">🚪</span><div>לא שב</div>' +
       '</button>' +
     '</div>', '');
@@ -8289,7 +8289,7 @@ window.openCurrentStatusModal = function() {
   var absencesHtml = activeAbsences.map(function(a) {
     var isFuture = a.from && new Date(a.from) > _now;
     var badge = isFuture
-      ? '<span class="u-fs-2 u-fw-700 u-p-1-4 u-r-7 u-bg-info-bg u-c-info">⏳ עתידי</span>'
+      ? '<span class="u-fs-2 u-fw-700 u-p-1-4 u-r-7 u-bg-info-soft u-c-info">⏳ עתידי</span>'
       : '<span class="u-fs-2 u-fw-700 u-p-1-4 u-r-7 u-bg-ty-line u-c-ty">● פעיל</span>';
     var cancelId = a.id === 'legacy' ? '' : String(a.id);
     return '<div class="u-ty ' + tyCls(a.type) + ' u-bg-ty u-bd-ty u-r-5 u-p-5-6 u-mb-5">' +
@@ -8299,7 +8299,7 @@ window.openCurrentStatusModal = function() {
           '<span class="u-fw-700 u-c-ty u-fs-4">' + (TL[a.type]||a.type) + '</span>' +
           badge +
         '</div>' +
-        '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" class="u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-r-3 u-p-2-5 u-ff-heebo u-fs-2 u-fw-600 u-cur-p">בטל</button>' +
+        '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" class="u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-r-3 u-p-2-5 u-ff-heebo u-fs-2 u-fw-600 u-cur-p">בטל</button>' +
       '</div>' +
       (a.reason ? '<div class="u-fs-3 u-c-text2 u-mb-2">סיבה: ' + a.reason + '</div>' : '') +
       '<div class="u-fs-2 u-c-text3 u-lh-17">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
@@ -8598,12 +8598,12 @@ window.importStudentsFromFile = function(input) {
                         : 'הייבוא נכשל — אין מקום באחסון המכשיר';
       var body = '';
       if (!wrote) {
-        body += '<div class="u-c-danger"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
+        body += '<div class="u-c-bad"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
                 'הכתיבה המקומית נכשלה, ולכן שום דבר לא נוסף. פנה מקום ונסה שוב.</div>';
       }
       if (wrote && skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
       if (wrote && failed.length > 0) {
-        body += '<div class="u-c-danger u-mt-3"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
+        body += '<div class="u-c-bad u-mt-3"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
         body += '<div class="u-fs-3 u-mt-2 u-dir-rtl">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       // ⚠️ הסיכום הוא הדיווח היחיד למשתמש כאן, ולכן הוא נבנה מהאמת ולא
@@ -9449,7 +9449,7 @@ function atShowOverrideDialog(sid, student) {
     datesHtml+
     '<div class="u-mt-6 u-fs-3 u-c-text2">האם לבטל את הסטטוס לגמרי?<br><span class="u-fs-2 u-c-text3 u-fw-700 u-td-u">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-5 u-bg-none u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-cur-p">סגור</button>'+
-    '<button data-act="at-status-cancel" data-id="'+esc(sid)+'" class="u-fx-1 u-p-5 u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-r-3 u-ff-heebo u-fs-3 u-fw-600 u-cur-p">בטל סטטוס</button>');
+    '<button data-act="at-status-cancel" data-id="'+esc(sid)+'" class="u-fx-1 u-p-5 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-r-3 u-ff-heebo u-fs-3 u-fw-600 u-cur-p">בטל סטטוס</button>');
 }
 
 // ביטול סטטוס תלמיד מתוך לשונית הרישום
@@ -9557,7 +9557,7 @@ window.atRenderStudents = function() {
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
         ' class="u-w-54 u-p-2-3 u-bd-15-solid-warn u-r-2 u-ff-heebo u-fs-3 u-ta-c">'+
         '<span class="u-fs-2 u-c-text3">דק׳</span>'+
-        (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-bg u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'u-bg-card-2':'u-bg-card';
     return '<div class="'+rowBg+' u-d-flex u-ai-c u-g-4 u-p-4-5 u-bd-15-solid-border u-r-4 u-mb-3 u-fwr-wrap">'+
@@ -9658,7 +9658,7 @@ window.atRenderArchive = async function(records) {
   _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _atPaintArchive(el, records, warn) {
-  var warnHtml=warn?'<div class="u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
+  var warnHtml=warn?'<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML=warnHtml+'<div class="u-ta-c u-p-7 u-c-text3">אין רשומות</div>';return;
@@ -9729,7 +9729,7 @@ function _atPaintArchive(el, records, warn) {
         html+='<div class="u-mb-4">';
         // כותרת יום
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
-          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-bg u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
+          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
           '<span class="u-fx-1">'+dayLabel+(isToday?' — <span class="u-c-warn">היום</span>':'')+
           ' <span class="u-fs-2 u-fw-400 u-c-text2">('+entries.length+' סדרים)</span></span>'+
           '<span class="u-fs-1 u-op-45">▾</span>'+
@@ -9746,7 +9746,7 @@ function _atPaintArchive(el, records, warn) {
           html+='<div class="u-d-flex u-ai-c u-g-5 u-p-4-5 u-cur-p" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="u-fw-700 u-fs-3 u-c-navy-ink u-fx-1">'+esc(rec.session)+'</span>';
           html+='<div class="u-fs-3 u-d-flex u-g-3 u-ai-c u-fwr-wrap u-dir-rtl">'+summary+'</div>';
-          html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="u-bg-none u-bd-none u-c-danger u-cur-p u-fs-3 u-p-1-3">✕</button>';
+          html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="u-bg-none u-bd-none u-c-bad u-cur-p u-fs-3 u-p-1-3">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="u-d-none u-p-5-6 u-bt-1-solid-border u-bg-card">';
           var _mk2=ysMarks(rec);
@@ -9984,7 +9984,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     '<span class="u-fx-1 u-ta-c u-fw-700 u-fs-4 u-c-navy-ink">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" class="'+navStyle+(hasNext?'':' u-op-3 u-cur-def')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div class="u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHtml='<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div class="u-ta-c u-p-7 u-c-text3">אין נתונים עדיין</div>';return;
@@ -10039,10 +10039,10 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
       var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
-      lastLabel='<span class="u-bg-ok-bg u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+atDow(ltIso)+' '+ltDateStr+'</span>';
+      lastLabel='<span class="u-bg-ok-soft u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+atDow(ltIso)+' '+ltDateStr+'</span>';
     }
-    var alert20=st.absent>=20?'<span class="u-bg-danger-bg u-c-danger u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
-    var alert300=st.lateMin>=300?'<span class="u-bg-warn-bg u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
+    var alert20=st.absent>=20?'<span class="u-bg-bad-soft u-c-bad u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
+    var alert300=st.lateMin>=300?'<span class="u-bg-warn-soft u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
     html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h u-tr-box-shadow-15s-border-color-15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
@@ -10079,7 +10079,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
           (t.note?'<span class="u-c-text2">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span class="u-c-text3 u-fs-2">'+esc(t.by_name)+'</span>'+
-          '<button data-act="at-del-treat" data-id="'+esc(t.id)+'" class="u-bg-none u-bd-none u-c-danger u-cur-p u-fs-3 u-p-0-2">✕</button>'+
+          '<button data-act="at-del-treat" data-id="'+esc(t.id)+'" class="u-bg-none u-bd-none u-c-bad u-cur-p u-fs-3 u-p-0-2">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -10255,7 +10255,7 @@ function atCheckAlert() {
 
   var list=alerts.slice(0,10).map(function(s){
     return '<div class="u-p-3-0 u-fs-3 u-bb-1-solid-border">'+esc(s.name)+
-      (s.absent>=20?'<span class="u-c-danger u-mr-3"> — '+s.absent+' חיסורים</span>':'')+
+      (s.absent>=20?'<span class="u-c-bad u-mr-3"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span class="u-c-warn u-mr-3"> — '+s.lateMin+' דק׳ איחור</span>':'')+
       '</div>';
   }).join('');
@@ -10283,7 +10283,7 @@ function _atPaintSettings() {
       return '<div data-sess-row="1" class="u-d-flex u-g-3 u-ai-c u-mb-1">'+
         '<input aria-label="שם הסדר" data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3">'+
         '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+(s.startTime||'')+'" class="u-w-90 u-bd-15-solid-border u-r-3 u-p-3-4 u-ff-heebo u-fs-3">'+
-        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>'+
+        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>'+
       '</div>';
     }).join('');
   }
@@ -10291,7 +10291,7 @@ function _atPaintSettings() {
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div class="u-d-flex u-g-3 u-ai-c">'+
         '<input aria-label="שם הטיפול" value="'+esc(t)+'" id="at-treat-inp-'+i+'" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3">'+
-        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>'+
+        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>'+
       '</div>';
     }).join('');
   }
@@ -10305,7 +10305,7 @@ window.atAddSession = function() {
   div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:2px';
   div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3">'+
     '<input data-sess-time="1" aria-label="שעת הסדר" type="time" class="u-w-90 u-bd-15-solid-border u-r-3 u-p-3-4 u-ff-heebo u-fs-3">'+
-    '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>';
+    '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>';
   sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 };
 window.atAddTreatRow = function() {
@@ -10313,7 +10313,7 @@ window.atAddTreatRow = function() {
   if(!tc) return;
   var div=document.createElement('div');
   div.style.cssText='display:flex;gap:6px;align-items:center';
-  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3"><button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>';
+  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3"><button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
@@ -10908,7 +10908,7 @@ function slShowOverrideDialog(sid, student) {
     reasonHtml+datesHtml+
     '<div class="u-mt-6 u-fs-3 u-c-text2">האם לבטל את הסטטוס לגמרי?<br><span class="u-fs-2 u-c-text3 u-fw-700 u-td-u">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
     '<button data-act="modal-close" class="u-fx-1 u-p-5 u-bg-none u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-cur-p">סגור</button>'+
-    '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" class="u-fx-1 u-p-5 u-bg-danger-bg u-c-danger u-bd-15-solid-danger-line u-r-3 u-ff-heebo u-fs-3 u-fw-600 u-cur-p">בטל סטטוס</button>');
+    '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" class="u-fx-1 u-p-5 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-r-3 u-ff-heebo u-fs-3 u-fw-600 u-cur-p">בטל סטטוס</button>');
 }
 
 /*  ⛔ ביטול סטטוס מתוך לשונית הרישום — ⚠️ הקורא הוא `sl-status-cancel`,
@@ -11011,7 +11011,7 @@ window.slRenderStudents = function() {
         'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
         ' class="u-w-54 u-p-2-3 u-bd-15-solid-warn u-r-2 u-ff-heebo u-fs-3 u-ta-c">'+
         '<span class="u-fs-2 u-c-text3">דק׳</span>'+
-        (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-bg u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
     var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
@@ -11122,7 +11122,7 @@ window.slRenderArchive = async function(records) {
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _slPaintArchive(el, records, warn) {
-  var warnHtml=warn?'<div class="u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
+  var warnHtml=warn?'<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML=warnHtml+'<div class="u-ta-c u-p-7 u-c-text3">אין רשומות</div>';return;
@@ -11188,7 +11188,7 @@ function _slPaintArchive(el, records, warn) {
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
-          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-bg u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
+          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
           '<span class="u-fx-1">'+dayLabel+(isToday?' — <span class="u-c-warn">היום</span>':'')+
           ' <span class="u-fs-2 u-fw-400 u-c-text2">('+entries.length+' דוחות)</span></span>'+
           '<span class="u-fs-1 u-op-45">▾</span>'+
@@ -11205,7 +11205,7 @@ function _slPaintArchive(el, records, warn) {
           html+='<div class="u-d-flex u-ai-c u-g-5 u-p-4-5 u-cur-p" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="u-fw-700 u-fs-3 u-c-navy-ink u-fx-1">'+esc(rec.session)+'</span>';
           html+='<div class="u-fs-3 u-d-flex u-g-3 u-ai-c u-fwr-wrap u-dir-rtl">'+summary+'</div>';
-          html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" class="u-bg-none u-bd-none u-c-danger u-cur-p u-fs-3 u-p-1-3">✕</button>';
+          html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" class="u-bg-none u-bd-none u-c-bad u-cur-p u-fs-3 u-p-1-3">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="u-d-none u-p-5-6 u-bt-1-solid-border u-bg-card">';
           var _mk2=ysMarks(rec);
@@ -11435,7 +11435,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     '<span class="u-fx-1 u-ta-c u-fw-700 u-fs-4 u-c-navy-ink">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" class="'+navStyle+(hasNext?'':' u-op-3 u-cur-def')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div class="u-bg-warn-bg u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHtml='<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>'+navHtml;
 
   if(!data||!data.length){
     el.innerHTML=navHtml+'<div class="u-ta-c u-p-7 u-c-text3">אין נתונים עדיין</div>';return;
@@ -11485,10 +11485,10 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
       var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
-      lastLabel='<span class="u-bg-ok-bg u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+slDow(ltIso)+' '+ltDateStr+'</span>';
+      lastLabel='<span class="u-bg-ok-soft u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+slDow(ltIso)+' '+ltDateStr+'</span>';
     }
-    var alert20=st.absent>=20?'<span class="u-bg-danger-bg u-c-danger u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
-    var alert300=st.lateMin>=300?'<span class="u-bg-warn-bg u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
+    var alert20=st.absent>=20?'<span class="u-bg-bad-soft u-c-bad u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
+    var alert300=st.lateMin>=300?'<span class="u-bg-warn-soft u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
     html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h u-tr-box-shadow-15s-border-color-15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
@@ -11524,7 +11524,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
           (t.note?'<span class="u-c-text2">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
           '<span class="u-c-text3 u-fs-2">'+esc(t.by_name)+'</span>'+
-          '<button data-act="sl-del-treat" data-id="'+esc(t.id)+'" class="u-bg-none u-bd-none u-c-danger u-cur-p u-fs-3 u-p-0-2">✕</button>'+
+          '<button data-act="sl-del-treat" data-id="'+esc(t.id)+'" class="u-bg-none u-bd-none u-c-bad u-cur-p u-fs-3 u-p-0-2">✕</button>'+
         '</div>';
       }).join('');
     }
@@ -11676,7 +11676,7 @@ function _slPaintSettings() {
     tc.innerHTML=cfg.treats.map(function(t,i){
       return '<div class="u-d-flex u-g-3 u-ai-c">'+
         '<input aria-label="שם הטיפול" value="'+esc(t)+'" id="sl-treat-inp-'+i+'" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3">'+
-        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>'+
+        '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>'+
       '</div>';
     }).join('');
   }
@@ -11687,7 +11687,7 @@ window.slAddTreatRow = function() {
   if(!tc) return;
   var div=document.createElement('div');
   div.style.cssText='display:flex;gap:6px;align-items:center';
-  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3"><button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-danger u-fs-4">✕</button>';
+  div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="u-fx-1 u-bd-15-solid-border u-r-3 u-p-3-5 u-ff-heebo u-fs-3"><button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
