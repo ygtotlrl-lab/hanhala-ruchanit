@@ -25,20 +25,25 @@ import crypto from 'node:crypto';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
-  /*  ⚠️ רצפת הטענות — ⛔ פחות מזה פירושו שהתהליך נסגר באמצע. */
-  expected: 11,
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: true,/, 'החלון החם פעיל (HW_CFG.enabled=true, סבב 56)'],
     [/key: mirrorKey\('ys_sessions'\),/, 'מפרט החלון קיים ל-ys_sessions (סבב 56)'],
     [/hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/, 'שער הדיסק מחווט למשפך הכתיבה של שכבת המראה (סבב 114)'],
     [/try \{ hwBoot\(\); \}/, 'hwBoot מחווטת מפונקציית העלייה'],
-    [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],
     [/if \(s\.eq\) q = q\.eq\(s\.eq\[0\], s\.eq\[1\]\);/, 'מודול הגיבוי תומך ב-eq למקורות טבלה (מוכנות שלב ב)'],
   ],
+  /*  ⛔ בדיקות על קובץ שאינו `index.html` — ⚠️ **מה נכנס**: `[קובץ, תבנית,
+   *  הודעה]`; ⛔ **ומה מפיל**: תבנית שאינה נמצאת בקובץ. ⭐ **ולמה המבנה
+   *  קיים**: החלון החם נשען על מטמון ה-CDN שב-`sw.js`, ⛔ והוא אינו נראה
+   *  מ-`index.html` — ⚠️ ובלי המפתח הזה אין דרך למדוד אותו. */
   fileChecks: [
     ['sw.js', /var CDN_ASSETS = \[/, 'רשימת ה-CDN נושאת את השם המשותף CDN_ASSETS (סבב 35ג)'],
     ['sw.js', /ensureCdnCached/, 'ריפוי עצמי של ה-CDN קיים (ensureCdnCached)'],
   ],
+  /*  ⛔ מוטציות פרטיות לאפליקציה — ⚠️ **מה נכנס**: `[מחט, תחליף, תבנית,
+   *  הודעה]`. ⛔ **ומה מפיל**: מוטציה שאינה מפילה את הטענה שהיא נוקבת בה.
+   *  ⭐ **ולמה היא קיימת**: החלון החם נבדל בין הריפו — ⛔ **וכאן המוטציות
+   *  המשותפות מכסות הכול**, ⚠️ וההצהרה ריקה ואינה נשמטת. */
   mutations: [],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
@@ -72,19 +77,31 @@ const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
 
 let failed = 0;
 /*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
- *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה המהירה, ⛔ ופחות ממנה הוא
- *  כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
+ *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה שבה השער רץ, ⛔ ופחות ממנה
+ *  הוא כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
 const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
-const EXPECTED = APP.expected;
+/*  ⛔ ריצפת הטענות — ⚠️ **מה נכנס**: המשותפת, שהיא מספר זהה בארבעת הריפו,
+ *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
+ *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
+ *  טענה משותפת שאבדה. */
+const FLOOR = { shared: 8, app: 0, appWhy: '' };
+const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
+/*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
+ *  שלא הגיע לשם, ⛔ ואפס הוא שער שכל גופו מוטציות: ⭐ ההבחנה היא מה
+ *  שמבדיל ריצה חלקית מדילוג מוצהר. */
+let PRE_MUT = null;
+const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
  *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
 const SUBRUN = !!process.env.GATE_SUBRUN;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
- *  שרצו; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית — ⛔ ויותר ממנו —
- *  ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה מתעדכנת מפסיקה
- *  למדוד את מה שנוסף. ⚠️ **והתקרה ברמה המהירה בלבד** — ⛔ המוטציות
- *  מוסיפות טענות בכוונה, ⭐ ושער שמספרו משתנה גם בלעדיהן מוכרז
+ *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
+ *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
+ *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד
+ *  (סבב 119)** — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
+ *  מוסיף אינו נספר בתקרה: ⛔ השהיה על הרמה המלאה כולה השאירה תשעה שערים
+ *  בלי מדידה באף כיוון. ⚠️ ושער שמספרו משתנה גם בלי המוטציות מוכרז
  *  ב-`APP.floorRange` ומקבל את הטווח ב-`GATE_FLOOR_RANGE`. */
 const FLOOR_MAX = (() => {
   const r = /^(\d+)-(\d+)$/.exec(process.env.GATE_FLOOR_RANGE || '');
@@ -96,14 +113,22 @@ process.on('exit', () => {
    *  סינתטי מגיע לחלק מטענותיו בכוונה, ⭐ והרצפה נמדדת על עץ אמיתי. */
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
-  console.log(`רצו ${RAN} מתוך ${EXPECTED}`);
-  if (RAN < EXPECTED) {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN} טענות מתוך ${EXPECTED} מוצהרות — ` +
+  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר (סבב 119) —
+   *  ⚠️ שער שכל גופו מוטציות אינו רץ ברמה המהירה, ⭐ ואפס כזה אינו
+   *  ריצה חלקית: ⛔ ו-`null` — תהליך שלא הגיע לשם — כן. */
+  if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
+    console.log(`⏭ ${GATE_ID}: כל גופו רץ ברמה המלאה — לא נמדד כאן`);
+    return;
+  }
+  const N = PRE_MUT || RAN;
+  console.log(`רצו ${N} מתוך ${EXPECTED}`);
+  if (N < EXPECTED) {
+    console.error(`❌ ${GATE_ID}: רצו ${N} טענות מתוך ${EXPECTED} מוצהרות — ` +
       'מה עושים: ודא `await` בקריאה הראשית, ⛔ ויציאה שאינה קודמת להמתנה.');
     process.exitCode = 1;
-  } else if (RAN > FLOOR_MAX && process.env.GATE_MUT !== '1') {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN}, והריצפה ${EXPECTED} — ` +
-      'עדכן את `EXPECTED`.');
+  } else if (N > FLOOR_MAX) {
+    console.error(`❌ ${GATE_ID}: רצו ${N}, והריצפה ${EXPECTED} — ` +
+      'עדכן את `FLOOR`.');
     process.exitCode = 1;
   }
 });
@@ -131,7 +156,7 @@ function harness(modSrc, opts) {
       { id: 'c', ts: 300 },
     ],
     cloud: { ok: true, rows: [{ id: 'a', ts: 100 }, { id: 'b', ts: 200 }] },
-    pending: false, applied: undefined, fetchCalls: 0, restoreCalls: 0, domCalls: 0,
+    pending: false, applied: undefined, fetchCalls: 0,
   };
   Object.assign(state, opts || {});
   const spec = {
@@ -149,9 +174,7 @@ function harness(modSrc, opts) {
     Date,
     setTimeout: (fn) => fn,
     window: {},
-    document: { getElementById: () => { state.domCalls++; return null; } },
     lsLog: () => {},
-    lsRestoreAll: () => { state.restoreCalls++; },
     HW_CFG: { enabled: true, admin: () => true, specs: [spec] },
     LS_CFG: { pending: () => state.pending },
   };
@@ -208,23 +231,11 @@ const ids = (rows) => (rows || []).map((r) => r.id).join(',');
   assert(r.ok === true && ids(r.rows) === 'e,a' && state.applied === undefined,
     'hwPastLoad: חיות מחוץ לחלון בלבד, ממוינות, בלי כתיבה לדיסק');
 }
-/* ── כפתור השחזור: דו-שלבי, ושער מנהל ──────────────────────────────────── */
-{
-  const { state, ctx } = harness(MOD);
-  ctx.hwRestoreClick(null);
-  assert(state.restoreCalls === 0, 'לחיצה ראשונה חומשת בלבד — lsRestoreAll לא נקראה');
-  ctx.hwRestoreClick(null);
-  assert(state.restoreCalls === 1, 'לחיצה שנייה בתוך החלון מפעילה את lsRestoreAll');
-}
-{
-  const { state, ctx } = harness(MOD, { admin: false });
-  ctx.hwRestoreMount();
-  assert(state.domCalls === 0, 'hwRestoreMount נעצר לפני ה-DOM כשאין הרשאת מנהל');
-}
 
 /*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
  *  המלאה בלבד: ⛔ הרמה המהירה עוצרת כאן עם קוד היציאה של הטענות
  *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
+mutStage();
 if (!RUN_MUT) {
   console.log('\n⏭ test_hotwin: המוטציות רצות ברמה המלאה (--full)');
   process.exit(failed ? 1 : 0);

@@ -43,6 +43,11 @@ const html = fs.readFileSync('index.html', 'utf8');
 const SRC = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)]
   .map((m) => m[1]).join('\n');
 
+/*  ⛔ ההודעות הן קבועים ⛔ ואינן ליטרל באתר התצוגה — ⚠️ הרתמה טוענת את
+ *  הצהרותיהן, ⭐ שאם לא כן מטפל שמציג הודעה זורק `ReferenceError`,
+ *  ⛔ והכשל נקרא ככשל התנהגות ולא כחוסר בסביבה. */
+const MSG_DECLS = (SRC.match(/^var MSG_[A-Z_0-9]* = '(?:[^'\\]|\\.)*';$/gm) || []).join('\n');
+
 function grab(name) {
   const re = new RegExp(`(?:^|\\n)(async\\s+)?function\\s+${name}\\s*\\(`);
   const m = re.exec(SRC);
@@ -98,13 +103,13 @@ function grabObj(name) {
 }
 
 const OBJS = ['USER_CFG', 'MIRROR_CFG'];
-const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
+const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMissingFpCol',
   'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
   'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
-  /* ⛔ מגן השליחה הכפולה ושתי הפנימיות שלו (סבב 67) — המעטפות קוראות
-   * להן, ורתמה שאינה מחלצת אותן נופלת ב-ReferenceError. */
-  'ysBusy', '_saveUserInner', '_changeMyPasswordInner',
+  /* ⛔ מגן השליחה הכפולה — ⚠️ שני מסלולי פתיחת הסדר קוראים לו עם תווית
+   * משלהם, ⭐ ורתמה שאינה מחלצת אותו נופלת ב-ReferenceError. */
+  'busy',
   /* ⛔ נקודת המעבר האחת אל טבלת המשתמשים — ⚠️ שלושת אתרי הכתיבה עוברים
    * בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. ⛔ ואיתה שתי
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
@@ -120,7 +125,16 @@ const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'M
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
   /*  ⛔ שם טבלת המשתמשים במראה (סבב 116) — ⚠️ שלושת אתרי הכתיבה נוקבים
    *  בו, ⭐ ומפתח האחסון נגזר ממנו. */
-  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES'];
+  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES',
+  /*  ⛔ הודעת חסימת כתיבת המשתמש (סבב 131) — ⚠️ `USER_CFG.offMsg` מחזירה
+   *  אותה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
+  'MSG_OFF_USER_WRITE'];
+/*  ⛔ **מה נכנס** (סבב 131): שם שאינו קיים בהכרח במקור, ⛔ **ומה מפיל**:
+ *  אין — ⚠️ הוא נמשך רק כשהוא נמצא: ⭐ והמבנה קיים מפני שאפליקציה בלי
+ *  מסך שיוצר או משנה סיסמה אין לה מה להצהיר, ⛔ ורתמה שדורשת שם כזה
+ *  נופלת שם ב-`ReferenceError`. */
+const VARS_OPT = ['PASS_SIX_RE', 'MSG_PASS_SIX'];
+const hasVar = (name) => new RegExp('(?:^|\\n)var\\s+' + name + '\\s*=').test(SRC);
 
 /*  ⛔ מערך רב-שורות נחתך אף הוא בהתאמת סוגריים — ⚠️ `YS_MIRROR_TABLES`
  *  נפרס על שתי שורות, ⭐ ו-`grabVar` לוקח את שארית השורה בלבד. */
@@ -136,6 +150,7 @@ function grabArr(name) {
 }
 
 const CODE = ['YS_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(grabVar).join(';\n') + ';\n' +
+  VARS_OPT.filter(hasVar).map(grabVar).join(';\n') + ';\n' +
   OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
@@ -159,7 +174,7 @@ const DOM_IDS = ['auth-user', 'auth-pass', 'auth-err', 'auth-spinner', 'auth-btn
   'user-avatar-wrap', 'hdr-username', 'user-menu-name', 'user-menu-role', 'hdr-role',
   'switch-user-modal', 'switch-pass', 'switch-err',
   'um-id', 'um-name', 'um-username', 'um-role', 'um-pass', 'um-err',
-  'pw-old', 'pw-new'];
+  'mp-cur', 'mp-new', 'mp-new2'];
 
 /* `SB` מדומה: שרשרת PostgREST עצלה שמסננת מעל טבלה בזיכרון. */
 function makeSB(state) {
@@ -268,30 +283,45 @@ function boot(state, opts = {}) {
      *  עם המיכלים שלהן, ⭐ והרתמה מדמה את היחידה שנשארה. */
     closeModal: () => {},
     openModal: () => {},
+    /*  ⛔ נפילת הדיאלוג מדומה ואינה מושתקת — ⚠️ שומר שקורא ערך משדה שאינו
+     *  ב-DOM נופל דרכה, ⭐ והרתמה מודדת שהמסלול נגמר ברעש ⛔ ולא בשקט. */
+    uiNoDialog: (fn, id) => { TOASTS.push('uiNoDialog:' + fn + ':' + id); },
     renderUsersList: () => {},
   };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(CODE, sandbox);
+  vm.runInContext(MSG_DECLS + '\n' + CODE, sandbox);
   return sandbox;
 }
 
 /* ── טענות ─────────────────────────────────────────────────────────────── */
 let ok = 0, bad = 0;
 /*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
- *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה המהירה, ⛔ ופחות ממנה הוא
- *  כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
+ *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה שבה השער רץ, ⛔ ופחות ממנה
+ *  הוא כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
 const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
-const EXPECTED = 103;
+/*  ⛔ ריצפת הטענות — ⚠️ **מה נכנס**: המשותפת, שהיא מספר זהה בארבעת הריפו,
+ *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
+ *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
+ *  טענה משותפת שאבדה. */
+const FLOOR = { shared: 0, app: 103, appWhy: 'הכניסה האופליין — קיימת בשלוש, ומספר המסלולים נגזר ממסך ניהול המשתמשים שיש או שאין' };
+const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
+/*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
+ *  שלא הגיע לשם, ⛔ ואפס הוא שער שכל גופו מוטציות: ⭐ ההבחנה היא מה
+ *  שמבדיל ריצה חלקית מדילוג מוצהר. */
+let PRE_MUT = null;
+const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
  *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
 const SUBRUN = !!process.env.GATE_SUBRUN;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
- *  שרצו; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית — ⛔ ויותר ממנו —
- *  ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה מתעדכנת מפסיקה
- *  למדוד את מה שנוסף. ⚠️ **והתקרה ברמה המהירה בלבד** — ⛔ המוטציות
- *  מוסיפות טענות בכוונה, ⭐ ושער שמספרו משתנה גם בלעדיהן מוכרז
+ *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
+ *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
+ *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד
+ *  (סבב 119)** — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
+ *  מוסיף אינו נספר בתקרה: ⛔ השהיה על הרמה המלאה כולה השאירה תשעה שערים
+ *  בלי מדידה באף כיוון. ⚠️ ושער שמספרו משתנה גם בלי המוטציות מוכרז
  *  ב-`APP.floorRange` ומקבל את הטווח ב-`GATE_FLOOR_RANGE`. */
 const FLOOR_MAX = (() => {
   const r = /^(\d+)-(\d+)$/.exec(process.env.GATE_FLOOR_RANGE || '');
@@ -303,14 +333,22 @@ process.on('exit', () => {
    *  סינתטי מגיע לחלק מטענותיו בכוונה, ⭐ והרצפה נמדדת על עץ אמיתי. */
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
-  console.log(`רצו ${RAN} מתוך ${EXPECTED}`);
-  if (RAN < EXPECTED) {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN} טענות מתוך ${EXPECTED} מוצהרות — ` +
+  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר (סבב 119) —
+   *  ⚠️ שער שכל גופו מוטציות אינו רץ ברמה המהירה, ⭐ ואפס כזה אינו
+   *  ריצה חלקית: ⛔ ו-`null` — תהליך שלא הגיע לשם — כן. */
+  if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
+    console.log(`⏭ ${GATE_ID}: כל גופו רץ ברמה המלאה — לא נמדד כאן`);
+    return;
+  }
+  const N = PRE_MUT || RAN;
+  console.log(`רצו ${N} מתוך ${EXPECTED}`);
+  if (N < EXPECTED) {
+    console.error(`❌ ${GATE_ID}: רצו ${N} טענות מתוך ${EXPECTED} מוצהרות — ` +
       'מה עושים: ודא `await` בקריאה הראשית, ⛔ ויציאה שאינה קודמת להמתנה.');
     process.exitCode = 1;
-  } else if (RAN > FLOOR_MAX && process.env.GATE_MUT !== '1') {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN}, והריצפה ${EXPECTED} — ` +
-      'עדכן את `EXPECTED`.');
+  } else if (N > FLOOR_MAX) {
+    console.error(`❌ ${GATE_ID}: רצו ${N}, והריצפה ${EXPECTED} — ` +
+      'עדכן את `FLOOR`.');
     process.exitCode = 1;
   }
 });
@@ -667,7 +705,8 @@ sec('8. saveUser / changeMyPassword');
   const S = boot({ tables: { ys_users: rows } });
   await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
   S.AUTH.user = { client_id: '2', username: 'moshe', full_name: 'משה', role: 'senior', active: true };
-  DOM._m['pw-old'].value = '222222'; DOM._m['pw-new'].value = '246810';
+  DOM._m['mp-cur'].value = '222222'; DOM._m['mp-new'].value = '246810';
+  DOM._m['mp-new2'].value = '246810';
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
@@ -751,7 +790,8 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
   await waitFor(() => !!LS.ys_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
-  DOM._m['pw-old'].value = '111111'; DOM._m['pw-new'].value = '135790';
+  DOM._m['mp-cur'].value = '111111'; DOM._m['mp-new'].value = '135790';
+  DOM._m['mp-new2'].value = '135790';
   await S.changeMyPassword();
   const all = Object.entries(LS).map(([k, v]) => k + '=' + v).join('\n');
   T('10א. אף מפתח אינו מכיל את המחרוזת password_hash', all.indexOf('password_hash') === -1);
@@ -766,6 +806,7 @@ process.exit(bad ? 1 : 0);
 /*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
  *  המלאה בלבד: ⛔ הרמה המהירה עוצרת כאן עם קוד היציאה של הטענות
  *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
+mutStage();
 if (!RUN_MUT) {
   console.log('\n⏭ test_offline_login: המוטציות רצות ברמה המלאה (--full)');
   process.exit(failures ? 1 : 0);
