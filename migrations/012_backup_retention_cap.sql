@@ -26,7 +26,7 @@
 --      · **30** — תפוגת גיבוי אוטומטי, כפי שהייתה (`p_days`)
 --      · **14** — תפוגת גיבוי ידני בקידומת `pre-` (`p_manual_days`)
 --    ⛔ שינוי אחד מהם כאן בלי לעדכן את כלל ברזל 20 מפיל את
---    `tools/test_round61_backup_policy.mjs` בארבעת הריפו.
+--    `tools/test_round61_backup_policy.mjs` בכל הריפו.
 --
 -- ⛔ אידמפוטנטי לחלוטין: `create or replace function`, ו-`unschedule` לפני
 --    `schedule` מחדש. אין כאן `insert`/`update` על נתוני אפליקציה, ואין

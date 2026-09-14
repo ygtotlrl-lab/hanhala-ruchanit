@@ -1,21 +1,22 @@
 #!/usr/bin/env node
-/*  test_tables.mjs — שכבת השורות של הנוכחות: מבנה, כתיבה והתנהגות.
+/*  test_tables.mjs — שכבת השורות של הנוכחות: מבנה הטבלאות והכתיבה אליהן.
  *
- *  **מה נאכף:** (1) המיגרציות — שתי טבלאות אב-ובן, הרשאות בשני התפקידים,
- *  ⛔ אינדקסים מלאים בלבד, ⛔ בלי מפתח זר פיזי, אידמפוטנטיות; (2) שכבת
- *  השורות רצה ברתמת `vm` — גזירת המזהה, ירושת המחיקה והחותמת מהאב, דילוג
- *  על מפתח סימון לא-מספרי, ⛔ וסדר אב-לפני-בן; (3) מניעת כפילות סדרים —
- *  כלל אחד בשני המקומות, בדיקה טרייה מול הענן ⛔ שנכשלת רכה.
+ *  **מה נאכף:** (1) המיגרציות — שלוש הטבלאות נוצרות ב-`if not exists`,
+ *  הרשאות בשני התפקידים, ⛔ אינדקסים מלאים בלבד, וההעברה אידמפוטנטית
+ *  ובדו-כיווניות; (2) שכבת השורות רצה ברתמת `vm` — גזירת המזהה, אי-הדילוג
+ *  על מפתח סימון לא-מספרי, ⛔ המנות של 500, והנפילה-הסגורה של כשל בן.
  *
  *  **הנימוק המדוד:** מפתח הנתונים היה 360KB, ⛔ ולכן **כל סימון נוכחות
  *  בודד דרס את מלוא הערך**.
  *
  *  **מה יישבר בלעדיו:** ⛔ אינדקס **חלקי** מפיל את `ON CONFLICT` בשקט —
  *  ⚠️ פוסטגרס מסיק את אינדקס-הבורר מרשימת העמודות, ⭐ ולממשק ה-REST אין
- *  דרך להוסיף את התנאי; ⛔ ובן שאינו יורש את המחיקה מהאב חוזר לחיים.
+ *  דרך להוסיף את התנאי.
  *
  *  **מה אינו נאכף כאן:** ⛔ הרצת המיגרציות — ⚠️ הבדיקה קוראת אותן כטקסט,
- *  ⭐ ומצב ההרצה נמדד מול המסד.
+ *  ⭐ ומצב ההרצה נמדד מול המסד; ⛔ ירושת המחיקה והחותמת, סדר אב-לפני-בן
+ *  והמפתח הזר — ⚠️ הם נמדדים בשער האב-ובן המשותף; ⛔ ומניעת כפילות
+ *  הסדרים — ⚠️ בשער הכפילות הפרטי.
  *
  *  ⚠️ פרטי לאפליקציה הזו — היא בודקת מיגרציות וקוד שקיימים כאן בלבד.
  */
@@ -44,11 +45,11 @@ let failed = 0;
  *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה שבה השער רץ, ⛔ ופחות ממנה
  *  הוא כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
 const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
-/*  ⛔ ריצפת הטענות — ⚠️ **מה נכנס**: המשותפת, שהיא מספר זהה בארבעת הריפו,
+/*  ⛔ ריצפת הטענות — ⚠️ **מה נכנס**: המשותפת, שהיא מספר זהה בכל הריפו,
  *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
-const FLOOR = { shared: 0, app: 80, appWhy: 'שכבת השורות של הנוכחות — שער פרטי להנהלה' };
+const FLOOR = { shared: 0, app: 49, appWhy: 'מבנה שכבת השורות של הנוכחות והשינה — יכולת שקיימת בהנהלה בלבד' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
@@ -146,8 +147,6 @@ function t1() {
   assert(idx.some((i) => /ys_sessions_session_date_idx/.test(i) && !/unique/.test(i)),
     '1ט · ⚠️ (session, date_iso) **אינו** ייחודי — נמדדו 5 התנגשויות בנתונים החיים');
 
-  assert(!/references\s+public\.ys_sessions/i.test(C5),
-    '1י · ⛔ אין מפתח זר פיזי מהבן לאב — סדר הגעה לא ידוע ממכשירים אופליין');
 
   // הרשאות — שני התפקידים, תמיד.
   ['ys_sessions', 'ys_marks', 'ys_students_rows'].forEach((t) => {
@@ -287,38 +286,6 @@ function harness(modSrc, opts) {
   return { sandbox, calls };
 }
 
-/* חילוץ מודול מניעת הכפילות + רתמה. `ysMarks` ו-`_ysSessionsMerge` מסופקים
-   כבדלים — הבדיקה כאן היא על כלל הכפילות ועל האימוץ, לא על מנוע המיזוג. */
-const DUP_START = 'מניעת כפילות סדרים — ההגנה בנקודת היצירה';
-const DUP_END = '/* ═══ סוף מניעת כפילות סדרים';
-function extractDup(src) {
-  const lines = src.split('\n');
-  const si = lines.findIndex((l) => l.includes(DUP_START));
-  const ei = lines.findIndex((l) => l.includes(DUP_END));
-  if (si < 0 || ei <= si) return null;
-  return lines.slice(si - 1, ei + 1).join('\n');
-}
-/*  ⛔ `idEq` נחלצת מ-`index.html` ⛔ ואינה נכתבת כאן מחדש — ⚠️ עותק שני של
-    ההשוואה היה ממשיך לעבור אחרי שהמקורית השתנתה, ⭐ והרתמה הייתה מודדת
-    את עצמה. */
-function extractIdEq(src) {
-  const m = /function idEq\(a, b\) \{[\s\S]*?\n\}/.exec(src);
-  return m ? m[0] : null;
-}
-function dupHarness(modSrc) {
-  const idEqSrc = extractIdEq(SRC);
-  if (!idEqSrc) throw new Error('idEq לא נחלצה מ-index.html — נמדדו 0 הגדרות והצפוי אחת');
-  const sandbox = {
-    console, Object, Array, String, Number,
-    window: { _atMarks: {}, _slMarks: {} },
-    ysMarks: (r) => (r && r.marks && typeof r.marks === 'object') ? r.marks : {},
-    ysKvGet: async () => null,
-    _ysSessionsMerge: (c, l) => l,
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(idEqSrc + '\n' + modSrc, sandbox);
-  return sandbox;
-}
 
 const SESS = {
   id: '111', session: 'שחרית', date_iso: '2026-05-17',
@@ -356,10 +323,6 @@ async function t3() {
     '4ה3 · והמפתח עצמו נשמר כמות שהוא, בלי עיגול ובלי NaN');
   assert(marks.length > 0 && marks.every((m) => m.client_id === '111:' + m.student_id),
     '4ו · `client_id` של הסימון נגזר ממפתח הזהות `<סדר>:<תלמיד>` ואינו uuid חדש');
-  assert(marks.length > 0 && marks.every((m) => m.updated_at === 900),
-    '4ז · הסימון יורש את חותמת האב — ⛔ ולא `Date.now()`');
-  assert(marks.length > 0 && marks.every((m) => m.deleted === true),
-    '4ח · ⛔ הסימון יורש את `deleted` של האב — אחרת סדר מחוק דולף לדוח פר-תלמיד');
   assert(marks.length > 0 && marks.every((m) => m.date_iso === '2026-05-17'),
     '4ט · `date_iso` משוכפל לכל שורת סימון');
 
@@ -373,8 +336,6 @@ async function t3() {
   // סדר אב-לפני-בן, ובחירת מה לדחוף.
   const r = await sandbox.pushTable('ys_sessions', [SESS]);
   assert(r.ok === true && calls.length === 2, '4כ · דחיפה מוצלחת כותבת לשתי הטבלאות');
-  assert(calls[0].table === 'ys_sessions' && calls[1].table === 'ys_marks',
-    '4ל · האב נכתב לפני הבן — אין רגע שבו יש סימון בלי הסדר שלו');
 
   const h2 = harness(extract(SRC), { remote: [{ client_id: '111', updated_at: 900 }] });
   const r2 = await h2.sandbox.pushTable('ys_sessions', [SESS]);
@@ -404,58 +365,10 @@ async function t3() {
     '4ע · טבלה שטרם נוצרה / משיכה שנכשלה ⇒ בספק דוחפים (map=null)');
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   3ב · מניעת כפילות סדרים (השלמת סבב 36)
-   ══════════════════════════════════════════════════════════════════════════ */
-const DUP_GUARD = [
-  [/function atFindLiveSession\(data, sessName, dateIso, exceptId\)/,
-    '6א · כלל הכפילות מוגדר פעם אחת (`atFindLiveSession`)'],
-  /*  ⛔ המשיכה מסוננת ליום שנבחר (סבב 89) — ⚠️ עד כאן היו כאן **שתי**
-   *  משיכות מלאות בזו אחר זו, ⭐ 18,688 שורות כפול שתיים לפתיחת סדר אחד:
-   *  ⛔ והבדיקה צריכה יום אחד — 248 שורות. ⚠️ והטענה מודדת **את החלון**
-   *  ⛔ ולא את עצם המשיכה: ⭐ קריאה בלי חלון היא בדיוק מה שהצטמצם. */
-  [/await _atPullSessions\(ysDayWin\(dateIso\)\);/,
-    '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן, ⛔ ובחלון של יום אחד'],
-  [/await _slPullSessions\(ysDayWin\(dateIso\)\);/,
-    '6ב2 · ואותו חלון במודול השינה'],
-  [/var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,/,
-    '6ג · ⛔ הבדיקה חוזרת ב-`atMarkDirty` — נקודת היצירה בפועל'],
-  [/var _slDup=atFindLiveSession\(window\._slData,window\._slPendingRec\.session,/,
-    '6ד · אותה הגנה במודול השינה — אותו מבנה רשומה, אותו חור'],
-];
-function t3b() {
-  console.log('\n3ב · מניעת כפילות סדרים');
-  DUP_GUARD.forEach(([re, msg]) => assert(re.test(SRC), msg));
 
-  // ⚠️ הרתמה מריצה את הפונקציות עצמן, לא regex עליהן.
-  const src = extractDup(SRC);
-  assert(src !== null, '6ה · מודול מניעת הכפילות מחולץ מ-index.html');
-  if (!src) return;
-  const sb = dupHarness(src);
-  const rows = [
-    { id: 'a', session: 'שחרית', date_iso: '2026-05-17' },
-    { id: 'b', session: 'שחרית', date_iso: '2026-05-17', deleted: true },
-    { id: 'c', session: 'מנחה',  date_iso: '2026-05-17' },
-  ];
-  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-17').id === 'a',
-    '6ו · סדר חי לאותו שם ואותו יום נמצא');
-  assert(sb.atFindLiveSession(rows, 'מעריב', '2026-05-17') === null,
-    '6ז · שם-סדר אחר אינו נחשב כפילות');
-  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-18') === null,
-    '6ח · יום אחר אינו נחשב כפילות');
-  assert(sb.atFindLiveSession([rows[1]], 'שחרית', '2026-05-17') === null,
-    '6ט · ⛔ סדר מחוק אינו חוסם פתיחה מחדש — הכפילות היא בין סדרים חיים');
-  assert(sb.atFindLiveSession(rows, 'שחרית', '2026-05-17', 'a') === null,
-    '6י · `exceptId` מוציא את הרשומה הממתינה עצמה מהבדיקה');
-
-  // אימוץ — ⛔ אינו מוחק את סימוני המכשיר האחר.
-  sb.window._atMarks = { '1': { s: 'l', min: 12 }, '2': { s: '', min: 0 } };
-  sb.atAdoptSession({ id: 'a', marks: { '1': { s: 'p', min: 0 }, '2': { s: 'e', min: 0 }, '3': { s: 'ak', min: 0 } } });
-  assert(sb.window._atCurrentSessionId === 'a', '6כ · האימוץ מעביר את הסדר הפעיל לרשומה הקיימת');
-  assert(sb.window._atMarks['1'].s === 'l', '6ל · סימון שהמשתמש כבר סימן גובר');
-  assert(sb.window._atMarks['2'].s === 'e' && sb.window._atMarks['3'].s === 'ak',
-    '6מ · ⛔ סימוני המכשיר האחר נטענים ואינם נמחקים');
-}
+console.log('סבב 36 — מעבר הנהלה לטבלאות מובנות, שלב א');
+t1(); t2();
+await t3();
 
 /*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
  *  המלאה בלבד: ⛔ הרמה המהירה עוצרת כאן עם קוד היציאה של הטענות
@@ -487,27 +400,6 @@ async function t4() {
   assert(idxB.some((i) => /\bwhere\b/i.test(i)),
     '5ד · ⛔ מוטציה שמכניסה אינדקס חלקי נתפסת — טענת 1ו הייתה נכשלת (42P10)');
 
-  // ג. ביטול ירושת ה-deleted בשורת הסימון.
-  const mutC = SRC.replace('      deleted: del,\n', '      deleted: false,\n');
-  assert(mutC !== SRC, '5ה · המוטציה אכן מבטלת את ירושת ה-`deleted`');
-  const hC = harness(extract(mutC), {});
-  const marksC = hC.sandbox.ysMarkRows(SESS);
-  assert(marksC.length > 0 && marksC.every((m) => m.deleted === false),
-    '5ו · ⛔ במוטנט סימון של סדר מחוק נשאר חי — טענת 4ח הייתה נכשלת');
-
-  // ד. הסרת בדיקת הכפילות מנקודת היצירה בפועל.
-  const mutDup = SRC.replace(
-    /    var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,\n\s*window\._atPendingRec\.date_iso,window\._atPendingRec\.id\);\n/,
-    '    var _atDup=null;\n');
-  assert(mutDup !== SRC, '5ח · המוטציה אכן מסירה את בדיקת הכפילות');
-  /*  ⛔ הטענה נשלפת **לפי התווית** ⛔ ולא לפי מקומה במערך (סבב 89) —
-   *  ⚠️ הוספת שורה ל-`DUP_GUARD` הזיזה את האינדקס, ⭐ והמוטציה בדקה
-   *  טענה אחרת: ⛔ מוטציה שמפילה טענה שאינה זו שנקבה בשמה אינה אכיפה. */
-  const g6c = DUP_GUARD.find((x) => x[1].indexOf('6ג ') === 0);
-  assert(!!g6c, '5ט0 · טענת 6ג אותרה ב-`DUP_GUARD` לפי תוויתה');
-  assert(!g6c[0].test(mutDup),
-    '5ט · ⛔ מוטציה שמסירה את בדיקת הכפילות נתפסת — טענת 6ג הייתה נכשלת');
-
   /*  ו. החזרת הדילוג על מפתח לא-מספרי ב-`ysMarkRows` (סבב 37א) — זה
       הפיגום שהוסר כשהעמודה הפכה ל-`text`, ו⛔ החזרתו משמיטה בשקט את כל
       הסימונים של כל תלמיד שנוסף מסבב 37 ואילך. */
@@ -527,9 +419,7 @@ async function t4() {
     '5י · ⛔ מוטציה שהופכת את ההעברה ל-`do update` נתפסת — טענת 2ב הייתה נכשלת');
 }
 
-console.log('סבב 36 — מעבר הנהלה לטבלאות מובנות, שלב א');
-t1(); t2();
-await t3(); t3b(); await t4();
+await t4();
 /*  ⭐ מוטציית-נגד: **קוד שנוסף** ⛔ אינו מפיל — ⚠️ הטענות מודדות את מפת
  *  הטבלאות ואת מסלול הכתיבה, ⛔ ולא את אורך הקובץ: ⭐ שער שהיה נופל על כל
  *  תוספת היה הופך כל עבודה באפליקציה להפרה. */
