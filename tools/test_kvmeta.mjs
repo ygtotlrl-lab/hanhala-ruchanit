@@ -179,6 +179,9 @@ noneIn(/ysCfgSet\(\s*'ys_settings_meta'/, SRC,
 /* ── ד. המיגרציה ───────────────────────────────────────────────────────── */
 ok(existsSync(MIG), '10 · `migrations/013_kv_updated_at.sql` קיים');
 const sql = existsSync(MIG) ? readFileSync(MIG, 'utf8') : '';
+/*  ⛔ השמות כאן הם מה שכתוב **במיגרציה שכבר רצה** — ⚠️ והיא אינה
+   *  נערכת: ⭐ ההסבה ל-`tb_` נעשתה במיגרציה מאוחרת, ⛔ והקובץ הזה
+   *  ממשיך לתאר את מה שהיה בו ביום שנכתב. */
 ['kv', 'kv_rishon', 'kv_ramataviv'].forEach((t) => {
   ok(new RegExp('alter table public\\.' + t + '\\s+add column if not exists updated_at').test(sql),
      '11 · העמודה נוספת ל-`' + t + '`');

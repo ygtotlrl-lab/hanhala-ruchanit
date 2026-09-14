@@ -1,30 +1,47 @@
 #!/usr/bin/env node
-/*  test_schema_source.mjs — מקור אמת יחיד לסכימה.
+/*  test_schema_source.mjs — מקור אמת יחיד לסכימה, ואין מפתח שירות.
  *
- *  **מה נאכף:** ⛔ אין סכימה מוטבעת ב-`index.html` · ⛔ אין מסלול שמשתמש
- *  במפתח שירות · ⛔ וכלי ההתקנה מושך את **אותו** קובץ ואינו מחזיק עותק שני.
+ *  **מה נאכף:** ⛔ אין הצהרת סכימה מוטבעת בקוד הרץ של `index.html` —
+ *  ⚠️ `alter table` · `create policy` · `drop`/`truncate` · `grant` ·
+ *  ⛔ ואין מסלול שמשתמש במפתח שירות: ⚠️ אפס `service_role` במקור,
+ *  אפס `exec_sql`, ⛔ ואפס לקוח Supabase שנבנה מערך שהמשתמש הקליד.
  *
- *  **הנימוק המדוד:** עותק מוטבע של הסכימה מתיישן בכל מיגרציה — ⚠️ ומי
- *  שמתקין ממנו מקבל מסד שאינו זהה לזה שבייצור.
+ *  **הנימוק המדוד:** ⛔ מפתח שירות בקוד לקוח הוא מפתח על שעוקף RLS,
+ *  ⚠️ והוא ציבורי ברגע שהדף נטען — ⭐ ונמדד אפס בארבעתן: ⛔ כלומר
+ *  השער אוכף מצב תקין בכולן, ⚠️ והוא ישב באחת בלבד.
  *
- *  **מה יישבר בלעדיו:** ⛔ מפתח שירות בקוד לקוח הוא מפתח על, ⚠️ והוא
- *  ציבורי; ⛔ ושני מקורות סכימה נסחפים זה מזה בשקט.
+ *  **מה יישבר בלעדיו:** ⛔ מפתח שירות שייכנס בתום לב חושף את המסד כולו
+ *  לכל מי שפותח את הדף; ⛔ ועותק מוטבע של הסכימה מתיישן בכל מיגרציה,
+ *  ⚠️ ומי שמתקין ממנו מקבל מסד שאינו זהה לזה שבייצור.
  *
- *  **מה אינו נאכף כאן:** ⛔ תוכן הסכימה עצמה — ⚠️ הוא נאכף בשערי המיגרציות,
- *  ⭐ וכאן נמדד **מניין** היא נקראת.
- *
- *  ⚠️ פרטי לאפליקציה הזו. ⛔ אין ליישר אותו מריפו אחר — כלי ההתקנה שלה
- *  אינו קיים באחיות באותה צורה.
+ *  **מה אינו נאכף כאן:** ⛔ תוכן הסכימה עצמה — ⚠️ הוא נאכף בשערי
+ *  המיגרציות ובשורות «מקור אמת יחיד לסכימה» ו«קובץ התקנה מלא»,
+ *  ⭐ וכאן נמדד **מניין** היא נקראת; ⛔ ותפקיד המפתח המוטבע, שנמדד
+ *  מול המסד החי בשער עובדות המסד.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+/* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
+const APP = {
+  app: 'hanhala-ruchanit',
+  /*  ⛔ כלי ההתקנה החד-פעמי — ⚠️ **מה נכנס**: שם הקובץ שמושך את קובץ
+   *  הסכימה ומריץ אותו; ⛔ **ומה מפיל**: שם שאין לו קובץ. ⭐ **ולמה
+   *  המבנה קיים**: כלי שמחזיק עותק סכימה משלו הוא מקור אמת שני.
+   *  ⚠️ **וההיעדר מוצהר ריק** ⛔ ואינו נשמט — ⭐ שדה חסר נקרא «לא נשאל»,
+   *  וריק נקרא «נמדד ואין». */
+  setupTool: 'setup-db.html',
+  /*  ⛔ קובץ הסכימה הראשונית — ⚠️ שמו נבדל בין הריפו, ⭐ והוא המקור
+   *  שכלי ההתקנה מושך ⛔ ושהתיעוד אינו מצהיר. */
+  schemaFile: 'migrations/000_initial_schema.sql',
+};
+/* ── סוף APP ───────────────────────────────────────────────────────────── */
 
-/*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
- *  ולא היעדר: ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
-export const ROWS = [];
+/*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ המיפוי נגזר מכאן ⛔ ואינו
+ *  רשימה שנייה בבודק. */
+export const ROWS = [175];
 
 /*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
  *  ⟵ שחזור, ⭐ ושני שערים לבדם היו רוב זמן הסט: ⛔ הן רצות ברמה המלאה
@@ -32,8 +49,9 @@ export const ROWS = [];
 const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const SETUP = fs.readFileSync(path.join(ROOT, 'setup-db.html'), 'utf8');
-const SCHEMA = fs.readFileSync(path.join(ROOT, 'migrations/000_initial_schema.sql'), 'utf8');
+/*  ⛔ כלי ההתקנה נקרא רק כשהוא מוצהר — ⚠️ קריאה של קובץ שאינו קיים
+ *  זורקת, ⭐ וההצהרה הריקה היא «נמדד ואין» ⛔ ולא «לא נשאל». */
+const SETUP = APP.setupTool ? fs.readFileSync(path.join(ROOT, APP.setupTool), 'utf8') : '';
 
 let passN = 0, failN = 0;
 /*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
@@ -44,7 +62,9 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
-const FLOOR = { shared: 0, app: 24, appWhy: 'מקור אמת יחיד לסכימה — שער פרטי להנהלה' };
+/* ⚠️ פר-אפליקציה — הריצפה הפרטית נגזרת מכלי ההתקנה שקיים בהנהלה בלבד, והנימוק בשדה עצמו */
+const FLOOR = { shared: 8, app: 3, appWhy: 'ארבע טענות כלי ההתקנה `setup-db.html`, שקיים בהנהלה בלבד, במקום שורת ההצהרה האחת' };
+/* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
@@ -58,11 +78,7 @@ const SUBRUN = !!process.env.GATE_SUBRUN;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
  *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
  *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
- *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד
- *  (סבב 119)** — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
- *  מוסיף אינו נספר בתקרה: ⛔ השהיה על הרמה המלאה כולה השאירה תשעה שערים
- *  בלי מדידה באף כיוון. ⚠️ ושער שמספרו משתנה גם בלי המוטציות מוכרז
- *  ב-`APP.floorRange` ומקבל את הטווח ב-`GATE_FLOOR_RANGE`. */
+ *  מתעדכנת מפסיקה למדוד את מה שנוסף. */
 const FLOOR_MAX = (() => {
   const r = /^(\d+)-(\d+)$/.exec(process.env.GATE_FLOOR_RANGE || '');
   return r ? Number(r[2]) : EXPECTED;
@@ -73,9 +89,6 @@ process.on('exit', () => {
    *  סינתטי מגיע לחלק מטענותיו בכוונה, ⭐ והרצפה נמדדת על עץ אמיתי. */
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
-  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר (סבב 119) —
-   *  ⚠️ שער שכל גופו מוטציות אינו רץ ברמה המהירה, ⭐ ואפס כזה אינו
-   *  ריצה חלקית: ⛔ ו-`null` — תהליך שלא הגיע לשם — כן. */
   if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
     console.log(`⏭ ${GATE_ID}: כל גופו רץ ברמה המלאה — לא נמדד כאן`);
     return;
@@ -93,41 +106,57 @@ process.on('exit', () => {
   }
 });
 const ok = (c, m) => { RAN++; if (c) passN++; else { failN++; console.error('❌ ' + m); } };
-/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
- *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
- *  מודפס בהודעה. */
-const _hits = (re, s) => (s.match(new RegExp(re.source, 'g')) || []).length;
-const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
-  `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
 
-
-/* ── הסרת הערות והצהרות DDL אמיתיות ─────────────────────────────────────────
-   ⚠️ המילים «create table» מופיעות גם בפרוזה של ההערות שמסבירות למה
-   הסכימה הוסרה. ⛔ לכן ההערות מוסרות תחילה (בלוק ושורה), והחיפוש הוא על
-   **הצהרה בשורה אחת** — `[ \t]+` ולא `\s+`, שחוצה שורות ותופס פרוזה. */
+/* ────── הלבנה ולספירה ──────────────────────────────────────────────────────
+   ⚠️ המילים «create table» ו-«service_role» מופיעות גם בפרוזה של ההערות
+   שמסבירות למה הסכימה הוסרה ולמה אין מפתח שירות. ⛔ לכן ההערות מוסרות
+   תחילה (בלוק ושורה), והחיפוש הוא על **הצהרה בשורה אחת** — `[ \t]+`
+   ולא `\s+`, שחוצה שורות ותופס פרוזה. */
 function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
 }
-const DDL = {
-  table: /create[ \t]+table\b/i,
-  alter: /alter[ \t]+table[ \t]+ys_users\b/i,
-  policy: /create[ \t]+policy\b/i,
-};
+/*  ⛔ מונה ולא נוכחות (סבב 79) — ⚠️ בדיקת נוכחות עוברת גם על הצהרה כפולה
+ *  וגם על שורה שיושבת בתוך הערה: ⭐ הטענה היא על **מספר המופעים**, ⛔ והוא
+ *  מודפס בהודעה. */
+const hits = (re, s) => (s.match(new RegExp(re.source, 'gi')) || []).length;
+const noneIn = (re, s, label) => ok(hits(re, s) === 0,
+  `${label} — נמדדו ${hits(re, s)} מופעים והצפוי אפס`);
+
+/*  ⛔ ארגומנטי `createClient` נחתכים בהתאמת סוגריים ⛔ ולא בחלון תווים —
+ *  ⚠️ ארגומנט ארוך מהחלון היה נחתך באמצע, ⭐ והאתר שנשען עליו היה עובר. */
+function clientArgs(code) {
+  const out = [];
+  const re = /createClient\s*\(/g;
+  let m;
+  while ((m = re.exec(code)) !== null) {
+    let depth = 0, j = m.index + m[0].length - 1;
+    for (; j < code.length; j++) {
+      const c = code[j];
+      if (c === '(') depth++;
+      else if (c === ')') { depth--; if (!depth) break; }
+    }
+    out.push(code.slice(m.index, j + 1));
+  }
+  return out;
+}
+/*  ⛔ מפתח שהמשתמש הקליד — ⚠️ ערך שנקרא מ-DOM, מהודעת `prompt`, או
+ *  מהאחסון המקומי: ⭐ מפתח `anon` שיושב בקוד הוא ציבורי בהגדרתו,
+ *  ⛔ ומפתח שמוקלד בדף הוא בדיוק המסלול שמפתח שירות נכנס בו. */
+const TYPED_KEY = /\.value\b|prompt\s*\(|localStorage\.getItem/;
 
 /* ══════════════════════════════════════════════════════════════════════════
-   1 · ⛔ אין יותר סכימה מוטבעת ב-index.html — עותק שני מתיישן בשקט
-   ══════════════════════════════════════════════════════════════════════════ */
-function t1() {
-  // ⚠️ נמדד על **הקוד הרץ** — שורות ההערה מוסרות קודם, אחרת הבלוק שמסביר
-  //    למה הסכימה הוסרה היה נספר כסכימה.
-  const code = stripComments(SRC);
-  /*  ⛔ `create table` בקוד הרץ אינו נמדד כאן — ⚠️ שורת «מקור אמת יחיד
-   *  לסכימה» מודדת בדיוק אותו, ⭐ וטענה נאכפת במקום אחד. */
-  ok(!DDL.alter.test(code), '1ב · ⛔ אין `alter table` בקוד הרץ — הסכימה כולה בקובץ');
-  noneIn(/password_hash[ \t]+text[ \t]+not[ \t]+null/i, SRC, '1ג · ולא הגדרת עמודה');
-  ok(!DDL.policy.test(code), '1ד · ולא פוליסה');
-  // ⛔ ואין עותק-גיבוי מוטבע «ליתר ביטחון» — הוא בדיוק המקור השני
-  noneIn(/pass_salt text;?\\n/, SRC, '1ה · ⛔ ואין עותק-גיבוי מוטבע של ה-SQL כמחרוזת');
+   1 · ⛔ אין הצהרת סכימה מוטבעת בקוד הרץ
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ `create table` בקוד הרץ אינו נמדד כאן — ⚠️ שורת «מקור אמת יחיד
+   לסכימה» מודדת בדיוק אותו, ⭐ וטענה נאכפת במקום אחד. */
+function t1(src) {
+  const code = stripComments(src);
+  noneIn(/alter[ \t]+table\b/, code,   '1א · ⛔ אין `alter table` בקוד הרץ — הסכימה כולה בקובץ');
+  noneIn(/create[ \t]+policy\b/, code, '1ב · ⛔ ולא `create policy`');
+  noneIn(/(drop|truncate)[ \t]+table\b/, code,
+    '1ג · ⛔ ולא `drop table` או `truncate table` — מסלול הריסה בקוד לקוח');
+  noneIn(/\bgrant[ \t]+(select|insert|update|delete|all)\b/, code,
+    '1ד · ⛔ ולא `grant` — ההרשאות נקבעות במיגרציה ולא בדפדפן');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -135,43 +164,44 @@ function t1() {
    ══════════════════════════════════════════════════════════════════════════
    ⛔ שדה שמבקש **service-role key** בקוד לקוח אסור — ⚠️ הוא מפתח על
    שעוקף RLS, והוא ציבורי ברגע שהדף נטען. ⭐ האיסור חי ואינו תלוי במימוש. */
-function t2() {
-  const code = stripComments(SRC);
-  noneIn(/setupWithServiceKey/, code, '2א · ⛔ אין `setupWithServiceKey` בקוד הרץ');
-  noneIn(/exec_sql/, code,            '2ב · ⛔ ואין קריאת `exec_sql`');
-  noneIn(/createClient\s*\([^)]*key/, code,
-    '2ג · ⛔ ואין לקוח Supabase שנבנה ממפתח שהמשתמש הקליד');
+function t2(src) {
+  /*  ⛔ הטענה הזו נמדדת על המקור **הגולמי** ⛔ ולא על הקוד המולבן —
+   *  ⚠️ מפתח שירות שיושב בהערה פורסם בדיוק כמו מפתח שיושב בקוד. */
+  noneIn(/service_role/, src, '2א · ⛔ אין `service_role` בקובץ — גם לא בהערה');
+  const code = stripComments(src);
+  noneIn(/exec_sql/, code,    '2ב · ⛔ ואין קריאת `exec_sql`');
+  const typed = clientArgs(code).filter((a) => TYPED_KEY.test(a));
+  ok(typed.length === 0,
+    `2ג · ⛔ ואין לקוח Supabase שנבנה מערך שהמשתמש הקליד — נמדדו ${typed.length} אתרים והצפוי אפס`);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   6 · setup-db.html — מושך את אותו קובץ, ואינו מחזיק עותק שני
+   3 · כלי ההתקנה — מושך את אותו קובץ, ואינו מחזיק עותק שני
    ══════════════════════════════════════════════════════════════════════════
-   ⚠️ הכלי החד-פעמי **נשאר** (סבב 58) — הוא אינו עותק של האפליקציה ואינו
-   נטען אצל המשתמשים; הוא הדרך שבה מריצים התקנה, ומקור האמת שלו הוא
-   קובץ המיגרציה. */
-function t6() {
-  ok(/migrations\/000_initial_schema\.sql/.test(SETUP), '6א · הכלי מפנה לקובץ ההתקנה');
-  ok(/cache:\s*'no-store'/.test(SETUP), '6ב · במשיכה בלי מטמון');
-  ok(!DDL.table.test(stripComments(SETUP)), '6ג · ⛔ ואין בו עותק סכימה משלו');
-  ok(/style\.display\s*=\s*'none'/.test(SETUP), '6ד · ובכשל הוא מסתיר את התיבה');
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   7 · ⭐ הקובץ היחיד מכיל את מה שהעותק המוטבע החסיר
-   ══════════════════════════════════════════════════════════════════════════
-   העותק ב-`index.html` הגדיר `ys_users` בלבד — כלומר התקנה טרייה לפיו
-   נתנה מסך כניסה ותו לא. */
-function t7() {
-  for (const t of ['public.kv', 'public.ys_users', 'public.sync_log', 'public.kv_backup']) {
-    ok(new RegExp('create table if not exists ' + t.replace('.', '\\.')).test(SCHEMA),
-      `7א.${t} · הטבלה מוגדרת בקובץ ההתקנה`);
+   ⚠️ הכלי החד-פעמי אינו עותק של האפליקציה ואינו נטען אצל המשתמשים; הוא
+   הדרך שבה מריצים התקנה, ומקור האמת שלו הוא קובץ המיגרציה. */
+function t3() {
+  if (!APP.setupTool) {
+    ok(!!APP.schemaFile && fs.existsSync(path.join(ROOT, APP.schemaFile)),
+      `3 · ⛔ אין בריפו הזה כלי התקנה — ⚠️ מוצהר ריק ⛔ ואינו נשמט: ` +
+      `⭐ וקובץ הסכימה ${APP.schemaFile} קיים ונמדד בשורות המיגרציה`);
+    return;
   }
-  ok(/pass_salt/.test(SCHEMA) && /pass_fp/.test(SCHEMA),
-    '7ב · ⭐ וגם עמודות הטביעה של סבב 22 — שהעותק המוטבע כן החזיק');
-  ok(/check \(role in \('admin','senior','junior'\)\)/.test(SCHEMA),
-    '7ג · וה-CHECK על role');
-  ok(/<שם משתמש>|<שם מלא>/.test(SCHEMA),
-    '7ד · ⛔ והמשתמש הראשון הוא מצייני מקום בלבד');
+  /*  ⛔ הפניה נמדדת בהכלה ⛔ ולא ב-`RegExp` שנבנה מהשם — ⚠️ דפוס שנבנה
+   *  משם מוצהר דורש גבול משני צדדיו, ⭐ ונתיב קובץ נושא נקודות וקווים:
+   *  ⛔ הכלה היא בדיוק מה שנמדד כאן. */
+  ok(SETUP.indexOf(APP.schemaFile) >= 0,
+    `3א · הכלי מפנה ל-${APP.schemaFile}`);
+  ok(/cache:\s*'no-store'/.test(SETUP), '3ב · במשיכה בלי מטמון');
+  noneIn(/create[ \t]+table\b/, stripComments(SETUP), '3ג · ⛔ ואין בו עותק סכימה משלו');
+  ok(/style\.display\s*=\s*'none'/.test(SETUP), '3ד · ובכשל הוא מסתיר את התיבה');
+}
+
+/* ─ הרצת בדיקות הנכונות ────────────────────────────────────────────────── */
+console.log(`\n═══ מקור אמת יחיד לסכימה, ואין מפתח שירות (${APP.app}) ═══\n`);
+for (const t of [() => t1(SRC), () => t2(SRC), t3]) {
+  try { t(); }
+  catch (e) { failN++; console.error(`❌ טענה זרקה: ${(e && e.stack) || e}`); }
 }
 
 /*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
@@ -180,47 +210,51 @@ function t7() {
 mutStage();
 if (!RUN_MUT) {
   console.log('\n⏭ test_schema_source: המוטציות רצות ברמה המלאה (--full)');
+  console.log(`\n[${APP.app}] ${passN} עברו, ${failN} נכשלו`);
   process.exit(failN ? 1 : 0);
 }
-/* ══════════════════════════════════════════════════════════════════════════
-   8 · מוטציות — מפתח שירות או סכימה מוטבעת מפילים את 2 ואת 1
-   ══════════════════════════════════════════════════════════════════════════ */
-function t8() {
-  const code = stripComments(SRC);
-  const mutFn = code + "\nasync function setupWithServiceKey(){"
-    + "var SB2=supabase.createClient(URL,key);await SB2.rpc('exec_sql',{sql:s});}\n";
-  ok(/setupWithServiceKey/.test(mutFn) && /exec_sql/.test(mutFn),
-    '8א · מוטציה: החזרת הפונקציה מפילה את טענות 2א ו-2ב');
 
-  const mutDDL = code + "\nvar s='alter table ys_users add column x text';\n";
-  ok(!DDL.alter.test(code) && DDL.alter.test(mutDDL),
-    '8ב · מוטציה: `alter table ys_users` מוטבע מפיל את טענה 1ב');
-  const mutPol = code + "\nvar p='create policy pp on ys_users';\n";
-  ok(!DDL.policy.test(code) && DDL.policy.test(mutPol),
-    '8ג · ⛔ ו-`create policy` מוטבע מפיל את טענה 1ד');
+/* ══════════════════════════════════════════════════════════════════════════
+   4 · מוטציות — ⛔ על עותק בזיכרון, ⛔ ולא על העץ
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ כל מוטציה נוקבת בשם הטענה שתיפול, ⚠️ והמדידה היא שהערך שהטענה
+   מודדת התהפך: ⭐ מוטציה שמפילה טענה אחרת אינה אכיפה. */
+function t4() {
+  const base = stripComments(SRC);
+  const mAlter = base + "\nvar s1 = 'alter table ys_users add column x text';\n";
+  ok(hits(/alter[ \t]+table\b/, base) === 0 && hits(/alter[ \t]+table\b/, mAlter) === 1,
+    '4א · ⛔ מוטציה: `alter table` מוטבע מפיל את טענה 1א — נמדד 0 ⟵ 1');
+  const mSvc = SRC + "\nvar k = 'service_role';\n";
+  ok(hits(/service_role/, SRC) === 0 && hits(/service_role/, mSvc) === 1,
+    '4ב · ⛔ מוטציה: `service_role` בקובץ מפיל את טענה 2א — נמדד 0 ⟵ 1');
+  const mKey = base + "\nvar c = createClient(URL, document.getElementById('k').value);\n";
+  ok(clientArgs(base).filter((a) => TYPED_KEY.test(a)).length === 0 &&
+     clientArgs(mKey).filter((a) => TYPED_KEY.test(a)).length === 1,
+    '4ג · ⛔ מוטציה: לקוח שנבנה מערך שהוקלד מפיל את טענה 2ג — נמדד 0 ⟵ 1');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   9 · ⭐ מוטציית-נגד — קוד שנוסף ⛔ אינו מפיל
+   5 · ⭐ מוטציית-נגד — קוד שנוסף ⛔ אינו מפיל
    ══════════════════════════════════════════════════════════════════════════
    ⚠️ טענות 1 ו-2 הן טענות **היעדר**: הן מודדות שאין DDL ואין מפתח שירות,
    ⛔ ולא את העובדה שהקובץ לא השתנה. ⭐ שער שהיה נופל על כל תוספת היה הופך
    כל עבודה באפליקציה להפרה. */
-function t9() {
-  const added = stripComments(SRC) + '\nfunction _ncSchemaPing(){ return 1; }\n';
-  ok(added !== stripComments(SRC), 'נ1 · מוטציית-הנגד אכן מוסיפה קוד רץ');
-  ok(!DDL.table.test(added) && !DDL.alter.test(added) && !DDL.policy.test(added),
+function t5() {
+  const added = SRC + '\n<script>function _ncSchemaPing(){ return 1; }</script>\n';
+  const code = stripComments(added);
+  ok(added !== SRC, 'נ1 · מוטציית-הנגד אכן מוסיפה קוד רץ');
+  ok(hits(/alter[ \t]+table\b/, code) === 0 && hits(/create[ \t]+policy\b/, code) === 0 &&
+     hits(/(drop|truncate)[ \t]+table\b/, code) === 0,
     'נ2 · ⭐ ואף על פי כן אין בו DDL — נמדדו 0 הצהרות והצפוי אפס');
-  ok(_hits(/setupWithServiceKey/, added) === 0 && _hits(/exec_sql/, added) === 0,
+  ok(hits(/service_role/, added) === 0 && hits(/exec_sql/, code) === 0 &&
+     clientArgs(code).filter((a) => TYPED_KEY.test(a)).length === 0,
     'נ3 · ⛔ ואין בו מסלול מפתח שירות — נמדדו 0 מופעים והצפוי אפס');
 }
 
-/* ── הרצה ──────────────────────────────────────────────────────────────── */
-console.log('\n═══ סבב 32 — מקור אמת יחיד לסכימה ═══\n');
-const tests = [t1, t2, t6, t7, t8, t9];
-for (const t of tests) {
-  try { await t(); }
-  catch (e) { failN++; console.error(`❌ ${t.name} זרקה: ${(e && e.stack) || e}`); }
+for (const t of [t4, t5]) {
+  try { t(); }
+  catch (e) { failN++; console.error(`❌ מוטציה זרקה: ${(e && e.stack) || e}`); }
 }
-console.log(`\n[hanhala-ruchanit] סבב 32 — ${passN} עברו, ${failN} נכשלו`);
+
+console.log(`\n[${APP.app}] ${passN} עברו, ${failN} נכשלו`);
 process.exit(failN ? 1 : 0);

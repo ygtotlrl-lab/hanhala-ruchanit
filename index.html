@@ -4390,7 +4390,7 @@ window.addEventListener('load', swRegister);
    שלא היה ברשימה לא גובה כלל. הכיסוי המלא נעשה אפשרי בזכות הגיבוי
    הדיפרנציאלי — רובם סטטיים ואינם נכתבים שוב.
    ⛔ `ys_users` אינה כאן (סבב 30) — היא מחזיקה סיסמאות בטקסט גלוי, ו-
-   `kv_backup` קריאה ל-`anon`; גיבוי שלה היה מעתיק את הסוד למקום שני.
+   `sh_backup` קריאה ל-`anon`; גיבוי שלה היה מעתיק את הסוד למקום שני.
    ⛔ ומקור טבלה נוסף כאן בלבד (`kind:'table'` עם `eq`/`order`/`key`) —
    ⚠️ ולא במודול המשותף: ⭐ הוא זהה בארבע האפליקציות. */
 var BK_CFG = {
@@ -4441,8 +4441,8 @@ var BK_CFG = {
    ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
    ══════════════════════════════════════════════════════════════════════ */
-var BK_TABLE = 'kv_backup';       // יומן הגיבויים — הכתיבה היא insert בלבד
-var BK_LOG_TABLE = 'sync_log';    // יומן הפעולות — insert בלבד
+var BK_TABLE = 'sh_backup';       // יומן הגיבויים — הכתיבה היא insert בלבד
+var BK_LOG_TABLE = 'sh_sync_log';    // יומן הפעולות — insert בלבד
 var BK_LOG_MAX = 50;              // תקרת התור המקומי של היומן
 var BK_RETENTION_DAYS = 30;       // עותק יומי נשמר 30 יום; ישן מזה נגרע
 var _bkRunning = false;           // נעילת ריצה (החליפה את הכתיבה-מראש)
@@ -7571,7 +7571,7 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey,
   var merged = ysMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); },
                               ysPendingFor(logKey), mergePair);
   if (dropped.length) {
-    console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sync_log)');
+    console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sh_sync_log)');
     ysSyncLog('dropped_legacy', logKey, dropped.length, { records: dropped });
   }
   return merged;
