@@ -38,7 +38,7 @@ node tools/check-js.mjs --full   # מלאה — חובה לפני כל push
 היחיד: ⭐ המספר שהמסך מציג נגזר משם המטמון החי, ⛔ ואינו ליטרל שני.
 
 ### PDF
-**pdfmake** (⛔ לא html2pdf — בעיות RTL), `cdnjs` בגרסה נעוצה `0.2.7`.
+**pdfmake** (⛔ לא html2pdf — בעיות RTL), `cdnjs` בגרסה נעוצה.
 
 <!-- SHARED:start id="readme-apk" -->
 ## APK

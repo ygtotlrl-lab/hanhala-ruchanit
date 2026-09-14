@@ -39,8 +39,6 @@ import { spawnSync } from 'node:child_process';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
-  /*  ⚠️ רצפת הטענות — ⛔ פחות מזה פירושו שהתהליך נסגר באמצע. */
-  expected: 36,
   app: 'hanhala-ruchanit',
   origin: 'https://ygtotlrl-lab.github.io',
   scope: '/hanhala-ruchanit/',
@@ -51,31 +49,32 @@ const APP = {
       ⛔ תא בלי `defect` חייב להישאר זהה אחרי האיחוד — הפרש הוא עצירה. */
   expects: {
     'nav-online':            'body:NET-OK|status:200',
-    'nav-offline-cached':    'body:CORE-ROOT|status:200',
-    'nav-offline-empty':     'body:html|status:503',
-    'nav-offline-query':     'body:CORE-ROOT|status:200',
-    'sub-cached-online':     'body:NET-OK|status:200',
+    'nav-offline-cached':    'body:CORE-INDEX|status:200',
+    'nav-offline-empty':     'body:html|status:200',
+    'nav-offline-query':     'body:CORE-INDEX|status:200',
+    'sub-cached-online':     'body:CORE-ASSET|status:200',
     'sub-cached-offline':    'body:CORE-ASSET|status:200',
-    'sub-missing-offline':   'network-error',
+    'sub-missing-offline':   'body:empty|status:504',
     'sub-404':               'body:NET-404|status:404',
     'sub-404-stored':        'not-stored',
     'supabase':              'passthrough',
-    'cdn-cached-online':     'body:NET-OK|status:200',
-    'version-probe':         'body:NET-OK|status:200',
+    'cdn-cached-online':     'body:CDN-0|status:200',
+    'version-probe':         'passthrough',
     'non-get':               'passthrough',
     'sweep-scope':           '%CACHE%,sister-app-v9',
   },
   defectCount: 0,
-  /*  ⚠️ ידיות המדיניות **נמדדו בסבב 40 ונשמרו** — ⛔ אינן ברירת מחדל
-   *  שנפלה מאליה, ואין לשנות אף אחת מהן «לשם אחידות» (סבב 42ג). */
+  /*  ⚠️ ידיות המדיניות **נמדדו** ברתמת קו-הבסיס — ⛔ אינן ברירת מחדל
+   *  שנפלה מאליה, ⭐ **ושבע מהן זהות בארבעתן**: ⚠️ מה שנבדל הוא
+   *  `prefix` ו-`cdnHosts` בלבד, ⛔ וכל סטייה נוספת מוצהרת בשמה. */
   cfg: {
     prefix: "'hanhala-ruchanit-'",
-    scoped: 'false',
-    navFallback: "'request'",
+    scoped: 'true',
+    navFallback: "'shell'",
     navIgnoreSearch: 'true',
-    subStrategy: "'network-first'",
-    subMiss: "'error'",
-    offlineStatus: '503',
+    subStrategy: "'cache-first'",
+    subMiss: "'504'",
+    offlineStatus: '200',
     skipWaiting: 'true',
   },
 };
@@ -124,19 +123,31 @@ const CACHE_NAME = (SRC.match(/CACHE_NAME\s*=\s*['"]([^'"]+)['"]/) || [])[1];
 
 let n = 0, bad = 0;
 /*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
- *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה המהירה, ⛔ ופחות ממנה הוא
- *  כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
+ *  שלא רצו: ⭐ `EXPECTED` הוא רצפה שנמדדה ברמה שבה השער רץ, ⛔ ופחות ממנה
+ *  הוא כשל — ⚠️ והמאזין על `exit` תופס גם יציאה שקדמה להמתנה. */
 const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
-const EXPECTED = APP.expected;
+/*  ⛔ ריצפת הטענות — ⚠️ **מה נכנס**: המשותפת, שהיא מספר זהה בארבעת הריפו,
+ *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
+ *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
+ *  טענה משותפת שאבדה. */
+const FLOOR = { shared: 36, app: 0, appWhy: '' };
+const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
+/*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
+ *  שלא הגיע לשם, ⛔ ואפס הוא שער שכל גופו מוטציות: ⭐ ההבחנה היא מה
+ *  שמבדיל ריצה חלקית מדילוג מוצהר. */
+let PRE_MUT = null;
+const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
  *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
 const SUBRUN = !!process.env.GATE_SUBRUN;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
- *  שרצו; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית — ⛔ ויותר ממנו —
- *  ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה מתעדכנת מפסיקה
- *  למדוד את מה שנוסף. ⚠️ **והתקרה ברמה המהירה בלבד** — ⛔ המוטציות
- *  מוסיפות טענות בכוונה, ⭐ ושער שמספרו משתנה גם בלעדיהן מוכרז
+ *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
+ *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
+ *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד
+ *  (סבב 119)** — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
+ *  מוסיף אינו נספר בתקרה: ⛔ השהיה על הרמה המלאה כולה השאירה תשעה שערים
+ *  בלי מדידה באף כיוון. ⚠️ ושער שמספרו משתנה גם בלי המוטציות מוכרז
  *  ב-`APP.floorRange` ומקבל את הטווח ב-`GATE_FLOOR_RANGE`. */
 const FLOOR_MAX = (() => {
   const r = /^(\d+)-(\d+)$/.exec(process.env.GATE_FLOOR_RANGE || '');
@@ -148,14 +159,22 @@ process.on('exit', () => {
    *  סינתטי מגיע לחלק מטענותיו בכוונה, ⭐ והרצפה נמדדת על עץ אמיתי. */
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
-  console.log(`רצו ${RAN} מתוך ${EXPECTED}`);
-  if (RAN < EXPECTED) {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN} טענות מתוך ${EXPECTED} מוצהרות — ` +
+  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר (סבב 119) —
+   *  ⚠️ שער שכל גופו מוטציות אינו רץ ברמה המהירה, ⭐ ואפס כזה אינו
+   *  ריצה חלקית: ⛔ ו-`null` — תהליך שלא הגיע לשם — כן. */
+  if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
+    console.log(`⏭ ${GATE_ID}: כל גופו רץ ברמה המלאה — לא נמדד כאן`);
+    return;
+  }
+  const N = PRE_MUT || RAN;
+  console.log(`רצו ${N} מתוך ${EXPECTED}`);
+  if (N < EXPECTED) {
+    console.error(`❌ ${GATE_ID}: רצו ${N} טענות מתוך ${EXPECTED} מוצהרות — ` +
       'מה עושים: ודא `await` בקריאה הראשית, ⛔ ויציאה שאינה קודמת להמתנה.');
     process.exitCode = 1;
-  } else if (RAN > FLOOR_MAX && process.env.GATE_MUT !== '1') {
-    console.error(`❌ ${GATE_ID}: רצו ${RAN}, והריצפה ${EXPECTED} — ` +
-      'עדכן את `EXPECTED`.');
+  } else if (N > FLOOR_MAX) {
+    console.error(`❌ ${GATE_ID}: רצו ${N}, והריצפה ${EXPECTED} — ` +
+      'עדכן את `FLOOR`.');
     process.exitCode = 1;
   }
 });
@@ -505,6 +524,7 @@ is(/text\/html; charset=utf-8/.test(SRC),
    'דף האופליין מוגש עם Content-Type מפורש — בארבעתן, גם ב-schar');
 
 if (RUN_MUT) {
+  mutStage();
 /* ── ה. שלוש המוטציות ההתנהגותיות ──────────────────────────────────────── */
 /*  ⚠️ כל מוטציה רצה על עותק בתיקייה זמנית, ומריצה את **רתמת קו-הבסיס
  *  האמיתית**. הצלחה = הרתמה נכשלה. ⛔ מוטציה שהרתמה עוברת עליה היא תיקון
