@@ -74,6 +74,7 @@ const APP = {
           'test_anchors.mjs',
           'test_visual.mjs',
            'test_dbfacts.mjs',
+          'test_dbscan.mjs',
           'test_sharedsync.mjs',
           'test_signedshared.mjs',
           'test_toolsid.mjs',
