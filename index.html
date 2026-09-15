@@ -1100,7 +1100,14 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   </div>
 </div>
 
-<script>
+<script type="module">
+/*  ⛔ הליבה המשותפת נטענת כמודול ⛔ ואינה מוכפלת כאן — ⚠️ והמסמך עצמו הוא
+ *  מודול: ⭐ סקריפט קלאסי רץ **לפני** כל מודול, ⛔ וקריאה אליו בעלייה
+ *  הייתה מוצאת `undefined`. */
+import { readNum, uniqList, uniqHas } from './core/util.js';
+import { newClientId, idEq, idArg, mergeCore, tombPruneMerged, tombBoot,
+         ctxEpoch, ctxSwitch, ctxStale } from './core/sync.js';
+import './core/hebrew.js';
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
    תאריך עברי — מקור אמת יחיד
@@ -4121,6 +4128,20 @@ window.lsBootDeferred = lsBootDeferred;
 window.lsSweepVerified = lsSweepVerified;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
 
+/*  ⛔ עשרת השמות שהמסמך קורא להם דרך `window` מוצבים עליו במפורש —
+ *  ⚠️ המסמך הוא מודול, ⭐ ושם שמוגדר בו אינו גלובלי מאליו: ⛔ בלי ההצבה
+ *  הקריאה מ-`oninput` שבתגית וממפת הפעולות מוצאת `undefined`. */
+window.onSearchInput = onSearchInput;
+window.selectSearchStudent = selectSearchStudent;
+window.editStudent = editStudent;
+window.showPage = showPage;
+window.showSettingsHome = showSettingsHome;
+window.showSettingsModule = showSettingsModule;
+window.filterClass = filterClass;
+window.openStatusForm = openStatusForm;
+window.saveStudentStatus = saveStudentStatus;
+window.renderUsersList = renderUsersList;
+
 /* ═══ האזנת הסכימה — מודול משותף (סבב 91) ═════════════════════════════════
 /*  ⛔ **שלוש תשובות מסד מעידות שהקוד ישן מהסכימה** — טבלה שאינה קיימת
  *  (`42P01`) · עמודה שאינה קיימת (`42703`) · ו-404 על טבלה: ⚠️ שלושתן
@@ -5051,54 +5072,6 @@ function pendBoot() {
 }
 /* ═══════════════ סוף מודול "ממתין לסנכרון" ═════════════════════════════ */
 
-/* ═══ מזהי רשומות — מודול משותף (סבב 37א) ═════════════════════════════════
-   ⛔ שינוי כאן (סבב 65) — כל האפליקציות **וכל עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ═══════════════════════════════════════════════════════════════════════ */
-function newClientId(){
-  try{
-    if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function')return crypto.randomUUID();
-  }catch(e){}
-  var b=null;
-  try{
-    if(typeof crypto!=='undefined'&&crypto&&typeof crypto.getRandomValues==='function'){
-      b=new Uint8Array(16);crypto.getRandomValues(b);
-    }
-  }catch(e){b=null;}
-  if(!b){b=new Array(16);for(var i=0;i<16;i++)b[i]=Math.floor(Math.random()*256);}
-  b[6]=(b[6]&0x0f)|0x40;b[8]=(b[8]&0x3f)|0x80;  // גרסה 4, variant RFC 4122
-  var h=[],j;for(j=0;j<16;j++)h.push((b[j]+0x100).toString(16).slice(1));
-  return h.slice(0,4).join('')+'-'+h.slice(4,6).join('')+'-'+h.slice(6,8).join('')+'-'+h.slice(8,10).join('')+'-'+h.slice(10,16).join('');
-}
-// השוואת זהות — תמיד כמחרוזת. עובדת על מזהה ישן (מספר) ועל חדש (uuid)
-// באותה מידה, ⛔ וגם על התאמה חוצת-סוגים שנוצרת כשמזהה עובר דרך מאפיין
-// HTML וחוזר כמחרוזת (סבב 38).
-function idEq(a, b) {
-  if (a == null || b == null) return false;
-  return String(a) === String(b);
-}
-// מזהה כארגומנט למאפיין `onclick`, וכבורר לאיתור האלמנט בחזרה.
-// ⛔ **מצוטט תמיד** (סבב 38) — uuid בלי מרכאות הוא שם משתנה שאינו קיים,
-// וכל כפתורי העריכה והמחיקה היו מתים.
-// ⛔ והסינון הוא **רשימת-היתר של תווים** ולא בריחה (סבב 38): ערך המאפיין
-//    עובר פענוח-ישויות לפני שהוא נקרא כ-JS, ולכן `&#39;` שנוצר ע"י `esc`
-//    היה חוזר להיות גרש וסוגר את המחרוזת. מזהה חוקי כאן הוא ספרות, אותיות
-//    לטיניות, מקף וקו תחתון בלבד — כל השאר נחתך.
-function idArg(v) {
-  return "'" + String(v == null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '') + "'";
-}
-// ⛔ **נקודת המעבר האחת בין מזהה למספר** — ⚠️ והיא אינה השוואת זהות: ⭐ היא
-//    מחלצת **חותמת שנשמרה בשדה המזהה בגרסה ישנה**, מהתקופה שבה המזהה היה
-//    `Date.now()`. ⛔ ומחרוזת שאינה ספרות בלבד מחזירה 0 ⛔ ולא `NaN` —
-//    ⚠️ `NaN` בהשוואה נכשל בשקט, ⭐ ואפס הוא «אין חותמת» מוצהר.
-// ⛔ אין להמיר מזהה למספר בשום מקום אחר — הוא `text`, ⛔ ו-`parseInt` עליו
-//    מחזיר `NaN`: ⚠️ ההשוואה נכשלת בלי שאיש רואה.
-function legacyIdStamp(v) {
-  var s = String(v == null ? '' : v);
-  return /^[0-9]+$/.test(s) ? Number(s) : 0;
-}
-/* ═══════════════ סוף מודול מזהי הרשומות ════════════════════════════════ */
-
 /* ── RTY_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
 /* ⚠️ בהנהלה «ממתין» הוא גם סימון ⏳ וגם מפתח שתקוע ב-`ys_offline_queue` —
    ו-`PEND_CFG.extra()` כבר מוסיף את השני למונה, ולכן `pendCount()` מכסה
@@ -5409,30 +5382,6 @@ var PL_CFG = {
       }, function () { return { ok: false, ts: null }; });
   },
 };
-/* ═══ שומר ההקשר — מודול משותף (סבב 109) ══════════════════════════════════
-   ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב: ⚠️ אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ מחזור «קרא ← מזג ← דחוף» נפתח בהקשר אחד ⛔ ואינו רשאי לכתוב באחר —
-      ⚠️ בין ה-`await` הראשון לאחרון ההקשר יכול להתחלף, ⭐ ומאותו רגע
-      הגלובלים מצביעים על החדש והזיכרון עדיין מחזיק את הישן: ⛔ כל כתיבה
-      שאחריו כותבת את נתוני ההקשר הקודם תחת החדש, ⚠️ וכל רישום הצלחה נזקף
-      לחשבון הלא נכון — ⭐ ועֵד פינוי כזה מתיר למחוק מהדיסק רשומה שמעולם
-      לא עלתה.
-   ⛔ **המונה ⛔ ולא שם ההקשר** — ⚠️ החלפה הלוך-ושוב מחזירה את אותו שם,
-      ⭐ והזיכרון בינתיים כבר הוחלף: ⛔ שוויון שמות אינו שוויון הקשר.
-   ⛔ **ומה נלכד מוצהר פר-אפליקציה** ⛔ ואינו כאן — ⚠️ באפליקציה רב-מוסדית
-      זה המוסד, ⭐ ובשאר המשתמש המחובר: ⛔ המנגנון אחד ⚠️ והנלכד נבדל.
-   ═══════════════════════════════════════════════════════════════════════ */
-var _ctxEpoch = 0;
-function ctxEpoch() { return _ctxEpoch; }
-/*  ⛔ נקודת הקידום היחידה — ⚠️ כל מסלול שמחליף הקשר קורא לה **לפני**
- *  הטעינה החדשה: ⭐ קידום שאחרי הטעינה משאיר את המחזור שרץ עכשיו סבור
- *  שהוא עדיין בהקשר שלו, ⛔ והכתיבה שלו נזקפת לחשבון החדש. */
-function ctxSwitch() { _ctxEpoch++; return _ctxEpoch; }
-/*  ⛔ «האם ההקשר התחלף מאז שהתחלתי» — ⚠️ הקורא לוכד את הערך בכניסה
- *  ⛔ ומוסר אותו כאן, ⭐ ואינו קורא את הגלובלי פעמיים. */
-function ctxStale(ep) { return ep !== _ctxEpoch; }
-/* ═══════════════ סוף שומר ההקשר ═════════════════════════════════════════ */
 /* ═══ מנגנון המשיכה — מודול משותף (סבב 51) ════════════════════════════════
    ⛔ שינוי כאן (סבב 65) — כל האפליקציות **וכל עותקי השער**, באותו
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
@@ -6880,148 +6829,6 @@ function _randDeviceId() {
   return id;
 }
 /* ═══════════════ סוף מודול מזהה המכשיר ═════════════════════════════════ */
-/* ═══ מיזוג רשומות — מודול משותף (סבב 38) ════════════════════════════════
-   ⛔ שינוי כאן (סבב 65) — כל האפליקציות **וכל עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ═══════════════════════════════════════════════════════════════════════ */
-// כלל ההכרעה בין שתי גרסאות של **אותה** רשומה — הנקודה היחידה בארגון שבה
-// הוא נכתב. ⛔ אין לשכפל אותה (סבב 38) — ר' הנימוק שבראש הבלוק.
-// `isPend` הוא הסימון ⏳ של הרשומה המקומית; `mergePair`, כשהוא קיים, מקבל
-// את ההכרעה כפרמטר ומרחיב אותה (מיזוג פנימי של סנאפשוט).
-// ⛔ **⏳ שובר שוויון ⛔ ואינו גובר על חותמת חדשה יותר** — ⚠️ מכשיר א׳ ערך
-//    ב-08:00 ולא הספיק לדחוף, ב׳ ערך ב-10:00 וסנכרן, וא׳ עלה ב-14:00:
-//    ⭐ ⏳ שמנצח תמיד היה מוחק כאן את עריכת ה-10:00. ⛔ והמקרה שבו ⏳ באמת
-//    נחוץ — רשומה שאינה בענן כלל — מטופל במסלול «מפתח שאינו בענן».
-function _mergePick(loc, rem, k, isPend, tsOf, mergePair) {
-  if (mergePair) return mergePair(loc, rem, k, isPend);
-  return tsOf(loc) > tsOf(rem) ? loc
-       : (tsOf(loc) === tsOf(rem) && isPend ? loc : rem);   // שוויון → ⏳, אחרת הענן
-}
-// `opts`: getKey · ts · isPending · mergePair · keepUnversionedLocal · onDrop
-//         ובנוסף ארבע ידיות המדיניות שבראש הבלוק.
-function mergeCore(local, remote, opts) {
-  var o = opts || {};
-  var getKey = o.getKey, tsOf = o.ts, mergePair = o.mergePair || null;
-  var keepUnversionedLocal = !!o.keepUnversionedLocal, onDrop = o.onDrop || null;
-  var dedupe = o.dedupe !== false;
-  var remoteDupe = o.remoteDupe || 'ts';        // 'ts' | 'last'
-  var keyless = o.keyless || 'drop';            // 'drop' | 'keep-remote'
-  var localPick = o.localPick || 'last';        // 'last' | 'first'
-  var pend = function (k) { return !!(o.isPending && o.isPending(k)); };
-  var L = Array.isArray(local) ? local : [];
-  var R = Array.isArray(remote) ? remote : [];
-
-  // ── מסלול א: איחוד כפילויות (map+order) ────────────────────────────────
-  if (dedupe) {
-    var map = {}, order = [];
-    R.forEach(function (r) {
-      if (!r) return;
-      var k = getKey(r); if (k == null) return; k = String(k);
-      if (!(k in map)) { order.push(k); map[k] = r; return; }
-      // ⚠️ הסדר כאן הוא (הקיים, החדש) — שוויון נופל על ה**מאוחר** במערך.
-      //    היפוך הארגומנטים הופך את שובר-השוויון בשקט.
-      map[k] = (remoteDupe === 'last') ? r
-             : _mergePick(map[k], r, k, false, tsOf, mergePair);
-    });
-    L.forEach(function (r) {
-      if (!r) return;
-      var k = getKey(r); if (k == null) return; k = String(k);
-      if (!(k in map)) {
-        // רשומה מקומית-בלבד — היעדרות אצל הצד השני אינה מחיקה.
-        if (tsOf(r) > 0 || keepUnversionedLocal || remote == null) { order.push(k); map[k] = r; }
-        else if (onDrop) { try { onDrop(r, k); } catch (eD) {} }
-      } else { map[k] = _mergePick(r, map[k], k, pend(k), tsOf, mergePair); }
-    });
-    return order.map(function (k) { return map[k]; });
-  }
-
-  // ── מסלול ב: שימור כפילויות (דחיפה זורמת) ──────────────────────────────
-  var out = [], seen = {}, byKey = {};
-  L.forEach(function (l) {
-    var k = getKey(l); if (k == null) return; k = String(k);
-    if (localPick === 'last' || !(k in byKey)) byKey[k] = l;
-  });
-  R.forEach(function (r) {
-    var k = getKey(r);
-    if (k == null) { if (keyless === 'keep-remote') out.push(r); return; }
-    k = String(k); seen[k] = 1;
-    var l = byKey[k];
-    if (!l) { out.push(r); return; }
-    out.push(_mergePick(l, r, k, pend(k), tsOf, mergePair));
-  });
-  L.forEach(function (l) {
-    var k = getKey(l); if (k == null) return; k = String(k);
-    if (!seen[k]) out.push(l);
-  });
-  return out;
-}
-/* ═══════════════ סוף מודול המיזוג ══════════════════════════════════════ */
-
-/* ═══ גריעת tombstones — מודול משותף (סבב 93) ════════════════════════════
-   ⛔ שינוי כאן (סבב 93) — כל האפליקציות **וכל עותקי השער**, באותו
-      סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ═══════════════════════════════════════════════════════════════════════ */
-// כל רשומה שנמחקה משאירה tombstone לנצח. הם נשמרים במכשיר **ונדחפים לענן
-// בכל שמירה**, ואיש כבר אינו קורא אותם.
-//
-// שלושה כללים, כולם קריטיים:
-// 1. **רק tombstones.** רשומה חיה אינה נגרעת לעולם, בלי קשר לגיל.
-// 2. **רק עם חותמת מספרית.** tombstone בלי חותמת — אי אפשר לדעת מתי נמחק,
-//    ולכן הוא **נשאר**: חותמת חסרה נקראת 0, וגריעה לפיה הייתה מוחקת דווקא
-//    את הישנים ביותר בלי שום ראיה לגילם.
-// 3. **`TOMBSTONE_TTL_MS`.** ⛔ הסף ארוך בהרבה מכל היעדרות סבירה.
-//
-// ⚠️ המחיר המודע: מכשיר שהיה מנותק מעבר לסף ולא קיבל את ה-tombstone עדיין
-// מחזיק את הרשומה כחיה, וכשיסתנכרן היא תחזור **פעם אחת**. מחיקה חוזרת
-// יוצרת tombstone חדש ומתוארך. ⛔ והסף עצמו הוא מדיניות נתונים ⛔ ולכן
-// החלטת המנהל.
-var TOMBSTONE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
-
-// דגל חד-פעמי: הטעינה מרימה אותו, והמיזוג הראשון שאחריה צורך אותו.
-// ⛔ גריעה מקומית בלבד חסרת משמעות — מנוע המיזוג מחזיר כל רשומה שקיימת
-// בענן ואין לה מקבילה מקומית, ולכן ה-tombstones היו חוזרים תוך שניות
-// והעותק הענני לעולם לא היה מצטמצם. ⚠️ הגריעה **אינה** רצה בפולינג
-// ואינה נוגעת במנוע המיזוג — היא מופעלת על התוצאה, פעם אחת לעלייה.
-var _tombPrunePending = false;
-
-// ⛔ שתי צורות החותמת נקראות כאן — ⚠️ `updatedAt` ו-`updated_at` חיות שתיהן
-//    בארגון, ⭐ ופונקציה שמכירה אחת מהן אינה מודול משותף: ⛔ היא הייתה
-//    מחזירה «בלי חותמת» לכל רשומה בשתי אפליקציות, ומשאירה כל tombstone.
-function tombStamp(r) {
-  if (!r || typeof r !== 'object') return null;
-  if (typeof r.updatedAt === 'number') return r.updatedAt;
-  if (typeof r.updated_at === 'number') return r.updated_at;
-  return null;
-}
-
-function prunePastTombstones(arr, nowTs) {
-  if (!Array.isArray(arr)) return [];
-  var cutoff = (typeof nowTs === 'number' ? nowTs : Date.now()) - TOMBSTONE_TTL_MS;
-  return arr.filter(function (r) {
-    if (!r || typeof r !== 'object') return false;
-    if (!r.deleted) return true;                 // חי — לא נוגעים
-    var t = tombStamp(r);
-    if (t === null) return true;                 // בלי חותמת — משאירים
-    return t >= cutoff;                          // tombstone טרי — משאירים
-  });
-}
-
-// ⛔ נקודת ההפעלה האחת — ⚠️ המיזוג של אוסף רשומות מעביר כאן את תוצאתו,
-//    ⭐ והגריעה רצה בפעם הראשונה שאחרי הטעינה ותו לא: ⛔ עוטף שני היה
-//    מאפשר לכל מקום בקוד לגרוע, ⚠️ ובכל פולינג.
-function tombPruneMerged(arr) {
-  if (!_tombPrunePending) return arr;
-  _tombPrunePending = false;
-  var before = Array.isArray(arr) ? arr.length : 0;
-  var out = prunePastTombstones(arr);
-  if (before !== out.length) console.log('[tomb] נגרעו ' + (before - out.length) + ' tombstones מעבר לסף');
-  return out;
-}
-// ⛔ נקודת ההפעלה היחידה של המודול — ⚠️ העלייה מרימה את הדגל **פעם אחת**,
-//    ⭐ והמיזוג הראשון שאחריה צורך אותו: ⛔ הרמה בכל פולינג הייתה גורעת
-//    בכל שלוש שניות, ⚠️ וזה בדיוק מה שהדגל בא למנוע.
-function tombBoot() { _tombPrunePending = true; }
-/* ═══════════════ סוף מודול גריעת ה-tombstones ══════════════════════════ */
 /*  ⛔ הדבר היחיד שנבדל בין שלוש האפליקציות שיש בהן כניסה — ⚠️ הלקוח,
  *  שם הטבלה, הודעת הניתוק, ומה נעשה **אחרי** שהתשובה חזרה: ⭐ הכתיבה
  *  עצמה זהה בית-לבית. */
@@ -7085,93 +6892,6 @@ function writeUser(id, row) {
   }).then(function (res) { return USER_CFG.after(res, body); });
 }
 /* ═══════════════ סוף מודול כתיבת משתמש ══════════════════════════════════ */
-
-/* ═══ מנוע התאריך העברי — מודול משותף (סבב 107) ═══════════════════════════
-   ⛔ מנוע אחד לכל צרכני התאריך — ⚠️ `ysHebDate` מעל `Intl`, ⛔ ובנפילה-חזרה
-      טבלה אריתמטית: ⭐ ואין תלות ב-CDN.
-   ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב: ⚠️ אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ **והטבלה אינה נמחקת** — ⚠️ היא רשת הביטחון כש-`Intl` חסר או שוגה,
-      ⭐ ואומתה מול הלוח הקבוע עד תת"י.
-   ⛔ **ושלושת החלקים יושבים יחד** — ⚠️ הם היו פזורים על פני מאות שורות,
-      ⭐ ומי שערך אחד מהם לא ראה את השניים: ⛔ החתימה מודדת טקסט רצוף. */
-// טבלת גיבוי לחישוב התאריך העברי — **נפילה-חזרה בלבד**. המנוע הראשי הוא Intl
-// (ysHebYearInfo), והוא בונה את השנה דינמית; הטבלה נכנסת לפעולה רק אם Intl חסר
-// או מחזיר תוצאה לא צפויה. ארבע השורות הראשונות אומתו ידנית מול הלוח האמיתי;
-// כל השאר נוצרו מאותו לוח Intl ואומתו מול הארבע (שחזור מדויק), כולל בדיקה
-// שכל שנה נסגרת בדיוק לא׳ תשרי של הבאה ושאורכה חוקי (353-355 / 383-385).
-// **אין למחוק** — זו רשת הביטחון. הטווח מגיע עד תת"י (2049).
-window._hcST=[
-  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9, 3),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9, 2),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5789,lb:'תשפ"ט',jd:new Date(2028,8,21),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5790,lb:'תש"צ',jd:new Date(2029,8,10),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5791,lb:'תשצ"א',jd:new Date(2030,8,28),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5792,lb:'תשצ"ב',jd:new Date(2031,8,18),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5793,lb:'תשצ"ג',jd:new Date(2032,8, 6),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5794,lb:'תשצ"ד',jd:new Date(2033,8,24),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5795,lb:'תשצ"ה',jd:new Date(2034,8,14),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5796,lb:'תשצ"ו',jd:new Date(2035,9, 4),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5797,lb:'תשצ"ז',jd:new Date(2036,8,22),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5798,lb:'תשצ"ח',jd:new Date(2037,8,10),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5799,lb:'תשצ"ט',jd:new Date(2038,8,30),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5800,lb:'ת"ת',jd:new Date(2039,8,19),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5801,lb:'תת"א',jd:new Date(2040,8, 8),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5802,lb:'תת"ב',jd:new Date(2041,8,26),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5803,lb:'תת"ג',jd:new Date(2042,8,15),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5804,lb:'תת"ד',jd:new Date(2043,9, 5),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5805,lb:'תת"ה',jd:new Date(2044,8,22),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5806,lb:'תת"ו',jd:new Date(2045,8,12),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5807,lb:'תת"ז',jd:new Date(2046,9, 1),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5808,lb:'תת"ח',jd:new Date(2047,8,21),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5809,lb:'תת"ט',jd:new Date(2048,8, 8),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5810,lb:'תת"י',jd:new Date(2049,8,27),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false}];
-// גרגוריאני → עברי, מנוע טבלאי פנימי — משמש כנפילה-חזרה ל-Intl בלבד
-window._hcHTable=function(d){
-  var td=new Date(d.getFullYear(),d.getMonth(),d.getDate()),b=window._hcST[0];
-  for(var i=window._hcST.length-1;i>=0;i--){if(td>=window._hcST[i].jd){b=window._hcST[i];break;}}
-  var df=Math.round((td-b.jd)/86400000),c=0;
-  for(var mi=0;mi<b.ml.length;mi++){if(df<c+b.ml[mi])return{hy:b.hy,mi:mi,day:df-c+1};c+=b.ml[mi];}
-  return{hy:b.hy,mi:0,day:1};};
-// ---- הפונקציה המרכזית ----
-// מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
-/*  ⛔ מטמון הגזירה — ⚠️ `formatToParts` וארבע גזירות הגימטריה רצות בכל
- *  קריאה, ⭐ ובמסך ההשגחה הגזירה חוזרת פעם לכל רשומה: אלפי קריאות על
- *  עשרות תאריכים שונים בלבד. ⛔ **והמפרמט עצמו כבר נשמר** — ⚠️ מה שחוזר
- *  על עצמו הוא הגזירה, ⛔ ולא בניית המפרמט.
- *  ⛔ **המפתח הוא היום המקומי** — ⚠️ הגזירה מעגנת בצהריים מקומיים, ⛔ ולכן
- *  שעה ודקה אינן משנות את התוצאה: מפתח שכולל אותן אינו פוגע לעולם.
- *  ⛔ **והתשובה מוחזרת כעותק רדוד** — ⚠️ קורא שיכתוב לשדה היה מרעיל את
- *  המטמון לכל שאר הקוראים, ⭐ והעתקה של עשרה שדות זולה מהגזירה בסדר גודל.
- *  ⛔ **והמטמון מתרוקן בתקרה** — ⚠️ מפה שגדלה בלי גבול היא דליפה בסשן ארוך. */
-window._ysHebCache={};
-window._ysHebCacheN=0;
-window.ysHebDate=function(d){
-  if(d===undefined||d===null) d=new Date();
-  if(!window._ysIsDate(d)){ window._ysBadDate('ysHebDate',d); return window._ysHebNone('bad-input'); }
-  var ck=d.getFullYear()+'|'+d.getMonth()+'|'+d.getDate();
-  var hit=window._ysHebCache[ck];
-  if(hit) return Object.assign({},hit);
-  // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
-  var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
-  var r=window.ysIntlHeb(nd),src='intl';
-  if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
-  if(!r||!r.hy){ return window._ysHebNone('none'); }
-  var names=window.ysHebMonthNames(r.hy);
-  var out={
-    year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
-    dayLabel:window.ysHebDayLabel(r.day),
-    yearLabel:window.ysHebYearLabel(r.hy),
-    yearLabelFull:window.ysHebYearLabelFull(r.hy),
-    leap:window.ysHebIsLeap(r.hy), ok:true, src:src
-  };
-  if(window._ysHebCacheN>=4000){ window._ysHebCache={}; window._ysHebCacheN=0; }
-  window._ysHebCache[ck]=out; window._ysHebCacheN++;
-  return Object.assign({},out);
-};
-/* ═══════════════ סוף מודול מנוע התאריך העברי ═══════════════════════════ */
 
 /* ═══ שכבת המודאל — מודול משותף (סבב 86) ══════════════════════════════════
    ⛔ שכבת המודאל ושלושת העוזרים ישבו **מחוץ** לכל בלוק חתום ⛔ ונסחפו:
@@ -7296,56 +7016,6 @@ function modalEsc(e) {
   return false;
 }
 /* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
-/* ═══ קריאת ערך מספרי — מודול משותף (סבב 104) ═════════════════════════════
-   ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב: אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ **כל קריאת ערך מספרי משדה עוברת כאן** — ⚠️ המרה ישירה מחזירה `NaN`
-      על שדה ריק, ⭐ ו-`NaN` שנכנס להשוואה נכשל בשקט: ⛔ `!val` תופס גם
-      אפס תקין, ⚠️ ו-`val > 30` על `NaN` הוא `false`.
-   ⛔ **והברירה מוצהרת בקריאה** — ⚠️ ולא נגזרת בשקט מהטיפוס: ⭐ מי שקורא
-      רואה מה הוא מקבל על שדה ריק, ⛔ ואינו מגלה זאת מהתנהגות.
-   ⛔ **והקלט הוא האלמנט** ⛔ ולא ערכו — ⚠️ אלמנט חסר הוא מסלול תקף, ⭐ והוא
-      מחזיר את הברירה: ⛔ קורא שמפרק בעצמו `el.value` מקבל `undefined`
-      ונופל לפני שהגיע לכאן.
-   ═══════════════════════════════════════════════════════════════════════ */
-function readNum(inp, dflt) {
-  var d = (dflt === undefined) ? 0 : dflt;
-  if (!inp) return d;
-  var raw = String(inp.value == null ? '' : inp.value).trim();
-  if (raw === '') return d;
-  var n = Number(raw);
-  return isFinite(n) ? n : d;
-}
-/* ═══════════════ סוף מודול קריאת ערך מספרי ══════════════════════════════ */
-
-/* ═══ כיווץ רשימת ערכים — מודול משותף (סבב 101) ═══════════════════════════
-   ⛔ שני פריטים באותו ערך הם פריט אחד — ⚠️ **והכיווץ הוא בכתיבה ובמיזוג
-      כאחד**: ⭐ `uniqHas` מונעת את הכפילות שמכאן ואילך, ⛔ ו-`uniqList`
-      מסלקת את מה שכבר נכתב פעמיים.
-   ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב: ⚠️ אחרת
-      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
-   ⛔ ושתיהן מכריעות לפי **אותה זהות** — ⚠️ שני מימושים לאותה טענה נבדלים
-      בשקט, ⭐ ואז המסך מראה פעמיים את מה שהמיזוג מכווץ לאחד.
-   ⛔ והראשון שורד — ⚠️ הסדר של הצד שניצח הוא סדר המסך, ⭐ ומי שדורש
-      שהחדש ינצח ממיין לפני הקריאה. */
-function uniqKeyOf(v, keyFn) { return String(keyFn ? keyFn(v) : v); }
-function uniqList(list, keyFn) {
-  if (!Array.isArray(list)) return list;
-  var seen = {}, out = [];
-  list.forEach(function (v) {
-    var k = uniqKeyOf(v, keyFn);
-    if (seen[k]) return;
-    seen[k] = 1;
-    out.push(v);
-  });
-  return out;
-}
-function uniqHas(list, val, keyFn) {
-  if (!Array.isArray(list)) return false;
-  var k = uniqKeyOf(val, keyFn);
-  return list.some(function (v) { return uniqKeyOf(v, keyFn) === k; });
-}
-/* ═══════════════ סוף מודול כיווץ רשימת ערכים ═══════════════════════════ */
 /* ═══ Enter שומר בשדה עריכה — מודול משותף (סבב 125) ═════════════════════
    ⛔ שדה שנשמר בכפתור נשמר גם ב-`Enter` — ⚠️ **וההיקף הוא הטופס** (`.ksave`)
       ⛔ ולא השדה: ⭐ שדה שנוסף לטופס קיים מקבל את המקש בלי שאיש ייגע בו,

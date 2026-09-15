@@ -28,6 +28,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { webcrypto } from 'node:crypto';
+import { appSrc } from './appsrc.mjs';
 
 
 /*  ⛔ הקובץ הזה אינו אוכף שורה בטבלת התשתית (סבב 72) — ⚠️ הצהרה ריקה
@@ -39,7 +40,9 @@ export const ROWS = [];
  *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
 const RUN_MUT = process.env.GATE_MUT === '1';
 /* ── חילוץ ─────────────────────────────────────────────────────────────── */
-const html = fs.readFileSync('index.html', 'utf8');
+/*  ⛔ המקור הוא `index.html` **ומודולי הליבה** — ⚠️ הליבה המשותפת יצאה
+ *  למודול, ⭐ ושער שקורא את הקובץ בלבד אינו מוצא את מה שרץ. */
+const html = appSrc(process.cwd());
 const SRC = [...html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)]
   .map((m) => m[1]).join('\n');
 
@@ -51,7 +54,7 @@ const MSG_DECLS = (SRC.match(/^var MSG_[A-Z_0-9]* = '(?:[^'\\]|\\.)*';$/gm) || [
 function grab(name) {
   const re = new RegExp(`(?:^|\\n)(async\\s+)?function\\s+${name}\\s*\\(`);
   const m = re.exec(SRC);
-  if (!m) throw new Error(`לא נמצאה הפונקציה ${name} ב-index.html`);
+  if (!m) throw new Error(`לא נמצאה הפונקציה ${name} במקור האפליקציה`);
   let i = SRC.indexOf('{', m.index + m[0].length - 1);
   // סורק מלא: מחרוזות (כולל תבניות), הערות שורה, הערות בלוק וליטרלי regex.
   // בלי כל אלה הערה עברית עם גרש בודד פותחת "מחרוזת" ומבלבלת את הספירה.
