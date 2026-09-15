@@ -177,8 +177,8 @@ const APP = {
   },
   cloudPut: ['ysCfgSet', 'writeUser'],
   cloudPutWhy: '',
-  cloudWrites: ['savePerms', 'atSaveCfg', 'atSaveTreats', '_slCleanCfg', 'slSaveCfg', 'slSaveTreats',
-                'saveUser', 'toggleUserActive', 'changeMyPassword'],
+  cloudWrites: ['savePerms', 'saveAbsenceReasons', 'atSaveCfg', 'atSaveTreats', '_slCleanCfg',
+                'slSaveCfg', 'slSaveTreats', 'saveUser', 'toggleUserActive', 'changeMyPassword'],
   cloudWriteAllow: {
     writeUser: 'הפרימיטיב עצמו — ⛔ גופו בבלוק חתום משותף לכולן, ⚠️ והקידום נמדד באתרי הקריאה שמעליו',
     ysCfgSet: 'הפרימיטיב עצמו — ⛔ אות הפולינג נכתב דרכו: ⭐ קידום בתוכו היה לולאה',
@@ -665,6 +665,12 @@ const APP = {
   ksaveActs: ['login', 'rpt-load', 'absence-reasons-save', 'at-settings-save', 'sl-settings-save',
               'perms-save', 'switch-confirm', 'user-save', 'my-pass-save',
               'student-save', 'at-add-treat', 'sl-add-treat'],
+  /*  ⛔ גשר על `window` שנשאר בכוונה (סבב 148) — ⚠️ **מה נכנס**: השם ⟵
+   *  מי צרכנו; ⛔ **ומה מפיל**: שם כאן שיש לו קורא, ⛔ ושם בלי קורא
+   *  שאינו כאן. ⭐ **ולמה המבנה קיים**: גשר בלי צרכן הוא הגדרה שנייה
+   *  שאין לה מטרה, ⚠️ ואין דרך להבדיל בינו לבין חוזה בין-מודולי בלי
+   *  שמישהו יכתוב מי קורא לו. */
+  windowBridges: {},
   elemListeners: [],
   docListeners: [
     { arg: 'LK_EVENTS[i]', why: 'מדידת חוסר-פעילות לנעילה — היא מודדת שהמשתמש כאן, ואינה מסלול פעולה' },
@@ -674,8 +680,6 @@ const APP = {
     { site: "['pointerdown', 'keydown']", why: 'שומר המגע לעדכון הגרסה — אינו מסלול שמירה' },
     { site: "LK_EVENTS  = ['touchstart', 'click', 'keydown', 'scroll']",
       why: 'מדידת חוסר-פעילות לנעילה — אינה מסלול שמירה' },
-    { site: 'atConfirmLate(', why: 'אישור איחור — הכפתור מופיע רק אחרי הקלדה, והמקש הוא המסלול שלפניו' },
-    { site: 'slConfirmLate(', why: 'אישור איחור — הכפתור מופיע רק אחרי הקלדה, והמקש הוא המסלול שלפניו' },
   ],
   probeInput: {
     '97|חותמת רעננות נכשלת סגור': 'src',
@@ -872,7 +876,7 @@ const CAPS = {
   bchartcss: {
     name: 'CSS גרף העמודות',
     docRows: ['גרף נבנה מ-CSS ולא מספרייה'],
-    block: { sha: '330fa4f388e8f15e', lines: 18,
+    block: { sha: 'b837f4000d5d7315', lines: 18,
              css: true,
              start: '/* ═══ CSS גרף העמודות — מודול משותף (סבב 137)',
              end:   '/* ═══ סוף CSS גרף העמודות' },
@@ -880,7 +884,7 @@ const CAPS = {
   bchart: {
     name: 'מודול גרף העמודות',
     docRows: ['גרף נבנה מ-CSS ולא מספרייה'],
-    block: { sha: '583c64c83120615f', lines: 34,
+    block: { sha: '8edc52349536c699', lines: 45,
              start: '/* ═══ גרף העמודות — מודול משותף (סבב 137)',
              end:   '/* ═══════════════ סוף מודול גרף העמודות' },
   },
@@ -909,7 +913,7 @@ const CAPS = {
   bp: {
     name: 'סולם נקודות השבירה',
     docRows: ['פריסה במסכי טלפון וטאבלט'],
-    block: { sha: '42de16108049515d', lines: 13,
+    block: { sha: '8c6d4dcf23b4dd8a', lines: 12,
              start: '/* ═══ סולם נקודות השבירה — מודול משותף (סבב 97)',
              end:   '/* ═══════════════ סוף מודול סולם נקודות השבירה' },
   },
@@ -926,7 +930,7 @@ const CAPS = {
   storage: {
     name: 'מודול עמידות האחסון',
     docRows: ['אחסון מקומי', 'אסטרטגיית `localStorage`'],
-    block: { sha: '414c7b7337d8a775', lines: 609,
+    block: { sha: 'b33084ad92187f9c', lines: 591,
              start: '   עמידות אחסון מקומי — מודול משותף (סבב 11).',
              end:   '/* ═══════════════ סוף המודול המשותף' },
     hooks: [{ fn: 'lsBoot', at: 'boot' }],
@@ -951,14 +955,14 @@ const CAPS = {
   busyguard: {
     name: 'מודול כפתור עסוק',
     docRows: ['כפתור שכותב מושבת בזמן הכתיבה'],
-    block: { sha: '91e97d94781c9221', lines: 44,
+    block: { sha: '52913a32d3034a09', lines: 45,
              start: '/* ═══ כפתור עסוק והשומר שבניתוב — מודול משותף (סבב 135)',
              end:   '/* ═══════════════ סוף מודול כפתור עסוק' },
   },
   savepipe: {
     name: 'צינור השמירה',
     docRows: ['פעולה מגיבה מיד'],
-    block: { sha: '693cfecbd5f07e54', lines: 43,
+    block: { sha: 'ecb88ea838510fcc', lines: 40,
              start: '/* ═══ צינור השמירה — מודול משותף (סבב 136)',
              end:   '/* ═══════════════ סוף צינור השמירה' },
   },
@@ -973,7 +977,7 @@ const CAPS = {
   backup: {
     name: 'גיבוי יומי אוטומטי',
     docRows: ['`bk` — גיבוי יומי ויומן', 'הגיבוי שלם ומעומד', '`sh_backup` — טבלת הגיבוי'],
-    block: { sha: '8dd2aec4bfe95fe2', lines: 304,
+    block: { sha: '0fc933bcc0b4c3ac', lines: 303,
              start: '/* ═══ גיבוי יומי ויומן פעולות — מודול משותף (סבב 30)',
              end:   'סוף מודול הגיבוי היומי' },
     hooks: [{ fn: 'bkBoot', at: 'boot' }],
@@ -982,7 +986,7 @@ const CAPS = {
   hotwin: {
     name: 'מודול החלון החם והשחזור המקומי',
     docRows: ['`hw` — חלון חם'],
-    block: { sha: 'cd35d70c65e1b3e0', lines: 152,
+    block: { sha: 'ed0dfd2d0ee833a5', lines: 151,
              start: '/* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35)',
              end:   '/* ═══════════════ סוף מודול החלון החם' },
     hooks: [{ fn: 'hwBoot', at: 'boot' }],
@@ -6051,6 +6055,46 @@ function listenerGaps() {
   for (const d of docOk) {
     if (!d.why || !String(d.why).trim()) out.push('מאזין גלובלי מוכרז בלי נימוק: ' + d.arg);
     if (!hitDoc.has(d.arg)) out.push('מאזין גלובלי מוכרז שאין לו אתר: ' + d.arg);
+  }
+  return out.concat(inlineHandlerGaps(), windowBridgeGaps());
+}
+/*  ⛔ אפס מטפל מוטבע בתגית, בכל סוג אירוע — ⚠️ **מה נכנס**: כל
+ *  `on<אירוע>="` שבמקור; ⛔ **ומה מפיל**: כל אתר כזה. ⭐ **ולמה המבנה
+ *  קיים**: תגית מוטבעת אינה רואה שם שחי במודול, ⛔ ולכן היא מכריחה גשר
+ *  על `window` — ⚠️ וגשר הוא הגדרה שנייה לאותו שם.
+ *  ⛔ **והמדידה על המקור הגולמי** — ⚠️ המטפל חי בתוך מחרוזת שנבנית
+ *  ב-JS, ⭐ והלבנה הייתה מוחקת בדיוק את מה שהיא סורקת. */
+function inlineHandlerGaps() {
+  const out = [];
+  for (const m of src.matchAll(/(?<![\w-])on[a-z]+\s*=\s*["']/g))
+    out.push('מטפל מוטבע בתגית: ' + m[0].trim() + ' ⛔ — בשורה ' +
+             src.slice(0, m.index).split('\n').length +
+             ': מעבירים אותו ל-`data-act` ולמאזין האחד של אותו אירוע');
+  return out;
+}
+/*  ⛔ וגשר על `window` בלי צרכן — ⚠️ **מה נכנס**: כל שם שמוצב על
+ *  `window`; ⛔ **ומה מפיל**: שם שאין לו קורא — לא דרך `window` ולא
+ *  בשמו החשוף — ואינו מוכרז, ⛔ והכרזה שיש לה קורא. ⭐ **ולמה המבנה
+ *  קיים**: גשר בלי צרכן הוא הגדרה שנייה שאין לה מטרה, ⚠️ והיא שורדת
+ *  כל ניקוי מפני שהיא נראית כחיווט. */
+function windowBridgeGaps() {
+  const out = [], seen = [], decl = APP.windowBridges || {};
+  for (const m of code.matchAll(/(?<![\w$.])window\.([A-Za-z_$][\w$]*)\s*=(?!=)/g)) {
+    const n = m[1];
+    if (seen.indexOf(n) >= 0) continue;
+    seen.push(n);
+    const viaWin = new RegExp('(?<![\\w$.])window\\.' + n + '\\b(?!\\s*=(?!=))');
+    const bare = new RegExp('(?<![\\w$.])' + n + '\\b(?!\\s*=(?!=))');
+    const live = viaWin.test(code) || bare.test(code);
+    if (!live && !decl[n])
+      out.push('גשר על `window` בלי צרכן: ' + n +
+               ' ⛔ — מוחקים אותו, או מכריזים ב-`APP.windowBridges` עם צרכנו');
+    if (live && decl[n])
+      out.push('גשר מוכרז שיש לו צרכן: ' + n + ' ⛔ — מסירים אותו מההכרזה');
+  }
+  for (const n of Object.keys(decl)) {
+    if (seen.indexOf(n) < 0) out.push('גשר מוכרז שאין לו אתר: ' + n + ' ⛔ — מסירים אותו מההכרזה');
+    else if (!String(decl[n] || '').trim()) out.push('גשר מוכרז בלי נימוק: ' + n + ' ⛔ — כותבים מי צרכנו');
   }
   return out;
 }

@@ -648,7 +648,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-tr-all-15s{transition:all var(--dur-2)}
 .u-tr-all-2s{transition:all var(--dur-3)}
 .u-tr-border-color-15s{transition:border-color var(--dur-2)}
-.u-tr-box-shadow-15s-border-color-15s{transition:box-shadow var(--dur-2),border-color var(--dur-2)}
+.sup-card{transition:box-shadow var(--dur-2),border-color var(--dur-2)}
+.sup-card:hover{box-shadow:var(--shadow);border-color:var(--navy-ink)}
 .u-tr-transform-2s{transition:transform var(--dur-3)}
 .u-ty{--ty:var(--text);--ty-line:var(--border);--ty-bg:var(--card-2)}
 .u-ty-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
@@ -762,7 +763,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="u-d-none btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" onchange="window.importStudentsFromFile(this)"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="u-d-none btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" data-chg="import-students"></div>
 
 
 <!-- Filter Tabs -->
@@ -775,7 +776,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div class="u-d-flex u-jc-c u-m-0-0-6">
-<div class="sw" id="sw-inner"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." oninput="window.onSearchInput()" autocomplete="off"><div id="search-dropdown"></div></div>
+<div class="sw" id="sw-inner"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." data-inp="search-st" autocomplete="off"><div id="search-dropdown"></div></div>
 </div>
 
 <!-- Summary Bar -->
@@ -1105,7 +1106,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
  *  מודול: ⭐ סקריפט קלאסי רץ **לפני** כל מודול, ⛔ וקריאה אליו בעלייה
  *  הייתה מוצאת `undefined`. */
 import { readNum, uniqList, uniqHas } from './core/util.js';
-import { newClientId, idEq, idArg, mergeCore, tombPruneMerged, tombBoot,
+import { newClientId, idEq, mergeCore, tombPruneMerged, tombBoot,
          ctxEpoch, ctxSwitch, ctxStale } from './core/sync.js';
 import './core/hebrew.js';
 // ============================================================
@@ -1725,7 +1726,6 @@ var MSG_DEL_ROW_BODY = 'הרשומה תימחק לצמיתות מהארכיון.
    ⭐ והשער הוא מה שמשווה ביניהם לרשימה שכאן: ⛔ הקבוע הוא ההצהרה,
    ⚠️ והשאילתה היא המימוש. */
 var BP_SCALE = [360, 480, 640, 900, 1200];
-window.BP_SCALE = BP_SCALE;
 /* ═══════════════ סוף מודול סולם נקודות השבירה ═════════════════════════ */
 /* ═══ עוזרי הרשת — מודול משותף (סבב 84) ═══════════════════════════════════
    ⛔ שלוש הפונקציות ישבו **בין** בלוקים חתומים, ⚠️ ולכן אף `sha256` לא מדד
@@ -2106,8 +2106,8 @@ function showPage(pg) {
 function renderPage(pg) {
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
-  if (pg === 'attend') window.loadAttend();
-  if (pg === 'sleep') window.loadSleep();
+  if (pg === 'attend') loadAttend();
+  if (pg === 'sleep') loadSleep();
 }
 /*  ⛔ נקודת הרענון של הצינור — ⚠️ **מה נכנס**: ציור המסך הפתוח,
  *  ⛔ **ומה מפיל**: `showPage` — ⭐ הוא בודק הרשאה ומנווט, ⚠️ ורענון
@@ -2121,17 +2121,15 @@ function saveRefresh() {
 
 // ---- לוח שנה עברי ויזואלי לטופס סטאטוס ----
 // שמות חודשים / ימים — אותן טבלאות תצוגה של ysHebDate (מקור אמת יחיד)
-window._hcMstd=window.MONTHS_HEB;
-window._hcMlp= window.MONTHS_HEB_LEAP;
 /* ══════════════════════════════════════════════════════════════════════════
    בורר התאריך העברי — לוח קופץ (`_hc*`)
    ══════════════════════════════════════════════════════════════════════════ */
-window._hcMN=function(hy){return window.ysHebMonthNames(hy);};
+function _hcMN(hy){return window.ysHebMonthNames(hy);};
 window._hcD=window.DAYS_HEB;
 window._hcVw={};
 // בניית נתוני שנה עברית מלוח הדפדפן: {hy,lb,jd (א׳ תשרי),ml[],leap}
 window._ysYearCache={};
-window.ysHebYearInfo=function(hy){
+function ysHebYearInfo(hy){
   hy=+hy;
   if(window._ysYearCache[hy]!==undefined) return window._ysYearCache[hy];
   var info=null;
@@ -2162,43 +2160,43 @@ window.ysHebYearInfo=function(hy){
   return info;
 };
 // מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה הטבלה הפנימית
-window._hcBaseST=function(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
-window._hcBase=function(hy){return window.ysHebYearInfo(hy)||window._hcBaseST(hy);};
+function _hcBaseST(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
+function _hcBase(hy){return ysHebYearInfo(hy)||_hcBaseST(hy);};
 // עברי → גרגוריאני Date
 // העוגן הוא צהריים ולא חצות: הוספת מכפלות של 24 שעות מחצות "נופלת" ליום הקודם
 // במעבר לשעון חורף (24 שעות = 23 שעות שעון) — זה החזיר תאריך מוקדם ביום.
-window._hcG=function(hy,mi,day){
-  var b=window._hcBase(hy);if(!b)return new Date();
+function _hcG(hy,mi,day){
+  var b=_hcBase(hy);if(!b)return new Date();
   var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
   var anchor=new Date(b.jd.getFullYear(),b.jd.getMonth(),b.jd.getDate(),12,0,0);
   var d=new Date(anchor.getTime()+c*86400000);
   return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);};
 // גרגוריאני → עברי {hy,mi,day} — עובר דרך המקור היחיד
-window._hcH=function(d){
+function _hcH(d){
   var h=window.ysHebDate(d);
   return {hy:h.year,mi:h.monthIndex,day:h.day};};
 // תווית שנה
-window._hcYL=function(hy){return window.ysHebYearLabel(hy)||String(hy);};
+function _hcYL(hy){return window.ysHebYearLabel(hy)||String(hy);};
 // פורמט תצוגה
-window._hcFmt=function(hy,mi,day){return (window._hcD[day]||window.ysGematria(day))+' ב'+(window._hcMN(hy)[mi]||'')+' '+window._hcYL(hy);};
+function _hcFmt(hy,mi,day){return (window._hcD[day]||window.ysGematria(day))+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);};
 // ניווט חודש
-window._hcNav=function(pfx,dir){
+function _hcNav(pfx,dir){
   var v=window._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
-  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
-  window._hcVw[pfx]={hy:hy,mi:mi};window._hcDraw(pfx);};
+  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
+  window._hcVw[pfx]={hy:hy,mi:mi};_hcDraw(pfx);};
 // ציור הלוח
-window._hcDraw=function(pfx){
-  var v=window._hcVw[pfx],b=window._hcBase(v.hy);if(!b)return;
+function _hcDraw(pfx){
+  var v=window._hcVw[pfx],b=_hcBase(v.hy);if(!b)return;
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
-  var mlen=b.ml[v.mi],fdow=window._hcG(v.hy,v.mi,1).getDay();
+  var mlen=b.ml[v.mi],fdow=_hcG(v.hy,v.mi,1).getDay();
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
-  var selH=selIso?window._hcH(new Date(selIso)):null;
-  var todH=window._hcH(new Date());
+  var selH=selIso?_hcH(new Date(selIso)):null;
+  var todH=_hcH(new Date());
   var bs='u-bd-none u-bg-none u-cur-p u-fs-5 u-c-navy-ink u-p-1-5 u-lh-1';
   var maxMi=(b.ml.length-1);
-  var hasPrev=v.mi>0||!!window._hcBase(v.hy-1),hasNext=v.mi<maxMi||!!window._hcBase(v.hy+1);
+  var hasPrev=v.mi>0||!!_hcBase(v.hy-1),hasNext=v.mi<maxMi||!!_hcBase(v.hy+1);
   // בגריד RTL: DOM[0]=ימין=ראשון, DOM[6]=שמאל=שבת
   // מספר תאים ריקים = fdow (0=ראשון → 0 ריקים, 6=שבת → 6 ריקים)
   var rtlOffset=fdow;
@@ -2206,7 +2204,7 @@ window._hcDraw=function(pfx){
   // כותרת ניווט — חץ ימני=חודש הקודם, שמאלי=הבא
   h+='<div class="u-d-flex u-jc-sb u-ai-c u-mb-5">';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" class="'+bs+(hasPrev?'':' u-op-25 u-cur-def')+'"'+(hasPrev?'':' disabled')+'>›</button>';
-  h+='<span class="u-fw-700 u-fs-4 u-c-navy-ink">'+window._hcMN(v.hy)[v.mi]+'&nbsp;'+window._hcYL(v.hy)+'</span>';
+  h+='<span class="u-fw-700 u-fs-4 u-c-navy-ink">'+_hcMN(v.hy)[v.mi]+'&nbsp;'+_hcYL(v.hy)+'</span>';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" class="'+bs+(hasNext?'':' u-op-25 u-cur-def')+'"'+(hasNext?'':' disabled')+'>‹</button>';
   h+='</div>';
   // כותרת ימים: DOM[0]=ימין=א׳(ראשון) → DOM[6]=שמאל=ש׳(שבת)
@@ -2248,13 +2246,13 @@ function uiShown(el) {
   return (el.style.display || getComputedStyle(el).display) !== 'none';
 }
 // פתיחה/סגירה
-window._hcOpen=function(pfx){
+function _hcOpen(pfx){
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
   if(uiShown(pop)){pop.style.display='none';return;}
   document.querySelectorAll('.hc-pop').forEach(function(p){p.style.display='none';});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
-  var vh=iso?window._hcH(new Date(iso)):window._hcH(new Date());
-  window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};window._hcDraw(pfx);
+  var vh=iso?_hcH(new Date(iso)):_hcH(new Date());
+  window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // מיקום fixed — מחושב מהטריגר, חסין לכל overflow:hidden בהורים
   var trg=document.getElementById(pfx+'_trg');
   if(trg){
@@ -2265,13 +2263,13 @@ window._hcOpen=function(pfx){
   }
   pop.style.display='block';};
 // בחירת יום
-window._hcPick=function(pfx,hy,mi,day){
-  var g=window._hcG(hy,mi,day);
+function _hcPick(pfx,hy,mi,day){
+  var g=_hcG(hy,mi,day);
   var iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');
   var el=document.getElementById(pfx+'_iso');if(el)el.value=iso;
   var lb=document.getElementById(pfx+'_lbl');
   if(lb){
-    var lbTxt=window._hcFmt(hy,mi,day);
+    var lbTxt=_hcFmt(hy,mi,day);
     if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[new Date(iso+'T12:00:00').getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
@@ -2283,13 +2281,13 @@ window._hcPick=function(pfx,hy,mi,day){
 // "בלי תאריך סיום" ל"מסתיים עכשיו": הסטטוס פג באותו רגע, התלמיד הוצג כנוכח
 // ולא הופיע באף רשימת השגחה — בזמן שהוצג "✅ סטאטוס נשמר".
 // כל צרכני a.to כבר מפרשים null כ"ללא תאריך סיום".
-window._hcGet=function(pfx){
+function _hcGet(pfx){
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
   if(!iso) return null;
   var t=(document.getElementById(pfx+'_t')||{}).value;
   return iso+'T'+(t||'00:00');};
 // הצג/הסתר בורר סיום
-window._hcToggle=function(){
+function _hcToggle(){
   var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
   if(!btn||!wr)return;
   var open=!uiShown(wr);
@@ -2306,14 +2304,14 @@ window._hcToggle=function(){
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
   }};
 // בניית HTML: כפתור-טריגר + פופאפ + שעה
-window._hcBuild=function(pfx,initH,tv){
+function _hcBuild(pfx,initH,tv){
   var label;
   if(initH){
-    label=window._hcFmt(initH.hy,initH.mi,initH.day);
-    if(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'){var _BD_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];var _bdG=window._hcG(initH.hy,initH.mi,initH.day);label='יום '+_BD_DOW[_bdG.getDay()]+' '+label;}
+    label=_hcFmt(initH.hy,initH.mi,initH.day);
+    if(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'){var _BD_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];var _bdG=_hcG(initH.hy,initH.mi,initH.day);label='יום '+_BD_DOW[_bdG.getDay()]+' '+label;}
   }else{label='בחר תאריך עברי';}
   var iso='';
-  if(initH){var g=window._hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
+  if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
   var trg='u-d-flex u-ai-c u-jc-sb u-cur-p u-p-4-5 u-bd-15-solid-border u-r-4 u-bg-bg u-ff-heebo u-fs-4 u-c-navy-ink u-fw-600 u-bx-border-box u-tr-border-color-15s';
   return '<div class="u-pos-rel">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" class="'+trg+'">'+
@@ -2341,13 +2339,13 @@ function openStatusForm(type) {
   var typeLabels = {approved: 'אישור', suspended: 'השעיה', left: 'לא שב'};
   var typeIcons = {approved: '✅', suspended: '⚠️', left: '🚪'};
 
-  var reasons = (window.getAbsenceReasons() || {})[type] || [];
+  var reasons = (getAbsenceReasons() || {})[type] || [];
 
   // ברירת מחדל — היום בלוח העברי
   var now = new Date();
   var mins = now.getMinutes() >= 30 ? 30 : 0;
   var defaultTime = String(now.getHours()).padStart(2,'0')+':'+String(mins).padStart(2,'0');
-  var todayHeb = window._hcH(now);
+  var todayHeb = _hcH(now);
 
   var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'u-fs-3 u-fw-600 u-c-text2 u-d-block u-mb-3';
@@ -2362,13 +2360,13 @@ function openStatusForm(type) {
       '</div>' +
       '<div>' +
         '<label class="'+lbl+'">תאריך התחלה</label>' +
-        window._hcBuild('sfmF', todayHeb, defaultTime) +
+        _hcBuild('sfmF', todayHeb, defaultTime) +
       '</div>' +
       '<div>' +
         '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="u-p-4-6 u-bd-15-solid-border u-r-3 u-bg-bg u-c-navy-ink u-ff-heebo u-fs-3 u-fw-600 u-cur-p u-mb-5">+ הוסף תאריך סיום</button>' +
         '<div id="sfmT_wrap" class="u-d-none">' +
           '<label class="'+lbl+'">תאריך סיום</label>' +
-          window._hcBuild('sfmT', null, '') +
+          _hcBuild('sfmT', null, '') +
         '</div>' +
       '</div>' +
     '</div>',
@@ -2379,11 +2377,11 @@ function openStatusForm(type) {
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
   if (!reason) { toast(MSG_PICK_REASON, null, 'bad'); return; }
-  var from = window._hcGet('sfmF');
+  var from = _hcGet('sfmF');
   if (!from) { toast(MSG_PICK_START_DATE, null, 'bad'); return; }
   var toWrap = document.getElementById('sfmT_wrap');
   var toOpen = uiShown(toWrap);
-  var to = toOpen ? window._hcGet('sfmT') : null;
+  var to = toOpen ? _hcGet('sfmT') : null;
   // שורת סיום פתוחה בלי תאריך נבחר — לא לשמור בשקט כאילו הכול תקין
   if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'bad'); return; }
   var sid = window._statusSid;
@@ -2441,7 +2439,7 @@ function closeUserMenu() {
 }
 // קורא ה-data-attributes של כפתור החלפת המשתמש. אין להחזיר קוד JS מורכב
 // לתוך מאפיין onclick — שם עם מרכאה או גרש שובר את המאפיין (סבב 8).
-window.switchUserEl = function(el) {
+function switchUserEl(el) {
   if (!el) return;
   switchUser(Number(el.getAttribute('data-uid')), el.getAttribute('data-uname') || '');
 };
@@ -2576,8 +2574,8 @@ function showSettingsModule(mod) {
   if (target) target.style.display = '';
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
-  if (mod === 'attend') window.renderAttendSettings();
-  if (mod === 'sleep') window.renderSleepSettings();
+  if (mod === 'attend') renderAttendSettings();
+  if (mod === 'sleep') renderSleepSettings();
 }
 
 // ברירות מחדל לסיבות היעדרות
@@ -2589,12 +2587,11 @@ function getDefaultReasons() {
   };
 }
 
-window.getAbsenceReasons = function() {
+function getAbsenceReasons() {
   try { return ysCfgLocalGet('ys_absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 };
-function getAbsenceReasons() { return window.getAbsenceReasons(); }
 
-window.saveAbsenceReasons = async function() {
+async function saveAbsenceReasons() {
   var reasons = {approved:[], suspended:[], left:[]};
   ['approved','suspended','left'].forEach(function(type) {
     /*  ⛔ ערך שכבר נאסף אינו נאסף שוב — ⚠️ שתי שורות באותו טקסט הן פריט
@@ -2618,15 +2615,15 @@ window.saveAbsenceReasons = async function() {
   try {
     var r = await ysCfgSet('ys_absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
-    var ts = Date.now();
-    await ysCfgSet('ys_last_changed', ts);
-    console.log('[absence-reasons] ys_last_changed updated:', ts);
+    /*  ⛔ אות הפולינג מקודם בנקודת המעבר האחת — ⚠️ כתיבה ידנית של
+     *  `ys_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
+     *  שני הוא מקום שני שבו הוא יכול להישכח. */
+    await ysTouchLastChanged();
   } catch(e) { console.error('[absence-reasons] save error:', e); }
 };
-function saveAbsenceReasons() { window.saveAbsenceReasons(); }
 
-window.renderAbsenceReasons = function() {
-  var reasons = window.getAbsenceReasons();
+function renderAbsenceReasons() {
+  var reasons = getAbsenceReasons();
   ['approved','suspended','left'].forEach(function(type) {
     var el = document.getElementById('reasons-'+type);
     if (!el) return;
@@ -2647,8 +2644,7 @@ window.renderAbsenceReasons = function() {
     });
   });
 };
-function renderAbsenceReasons() { window.renderAbsenceReasons(); }
-window.addAbsenceReason = function(type) {
+function addAbsenceReason(type) {
   var el = document.getElementById('reasons-'+type);
   if (!el) return;
   var div = document.createElement('div');
@@ -2748,8 +2744,8 @@ var DOM_ACTIONS = {
   /*  ⛔ שורת הסיבה נמחקת מההורה של הכפתור — ⚠️ המבנה חי ב-DOM,
    *  ⭐ והמטפל קורא אותו משם ולא מסגור שנתפר לשורה. */
   'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
-  'at-open-session':     function (el) { window.atOpenSession(el.dataset.sid, el.dataset.sname, el); },
-  'sl-open-session':     function (el) { window.slOpenSession(el.dataset.sid, el.dataset.sname, el); },
+  'at-open-session':     function (el) { atOpenSession(el.dataset.sid, el.dataset.sname, el); },
+  'sl-open-session':     function (el) { slOpenSession(el.dataset.sid, el.dataset.sname, el); },
   /*  ⛔ שלוש התראות התשתית מנותבות במפה — ⚠️ הכפתור נבנה ב-JS,
    *  ⭐ והמאזין הישיר שעליו היה בדיוק ההיקף שיצא מהמנגנון. */
   'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.style.display = 'none'; },
@@ -2759,18 +2755,18 @@ var DOM_ACTIONS = {
   'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
   'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
-  'st-pick':     function (el) { window.selectSearchStudent(el.getAttribute('data-id')); },
-  'st-activate': function (el) { window.setStudentActive(el.getAttribute('data-id')); },
+  'st-pick':     function (el) { selectSearchStudent(el.getAttribute('data-id')); },
+  'st-activate': function (el) { setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
-  'st-edit':     function (el) { window.editStudent(el.getAttribute('data-id')); },
-  'st-history':  function (el) { return window.openStatusHistory(el.getAttribute('data-id')); },
+  'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
+  'st-history':  function (el) { return openStatusHistory(el.getAttribute('data-id')); },
   /*  ⛔ ניווט ⛔ ופתיחת מסך עוברים בדלגציה (סבב 79) — ⚠️ המסכים כאן נבנים
    *  מחדש בכל רינדור, ⛔ ומאזין פר-אלמנט היה צריך חיווט מחדש בכל פעם.
    *  ⭐ `page-nav` הוא `page` ועוד סימון הכפתור הפעיל — ⛔ שני שמות ולא
    *  שני מסלולים: ⚠️ הסרגל התחתון מסמן, וכפתורי הפנים אינם. */
-  'page':        function (el) { window.showPage(el.getAttribute('data-page')); },
+  'page':        function (el) { showPage(el.getAttribute('data-page')); },
   'page-nav':    function (el) {
-                   window.showPage(el.getAttribute('data-page'));
+                   showPage(el.getAttribute('data-page'));
                    document.querySelectorAll('.bn').forEach(function (b) { b.classList.remove('on'); });
                    el.classList.add('on');
                  },
@@ -2785,35 +2781,35 @@ var DOM_ACTIONS = {
   'deact-st-confirm': function () {
                    var v = document.getElementById('deact-st-sel').value;
                    if (!v) { toast(MSG_PICK_STUDENT, null, 'bad'); return; }
-                   window.setStudentInactive(parseInt(v));
+                   setStudentInactive(parseInt(v));
                    closeModal();
                  },
-  'year-transition-confirm': function () { window.doYearTransition(); closeModal(); },
-  'at-resume-go':     function (el) { var p = window.atEditSession(el.getAttribute('data-id'));
+  'year-transition-confirm': function () { doYearTransition(); closeModal(); },
+  'at-resume-go':     function (el) { var p = atEditSession(el.getAttribute('data-id'));
                                     closeModal(); return p; },
-  'at-status-cancel': function (el) { window.atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'at-export-go':     function (el) { return window.atExportConfirm(el.getAttribute('data-type')); },
-  'at-mark-edit':     function (el) { window.atSupEditMarkDlg(el.getAttribute('data-rec'),
+  'at-status-cancel': function (el) { atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
+  'at-export-go':     function (el) { return atExportConfirm(el.getAttribute('data-type')); },
+  'at-mark-edit':     function (el) { atSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'at-mark-set':      function (el) { return window.atEditMark(el.getAttribute('data-rec'),
+  'at-mark-set':      function (el) { return atEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-resume-go':     function (el) { var p = window.slEditSession(el.getAttribute('data-id'));
+  'sl-resume-go':     function (el) { var p = slEditSession(el.getAttribute('data-id'));
                                     closeModal(); return p; },
-  'sl-status-cancel': function (el) { window.slCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'sl-export-go':     function (el) { window.slExportConfirm(el.getAttribute('data-type')); },
-  'sl-mark-edit':     function (el) { window.slSupEditMarkDlg(el.getAttribute('data-rec'),
+  'sl-status-cancel': function (el) { slCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
+  'sl-export-go':     function (el) { slExportConfirm(el.getAttribute('data-type')); },
+  'sl-mark-edit':     function (el) { slSupEditMarkDlg(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-mark-set':      function (el) { return window.slEditMark(el.getAttribute('data-rec'),
+  'sl-mark-set':      function (el) { return slEditMark(el.getAttribute('data-rec'),
                                         el.getAttribute('data-sid'), el.getAttribute('data-code')); },
   /*  ⛔ בורר התאריך העברי מנותב כאן — ⚠️ הלוח נבנה מחדש בכל ניווט חודש,
    *  ⭐ ומאזין פר-תא היה צריך חיווט מחדש בכל פעם. */
-  'hc-nav':           function (el) { window._hcNav(el.getAttribute('data-pfx'),
+  'hc-nav':           function (el) { _hcNav(el.getAttribute('data-pfx'),
                                         Number(el.getAttribute('data-dir'))); },
-  'hc-pick':          function (el) { window._hcPick(el.getAttribute('data-pfx'),
+  'hc-pick':          function (el) { _hcPick(el.getAttribute('data-pfx'),
                                         Number(el.getAttribute('data-hy')),
                                         Number(el.getAttribute('data-mi')),
                                         Number(el.getAttribute('data-day'))); },
-  'hc-open':          function (el) { window._hcOpen(el.getAttribute('data-pfx')); },
+  'hc-open':          function (el) { _hcOpen(el.getAttribute('data-pfx')); },
   /*  ⛔ הכפתור הפנימי גובר על השורה העוטפת בלי `stopPropagation` (סבב 80) —
    *  ⚠️ `closest('[data-act]')` מחזיר את הפנימי ביותר, ⭐ ולכן שני הצדדים
    *  מואצלים ורק אחד מהם רץ; ⛔ עד סבב 79 העוטף היה `onclick` מוטבע,
@@ -2830,62 +2826,62 @@ var DOM_ACTIONS = {
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
                         if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
                       },
-  'at-edit-session':  function (el) { return window.atEditSession(el.getAttribute('data-id')); },
-  'at-del-session':   function (el) { window.atDeleteSession(el.getAttribute('data-id')); },
-  'at-sup-detail':    function (el) { window.atSupDetail(el.getAttribute('data-id')); },
-  'at-set-mark':      function (el) { window.atSetMark(el.getAttribute('data-id'),
+  'at-edit-session':  function (el) { return atEditSession(el.getAttribute('data-id')); },
+  'at-del-session':   function (el) { atDeleteSession(el.getAttribute('data-id')); },
+  'at-sup-detail':    function (el) { atSupDetail(el.getAttribute('data-id')); },
+  'at-set-mark':      function (el) { atSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
-  'at-clear-mark':    function (el) { window.atClearMark(el.getAttribute('data-id')); },
-  'at-confirm-late':  function (el) { window.atConfirmLate(el.getAttribute('data-id')); },
-  'at-add-treat':     function (el) { return window.atAddTreat(el.getAttribute('data-id')); },
-  'at-del-treat':     function (el) { window.atDeleteTreat(el.getAttribute('data-id')); },
-  'sl-edit-session':  function (el) { return window.slEditSession(el.getAttribute('data-id')); },
-  'sl-del-session':   function (el) { window.slDeleteSession(el.getAttribute('data-id')); },
-  'sl-sup-detail':    function (el) { window.slSupDetail(el.getAttribute('data-id')); },
-  'sl-set-mark':      function (el) { window.slSetMark(el.getAttribute('data-id'),
+  'at-clear-mark':    function (el) { atClearMark(el.getAttribute('data-id')); },
+  'at-confirm-late':  function (el) { atConfirmLate(el.getAttribute('data-id')); },
+  'at-add-treat':     function (el) { return atAddTreat(el.getAttribute('data-id')); },
+  'at-del-treat':     function (el) { atDeleteTreat(el.getAttribute('data-id')); },
+  'sl-edit-session':  function (el) { return slEditSession(el.getAttribute('data-id')); },
+  'sl-del-session':   function (el) { slDeleteSession(el.getAttribute('data-id')); },
+  'sl-sup-detail':    function (el) { slSupDetail(el.getAttribute('data-id')); },
+  'sl-set-mark':      function (el) { slSetMark(el.getAttribute('data-id'),
                                         el.getAttribute('data-code')); },
-  'sl-clear-mark':    function (el) { window.slClearMark(el.getAttribute('data-id')); },
-  'sl-confirm-late':  function (el) { window.slConfirmLate(el.getAttribute('data-id')); },
-  'sl-add-treat':     function (el) { return window.slAddTreat(el.getAttribute('data-id')); },
-  'sl-del-treat':     function (el) { window.slDeleteTreat(el.getAttribute('data-id')); },
+  'sl-clear-mark':    function (el) { slClearMark(el.getAttribute('data-id')); },
+  'sl-confirm-late':  function (el) { slConfirmLate(el.getAttribute('data-id')); },
+  'sl-add-treat':     function (el) { return slAddTreat(el.getAttribute('data-id')); },
+  'sl-del-treat':     function (el) { slDeleteTreat(el.getAttribute('data-id')); },
   'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
-  'settings-home':   function () { window.showSettingsHome(); },
-  'settings-module': function (el) { window.showSettingsModule(el.getAttribute('data-mod')); },
-  'filter-class':    function (el) { window.filterClass(el.getAttribute('data-cls')); },
-  'sl-tab':          function (el) { window.slShowTab(el.getAttribute('data-tab')); },
-  'at-tab':          function (el) { window.atShowTab(el.getAttribute('data-tab')); },
-  'sl-export':       function (el) { window.slShowExportDialog(el.getAttribute('data-fmt')); },
-  'at-export':       function (el) { window.atShowExportDialog(el.getAttribute('data-fmt')); },
+  'settings-home':   function () { showSettingsHome(); },
+  'settings-module': function (el) { showSettingsModule(el.getAttribute('data-mod')); },
+  'filter-class':    function (el) { filterClass(el.getAttribute('data-cls')); },
+  'sl-tab':          function (el) { slShowTab(el.getAttribute('data-tab')); },
+  'at-tab':          function (el) { atShowTab(el.getAttribute('data-tab')); },
+  'sl-export':       function (el) { slShowExportDialog(el.getAttribute('data-fmt')); },
+  'at-export':       function (el) { atShowExportDialog(el.getAttribute('data-fmt')); },
   /*  ⚠️ כיוון הדפדוף הוא **מספר** — ⛔ הוא נכנס לחישוב אינדקס ולא להשוואת
    *  מפתח, ⭐ וההמרה נעשית באותו קומיט של ההמרה לדלגציה. */
-  'sl-sup-nav':      function (el) { window.slSupNav(Number(el.getAttribute('data-dir'))); },
-  'at-sup-nav':      function (el) { window.atSupNav(Number(el.getAttribute('data-dir'))); },
-  'absence-reason-add':  function (el) { window.addAbsenceReason(el.getAttribute('data-kind')); },
-  'status-form':         function (el) { window.openStatusForm(el.getAttribute('data-kind')); },
+  'sl-sup-nav':      function (el) { slSupNav(Number(el.getAttribute('data-dir'))); },
+  'at-sup-nav':      function (el) { atSupNav(Number(el.getAttribute('data-dir'))); },
+  'absence-reason-add':  function (el) { addAbsenceReason(el.getAttribute('data-kind')); },
+  'status-form':         function (el) { openStatusForm(el.getAttribute('data-kind')); },
   'user-edit':           function (el) { openEditUser({
                            id: el.getAttribute('data-uid'),
                            full_name: el.getAttribute('data-uname'),
                            username: el.getAttribute('data-uusername'),
                            role: el.getAttribute('data-urole') }); },
   'rpt-load':            function () { loadR(); },
-  'absence-reasons-save': function () { return window.saveAbsenceReasons(); },
+  'absence-reasons-save': function () { return saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
                             var id = el.getAttribute('data-id');
-                            if (id) window.cancelSingleAbsence(id); else window.cancelStudentStatus();
+                            if (id) cancelSingleAbsence(id); else cancelStudentStatus();
                           },
-  'status-picker-open':   function () { window.openStatusPickerModal(); },
-  'student-status-save':  function () { return runSave(function () { return window.saveStudentStatus(window._currentStatusType); }); },
-  'manage-list-open':     function () { window.openManageListDlg(); },
-  'students-print':       function () { window.printStudents(); },
-  'users-render':         function () { return window.renderUsersList(); },
-  'hc-toggle':            function () { window._hcToggle(); },
-  'sl-settings-save':     function () { return window.slSaveSettingsCfg(); },
-  'at-settings-save':     function () { return window.atSaveSettingsCfg(); },
-  'sl-session-close':     function () { return window.slCloseSession(); },
-  'at-session-close':     function () { return window.atCloseSession(); },
-  'at-session-add':       function () { window.atAddSession(); },
-  'sl-treat-row-add':     function () { window.slAddTreatRow(); },
-  'at-treat-row-add':     function () { window.atAddTreatRow(); },
+  'status-picker-open':   function () { openStatusPickerModal(); },
+  'student-status-save':  function () { return runSave(function () { return saveStudentStatus(window._currentStatusType); }); },
+  'manage-list-open':     function () { openManageListDlg(); },
+  'students-print':       function () { printStudents(); },
+  'users-render':         function () { return renderUsersList(); },
+  'hc-toggle':            function () { _hcToggle(); },
+  'sl-settings-save':     function () { return slSaveSettingsCfg(); },
+  'at-settings-save':     function () { return atSaveSettingsCfg(); },
+  'sl-session-close':     function () { return slCloseSession(); },
+  'at-session-close':     function () { return atCloseSession(); },
+  'at-session-add':       function () { atAddSession(); },
+  'sl-treat-row-add':     function () { slAddTreatRow(); },
+  'at-treat-row-add':     function () { atAddTreatRow(); },
   /*  ⛔ מסך הכניסה והמשתמשים — ⚠️ `user-save` ו-`my-pass-save` מקבלים את
    *  הכפתור שנלחץ, ⛔ ולכן `this` שהיה ב-`onclick` הוא ה-`el` שכאן. */
   'login':            function () { return doLogin(); },
@@ -2895,7 +2891,7 @@ var DOM_ACTIONS = {
   'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function () { return saveUser(); },
-  'user-switch':      function (el) { window.switchUserEl(el); },
+  'user-switch':      function (el) { switchUserEl(el); },
   'my-pass-save':     function () { return changeMyPassword(); },
   'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { return runSave(saveStudent); },
@@ -2935,6 +2931,29 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('keydown', function (e) {
   if (ksKey(e)) return;
   modalEsc(e);
+  /*  ⛔ `Enter` בשדה הדקות מאשר את האיחור — ⚠️ השדה אינו בהיקף `ksave`,
+   *  ⭐ ואין לו כפתור שמירה: ⛔ והמסלול הזה הוא מה שהחליף מטפל בתגית. */
+  if (e.key !== 'Enter' || !e.target || !e.target.dataset || !e.target.dataset.kent) return;
+  e.preventDefault();
+  if (e.target.dataset.kent === 'at-late') atConfirmLate(e.target.dataset.id);
+  else if (e.target.dataset.kent === 'sl-late') slConfirmLate(e.target.dataset.id);
+});
+
+/*  ⛔ מאזין ההקלדה האחד — ⚠️ שדות שנבנים ב-JS ונמחקים בכל רינדור:
+ *  ⭐ מאזין שנקשר אליהם מת איתם, ⛔ ומטפל בתגית מכריח גשר על `window`. */
+document.addEventListener('input', function (e) {
+  var el = e.target; if (!el || !el.dataset) return;
+  var k = el.dataset.inp;
+  if (k === 'search-st') onSearchInput();
+  else if (k === 'at-late') atSetLateMin(el.dataset.id, el.value);
+  else if (k === 'sl-late') slSetLateMin(el.dataset.id, el.value);
+  else if (k === 'sl-note') slSetNote(el.dataset.id, el.value);
+});
+
+/*  ⛔ מאזין השינוי האחד — ⚠️ בחירת קובץ הייבוא היא האתר היחיד. */
+document.addEventListener('change', function (e) {
+  var el = e.target;
+  if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
 });
 
 function moveUser(id, dir) {
@@ -3663,14 +3682,6 @@ function lsAlert(msg) {
    מחזירה true/false — ומסלול קריטי שמתעלם מהערך המוחזר הוא באג. */
 var _lsSweeping = false;
 var _lsToastAt = 0;
-/* "אף כישלון שקט" — מונה כישלונות גלובלי.
-   מסלול קריטי (רישום נוכחות, שמירת תשלום, הוספת רשומה, רישום תנועה) עוטף את
-   הפעולה כך:  `var t = lsFails(); ...await save()...; if (!lsOkSince(t)) return;`
-   ורק אז מציג "נשמר". כך גם כתיבה שנכשלה עמוק בתוך שרשרת async מונעת את טוסט
-   ההצלחה, בלי להשחיל ערך מוחזר דרך עשר פונקציות. */
-var _lsFailCount = 0;
-function lsFails() { return _lsFailCount; }
-function lsOkSince(n) { return _lsFailCount === n; }
 
 /* ── שער "אין טוסט הצלחה אחרי כישלון שמירה" ─────────────────────────────
    נקודת אכיפה **אחת** במקום עשרות בדיקות פזורות שאפשר לשכוח באחת: `toast()`
@@ -3690,16 +3701,15 @@ function lsSet(key, value) {
   try { localStorage.setItem(key, v); return true; } catch (e) {
     // בתוך פינוי — כישלון הוא תוצאה, לא טריגר לפינוי נוסף (רקורסיה).
     if (_lsSweeping) return false;
-    _lsFailCount++;
     _lsLastFailAt = Date.now();
     if (lsIsQuotaErr(e)) {
       // מנגנון חירום: פינוי נוסף לפי **אותו סדר** בדיוק, וניסיון אחד נוסף.
       var need = lsEntryBytes(key, v) + 64 * 1024;
       var freed = lsSweepGuarded('חירום — כתיבה נכשלה במכסה: ' + key, need);
       if (freed > 0) {
-        // הצליח בניסיון השני — לא כישלון. המונה מוחזר כדי שהמסלול הקריטי
-        // יציג "נשמר", שהרי הנתון באמת נשמר.
-        try { localStorage.setItem(key, v); _lsFailCount--; _lsLastFailAt = 0; lsLog('כתיבה חוזרת הצליחה', key, 0); return true; }
+        // הצליח בניסיון השני — לא כישלון. חלון ההשתקה נסגר כדי שטוסט
+        // ההצלחה יעבור, שהרי הנתון באמת נשמר.
+        try { localStorage.setItem(key, v); _lsLastFailAt = 0; lsLog('כתיבה חוזרת הצליחה', key, 0); return true; }
         catch (e2) { e = e2; }
       }
       lsLog('❌ כתיבה נכשלה (מכסה)', key, lsEntryBytes(key, v));
@@ -4119,30 +4129,11 @@ function lsBootAlert(u) {
   if (lsHorizonKeys().length) { try { lsToast(MSG_LS_PRUNED, 6000, 'bad'); } catch (e1) { } }
 }
 
-window.lsHorizonRelease = lsHorizonRelease;
-window.lsSet = lsSet;
-window.lsGet = lsGet;
-window.lsUsage = lsUsage;
-window.lsFails = lsFails;
-window.lsOkSince = lsOkSince;
-window.lsGuardToast = lsGuardToast;
-window.lsBootDeferred = lsBootDeferred;
-window.lsSweepVerified = lsSweepVerified;
 /* ═══════════════ סוף המודול המשותף ═══════════════════════════════════ */
 
 /*  ⛔ עשרת השמות שהמסמך קורא להם דרך `window` מוצבים עליו במפורש —
  *  ⚠️ המסמך הוא מודול, ⭐ ושם שמוגדר בו אינו גלובלי מאליו: ⛔ בלי ההצבה
  *  הקריאה מ-`oninput` שבתגית וממפת הפעולות מוצאת `undefined`. */
-window.onSearchInput = onSearchInput;
-window.selectSearchStudent = selectSearchStudent;
-window.editStudent = editStudent;
-window.showPage = showPage;
-window.showSettingsHome = showSettingsHome;
-window.showSettingsModule = showSettingsModule;
-window.filterClass = filterClass;
-window.openStatusForm = openStatusForm;
-window.saveStudentStatus = saveStudentStatus;
-window.renderUsersList = renderUsersList;
 
 /* ═══ האזנת הסכימה — מודול משותף (סבב 91) ═════════════════════════════════
 /*  ⛔ **שלוש תשובות מסד מעידות שהקוד ישן מהסכימה** — טבלה שאינה קיימת
@@ -4259,7 +4250,8 @@ function actRun(el, fn) {
     if (isBtn) busy(el, false);
   });
 }
-window.busy = busy;
+/*  ⛔ הגשר היחיד שנשאר כאן — ⚠️ צרכנו הוא שער ההתנהגות, ⭐ שמודד את
+ *  נקודת הניתוב בדפדפן אמיתי: ⛔ שם שחי במודול אינו נראה משם. */
 window.actRun = actRun;
 /* ═══════════════ סוף מודול כפתור עסוק ═══════════════════════════════════ */
 /* ═══ צינור השמירה — מודול משותף (סבב 136) ═══════════════════════════════
@@ -4301,9 +4293,6 @@ function runSave(fn, msg) {
     })
     .catch(function (e) { errToast(e); });
 }
-window.errToast = errToast;
-window.afterSave = afterSave;
-window.runSave = runSave;
 /* ═══════════════ סוף צינור השמירה ═══════════════════════════════════════ */
 
 /* ═══ הרשמת service worker — מודול משותף (סבב 128) ══════════════════════
@@ -4762,7 +4751,6 @@ function bkBoot() {
   try { bkMaybeDaily(); } catch (e) { }
   try { logFlush(); } catch (e) { }
 }
-window.bkBoot = bkBoot;
 /* ═══════════════ סוף מודול הגיבוי היומי ═══════════════════════════════ */
 
 /* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
@@ -5832,7 +5820,6 @@ function hwBoot() {
   if (!hwEnabled()) return;
   try { setTimeout(function () { hwSweep(); }, HW_BOOT_DEFER_MS); } catch (e) { }
 }
-window.hwBoot = hwBoot;
 /* ═══════════════ סוף מודול החלון החם ══════════════════════════════════ */
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -6740,18 +6727,18 @@ function _ysWinIso(d) {
          '-' + String(d.getDate()).padStart(2, '0');
 }
 function ysHebMonthWin(hy, mi) {
-  var b = window._hcBase(hy);
+  var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var i = Math.max(0, Math.min(mi, b.ml.length - 1));
-  return { col: 'date_iso', from: _ysWinIso(window._hcG(hy, i, 1)),
-           to: _ysWinIso(window._hcG(hy, i, b.ml[i])) };
+  return { col: 'date_iso', from: _ysWinIso(_hcG(hy, i, 1)),
+           to: _ysWinIso(_hcG(hy, i, b.ml[i])) };
 }
 function ysHebYearWin(hy) {
-  var b = window._hcBase(hy);
+  var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var last = b.ml.length - 1;
-  return { col: 'date_iso', from: _ysWinIso(window._hcG(hy, 0, 1)),
-           to: _ysWinIso(window._hcG(hy, last, b.ml[last])) };
+  return { col: 'date_iso', from: _ysWinIso(_hcG(hy, 0, 1)),
+           to: _ysWinIso(_hcG(hy, last, b.ml[last])) };
 }
 /*  ⛔ חלון היום שבו רושמים — ⚠️ לשונית הרישום מציגה את סדרי **היום**,
  *  ⭐ ולכן זה כל מה שהיא צריכה מהענן. */
@@ -7480,7 +7467,7 @@ async function ysPushToCloud() {
     var meta = ysSettingsMeta();
     var settingsKeys = [
       { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ ysCfgLocalSet('ys_reasons', v); } },
-      { key: 'ys_absence_reasons', get: function(){ return window.getAbsenceReasons(); }, set: function(v){ ysCfgLocalSet('ys_absence_reasons', v); } }
+      { key: 'ys_absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ ysCfgLocalSet('ys_absence_reasons', v); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -8031,7 +8018,7 @@ function ysCycleFor(cls, now) {
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
-window.setStudentInactive = function(sid){
+function setStudentInactive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
@@ -8047,7 +8034,7 @@ window.setStudentInactive = function(sid){
   toast('✅ '+s.name+MSG_MARKED_INACTIVE);
 };
 
-window.setStudentActive = function(sid){
+function setStudentActive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
@@ -8063,13 +8050,13 @@ window.setStudentActive = function(sid){
  *  JS בתוך `onclick`, ⛔ כלומר קוד שנבנה מחרוזת ורץ ב-`eval` של הדפדפן. */
 var MANAGE_PICK = {
   'add':    function () { openAddStudent(); },
-  'deact':  function () { window.openDeactivateStudentDlg(); },
-  'tmpl':   function () { window.downloadImportTemplate(); },
+  'deact':  function () { openDeactivateStudentDlg(); },
+  'tmpl':   function () { downloadImportTemplate(); },
   'import': function () { document.getElementById('import-file-input').click(); },
-  'delall': function () { window.openDeleteAllModal(); },
-  'year':   function () { window.openYearTransitionDlg(); }
+  'delall': function () { openDeleteAllModal(); },
+  'year':   function () { openYearTransitionDlg(); }
 };
-window.openManageListDlg = function(){
+function openManageListDlg(){
   if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'bad');return;}
   var ITEMS=[
     {icon:'➕',label:'הוסף תלמיד',k:'add'},
@@ -8089,7 +8076,7 @@ window.openManageListDlg = function(){
 };
 
 // -------- דיאלוג: סמן תלמיד כלא פעיל --------
-window.openDeactivateStudentDlg = function(){
+function openDeactivateStudentDlg(){
   var students=ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
   var opts=students.map(function(s){
     return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
@@ -8104,7 +8091,7 @@ window.openDeactivateStudentDlg = function(){
 };
 
 // -------- דיאלוג: מעבר שנתי --------
-window.openYearTransitionDlg = function(){
+function openYearTransitionDlg(){
   var _gc=ysCycleFor('g');
   var gYr=_gc?(' (מחזור '+_gc+')'):'';
   openModal(MSG_YEAR_ROLL_TITLE,
@@ -8120,7 +8107,7 @@ window.openYearTransitionDlg = function(){
     '<button data-act="year-transition-confirm" class="u-fx-1 u-p-4 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-3 u-ff-heebo u-fw-700 u-cur-p">🔄 בצע מעבר שנתי</button>');
 };
 
-window.doYearTransition = function(){
+function doYearTransition(){
   var students=getStudents();
   var _gCycle=ysCycleFor('g');
   var changed=0;
@@ -8194,10 +8181,10 @@ function openAttendanceEdit(sid) {
   if (!s) return;
   window._statusSid = sid;
   window._statusStudentName = s.name;
-  if (getAllRelevantAbsences(s).length > 0) { window.openCurrentStatusModal(); } else { window.openStatusPickerModal(); }
+  if (getAllRelevantAbsences(s).length > 0) { openCurrentStatusModal(); } else { openStatusPickerModal(); }
 }
 
-window.openStatusPickerModal = function() {
+function openStatusPickerModal() {
   openModal(window._statusStudentName,
     '<div class="u-fs-3 u-c-text3 u-mb-7">בחר סטאטוס היעדרות:</div>' +
     '<div class="u-d-flex u-fd-col u-g-5">' +
@@ -8213,7 +8200,7 @@ window.openStatusPickerModal = function() {
     '</div>', '');
 };
 
-window.openCurrentStatusModal = function() {
+function openCurrentStatusModal() {
   var students = getStudents();
   var s = students.find(function(x){return idEq(x.id, window._statusSid);});
   if (!s) return;
@@ -8223,10 +8210,10 @@ window.openCurrentStatusModal = function() {
   var fmtDt = function(v){
     if(!v) return '—';
     var d = new Date(v);
-    var hd = window._hcH(d);
+    var hd = _hcH(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var timeStr = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
+    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
   };
   var activeAbsences = getAllRelevantAbsences(s);
   var _now = new Date();
@@ -8257,12 +8244,12 @@ window.openCurrentStatusModal = function() {
 function ysRefreshSupervisionViews() {
   try {
     var av = document.getElementById('at-view-sup');
-    if (uiShown(av) && typeof window.atRenderSupervision === 'function') window.atRenderSupervision();
+    if (uiShown(av) && typeof atRenderSupervision === 'function') atRenderSupervision();
     var sv = document.getElementById('sl-view-sup');
-    if (uiShown(sv) && typeof window.slRenderSupervision === 'function') window.slRenderSupervision();
+    if (uiShown(sv) && typeof slRenderSupervision === 'function') slRenderSupervision();
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
-window.cancelStudentStatus = function() {
+function cancelStudentStatus() {
   var sid = window._statusSid;
   var students = getStudents();
   var s = students.find(function(x){return idEq(x.id, sid);});
@@ -8281,7 +8268,7 @@ window.cancelStudentStatus = function() {
   toast(MSG_STATUS_REVERTED + s.name);
 };
 
-window.cancelSingleAbsence = function(absenceId) {
+function cancelSingleAbsence(absenceId) {
   var sid = window._statusSid;
   var students = getStudents();
   var s = students.find(function(x){return idEq(x.id, sid);});
@@ -8299,7 +8286,7 @@ window.cancelSingleAbsence = function(absenceId) {
   renderStudents();
   ysRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
   if (stillActive.length > 0) {
-    window.openCurrentStatusModal();
+    openCurrentStatusModal();
   } else {
     closeModal();
     toast(MSG_STATUS_REVERTED + s.name);
@@ -8327,7 +8314,7 @@ function studentFormHtml(sid){
 /*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
  *  ששרד את הפינוי ואת מה שהמכשיר הזה במקרה ראה, ⭐ וסטטוס שנרשם ממכשיר אחר
  *  ולא הגיע לכאן היה נעדר מהרשימה בלי שדבר יסמן שהוא חסר. */
-window.openStatusHistory = async function (sid) {
+async function openStatusHistory(sid) {
   openModal(MSG_STATUS_HISTORY,
     '<div class="u-p-7 u-ta-c u-c-text3 u-fs-3">טוען מהענן…</div>', '');
   var rows = null, failed = false;
@@ -8472,7 +8459,7 @@ function ysTombstoneStudents(ids){
 /* ══════════════════════════════════════════════════════════════════════════
    ייבוא, מחיקה המונית והדפסת מצבת התלמידים
    ══════════════════════════════════════════════════════════════════════════ */
-window.importStudentsFromFile = function(input) {
+function importStudentsFromFile(input) {
   if (!input.files || !input.files[0]) return;
   if (typeof XLSX === 'undefined') { toast(MSG_LIB_LOADING, null, 'bad'); return; }
   var file = input.files[0];
@@ -8564,14 +8551,14 @@ window.importStudentsFromFile = function(input) {
 };
 
 // ---- מחיקת כלל התלמידים ----
-window.openDeleteAllModal = function() {
+function openDeleteAllModal() {
   if (checkLoginNeeded()) return;
   ask(MSG_WIPE_STUDENTS_TITLE,
       MSG_WIPE_STUDENTS_BODY,
-      MSG_WIPE_STUDENTS_OK).then(function (yes) { if (yes) window.confirmDeleteAll(); });
+      MSG_WIPE_STUDENTS_OK).then(function (yes) { if (yes) confirmDeleteAll(); });
 };
 
-window.confirmDeleteAll = function() {
+function confirmDeleteAll() {
   // saveStudents([]) הפיל את התלמידים החיים בלי tombstone, ולכן המיזוג הבא
   // החזיר את כולם מהענן תוך פחות משנייה. אותה ליבה כמו מחיקת תלמיד בודד.
   var n = ysTombstoneStudents(getStudents().map(function(s){ return s.id; }));
@@ -8580,7 +8567,7 @@ window.confirmDeleteAll = function() {
   toast(n ? ('🗑️ ' + n + MSG_STUDENTS_WIPED) : MSG_NO_STUDENTS_WIPE);
 };
 
-window.downloadImportTemplate = function() {
+function downloadImportTemplate() {
   // CSV + BOM, עמודות בסדר הפוך (שיעור | שם פרטי | שם משפחה) כדי שנראה נכון ב-LTR
   var BOM = '\uFEFF';
   var rows = [
@@ -8597,15 +8584,15 @@ window.downloadImportTemplate = function() {
   setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 };
 
-window.printStudents = function() {
+function printStudents() {
   try {
     if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
     toast(MSG_PDF_BUILDING);
     var students = ysSortStudents(getStudents().filter(function(s){return s.active!==false;}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
-    var _todG=new Date(),_todH=window._hcH(_todG);
-    var today=window._hcFmt(_todH.hy,_todH.mi,_todH.day).replace(/"/g,'\u05F4');
+    var _todG=new Date(),_todH=_hcH(_todG);
+    var today=_hcFmt(_todH.hy,_todH.mi,_todH.day).replace(/"/g,'\u05F4');
     var NB = ' ';    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
     function fixName(n){return (n||'').replace(/ /g,NB);}
     var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
@@ -8746,7 +8733,7 @@ window._atSupMI = null;
  *  שתי תשובות לשאלה «איזה חודש», ⚠️ והן נבדלות בדיוק במסך שטרם צויר. */
 function _atSupMonth() {
   if (window._atSupHY === null) {
-    var ch = window._hcH(new Date());
+    var ch = _hcH(new Date());
     window._atSupHY = ch.hy; window._atSupMI = ch.mi;
   }
   return window._atSupHY;
@@ -8863,15 +8850,15 @@ function _atPaintReg() {
   // בורר תאריך לרישום — ללא שעה (tv=undefined)
   var dw=document.getElementById('at-date-wrap');
   if(dw){
-    var todH=window._hcH(new Date()); dw.innerHTML=window._hcBuild('at_date',todH);
+    var todH=_hcH(new Date()); dw.innerHTML=_hcBuild('at_date',todH);
     var _AT_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
     var lbEl=document.getElementById('at_date_lbl');
-    if(lbEl) lbEl.textContent='יום '+_AT_DOW_I[new Date().getDay()]+' '+window._hcFmt(todH.hy,todH.mi,todH.day);
+    if(lbEl) lbEl.textContent='יום '+_AT_DOW_I[new Date().getDay()]+' '+_hcFmt(todH.hy,todH.mi,todH.day);
   }
 
   // בורר תאריך לארכיון — ללא שעה
   var adw=document.getElementById('at-arc-date-wrap');
-  if(adw) adw.innerHTML='<div class="u-d-flex u-ai-c u-g-4"><span class="u-fs-3 u-c-text2 u-ws-nw">סינון לפי תאריך:</span>'+window._hcBuild('at_arc_date')+'</div>';
+  if(adw) adw.innerHTML='<div class="u-d-flex u-ai-c u-g-4"><span class="u-fs-3 u-c-text2 u-ws-nw">סינון לפי תאריך:</span>'+_hcBuild('at_arc_date')+'</div>';
 
   // שם ממלא
   var fl=document.getElementById('at-filler');
@@ -8889,7 +8876,7 @@ function _atPaintReg() {
 }
 
 // טעינה ראשית של המודול
-window.loadAttend = async function() {
+async function loadAttend() {
   var el = document.getElementById('at-pullStale');
   window._atMarks={};
   window._atCurrentSessionId=null;
@@ -8905,13 +8892,13 @@ window.loadAttend = async function() {
   atCachedCfg();
   ysCachedArr('_atData','ys_sessions');
   _atPaintReg();
-  window.atShowTab(window._atView||'reg');
+  atShowTab(window._atView||'reg');
 
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
    *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
   var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysDayWin())]);
   _atPaintReg();
-  window.atShowTab(window._atView||'reg');
+  atShowTab(window._atView||'reg');
   _ysPullStaleMark(el, !(_okAt[0]&&_okAt[1]));
 
   var _todayIsoR=new Date().toISOString().split('T')[0];
@@ -8956,7 +8943,7 @@ function atFillSessionBtns() {
 }
 
 // מעבר לשונית
-window.atShowTab = function(tab) {
+function atShowTab(tab) {
   window._atView=tab;
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('at-view-'+t);
@@ -8969,9 +8956,9 @@ window.atShowTab = function(tab) {
     }
   });
   // רישום: רק מרנדר אם סדר פתוח
-  if(tab==='reg' && window._atCurrentSessionId) window.atRenderStudents();
-  if(tab==='arc') window.atRenderArchive();
-  if(tab==='sup') window.atRenderSupervision();
+  if(tab==='reg' && window._atCurrentSessionId) atRenderStudents();
+  if(tab==='arc') atRenderArchive();
+  if(tab==='sup') atRenderSupervision();
 };
 
 // -------- רישום --------
@@ -9055,11 +9042,11 @@ async function ysRefreshApprovalMarks(sid) {
     }
 
     var atCfg = (window._atCfg && Array.isArray(window._atCfg.sessions)) ? window._atCfg.sessions : [];
-    refreshSet('ys_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, window.atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
+    refreshSet('ys_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
 
     var slCfg = (window._slCfg && Array.isArray(window._slCfg.sessions)) ? window._slCfg.sessions : [];
     var slIso = (typeof slGetLogicalDate === 'function') ? slGetLogicalDate() : todayIso;
-    refreshSet('ys_sleep_sessions', slCfg, slIso, window._slCurrentSessionId, window._slMarks, window.slRenderStudents, function(d){ window._slData = d; slSaveData(d); }, true);
+    refreshSet('ys_sleep_sessions', slCfg, slIso, window._slCurrentSessionId, window._slMarks, slRenderStudents, function(d){ window._slData = d; slSaveData(d); }, true);
   } catch(e) { console.warn('[approval-refresh]', e); }
 }
 
@@ -9108,7 +9095,7 @@ function atRenderTodaySessions() {
 /*  ⛔ הרשומה נקראת מהמטמון ⛔ ואין המתנה לרשת — ⚠️ הכפתור שנלחץ צויר
  *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
  *  משהה את פתיחת הסדר עד שהרשת עונה. */
-window.atEditSession = async function(recId) {
+async function atEditSession(recId) {
   var data=ysCachedArr('_atData','ys_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
@@ -9148,7 +9135,7 @@ window.atEditSession = async function(recId) {
   } catch(eAp){ console.warn('[approval-refresh:edit]', eAp); }
   // מלא תאריך
   var dw=document.getElementById('at-date-wrap');
-  if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('at_date',rec.date_heb);
+  if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('at_date',rec.date_heb);
   var fl=document.getElementById('at-filler');
   if(fl) fl.value=rec.filled_by_name||'';
   window._atPendingRec=null;
@@ -9156,10 +9143,10 @@ window.atEditSession = async function(recId) {
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="u-fw-700 u-fs-4">'+rec.session+'</span>'+
-    '<span class="u-fs-3 u-op-85">'+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+    '<span class="u-fs-3 u-op-85">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
   document.getElementById('at-reg-picker').style.display='none';
   document.getElementById('at-reg-list').style.display='block';
-  window.atRenderStudents();
+  atRenderStudents();
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -9228,7 +9215,7 @@ function slAdoptSession(rec) {
 /* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
 
 // פתיחת סדר חדש
-window.atOpenSession = async function(sessId, sessName, btn) {
+async function atOpenSession(sessId, sessName, btn) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
   if(window._atCurrentSessionId){toast(MSG_CLOSE_SESSION_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
@@ -9276,7 +9263,7 @@ window.atOpenSession = async function(sessId, sessName, btn) {
   });
 
   var filler=document.getElementById('at-filler');
-  var dateHeb=window._hcH(new Date(dateIso));
+  var dateHeb=_hcH(new Date(dateIso));
   // שמור auto-marks ישירות ב-rec.marks כדי שלא יאבדו ביציאה ללא שמירה
   var initMarks={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
@@ -9315,11 +9302,11 @@ function _atMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="u-fw-700 u-fs-4">'+sessName+'</span>'+
-    '<span class="u-fs-3 u-op-85">'+window._hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
+    '<span class="u-fs-3 u-op-85">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
   document.getElementById('at-reg-picker').style.display='none';
   document.getElementById('at-reg-list').style.display='block';
-  window.atRenderStudents();
+  atRenderStudents();
 }
 
 // שמירה מקומית מיידית של הסימונים לתוך רשומת הסשן האמיתית (ללא רשת)
@@ -9379,9 +9366,9 @@ function atShowOverrideDialog(sid, student) {
   var _dow=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   var fmtDt=function(v){
     if(!v)return '—';
-    var d=new Date(v),hd=window._hcH(d);
+    var d=new Date(v),hd=_hcH(d);
     var hh=d.getHours(),mm=d.getMinutes();
-    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
@@ -9397,7 +9384,7 @@ function atShowOverrideDialog(sid, student) {
 }
 
 // ביטול סטטוס תלמיד מתוך לשונית הרישום
-window.atCancelStudentStatusFromReg = function(sid) {
+function atCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return String(x.id)===String(sid);});
   if(!s) return;
@@ -9413,24 +9400,24 @@ window.atCancelStudentStatusFromReg = function(sid) {
   delete window._atCleared[sid];
   delete window._atPending[sid];
   atMarkDirty();
-  window.atRenderStudents();
+  atRenderStudents();
   renderStudents();
   toast(MSG_STATUS_REVERTED+s.name);
 };
 
 // החלת סימון (אחרי אישור אם נדרש)
-window.atApplyMark = function(sid, code) {
+function atApplyMark(sid, code) {
   var s=String(sid);
   // איחור: min=null → שדה ריק עד שהמשתמש יזין ערך
   window._atMarks[s]={s:code,min:code==='l'?null:0};
   window._atCleared[s]=true;    // מנע חזרת auto-mark
   window._atPending[s]=true;    // השאר למעלה בינתיים
-  window.atRenderStudents();
+  atRenderStudents();
   if(code!=='l'){
     // לא איחור: הורד לרשימה לאחר 600ms
     setTimeout(function(){
       delete window._atPending[s];
-      window.atRenderStudents();
+      atRenderStudents();
     },600);
   }
   // איחור: נשאר pending עד לחיצה על ✓ (atConfirmLate)
@@ -9438,22 +9425,22 @@ window.atApplyMark = function(sid, code) {
 };
 
 // אישור איחור — הורדה לרשימת מסומנים
-window.atConfirmLate = function(sid) {
+function atConfirmLate(sid) {
   var s=String(sid);
   var inp=document.getElementById('at-min-'+sid);
   var val=readNum(inp, 0);
   if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'bad');return;}
   if(val>30){toast(MSG_LATE_OVER_30, null, 'bad');return;}
-  window.atSetLateMin(sid,val);
+  atSetLateMin(sid,val);
   delete window._atPending[s];
-  window.atRenderStudents();
+  atRenderStudents();
   atMarkDirty();
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
    נוכחות — רשימת התלמידים שבסדר וכפתורי הסימון
    ══════════════════════════════════════════════════════════════════════════ */
-window.atRenderStudents = function() {
+function atRenderStudents() {
   var el=document.getElementById('at-students');
   if(!el) return;
   var students=ysSortStudents(getStudents());
@@ -9497,8 +9484,7 @@ window.atRenderStudents = function() {
     var lateField=isLate?
       '<div class="u-d-iflex u-ai-c u-g-2 u-mr-3">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
-        'oninput="window.atSetLateMin('+idArg(s.id)+',this.value)" '+
-        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.atConfirmLate('+idArg(s.id)+')}" '+
+        'data-inp="at-late" data-kent="at-late" data-id="'+esc(s.id)+'" '+
         ' class="u-w-54 u-p-2-3 u-bd-15-solid-warn u-r-2 u-ff-heebo u-fs-3 u-ta-c">'+
         '<span class="u-fs-2 u-c-text3">דק׳</span>'+
         (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
@@ -9532,7 +9518,7 @@ window.atRenderStudents = function() {
 };
 
 // לחיצה על כפתור סימון — בדיקת override לאוטו-מארק
-window.atSetMark = function(sid, code) {
+function atSetMark(sid, code) {
   var student=getStudents().find(function(s){return String(s.id)===String(sid);});
   // חשב auto-mark עם תאריך ושעת הסדר הנוכחי — זהה לחישוב בפתיחת הסדר
   var curRec=window._atData&&window._atCurrentSessionId?
@@ -9548,19 +9534,19 @@ window.atSetMark = function(sid, code) {
     atShowOverrideDialog(sid,student);
     return;
   }
-  window.atApplyMark(sid,code);
+  atApplyMark(sid,code);
 };
 
 // ניקוי סימון — מחזיר תלמיד לרשימה העליונה
-window.atClearMark = function(sid) {
+function atClearMark(sid) {
   delete window._atMarks[sid];
   delete window._atPending[sid];
   window._atCleared[sid]=true;
-  window.atRenderStudents();
+  atRenderStudents();
   atMarkDirty();
 };
 
-window.atSetLateMin = function(sid, val) {
+function atSetLateMin(sid, val) {
   var n=parseInt(val)||0;
   if(n<0)n=0;if(n>30)n=30;
   if(!window._atMarks[sid])window._atMarks[sid]={s:'l',min:n};
@@ -9569,14 +9555,14 @@ window.atSetLateMin = function(sid, val) {
 };
 
 // שמור וסגור — חזרה לבחירת סדר
-window.atCloseSession = async function() {
+async function atCloseSession() {
   clearTimeout(window._atSaveTimer);
   // "שמור וסגור" = סימון הסשן כסגור (open=false); הרשומה עצמה כבר נשמרה לאורך הדרך
   var _cRec=window._atData&&window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await atAutoSaveNow();
   var rec=window._atData&&window._atData.find(function(r){return idEq(r.id,window._atCurrentSessionId);});
-  var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הסדר נשמר';
+  var msg=rec?('✅ '+rec.session+' — '+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הסדר נשמר';
   window._atCurrentSessionId=null;
   window._atMarks={};
   window._atPendingRec=null;
@@ -9593,12 +9579,12 @@ window.atCloseSession = async function() {
 /*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ עד כאן הארכיון המתין למשיכה לפני הציור
  *  הראשון, ⛔ ולכן ניווט אליו נראה תקוע עד שהרשת חזרה. ⛔ וקורא שמסר
  *  רשומות מקבל אותן כפי שהן — ⚠️ הוא כבר סינן, ⭐ ורענון היה דורס אותו. */
-window.atRenderArchive = async function(records) {
+async function atRenderArchive(records) {
   var el=document.getElementById('at-arc-list');
   if(!el) return;
   if(records){ _atPaintArchive(el, records, ''); return; }
   _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], '');
-  var _okArc=await _atPullSessions(ysHebYearWin(window._hcH(new Date()).hy));
+  var _okArc=await _atPullSessions(ysHebYearWin(_hcH(new Date()).hy));
   _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _atPaintArchive(el, records, warn) {
@@ -9614,14 +9600,14 @@ function _atPaintArchive(el, records, warn) {
   // חודש עברי נוכחי
   var todG=new Date();
   var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
-  var todH=window._hcH(todG);
+  var todH=_hcH(todG);
   var curHY=todH.hy, curMI=todH.mi;
 
   // קיבוץ: hy → mi → date_iso → [rec]
   var byYear={};
   records.forEach(function(rec){
     var hd=rec.date_heb;
-    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     var hy=hd.hy,mi=hd.mi,iso=rec.date_iso;
     if(!byYear[hy]) byYear[hy]={};
     if(!byYear[hy][mi]) byYear[hy][mi]={};
@@ -9640,7 +9626,7 @@ function _atPaintArchive(el, records, warn) {
     // כותרת שנה
     html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
       ' class="u-d-flex u-ai-c u-g-4 u-p-5-6 u-bg-navy-fill u-c-on-brand u-r-4 u-cur-p u-fw-700 u-fs-4 u-mb-5 u-us-none">'+
-      '<span class="u-fx-1">📅 '+window._hcYL(hy)+'</span><span class="u-fs-3 u-op-6">▾</span>'+
+      '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="u-fs-3 u-op-6">▾</span>'+
     '</div>';
     html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
 
@@ -9648,7 +9634,7 @@ function _atPaintArchive(el, records, warn) {
     months.forEach(function(mi){
       var mId=uid();
       var isMonthCur=isYearCur&&mi===curMI;
-      var mName=window._hcMN(hy)[mi];
+      var mName=_hcMN(hy)[mi];
       html+='<div class="u-mb-5">';
       // כותרת חודש
       html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
@@ -9719,27 +9705,18 @@ function _atPaintArchive(el, records, warn) {
   el.innerHTML=warnHtml+html;
 }
 
-window.atArcFilter = async function(all) {
-  var data=await atLoadData();
-  if(all){window.atRenderArchive(data);return;}
-  var dateIso=(document.getElementById('at_arc_date_iso')||{}).value;
-  if(!dateIso){window.atRenderArchive(data);return;}
-  var filtered=data.filter(function(r){return !r.deleted&&r.date_iso===dateIso;});
-  window.atRenderArchive(filtered);
-};
-
-window.atDeleteSession = function(id) {
+function atDeleteSession(id) {
   ask(MSG_DEL_SESSION_TITLE, MSG_DEL_SESSION_BODY, MSG_DELETE)
-    .then(function (yes) { if (yes) window.atDeleteSessionConfirmed(id); });
+    .then(function (yes) { if (yes) atDeleteSessionConfirmed(id); });
 };
 
-window.atDeleteSessionConfirmed = async function(id) {
+async function atDeleteSessionConfirmed(id) {
   var data=await atLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
   var _dRec=data.find(function(r){return idEq(r.id,id);});
   if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await atSaveData(data);
-  window.atRenderArchive();
+  atRenderArchive();
   atRenderTodaySessions();   // רענן גם את רשימת הסדרים בלשונית רישום
   toast(MSG_ROW_DELETED);
 };
@@ -9748,26 +9725,26 @@ window.atDeleteSessionConfirmed = async function(id) {
 /* ══════════════════════════════════════════════════════════════════════════
    נוכחות — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
-window.atShowExportDialog = function(type) {
+function atShowExportDialog(type) {
   openModal(type==='pdf'?MSG_EXPORT_PDF:MSG_EXPORT_XLS,
-     '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+window._hcBuild('expF',null)+'</div>'
-    +'<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+window._hcBuild('expT',null)+'</div>'
+     '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+_hcBuild('expF',null)+'</div>'
+    +'<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+_hcBuild('expT',null)+'</div>'
     +'<div class="u-fs-3 u-c-text3 u-ta-c">השאר ריק לייצוא כל הנתונים</div>',
      '<button data-act="at-export-go" data-type="'+esc(type)+'" class="u-fx-1 u-p-4-7 u-bg-navy-fill u-c-on-brand u-bd-none u-r-4 u-ff-heebo u-fs-4 u-fw-700 u-cur-p">ייצא</button>'
     +'<button data-act="modal-close" class="u-fx-1 u-p-4-7 u-bg-bg u-c-navy-ink u-bd-15-solid-border u-r-4 u-ff-heebo u-fs-4 u-fw-700 u-cur-p">ביטול</button>');
 };
 
-window.atExportConfirm = async function(type) {
+async function atExportConfirm(type) {
   var fromIso=(document.getElementById('expF_iso')||{}).value||null;
   var toIso=(document.getElementById('expT_iso')||{}).value||null;
   /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
    *  ⭐ וקריאה אחריה הייתה מחזירה `null` על טווח שהמשתמש בחר. */
   closeModal();
-  if(type==='excel') await window.atExportExcel(fromIso,toIso);
-  else await window.atExportPdf(fromIso,toIso);
+  if(type==='excel') await atExportExcel(fromIso,toIso);
+  else await atExportPdf(fromIso,toIso);
 };
 
-window.atExportExcel = async function(fromIso,toIso) {
+async function atExportExcel(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
@@ -9786,7 +9763,7 @@ window.atExportExcel = async function(fromIso,toIso) {
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
       var hd=rec.date_heb;
-      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       Object.entries(ysMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
@@ -9819,7 +9796,7 @@ window.atExportExcel = async function(fromIso,toIso) {
   } catch(e){console.error('[Excel ERROR]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
-window.atExportPdf = async function(fromIso,toIso) {
+async function atExportPdf(fromIso,toIso) {
   try {
     var data=await atLoadData();
     var students=getStudents();
@@ -9840,7 +9817,7 @@ window.atExportPdf = async function(fromIso,toIso) {
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
-      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       var p=Object.values(ysMarks(rec)).filter(function(m){return m.s==='p';}).length;
       var ab=Object.values(ysMarks(rec)).filter(function(m){return m.s==='e'||m.s==='x';}).length;
       var l=Object.values(ysMarks(rec)).filter(function(m){return m.s==='l';}).length;
@@ -9870,17 +9847,17 @@ window.atExportPdf = async function(fromIso,toIso) {
 /* ══════════════════════════════════════════════════════════════════════════
    נוכחות — לשונית ההשגחה, הטיפולים וההתראה
    ══════════════════════════════════════════════════════════════════════════ */
-window.atSupNav = function(dir) {
+function atSupNav(dir) {
   var hy=window._atSupHY, mi=window._atSupMI;
   mi+=dir;
-  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
+  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
   window._atSupHY=hy;window._atSupMI=mi;
-  window.atRenderSupervision();
+  atRenderSupervision();
 };
 
-window.atRenderSupervision = async function() {
+async function atRenderSupervision() {
   var el=document.getElementById('at-sup-content');
   if(!el) return;
   if(!ysSupervisionAccess()){
@@ -9913,13 +9890,13 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
 
   _atSupMonth();
   var hy=window._atSupHY,mi=window._atSupMI;
-  var mNames=window._hcMN(hy);
-  var mLabel=mNames[mi]+' '+window._hcYL(hy);
+  var mNames=_hcMN(hy);
+  var mLabel=mNames[mi]+' '+_hcYL(hy);
 
   // בדיקת ניווט
-  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
-  var hasPrev=mi>0||!!window._hcBase(hy-1);
-  var hasNext=mi<curMax||!!window._hcBase(hy+1);
+  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
+  var hasPrev=mi>0||!!_hcBase(hy-1);
+  var hasNext=mi<curMax||!!_hcBase(hy+1);
 
   // כותרת ניווט
   var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-navy-ink';
@@ -9939,7 +9916,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
   students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
   data.forEach(function(rec){
     var dh=rec.date_heb;
-    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
     Object.entries(ysMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
@@ -9981,14 +9958,14 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
-      var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
+      var ltDateStr=ltHd?_hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
       lastLabel='<span class="u-bg-ok-soft u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+atDow(ltIso)+' '+ltDateStr+'</span>';
     }
     var alert20=st.absent>=20?'<span class="u-bg-bad-soft u-c-bad u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="u-bg-warn-soft u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sup-card-'+sid;
-    html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h u-tr-box-shadow-15s-border-color-15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h sup-card">';
     html+='<div class="u-d-flex u-ai-c u-g-5 u-p-5-6 u-cur-p" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div class="u-w-22 u-fs-3 u-fw-700 u-c-text3">'+esc(clsLabel)+'</div>';
     html+='<div class="u-fx-1"><div class="u-fw-700 u-fs-4">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div class="u-mt-2">'+lastLabel+'</div>':'')+'</div>';
@@ -10015,7 +9992,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
       html+='<div class="u-fw-700 u-fs-3 u-c-navy-ink u-mb-4">📋 היסטוריית טיפולים</div>';
       html+=stuTreats.slice().reverse().map(function(t){
         var hd=t.date_heb;
-        var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
+        var dl=hd?_hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div class="u-d-flex u-g-4 u-ai-c u-p-3-0 u-bb-1-solid-border u-fs-3">'+
           '<span class="u-c-text2">'+dl+'</span>'+
           '<span class="u-fw-600">'+esc(t.type)+'</span>'+
@@ -10035,7 +10012,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
 /* ══════════════════════════════════════════════════════════════════════════
    נוכחות — טיפולים ופירוט תלמיד בהשגחה
    ══════════════════════════════════════════════════════════════════════════ */
-window.atAddTreat = async function(sid) {
+async function atAddTreat(sid) {
   var typeEl=document.getElementById('at-treat-type-'+sid);
   var noteEl=document.getElementById('at-treat-note-'+sid);
   if(!typeEl) return;
@@ -10044,7 +10021,7 @@ window.atAddTreat = async function(sid) {
     id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
     sid:sid,
     date_iso:now.toISOString().split('T')[0],
-    date_heb:window._hcH(now),
+    date_heb:_hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
     by:AUTH.user?AUTH.user.client_id:'',
@@ -10058,16 +10035,16 @@ window.atAddTreat = async function(sid) {
   pendMark(PK_AT_TREAT+rec.id);
   await atSaveTreats(treats);
   if(noteEl) noteEl.value='';
-  window.atRenderSupervision();
+  atRenderSupervision();
   toast(MSG_CARE_SAVED);
 };
 
-window.atDeleteTreat = function(id) {
+function atDeleteTreat(id) {
   ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE)
-    .then(function (yes) { if (yes) window.atDeleteTreatConfirmed(id); });
+    .then(function (yes) { if (yes) atDeleteTreatConfirmed(id); });
 };
 
-window.atDeleteTreatConfirmed = async function(id) {
+async function atDeleteTreatConfirmed(id) {
   closeModal();
   var treats=await atLoadTreats();
   // tombstone ולא filter פיזי: רשומה שנעלמת מהמערך בלי סימון חוזרת מהענן
@@ -10077,17 +10054,17 @@ window.atDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); window.atRenderSupervision(); return; }
+  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); atRenderSupervision(); return; }
   pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
-  window.atRenderSupervision();
+  atRenderSupervision();
   toast(MSG_DELETED_MARK);
 };
 
 // -------- פירוט חודשי לתלמיד (🔍) --------
 var ARC_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
 
-window.atSupDetail = function(sid) {
+function atSupDetail(sid) {
   var students=getStudents();
   var st=students.find(function(s){return String(s.id)===String(sid);});
   var name=st?st.name:'תלמיד';
@@ -10098,7 +10075,7 @@ window.atSupDetail = function(sid) {
   else{
     records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
-      var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
+      var hbr=hd?_hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+atDow(r.date_iso);
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(ARC_LBL_DET[r.mark]||r.mark);
       var mkc=atvCls(r.mark);
@@ -10117,7 +10094,7 @@ window.atSupDetail = function(sid) {
     '<div class="u-maxh-60vh u-ovy-a">'+rows+'</div>','');
 };
 
-window.atSupEditMarkDlg = function(recId, sid, curMark) {
+function atSupEditMarkDlg(recId, sid, curMark) {
   var CODES=[
     {c:'p', lbl:'✓ נוכח'},
     {c:'l', lbl:'⏰ איחור'},
@@ -10137,7 +10114,7 @@ window.atSupEditMarkDlg = function(recId, sid, curMark) {
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>');
 };
 
-window.atEditMark = async function(recId, sid, newCode) {
+async function atEditMark(recId, sid, newCode) {
   var data=await atLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
@@ -10156,8 +10133,8 @@ window.atEditMark = async function(recId, sid, newCode) {
   closeModal();
   // רענן את כל הלשוניות
   atRenderTodaySessions();
-  window.atRenderArchive();
-  window.atRenderSupervision();
+  atRenderArchive();
+  atRenderSupervision();
   toast(MSG_MARK_UPDATED);
   await _p;
 };
@@ -10169,13 +10146,13 @@ function atCheckAlert() {
   var students=getStudents();
   if(!data.length) return;
 
-  var todH=window._hcH(new Date());
+  var todH=_hcH(new Date());
   var curHY=todH.hy, curMI=todH.mi;
   // חישוב תחילת חודש — חצות מקומית (לא צהריים) כדי לא לפסול רשומות מה-1 בחודש
   // new Date("2026-04-28") = UTC midnight = 03:00 Israel, קטן מ-12:00 מקומי
-  var _mG=window._hcG(curHY,curMI,1);
+  var _mG=_hcG(curHY,curMI,1);
   var monthBeg=new Date(_mG.getFullYear(),_mG.getMonth(),_mG.getDate(),0,0,0);
-  console.log('[atCheckAlert] חודש עברי:', window._hcMN(curHY)[curMI], curHY,
+  console.log('[atCheckAlert] חודש עברי:', _hcMN(curHY)[curMI], curHY,
     '| תחילת חודש גרגוריאנית:', monthBeg.toISOString(),
     '| רשומות סה"כ:', data.length);
 
@@ -10211,7 +10188,7 @@ function atCheckAlert() {
 // -------- הגדרות מודול --------
 /*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ ההגדרות יושבות על הדיסק, ⭐ ואין סיבה
  *  שמסך ההגדרות ימתין לרשת כדי לצייר אותן. */
-window.renderAttendSettings = async function() {
+async function renderAttendSettings() {
   atCachedCfg();
   _atPaintSettings();
   await _atPullCfg();
@@ -10240,7 +10217,7 @@ function _atPaintSettings() {
   }
 }
 
-window.atAddSession = function() {
+function atAddSession() {
   var sc=document.getElementById('at-cfg-sessions');
   if(!sc) return;
   var div=document.createElement('div');
@@ -10251,7 +10228,7 @@ window.atAddSession = function() {
     '<button data-act="row-remove" class="u-bg-none u-bd-none u-cur-p u-c-bad u-fs-4">✕</button>';
   sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 };
-window.atAddTreatRow = function() {
+function atAddTreatRow() {
   var tc=document.getElementById('at-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
@@ -10260,7 +10237,7 @@ window.atAddTreatRow = function() {
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
-window.atSaveSettingsCfg = async function() {
+async function atSaveSettingsCfg() {
   var cfg=window._atCfg||atDefaultCfg();
   var oldSessions=(cfg.sessions||[]).slice();
   // קרא סדרים
@@ -10370,7 +10347,7 @@ window._slSupMI = null;
  *  ⭐ והנקודה היחידה שנבדלת היא שם המצב. */
 function _slSupMonth() {
   if (window._slSupHY === null) {
-    var ch = window._hcH(new Date());
+    var ch = _hcH(new Date());
     window._slSupHY = ch.hy; window._slSupMI = ch.mi;
   }
   return window._slSupHY;
@@ -10485,16 +10462,16 @@ function _slPaintReg() {
   if(dw){
     var logIso=slGetLogicalDate();
     var logDate=new Date(logIso+'T12:00:00');
-    var todH=window._hcH(logDate);
-    dw.innerHTML=window._hcBuild('sl_date',todH);
+    var todH=_hcH(logDate);
+    dw.innerHTML=_hcBuild('sl_date',todH);
     var _SL_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
     var lbEl=document.getElementById('sl_date_lbl');
-    if(lbEl) lbEl.textContent='יום '+_SL_DOW_I[logDate.getDay()]+' '+window._hcFmt(todH.hy,todH.mi,todH.day);
+    if(lbEl) lbEl.textContent='יום '+_SL_DOW_I[logDate.getDay()]+' '+_hcFmt(todH.hy,todH.mi,todH.day);
   }
 
   // בורר תאריך לארכיון
   var adw=document.getElementById('sl-arc-date-wrap');
-  if(adw) adw.innerHTML='<div class="u-d-flex u-ai-c u-g-4"><span class="u-fs-3 u-c-text2 u-ws-nw">סינון לפי תאריך:</span>'+window._hcBuild('sl_arc_date')+'</div>';
+  if(adw) adw.innerHTML='<div class="u-d-flex u-ai-c u-g-4"><span class="u-fs-3 u-c-text2 u-ws-nw">סינון לפי תאריך:</span>'+_hcBuild('sl_arc_date')+'</div>';
 
   // ממלא
   var fl=document.getElementById('sl-filler');
@@ -10511,7 +10488,7 @@ function _slPaintReg() {
 }
 
 // טעינה ראשית של מודול שינה
-window.loadSleep = async function() {
+async function loadSleep() {
   var el = document.getElementById('sl-pullStale');
   window._slMarks={};
   window._slCurrentSessionId=null;
@@ -10522,11 +10499,11 @@ window.loadSleep = async function() {
   slCachedCfg();
   ysCachedArr('_slData','ys_sleep_sessions');
   _slPaintReg();
-  window.slShowTab(window._slView||'reg');
+  slShowTab(window._slView||'reg');
 
   var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysDayWin())]);
   _slPaintReg();
-  window.slShowTab(window._slView||'reg');
+  slShowTab(window._slView||'reg');
   _ysPullStaleMark(el, !(_okSl[0]&&_okSl[1]));
 
   var _logIsoR=slGetLogicalDate();
@@ -10567,7 +10544,7 @@ function slFillSessionBtns() {
   });
 }
 
-window.slShowTab = function(tab) {
+function slShowTab(tab) {
   window._slView=tab;
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('sl-view-'+t);
@@ -10579,9 +10556,9 @@ window.slShowTab = function(tab) {
       b.style.fontWeight=(t===tab)?'700':'600';
     }
   });
-  if(tab==='reg' && window._slCurrentSessionId) window.slRenderStudents();
-  if(tab==='arc') window.slRenderArchive();
-  if(tab==='sup') window.slRenderSupervision();
+  if(tab==='reg' && window._slCurrentSessionId) slRenderStudents();
+  if(tab==='arc') slRenderArchive();
+  if(tab==='sup') slRenderSupervision();
 };
 
 function slAutoMark(student, sessDateIso, sessStartTime) {
@@ -10660,7 +10637,7 @@ function slRenderTodaySessions() {
 /*  ⛔ הרשומה נקראת מהמטמון ⛔ ואין המתנה לרשת — ⚠️ הכפתור שנלחץ צויר
  *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
  *  משהה את פתיחת הסדר עד שהרשת עונה. */
-window.slEditSession = async function(recId) {
+async function slEditSession(recId) {
   var data=ysCachedArr('_slData','ys_sleep_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
@@ -10698,7 +10675,7 @@ window.slEditSession = async function(recId) {
     }
   } catch(eAp2){ console.warn('[approval-refresh:sl-edit]', eAp2); }
   var dw=document.getElementById('sl-date-wrap');
-  if(dw&&rec.date_heb) dw.innerHTML=window._hcBuild('sl_date',rec.date_heb);
+  if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('sl_date',rec.date_heb);
   var fl=document.getElementById('sl-filler');
   if(fl) fl.value=rec.filled_by_name||'';
   window._slPendingRec=null;
@@ -10706,13 +10683,13 @@ window.slEditSession = async function(recId) {
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="u-fw-700 u-fs-4">'+rec.session+'</span>'+
-    '<span class="u-fs-3 u-op-85">'+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+    '<span class="u-fs-3 u-op-85">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
   document.getElementById('sl-reg-picker').style.display='none';
   document.getElementById('sl-reg-list').style.display='block';
-  window.slRenderStudents();
+  slRenderStudents();
 };
 
-window.slOpenSession = async function(sessId, sessName, btn) {
+async function slOpenSession(sessId, sessName, btn) {
   if(window._slCurrentSessionId){toast(MSG_CLOSE_REPORT_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||slGetLogicalDate();
   if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
@@ -10743,7 +10720,7 @@ window.slOpenSession = async function(sessId, sessName, btn) {
   });
 
   var filler=document.getElementById('sl-filler');
-  var dateHeb=window._hcH(new Date(dateIso));
+  var dateHeb=_hcH(new Date(dateIso));
   var initMarks={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var m=window._slMarks[s.id];
@@ -10779,11 +10756,11 @@ function _slMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="u-fw-700 u-fs-4">'+sessName+'</span>'+
-    '<span class="u-fs-3 u-op-85">'+window._hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
+    '<span class="u-fs-3 u-op-85">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
   document.getElementById('sl-reg-picker').style.display='none';
   document.getElementById('sl-reg-list').style.display='block';
-  window.slRenderStudents();
+  slRenderStudents();
 }
 
 // שמירה מקומית מיידית (ללא רשת)
@@ -10838,9 +10815,9 @@ function slShowOverrideDialog(sid, student) {
   var _dow=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   var fmtDt=function(v){
     if(!v)return '—';
-    var d=new Date(v),hd=window._hcH(d);
+    var d=new Date(v),hd=_hcH(d);
     var hh=d.getHours(),mm=d.getMinutes();
-    return 'יום '+_dow[d.getDay()]+' '+window._hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
@@ -10857,7 +10834,7 @@ function slShowOverrideDialog(sid, student) {
 /*  ⛔ ביטול סטטוס מתוך לשונית הרישום — ⚠️ הקורא הוא `sl-status-cancel`,
  *  ⛔ ואין להסירה בלי להסיר גם אותו: כפתור שקורא לשם שאינו מוגדר זורק,
  *  ⭐ והמודאל נסגר — והמשגיח קורא את הסגירה כהצלחה. */
-window.slCancelStudentStatusFromReg = function(sid) {
+function slCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s) return;
@@ -10872,43 +10849,43 @@ window.slCancelStudentStatusFromReg = function(sid) {
   delete window._slCleared[sid];
   delete window._slPending[sid];
   slMarkDirty();
-  window.slRenderStudents();
+  slRenderStudents();
   renderStudents();
   toast(MSG_STATUS_REVERTED+s.name);
 };
 
-window.slApplyMark = function(sid, code) {
+function slApplyMark(sid, code) {
   var s=String(sid);
   var existNote=(window._slMarks[s]||{}).note||'';
   window._slMarks[s]={s:code,min:code==='l'?null:0,note:existNote};
   window._slCleared[s]=true;
   window._slPending[s]=true;
-  window.slRenderStudents();
+  slRenderStudents();
   if(code!=='l'){
     setTimeout(function(){
       delete window._slPending[s];
-      window.slRenderStudents();
+      slRenderStudents();
     },600);
   }
   slMarkDirty();
 };
 
-window.slConfirmLate = function(sid) {
+function slConfirmLate(sid) {
   var s=String(sid);
   var inp=document.getElementById('sl-min-'+sid);
   var val=readNum(inp, 0);
   if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'bad');return;}
   if(val>30){toast(MSG_LATE_OVER_30, null, 'bad');return;}
-  window.slSetLateMin(sid,val);
+  slSetLateMin(sid,val);
   delete window._slPending[s];
-  window.slRenderStudents();
+  slRenderStudents();
   slMarkDirty();
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
    שינה — רשימת התלמידים שבסדר וכפתורי הסימון
    ══════════════════════════════════════════════════════════════════════════ */
-window.slRenderStudents = function() {
+function slRenderStudents() {
   var el=document.getElementById('sl-students');
   if(!el) return;
   var students=ysSortStudents(getStudents());
@@ -10950,8 +10927,7 @@ window.slRenderStudents = function() {
     var lateField=isLate?
       '<div class="u-d-iflex u-ai-c u-g-2 u-mr-3">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
-        'oninput="window.slSetLateMin('+idArg(s.id)+',this.value)" '+
-        'onkeydown="if(event.key===\'Enter\'){event.preventDefault();window.slConfirmLate('+idArg(s.id)+')}" '+
+        'data-inp="sl-late" data-kent="sl-late" data-id="'+esc(s.id)+'" '+
         ' class="u-w-54 u-p-2-3 u-bd-15-solid-warn u-r-2 u-ff-heebo u-fs-3 u-ta-c">'+
         '<span class="u-fs-2 u-c-text3">דק׳</span>'+
         (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" class="u-p-2-5 u-bg-warn-soft u-c-warn u-bd-15-solid-warn-line u-r-2 u-ff-heebo u-fs-2 u-cur-p u-fw-700">✓ אשר</button>':'')+
@@ -10959,7 +10935,7 @@ window.slRenderStudents = function() {
     var noteVal=esc(marks.note||'');
     var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
       'id="sl-note-'+s.id+'" '+
-      'oninput="window.slSetNote('+idArg(s.id)+',this.value)" '+
+      'data-inp="sl-note" data-id="'+esc(s.id)+'" '+
       ' class="u-w-80 u-p-2-4 u-bd-15-solid-border u-r-2 u-ff-heebo u-fs-2">';
     var rowBg=isMark?'u-bg-card-2':'u-bg-card';
     return '<div class="'+rowBg+' u-d-flex u-ai-c u-g-4 u-p-4-5 u-bd-15-solid-border u-r-4 u-mb-3 u-fwr-wrap">'+
@@ -10990,7 +10966,7 @@ window.slRenderStudents = function() {
   el.innerHTML=html||'<div class="u-ta-c u-p-7 u-c-text3">אין תלמידים פעילים</div>';
 };
 
-window.slSetMark = function(sid, code) {
+function slSetMark(sid, code) {
   var student=getStudents().find(function(s){return String(s.id)===String(sid);});
   var curRec=window._slData&&window._slCurrentSessionId?
     window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);}):null;
@@ -11004,20 +10980,20 @@ window.slSetMark = function(sid, code) {
     slShowOverrideDialog(sid,student);
     return;
   }
-  window.slApplyMark(sid,code);
+  slApplyMark(sid,code);
 };
 
-window.slClearMark = function(sid) {
+function slClearMark(sid) {
   var existNote=(window._slMarks[sid]||{}).note||'';
   delete window._slMarks[sid];
   if(existNote) window._slMarks[sid]={s:'',min:0,note:existNote};
   delete window._slPending[sid];
   window._slCleared[sid]=true;
-  window.slRenderStudents();
+  slRenderStudents();
   slMarkDirty();
 };
 
-window.slSetLateMin = function(sid, val) {
+function slSetLateMin(sid, val) {
   var n=parseInt(val)||0;
   if(n<0)n=0;if(n>30)n=30;
   if(!window._slMarks[sid])window._slMarks[sid]={s:'l',min:n,note:''};
@@ -11025,21 +11001,21 @@ window.slSetLateMin = function(sid, val) {
   slMarkDirty();
 };
 
-window.slSetNote = function(sid, val) {
+function slSetNote(sid, val) {
   var s=String(sid);
   if(!window._slMarks[s]) window._slMarks[s]={s:'',min:0,note:''};
   window._slMarks[s].note=val;
   slMarkDirty();
 };
 
-window.slCloseSession = async function() {
+async function slCloseSession() {
   clearTimeout(window._slSaveTimer);
   // "שמור וסגור" = סימון הסשן כסגור (open=false)
   var _cRec=window._slData&&window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await slAutoSaveNow();
   var rec=window._slData&&window._slData.find(function(r){return idEq(r.id,window._slCurrentSessionId);});
-  var msg=rec?('✅ '+rec.session+' — '+window._hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
+  var msg=rec?('✅ '+rec.session+' — '+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
   window._slCurrentSessionId=null;
   window._slMarks={};
   window._slPendingRec=null;
@@ -11056,12 +11032,12 @@ window.slCloseSession = async function() {
 /*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ עד כאן הארכיון המתין למשיכה לפני הציור
  *  הראשון, ⛔ ולכן ניווט אליו נראה תקוע עד שהרשת חזרה. ⛔ וקורא שמסר
  *  רשומות מקבל אותן כפי שהן — ⚠️ הוא כבר סינן, ⭐ ורענון היה דורס אותו. */
-window.slRenderArchive = async function(records) {
+async function slRenderArchive(records) {
   var el=document.getElementById('sl-arc-list');
   if(!el) return;
   if(records){ _slPaintArchive(el, records, ''); return; }
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], '');
-  var _okArc=await _slPullSessions(ysHebYearWin(window._hcH(new Date()).hy));
+  var _okArc=await _slPullSessions(ysHebYearWin(_hcH(new Date()).hy));
   _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _slPaintArchive(el, records, warn) {
@@ -11076,13 +11052,13 @@ function _slPaintArchive(el, records, warn) {
 
   var todG=new Date();
   var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
-  var todH=window._hcH(todG);
+  var todH=_hcH(todG);
   var curHY=todH.hy, curMI=todH.mi;
 
   var byYear={};
   records.forEach(function(rec){
     var hd=rec.date_heb;
-    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     var hy=hd.hy,mi=hd.mi,iso=rec.date_iso;
     if(!byYear[hy]) byYear[hy]={};
     if(!byYear[hy][mi]) byYear[hy][mi]={};
@@ -11100,7 +11076,7 @@ function _slPaintArchive(el, records, warn) {
     html+='<div class="u-mb-6">';
     html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
       ' class="u-d-flex u-ai-c u-g-4 u-p-5-6 u-bg-navy-fill u-c-on-brand u-r-4 u-cur-p u-fw-700 u-fs-4 u-mb-5 u-us-none">'+
-      '<span class="u-fx-1">📅 '+window._hcYL(hy)+'</span><span class="u-fs-3 u-op-6">▾</span>'+
+      '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="u-fs-3 u-op-6">▾</span>'+
     '</div>';
     html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
 
@@ -11108,7 +11084,7 @@ function _slPaintArchive(el, records, warn) {
     months.forEach(function(mi){
       var mId=uid();
       var isMonthCur=isYearCur&&mi===curMI;
-      var mName=window._hcMN(hy)[mi];
+      var mName=_hcMN(hy)[mi];
       html+='<div class="u-mb-5">';
       html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
         ' class="u-d-flex u-ai-c u-g-4 u-p-4-5 u-bg-bg u-r-3 u-cur-p u-fw-700 u-fs-3 u-c-navy-ink u-mb-3 u-us-none">'+
@@ -11178,27 +11154,18 @@ function _slPaintArchive(el, records, warn) {
   el.innerHTML=warnHtml+html;
 }
 
-window.slArcFilter = async function(all) {
-  var data=await slLoadData();
-  if(all){window.slRenderArchive(data);return;}
-  var dateIso=(document.getElementById('sl_arc_date_iso')||{}).value;
-  if(!dateIso){window.slRenderArchive(data);return;}
-  var filtered=data.filter(function(r){return !r.deleted&&r.date_iso===dateIso;});
-  window.slRenderArchive(filtered);
-};
-
-window.slDeleteSession = function(id) {
+function slDeleteSession(id) {
   ask(MSG_DEL_ROW_TITLE, MSG_DEL_ROW_BODY, MSG_DELETE)
-    .then(function (yes) { if (yes) window.slDeleteSessionConfirmed(id); });
+    .then(function (yes) { if (yes) slDeleteSessionConfirmed(id); });
 };
 
-window.slDeleteSessionConfirmed = async function(id) {
+async function slDeleteSessionConfirmed(id) {
   var data=await slLoadData();
   // מחיקה = tombstone, לא הסרה פיזית — כדי שהמחיקה תסתנכרן לכל המכשירים
   var _dRec=data.find(function(r){return idEq(r.id,id);});
   if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=ysWho();}
   await slSaveData(data);
-  window.slRenderArchive();
+  slRenderArchive();
   slRenderTodaySessions();
   toast(MSG_ROW_DELETED);
 };
@@ -11207,10 +11174,10 @@ window.slDeleteSessionConfirmed = async function(id) {
 /* ══════════════════════════════════════════════════════════════════════════
    שינה — ייצוא ל-Excel ול-PDF
    ══════════════════════════════════════════════════════════════════════════ */
-window.slShowExportDialog = function(type) {
+function slShowExportDialog(type) {
   openModal(type==='pdf'?MSG_EXPORT_PDF:MSG_EXPORT_XLS,
-    '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+window._hcBuild('slExpF',null)+'</div>'+
-    '<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+window._hcBuild('slExpT',null)+'</div>'+
+    '<div class="u-mb-6"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">מתאריך</div>'+_hcBuild('slExpF',null)+'</div>'+
+    '<div class="u-mb-7"><div class="u-fs-3 u-fw-600 u-c-text2 u-mb-3">עד תאריך</div>'+_hcBuild('slExpT',null)+'</div>'+
     '<div class="u-fs-3 u-c-text3 u-ta-c">השאר ריק לייצוא כל הנתונים</div>',
     '<button data-act="sl-export-go" data-type="'+esc(type)+'" class="u-fx-1 u-p-4-7 u-bg-navy-fill u-c-on-brand u-bd-none u-r-4 u-ff-heebo u-fs-4 u-fw-700 u-cur-p">ייצא</button>'+
     '<button data-act="modal-close" class="u-fx-1 u-p-4-7 u-bg-bg u-c-navy-ink u-bd-15-solid-border u-r-4 u-ff-heebo u-fs-4 u-fw-700 u-cur-p">ביטול</button>');
@@ -11218,15 +11185,15 @@ window.slShowExportDialog = function(type) {
 
 /*  ⛔ שני השדות נקראים לפני הסגירה — ⚠️ `closeModal` מרוקן את הגוף,
  *  ⭐ וקריאה אחריה הייתה מחזירה `null` על טווח שהמשתמש בחר. */
-window.slExportConfirm = function(type) {
+function slExportConfirm(type) {
   var fromIso=(document.getElementById('slExpF_iso')||{}).value||null;
   var toIso=(document.getElementById('slExpT_iso')||{}).value||null;
   closeModal();
-  if(type==='pdf') window.slExportPdf(fromIso,toIso);
-  else window.slExportExcel(fromIso,toIso);
+  if(type==='pdf') slExportPdf(fromIso,toIso);
+  else slExportExcel(fromIso,toIso);
 };
 
-window.slExportExcel = async function(fromIso,toIso) {
+async function slExportExcel(fromIso,toIso) {
   try {
     var data=await slLoadData();
     var students=getStudents();
@@ -11244,7 +11211,7 @@ window.slExportExcel = async function(fromIso,toIso) {
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
       var hd=rec.date_heb;
-      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       Object.entries(ysMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
@@ -11277,7 +11244,7 @@ window.slExportExcel = async function(fromIso,toIso) {
   } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
-window.slExportPdf = async function(fromIso,toIso) {
+async function slExportPdf(fromIso,toIso) {
   try {
     var data=await slLoadData();
     var students=getStudents();
@@ -11298,7 +11265,7 @@ window.slExportPdf = async function(fromIso,toIso) {
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var hd=rec.date_heb;
-      var dLabel=hd?window._hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
       var p=Object.values(ysMarks(rec)).filter(function(m){return m.s==='p';}).length;
       var ab=Object.values(ysMarks(rec)).filter(function(m){return m.s==='e'||m.s==='x';}).length;
       var l=Object.values(ysMarks(rec)).filter(function(m){return m.s==='l';}).length;
@@ -11329,17 +11296,17 @@ window.slExportPdf = async function(fromIso,toIso) {
 /* ══════════════════════════════════════════════════════════════════════════
    שינה — לשונית ההשגחה והטיפולים
    ══════════════════════════════════════════════════════════════════════════ */
-window.slSupNav = function(dir) {
+function slSupNav(dir) {
   var hy=window._slSupHY, mi=window._slSupMI;
   mi+=dir;
-  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=window._hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!window._hcBase(hy))return;mi=0;}
+  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
   window._slSupHY=hy;window._slSupMI=mi;
-  window.slRenderSupervision();
+  slRenderSupervision();
 };
 
-window.slRenderSupervision = async function() {
+async function slRenderSupervision() {
   var el=document.getElementById('sl-sup-content');
   if(!el) return;
   if(!ysSupervisionAccess()){
@@ -11365,12 +11332,12 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
 
   _slSupMonth();
   var hy=window._slSupHY,mi=window._slSupMI;
-  var mNames=window._hcMN(hy);
-  var mLabel=mNames[mi]+' '+window._hcYL(hy);
+  var mNames=_hcMN(hy);
+  var mLabel=mNames[mi]+' '+_hcYL(hy);
 
-  var curMax=(window._hcBase(hy)||{ml:[]}).ml.length-1;
-  var hasPrev=mi>0||!!window._hcBase(hy-1);
-  var hasNext=mi<curMax||!!window._hcBase(hy+1);
+  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
+  var hasPrev=mi>0||!!_hcBase(hy-1);
+  var hasNext=mi<curMax||!!_hcBase(hy+1);
 
   var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-navy-ink';
   var navHtml='<div class="u-d-flex u-ai-c u-g-3 u-mb-6 u-bg-card u-bd-15-solid-border u-r-radius u-p-5-6">'+
@@ -11388,7 +11355,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
   data.forEach(function(rec){
     var dh=rec.date_heb;
-    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=window._hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
     Object.entries(ysMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
@@ -11427,14 +11394,14 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
-      var ltDateStr=ltHd?window._hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
+      var ltDateStr=ltHd?_hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
       lastLabel='<span class="u-bg-ok-soft u-c-ok u-r-2 u-p-1-4 u-fs-2 u-fw-700 u-mr-3">📝 יום '+slDow(ltIso)+' '+ltDateStr+'</span>';
     }
     var alert20=st.absent>=20?'<span class="u-bg-bad-soft u-c-bad u-r-2 u-p-1-3 u-fs-2 u-mr-2">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="u-bg-warn-soft u-c-warn u-r-2 u-p-1-3 u-fs-2 u-mr-2">⏰ 300+</span>':'';
     var clsLabel=st.cls==='a'?'א':st.cls==='b'?'ב':st.cls==='g'?'ג':st.cls||'';
     var cardId='sl-sup-card-'+sid;
-    html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h u-tr-box-shadow-15s-border-color-15s" onmouseover="this.style.boxShadow=\'0 3px 12px rgba(0,0,0,.10)\';this.style.borderColor=\'var(--navy-ink)\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'var(--border)\'">';
+    html+='<div id="'+cardId+'" class="u-bg-card u-bd-15-solid-border u-r-radius u-ov-h sup-card">';
     html+='<div class="u-d-flex u-ai-c u-g-5 u-p-5-6 u-cur-p" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div class="u-w-22 u-fs-3 u-fw-700 u-c-text3">'+esc(clsLabel)+'</div>';
     html+='<div class="u-fx-1"><div class="u-fw-700 u-fs-4">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div class="u-mt-2">'+lastLabel+'</div>':'')+'</div>';
@@ -11460,7 +11427,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
       html+='<div class="u-fw-700 u-fs-3 u-c-navy-ink u-mb-4">📋 היסטוריית טיפולים</div>';
       html+=stuTreats.slice().reverse().map(function(t){
         var hd=t.date_heb;
-        var dl=hd?window._hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
+        var dl=hd?_hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div class="u-d-flex u-g-4 u-ai-c u-p-3-0 u-bb-1-solid-border u-fs-3">'+
           '<span class="u-c-text2">'+dl+'</span>'+
           '<span class="u-fw-600">'+esc(t.type)+'</span>'+
@@ -11477,7 +11444,7 @@ function _slSupPaint(el, rawData, rawTreats, warn) {
   el.innerHTML=html;
 };
 
-window.slAddTreat = async function(sid) {
+async function slAddTreat(sid) {
   var typeEl=document.getElementById('sl-treat-type-'+sid);
   var noteEl=document.getElementById('sl-treat-note-'+sid);
   if(!typeEl) return;
@@ -11486,7 +11453,7 @@ window.slAddTreat = async function(sid) {
     id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
     sid:sid,
     date_iso:now.toISOString().split('T')[0],
-    date_heb:window._hcH(now),
+    date_heb:_hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
     by:AUTH.user?AUTH.user.client_id:'',
@@ -11500,16 +11467,16 @@ window.slAddTreat = async function(sid) {
   pendMark(PK_SL_TREAT+rec.id);
   await slSaveTreats(treats);
   if(noteEl) noteEl.value='';
-  window.slRenderSupervision();
+  slRenderSupervision();
   toast(MSG_CARE_SAVED);
 };
 
-window.slDeleteTreat = function(id) {
+function slDeleteTreat(id) {
   ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE)
-    .then(function (yes) { if (yes) window.slDeleteTreatConfirmed(id); });
+    .then(function (yes) { if (yes) slDeleteTreatConfirmed(id); });
 };
 
-window.slDeleteTreatConfirmed = async function(id) {
+async function slDeleteTreatConfirmed(id) {
   closeModal();
   var treats=await slLoadTreats();
   // ראה atDeleteTreatConfirmed — tombstone, לא הסרה פיזית.
@@ -11518,17 +11485,17 @@ window.slDeleteTreatConfirmed = async function(id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
-  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); window.slRenderSupervision(); return; }
+  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); slRenderSupervision(); return; }
   pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await slSaveTreats(treats);
-  window.slRenderSupervision();
+  slRenderSupervision();
   toast(MSG_DELETED_MARK);
 };
 
 // -------- פירוט חודשי לתלמיד --------
 var SL_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'אירוע',ap:'אישור',ak:'בבית',a:'מנוחה'};
 
-window.slSupDetail = function(sid) {
+function slSupDetail(sid) {
   var students=getStudents();
   var st=students.find(function(s){return String(s.id)===String(sid);});
   var name=st?st.name:'תלמיד';
@@ -11539,7 +11506,7 @@ window.slSupDetail = function(sid) {
   else{
     records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
-      var hbr=hd?window._hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
+      var hbr=hd?_hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
       var dowStr='יום '+slDow(r.date_iso);
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(SL_LBL_DET[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
@@ -11559,7 +11526,7 @@ window.slSupDetail = function(sid) {
     '<div class="u-maxh-60vh u-ovy-a">'+rows+'</div>','');
 };
 
-window.slSupEditMarkDlg = function(recId, sid, curMark) {
+function slSupEditMarkDlg(recId, sid, curMark) {
   var CODES=[
     {c:'p', lbl:'✓ נוכח'},
     {c:'l', lbl:'⏰ איחור'},
@@ -11579,7 +11546,7 @@ window.slSupEditMarkDlg = function(recId, sid, curMark) {
     '<button data-act="modal-close" class="u-fx-1 u-p-4 u-bg-none u-bd-2-solid-border u-r-3 u-ff-heebo u-cur-p">ביטול</button>');
 };
 
-window.slEditMark = async function(recId, sid, newCode) {
+async function slEditMark(recId, sid, newCode) {
   var data=await slLoadData();
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
@@ -11597,8 +11564,8 @@ window.slEditMark = async function(recId, sid, newCode) {
   var _p=slSaveData(data);
   closeModal();
   slRenderTodaySessions();
-  window.slRenderArchive();
-  window.slRenderSupervision();
+  slRenderArchive();
+  slRenderSupervision();
   toast(MSG_MARK_UPDATED);
   await _p;
 };
@@ -11606,7 +11573,7 @@ window.slEditMark = async function(recId, sid, newCode) {
 // -------- הגדרות מודול שינה (טיפולים בלבד) --------
 /*  ⛔ מציג מיד ⛔ ומרענן ברקע — ⚠️ ההגדרות יושבות על הדיסק, ⭐ ואין סיבה
  *  שמסך ההגדרות ימתין לרשת כדי לצייר אותן. */
-window.renderSleepSettings = async function() {
+async function renderSleepSettings() {
   slCachedCfg();
   _slPaintSettings();
   await _slPullCfg();
@@ -11625,7 +11592,7 @@ function _slPaintSettings() {
   }
 }
 
-window.slAddTreatRow = function() {
+function slAddTreatRow() {
   var tc=document.getElementById('sl-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
@@ -11634,7 +11601,7 @@ window.slAddTreatRow = function() {
   tc.appendChild(div);div.querySelector('input').focus();
 };
 
-window.slSaveSettingsCfg = async function() {
+async function slSaveSettingsCfg() {
   var cfg=window._slCfg||slDefaultCfg();
   var tc=document.getElementById('sl-cfg-treats');
   if(tc){

@@ -103,18 +103,6 @@ const bad = (m) => { RAN++; failed++; console.error('  FAIL ' + m); };
 const assert = (cond, m) => (cond ? ok(m) : bad(m));
 
 /* ── חיתוך לפי שם, בהתאמת סוגריים (זהה לרתמות האחרות של הסבב) ──────────── */
-function cutAssign(name, src) {
-  const re = new RegExp('\\nwindow\\.' + name + '\\s*=\\s*function', 'g');
-  const m = re.exec(src);
-  if (!m) throw new Error('window.' + name + ' לא נמצאה ב-index.html');
-  const start = m.index + 1;
-  let i = src.indexOf('{', m.index + m[0].length - 1), d = 0;
-  for (; i < src.length; i++) {
-    if (src[i] === '{') d++;
-    else if (src[i] === '}') { d--; if (!d) return src.slice(start, i + 1) + ';'; }
-  }
-  throw new Error('window.' + name + ' אינה סגורה');
-}
 function cutFn(name, src) {
   const re = new RegExp('\\n(async )?function ' + name + '\\s*\\(', 'g');
   const m = re.exec(src);
@@ -188,8 +176,8 @@ function run(src, opts) {
    *  קורא לה על הרשימה שהוא עומד לשמור, ⭐ ופונקציה מדומה כאן הייתה מאשרת
    *  ייבוא שנשען על מיון שאינו קיים באפליקציה. */
   vm.runInContext(cutFn('ysSortStudents', src), sandbox, { filename: 'ysSortStudents.js' });
-  vm.runInContext(cutAssign('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
-  sandbox.window.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
+  vm.runInContext(cutFn('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
+  sandbox.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
   return {
     saved, marked, pushed: !!summary.pushed,
     title: slots.title.v, body: slots.body.v, shown: summary.shown,
@@ -233,7 +221,7 @@ assert(nc.added.length === 3 && new Set(nc.added.map((s) => String(s.id))).size 
 if (RUN_MUT) {
   mutStage();
 /* ── 5 · שלוש מוטציות ──────────────────────────────────────────────────── */
-const FN = cutAssign('importStudentsFromFile', SRC);
+const FN = cutFn('importStudentsFromFile', SRC);
 
 /*  מוטציה א — חזרה למזהה רץ. ⛔ אם היא אינה מפילה את טענה 4, הבדיקה
  *  אינה מודדת את הדבר שהסבב תיקן.                                        */
