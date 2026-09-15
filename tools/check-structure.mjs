@@ -30,9 +30,7 @@ import { fileURLToPath } from 'node:url';
 const APP = {
   app: 'hanhala-ruchanit',
   /* חריגות מנומקות — קובץ/תיקייה שקיימים כאן ולא באחיות, עם הסיבה. */
-  rootExtra: {
-    'setup-db.html': 'כלי עזר חד-פעמי להגדרת המסד — מושך את migrations/000 ואינו עותק של האפליקציה (כלל קריטי 6)',
-  },
+  rootExtra: {},
   toolsExtra: {
     /* ⭐ נימוקי מטריצת היכולות — עברו לכאן מ-CLAUDE.md בסבב 49 (תקציב
        התיעוד). ⛔ מעבר ולא גיזום: אף שורה לא נמחקה, ואף שער אינו
@@ -97,7 +95,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
 /* ⚠️ פר-אפליקציה — הריצפה הפרטית של השער נבדלת ביניהן לפי היכולת שכל אחת נושאת, והנימוק בשדה עצמו */
-const FLOOR = { shared: 14, app: 1, appWhy: 'setup-db.html — כלי הגדרת המסד החד-פעמי, חריגת שורש שקיימת בהנהלה בלבד' };
+const FLOOR = { shared: 14, app: 0, appWhy: '' };
 /* ⚠️ סוף פר-אפליקציה */
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
