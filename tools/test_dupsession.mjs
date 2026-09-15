@@ -204,7 +204,7 @@ t3b();
  *  עוצרת כאן עם קוד היציאה של הטענות שכבר רצו, ⭐ והכיסוי אינו יורד. */
 mutStage();
 if (!RUN_MUT) {
-  console.log('\n⏭ test_dupsession: המוטציות רצות ברמה המלאה (--full)');
+  console.log('\n⏭ test_dupsession: המוטציות רצות ברמה המלאה (--full) — ⛔ ואינן נמדדות כאן');
   process.exit(failed ? 1 : 0);
 }
 

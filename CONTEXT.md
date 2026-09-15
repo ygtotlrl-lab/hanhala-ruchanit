@@ -1,7 +1,7 @@
 # הנהלה רוחנית — קונטקסט פיתוח
 
 ## פרטי ריפו
-- **ריפו:** `ygtotlrl-lab/hanhala-ruchanit` (שונה מ-`yeshiva-manager`)
+- **ריפו:** `ygtotlrl-lab/hanhala-ruchanit`
 - **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
 - **טוקן:** מנוהל ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ
 - **קובץ ראשי:** `index.html`

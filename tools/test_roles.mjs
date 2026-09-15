@@ -169,7 +169,7 @@ const failed = REP.summary('מודל ההרשאות');
  *  בתיקייה זמנית** ⛔ ולא על העץ. */
 mutStage();
 if (!RUN_MUT) {
-  console.log('\n⏭ test_roles: המוטציות רצות ברמה המלאה (--full)');
+  console.log('\n⏭ test_roles: המוטציות רצות ברמה המלאה (--full) — ⛔ ואינן נמדדות כאן');
   process.exit(failed ? 1 : 0);
 }
 {

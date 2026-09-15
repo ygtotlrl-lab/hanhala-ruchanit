@@ -821,7 +821,7 @@ process.exit(bad ? 1 : 0);
  *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
 mutStage();
 if (!RUN_MUT) {
-  console.log('\n⏭ test_offline_login: המוטציות רצות ברמה המלאה (--full)');
+  console.log('\n⏭ test_offline_login: המוטציות רצות ברמה המלאה (--full) — ⛔ ואינן נמדדות כאן');
   process.exit(failures ? 1 : 0);
 }
 /* ───────────────────────────────────────────────────────────────────────────

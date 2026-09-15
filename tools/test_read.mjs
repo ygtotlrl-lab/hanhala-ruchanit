@@ -335,7 +335,7 @@ async function mut(find, repl, key, name) {
  *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
 mutStage();
 if (!RUN_MUT) {
-  console.log('\n⏭ test_read: המוטציות רצות ברמה המלאה (--full)');
+  console.log('\n⏭ test_read: המוטציות רצות ברמה המלאה (--full) — ⛔ ואינן נמדדות כאן');
   process.exit(failed ? 1 : 0);
 }
 await mut('if (staleIsDeleted && mt < rec.updatedAt) return;', '',
