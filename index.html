@@ -1229,17 +1229,18 @@ window._ysHebNone=function(src){
           yearLabelFull:'',leap:false,ok:false,src:src};
 };
 
-// ---- צרכני התצוגה — כולם יושבים על ysHebDate ----
-function hebrewDate(jsDate){
-  /*  ⛔ אותו כלל בדיוק כמו ב-ysHebDate (סבב 57) — קלט פגום אינו הופך
-   *  ל«היום»; מחרוזת ריקה היא מה שכל צרכני התצוגה כאן כבר יודעים לטפל בו. */
-  if(jsDate===undefined||jsDate===null) jsDate=new Date();
-  if(!window._ysIsDate(jsDate)){ window._ysBadDate('hebrewDate',jsDate); return ''; }
-  var h=window.ysHebDate(jsDate);
-  if(!h.ok) return '';
-  return 'יום '+window.YS_DOW_HEB[jsDate.getDay()]+', '+h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
+// ---- צרכן התצוגה — יושב על ysHebDate ----
+/*  ⛔ קלט פגום אינו הופך ל«היום» (סבב 80) — ⚠️ `jsDate || new Date()` הסתיר
+ *  ארגומנט שגוי והציג את תאריך היום כאילו הוא התאריך שנתבקש; ⭐ מחרוזת
+ *  ריקה היא מה שכל הצרכנים כאן כבר יודעים לטפל בו.
+ *  ⚠️ קריאה **בלי ארגומנט** היא חוזה קיים ומשמעה «היום» — היא נשארת. */
+function hebrewDate(jsDate) {
+  if (jsDate === undefined || jsDate === null) jsDate = new Date();
+  if (!window._ysIsDate(jsDate)) { window._ysBadDate('hebrewDate', jsDate); return ""; }
+  var h = window.ysHebDate(jsDate);
+  if (!h.ok) return "";
+  return h.dayLabel + " " + h.monthName + " " + h.yearLabelFull;
 }
-function hebrewDateShort(d){var s=hebrewDate(d);var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
 // ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
@@ -6174,8 +6175,12 @@ function initDateFields(){
   var rmEl=document.getElementById('rm');
   if(dpEl) dpEl.value=TODAY;
   if(rmEl) rmEl.value=TODAY.substring(0,7);
+  /*  ⛔ שם היום מורכב באתר התצוגה ⛔ ולא במנוע — ⚠️ המנוע מחזיר תאריך
+   *  עברי, ⭐ ושם היום הוא לוח לועזי: ⛔ שני מימושים לאותו שם היו שתי
+   *  התנהגויות, ⚠️ ובאג שיתוקן באחד היה נשאר בשני. */
   var hdEl=document.getElementById('hdate');
-  if(hdEl) hdEl.textContent=hebrewDate();
+  var _now=new Date();
+  if(hdEl) hdEl.textContent='יום '+window.YS_DOW_HEB[_now.getDay()]+', '+hebrewDate(_now);
 }
 
 // לא קוראים loadDash ו-initDateFields ישירות — נקרא אחרי login
