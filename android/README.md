@@ -127,15 +127,15 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 
 | | |
 |---|---|
-| **קובץ** | `signing/hanhala.keystore` (PKCS12, RSA 2048) |
-| **alias** | `hanhala` |
-| **storepass / keypass** | `hanhala123` (זהה לשניהם) |
+| **קובץ** | ⛔ אינו בריפו — GitHub Secret `KEYSTORE_B64`, מפוענח לקובץ זמני בזמן בנייה ונמחק אחריה (PKCS12, RSA 2048) |
+| **alias** | ⛔ אינו מוקלד — `sign-apk.sh` גוזר אותו מהמפתח עצמו |
+| **storepass / keypass** | ⛔ אינה בריפו — GitHub Secret `KEYSTORE_PASS` |
 | **תוקף** | 10,000 יום — 10.08.2026 עד 26.12.2053 |
 | **SHA256** | `9F:68:B5:A0:0E:FA:D1:2F:19:C6:FF:E7:05:8E:D0:61:79:92:E6:99:9F:34:74:12:66:B0:93:93:E4:E1:6D:BF` |
 | **SHA1** | `D7:E5:DC:42:32:EC:4A:04:B0:64:40:3F:48:EA:2B:2F:C8:67:1E:59` |
 | **DN** | `CN=hanhala, OU=Yeshiva, O=Yeshiva, L=Rishon LeZion, ST=Israel, C=IL` |
 
-אימות: `keytool -list -v -keystore signing/hanhala.keystore -storepass hanhala123`,
+אימות: `keytool -list -v -keystore <עותק מקומי> -storepass <הערך שב-KEYSTORE_PASS>`,
 ואחרי חתימה — ש-`apksigner verify --print-certs` מחזיר את אותו SHA256.
 
 ⚠️ **ה-APK הישן (`yeshiva-manager.apk`) נבנה מחוץ לריפו במפתח זמני שאבד**,
@@ -168,8 +168,8 @@ apktool d <app>.apk -o /tmp/hanhala_work -f
 rm -rf /tmp/hanhala_work/build          # חובה לפני בנייה חוזרת
 apktool b /tmp/hanhala_work -o built.apk
 zipalign -f 4 built.apk aligned.apk
-apksigner sign --ks signing/hanhala.keystore --ks-key-alias hanhala \
-  --ks-pass pass:hanhala123 --key-pass pass:hanhala123 --out output.apk aligned.apk
+SIGN_KEYSTORE=<עותק מקומי של המפתח> SIGN_PASS=<הערך שב-KEYSTORE_PASS> \
+  signing/sign-apk.sh aligned.apk output.apk
 ```
 
 ⚠️ **המפתח הישן שישב ב-`/tmp` אבד**, והמפתח הקבוע הוא
