@@ -29,6 +29,7 @@
    **מדווחת ואינה מדלגת בשתיקה**.
    ──────────────────────────────────────────────────────────────────────── */
 import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { reasonGaps } from './scope.mjs';
 import { PEERS } from './peers.mjs';
 import { join, dirname, resolve } from 'node:path';
@@ -74,8 +75,6 @@ const APP = {
       'מאמתת שם וסיסמה מול הענן ומכניסה לאפליקציה — וביומן אין כניסה ואין משתמש שיאומת',
     doLogout:
       'מנתקת את המשתמש, עוצרת את שעון הנעילה ומחזירה למסך הכניסה — וביומן אין כניסה ואין ממה להתנתק',
-    guardOnline:
-      'חוסמת מסלול שדורש רשת ומודיעה למשתמש בהודעה כללית אחת — ובגיוס כל אתר חסימה נושא הודעה ייעודית לכתיבת המשתמש, והכללית הייתה מוחקת בדיוק את מה שהמשתמש צריך לדעת',
     hebrewDate:
       'מעצבת תאריך עברי לתצוגה מעל מנוע התאריך המשותף — ובשכר ובגיוס אין צרכן תאריך עברי כלל',
     isAdmin:
@@ -143,12 +142,33 @@ const APP = {
     ysIntlHeb:
       'מעצבת תאריך בלוח העברי המובנה בדפדפן ומחזירה את חלקיו — ובשכר ובגיוס אין צרכן תאריך עברי כלל',
   },
+  /*  ⛔ פונקציות שהשם בהן חוזר ביותר מריפו אחד **בתוכן שונה** — ⚠️ **מה
+   *  נכנס**: שם כזה שמוגדר גם כאן ⟵ היכולת שמצדיקה את ההבדל; ⛔ **ומה
+   *  מפיל**: שם כזה שאינו כאן, והצהרה שאין לה שם חצוי כאן. ⭐ **ולמה
+   *  המבנה קיים**: בלי הצהרה אין דרך לדעת אם זה הבדל מוצר או שני מימושים
+   *  לאותה יכולת, ⛔ ובאג שיתוקן באחד יישאר בשני. */
+  productFns: {
+    doLogin:
+      'מסלול הכניסה המקוונת — ⚠️ ומה שנטען אחריה נבדל: הרשאות פר-עמוד בהנהלה, משתמש-מנהל יחיד בשכר, ותפקיד שחוסם את ההגדרות בגיוס',
+    doLogout:
+      'יציאת המשתמש וניקוי מצב הסשן — ⚠️ ומה שמתאפס אחריה הוא מצב האפליקציה: המסכים, מטמון ההרשאות והמראה המקומית נבדלים',
+    hebrewDate:
+      'מעצבת את התאריך העברי לתצוגה מעל המנוע המשותף — ⚠️ וביומן היא מחזירה תאריך בלבד, ⛔ ובהנהלה גם את שם היום שלפניו',
+    openAddStudent:
+      'פותחת את טופס הוספת התלמיד — ⚠️ והשדות שבו הם מוצר: שיעור ומחזור בהנהלה, וחודשי הצטרפות ועזיבה בשכר',
+    renderSettings:
+      'מציירת את מסך ההגדרות — ⚠️ ותוכן המסך הוא מוצר: עורך הקטגוריות ביומן, והרשאות ומחזור בהנהלה',
+    saveRefresh:
+      'נקודת הרענון שאחרי צינור השמירה — ⚠️ וכל אפליקציה מציירת מסך אחר, ⛔ ולכן התקן עצמו מצהיר אותה פר-אפליקציה',
+    saveUser:
+      'שומרת שורת משתמש דרך הכותב האחד — ⚠️ והשדות שנשמרים נבדלים: תפקיד והרשאות פר-עמוד בהנהלה, ותפקיד ודגל פעיל בגיוס',
+  },
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ המיפוי נגזר מכאן ⛔ ואינו
  *  רשימה שנייה בבודק. */
-export const ROWS = [57];
+export const ROWS = [57, 109];
 
 /*  ⛔ המרשם שהסורק מכריז — ⚠️ **מה נכנס**: שם הדפוס שהשער אוכף;
  *  ⛔ **ומה מפיל**: דפוס שאין לו מוטציה, ומוטציה שנוקבת בדפוס שאינו כאן.
@@ -180,7 +200,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  טענה משותפת שאבדה.
  *  ⚠️ **וכאן אין ריצפה פרטית** — ⛔ הטענות אינן נגזרות ממספר השמות אלא
  *  ממבנה המדידה, ⭐ והוא זהה בכולן. */
-const FLOOR = { shared: 6, app: 0, appWhy: '' };
+const FLOOR = { shared: 9, app: 0, appWhy: '' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות — ⚠️ `null` הוא תהליך שלא הגיע
@@ -272,6 +292,63 @@ export function declGaps(mine, partial, decl) {
   return { undeclared, stale };
 }
 
+/*  ⛔ גוף הפונקציה נחתך בסוגריים מאוזנים ⛔ ולא בחלון תווים — ⚠️ גוף שנמתח
+ *  או נחתך באמצע מייצר טביעה שאינה הגוף, ⭐ והשוואה בין הריפו הייתה מדווחת
+ *  הבדל על קוד זהה. ⛔ **וההשוואה על המקור המולבן** — ⚠️ ריווח, מחרוזת
+ *  והערה אינם הגוף: ⭐ הערה שנוספה באחת אינה «מימוש שני». */
+function cutBody(w, at) {
+  const b = w.indexOf('{', at), semi = w.indexOf(';', at);
+  const tail = (e) => w.slice(at, e).replace(/\s+/g, ' ').trim();
+  if (b < 0 || (semi >= 0 && semi < b)) return tail(semi < 0 ? at + 200 : semi + 1);
+  let d = 0;
+  for (let k = b; k < w.length; k++) {
+    if (w[k] === '{') d++;
+    else if (w[k] === '}') { d--; if (!d) return tail(k + 1); }
+  }
+  return tail(at + 200);
+}
+
+/*  ⛔ טביעת הגוף ⛔ ולא הגוף עצמו — ⚠️ מה שנמדד הוא **אם** שני הגופים
+ *  נבדלים, ⭐ ולא במה: ⛔ והשוואת טקסט מלא בין חמישה מקורות היא מה
+ *  שהופך את המדידה ליקרה בלי שהיא מוסיפה דבר. */
+export function fnBodies(src) {
+  const w = whiten(src, { markup: 'blank' });
+  const out = new Map();
+  for (const re of DEF_FORMS) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(w)) !== null) {
+      if (out.has(m[1])) continue;
+      out.set(m[1], createHash('sha256').update(cutBody(w, m.index + m[0].indexOf(m[1]))).digest('hex').slice(0, 16));
+    }
+  }
+  return out;
+}
+
+/*  ⛔ השם החצוי הוא הנמדד — ⚠️ שם שחי בריפו אחד בלבד אינו נמדד כאן,
+ *  ⭐ ושם שחי בכמה וגופו זהה הוא רכיב משותף: ⛔ מה שנשאר הוא שם אחד
+ *  לשני מימושים. */
+export function splitNames(maps) {
+  const all = new Set();
+  for (const m of maps) for (const n of m.keys()) all.add(n);
+  const out = new Set();
+  for (const n of all) {
+    const shas = new Set(maps.filter((m) => m.has(n)).map((m) => m.get(n)));
+    if (maps.filter((m) => m.has(n)).length > 1 && shas.size > 1) out.add(n);
+  }
+  return out;
+}
+
+/*  ⛔ שני הצדדים — ⚠️ שם חצוי שמוגדר כאן ואינו מוצהר, ⛔ והצהרה שאין לה
+ *  שם חצוי כאן: ⭐ צד אחד לבדו מאשר את השני. */
+export function productGaps(mine, split, decl) {
+  const names = Object.keys(decl || {});
+  return {
+    undeclared: [...split].filter((n) => mine.has(n) && names.indexOf(n) < 0).sort(),
+    stale: names.filter((n) => !(mine.has(n) && split.has(n))).sort(),
+  };
+}
+
 /* ── 1. הסורק אינו סופר טקסט כקוד ──────────────────────────────────────── */
 let n = 1;
 {
@@ -306,6 +383,16 @@ const DECL = APP.appFns || {};
     'כותבים «מה הפונקציה עושה — ולמה לתפקיד אין מקבילה בשאר»');
 }
 
+/* ── 3ב. הנימוק של השם החצוי תפקידי ────────────────────────────────────── */
+const PROD = APP.productFns || {};
+{
+  const gaps = reasonGaps(PROD);
+  t(n++, gaps.length === 0,
+    `[fn-product-reason] נימוק שאינו תפקידי בשם חצוי — נמדדו ${gaps.length} ` +
+    `מתוך ${Object.keys(PROD).length} והצפוי 0${gaps.length ? ` (${gaps.join(' · ')})` : ''}. ` +
+    'כותבים «מה הפונקציה עושה — והיכולת שמצדיקה את ההבדל»');
+}
+
 /* ── 3. המקור נקרא ─────────────────────────────────────────────────────── */
 const MINE = fnNames(readFileSync(join(ROOT, 'index.html'), 'utf8'));
 t(n++, MINE.size > 0,
@@ -318,7 +405,7 @@ const dirOf = (p) => (p === APP.name ? ROOT : join(SIBS, p));
 const away = others.filter((p) => !existsSync(join(dirOf(p), 'index.html')));
 /*  ⚠️ המקורות נשמרים ⛔ ואינם נקראים פעמיים — ⭐ שלב המוטציות מזין אותם
  *  לליבה אחרי עריכה, ⛔ בלי לגעת בעץ ובלי תהליך נוסף. */
-let SRCS = null, PARTIAL = null, IN_ALL = [];
+let SRCS = null, PARTIAL = null, IN_ALL = [], SPLIT = new Set();
 if (!away.length) {
   SRCS = PEERS.map((p) => readFileSync(join(dirOf(p), 'index.html'), 'utf8'));
   const sets = SRCS.map(fnNames);
@@ -343,6 +430,21 @@ if (!away.length) {
     `מתוך ${Object.keys(DECL).length} והצפוי 0` +
     `${g.stale.length ? ` (${g.stale.join(', ')})` : ''}. ` +
     'מסירים מ-APP.appFns שם שאינו כאן, או שכבר חי בכולן');
+  /*  ⛔ שם אחד לשני מימושים — ⚠️ המדידה היא על **טביעת הגוף** בכל הריפו,
+   *  ⭐ ומה שנשאר בלי הצהרה הוא בדיוק מי שאיש לא הכריע אם הוא הבדל מוצר. */
+  SPLIT = splitNames(SRCS.map(fnBodies));
+  const pg = productGaps(MINE, SPLIT, PROD);
+  console.log(`  ℹ️  ${SPLIT.size} שמות חוזרים בתוכן שונה · ${Object.keys(PROD).length} מוצהרים כאן`);
+  t(n++, pg.undeclared.length === 0,
+    `[fn-product] שם שחוזר בתוכן שונה ואינו מוצהר — נמדדו ${pg.undeclared.length} ` +
+    `מתוך ${SPLIT.size} חצויים והצפוי 0` +
+    `${pg.undeclared.length ? ` (${pg.undeclared.join(', ')})` : ''}. ` +
+    'מאחדים את שני המימושים, או מכריזים ב-APP.productFns עם היכולת שמצדיקה');
+  t(n++, pg.stale.length === 0,
+    `[fn-product-stale] הצהרה שאין לה שם חצוי כאן — נמדדו ${pg.stale.length} ` +
+    `מתוך ${Object.keys(PROD).length} והצפוי 0` +
+    `${pg.stale.length ? ` (${pg.stale.join(', ')})` : ''}. ` +
+    'מסירים מ-APP.productFns שם שגופו כבר זהה בכולן, או שאינו מוגדר כאן');
 } else {
   /*  ⛔ ההצלבה שלא רצה **נראית** ⛔ ואינה מדלגת בשתיקה — ⚠️ ואינה נספרת
    *  כטענה שעברה: ⭐ עותק עץ בתיקייה זמנית אין לצידו אחיות. */
@@ -414,6 +516,38 @@ t(n++, reasonGaps({ synFn: 'הפונקציה אינה בכולן' }).length === 
   const g2 = PARTIAL ? declGaps(grown, PARTIAL, DECL) : { undeclared: [], stale: [] };
   t(n++, grown.has('zzProductOnlyFn') && g2.undeclared.length === 0 && g2.stale.length === 0,
     'נ1 · ⭐ פונקציה חדשה שקיימת כאן בלבד ⛔ **אינה** מפילה');
+}
+/*  ⛔ מ4: תאום שגופו זהה ⟵ שורה נוספת באחות — ⚠️ הוא הופך לשם אחד לשני
+ *  מימושים, ⭐ ואין לו הצהרה: ⛔ והשער חייב ליפול על `[fn-product]`.
+ *  ⛔ **והמוטציה שוברת את המנגנון** — ⚠️ הגוף עצמו משתנה, ⭐ ולא שמו
+ *  ולא ריווחו: ⛔ הערה שנוספה מולבנת ואינה משנה דבר. */
+{
+  const k = PEERS.findIndex((p) => p !== APP.name);
+  const mineB = away.length ? null : fnBodies(MY_SRC);
+  const peerB = away.length ? null : fnBodies(SRCS[k]);
+  let twin = null;
+  if (mineB) for (const [nm, s] of mineB) {
+    if (peerB.get(nm) !== s) continue;
+    if (SRCS[k].indexOf('\nfunction ' + nm + '(') < 0) continue;
+    twin = nm; break;
+  }
+  if (!twin) t(n++, true, 'מ4 · ⭕ אין תאום שגופו זהה ומוגדר באחות — ⛔ ואין מה למוטט');
+  else {
+    const at = SRCS[k].indexOf('\nfunction ' + twin + '(');
+    const br = SRCS[k].indexOf('{', at);
+    const peers = SRCS.slice();
+    peers[k] = SRCS[k].slice(0, br + 1) + ' var zzSplitProbe = 1;' + SRCS[k].slice(br + 1);
+    const split = splitNames(peers.map(fnBodies));
+    t(n++, productGaps(MINE, split, PROD).undeclared.indexOf(twin) >= 0,
+      `[fn-product] מ4 · «${twin}» קיבל גוף שני באחות בלי הצהרה — נתפס`);
+    /*  ⭐ מוטציית-נגד: אותו שינוי חי ⛔ **בתוספת ההצהרה** — ⚠️ זו העבודה
+     *  שהתקן מתיר, ⭐ ואסור לשער לחסום אותה. */
+    const withDecl = Object.assign({}, PROD,
+      { [twin]: 'מימוש שנבדל בכוונה — והיכולת שמצדיקה אותו נמדדה ונרשמה' });
+    const g3 = productGaps(MINE, split, withDecl);
+    t(n++, g3.undeclared.indexOf(twin) < 0 && g3.stale.indexOf(twin) < 0,
+      `נ2 · ⭐ «${twin}» עם הצהרה ⛔ **אינו** מפיל`);
+  }
 }
 }
 

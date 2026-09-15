@@ -155,6 +155,9 @@ const CODE = ['YS_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(gr
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
 let LS, DOM, SBLOG, TOASTS, LOGINLOG;
+/*  ⛔ מונה קידומי אות הפולינג — ⚠️ הוא מאופס בכל `boot`, ⭐ ומה שנמדד
+ *  בו הוא שכתיבת משתמש שהצליחה אכן קידמה את האות. */
+const TOUCHES = { n: 0 };
 /*  ⛔ שומר ההקשר ברתמה הוא **מונה אמיתי** ⛔ ולא stub — ⚠️ stub שמחזיר
  *  קבוע אינו יכול להתחלף, ⭐ ובדיקה שמדמה החלפת משתמש באמצע מחזור לא
  *  הייתה יכולה להיכשל: ⛔ וזה בדיוק «probe שאינו יכול להיכשל». */
@@ -239,7 +242,7 @@ function makeSB(state) {
 }
 
 function boot(state, opts = {}) {
-  LS = {}; SBLOG = []; TOASTS = []; LOGINLOG = []; CTX.n = 0;
+  LS = {}; SBLOG = []; TOASTS = []; LOGINLOG = []; CTX.n = 0; TOUCHES.n = 0;
   DOM = freshDom(DOM_IDS);
   Object.assign(DOM._m, opts.domSeed || {});
   const sandbox = {
@@ -287,6 +290,10 @@ function boot(state, opts = {}) {
      *  ב-DOM נופל דרכה, ⭐ והרתמה מודדת שהמסלול נגמר ברעש ⛔ ולא בשקט. */
     uiNoDialog: (fn, id) => { TOASTS.push('uiNoDialog:' + fn + ':' + id); },
     renderUsersList: () => {},
+    /*  ⛔ קידום אות הפולינג מדומה ⛔ ואינו שקט — ⚠️ שלושת אתרי כתיבת
+     *  המשתמש קוראים לו אחרי כתיבה שהצליחה, ⭐ והרתמה סופרת אותו:
+     *  ⛔ בלעדיו הם נופלים ב-`ReferenceError` ⚠️ ולא נמדדים כלל. */
+    ysTouchLastChanged: async () => { TOUCHES.n++; },
   };
   sandbox.window = sandbox;
   vm.createContext(sandbox);
@@ -304,7 +311,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
  *  ⛔ והפרטית עם היכולת שמוסיפה אותה; ⛔ **ומה מפיל**: משותפת שנבדלת בין
  *  הריפו, פרטית בלי נימוק, וסכום אפס. ⭐ **ולמה לא מספר אחד**: הוא מסתיר
  *  טענה משותפת שאבדה. */
-const FLOOR = { shared: 0, app: 103, appWhy: 'הכניסה האופליין — קיימת בשלוש, ומספר המסלולים נגזר ממסך ניהול המשתמשים שיש או שאין' };
+const FLOOR = { shared: 0, app: 104, appWhy: 'הכניסה האופליין — קיימת בשלוש, ומספר המסלולים נגזר ממסך ניהול המשתמשים שיש או שאין' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
 /*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
@@ -669,6 +676,9 @@ sec('8. saveUser / changeMyPassword');
   const nu = rows.find((r) => r.username === 'hadash');
   T('8א. משתמש חדש נוצר עם מלח+טביעה', !!nu && !!nu.pass_salt && !!nu.pass_fp);
   eq('8ב. הטביעה תואמת לסיסמה', await S.ysPassFp('567890', nu.pass_salt), nu.pass_fp);
+  /*  ⛔ כתיבת משתמש שהצליחה מקדמת את אות הפולינג — ⚠️ טבלת המשתמשים נמשכת
+   *  במשיכה המוצלחת, ⭐ ובלי הקידום השינוי נשאר בלתי-נראה לכל מכשיר אחר. */
+  T('8ב2. ⛔ ואות הפולינג קודמה אחרי הכתיבה', TOUCHES.n > 0);
 }
 {
   const rows = USERS();
