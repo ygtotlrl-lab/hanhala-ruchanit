@@ -72,7 +72,7 @@ https://ygtotlrl-lab.github.io/hanhala-ruchanit/
 - **mipmap במעטפת:** `ic_launcher` (מלא על לבן) + `ic_launcher_foreground`
   (דיו שטוח על שקוף, הלוגו ב-66% מהקנבס) בכל חמש הרזולוציות, ואדפטיבי
   ב-`mipmap-anydpi-v26` עם רקע לבן.
-- **אותה גיאומטריה משמשת את הסט הירוק של schar-limud** (דיו `#307535`;
+- **אותה גיאומטריה משמשת גם סט ירוק** (דיו `#307535`;
   אומתה התאמה מבנית ≥99.9% בין הסטים בכל גודל).
 
 <!-- SHARED:start id="android-shell-split" -->

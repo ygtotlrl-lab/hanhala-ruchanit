@@ -1437,7 +1437,7 @@ function ysRandSalt() {
 }
 // PBKDF2-SHA256 → hex בן 64 תווים. מחזירה null כשאין `crypto.subtle`
 // (הקשר לא-מאובטח / WebView ישן) — וגם כאן הקורא נכשל סגור.
-// זהה במנגנון לזה של schar-limud (סבב 13), פרט למלח הפר-משתמש.
+// המנגנון משותף, פרט למלח הפר-משתמש.
 async function ysPassFp(pass, salt) {
   try {
     if (!salt) return null;
