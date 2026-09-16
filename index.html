@@ -87,7 +87,6 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:var(--sp-6) var(--sp-7);text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
-.stat:hover{background:var(--card-2)}
 .stat .n{font-size:var(--fs-6);font-weight:700;color:var(--navy-ink)}
 .stat .l{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-2)}
 .mods-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
@@ -110,6 +109,8 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:var(--on-dark);border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy-2);border-color:var(--navy-2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
@@ -322,7 +323,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
 .auth-field input:focus{border-color:var(--navy-ink)}
 .auth-btn{width:100%;background:var(--navy-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
+.auth-btn:hover{background:var(--navy-2)}
 .auth-btn:active{background:var(--navy-2)}
+.auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
 .auth-spinner{display:none;margin:var(--sp-5) auto 0;width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
