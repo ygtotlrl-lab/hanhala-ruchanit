@@ -171,8 +171,8 @@ function harness(calSrc) {
                    hebNoArg: function () { return window.ysHebDate(); },
                    names: function (hy) { return window.ysHebMonthNames(hy); },
                    isLeap: function (hy) { return window.ysHebIsLeap(hy); },
-                   text: function (d) { return hebrewDate(d); },
-                   textNoArg: function () { return hebrewDate(); },
+                   text: function (d) { return window.hebrewDate(d); },
+                   textNoArg: function () { return window.hebrewDate(); },
                    /*  ⛔ מונה גזירות — ⚠️ הוא מותקן **לפני** הקריאה הראשונה,
                     *  ⭐ ולכן המטמון קר כשהמדידה מתחילה. */
                    spy: function () { var n = 0, orig = window.ysIntlHeb;

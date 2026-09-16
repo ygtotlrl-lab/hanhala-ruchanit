@@ -11,8 +11,8 @@
    **מה יישבר בלעדיו:** ⛔ תיקון שנעשה באחת ולא בשלוש — ⚠️ ותאריך שנבדל בין
    האפליקציות הוא שני דליים בארכיון.
 
-   **מה אינו נאכף כאן:** ⛔ צרכן התצוגה — ⚠️ הוא נבדל בין האפליקציות: ⭐ תווית
-   שנה מלאה בשתיים וקצרה באחת, ⛔ ולכן הוא אינו כאן.
+   **מה אינו נאכף כאן:** ⛔ מה שהצרכן עושה עם המחרוזת — ⚠️ האתר שמציג
+   אותה נבדל בין האפליקציות: ⭐ והצורה עצמה אחת, ⛔ ולכן היא כאן.
 
    ⛔ **והסיומת `.js` ⛔ ולא `.mjs`** — ⚠️ הקובץ נמסר לדפדפן משרת סטטי,
    ⭐ ומודול שה-MIME שלו אינו JavaScript נדחה כולו: ⛔ נמדד בשער ההתנהגות
@@ -70,7 +70,7 @@ window._hcHTable=function(d){
   for(var mi=0;mi<b.ml.length;mi++){if(df<c+b.ml[mi])return{hy:b.hy,mi:mi,day:df-c+1};c+=b.ml[mi];}
   return{hy:b.hy,mi:0,day:1};};
 // ---- הפונקציה המרכזית ----
-// מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabel, yearLabelFull, leap, ok, src}
+// מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabelFull, ok, src}
 /*  ⛔ מטמון הגזירה — ⚠️ `formatToParts` וארבע גזירות הגימטריה רצות בכל
  *  קריאה, ⭐ ובמסך ההשגחה הגזירה חוזרת פעם לכל רשומה: אלפי קריאות על
  *  עשרות תאריכים שונים בלבד. ⛔ **והמפרמט עצמו כבר נשמר** — ⚠️ מה שחוזר
@@ -97,13 +97,27 @@ window.ysHebDate=function(d){
   var out={
     year:r.hy, monthIndex:r.mi, monthName:names[r.mi]||'', day:r.day,
     dayLabel:window.ysHebDayLabel(r.day),
-    yearLabel:window.ysHebYearLabel(r.hy),
     yearLabelFull:window.ysHebYearLabelFull(r.hy),
-    leap:window.ysHebIsLeap(r.hy), ok:true, src:src
+    ok:true, src:src
   };
   if(window._ysHebCacheN>=4000){ window._ysHebCache={}; window._ysHebCacheN=0; }
   window._ysHebCache[ck]=out; window._ysHebCacheN++;
   return Object.assign({},out);
+};
+/*  ⛔ צרכן התצוגה יושב כאן — ⚠️ ולא בכל אפליקציה בנפרד: ⭐ תווית
+ *  אחת לכל ערך — שנה · חודש · יום, ⛔ ושתי צורות לאותו ערך הן שני
+ *  מקורות אמת לתצוגה: ⚠️ ומי שיקרא שתי אפליקציות יראה שני תאריכים
+ *  לאותו יום.
+ *  ⛔ קלט פגום אינו הופך ל«היום» — ⚠️ `jsDate || new Date()` הסתיר
+ *  ארגומנט שגוי והציג את תאריך היום כאילו הוא התאריך שנתבקש;
+ *  ⭐ מחרוזת ריקה היא מה שכל הצרכנים כבר יודעים לטפל בו.
+ *  ⚠️ וקריאה **בלי ארגומנט** היא חוזה קיים ומשמעה «היום» — היא נשארת. */
+window.hebrewDate=function(jsDate){
+  if(jsDate===undefined||jsDate===null) jsDate=new Date();
+  if(!window._ysIsDate(jsDate)){ window._ysBadDate('hebrewDate',jsDate); return ''; }
+  var h=window.ysHebDate(jsDate);
+  if(!h.ok) return '';
+  return h.dayLabel+' '+h.monthName+' '+h.yearLabelFull;
 };
 /* ═══════════════ סוף מודול מנוע התאריך העברי ═══════════════════════════ */
 

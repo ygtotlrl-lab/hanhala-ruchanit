@@ -1150,8 +1150,6 @@ window.ysGematria=function(n,sep){
   return s.slice(0,-1)+sep+s.slice(-1);
 };
 window.ysHebDayLabel=function(day){var T=window.DAYS_HEB;return (T&&T[day])||window.ysGematria(day)||String(day);};
-// תווית שנה קצרה — תשפ"ו (גרשיים ישרים, כפי שהוצג עד היום בלוח)
-window.ysHebYearLabel=function(hy){return window.ysGematria((+hy)%1000,'"');};
 // תווית שנה מלאה — ה׳תשפ״ו
 window.ysHebYearLabelFull=function(hy){
   var ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],th=Math.floor((+hy)/1000);
@@ -1233,22 +1231,10 @@ window._ysBadDate=function(where,d){
   try{ console.warn('ysHebDate: קלט שאינו תאריך תקף ב-'+where+' — '+got); }catch(e){}
 };
 window._ysHebNone=function(src){
-  return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',yearLabel:'',
-          yearLabelFull:'',leap:false,ok:false,src:src};
+  return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',
+          yearLabelFull:'',ok:false,src:src};
 };
 
-// ---- צרכן התצוגה — יושב על ysHebDate ----
-/*  ⛔ קלט פגום אינו הופך ל«היום» (סבב 80) — ⚠️ `jsDate || new Date()` הסתיר
- *  ארגומנט שגוי והציג את תאריך היום כאילו הוא התאריך שנתבקש; ⭐ מחרוזת
- *  ריקה היא מה שכל הצרכנים כאן כבר יודעים לטפל בו.
- *  ⚠️ קריאה **בלי ארגומנט** היא חוזה קיים ומשמעה «היום» — היא נשארת. */
-function hebrewDate(jsDate) {
-  if (jsDate === undefined || jsDate === null) jsDate = new Date();
-  if (!window._ysIsDate(jsDate)) { window._ysBadDate('hebrewDate', jsDate); return ""; }
-  var h = window.ysHebDate(jsDate);
-  if (!h.ok) return "";
-  return h.dayLabel + " " + h.monthName + " " + h.yearLabelFull;
-}
 // ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
@@ -2125,7 +2111,6 @@ function saveRefresh() {
    בורר התאריך העברי — לוח קופץ (`_hc*`)
    ══════════════════════════════════════════════════════════════════════════ */
 function _hcMN(hy){return window.ysHebMonthNames(hy);};
-window._hcD=window.DAYS_HEB;
 window._hcVw={};
 // בניית נתוני שנה עברית מלוח הדפדפן: {hy,lb,jd (א׳ תשרי),ml[],leap}
 window._ysYearCache={};
@@ -2153,7 +2138,7 @@ function ysHebYearInfo(hy){
         cur=new Date(nx.getFullYear(),nx.getMonth(),nx.getDate(),12,0,0);
       }
       if(ok&&ml.length===nM&&total>=353&&total<=385)
-        info={hy:hy,lb:window.ysHebYearLabel(hy),jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
+        info={hy:hy,jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
     }
   }catch(e){info=null;}
   window._ysYearCache[hy]=info;
@@ -2175,10 +2160,10 @@ function _hcG(hy,mi,day){
 function _hcH(d){
   var h=window.ysHebDate(d);
   return {hy:h.year,mi:h.monthIndex,day:h.day};};
-// תווית שנה
-function _hcYL(hy){return window.ysHebYearLabel(hy)||String(hy);};
+// תווית שנה — ⛔ הצורה האחת של המנוע
+function _hcYL(hy){return window.ysHebYearLabelFull(hy)||String(hy);};
 // פורמט תצוגה
-function _hcFmt(hy,mi,day){return (window._hcD[day]||window.ysGematria(day))+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);};
+function _hcFmt(hy,mi,day){return window.ysHebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);};
 // ניווט חודש
 function _hcNav(pfx,dir){
   var v=window._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
@@ -2219,7 +2204,7 @@ function _hcDraw(pfx){
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
     var st=isSel?'u-hcd-sel':isToday?'u-hcd-today':'u-hcd';
     h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
-      'class="u-ff-heebo u-fs-2 u-p-3-1 u-bd-none u-r-2 u-cur-p u-ta-c '+st+'">'+window._hcD[d]+'</button>';
+      'class="u-ff-heebo u-fs-2 u-p-3-1 u-bd-none u-r-2 u-cur-p u-ta-c '+st+'">'+window.ysHebDayLabel(d)+'</button>';
   }
   h+='</div></div>';pop.innerHTML=h;};
 /*  ⛔ סוג הסטטוס עובר במחלקה ⛔ ולא בשלוש מפות גוונים — ⚠️ שלוש המפות
@@ -8014,7 +7999,7 @@ function ysCycleFor(cls, now) {
   var hy = y + add[cls];
   // ⚠️ שנה שמאיות עגולה נותנת שתי ספרות אפס ⛔ ואין לה צורה מקוצרת —
   //    התווית המלאה היא מה שנשאר, ⭐ ולא מחרוזת ריקה שנקראת «אין מחזור».
-  return window.ysGematria(hy % 100, '״') || window.ysHebYearLabel(hy);
+  return window.ysGematria(hy % 100, '״') || window.ysHebYearLabelFull(hy);
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
@@ -8350,7 +8335,7 @@ async function openStatusHistory(sid) {
     var h = window.ysHebDate(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
-    return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabel) : '—') + ' · ' + t;
+    return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
   };
   var ts = function (a) { var d = new Date(a && a.from); return isNaN(d.getTime()) ? 0 : d.getTime(); };
   list.sort(function (a, b) { return ts(b) - ts(a); });
@@ -8592,7 +8577,7 @@ function printStudents() {
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=_hcH(_todG);
-    var today=_hcFmt(_todH.hy,_todH.mi,_todH.day).replace(/"/g,'\u05F4');
+    var today=_hcFmt(_todH.hy,_todH.mi,_todH.day);
     var NB = ' ';    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
     function fixName(n){return (n||'').replace(/ /g,NB);}
     var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
@@ -9654,7 +9639,7 @@ function _atPaintArchive(el, records, warn) {
           return ia-ib;
         });
         var hd0=entries[0].hd;
-        var dayLabel=window._hcD[hd0.day]+' '+mName;
+        var dayLabel=window.ysHebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         // כותרת יום
@@ -11103,7 +11088,7 @@ function _slPaintArchive(el, records, warn) {
           return ia-ib;
         });
         var hd0=entries[0].hd;
-        var dayLabel=window._hcD[hd0.day]+' '+mName;
+        var dayLabel=window.ysHebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
