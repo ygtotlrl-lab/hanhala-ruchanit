@@ -25,7 +25,7 @@ import { appSrc } from './appsrc.mjs';
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
   // המפתחות שעברו לטבלאות, ואתרי הקריאה שחייבים לעבור דרך המשפך.
-  keys: ['ys_sessions', 'ys_students_rows', 'ys_sleep_sessions'],
+  keys: ['hr_sessions', 'hr_students_rows', 'hr_sleep_sessions'],
   funnel: 'ysCloudGet',
   rawGet: 'ysCfgGet',
   minCallSites: 6,
@@ -176,7 +176,7 @@ function run(block, tables, kvValue, opts) {
   const ctx = {
     SB: sb,
     YS_ROWS: true,
-    YS_ROWS_KINDS: { attend: { parent: 'ys_sessions', child: 'ys_marks', pk: 'at-sess:', note: false } },
+    YS_ROWS_KINDS: { attend: { parent: 'hr_sessions', child: 'hr_marks', pk: 'at-sess:', note: false } },
     withTimeout: (p) => Promise.resolve(p),
     ysCfgGet: () => { log.kv++; return Promise.resolve(kvValue); },
     console,
@@ -201,56 +201,56 @@ async function scenarios(block, label) {
   const res = { };
   // א. שחזור מלא
   {
-    const { api, log } = run(block, { ys_sessions: [SESS()], ys_marks: [MARK(), MARK({ student_id: 'st-2', status: 'l', minutes: 10 })] }, null);
-    const out = await api.ysCloudGet('ys_sessions');
+    const { api, log } = run(block, { hr_sessions: [SESS()], hr_marks: [MARK(), MARK({ student_id: 'st-2', status: 'l', minutes: 10 })] }, null);
+    const out = await api.ysCloudGet('hr_sessions');
     res.rebuild = out;
     res.kvTouched = log.kv;
   }
   // ב. סימון מחוק ⇐ מדולג
   {
-    const { api } = run(block, { ys_sessions: [SESS()], ys_marks: [MARK({ deleted: true })] }, null);
-    res.delMark = (await api.ysCloudGet('ys_sessions'))[0].marks;
+    const { api } = run(block, { hr_sessions: [SESS()], hr_marks: [MARK({ deleted: true })] }, null);
+    res.delMark = (await api.ysCloudGet('hr_sessions'))[0].marks;
   }
   // ג. סימון שחותמתו ישנה מהאב ⇐ מדולג (סימון שנמחק מהמפה)
   {
-    const { api } = run(block, { ys_sessions: [SESS({ updated_at: 2000 })], ys_marks: [MARK({ updated_at: 1000 }), MARK({ student_id: 'st-9', updated_at: 2000 })] }, null);
-    res.staleMark = (await api.ysCloudGet('ys_sessions'))[0].marks;
+    const { api } = run(block, { hr_sessions: [SESS({ updated_at: 2000 })], hr_marks: [MARK({ updated_at: 1000 }), MARK({ student_id: 'st-9', updated_at: 2000 })] }, null);
+    res.staleMark = (await api.ysCloudGet('hr_sessions'))[0].marks;
   }
   // ד. סדר מחוק ⇐ tombstone נשמר
   {
-    const { api } = run(block, { ys_sessions: [SESS({ deleted: true })], ys_marks: [] }, null);
-    res.tomb = (await api.ysCloudGet('ys_sessions'))[0];
+    const { api } = run(block, { hr_sessions: [SESS({ deleted: true })], hr_marks: [] }, null);
+    res.tomb = (await api.ysCloudGet('hr_sessions'))[0];
   }
   // ה. כשל טבלה ⇐ `null` — «אין ראיה», ולא «הענן ריק»
   {
-    const { api, log } = run(block, { ys_sessions: 'error' }, [{ id: 'KV' }]);
-    res.onError = await api.ysCloudGet('ys_sessions');
+    const { api, log } = run(block, { hr_sessions: 'error' }, [{ id: 'KV' }]);
+    res.onError = await api.ysCloudGet('hr_sessions');
     res.onErrorKv = log.kv;
   }
   // ו. טבלה ריקה ⇐ מערך ריק — «נמדד ואין», והמיזוג מכריע לפיו
   {
-    const { api, log } = run(block, { ys_sessions: [], ys_marks: [] }, [{ id: 'KV' }]);
-    res.onEmpty = await api.ysCloudGet('ys_sessions');
+    const { api, log } = run(block, { hr_sessions: [], hr_marks: [] }, [{ id: 'KV' }]);
+    res.onEmpty = await api.ysCloudGet('hr_sessions');
     res.onEmptyKv = log.kv;
   }
-  // ז. מפתח הגדרות ⇐ `ys_settings`, בלי לגעת בטבלאות הרשומות
+  // ז. מפתח הגדרות ⇐ `hr_settings`, בלי לגעת בטבלאות הרשומות
   {
     const { api, log } = run(block, {}, [{ id: 'KV' }]);
-    res.passthru = await api.ysCloudGet('ys_attend_cfg');
+    res.passthru = await api.ysCloudGet('hr_attend_cfg');
     res.passthruSel = log.sel.length;
   }
   // ח2. יותר מעמוד אחד ⇐ נמשכים כל העמודים
   {
     const many = [];
     for (let i = 0; i < 1200; i++) many.push(MARK({ student_id: 'st-' + i }));
-    const { api } = run(block, { ys_sessions: [SESS()], ys_marks: many }, null);
-    const out = await api.ysCloudGet('ys_sessions');
+    const { api } = run(block, { hr_sessions: [SESS()], hr_marks: many }, null);
+    const out = await api.ysCloudGet('hr_sessions');
     res.paged = out[0] ? Object.keys(out[0].marks).length : 0;
   }
   // ח. המצבה — `data` מועתקת כמות שהיא
   {
-    const { api } = run(block, { ys_students_rows: [{ client_id: 'x', updated_at: 5, deleted: false, data: { id: 'x', name: 'ב' } }] }, null);
-    res.students = await api.ysCloudGet('ys_students_rows');
+    const { api } = run(block, { hr_students_rows: [{ client_id: 'x', updated_at: 5, deleted: false, data: { id: 'x', name: 'ב' } }] }, null);
+    res.students = await api.ysCloudGet('hr_students_rows');
   }
   return res;
 }

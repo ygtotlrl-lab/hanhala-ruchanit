@@ -37,8 +37,13 @@ export const ROWS = [];
 const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
-const M5 = readFileSync(join(ROOT, 'migrations/005_structured_tables.sql'), 'utf8');
-const M6 = readFileSync(join(ROOT, 'migrations/006_migrate_kv_to_rows.sql'), 'utf8');
+/*  ⛔ המיגרציה מתארת את המסד כפי שהיה בשעה שהיא רצה — ⚠️ והשמות שבה
+ *  קדמו לגזירת התחילית משם הריפו (סבב 148): ⭐ ולכן הטקסט מנורמל לשם
+ *  החי **לפני** המדידה, ⛔ והקובץ עצמו אינו נערך ואינו נמחק — ⚠️ וזו
+ *  נקודת התרגום האחת בשער, ⭐ ושתיים היו שני מקורות אמת לאותו שם. */
+const migLive = (s) => s.split('ys_').join('hr_');
+const M5 = migLive(readFileSync(join(ROOT, 'migrations/005_structured_tables.sql'), 'utf8'));
+const M6 = migLive(readFileSync(join(ROOT, 'migrations/006_migrate_kv_to_rows.sql'), 'utf8'));
 
 let failed = 0;
 /*  ⛔ שער מריץ את כל טענותיו — ⚠️ תהליך שנסגר באמצע מדפיס «עבר» על טענות
@@ -121,17 +126,17 @@ const C5 = sqlCode(M5), C6 = sqlCode(M6);
    ══════════════════════════════════════════════════════════════════════════ */
 function t1() {
   console.log('\n1 · המיגרציות');
-  assert(/create table if not exists public\.ys_sessions \(/.test(C5) &&
-         /create table if not exists public\.ys_marks \(/.test(C5) &&
-         /create table if not exists public\.ys_students_rows \(/.test(C5),
+  assert(/create table if not exists public\.hr_sessions \(/.test(C5) &&
+         /create table if not exists public\.hr_marks \(/.test(C5) &&
+         /create table if not exists public\.hr_students_rows \(/.test(C5),
     '1א · שלוש הטבלאות נוצרות ב-`if not exists` — אידמפוטנטי');
 
   // ⭐ ההכרעה: אב ובן, ולא טבלה אחת שטוחה.
   assert(/session_client_id\s+text\s+not null/.test(C5),
-    '1ב · `ys_marks` מפנה לאב דרך `session_client_id` — אב ובן, לא טבלה שטוחה');
-  assert(!/filled_by_name/.test(C5.split('create table if not exists public.ys_marks')[1] || ''),
-    '1ג · ⛔ מטא הסדר אינה משוכפלת לשורת הסימון (אין `filled_by_name` ב-`ys_marks`)');
-  assert(/date_iso\s+text\s+not null/.test((C5.split('create table if not exists public.ys_marks')[1] || '')),
+    '1ב · `hr_marks` מפנה לאב דרך `session_client_id` — אב ובן, לא טבלה שטוחה');
+  assert(!/filled_by_name/.test(C5.split('create table if not exists public.hr_marks')[1] || ''),
+    '1ג · ⛔ מטא הסדר אינה משוכפלת לשורת הסימון (אין `filled_by_name` ב-`hr_marks`)');
+  assert(/date_iso\s+text\s+not null/.test((C5.split('create table if not exists public.hr_marks')[1] || '')),
     '1ד · `date_iso` משוכפל לבן בכוונה — דוח פר-תלמיד בלי join לאב');
 
   // ⛔ אינדקסים מלאים בלבד — הלקח של 42P10.
@@ -139,17 +144,17 @@ function t1() {
   assert(idx.length >= 6, '1ה · האינדקסים מוגדרים (' + idx.length + ')');
   assert(!idx.some((i) => /\bwhere\b/i.test(i)),
     '1ו · ⛔ אין אף אינדקס חלקי — `where` באינדקס שובר את הסקת ON CONFLICT (42P10)');
-  assert(idx.some((i) => /unique index if not exists ys_marks_session_student[\s\S]*\(session_client_id, student_id\)/.test(i)),
+  assert(idx.some((i) => /unique index if not exists hr_marks_session_student[\s\S]*\(session_client_id, student_id\)/.test(i)),
     '1ז · הצמד (session_client_id, student_id) ייחודי — זהו מפתח הזהות של הסימון');
-  assert(idx.some((i) => /ys_marks_student_date_idx[\s\S]*\(student_id, date_iso desc\)/.test(i)),
+  assert(idx.some((i) => /hr_marks_student_date_idx[\s\S]*\(student_id, date_iso desc\)/.test(i)),
     '1ח · אינדקס הדוח פר-תלמיד (student_id, date_iso desc)');
   // ⚠️ הממצא שנמדד: (session, date_iso) אינו ייחודי בנתונים החיים.
-  assert(idx.some((i) => /ys_sessions_session_date_idx/.test(i) && !/unique/.test(i)),
+  assert(idx.some((i) => /hr_sessions_session_date_idx/.test(i) && !/unique/.test(i)),
     '1ט · ⚠️ (session, date_iso) **אינו** ייחודי — נמדדו 5 התנגשויות בנתונים החיים');
 
 
   // הרשאות — שני התפקידים, תמיד.
-  ['ys_sessions', 'ys_marks', 'ys_students_rows'].forEach((t) => {
+  ['hr_sessions', 'hr_marks', 'hr_students_rows'].forEach((t) => {
     assert(new RegExp('revoke all on public\\.' + t + ' from anon, authenticated;').test(C5),
       '1כ · `revoke all` ל-' + t + ' משני התפקידים');
     assert(new RegExp('grant select, insert, update on public\\.' + t + ' to anon, authenticated;').test(C5),
@@ -190,10 +195,10 @@ function t1() {
  *  שנשענת על כתיבה אחרת מזו שקרתה היא ראיה למשהו שלא נמדד. */
 const WIRING = [
   [/var YS_ROWS = true;/, '3ב · שכבת השורות פעילה (YS_ROWS=true)'],
-  [/var _rAt=await pushTable\('ys_sessions',data\);/,
+  [/var _rAt=await pushTable\('hr_sessions',data\);/,
     '3ג · `atSaveData` כותבת לשורות, ⛔ ובלי כתיבה שנייה לערך שלם'],
-  [/var r = await pushTable\('ys_students_rows', mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `ysPushToCloud`'],
-  [/if\(!\(_rAt&&_rAt\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('ys_sessions',data\);/,
+  [/var r = await pushTable\('hr_students_rows', mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `ysPushToCloud`'],
+  [/if\(!\(_rAt&&_rAt\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('hr_sessions',data\);/,
     '3ה · כתיבה שנכשלה חוזרת לתור — ⛔ ויש לה ניסיון חוזר'],
   [/if \(!kind\) return _ysCfgSetRaw\(key, value\);/,
     '3ה2 · ⭐ ריקון התור מנתב לפי היעד — מפתח שיש לו טבלה חוזר אליה'],
@@ -208,11 +213,11 @@ function t2() {
      ⚠️ ⛔ ועֵד הפינוי אינו נכתב כאן (סבב 102) — ⭐ שכבת הדחיפה המשותפת
      מסמנת אותו במעבר עצמו: ⛔ שני אתרי סימון לאותו עֵד הם שתי הכרעות
      על אותה ראיה. */
-  noneIn(/ysCfgSet\('ys_sessions'|ysCfgSet\('ys_students_rows'|ysCfgSet\('ys_sleep_sessions'/, SRC,
+  noneIn(/ysCfgSet\('hr_sessions'|ysCfgSet\('hr_students_rows'|ysCfgSet\('hr_sleep_sessions'/, SRC,
     '3ו · ⛔ אין כתיבת ערך שלם למפתח שיש לו טבלה — מקור אמת אחד');
   someIn(/if\(_rAt&&_rAt\.ok&&!ctxStale\(_ep\)\) pendConfirmPush\(PK_AT_SESS,_t0\)/, SRC,
     '3ז · ⭐ אישור ה-⏳ תלוי בהצלחת הכתיבה לשורות');
-  assert(/ys_sessions_rows/.test(SRC) && /ys_marks_rows/.test(SRC),
+  assert(/hr_sessions_rows/.test(SRC) && /hr_marks_rows/.test(SRC),
     '3ח · מקורות הגיבוי החדשים רשומים ב-BK_CFG (ומשם לרשימת-ההיתר של 004)');
 }
 
@@ -334,33 +339,33 @@ async function t3() {
     '4י2 · ⭐ ותלמיד עם מזהה uuid מקבל `student_id` תקין ולא `null`');
 
   // סדר אב-לפני-בן, ובחירת מה לדחוף.
-  const r = await sandbox.pushTable('ys_sessions', [SESS]);
+  const r = await sandbox.pushTable('hr_sessions', [SESS]);
   assert(r.ok === true && calls.length === 2, '4כ · דחיפה מוצלחת כותבת לשתי הטבלאות');
 
   const h2 = harness(extract(SRC), { remote: [{ client_id: '111', updated_at: 900 }] });
-  const r2 = await h2.sandbox.pushTable('ys_sessions', [SESS]);
+  const r2 = await h2.sandbox.pushTable('hr_sessions', [SESS]);
   assert(r2.ok === true && r2.n === 0 && h2.calls.length === 0,
     '4מ · סדר שכבר בענן באותה חותמת אינו נדחף שוב');
 
   const h3 = harness(extract(SRC), { remote: [{ client_id: '111', updated_at: 900 }], pending: true });
-  const r3 = await h3.sandbox.pushTable('ys_sessions', [SESS]);
+  const r3 = await h3.sandbox.pushTable('hr_sessions', [SESS]);
   assert(r3.n === 1, '4נ · ⛔ רשומה מסומנת ⏳ נדחפת תמיד');
 
-  const h4 = harness(extract(SRC), { failOn: 'ys_marks' });
-  const r4 = await h4.sandbox.pushTable('ys_sessions', [SESS]);
+  const h4 = harness(extract(SRC), { failOn: 'hr_marks' });
+  const r4 = await h4.sandbox.pushTable('hr_sessions', [SESS]);
   assert(r4.ok === false, '4ס · כשל בכתיבת הבן מוחזר כ-`ok:false` — נכשל סגור');
 
   // ⚠️ מנות — הדחיפה הראשונה נוגעת בכל הסדרים, ו-13,083 שורות בבקשה אחת נדחות.
   const big = { ...SESS, id: '222', marks: {} };
   for (let i = 1; i <= 1200; i++) big.marks[String(i)] = { s: 'p', min: 0 };
   const hB = harness(extract(SRC), {});
-  await hB.sandbox.pushTable('ys_sessions', [big]);
-  const markCalls = hB.calls.filter((c) => c.table === 'ys_marks');
+  await hB.sandbox.pushTable('hr_sessions', [big]);
+  const markCalls = hB.calls.filter((c) => c.table === 'hr_marks');
   assert(markCalls.length === 3 && markCalls.every((c) => c.rows.length <= 500),
     '4פ · 1,200 סימונים נדחפים ב-3 מנות של ≤500 — ⛔ ולא בבקשה אחת');
 
   const h5 = harness(extract(SRC), { remoteErr: { message: 'no table' } });
-  const r5 = await h5.sandbox.pushTable('ys_sessions', [SESS]);
+  const r5 = await h5.sandbox.pushTable('hr_sessions', [SESS]);
   assert(r5.ok === true && h5.calls.length === 2,
     '4ע · טבלה שטרם נוצרה / משיכה שנכשלה ⇒ בספק דוחפים (map=null)');
 }
@@ -385,16 +390,16 @@ async function t4() {
   console.log('\n4 · מוטציות');
 
   // א. הסרת הכתיבה הכפולה מ-atSaveData.
-  const mutA = SRC.replace("var _rAt=await pushTable('ys_sessions',data);",
-                           "var _rAt=await ysCfgSet('ys_sessions',data);");
+  const mutA = SRC.replace("var _rAt=await pushTable('hr_sessions',data);",
+                           "var _rAt=await ysCfgSet('hr_sessions',data);");
   assert(mutA !== SRC, '5א · המוטציה אכן מחזירה את הכתיבה לערך שלם');
   assert(!WIRING[1][0].test(mutA),
     '5ב · ⛔ מוטציה שמחזירה כתיבה לערך שלם נתפסת — טענת 3ג הייתה נכשלת');
 
   // ב. אינדקס חלקי במקום מלא.
   const mutB = M5.replace(
-    'create unique index if not exists ys_marks_session_student\n  on public.ys_marks (session_client_id, student_id);',
-    'create unique index if not exists ys_marks_session_student\n  on public.ys_marks (session_client_id, student_id) where not deleted;');
+    'create unique index if not exists hr_marks_session_student\n  on public.hr_marks (session_client_id, student_id);',
+    'create unique index if not exists hr_marks_session_student\n  on public.hr_marks (session_client_id, student_id) where not deleted;');
   assert(mutB !== M5, '5ג · המוטציה אכן מכניסה אינדקס חלקי');
   const idxB = sqlCode(mutB).match(/create (unique )?index[^;]*;/g) || [];
   assert(idxB.some((i) => /\bwhere\b/i.test(i)),
@@ -426,8 +431,8 @@ await t4();
 {
   const added = SRC + '\nfunction _ncTablesPing(){ return 1; }\nvar _ncTablesSeen = _ncTablesPing();\n';
   assert(added !== SRC &&
-    (added.match(/ys_marks\b/g) || []).length === (SRC.match(/ys_marks\b/g) || []).length &&
-    (added.match(/ys_sessions\b/g) || []).length === (SRC.match(/ys_sessions\b/g) || []).length,
+    (added.match(/hr_marks\b/g) || []).length === (SRC.match(/hr_marks\b/g) || []).length &&
+    (added.match(/hr_sessions\b/g) || []).length === (SRC.match(/hr_sessions\b/g) || []).length,
     'נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו משנה את מפת הטבלאות הנמדדת');
 }
 

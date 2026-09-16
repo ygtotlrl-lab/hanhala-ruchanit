@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url';
 const APP = {
   app: 'hanhala-ruchanit',
   /* ⛔ המפתח ההיסטורי — אינו משתנה לעולם (סבב 40). */
-  deviceKey: 'ys_device_id',
+  deviceKey: 'hr_device_id',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

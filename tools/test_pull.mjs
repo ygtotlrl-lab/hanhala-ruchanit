@@ -36,7 +36,7 @@ const APP = {
    *  `ysTouchLastChanged()`, שכל כותב ענן בהנהלה כבר קורא לו. */
   touchFns: ['ysTouchLastChanged'],
   every: 3000,
-  stampKey: 'ys_last_changed',
+  stampKey: 'hr_last_changed',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

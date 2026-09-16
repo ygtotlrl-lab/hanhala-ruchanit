@@ -5,7 +5,7 @@
 - **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
 - **טוקן:** מנוהל ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ
 - **קובץ ראשי:** `index.html`
-- **Supabase:** project `kxbtskqobynewvnckaaz` | טבלאות `kv`, `ys_*` (ראה למטה)
+- **Supabase:** project `kxbtskqobynewvnckaaz` | טבלאות `kv`, `hr_*` (ראה למטה)
 
 ---
 

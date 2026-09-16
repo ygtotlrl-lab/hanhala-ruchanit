@@ -38,7 +38,8 @@ const APP = {
    *  הפרש בלי נימוק, ⛔ ונימוק בלי הפרש. ⭐ **ולמה המבנה קיים**:
    *  קידום עידן מוחק עותק מקומי במכשירים חיים, ⛔ והוא נעשה רק כשצורת
    *  השורה השתנתה. */
-  dataEra: { base: 1, era: 1, why: '' },
+  dataEra: { base: 1, era: 2,
+    why: 'שם הטבלה ומפתח האחסון הוסבו לתחילית שנגזרת משם הריפו — ⚠️ והמראה ממופתחת בשם: ⭐ ההגירה המקומית מכסה מכשיר שעלה, ⛔ והעידן מכסה מכשיר שההגירה נפלה בו באמצע (סבב 148)' },
   names: ['ysRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
   vars: ['var PEND_KV_PREFIX = ', 'var TOMBSTONE_TTL_MS = ', 'var _tombPrunePending = '],
   globals: { PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:', PK_AT_TREAT: 'at-treat:', PK_SL_TREAT: 'sl-treat:', PK_STUDENT: 'student:' },
@@ -54,7 +55,7 @@ const APP = {
   tag: (r) => r && r.name,
   pendKey: (id) => 'student:' + id,
   merge: (sb, local, remote) => sb.ysMergeRecords(local, remote, (r) => r && r.id, true, null,
-                                                  sb.ysPendingFor('ys_students_rows')),
+                                                  sb.ysPendingFor('hr_students_rows')),
   /*  ⭐ שכבת ליבת המיזוג (סבב 72) — ⚠️ השמות, המעטפת והרשומה נבדלים
    *  מאלה שמעליהם, ⛔ ולכן הם יושבים בקבוצה משלהם ואינם מתמזגים בהם. */
   core: {

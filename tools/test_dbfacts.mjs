@@ -42,7 +42,7 @@ import { appSrc } from './appsrc.mjs';
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף (סבב 93) — ⚠️ הבודק גוזר את
  *  המיפוי מכאן, ⛔ ואינו מחזיק רשימה משלו. */
-export const ROWS = [162, 155, 156, 157, 177, 207, 208, 209, 210, 169, 160, 147, 158];
+export const ROWS = [163, 156, 157, 158, 178, 208, 210, 211, 212, 170, 161, 148, 159];
 
 /*  ⛔ המרשם שהסורק מכריז — ⚠️ **מה נכנס**: שם הדפוס שהשער אוכף;
  *  ⛔ **ומה מפיל**: דפוס שאין לו מוטציה, ומוטציה שנוקבת בדפוס שאינו כאן.
@@ -66,8 +66,8 @@ const APP = {
   /*  ⛔ הטבלאות שנושאות `updated_at` — ⚠️ **וכולן `bigint`**: ⭐ חותמת
    *  שהמכשיר מייצר, ⛔ ובה אפס הוא **הישן ביותר** ולא «לא ידוע».
    *  ⛔ אין כאן טיפוס שני — ⚠️ שני טיפוסים לאותו מושג הם שני מנועי הכרעה. */
-  stamped: ['ys_sessions', 'ys_marks', 'ys_students_rows',
-             'ys_sleep_sessions', 'ys_sleep_marks', 'ys_settings', 'ys_users'],
+  stamped: ['hr_sessions', 'hr_marks', 'hr_students_rows',
+             'hr_sleep_sessions', 'hr_sleep_marks', 'hr_settings', 'hr_users'],
   /*  ⛔ טבלה שמוצהרת ב-`migrations/` ואינה נמדדת — ⚠️ `sh_sync_log` ו-`sh_backup`
    *  הן תשתית משותפת שהריפו הזה מגדיר לכל הפרויקט, ⭐ והן נמדדות בטענה ד. */
   schemaSkip: ['sh_sync_log', 'sh_backup'],
@@ -84,15 +84,15 @@ const APP = {
    *  ⭐ **ולמה הוא נשאר**: הוא `{}` בענן, ⚠️ והמפה החיה היא מקומית: ⛔ מחיקתו
    *  מהמסד היא הכרעת מנהל. */
   cfgOrphans: {
-    ys_settings_meta: 'מפת החותמות המקומית — בענן היא `{}`, ⛔ ואין להחזירה כמקור חותמת מרוחקת',
+    hr_settings_meta: 'מפת החותמות המקומית — בענן היא `{}`, ⛔ ואין להחזירה כמקור חותמת מרוחקת',
   },
-  cfgTable: 'ys_settings',
+  cfgTable: 'hr_settings',
   /*  ⛔ טבלאות המפתח-ערך שבבעלות הריפו — ⚠️ **מה נכנס**: שם טבלה שעמודת
    *  `value` שלה נושאת JSON; ⛔ **ומה מפיל**: ערך שאינו מתפרש, ⭐ ורשימה
    *  ריקה. ⚠️ **ולמה היא קיימת**: הבעלות היא של ריפו אחד, ⛔ והמדידה
    *  רצה שם ⛔ ולא בשלושה. */
   kvReadFn: 'ysCfgGet',
-  kvTables: ['ys_settings'],
+  kvTables: ['hr_settings'],
   backupTable: 'sh_backup',
   /*  ⛔ הרשימה נקראת מהמסד דרך הפונקציה הזו — ⚠️ ולא מקובץ המיגרציה:
    *  ⭐ קובץ מודד את מה שהוצהר, ⛔ והמסד את מה שרץ. */
@@ -107,8 +107,8 @@ const APP = {
    *  מפיל**: שם שאין לו אף טבלה בסכימה. ⭐ **ולמה הוא כאן**: שני פרויקטים
    *  חיים בקובץ אחד, ⛔ וריפו שמודד את שניהם מדווח פער על טבלה שאינה שלו. */
   project: 'shared',
-  ownTables: ['ys_settings', 'ys_users', 'ys_sessions', 'ys_marks',
-              'ys_sleep_sessions', 'ys_sleep_marks', 'ys_students_rows'],
+  ownTables: ['hr_settings', 'hr_users', 'hr_sessions', 'hr_marks',
+              'hr_sleep_sessions', 'hr_sleep_marks', 'hr_students_rows'],
   /*  ⛔ שמות עמודה שאין להם קורא **בכוונה** (סבב 104) — ⚠️ וכל אחד נושא
    *  את נימוקו: ⭐ שלישיית המחיקה הרכה ומשפחת הטבלאות המקבילות מחייבות
    *  את העמודה בסכימה, ⛔ גם באפליקציה שאינה כותבת אותה.
@@ -132,10 +132,10 @@ const APP = {
    *  הזכות שמאפשרת לשכתב עקבה. */
   appendOnly: ['sh_backup', 'sh_sync_log'],
   twinTables: {
-    users:    { table: 'ys_users',
+    users:    { table: 'hr_users',
                 cols: ['client_id', 'username', 'full_name', 'role', 'active',
                     'created_at', 'updated_at', 'pass_salt', 'pass_fp'] },
-    settings: { table: 'ys_settings',
+    settings: { table: 'hr_settings',
                 cols: ['key', 'value', 'updated_at', 'client_id',
                     'deleted', 'deleted_at', 'deleted_by'] },
   },
@@ -960,7 +960,7 @@ if (RUN_MUT && !SELFTEST) {
       return [200, JSON.stringify([allowFirst])];
     if (APP.backupTable && url.includes('/' + APP.backupTable + '?'))
       return [200, JSON.stringify(
-        (scen === 'orphan' ? [{ key: 'ys_orphan_key_that_is_not_listed' }] : [])
+        (scen === 'orphan' ? [{ key: 'hr_orphan_key_that_is_not_listed' }] : [])
           .concat([{ key: allowFirst }]))];
     const keys = (scen === 'cfg' ? cfgWant.slice(1) : cfgWant).concat(cfgOrph);
     return [200, JSON.stringify(keys.map((k) => ({ key: k, deleted: false })))];

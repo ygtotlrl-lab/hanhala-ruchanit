@@ -1272,7 +1272,7 @@ window._alefFontB64=null;
 
 // ============================================================
 /* ══════════════════════════════════════════════════════════════════════════
-   כניסה והרשאות — `ys_users` ומטריצת `ys_perms`
+   כניסה והרשאות — `hr_users` ומטריצת `hr_perms`
    ══════════════════════════════════════════════════════════════════════════
    ⚠️ נקודת האכיפה לניווט היא **אחת**: `showPage` בודק `canAccess`
    ומציג `showDenied()`. ⛔ אין להסתיר כפתורים לפי הרשאה (סבב 6) —
@@ -1344,7 +1344,7 @@ function ysCurrentPage() {
 }
 
 // מקור יחיד לקליטת מטריצת הרשאות חדשה (כניסה או משיכה מהענן):
-// AUTH.perms + ys_perms_cache. מחזיר true אם המטריצה השתנתה.
+// AUTH.perms + hr_perms_cache. מחזיר true אם המטריצה השתנתה.
 function ysApplyPerms(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
   var next = JSON.stringify(p);
@@ -1355,7 +1355,7 @@ function ysApplyPerms(p) {
   // כניסה אופליין אחרי עדכון הרשאות מחזירה את המטריצה **הישנה**.
   // `lsSet` כבר מרימה באנר בעצמה; כאן נרשם גם ליומן.
   try {
-    if (!lsSet('ys_perms_cache', next)) {
+    if (!lsSet('hr_perms_cache', next)) {
       console.warn('[perms] העותק המקומי של ההרשאות לא נשמר');
     }
   } catch (e) { console.warn('[perms] lsSet זרקה:', e && e.message); }
@@ -1419,7 +1419,7 @@ function ysApplyPerms(p) {
 var YS_PASS_ITER = 100000;
 // המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
 // מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
-var YS_PASS_CTX = 'hanhala-ruchanit/ys_users/v1/';
+var YS_PASS_CTX = 'hanhala-ruchanit/hr_users/v1/';
 // 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
 // (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
 function ysRandSalt() {
@@ -1489,8 +1489,8 @@ function ysIsMissingFpCol(err) {
  *  ⛔ ורק כתיבה שהצליחה מתירה למחוק אותו — ⚠️ מחיקה לפני כתיבה מוצלחת
  *  הייתה נועלת בחוץ מכשיר שאין לו רשת. */
 /*  ⛔ המפתח נגזר משם הטבלה ⛔ ואינו מוקלד (סבב 116) — ⚠️ המראה היא
- *  `MIRROR.ys_users`, ⭐ ושם שנכתב פעמיים מייצר מפתח שאיש אינו מחפש. */
-var YS_USERS_TABLE = 'ys_users';
+ *  `MIRROR.hr_users`, ⭐ ושם שנכתב פעמיים מייצר מפתח שאיש אינו מחפש. */
+var YS_USERS_TABLE = 'hr_users';
 function ysUserSlim(u) {
   // ⛔ שדות מפורשים בלבד (סבב 22) — **`password_hash` אינו ביניהם, ולעולם לא יהיה.**
   return { client_id: u.client_id, username: u.username, full_name: u.full_name,
@@ -1548,7 +1548,7 @@ async function ysVerifyOffline(cu, pass) {
 async function ysRefreshUsersCache() {
   try {
     if (!AUTH.user || AUTH.user.client_id == null) return;
-    var res = await SB.from('ys_users').select('client_id,username,full_name,role,active,pass_salt,pass_fp')
+    var res = await SB.from('hr_users').select('client_id,username,full_name,role,active,pass_salt,pass_fp')
       .eq('active', true);
     if (!res.error && Array.isArray(res.data)) ysUsersCacheSaveAll(res.data);
   } catch(e) {}
@@ -1793,7 +1793,7 @@ async function _ysRowsPaged(mkQuery, order, win) {
 async function ysRevalidateOfflineLogin() {
   if (!AUTH.user || !AUTH.offlineLogin) return;
   try {
-    var res = await SB.from('ys_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
+    var res = await SB.from('hr_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
     if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
     if (!res.data) { toast(MSG_USER_DISABLED_OUT, null, 'bad'); doLogout(); return; }
     AUTH.user = res.data;
@@ -1839,7 +1839,7 @@ function ysLoginDetails(username) {
   return { typed_username: username || '', online: !!navigator.onLine, sw_version: YS_APP_VER };
 }
 // ⚠️ התור והריקון עברו למודול המשותף (סבב 30). המפתח נשאר
-// `ys_login_log_queue` **בכוונה** — `LS_CFG.pending()` בודק אותו, ושינוי שמו
+// `hr_login_log_queue` **בכוונה** — `LS_CFG.pending()` בודק אותו, ושינוי שמו
 // היה מנתק בשקט את ההגנה שמדלגת על שלב ב בפינוי כשיש משהו שטרם עלה.
 function ysLoginLog(action, branch, details) {
   logAction(action, branch, 0, details || null);
@@ -1888,7 +1888,7 @@ async function _doLoginInner() {
     // כאן ישב `.eq('password_hash', pass)` — כלומר הסיסמה הגלויה שבענן
     // הייתה **המפתח שפותח את הכניסה**, וכל מי שהחזיק את מפתח ה-anon
     // (שיושב ב-`index.html` הציבורי) יכול היה לקרוא אותה.
-    res = await withTimeout(SB.from('ys_users')
+    res = await withTimeout(SB.from('hr_users')
       .select('*')
       .eq('username', username)
       .eq('active', true)
@@ -2040,7 +2040,7 @@ async function loadPerms() {
    *  קיים **שגיאה**: ⛔ המסלול נפל לעותק המקומי כאילו אין רשת. */
   var res = null;
   try {
-    res = await ysCfgGet('ys_perms', true);
+    res = await ysCfgGet('hr_perms', true);
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
@@ -2053,7 +2053,7 @@ async function loadPerms() {
   }
   // אין רשת / פסק זמן / שגיאת שרת / ערך פגום — עותק מקומי, ואם אין: ברירות מחדל
   try {
-    var c = lsGet('ys_perms_cache');
+    var c = lsGet('hr_perms_cache');
     if (c) {
       ysApplyPerms(JSON.parse(c));
       console.log('[perms] נטען מעותק מקומי', res && res.ok ? '(אין ערך בענן)' : '(אין רשת)');
@@ -2061,7 +2061,7 @@ async function loadPerms() {
     }
   } catch(e2) { console.warn('[perms] עותק מקומי פגום:', e2); }
   console.log('[perms] נטענו ברירות מחדל');
-  // ברירות המחדל לא נכתבות ל-ys_perms_cache: היעדר עותק מקומי הוא מידע אמיתי
+  // ברירות המחדל לא נכתבות ל-hr_perms_cache: היעדר עותק מקומי הוא מידע אמיתי
   // ("מעולם לא נטענה מטריצה"), ואין להסוות אותו כמטריצה שנשמרה.
   AUTH.perms = AUTH.DEFAULT_PERMS;
 }
@@ -2406,7 +2406,7 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div class="u-p-4-6 u-fs-2 u-c-text3">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
-  try { res = await withTimeout(SB.from('ys_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  try { res = await withTimeout(SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = sortUsersByOrder(data);
@@ -2452,7 +2452,7 @@ async function confirmSwitch() {
   var res=null, netFail=false;
   try {
     // ⭐ סבב 40 — לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
-    res=await withTimeout(SB.from('ys_users').select('*').eq('client_id',window._ysSwitchId).eq('active',true).single());
+    res=await withTimeout(SB.from('hr_users').select('*').eq('client_id',window._ysSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -2546,8 +2546,8 @@ function showSettingsHome() {
    רלוונטי רק לאחת. הערה שיושבת במקום אחד אינה
    מגינה על הארגון.
 
-   כאן: `showSettingsModule` — ההרשאה נגזרת מ-`ys_users.role` דרך `canAccess`
-   שב-`showPage`, מעל מטריצת `ys_perms`. העמודה היא `NOT NULL` בלי DEFAULT.
+   כאן: `showSettingsModule` — ההרשאה נגזרת מ-`hr_users.role` דרך `canAccess`
+   שב-`showPage`, מעל מטריצת `hr_perms`. העמודה היא `NOT NULL` בלי DEFAULT.
    ═════════════════════════════════════════════════════════════════════ */
 function showSettingsModule(mod) {
   document.getElementById('settings-home').style.display = 'none';
@@ -2573,7 +2573,7 @@ function getDefaultReasons() {
 }
 
 function getAbsenceReasons() {
-  try { return ysCfgLocalGet('ys_absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  try { return ysCfgLocalGet('hr_absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 };
 
 async function saveAbsenceReasons() {
@@ -2587,8 +2587,8 @@ async function saveAbsenceReasons() {
       reasons[type].push(v);
     });
   });
-  ysCfgLocalSet('ys_absence_reasons', reasons);
-  ysSettingsTouch('ys_absence_reasons');
+  ysCfgLocalSet('hr_absence_reasons', reasons);
+  ysSettingsTouch('hr_absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
    *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
@@ -2598,10 +2598,10 @@ async function saveAbsenceReasons() {
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
   toast(MSG_REASONS_SAVED);
   try {
-    var r = await ysCfgSet('ys_absence_reasons', reasons);
+    var r = await ysCfgSet('hr_absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
     /*  ⛔ אות הפולינג מקודם בנקודת המעבר האחת — ⚠️ כתיבה ידנית של
-     *  `ys_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
+     *  `hr_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
      *  שני הוא מקום שני שבו הוא יכול להישכח. */
     await ysTouchLastChanged();
   } catch(e) { console.error('[absence-reasons] save error:', e); }
@@ -2686,10 +2686,10 @@ function renderSettings() {
 
 // ---- רשימת משתמשים ----
 function getUserOrder() {
-  try { return JSON.parse(lsGet('ys_user_order') || '[]'); } catch(e) { return []; }
+  try { return JSON.parse(lsGet('hr_user_order') || '[]'); } catch(e) { return []; }
 }
 function saveUserOrder(ids) {
-  lsSet('ys_user_order', JSON.stringify(ids));
+  lsSet('hr_user_order', JSON.stringify(ids));
 }
 function sortUsersByOrder(data) {
   var order = getUserOrder();
@@ -2961,7 +2961,7 @@ async function renderUsersList() {
   // הפירוק הישן `var {data} = await ...` בלע את res.error (supabase-js לא זורק),
   // וכשל רשת הוצג כ"אין משתמשים" — מנהל קורא את זה כאילו הטבלה נמחקה.
   var res;
-  try { res = await withTimeout(SB.from('ys_users').select('*').order('full_name')); }
+  try { res = await withTimeout(SB.from('hr_users').select('*').order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
@@ -3154,17 +3154,17 @@ async function savePerms() {
   // upsert דרך ysCfgSet במקום select-ואז-update/insert: ל-`.single()` יש error
   // גם כשהשורה חסרה וגם בכשל רשת, ולכן כשל זמני נפל לענף ה-insert → שגיאת
   // מפתח כפול → נבלעה → "✅ הרשאות נשמרו!" בזמן שהענן לא השתנה.
-  var res = await ysCfgSet('ys_perms', p);
+  var res = await ysCfgSet('hr_perms', p);
   if (res && res.error) {
     // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
     toast(MSG_PERMS_SAVE_FAIL + (res.error.message || res.error.code || MSG_NO_LINK) +
           MSG_WILL_RESEND, null, 'bad');
     return;
   }
-  // AUTH.perms + ys_perms_cache + רענון התצוגה — הכל דרך ysApplyPerms
+  // AUTH.perms + hr_perms_cache + רענון התצוגה — הכל דרך ysApplyPerms
   ysApplyPerms(p);
-  // ys_perms נמשך עכשיו ב-ysPullFromCloud, ו-`plTick` במכשירים האחרים משווה
-  // **רק** מול ys_last_changed. בלי הקידום הזה עדכון הרשאות היה נשאר בלתי-נראה
+  // hr_perms נמשך עכשיו ב-ysPullFromCloud, ו-`plTick` במכשירים האחרים משווה
+  // **רק** מול hr_last_changed. בלי הקידום הזה עדכון הרשאות היה נשאר בלתי-נראה
   // להם עד היציאה-והכניסה הבאה — בדיוק מה שהמעבר לרענון החי בא לפתור.
   await ysTouchLastChanged();
   toast(MSG_PERMS_SAVED);
@@ -3223,7 +3223,7 @@ async function changeMyPassword() {
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ סבב 40 — אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('ys_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
+  try { chk = await withTimeout(SB.from('hr_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
   catch (e) { toast(MSG_PASS_NEEDS_NET, null, 'bad'); return; }
   if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
@@ -3321,6 +3321,10 @@ async function refreshDashStats() {
 }
 
 async function loadDash(){
+  /*  ⛔ הגירת התחילית **ראשונה** (סבב 148) — ⚠️ לפני שכבת המראה ולפני כל
+   *  קורא: ⭐ המראה נטענת ממפתח שנבנה משם הטבלה, ⛔ וקריאה לפני ההגירה
+   *  הייתה מוצאת מפתח ריק ומרוקנת את המסך. */
+  try { migratePrefixKeys(); } catch (e) { console.error('[lsmig] ההגירה נכשלה', e); }
   // ⭐ שכבת המראה ראשונה — ⛔ ההגירה והטעינה לפני כל קורא: ⚠️ קורא שרץ
   //    לפניה מקבל `undefined` ונופל לברירת המחדל.
   try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
@@ -3362,13 +3366,13 @@ async function loadDash(){
 // ⛔ **אין להחזיר שאילתות ל-`students` / `attendance`** (סבב 7ב) — הן אינן מקור אמת.
 //
 // ⚠️ **מקור הנתונים הנכון הוא הטבלאות המובנות**, דרך הגישונים הקיימים:
-//    • `ys_sessions` — רשומות הסדרים (`window._atData` / `atSaveData`).
+//    • `hr_sessions` — רשומות הסדרים (`window._atData` / `atSaveData`).
 //      כל רשומה: `{id, date_iso, session, open, deleted, updatedAt, marks:{sid:{s,min}}}`.
 //      הסימונים ב-`marks`: `p` נוכח, `e`/`x` חיסור, `l` איחור (`min` דקות),
 //      `ap` אישור, `ak` בבית, `a` מנוחה. **חובה לקרוא דרך `ysMarks(rec)`**
 //      (רשומה בלי `marks` זרקה ורוקנה מסך שלם) ו**לסנן `!r.deleted`**
 //      (סדר מחוק שנספר ניפח את לוח המחוונים ואת התראת ה-20+).
-//    • `ys_students_rows` — מצבת התלמידים (`getStudents()`, כבר מסננת מחוקים).
+//    • `hr_students_rows` — מצבת התלמידים (`getStudents()`, כבר מסננת מחוקים).
 //      סטטוסים/היעדרויות פעילות: `getActiveAbsences(s, refDate)` — תמיד להעביר
 //      את זמן הסדר כ-`refDate`, אחרת החישוב נעשה מול "עכשיו".
 //    דוגמה חיה לצבירה נכונה מעל אותם נתונים: `atCheckAlert` (חיסורים/איחורים
@@ -3398,7 +3402,7 @@ var TOAST_DEFAULT_MS = 2800;
 // זו הטבלה **היחידה** שנבדלת בין האפליקציות; המודול שמתחתיה זהה בכולן.
 /*  ⛔ שם טבלת ההגדרות חי כאן **פעם אחת** — ⚠️ שם פזור אינו ניתן לשינוי
  *  ממקום אחד, ⭐ ושם הטבלה נגזר מתפקידה ⛔ ולא מהיום שבו נוצרה. */
-var KV_TABLE = 'ys_settings';
+var KV_TABLE = 'hr_settings';
 /* ── MIRROR_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────── */
 /*  ⚠️ `tables` היא **פונקציה** ⛔ ולא מערך — ⭐ `PUSH_TABLES` מוצהר אחרי
  *  הבלוק הזה, ⛔ והצהרה שקוראת אותו כאן הייתה מקבלת `undefined`.
@@ -3413,16 +3417,16 @@ var KV_TABLE = 'ys_settings';
  *  מסלול שאין לו גוף, סוג שאינו אחד משלושה, ומסלול שאינו מוסיף דבר.
  *  ⭐ **ולמה זה קיים**: מסלול שאינו מוסיף על הלולאה הוא לולאה שנכתבה
  *  פעמיים, ⛔ ושורותיו מסתכנות בכך שלא יעלו כלל. */
-var YS_MIRROR_TABLES = ['ys_sessions', 'ys_marks', 'ys_sleep_sessions',
-                        'ys_sleep_marks', 'ys_students_rows', KV_TABLE, 'ys_users'];
+var YS_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
+                        'hr_sleep_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
 var MIRROR_CFG = {
-  prefix: 'ys_mirror_',
-  app:    'ys_',
+  prefix: 'hr_mirror_',
+  app:    'hr_',
   tables: function () { return YS_MIRROR_TABLES; },
-  noPush: [{ t: 'ys_marks',       via: 'ysSendRecs', adds: 'parent' },
-           { t: 'ys_sleep_marks', via: 'ysSendRecs', adds: 'parent' },
+  noPush: [{ t: 'hr_marks',       via: 'ysSendRecs', adds: 'parent' },
+           { t: 'hr_sleep_marks', via: 'ysSendRecs', adds: 'parent' },
            { t: KV_TABLE,         via: 'ysCfgSet',   adds: 'queue'  },
-           { t: 'ys_users',       via: 'writeUser',  adds: 'secret' }],
+           { t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _ysRecTs(r); },
   clean:  function (t, rows) { return rows; },
@@ -3434,19 +3438,19 @@ var LS_CFG = {
    *  ⛔ ולא מנגנון — ⚠️ שם אחסון שישתנה יחזיר רשימה ריקה, ⭐ וסימן דחייה
    *  שנשען על מחרוזת ריקה מת בשקט: ⛔ הבאנר חוזר בכל טעינה בלי דרך לצאת. */
   cachePrefix: 'hanhala-ruchanit-',
-  logKey: 'ys_ls_log',
-  hzPrefix: 'ys_ls_hz_',
+  logKey: 'hr_ls_log',
+  hzPrefix: 'hr_ls_hz_',
   /*  ⛔ מפתח סימן הדחייה של באנר העדכון — ⚠️ **מה נכנס**: שם
    *  המטמון שנדחה, ⛔ **ומה מפיל**: שם בלי תחילית האפליקציה —
    *  ⭐ ה-origin משותף לכולן, וסימן אחד היה נדרס בכל דחייה. */
-  dismissKey: 'ys_sw_dismissed',
+  dismissKey: 'hr_sw_dismissed',
 
   // שלב א — מטמונים שניתן לשחזר מהענן בכל רגע.
-  // ⛔ מראת המשתמשים ו-`ys_perms_cache` אינם נכנסים לכאן —
+  // ⛔ מראת המשתמשים ו-`hr_perms_cache` אינם נכנסים לכאן —
   // אינם מטמוני מהירות אלא **מסלול הכניסה האופליין**: פינוי שלהם היה מונע
   // כניסה בלי רשת, כלומר משבית את האפליקציה
   // בדיוק במצב שבו הפינוי נועד לעזור. הם גם קטנים (KB בודדים) ולכן לא היו
-  // מפנים דבר ממשי. שאר מפתחות ה-ys_ הם המראה של kv — הם *כן* בענן, אבל
+  // מפנים דבר ממשי. שאר מפתחות ה-hr_ הם המראה של kv — הם *כן* בענן, אבל
   // מחיקתם מרוקנת את המסך אופליין, ולכן הם מטופלים בשלב ב ברמת רשומה.
   tier1: [],
 
@@ -3457,22 +3461,22 @@ var LS_CFG = {
   // הגלובלית — ר' ההערה מתחת ל-LS_CFG — ובנוסף `idOf`/`verify` למסלול
   // האימות מול הענן, שנכנס לפעולה כשאין עֵד מקומי בכלל.
   tier2: [
-    { key: mirrorKey('ys_sessions'), label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
-      idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sessions'), verify: _ysVerify('ys_sessions') },
-    { key: mirrorKey('ys_sleep_sessions'),  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
-      idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sleep_sessions'),  verify: _ysVerify('ys_sleep_sessions') },
-    { key: 'ys_attend_treats',   label: 'טיפולים — סדרים', ts: _ysRecTs, minAgeMs: 180 * 86400000,
-      idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_attend_treats'),   verify: _ysVerify('ys_attend_treats') },
-    { key: 'ys_sleep_treats',    label: 'טיפולים — שינה',  ts: _ysRecTs, minAgeMs: 180 * 86400000,
-      idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sleep_treats'),    verify: _ysVerify('ys_sleep_treats') }
+    { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+      idOf: _ysRecId, syncedThrough: _ysPushedFor('hr_sessions'), verify: _ysVerify('hr_sessions') },
+    { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+      idOf: _ysRecId, syncedThrough: _ysPushedFor('hr_sleep_sessions'),  verify: _ysVerify('hr_sleep_sessions') },
+    { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: _ysRecTs, minAgeMs: 180 * 86400000,
+      idOf: _ysRecId, syncedThrough: _ysPushedFor('hr_attend_treats'),   verify: _ysVerify('hr_attend_treats') },
+    { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: _ysRecTs, minAgeMs: 180 * 86400000,
+      idOf: _ysRecId, syncedThrough: _ysPushedFor('hr_sleep_treats'),    verify: _ysVerify('hr_sleep_treats') }
   ],
 
   // כלל ג: כל עוד יש משהו בתור האופליין — לא מפנים כלום, בשני השלבים.
   pending: function () {
     try {
-      var q = JSON.parse(lsGet('ys_offline_queue') || '[]');
+      var q = JSON.parse(lsGet('hr_offline_queue') || '[]');
       if (Array.isArray(q) && q.length) return true;
-      var l = JSON.parse(lsGet('ys_login_log_queue') || '[]');
+      var l = JSON.parse(lsGet('hr_login_log_queue') || '[]');
       return Array.isArray(l) && l.length > 0;
     } catch (e) { return true; }   // ספק = לא מפנים
   },
@@ -3549,9 +3553,9 @@ var MSG_LS_PRUNED = '⚠️ נתונים ישנים פונו מהמכשיר מח
 
 // כל האפליקציות שחולקות את ה-origin. הקידומת היא מה שמזהה מי תופס מה.
 var LS_APPS = [
-  { id: 'hanhala', name: 'הנהלה רוחנית', pre: ['ys_'] },
+  { id: 'hanhala', name: 'הנהלה רוחנית', pre: ['hr_'] },
   { id: 'schar',   name: 'שכר לימוד',    pre: ['sl_'] },
-  { id: 'yoman',   name: 'יומן עבודה',   pre: ['tb_'] },
+  { id: 'yoman',   name: 'יומן עבודה',   pre: ['ya_'] },
   { id: 'gius',    name: 'גיוס',         pre: ['g_', 'gius'] }
 ];
 
@@ -4383,54 +4387,54 @@ window.addEventListener('load', swRegister);
 
 
 /* ── BK_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
-/* ⚠️ `logQueueKey` נשאר `ys_login_log_queue` **בכוונה** (סבב 30) — זה המפתח
+/* ⚠️ `logQueueKey` נשאר `hr_login_log_queue` **בכוונה** (סבב 30) — זה המפתח
    ש-`LS_CFG.pending()` בודק, ושינוי שמו היה מנתק בשקט את ההגנה שמדלגת על
    שלב ב בפינוי כשיש משהו שטרם עלה.
    ⚠️ רשימת המקורות גדלה מקומץ מפתחות לכל מפתחות ה-`kv` (סבב 30): ⛔ מה
    שלא היה ברשימה לא גובה כלל. הכיסוי המלא נעשה אפשרי בזכות הגיבוי
    הדיפרנציאלי — רובם סטטיים ואינם נכתבים שוב.
-   ⛔ `ys_users` אינה כאן (סבב 30) — היא מחזיקה סיסמאות בטקסט גלוי, ו-
+   ⛔ `hr_users` אינה כאן (סבב 30) — היא מחזיקה סיסמאות בטקסט גלוי, ו-
    `sh_backup` קריאה ל-`anon`; גיבוי שלה היה מעתיק את הסוד למקום שני.
    ⛔ ומקור טבלה נוסף כאן בלבד (`kind:'table'` עם `eq`/`order`/`key`) —
    ⚠️ ולא במודול המשותף: ⭐ הוא זהה בכל האפליקציות. */
 var BK_CFG = {
   client: function () { return SB; },
-  flagKey: 'ys_last_backup',
-  logQueueKey: 'ys_login_log_queue',
+  flagKey: 'hr_last_backup',
+  logQueueKey: 'hr_login_log_queue',
   prefix: '',
   device: function () { try { return getDeviceId(); } catch (e) { return null; } },
   user: function () { try { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; } catch (e) { return null; } },
-  // ⚠️ אין סוד ברשימת המקורות — `ys_users` מוחרגת כולה מהגיבוי; הרשימה
+  // ⚠️ אין סוד ברשימת המקורות — `hr_users` מוחרגת כולה מהגיבוי; הרשימה
   //    ריקה ומנגנון הסינון של המודול נשאר דרוך לסוד עתידי.
   secrets: [],
   sources: function () {
     /* ⭐ סבב 36 — שלושת מקורות ה-`kind:'table'` הראשונים כאן: שכבת השורות
        של שלב א. ⚠️ מפתח הגיבוי נגזר משם הטבלה בתוספת `_rows`, ⛔ פרט
-       ל-`ys_students_rows` ששמו כבר נושא אותה. ⛔ ושלושתם נוספו באותו סבב
+       ל-`hr_students_rows` ששמו כבר נושא אותה. ⛔ ושלושתם נוספו באותו סבב
        לרשימת-ההיתר של `migrations/004` (סבב 36) — מפתח גיבוי שאינו שם
        אינו מתפנה לעולם, וזה בדיוק ההיסט שנמדד בהשלמת סבב 35ג.
        ⚠️ מקורות ה-`kv` **נשארים בינתיים** — ⛔ האפליקציה אינה כותבת אליהם
        עוד, ⭐ והסרתם היא פעולת מנהל: ⚠️ רשימת-ההיתר של הפינוי יושבת
        במיגרציה שכבר רצה, ⛔ ומפתח גיבוי שיצא מהרשימה אינו מתפנה לעולם. */
     var out = [
-      { kind: 'table', name: 'ys_sessions',       key: 'ys_sessions_rows',  order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'ys_marks',          key: 'ys_marks_rows',     order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'ys_students_rows',  key: 'ys_students_rows',  order: 'client_id', ts: 'updated_at' }
+      { kind: 'table', name: 'hr_sessions',       key: 'hr_sessions_rows',  order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'hr_marks',          key: 'hr_marks_rows',     order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'hr_students_rows',  key: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' }
     ];
     /* ⭐ שני מקורות השינה חזרו לרשימה (סבב 63) — הטבלאות נוצרו ואומתו.
        ⚠️ ומחרוזות המפתח נשארות בגוף הפונקציה: `test_cron` גוזר
        מכאן את תרומת האפליקציה לרשימת-ההיתר של `004`, ⛔ ומפתח שאינו שם
        אינו מתפנה לעולם. */
     out.push(
-      { kind: 'table', name: 'ys_sleep_sessions', key: 'ys_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'ys_sleep_marks',    key: 'ys_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
+      { kind: 'table', name: 'hr_sleep_sessions', key: 'hr_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
+      { kind: 'table', name: 'hr_sleep_marks',    key: 'hr_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
     );
     /*  ⛔ שלושה-עשר מקורות `kind:'kv'` ירדו (סבב 80) — ⚠️ **טבלת `kv` כבר
         אינה קיימת במסד**: `018` רוקנה אותה ו-`027` הפילה, ⛔ וגיבוי ממקור שאינו קיים
         מחזיר שגיאה, מונע את כתיבת הדגל היומי ומשתק את הגריעה.
         ⛔ ומקור שנכשל אינו מסמן את היום כהושלם — ⚠️ ולכן כל עלייה חזרה
         וגיבתה את מי שכן הצליח.
-        ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`ys_settings` בסבב 78,
+        ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`hr_settings` בסבב 78,
         ⭐ והמקור החדש הוא הטבלה ההיא. */
     out.push({ kind: 'table', name: KV_TABLE, key: KV_TABLE, order: 'key', ts: 'updated_at' });
     return out;
@@ -4746,10 +4750,10 @@ function bkBoot() {
 // לא נכנס למפת הסימונים. הוא כן חייב להופיע במונה, אחרת המשתמש רואה "0
 // ממתינות" בזמן שארבעה מפתחות תקועים בתור.
 var PEND_CFG = {
-  app: 'hanhala-ruchanit', key: 'ys_pending',
+  app: 'hanhala-ruchanit', key: 'hr_pending',
   extra: function () {
     try {
-      var q = JSON.parse(lsGet('ys_offline_queue') || '[]');
+      var q = JSON.parse(lsGet('hr_offline_queue') || '[]');
       return (Array.isArray(q) && q.length) ? (q.length + ' מפתחות בתור') : '';
     } catch (e) { return ''; }
   },
@@ -5050,7 +5054,7 @@ function pendBoot() {
 /* ═══════════════ סוף מודול "ממתין לסנכרון" ═════════════════════════════ */
 
 /* ── RTY_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה «ממתין» הוא גם סימון ⏳ וגם מפתח שתקוע ב-`ys_offline_queue` —
+/* ⚠️ בהנהלה «ממתין» הוא גם סימון ⏳ וגם מפתח שתקוע ב-`hr_offline_queue` —
    ו-`PEND_CFG.extra()` כבר מוסיף את השני למונה, ולכן `pendCount()` מכסה
    את שניהם. הריקון הוא `ysFlushQueue`, ⛔ ולא מסלול שני (סבב 44). */
 var RTY_CFG = {
@@ -5336,7 +5340,7 @@ function ysSupervisionAccess() {
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה החותמת היא שורת `ys_last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
+/* ⚠️ בהנהלה החותמת היא שורת `hr_last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
    שאינו נכנס לתור האופליין (סבב 51) — והיא נכתבת ממשפך אחד,
    `ysTouchLastChanged()`, שכל כותב ענן כאן כבר קורא לו.
    ⚠️ `ok()` הוא `_ysMarkSynced()` — חותמת **תצוגה** בלבד. ⛔ אין להזין
@@ -5347,13 +5351,13 @@ var PL_CFG = {
   seen:   function () { return _ysLastTs; },
   note:   function (ts) { _ysLastTs = ts; },
   ok:     function () { _ysMarkSynced(); },
-  stamp:  function (ts) { return ysCfgSet('ys_last_changed', ts); },
+  stamp:  function (ts) { return ysCfgSet('hr_last_changed', ts); },
   pull:   function () { return ysPullFromCloud(); },
   remote: function () {
-    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'ys_last_changed').maybeSingle())
+    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle())
       .then(function (r) {
         if (!r || r.error) return { ok: false, ts: null };
-        return { ok: true, ts: r.data ? plNum(kvParse('ys_last_changed', r.data.value).value) : null };
+        return { ok: true, ts: r.data ? plNum(kvParse('hr_last_changed', r.data.value).value) : null };
       }, function () { return { ok: false, ts: null }; });
   },
 };
@@ -5438,12 +5442,12 @@ function plBoot() {
 /* ═══════════════ סוף מנגנון המשיכה ══════════════════════════════════════ */
 
 /* ── PUSH_CFG — הדבר היחיד שנבדל בין האפליקציות ────────────────────────── */
-/* ⛔ `ys_users` **אינה כאן ואינה נדחפת לעולם** — ⚠️ המראה מחזיקה טביעות ולא
+/* ⛔ `hr_users` **אינה כאן ואינה נדחפת לעולם** — ⚠️ המראה מחזיקה טביעות ולא
    סיסמאות, ⭐ ודחיפת-מצב שלה הייתה כותבת סיסמה ריקה לכל המשתמשים:
    ⛔ מסלולה הוא `writeUser`, שדורש רשת.
    ⚠️ הסדרים לפני המצבה — ⛔ הסימון מפנה לתלמיד, ⭐ והמצבה היא מה שהוא
    מצביע אליו. */
-var PUSH_TABLES = ['ys_sessions', 'ys_sleep_sessions', 'ys_students_rows'];
+var PUSH_TABLES = ['hr_sessions', 'hr_sleep_sessions', 'hr_students_rows'];
 /*  ⛔ ההקשר שנלכד לפני ההמתנה הראשונה — ⚠️ `mark` רץ אחרי `await`, ⭐ וקריאת
  *  הגלובלי בו הייתה זוקפת את הצלחת הדחיפה של משתמש אחד לחשבון השני. */
 var _ysPushEp = 0;
@@ -5625,8 +5629,8 @@ function ysHwInWindow(rec) {
    נקראו כמפתחות `kv` שלמים, ⛔ ו«פינוי» מעל ערך `kv` שלם היה מוחק את הערך
    כולו ולא רשומות ישנות שבתוכו (סבב 35). מסבב 55 הקריאה היא פר-שורה
    (`ysCloudGet` ← `ysRowsGet`), ולכן לרשומה שתפונה מהדיסק יש מאיפה לחזור.
-   ⚠️ הספק היחיד הוא `ys_sessions` — המפתח הגדול כאן (360KB) והיחיד
-   שיש לו שכבת שורות **ושדה תאריך פר-רשומה**. ⛔ `ys_students_rows` אינו בחלון
+   ⚠️ הספק היחיד הוא `hr_sessions` — המפתח הגדול כאן (360KB) והיחיד
+   שיש לו שכבת שורות **ושדה תאריך פר-רשומה**. ⛔ `hr_students_rows` אינו בחלון
    (סבב 56) — מצבת התלמידים אינה סדרת אירועים בזמן, ואין לה «חודש» שמחוצה
    לו רשומה מיותרת במכשיר.
    ⭐ כפתור השחזור פעיל בכל מצב — הוא אינו תלוי בחלון. */
@@ -5637,7 +5641,7 @@ var HW_CFG = {
     catch (e) { return false; }
   },
   specs: [{
-    key: mirrorKey('ys_sessions'),
+    key: mirrorKey('hr_sessions'),
     label: 'סדרי נוכחות מחוץ לחלון',
     inWindow: function (r) { return ysHwInWindow(r); },
     idOf: _ysRecId,
@@ -5647,15 +5651,15 @@ var HW_CFG = {
       catch (e) { return true; }
     },
     fetch: function () {
-      return ysCloudGet('ys_sessions').then(function (rows) {
+      return ysCloudGet('hr_sessions').then(function (rows) {
         return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
       }).catch(function () { return { ok: false, rows: [] }; });
     },
     rows: function () {
       if (Array.isArray(window._atData)) return window._atData;
-      return ysMirrorRecs('ys_sessions');
+      return ysMirrorRecs('hr_sessions');
     },
-    apply: function (kept) { return ysMirrorWriteRecs('ys_sessions', kept); }
+    apply: function (kept) { return ysMirrorWriteRecs('hr_sessions', kept); }
   }]
 };
 /* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35) ════════════════════════
@@ -5864,11 +5868,13 @@ function mirrorBoot() { mirrorLoad(); }
 
 /* ── ERA_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
 /*  ⛔ העידן שהקוד הזה כותב בו — ⚠️ הוא עולה **רק בשינוי צורת שורה**:
- *  ⭐ וצורת השורה כאן לא השתנתה, ⛔ ולכן הוא בערך ההתחלתי — ⚠️ והמנגנון קיים
- *  כדי שהשינוי הבא יוכל לזרוק. */
-var DATA_ERA = 1;
+ *  ⭐ **ושינוי בשם טבלה הוא שינוי בצורת נתון** — ⛔ המראה ממופתחת בשם,
+ *  ⚠️ וההגירה המקומית מכסה מכשיר שעלה, ⛔ ואינה מכסה מכשיר שההגירה
+ *  נפלה בו באמצע: ⭐ ולכן העידן קודם בסבב 148, ⛔ **ואחרי ההגירה
+ *  ⛔ ולא לפניה** — ⚠️ סדר הפוך זורק תור שטרם הוגר. */
+var DATA_ERA = 2;
 var ERA_CFG = {
-  prefix: 'ys_',
+  prefix: 'hr_',
   client: function () { return SB; },
   table:  function () { return KV_TABLE; },
   /*  ⛔ המוחק — ⚠️ מפתחות המראה **ואופק הפינוי שלהם**: ⭐ אופק ששרד מסנן
@@ -6019,9 +6025,9 @@ function eraKick() {
    ⚠️ מה שאינו נאכף כאן: **חוזה הענן** — ⭐ `ysMarkRows` ממשיכה לחתום כל
       שורת סימון בחותמת האב, ⛔ שהיא מה שהקריאה מהענן מכריעה לפיו. */
 var YS_MIRROR_STREAMS = {
-  ys_sessions:       { kind: 'attend',   child: 'ys_marks' },
-  ys_sleep_sessions: { kind: 'sleep',    child: 'ys_sleep_marks' },
-  ys_students_rows:  { kind: 'students', child: null }
+  hr_sessions:       { kind: 'attend',   child: 'hr_marks' },
+  hr_sleep_sessions: { kind: 'sleep',    child: 'hr_sleep_marks' },
+  hr_students_rows:  { kind: 'students', child: null }
 };
 /*  ⛔ ההרכבה — ⚠️ שורה מסומנת מחוקה אינה נכנסת, ⭐ ושורה שאין לה אב אינה
  *  יתומה על המסך. ⛔ **ו-`staleIsDeleted` הוא ההבדל בין הענן למראה** —
@@ -6192,36 +6198,36 @@ function ysMarkTombs(t, sid) {
   });
   return out;
 }
-/*  ⛔ משפך כתיבה אחד לדיסק עבור `ys_sessions` (סבב 56) — ⚠️ אתרי
+/*  ⛔ משפך כתיבה אחד לדיסק עבור `hr_sessions` (סבב 56) — ⚠️ אתרי
  *  כתיבה נפרדים הם מקומות שבהם שער הדיסק של החלון החם יכול להישמט,
  *  ⭐ ואחד שנשמט מחזיר בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו. */
 function _ysAtDiskSave(rows) {
-  return ysMirrorPutRecs('ys_sessions', rows);
+  return ysMirrorPutRecs('hr_sessions', rows);
 }
 /*  ⛔ ומשפך אחד גם לשינה (סבב 116) — ⚠️ חמישה אתרי כתיבה גולמיים ישבו כאן,
  *  ⭐ וכל אחד מהם הוא מקום שבו הפירוק לשורות יכול להישמט. */
 function _ysSlDiskSave(rows) {
-  return ysMirrorPutRecs('ys_sleep_sessions', rows);
+  return ysMirrorPutRecs('hr_sleep_sessions', rows);
 }
 /*  ⛔ ומשפך אחד למצבה — ⚠️ הרשומה נכתבת כשורה עם `data`, ⭐ וקריאה
  *  מרכיבה אותה בחזרה. */
 function _ysStDiskSave(rows) {
-  return ysMirrorPutRecs('ys_students_rows', rows);
+  return ysMirrorPutRecs('hr_students_rows', rows);
 }
 
 /* ── חיבור hanhala-ruchanit למודול ────────────────────────────────────────
    כאן הכתיבה היא **מקומית-תחילה**: הרשומה נשמרת ב-localStorage מיד, והדחיפה
    לענן היא דחיפת-מצב מלא של המפתח כולו. לכן האישור אינו פר-רשומה אלא
-   `pendConfirmPush(prefix, t0)` — דחיפה מוצלחת של `ys_sessions`
+   `pendConfirmPush(prefix, t0)` — דחיפה מוצלחת של `hr_sessions`
    מאשרת כל סימון סדר שנרשם **לפני שהצילום נלקח**.
    ───────────────────────────────────────────────────────────────────────── */
 var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:',
     PK_AT_TREAT = 'at-treat:', PK_SL_TREAT = 'sl-treat:', PK_STUDENT = 'student:';
 // מיפוי מפתח kv → קידומת הסימונים שהוא נושא. משמש גם את ריקון התור.
 var PEND_KV_PREFIX = {
-  'ys_sessions': PK_AT_SESS, 'ys_sleep_sessions': PK_SL_SESS,
-  'ys_attend_treats': PK_AT_TREAT, 'ys_sleep_treats': PK_SL_TREAT,
-  'ys_students_rows': PK_STUDENT
+  'hr_sessions': PK_AT_SESS, 'hr_sleep_sessions': PK_SL_SESS,
+  'hr_attend_treats': PK_AT_TREAT, 'hr_sleep_treats': PK_SL_TREAT,
+  'hr_students_rows': PK_STUDENT
 };
 function pendConfirmKv(kvKey, t0) {
   var pfx = PEND_KV_PREFIX[kvKey];
@@ -6260,7 +6266,7 @@ var _ysLastTs = 0;
 var _ysLastSyncAt = 0;
 function _ysMarkSynced() { _ysLastSyncAt = Date.now(); }
 // "סנכרן עכשיו" מאזור המצב: משיכה מלאה + ריקון התור, בלי תלות בחותמת
-// `ys_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
+// `hr_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
 async function ysSyncNow() {
   await ysPullFromCloud();
   try { await ysFlushQueue(); } catch (e) { ysWriteFail('ysSyncNow', e); }
@@ -6268,9 +6274,9 @@ async function ysSyncNow() {
 }
 
 // ===== תור האופליין =====
-var _YS_Q_KEY = 'ys_offline_queue';
+var _YS_Q_KEY = 'hr_offline_queue';
 
-/* ⛔ בית ההגדרות בענן הוא `ys_settings` ⛔ ולא `kv` — ⚠️ מפתח `kv` הוא ערך
+/* ⛔ בית ההגדרות בענן הוא `hr_settings` ⛔ ולא `kv` — ⚠️ מפתח `kv` הוא ערך
    חופשי בטבלה משותפת לכל האפליקציות, ⭐ והטבלה המובנית היא מפתח ראשי
    `key` בטבלה שהיא של האפליקציה הזו בלבד. ⛔ ו-`onConflict` הוא `key`
    ⛔ ולא `client_id` — ⚠️ מיפתוח לפי מזהה שנוצר במכשיר היה יוצר שתי שורות
@@ -6280,7 +6286,7 @@ function _ysCfgSetRaw(key, value) {
 }
 
 // קידום חותמת השינוי הגלובלית. המכשירים האחרים משווים **רק** מול
-// ys_last_changed — כתיבה ל-kv בלי הקידום הזה נשארת בלתי-נראית להם לנצח.
+// hr_last_changed — כתיבה ל-kv בלי הקידום הזה נשארת בלתי-נראית להם לנצח.
 // כל כותב ענן (נתונים *והגדרות*) חייב לקרוא לזה אחרי כתיבה מוצלחת.
 // ⭐ סבב 51 — הגוף עבר ל-`plTouch()` שבמודול המשותף; הפונקציה נשארת
 //    בשמה מפני שהיא **המשפך** שכל הכותבים כאן קוראים לו. ⛔ אין לפצל
@@ -6308,7 +6314,7 @@ async function ysTouchLastChanged() {
 // ysCfgSet עם נפילה-חזרה לתור — תחליף שקוף, באותו חוזה
 async function ysCfgSet(key, value) {
   // ⛔ לעולם לא להכניס לתור את מפתח החותמת (נרשם בסבב 67) — הוא תמיד נגזר
-  if (key === 'ys_last_changed') {
+  if (key === 'hr_last_changed') {
     try { return await _ysCfgSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
   }
   try {
@@ -6411,7 +6417,7 @@ async function ysFlushQueue() {
     var item = q[i];
     try {
       /* ⛔ היעד נגזר מהמפתח ⛔ ולא מהתור — ⚠️ מפתח שיש לו טבלה חוזר
-         **אליה**, ⭐ ומפתח הגדרות ל-`ys_settings`: ⛔ ריקון שכותב הכול
+         **אליה**, ⭐ ומפתח הגדרות ל-`hr_settings`: ⛔ ריקון שכותב הכול
          לאותו מקום היה מחזיר את הרשומות לערך שלם, ⚠️ כלומר למקור אמת שני. */
       var r = await _ysQueueSend(item.key, item.value);
       if (r && r.error) {
@@ -6432,13 +6438,13 @@ async function ysFlushQueue() {
   }
   if (nOk > 0) {
     var ts = Date.now();
-    // ⛔ כשל חותמת אינו נבלע (סבב 67) — `ys_last_changed` הוא האות
+    // ⛔ כשל חותמת אינו נבלע (סבב 67) — `hr_last_changed` הוא האות
     // היחיד שהפולינג במכשירים האחרים משווה מולו, ולכן חותמת
     // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
     // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
-    try { await _ysCfgSetRaw('ys_last_changed', ts); if (!ctxStale(_ep)) _ysLastTs = ts; }
+    try { await _ysCfgSetRaw('hr_last_changed', ts); if (!ctxStale(_ep)) _ysLastTs = ts; }
     catch(e){
-      console.warn('[sync] חותמת ys_last_changed לא נכתבה:', e && e.message);
+      console.warn('[sync] חותמת hr_last_changed לא נכתבה:', e && e.message);
       try { ysSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
       toast(MSG_UP_SLOW_FANOUT, null, 'bad');
     }
@@ -6453,7 +6459,7 @@ async function ysFlushQueue() {
    שכבת השורות — טבלאות מובנות, שלב א (סבב 36)
    ══════════════════════════════════════════════════════════════════════════
    הנהלה רוחנית הייתה האחרונה בארגון שנתוניה יושבים כמפתחות `kv` שלמים
-   (מטריצת היכולות — שורת הנתונים בטבלאות מובנות). נמדד: `ys_sessions` הוא 360KB, ולכן
+   (מטריצת היכולות — שורת הנתונים בטבלאות מובנות). נמדד: `hr_sessions` הוא 360KB, ולכן
    **כל סימון נוכחות בודד דורס את מלוא הערך**. הדפוס כאן מועתק מ-yoman
    סבבים 30–35: מיגרציות אדיטיביות, כתיבה כפולה, והמתג בסבב נפרד.
 
@@ -6466,10 +6472,10 @@ async function ysFlushQueue() {
    ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ `ysRowsUpsert` נכשלת סגור ומדלגת בשקט,
       ⛔ ובלי התור רשומה שנכתבה אופליין לא הייתה מנסה לעלות שוב לעולם.
 
-   ⭐ שתי טבלאות, אב ובן: `ys_sessions` (מטא הסדר) ו-`ys_marks` (שורה
+   ⭐ שתי טבלאות, אב ובן: `hr_sessions` (מטא הסדר) ו-`hr_marks` (שורה
       לסימון). מטא הסדר אינה משוכפלת לכל סימון — `filled_by_name` היה
       חוזר ~48 פעם לכל סדר, וזה ניפוח ישיר של החלון החם המתוכנן.
-   ⚠️ `date_iso` משוכפל לתוך `ys_marks` בכוונה — הדוח פר-תלמיד קורא את
+   ⚠️ `date_iso` משוכפל לתוך `hr_marks` בכוונה — הדוח פר-תלמיד קורא את
       טבלת הבן בלי `join` לאב, ובלי השכפול הוא היה מושך את טבלת האב
       למכשיר רק כדי לדעת מתי היה הסדר.
    ⛔ `deleted` של הסדר יורד לכל שורות הסימון שלו (סבב 36) — הדוח פר-תלמיד
@@ -6479,9 +6485,9 @@ async function ysFlushQueue() {
 var YS_ROWS = true;
 
 /* ⭐ חותמת ההגדרות נקראת מ-`updated_at` של השורה — ⛔ ולא ממפה בתוך הערך
-   (סבב 63). ⛔ העמודה קיימת ב-`ys_settings`, ⚠️ והטריגר בצד השרת דורס כל
+   (סבב 63). ⛔ העמודה קיימת ב-`hr_settings`, ⚠️ והטריגר בצד השרת דורס כל
    ערך שהגיע מהלקוח: ⭐ שעון מכשיר שנסחף היה קובע מי מנצח.
-   ⛔ אין להחזיר את `ys_settings_meta` כמקור חותמת מרוחקת (סבב 63) — היא
+   ⛔ אין להחזיר את `hr_settings_meta` כמקור חותמת מרוחקת (סבב 63) — היא
    הייתה **מנגנון פיצוי** על היעדר העמודה, ונמדד שהיא מתה: הערך בענן הוא
    `{}`, ולכן `rts` היה תמיד 0 ו«האחרון שדוחף מנצח» על שלושת המפתחות.
    ⚠️ המפה **המקומית** נשארת — היא נושאת את `lts`, חותמת הכתיבה של המכשיר
@@ -6490,7 +6496,7 @@ var YS_ROWS = true;
 /* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
    ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
    דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
-var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons'];
+var YS_SETTINGS_LWW_KEYS = ['hr_reasons', 'hr_absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -6498,10 +6504,10 @@ var YS_SETTINGS_LWW_KEYS = ['ys_reasons', 'ys_absence_reasons'];
       הזדמנויות שאחד מהם ייסחף, בדיוק הלקח של איחוד מנועי המיזוג בסבב 38.
    ⚠️ `note` קיים בשינה בלבד — נמדד: סימון שינה הוא `{s,min,note}` וסימון
       נוכחות `{s,min}`. ⛔ ואין להוסיף `note` גם לנוכחות «לשם אחידות»
-      (סבב 39) — ל-`ys_marks` אין עמודה כזו, וה-`upsert` היה נדחה כולו. */
+      (סבב 39) — ל-`hr_marks` אין עמודה כזו, וה-`upsert` היה נדחה כולו. */
 var YS_ROWS_KINDS = {
-  attend: { parent: 'ys_sessions',       child: 'ys_marks',       pk: PK_AT_SESS, note: false },
-  sleep:  { parent: 'ys_sleep_sessions', child: 'ys_sleep_marks', pk: PK_SL_SESS, note: true  }
+  attend: { parent: 'hr_sessions',       child: 'hr_marks',       pk: PK_AT_SESS, note: false },
+  sleep:  { parent: 'hr_sleep_sessions', child: 'hr_sleep_marks', pk: PK_SL_SESS, note: true  }
 };
 
 /* מפת חותמות הענן פר-סדר, בזיכרון בלבד, **פר-מסלול**. ⛔ `null` פירושו
@@ -6566,7 +6572,7 @@ function ysMarkRows(rec, kind) {
   var ts = Math.round(Number(_ysRecTs(rec)) || 0);
   Object.keys(marks).forEach(function (k) {
     // ⛔ מפתח הסימון עובר כמחרוזת, בלי המרה מספרית (סבב 37א) —
-    //    `ys_marks.student_id` הוא `text` מאז `migrations/008`, ומזהה תלמיד
+    //    `hr_marks.student_id` הוא `text` מאז `migrations/008`, ומזהה תלמיד
     //    שנוצר במכשיר הוא uuid. `Number(k)` היה מחזיר `NaN` לכל תלמיד
     //    שנוסף מסבב 37 ואילך, כלומר סימוניו לא היו מגיעים לשכבת השורות.
     var m = marks[k] || {};
@@ -6580,7 +6586,7 @@ function ysMarkRows(rec, kind) {
       deleted: del,
       updated_at: ts
     };
-    // ⛔ `note` נוסף למסלול השינה בלבד (סבב 39) — ל-`ys_marks` של הנוכחות
+    // ⛔ `note` נוסף למסלול השינה בלבד (סבב 39) — ל-`hr_marks` של הנוכחות
     //    אין עמודה כזו, ושדה עודף ב-`upsert` מפיל את הבקשה **כולה**, לא
     //    רק את השדה. ⚠️ והוא נשלח גם כשהוא ריק — `null` מפורש הוא מה
     //    שמוחק הערה שנמחקה במכשיר, בעוד שהשמטת המפתח הייתה משאירה בענן
@@ -6660,7 +6666,7 @@ async function ysSendRecs(key, recs) {
     var stRows = [];
     recs.forEach(function (rec) { var r = ysStudentRow(rec); if (r) stRows.push(r); });
     if (!stRows.length) return {};
-    if (!(await ysRowsUpsert('ys_students_rows', stRows))) return { error: { message: 'ys_students_rows' } };
+    if (!(await ysRowsUpsert('hr_students_rows', stRows))) return { error: { message: 'hr_students_rows' } };
     return {};
   }
   var cfg = YS_ROWS_KINDS[kind];
@@ -6681,8 +6687,8 @@ async function ysSendRecs(key, recs) {
    ══════════════════════════════════════════════════════════════════════════
    עד כאן הטבלאות היו **בצל**: הכתיבה הכפולה מילאה אותן מ-18.8, אבל כל
    קריאה עברה דרך ערך שלם — כלומר הן נמדדו ולא שימשו. ⭐ היום הקריאה של
-   שלושת המפתחות שעברו (`ys_sessions` · `ys_sleep_sessions` ·
-   `ys_students_rows`) היא מהטבלאות, דרך משפך יחיד — `ysCloudGet`.
+   שלושת המפתחות שעברו (`hr_sessions` · `hr_sleep_sessions` ·
+   `hr_students_rows`) היא מהטבלאות, דרך משפך יחיד — `ysCloudGet`.
 
    ⭐ **המשפך אחד ולא שישה** — שישה אתרי קריאה נמדדו כאן, וששתם עוברים
       דרכו. ⛔ אין לקרוא ל-`ysCfgGet` ישירות למפתח שיש לו טבלה (סבב 55) —
@@ -6701,10 +6707,10 @@ async function ysSendRecs(key, recs) {
       נושא בדיוק את חותמת האב וסימון שנמחק נשאר מאחור.
    ══════════════════════════════════════════════════════════════════════════ */
 var YS_ROWS_READ = true;
-var YS_ROWS_READ_KEYS = { ys_sessions: 'attend', ys_students_rows: 'students' };
+var YS_ROWS_READ_KEYS = { hr_sessions: 'attend', hr_students_rows: 'students' };
 /* ⭐ מפתח השינה נכנס למפה (סבב 63) — `ysCloudGet` קורא אותו מהטבלאות,
    בדיוק כמו נוכחות ותלמידים. */
-YS_ROWS_READ_KEYS.ys_sleep_sessions = 'sleep';
+YS_ROWS_READ_KEYS.hr_sleep_sessions = 'sleep';
 
 /*  ⛔ החלון שהמסך מציג, בגבולות ISO — ⚠️ חודש עברי הוא טווח גרגוריאני
  *  **רציף**, ⭐ ולכן `.gte`/`.lte` על `date_iso` מכסים אותו בדיוק ⛔ ואין
@@ -6774,7 +6780,7 @@ async function ysRowsGetStudents() {
     /*  ⛔ המצבה נמשכת מלאה ⛔ ואין לה חלון — ⚠️ אין בטבלה עמודת תאריך,
      *  ⭐ והיא 71 שורות: ⛔ חלון על מפתח שאינו תאריך הוא מנגנון שני. */
     var rs = await _ysRowsPaged(function () {
-      return SB.from('ys_students_rows').select('client_id,updated_at,deleted,data');
+      return SB.from('hr_students_rows').select('client_id,updated_at,deleted,data');
     }, 'client_id', null);
     if (!rs) return { ok: false, data: null };
     var out = [];
@@ -6792,7 +6798,7 @@ async function ysRowsGet(kvKey, win) {
 }
 /* ⭐ משפך הקריאה היחיד — מערך או `null`, ⛔ ואין נפילה-חזרה ל-`kv`:
    ⚠️ המפתח שיש לו טבלה נקרא **ממנה בלבד**, ⛔ ומפתח הגדרות נקרא
-   מ-`ys_settings`. ⭐ הנימוק המדוד: השקילות אומתה מול המסד — 345=345
+   מ-`hr_settings`. ⭐ הנימוק המדוד: השקילות אומתה מול המסד — 345=345
    סדרים · 988 סימונים · 71 תלמידים · 21 סדרי שינה, ⛔ והנפילה-חזרה חדלה
    להיות רשת ביטחון והפכה למקור אמת שני.
    ⛔ וכשל רשת מחזיר `null` ⛔ ולא מערך ריק — ⚠️ «אין ראיה» אינו «הענן ריק»,
@@ -6846,7 +6852,7 @@ function ysCfgGet(key, res) {
 }
 
 /* ── DEV_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-var DEV_CFG = { key: 'ys_device_id' };
+var DEV_CFG = { key: 'hr_device_id' };
 
 
 // ⚠️ `ysSyncLog` היא **מעטפת דקה** מעל מודול הגיבוי והיומן המשותף
@@ -6883,7 +6889,7 @@ function ysRecTs(r) { return (r && typeof r === 'object' && r.updatedAt) ? r.upd
 // חלקית מהענן, או נכתבה בכשל) הפילה `Object.values(undefined)` באמצע הלולאה
 // ורוקנה מסך שלם — לוח מחוונים, ארכיון או השגחה. כל אתר קריאה עובר דרך כאן.
 /*  ⛔ הסימונים נקראים מהרשומה, ⚠️ ורשומה שאין בה `marks` מקבלת אותם
- *  **משורות המראה** (סבב 116) — ⭐ הן העותק המקומי של `ys_marks`,
+ *  **משורות המראה** (סבב 116) — ⭐ הן העותק המקומי של `hr_marks`,
  *  ⛔ ורשומה שנבנתה במסך לפני שהסימונים הורכבו הייתה מחזירה ריק. */
 function ysMarks(rec) {
   if (rec && rec.marks && typeof rec.marks === 'object') return rec.marks;
@@ -6954,7 +6960,7 @@ var USER_CFG = {
    *  במקום אחר בקובץ בכל אפליקציה, ⭐ וקריאה בהשמה נותנת `undefined`
    *  באחת מהן בשקט. */
   offMsg: function () { return MSG_OFF_USER_WRITE; },
-  from: function () { return SB.from('ys_users'); },
+  from: function () { return SB.from('hr_users'); },
   run: function (q) { return withTimeout(q); },
   missingFp: ysIsMissingFpCol,
   /*  ⛔ התשובה מוחזרת כפי שהיא — ⚠️ הקוראים בודקים `res.error` בעצמם
@@ -7211,7 +7217,7 @@ function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isP
       keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
     }));
   }
-  // ענף האובייקטים — `ys_approvals` ומפות `kv` אחרות. המפתח הוא מפתח המפה
+  // ענף האובייקטים — `hr_approvals` ומפות `kv` אחרות. המפתח הוא מפתח המפה
   // עצמה, ולכן הזוגות נעטפים ונפרסים חזרה; סדר המפתחות (מרוחק ואז
   // מקומי-בלבד) נשמר בזכות סדר ההכנסה של אובייקט JS.
   var Lo = (local && typeof local === 'object') ? local : {};
@@ -7231,7 +7237,7 @@ function ysMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isP
 
 // פרדיקט ה-⏳ לפי מפתח ה-kv (סבב 37) — נגזר מ-`PEND_KV_PREFIX`, אותה מפה
 // בדיוק שמשמשת את `pendConfirmKv` בריקון התור. מפתח שאין לו קידומת סימונים
-// (`ys_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
+// (`hr_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
 // ⚠️ הקידומת חייבת להיגזר מהמפה ולא להיכתב כאן שוב — שני מקורות לאותו מיפוי
 //    הם בדיוק איך שסימון נכתב תחת מפתח אחד ונקרא תחת אחר.
 function ysPendingFor(kvKey) {
@@ -7369,12 +7375,12 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey,
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
-function _ysStudentsRaw() { return ysMirrorRecs('ys_students_rows') || []; }
+function _ysStudentsRaw() { return ysMirrorRecs('hr_students_rows') || []; }
 function _ysStudentsSaveRaw(s) { _ysStDiskSave(s); }
 
 // updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
-function ysSettingsMeta() { try { return JSON.parse(lsGet('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
-function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); lsSet('ys_settings_meta', JSON.stringify(m)); }
+function ysSettingsMeta() { try { return JSON.parse(lsGet('hr_settings_meta') || '{}'); } catch(e) { return {}; } }
+function ysSettingsTouch(key) { var m = ysSettingsMeta(); m[key] = Date.now(); lsSet('hr_settings_meta', JSON.stringify(m)); }
 
 // זוכר אם כבר הזהרנו על כשל סנכרון, כדי לא להציף בטוסטים בכל דחיפה
 var _ysPushWarned = false;
@@ -7414,48 +7420,48 @@ async function ysPushToCloud() {
   //    נקודת ההפעלה היא `bkBoot()` ב-`loadDash()`, לצד `lsBoot()`.
 
   // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
-  await step('ys_students_rows', async function() {
+  await step('hr_students_rows', async function() {
     var _t0 = Date.now();   // לפני קריאת המצב המקומי — ראה atSaveData
     var localSt = _ysStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
-    var remoteSt = null; try { remoteSt = await ysCloudGet('ys_students_rows'); } catch(e1) {}
-    var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students_rows',
+    var remoteSt = null; try { remoteSt = await ysCloudGet('hr_students_rows'); } catch(e1) {}
+    var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'hr_students_rows',
                                       ysStudentPair);
     if (ctxStale(_ep)) return {};
     _ysStudentsSaveRaw(mergedSt);
-    var r = await pushTable('ys_students_rows', mergedSt);
+    var r = await pushTable('hr_students_rows', mergedSt);
     if (ctxStale(_ep)) return {};
     if (r && r.ok) pendConfirmPush(PK_STUDENT, _t0);
-    else if (mergedSt.length) { _ysQueueAdd('ys_students_rows', mergedSt); ysUpdateQueueBadge(); }
-    ysSyncLog('push', 'ys_students_rows', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
+    else if (mergedSt.length) { _ysQueueAdd('hr_students_rows', mergedSt); ysUpdateQueueBadge(); }
+    ysSyncLog('push', 'hr_students_rows', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
     /* ⛔ `step` מזהה כישלון לפי `error` ⛔ ולא לפי `ok` — ⚠️ החזרת `{ok:false}`
        כמות שהיא הייתה נספרת כהצלחה, ⭐ והמשתמש היה רואה «סונכרן» על דחיפה
        שלא עברה. ⛔ ומערך ריק אינו כישלון — ⚠️ אין מה לדחוף. */
     if (r && r.ok) return {};
-    return mergedSt.length ? { error: { message: 'ys_students_rows' } } : {};
+    return mergedSt.length ? { error: { message: 'hr_students_rows' } } : {};
   });
 
   // טבלת kv חסרה — אין טעם להמשיך, בדיוק כמו קודם
   if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
 
   // ---- approvals: מיזוג אובייקט לפי sid ----
-  await step('ys_approvals', async function() {
+  await step('hr_approvals', async function() {
     var localAp = getApprovals();
-    var remoteAp = null; try { remoteAp = await ysCfgGet('ys_approvals'); } catch(e3) {}
+    var remoteAp = null; try { remoteAp = await ysCfgGet('hr_approvals'); } catch(e3) {}
     var mergedAp = ysMergeRecords(localAp, remoteAp, null, true);
     if (ctxStale(_ep)) return {};
-    ysCfgLocalSet('ys_approvals', mergedAp);
-    var r = await ysCfgSet('ys_approvals', mergedAp);
-    ysSyncLog('push', 'ys_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
+    ysCfgLocalSet('hr_approvals', mergedAp);
+    var r = await ysCfgSet('hr_approvals', mergedAp);
+    ysSyncLog('push', 'hr_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
     return r;
   });
 
-  // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
+  // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי hr_settings_meta ----
   await step(KV_TABLE, async function() {
     var meta = ysSettingsMeta();
     var settingsKeys = [
-      { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ ysCfgLocalSet('ys_reasons', v); } },
-      { key: 'ys_absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ ysCfgLocalSet('ys_absence_reasons', v); } }
+      { key: 'hr_reasons',         get: getReasons,                                       set: function(v){ ysCfgLocalSet('hr_reasons', v); } },
+      { key: 'hr_absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ ysCfgLocalSet('hr_absence_reasons', v); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -7475,7 +7481,7 @@ async function ysPushToCloud() {
       }
     }
     if (ctxStale(_ep)) return {};
-    lsSet('ys_settings_meta', JSON.stringify(meta));
+    lsSet('hr_settings_meta', JSON.stringify(meta));
     /* ⛔ המפה אינה עולה לענן (סבב 63) — מפה שנכתבת לצד `updated_at` היא
        מקור אמת שני, וזה בדיוק מה שיש להסיר
        כשהמבנה תוקן.
@@ -7487,7 +7493,7 @@ async function ysPushToCloud() {
   // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
   // "שינוי" שלא קיים בענן
   if (pushed > 0 && !ctxStale(_ep)) {
-    await ysCfgSet('ys_last_changed', ts);
+    await ysCfgSet('hr_last_changed', ts);
     if (ctxStale(_ep)) return;
     _ysLastTs = ts;
     console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
@@ -7520,7 +7526,7 @@ async function ysPullFromCloud() {
   try {
     /* ⭐ מטא הגדרות מהענן — החותמת המרוחקת להכרעת ה-LWW על שלושת מפתחות
        ההגדרות הקטנים, ומסבב 63 היא נקראת מ-`updated_at` של השורה.
-       ⛔ אין לחזור למפה `ys_settings_meta` (סבב 63) — היא `{}` בענן
+       ⛔ אין לחזור למפה `hr_settings_meta` (סבב 63) — היא `{}` בענן
        כלומר `remoteMeta[k]` היה תמיד 0: התנאי
        `0 >= meta[k]` נכשל לכל מפתח שהמכשיר **ערך אי-פעם**, ⛔ ולכן
        מכשיר שערך הגדרה הפך חירש לצמיתות לשינוי שלה ממכשיר אחר.
@@ -7536,82 +7542,82 @@ async function ysPullFromCloud() {
     var meta = ysSettingsMeta();
 
     // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר
-    var s = await ysCloudGet('ys_students_rows');
+    var s = await ysCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
       var pullMigrated = false;
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
-      var mergedS = ysMergeWithDropLog(_ysStudentsRaw(), s, function(r){ return r.id; }, false, 'ys_students_rows');
+      var mergedS = ysMergeWithDropLog(_ysStudentsRaw(), s, function(r){ return r.id; }, false, 'hr_students_rows');
       _ysStudentsSaveRaw(mergedS);
       if (pullMigrated) schedulePush();
     }
     // approvals: מיזוג לפי sid עם updatedAt
-    var ap = await ysCfgGet('ys_approvals');
+    var ap = await ysCfgGet('hr_approvals');
     if (ctxStale(_ep)) return;
     if (ap && typeof ap === 'object') {
-      ysCfgLocalSet('ys_approvals', ysMergeRecords(getApprovals(), ap, null, true));
+      ysCfgLocalSet('hr_approvals', ysMergeRecords(getApprovals(), ap, null, true));
     }
     // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
-    var rs = await ysCfgGet('ys_reasons');
-    if (rs && Array.isArray(rs) && (remoteMeta['ys_reasons'] || 0) >= (meta['ys_reasons'] || 0)) {
-      ysCfgLocalSet('ys_reasons', rs);
-      if (remoteMeta['ys_reasons']) { meta['ys_reasons'] = remoteMeta['ys_reasons']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
+    var rs = await ysCfgGet('hr_reasons');
+    if (rs && Array.isArray(rs) && (remoteMeta['hr_reasons'] || 0) >= (meta['hr_reasons'] || 0)) {
+      ysCfgLocalSet('hr_reasons', rs);
+      if (remoteMeta['hr_reasons']) { meta['hr_reasons'] = remoteMeta['hr_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
     // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
-    var atSess = await ysCloudGet('ys_sessions');
+    var atSess = await ysCloudGet('hr_sessions');
     if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
-      var _atLocal = ysMirrorRecs('ys_sessions') || [];
-      var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_sessions');
-      var _atPending = _ysQueueGet('ys_sessions');
-      if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'ys_sessions');
+      var _atLocal = ysMirrorRecs('hr_sessions') || [];
+      var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'hr_sessions');
+      var _atPending = _ysQueueGet('hr_sessions');
+      if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'hr_sessions');
       _ysAtDiskSave(_atMerge);
       window._atData = _atMerge;
       if (_atPending && _atMerge.length > atSess.length) {
-        _ysQueueAdd('ys_sessions', _atMerge);
+        _ysQueueAdd('hr_sessions', _atMerge);
         ysUpdateQueueBadge();
       }
     }
     // טען נתוני שינה
-    var slSess = await ysCloudGet('ys_sleep_sessions');
+    var slSess = await ysCloudGet('hr_sleep_sessions');
     if (ctxStale(_ep)) return;
     if (slSess && Array.isArray(slSess)) {
-      var _slLocal2 = ysMirrorRecs('ys_sleep_sessions') || [];
-      var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
-      var _slPending = _ysQueueGet('ys_sleep_sessions');
-      if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'ys_sleep_sessions');
+      var _slLocal2 = ysMirrorRecs('hr_sleep_sessions') || [];
+      var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'hr_sleep_sessions');
+      var _slPending = _ysQueueGet('hr_sleep_sessions');
+      if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'hr_sleep_sessions');
       _ysSlDiskSave(_slMerge);
       window._slData = _slMerge;
       if (_slPending && _slMerge.length > slSess.length) {
-        _ysQueueAdd('ys_sleep_sessions', _slMerge);
+        _ysQueueAdd('hr_sleep_sessions', _slMerge);
         ysUpdateQueueBadge();
       }
     }
-    var abR = await ysCfgGet('ys_absence_reasons');
-    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['ys_absence_reasons'] || 0) >= (meta['ys_absence_reasons'] || 0)) {
-      ysCfgLocalSet('ys_absence_reasons', abR);
-      if (remoteMeta['ys_absence_reasons']) { meta['ys_absence_reasons'] = remoteMeta['ys_absence_reasons']; lsSet('ys_settings_meta', JSON.stringify(meta)); }
+    var abR = await ysCfgGet('hr_absence_reasons');
+    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['hr_absence_reasons'] || 0) >= (meta['hr_absence_reasons'] || 0)) {
+      ysCfgLocalSet('hr_absence_reasons', abR);
+      if (remoteMeta['hr_absence_reasons']) { meta['hr_absence_reasons'] = remoteMeta['hr_absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
-    /*  ⛔ `ys_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
+    /*  ⛔ `hr_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
      *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
      *  ⭐ השורה נמחקה מחיקה רכה בענן בהחלטת מנהל, ⛔ ואין להחזיר את
      *  המשיכה: ⚠️ משיכה של שורה מחוקה מחזירה אותה למסך כאילו היא חיה. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
-      var _atCfgV = await ysCfgGet('ys_attend_cfg');
-      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; ysCfgLocalSet('ys_attend_cfg', _atCfgV); }
-      var _slCfgV = await ysCfgGet('ys_sleep_cfg');
-      if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; ysCfgLocalSet('ys_sleep_cfg', _slCfgV); }
+      var _atCfgV = await ysCfgGet('hr_attend_cfg');
+      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; ysCfgLocalSet('hr_attend_cfg', _atCfgV); }
+      var _slCfgV = await ysCfgGet('hr_sleep_cfg');
+      if (_slCfgV && typeof _slCfgV === 'object') { window._slCfg = (typeof _slCleanCfg === 'function') ? _slCleanCfg(_slCfgV) : _slCfgV; ysCfgLocalSet('hr_sleep_cfg', _slCfgV); }
     } catch (eCfg) { ysWriteFail('ysPullFromCloud', eCfg); }
     // ---- הרשאות: משיכה שוטפת ----
-    // עד היום ys_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
+    // עד היום hr_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
     // למשתמש רק אחרי יציאה וכניסה מחדש. עכשיו הוא מגיע תוך שניות (הפולינג של
     // plTick). עטוף בנפרד: כשל כאן לא מפיל את שאר המשיכה, ומטריצה פגומה
     // או ריקה נדחית ב-ysApplyPerms במקום לנעול את המשתמש מחוץ לכל המודולים.
     try {
-      var pmV = await ysCfgGet('ys_perms');
+      var pmV = await ysCfgGet('hr_perms');
       if (ctxStale(_ep)) return;
       if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
         if (ysApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
@@ -7642,7 +7648,7 @@ setTimeout(async function() {
   var _ep = ctxEpoch();
   try {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
-    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'ys_last_changed').maybeSingle());
+    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
       // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
@@ -7652,7 +7658,7 @@ setTimeout(async function() {
       return;
     }
     if (r.data) {
-      var remoteTs = parseInt(kvParse('ys_last_changed', r.data.value).value) || 0;
+      var remoteTs = parseInt(kvParse('hr_last_changed', r.data.value).value) || 0;
       if (ctxStale(_ep)) return;
       _ysLastTs = remoteTs;
       await ysPullFromCloud();
@@ -7749,10 +7755,10 @@ function selectSearchStudent(sid) {
 // **מדווח** מה חסר ומפנה ליצירת המשתמש הראשון ידנית; הוא אינו מייצר סוד.
 async function ensureFirstAdmin() {
   try {
-    var {data, error} = await SB.from('ys_users').select('client_id').limit(1);
+    var {data, error} = await SB.from('hr_users').select('client_id').limit(1);
     var tableError = error && (
       error.code === '42P01' ||
-      (error.message && error.message.indexOf('ys_users') !== -1)
+      (error.message && error.message.indexOf('hr_users') !== -1)
     );
     // ⛔ מסך ההתקנה הוסר (סבב 58) — מה שנשאר הוא **דיווח** במסך הכניסה,
     //    ואין כאן סכימה, אין תיבת העתקה ואין המתנה אוטומטית. הטיפול
@@ -7846,7 +7852,7 @@ function ysSortStudents(list) {
     return HE.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
-function getStudents(){try{var s=ysMirrorRecs('ys_students_rows');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+function getStudents(){try{var s=ysMirrorRecs('hr_students_rows');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
 // ו-tombstones שורדים כל מחזור קריאה-שמירה.
@@ -7865,8 +7871,8 @@ function saveStudents(s){
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=ysCfgLocalGet('ys_reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] ys_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function getApprovals(){try{var v=ysCfgLocalGet('ys_approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] ys_approvals פגום — נטען ריק:',e.message);return {};}}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=ysCfgLocalGet('hr_reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getApprovals(){try{var v=ysCfgLocalGet('hr_approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
 }
@@ -8143,6 +8149,81 @@ function getAllRelevantAbsences(s) {
   return [];
 }
 
+/* ═══ הגירת התחילית — הגירה מקומית חד-פעמית (סבב 148) ═════════════════════
+   ⛔ **סורקת את `localStorage` עצמו** — ⚠️ ולא רשימת שמות: ⭐ חלק מהמפתחות
+      נבנים בזמן ריצה מקידומת (אופק הפינוי · המראה · יומן הפינוי), ⛔ ורשימה
+      מוקלדת הייתה מפספסת אותם בשקט — ⚠️ ובדיוק במקום שאין מי שיבחין.
+   ⛔ **והתור שלא נדחף וזהות המכשיר ראשונים** — ⚠️ שינוי שמם בלי הגירה מאבד
+      אותם: ⭐ התור אינו ניתן לשחזור, ⛔ וזהות חדשה מייתמת כל מה שסומן עליה.
+   ⛔ **וההגירה אידמפוטנטית** — ⚠️ קוראת · כותבת · ורק אז מוחקת: ⭐ מכשיר
+      שנסגר באמצע אינו מאבד דבר, ⛔ וריצה שנייה אינה משנה דבר.
+   ⛔ **ומפתח שערכו נוקב בשם הישן מתוקן בשדה** — ⚠️ ולא במחרוזת כולה:
+      ⭐ טקסט שהמשתמש הקליד עלול לשאת את אותן שתי אותיות, ⛔ ורישה גורפת
+      הייתה כותבת אותן מחדש.
+   ⚠️ **והיא יורדת בסבב שאחרי זה שהריץ אותה** — ⛔ אלא אם הוכרזה
+      ב-`APP.migrateKeep` עם סבבה.
+   ══════════════════════════════════════════════════════════════════════ */
+/*  ⛔ ההגירה מצהירה את סבבה כאן (סבב 148) — ⚠️ ולא בפרק הסבב: ⭐ פרק סבב
+ *  נגזם, ⛔ וההצהרה נשארת ליד הקוד שהיא מתארת. */
+function migratePrefixKeys() {
+  var from = 'ys_', to = 'hr_';
+  /*  ⛔ הראשונים בסדר — ⚠️ התור שלא נדחף וזהות המכשיר. */
+  var first = ['pending', 'device_id', 'offline_queue', 'login_log_queue'];
+  /*  ⛔ מפתחות שערכם נושא שם ישן בשדה `key` — ⚠️ תור הכתיבות ויומן הכניסות. */
+  var deep = ['offline_queue', 'login_log_queue'];
+  var keys = [];
+  try {
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf(from) === 0) keys.push(k);
+    }
+  } catch (e) { console.error('[lsmig] סריקת האחסון נכשלה', e); return { before: -1, moved: 0 }; }
+  var before = keys.length;
+  if (!before) return { before: 0, moved: 0 };
+  var rank = function (key) {
+    for (var j = 0; j < first.length; j++) if (key.indexOf(from + first[j]) === 0) return j;
+    return first.length;
+  };
+  keys.sort(function (a, b) { return rank(a) - rank(b) || (a < b ? -1 : (a > b ? 1 : 0)); });
+  var moved = 0;
+  for (var n = 0; n < keys.length; n++) {
+    var old = keys[n], neu = old.split(from).join(to);
+    if (neu === old) { moved++; continue; }
+    try {
+      var v = localStorage.getItem(old);
+      /*  ⛔ כותבים לפני שמוחקים — ⚠️ ויעד שכבר קיים אינו נדרס: ⭐ ריצה
+       *  שנייה מוצאת אותו שם, ⛔ והמקור יורד בלי לאבד דבר. */
+      if (v !== null && localStorage.getItem(neu) === null) {
+        localStorage.setItem(neu, migratePrefixValue(neu, v, from, to, deep));
+      }
+      localStorage.removeItem(old);
+      moved++;
+    } catch (e) { console.error('[lsmig] מפתח שלא הוגר: ' + old, e); }
+  }
+  /*  ⛔ המדידה בשני הכיוונים — ⚠️ פער בין מה שנמדד למה שהוגר הוא אובדן:
+   *  ⭐ והוא נרשם ברעש ⛔ ואינו נבלע. */
+  if (moved !== before) console.error('[lsmig] ⛔ ' + moved + ' מתוך ' + before + ' — פער בהגירה');
+  else console.log('[lsmig] ' + moved + ' מפתחות הוגרו מ-' + from + ' ל-' + to);
+  return { before: before, moved: moved };
+}
+/*  ⛔ השם שבתוך הערך — ⚠️ שדה `key` במערך JSON, ⭐ ולא המחרוזת כולה:
+ *  ⛔ ערך שאינו מערך, וערך פגום, נשמרים כפי שהם — ⚠️ הגירה אינה מקום
+ *  לתקן בו נתון. */
+function migratePrefixValue(key, val, from, to, deep) {
+  for (var i = 0; i < deep.length; i++) {
+    if (key.indexOf(to + deep[i]) !== 0) continue;
+    try {
+      var q = JSON.parse(val);
+      if (!Array.isArray(q)) return val;
+      for (var j = 0; j < q.length; j++) {
+        if (q[j] && typeof q[j].key === 'string') q[j].key = q[j].key.split(from).join(to);
+      }
+      return JSON.stringify(q);
+    } catch (e) { return val; }
+  }
+  return val;
+}
+
 function _migrateStudentLegacy(s) {
   if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1) {
     if (!Array.isArray(s.absences)) s.absences = [];
@@ -8306,7 +8387,7 @@ async function openStatusHistory(sid) {
   openModal(MSG_STATUS_HISTORY,
     '<div class="u-p-7 u-ta-c u-c-text3 u-fs-3">טוען מהענן…</div>', '');
   var rows = null, failed = false;
-  try { rows = await ysCloudGet('ys_students_rows'); } catch (e) { failed = true; }
+  try { rows = await ysCloudGet('hr_students_rows'); } catch (e) { failed = true; }
   if (!Array.isArray(rows)) failed = true;
   var box = document.getElementById('modal-body');
   var ttl = document.getElementById('modal-title');
@@ -8412,7 +8493,7 @@ function saveStudent(){
     // אין מיספור-מחדש! id חייב להישאר יציב לצורך מיזוג ברמת רשומה בין מכשירים
   }
   saveStudents(students);
-  // ⚠️ התלמיד נשמר במכשיר וסומן ⏳; האישור יגיע מדחיפת `ys_students_rows` הבאה.
+  // ⚠️ התלמיד נשמר במכשיר וסומן ⏳; האישור יגיע מדחיפת `hr_students_rows` הבאה.
   // ⛔ הסימון נגזר מהמזהה עצמו ולא מ-`students[students.length-1]` (סבב 37) —
   //    המערך ממוין מיד אחרי ה-push, ולכן האיבר האחרון הוא התלמיד האחרון
   //    **בסדר האלפביתי** ולא זה שנוסף; הסימון נכתב על רשומה אחרת, ושלוש
@@ -8686,26 +8767,26 @@ function _ysPullStaleMark(el, bad) {
  *  ⭐ מסלול שאין לו חלון מוצהר מוסר `null` במפורש ⛔ ולא משמיט ארגומנט,
  *  ⚠️ שהשמטה נקראת «לא נשאלתי» ⛔ והצהרה נקראת «נמדד ואין». */
 async function _atPullSessions(win) {
-  var v = null; try { v = await ysCloudGet('ys_sessions', win); } catch (e) {}
+  var v = null; try { v = await ysCloudGet('hr_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
-  var loc = _ysDiskArr('ys_sessions');
-  var out = loc ? _ysSessionsMerge(v, loc, 'ys_sessions', !!win) : v;
+  var loc = _ysDiskArr('hr_sessions');
+  var out = loc ? _ysSessionsMerge(v, loc, 'hr_sessions', !!win) : v;
   window._atData = out; _ysAtDiskSave(out);
   return true;
 }
 async function _atPullCfg() {
-  var r = null; try { r = await ysCfgGet('ys_attend_cfg', true); } catch (e) {}
+  var r = null; try { r = await ysCfgGet('hr_attend_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._atCfg = r.value; ysCfgLocalSet('ys_attend_cfg', r.value); }
+  if (r.value) { window._atCfg = r.value; ysCfgLocalSet('hr_attend_cfg', r.value); }
   return true;
 }
 async function _atPullTreats() {
-  var r = null; try { r = await ysCfgGet('ys_attend_treats', true); } catch (e) {}
+  var r = null; try { r = await ysCfgGet('hr_attend_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
    *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
-  if (Array.isArray(r.value)) { window._atTreats = r.value; lsSetArray('ys_attend_treats', r.value, _ysRecTs); }
-  else if (!Array.isArray(window._atTreats)) window._atTreats = ysCachedArr('_atTreats', 'ys_attend_treats') || [];
+  if (Array.isArray(r.value)) { window._atTreats = r.value; lsSetArray('hr_attend_treats', r.value, _ysRecTs); }
+  else if (!Array.isArray(window._atTreats)) window._atTreats = ysCachedArr('_atTreats', 'hr_attend_treats') || [];
   return true;
 }
 window._atMarks = {};              // המבנה: {sid:{s,min}}
@@ -8745,20 +8826,20 @@ function atDefaultCfg() {
  *  רשאי להמתין לרשת, ⭐ וההגדרות הן מה שקובע אילו כפתורי סדר להציג. */
 function atCachedCfg() {
   if (window._atCfg) return window._atCfg;
-  try { var p=ysCfgLocalGet('ys_attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
+  try { var p=ysCfgLocalGet('hr_attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
   return null;
 }
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
-  ysCfgLocalSet('ys_attend_cfg',cfg);
-  // בלי קידום ys_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
+  ysCfgLocalSet('hr_attend_cfg',cfg);
+  // בלי קידום hr_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
   // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
-  try { var r=await ysCfgSet('ys_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('atSaveCfg', e); }
+  try { var r=await ysCfgSet('hr_attend_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('atSaveCfg', e); }
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
-  try { var v=await ysCloudGet('ys_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
-  var _atDisk=ysMirrorRecs('ys_sessions');
+  try { var v=await ysCloudGet('hr_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
+  var _atDisk=ysMirrorRecs('hr_sessions');
   if(Array.isArray(_atDisk)){window._atData=_atDisk;return window._atData;}
   window._atData=[]; return window._atData;
 }
@@ -8775,9 +8856,9 @@ async function atSaveData(data) {
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _atLocalN=ysCount(data);
-    var _atRemote=null; try { _atRemote=await ysCloudGet('ys_sessions'); } catch(eR){}
+    var _atRemote=null; try { _atRemote=await ysCloudGet('hr_sessions'); } catch(eR){}
     if (Array.isArray(_atRemote)) {
-      data=_ysSessionsMerge(_atRemote, data, 'ys_sessions');
+      data=_ysSessionsMerge(_atRemote, data, 'hr_sessions');
       window._atData=data;
       _ysAtDiskSave(data);
     }
@@ -8785,15 +8866,15 @@ async function atSaveData(data) {
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
        לערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
-    var _rAt=await pushTable('ys_sessions',data);
+    var _rAt=await pushTable('hr_sessions',data);
     /* ⛔ כתיבה שנכשלה חוזרת לתור ⛔ ואינה נשכחת — ⚠️ בלי זה רשומה שנכתבה
        אופליין הייתה יושבת על הדיסק עד העריכה הבאה, ⭐ ואם לא הייתה כזו —
        לנצח: ⛔ הדחיפה היחידה שהייתה מנסה שוב היא זו שהמשתמש יזם. */
-    if(!(_rAt&&_rAt.ok)&&ysCount(data)) { _ysQueueAdd('ys_sessions',data); ysUpdateQueueBadge(); }
+    if(!(_rAt&&_rAt.ok)&&ysCount(data)) { _ysQueueAdd('hr_sessions',data); ysUpdateQueueBadge(); }
     // ⚠️ רק כתיבה שהצליחה היא ראיה — ⭐ ואותה עדות בדיוק מזינה את הסימון ⏳
     //    ואת עֵד הפינוי; ר' `_ysPushedAt`.
     if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
-    ysSyncLog('push','ys_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
+    ysSyncLog('push','hr_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
   } catch (e) { ysWriteFail('atSaveData', e); }
@@ -8801,8 +8882,8 @@ async function atSaveData(data) {
 async function atLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ⚠️ הציור הראשון של מסך ההשגחה קורא
   //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
-  try { var v=await ysCfgGet('ys_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
-  try { var lc=lsGet('ys_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
+  try { var v=await ysCfgGet('hr_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('hr_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
@@ -8813,17 +8894,17 @@ async function atSaveTreats(data) {
    *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
   var _ep = ctxEpoch();
   var _t0=Date.now();
-  lsSetArray('ys_attend_treats', data, _ysRecTs);
+  lsSetArray('hr_attend_treats', data, _ysRecTs);
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
     // מדריכים שרשמו טיפול במקביל מחקו זה את זה. אותה סמנטיקה כמו הסדרים.
-    var _tRemote=null; try { _tRemote=await ysCfgGet('ys_attend_treats'); } catch(eR){}
+    var _tRemote=null; try { _tRemote=await ysCfgGet('hr_attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
-      data=_ysSessionsMerge(_tRemote, data, 'ys_attend_treats');
-      lsSetArray('ys_attend_treats', data, _ysRecTs);
+      data=_ysSessionsMerge(_tRemote, data, 'hr_attend_treats');
+      lsSetArray('hr_attend_treats', data, _ysRecTs);
     }
-    var r=await ysCfgSet('ys_attend_treats',data);
-    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
+    var r=await ysCfgSet('hr_attend_treats',data);
+    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('hr_attend_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('atSaveTreats', e); }
   window._atTreats=data;
   return data;
@@ -8878,7 +8959,7 @@ async function loadAttend() {
   /*  ⛔ העותק נקרא ⛔ ואינו נכתב כברירת מחדל — ⚠️ `_atCfg=atDefaultCfg()`
    *  היה מסמן «נטען», ⭐ והמשיכה שאחריו לא הייתה מחליפה ערך שכבר «יש». */
   atCachedCfg();
-  ysCachedArr('_atData','ys_sessions');
+  ysCachedArr('_atData','hr_sessions');
   _atPaintReg();
   atShowTab(window._atView||'reg');
 
@@ -9030,11 +9111,11 @@ async function ysRefreshApprovalMarks(sid) {
     }
 
     var atCfg = (window._atCfg && Array.isArray(window._atCfg.sessions)) ? window._atCfg.sessions : [];
-    refreshSet('ys_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
+    refreshSet('hr_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
 
     var slCfg = (window._slCfg && Array.isArray(window._slCfg.sessions)) ? window._slCfg.sessions : [];
     var slIso = (typeof slGetLogicalDate === 'function') ? slGetLogicalDate() : todayIso;
-    refreshSet('ys_sleep_sessions', slCfg, slIso, window._slCurrentSessionId, window._slMarks, slRenderStudents, function(d){ window._slData = d; slSaveData(d); }, true);
+    refreshSet('hr_sleep_sessions', slCfg, slIso, window._slCurrentSessionId, window._slMarks, slRenderStudents, function(d){ window._slData = d; slSaveData(d); }, true);
   } catch(e) { console.warn('[approval-refresh]', e); }
 }
 
@@ -9084,7 +9165,7 @@ function atRenderTodaySessions() {
  *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
  *  משהה את פתיחת הסדר עד שהרשת עונה. */
 async function atEditSession(recId) {
-  var data=ysCachedArr('_atData','ys_sessions')||[];
+  var data=ysCachedArr('_atData','hr_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   // אתחל סימונים מהרשומה הקיימת
@@ -9571,9 +9652,9 @@ async function atRenderArchive(records) {
   var el=document.getElementById('at-arc-list');
   if(!el) return;
   if(records){ _atPaintArchive(el, records, ''); return; }
-  _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], '');
+  _atPaintArchive(el, ysCachedArr('_atData','hr_sessions')||[], '');
   var _okArc=await _atPullSessions(ysHebYearWin(_hcH(new Date()).hy));
-  _atPaintArchive(el, ysCachedArr('_atData','ys_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+  _atPaintArchive(el, ysCachedArr('_atData','hr_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _atPaintArchive(el, records, warn) {
   var warnHtml=warn?'<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
@@ -9855,8 +9936,8 @@ async function atRenderSupervision() {
    *  **לפני** הציור הראשון, ⭐ ולכן גם ניווט בין חודשים — שאינו נוגע
    *  בנתונים כלל — נראה תקוע עד שהמשיכה חזרה. ⛔ והרענון עצמו לא בוטל:
    *  המשגיח חייב נתונים טריים, ⚠️ ומה שהשתנה הוא **הסדר**. */
-  var cD=ysCachedArr('_atData','ys_sessions');
-  var cT=ysCachedArr('_atTreats','ys_attend_treats');
+  var cD=ysCachedArr('_atData','hr_sessions');
+  var cT=ysCachedArr('_atTreats','hr_attend_treats');
   if(cD&&cT) _atSupPaint(el,cD,cT,'');
   else el.innerHTML='<div class="u-ta-c u-p-7 u-c-text2">⏳ טוען...</div>';
   /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
@@ -9864,8 +9945,8 @@ async function atRenderSupervision() {
   var okA=await Promise.all([_atPullSessions(ysHebMonthWin(_atSupMonth(), window._atSupMI)), _atPullTreats()]);
   /*  ⛔ כשל משיכה מסומן גלוי ⛔ ולא בשקט — ⚠️ מסך שמציג נתון ישן בלי לומר
    *  זאת הוא הכשל השקט עצמו: ⭐ המשגיח מחליט על סמך מה שהוא רואה. */
-  _atSupPaint(el, ysCachedArr('_atData','ys_sessions')||[],
-                  ysCachedArr('_atTreats','ys_attend_treats')||[],
+  _atSupPaint(el, ysCachedArr('_atData','hr_sessions')||[],
+                  ysCachedArr('_atTreats','hr_attend_treats')||[],
                   (okA[0]&&okA[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 
@@ -10267,7 +10348,7 @@ async function atSaveSettingsCfg() {
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
-   מודול זמן השינה — אותו דפוס כמו הנוכחות, מפתחות `ys_sleep_*`
+   מודול זמן השינה — אותו דפוס כמו הנוכחות, מפתחות `hr_sleep_*`
    ══════════════════════════════════════════════════════════════════════════ */
 var SL_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 function slDow(isoDate){return SL_DOW[new Date(isoDate+'T12:00:00').getDay()];}
@@ -10302,25 +10383,25 @@ window._slTreats = null;
 /*  ⛔ אותו זוג בדיוק כמו בנוכחות (סבב 85) — ⚠️ שני המסכים הם אותו דפוס,
  *  ⛔ ותיקון באחד בלבד היה משאיר את השני תקוע על «⏳ טוען...». */
 async function _slPullSessions(win) {
-  var v = null; try { v = await ysCloudGet('ys_sleep_sessions', win); } catch (e) {}
+  var v = null; try { v = await ysCloudGet('hr_sleep_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
-  var loc = ysMirrorRecs('ys_sleep_sessions');
-  var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions', !!win) : v;
+  var loc = ysMirrorRecs('hr_sleep_sessions');
+  var out = loc ? _ysSessionsMerge(v, loc, 'hr_sleep_sessions', !!win) : v;
   window._slData = out; _ysSlDiskSave(out);
   return true;
 }
 async function _slPullCfg() {
-  var r = null; try { r = await ysCfgGet('ys_sleep_cfg', true); } catch (e) {}
+  var r = null; try { r = await ysCfgGet('hr_sleep_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._slCfg = _slCleanCfg(r.value); ysCfgLocalSet('ys_sleep_cfg', window._slCfg); }
+  if (r.value) { window._slCfg = _slCleanCfg(r.value); ysCfgLocalSet('hr_sleep_cfg', window._slCfg); }
   return true;
 }
 async function _slPullTreats() {
-  var r = null; try { r = await ysCfgGet('ys_sleep_treats', true); } catch (e) {}
+  var r = null; try { r = await ysCfgGet('hr_sleep_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ ראה `_atPullTreats` — מפתח שטרם נכתב אינו מוחק את הדיסק. */
-  if (Array.isArray(r.value)) { window._slTreats = r.value; lsSetArray('ys_sleep_treats', r.value, _ysRecTs); }
-  else if (!Array.isArray(window._slTreats)) window._slTreats = ysCachedArr('_slTreats', 'ys_sleep_treats') || [];
+  if (Array.isArray(r.value)) { window._slTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _ysRecTs); }
+  else if (!Array.isArray(window._slTreats)) window._slTreats = ysCachedArr('_slTreats', 'hr_sleep_treats') || [];
   return true;
 }
 window._slMarks = {};
@@ -10355,27 +10436,27 @@ function _slCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = slDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { ysCfgLocalSet('ys_sleep_cfg', cfg); } catch (e) { ysWriteFail('_slCleanCfg', e); }
-    try { ysCfgSet('ys_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch (e) { ysWriteFail('_slCleanCfg', e); }
+    try { ysCfgLocalSet('hr_sleep_cfg', cfg); } catch (e) { ysWriteFail('_slCleanCfg', e); }
+    try { ysCfgSet('hr_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) ysTouchLastChanged(); }); } catch (e) { ysWriteFail('_slCleanCfg', e); }
   }
   return cfg;
 }
 /*  ⛔ ראה `atCachedCfg` — שני המודולים הם אותו דפוס בדיוק. */
 function slCachedCfg() {
   if (window._slCfg) return window._slCfg;
-  try { var p=ysCfgLocalGet('ys_sleep_cfg'); if(p){ window._slCfg=_slCleanCfg(p); return window._slCfg; } } catch(e){}
+  try { var p=ysCfgLocalGet('hr_sleep_cfg'); if(p){ window._slCfg=_slCleanCfg(p); return window._slCfg; } } catch(e){}
   return null;
 }
 async function slSaveCfg(cfg) {
   window._slCfg=cfg;
-  ysCfgLocalSet('ys_sleep_cfg',cfg);
+  ysCfgLocalSet('hr_sleep_cfg',cfg);
   // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
-  try { var r=await ysCfgSet('ys_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('slSaveCfg', e); }
+  try { var r=await ysCfgSet('hr_sleep_cfg',cfg); if(!(r&&r.error)) await ysTouchLastChanged(); } catch (e) { ysWriteFail('slSaveCfg', e); }
 }
 async function slLoadData() {
   if (window._slData) return window._slData;
-  try { var v=await ysCloudGet('ys_sleep_sessions'); if(Array.isArray(v)){window._slData=v;return v;} } catch(e){}
-  var _slDisk=ysMirrorRecs('ys_sleep_sessions');
+  try { var v=await ysCloudGet('hr_sleep_sessions'); if(Array.isArray(v)){window._slData=v;return v;} } catch(e){}
+  var _slDisk=ysMirrorRecs('hr_sleep_sessions');
   if(Array.isArray(_slDisk)){window._slData=_slDisk;return window._slData;}
   window._slData=[]; return window._slData;
 }
@@ -10396,9 +10477,9 @@ async function slSaveData(data) {
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _slLocalN=ysCount(data);
-    var _slRemote=null; try { _slRemote=await ysCloudGet('ys_sleep_sessions'); } catch(eR){}
+    var _slRemote=null; try { _slRemote=await ysCloudGet('hr_sleep_sessions'); } catch(eR){}
     if (Array.isArray(_slRemote)) {
-      data=_ysSessionsMerge(_slRemote, data, 'ys_sleep_sessions');
+      data=_ysSessionsMerge(_slRemote, data, 'hr_sleep_sessions');
       window._slData=data;
       _ysSlDiskSave(data);
     }
@@ -10406,17 +10487,17 @@ async function slSaveData(data) {
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
        לערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
-    var _rSl=await pushTable('ys_sleep_sessions',data);
-    if(!(_rSl&&_rSl.ok)&&ysCount(data)) { _ysQueueAdd('ys_sleep_sessions',data); ysUpdateQueueBadge(); }
+    var _rSl=await pushTable('hr_sleep_sessions',data);
+    if(!(_rSl&&_rSl.ok)&&ysCount(data)) { _ysQueueAdd('hr_sleep_sessions',data); ysUpdateQueueBadge(); }
     if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
-    ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
+    ysSyncLog('push','hr_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
   } catch (e) { ysWriteFail('slSaveData', e); }
 }
 async function slLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ר' `atLoadTreats`.
-  try { var v=await ysCfgGet('ys_sleep_treats'); if(Array.isArray(v)){window._slTreats=v;return v;} } catch(e){}
-  try { var lc=lsGet('ys_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._slTreats=p;return p;}} } catch(e){}
+  try { var v=await ysCfgGet('hr_sleep_treats'); if(Array.isArray(v)){window._slTreats=v;return v;} } catch(e){}
+  try { var lc=lsGet('hr_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._slTreats=p;return p;}} } catch(e){}
   return [];
 }
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
@@ -10427,16 +10508,16 @@ async function slSaveTreats(data) {
    *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
   var _ep = ctxEpoch();
   var _t0=Date.now();
-  lsSetArray('ys_sleep_treats', data, _ysRecTs);
+  lsSetArray('hr_sleep_treats', data, _ysRecTs);
   try {
     // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
-    var _tRemoteS=null; try { _tRemoteS=await ysCfgGet('ys_sleep_treats'); } catch(eR){}
+    var _tRemoteS=null; try { _tRemoteS=await ysCfgGet('hr_sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
-      data=_ysSessionsMerge(_tRemoteS, data, 'ys_sleep_treats');
-      lsSetArray('ys_sleep_treats', data, _ysRecTs);
+      data=_ysSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
+      lsSetArray('hr_sleep_treats', data, _ysRecTs);
     }
-    var r=await ysCfgSet('ys_sleep_treats',data);
-    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
+    var r=await ysCfgSet('hr_sleep_treats',data);
+    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('hr_sleep_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('slSaveTreats', e); }
   window._slTreats=data;
   return data;
@@ -10485,7 +10566,7 @@ async function loadSleep() {
   _ysPullStaleMark(el, false);
   /*  ⛔ ראה `loadAttend` — קוראים את העותק ואין כותבים ברירת מחדל. */
   slCachedCfg();
-  ysCachedArr('_slData','ys_sleep_sessions');
+  ysCachedArr('_slData','hr_sleep_sessions');
   _slPaintReg();
   slShowTab(window._slView||'reg');
 
@@ -10626,7 +10707,7 @@ function slRenderTodaySessions() {
  *  מאותו עותק בדיוק, ⭐ ולכן הרשומה נמצאת בו בוודאות: ⛔ `await` כאן היה
  *  משהה את פתיחת הסדר עד שהרשת עונה. */
 async function slEditSession(recId) {
-  var data=ysCachedArr('_slData','ys_sleep_sessions')||[];
+  var data=ysCachedArr('_slData','hr_sleep_sessions')||[];
   var rec=data.find(function(r){return idEq(r.id,recId);});
   if(!rec) return;
   window._slMarks={};window._slPending={};window._slCleared={};
@@ -11024,9 +11105,9 @@ async function slRenderArchive(records) {
   var el=document.getElementById('sl-arc-list');
   if(!el) return;
   if(records){ _slPaintArchive(el, records, ''); return; }
-  _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], '');
+  _slPaintArchive(el, ysCachedArr('_slData','hr_sleep_sessions')||[], '');
   var _okArc=await _slPullSessions(ysHebYearWin(_hcH(new Date()).hy));
-  _slPaintArchive(el, ysCachedArr('_slData','ys_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+  _slPaintArchive(el, ysCachedArr('_slData','hr_sleep_sessions')||[], _okArc?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 function _slPaintArchive(el, records, warn) {
   var warnHtml=warn?'<div class="u-bg-warn-soft u-bd-15-solid-warn-line u-r-radius u-p-4-6 u-mb-5 u-fs-3 u-c-warn">'+esc(warn)+'</div>':'';
@@ -11301,13 +11382,13 @@ async function slRenderSupervision() {
     el.innerHTML='<div class="u-ta-c u-p-7 u-c-text3">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
   /*  ⛔ מציג מיד ומרענן ברקע (סבב 85) — ר' `atRenderSupervision`. */
-  var cD=ysCachedArr('_slData','ys_sleep_sessions');
-  var cT=ysCachedArr('_slTreats','ys_sleep_treats');
+  var cD=ysCachedArr('_slData','hr_sleep_sessions');
+  var cT=ysCachedArr('_slTreats','hr_sleep_treats');
   if(cD&&cT) _slSupPaint(el,cD,cT,'');
   else el.innerHTML='<div class="u-ta-c u-p-7 u-c-text2">⏳ טוען...</div>';
   var okS=await Promise.all([_slPullSessions(ysHebMonthWin(_slSupMonth(), window._slSupMI)), _slPullTreats()]);
-  _slSupPaint(el, ysCachedArr('_slData','ys_sleep_sessions')||[],
-                  ysCachedArr('_slTreats','ys_sleep_treats')||[],
+  _slSupPaint(el, ysCachedArr('_slData','hr_sleep_sessions')||[],
+                  ysCachedArr('_slTreats','hr_sleep_treats')||[],
                   (okS[0]&&okS[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
 };
 

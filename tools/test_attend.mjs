@@ -33,7 +33,12 @@ export const ROWS = [];
 const RUN_MUT = process.env.GATE_MUT === '1';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
-const SQL = readFileSync(join(ROOT, 'migrations/004_backup_retention_cron.sql'), 'utf8');
+/*  ⛔ המיגרציה מתארת את המסד כפי שהיה בשעה שהיא רצה — ⚠️ והשמות שבה
+ *  קדמו לגזירת התחילית משם הריפו (סבב 148): ⭐ ולכן הטקסט מנורמל לשם
+ *  החי **לפני** המדידה, ⛔ והקובץ עצמו אינו נערך ואינו נמחק — ⚠️ וזו
+ *  נקודת התרגום האחת בשער, ⭐ ושתיים היו שני מקורות אמת לאותו שם. */
+const migLive = (s) => s.split('ys_').join('hr_');
+const SQL = migLive(readFileSync(join(ROOT, 'migrations/004_backup_retention_cron.sql'), 'utf8'));
 const DOC = readFileSync(join(ROOT, 'CLAUDE.md'), 'utf8');
 
 let pass = 0, fail = 0;
@@ -96,28 +101,28 @@ process.on('exit', () => {
 const ok = (name, cond) => { RAN++; if (cond) { pass++; console.log('  ok   ' + name); }
   else { fail++; console.log('  FAIL ' + name); } };
 
-/* `ys_attend` כמילה שלמה — ⛔ ולא `ys_sessions`/`_cfg`/`_treats`. */
-const BARE = /ys_attend(?![_A-Za-z0-9])/g;
+/* `hr_attend` כמילה שלמה — ⛔ ולא `hr_sessions`/`_cfg`/`_treats`. */
+const BARE = /hr_attend(?![_A-Za-z0-9])/g;
 const bare = (s) => (s.match(BARE) || []).length;
 
-console.log('· סבב 38 — מחיקת `ys_attend`');
+console.log('· סבב 38 — מחיקת `hr_attend`');
 
 /* ── א. הקוד ───────────────────────────────────────────────────────────── */
-ok('1 · אין אף אזכור של `ys_attend` ב-index.html', bare(SRC) === 0);
+ok('1 · אין אף אזכור של `hr_attend` ב-index.html', bare(SRC) === 0);
 ok('2 · `getAttendance` נמחקה', !/function\s+getAttendance/.test(SRC));
 ok('3 · `saveAttendance` נמחקה', !/function\s+saveAttendance/.test(SRC));
 ok('4 · `ysMergeAttend` נמחקה', !/function\s+ysMergeAttend/.test(SRC));
 ok('5 · `togglePresent` נמחקה', !/togglePresent/.test(SRC));
 ok('6 · `recordTime` נמחקה', !/recordTime/.test(SRC));
-ok('7 · אין צעד דחיפה למפתח', !/step\('ys_attend'/.test(SRC));
+ok('7 · אין צעד דחיפה למפתח', !/step\('hr_attend'/.test(SRC));
 
 /* ── ב. מה ש⛔ לא נגע ───────────────────────────────────────────────────── */
-ok('8 · ⛔ `ys_sessions` שרד — הנוכחית האמיתית',
-  SRC.indexOf("'ys_sessions'") !== -1);
+ok('8 · ⛔ `hr_sessions` שרד — הנוכחית האמיתית',
+  SRC.indexOf("'hr_sessions'") !== -1);
 ok('9 · ⛔ `_ysSessionsMerge` שרד', /function\s+_ysSessionsMerge/.test(SRC));
 ok('10 · ⛔ `ysMarks` שרד', /function\s+ysMarks/.test(SRC));
-ok('11 · ⛔ ענף האובייקטים של `ysMergeRecords` שרד — `ys_approvals` נשען עליו',
-  /ysMergeRecords\(\s*localAp/.test(SRC) && SRC.indexOf("'ys_approvals'") !== -1);
+ok('11 · ⛔ ענף האובייקטים של `ysMergeRecords` שרד — `hr_approvals` נשען עליו',
+  /ysMergeRecords\(\s*localAp/.test(SRC) && SRC.indexOf("'hr_approvals'") !== -1);
 
 /* ── ג. הגיבוי — שני הצדדים יחד ────────────────────────────────────────── */
 const srcBody = /sources: function \(\) \{([\s\S]*?)\n  \}\n\};/.exec(SRC);
@@ -146,8 +151,8 @@ ok('17 · ⭐ פרק סבב 38 נגזם (סבב 48ב) — הסף בטל, והס�
    • ⭐ עד סבב 39 היה **מותר ונדרש** אזכור אחד — הערך שעדיין ישב במסד
      וחיכה למחיקת מנהל, כשורת פער עם טריגר. פער כתוב הוא מציאות, לא
      יכולת שאינה קיימת.
-   ⛔ המנהל מחק את הערך ב-2026-08-18 (נמדד: אפס ב-`kv`, ב-`tb_kv_rishon`,
-     ב-`tb_kv_ramataviv` וב-`sh_backup`), ושורת הפער נמחקה בסבב 39 — ולכן
+   ⛔ המנהל מחק את הערך ב-2026-08-18 (נמדד: אפס ב-`kv`, ב-`ya_settings_rishon`,
+     ב-`ya_settings_ramataviv` וב-`sh_backup`), ושורת הפער נמחקה בסבב 39 — ולכן
      מעכשיו אין אזכור מותר כלל מחוץ לפרקי הסבבים, וטענה 20 התהפכה. */
 const stray = [];
 for (const m of DOC.matchAll(BARE)) {
@@ -171,7 +176,7 @@ if (RUN_MUT) {
 console.log('  — מוטציות —');
 {
   const mut = SRC.replace('function getApprovals(',
-    "function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}\nfunction getApprovals(");
+    "function getAttendance(){return JSON.parse(localStorage.getItem('hr_attend')||'{}');}\nfunction getApprovals(");
   ok('21 · מוטציה: החזרת הגישון מפילה את טענות 1 ו-2',
     bare(mut) > 0 && /function\s+getAttendance/.test(mut));
 }
@@ -180,7 +185,7 @@ console.log('  — מוטציות —');
    *  ⚠️ שלושה-עשר מקורות ה-`kv` ירדו עם הטבלה שהופלה, ⭐ ומקורות הגיבוי
    *  כאן הם `out.push` של טבלאות. */
   const mut = SRC.replace("    out.push({ kind: 'table', name: KV_TABLE",
-                          "    out.push({ kind: 'table', name: 'ys_attend', order: 'key' });\n    out.push({ kind: 'table', name: KV_TABLE");
+                          "    out.push({ kind: 'table', name: 'hr_attend', order: 'key' });\n    out.push({ kind: 'table', name: KV_TABLE");
   const b = /sources: function \(\) \{([\s\S]*?)\n  \}\n\};/.exec(mut);
   ok('22 · מוטציה: החזרת המפתח למקורות הגיבוי מפילה את טענה 13',
     !!b && bare(b[1]) === 1);
@@ -190,8 +195,8 @@ console.log('  — מוטציות —');
 {
   /*  ⛔ העוגן הוא טקסט המיגרציה שכבר רצה — ⚠️ שמות המפתחות שם הם שמות
    *  ה-`kv` ההיסטוריים, ⛔ ומיגרציה שרצה אינה נערכת. */
-  const mut = SQL.replace("    'ys_students', 'ys_attend_sessions'",
-                          "    'ys_students', 'ys_attend', 'ys_attend_sessions'");
+  const mut = SQL.replace("    'hr_students', 'hr_attend_sessions'",
+                          "    'hr_students', 'hr_attend', 'hr_attend_sessions'");
   const k = /function public\.bk_retention_keys\(\)[\s\S]*?\$\$;/.exec(mut);
   ok('24 · מוטציה: החזרתו לרשימת-ההיתר לבדה מפילה את טענות 15 ו-16',
     !!k && bare(k[0]) === 1);
@@ -202,7 +207,7 @@ console.log('  — מוטציות —');
      אחרי שהערך כבר נמחק מהמסד. ⛔ מסבב 70 אין פרק פערים, ⚠️ ולכן הבסיס
      הוא בדיוק המקטע שטענה 20 מודדת — הקובץ מחוץ לפרקי הסבבים. */
   const gaps = DOC.slice(0, r38 === -1 ? DOC.length : r38);
-  const mut = gaps + '\n- **מחיקת המפתח `ys_attend`** — **הטריגר:** המנהל.\n';
+  const mut = gaps + '\n- **מחיקת המפתח `hr_attend`** — **הטריגר:** המנהל.\n';
   ok('25 · מוטציה: החזרת שורת הפער מפילה את טענה 20',
     bare(gaps) === 0 && bare(mut) > 0);
 }
@@ -213,11 +218,11 @@ console.log('  — מוטציות —');
 {
   const added = SRC + '\nfunction _ncPing(){ return 1; }\nvar _ncSeen = _ncPing();\n';
   ok('נ1 · ⭐ מוטציית-נגד: קוד שנוסף ⛔ אינו מפיל את טענות ההיעדר',
-    added !== SRC && (added.match(/ys_attend\b(?!_)/g) || []).length ===
-                     (SRC.match(/ys_attend\b(?!_)/g) || []).length);
+    added !== SRC && (added.match(/hr_attend\b(?!_)/g) || []).length ===
+                     (SRC.match(/hr_attend\b(?!_)/g) || []).length);
 }
 
 }
 
-console.log((fail ? '✗' : '✓') + ` סבב 38 (ys_attend) — ${pass} טענות עברו, ${fail} נכשלו`);
+console.log((fail ? '✗' : '✓') + ` סבב 38 (hr_attend) — ${pass} טענות עברו, ${fail} נכשלו`);
 process.exit(fail ? 1 : 0);

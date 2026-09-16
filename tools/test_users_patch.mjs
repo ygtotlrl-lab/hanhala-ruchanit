@@ -32,7 +32,7 @@ const APP = {
   app: 'hanhala-ruchanit',
   /*  ⛔ טבלת המשתמשים במראה, והקבוע שנושא את שמה — ⚠️ המפתח נגזר ממנו
    *  בשכבת המראה, ⛔ ושם שנכתב פעמיים מייצר מפתח שאיש אינו מחפש. */
-  usersTable: 'ys_users',
+  usersTable: 'hr_users',
   tableConst: 'YS_USERS_TABLE',
   idKey: 'client_id',
   /*  ⛔ עמודת הסוד שלעולם אינה יורדת לדיסק — ⚠️ שמה ההיסטורי כאן,

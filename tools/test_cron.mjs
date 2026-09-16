@@ -40,34 +40,34 @@ import { DB_SCHEMA } from './db_schema.mjs';
 const APP = {
   name: 'hanhala-ruchanit',
   keys: [// סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
-         'ys_sessions_rows', 'ys_marks_rows', 'ys_students_rows',
+         'hr_sessions_rows', 'hr_marks_rows', 'hr_students_rows',
          // סבב 39 — שכבת השורות של השינה, אב ובן.
-         'ys_sleep_sessions_rows', 'ys_sleep_marks_rows',
+         'hr_sleep_sessions_rows', 'hr_sleep_marks_rows',
          // סבב 80 — ההגדרות, שירשו את שלושה-עשר מפתחות ה-`kv`.
-         'ys_settings'],
+         'hr_settings'],
   prefixes: [''],
   /*  ⛔ שנים-עשר מפתחות שהאפליקציה **חדלה לכתוב** בסבב 80 ⛔ ואינם
       יורדים מרשימת-ההיתר — ⚠️ לכל אחד מהם יש עדיין עותקי גיבוי במסד,
       ⭐ ומפתח שיוצא מהרשימה אינו מתפנה לעולם.
-      ⛔ `ys_cls_years` הוחזר לכאן בסבב 83 — ⚠️ הוצאתו בסבב 82 נשענה על
+      ⛔ `hr_cls_years` הוחזר לכאן בסבב 83 — ⚠️ הוצאתו בסבב 82 נשענה על
       כיוון הפוך: הפינוי גורע מפתחות **שברשימה**, ⭐ ולכן ההוצאה הקפיאה
       את שבע שורות הגיבוי שלו ⛔ ולא גרעה אותן; ⚠️ נמדד במסד שהרשימה
       החיה נושאת 35 מפתחות והשם בתוכה. */
-  legacyKeys: ['ys_students', 'ys_attend_sessions', 'ys_attend_cfg',
-               'ys_attend_treats', 'ys_sleep_sessions', 'ys_sleep_cfg',
-               'ys_sleep_treats', 'ys_reasons', 'ys_absence_reasons',
-               'ys_approvals', 'ys_perms', 'ys_cls_years', 'ys_settings_meta'],
+  legacyKeys: ['hr_students', 'hr_attend_sessions', 'hr_attend_cfg',
+               'hr_attend_treats', 'hr_sleep_sessions', 'hr_sleep_cfg',
+               'hr_sleep_treats', 'hr_reasons', 'hr_absence_reasons',
+               'hr_approvals', 'hr_perms', 'hr_cls_years', 'hr_settings_meta'],
   sisterKeys: [
     // schar-limud
     'sl_students', 'sl_transactions', 'sl_settings', 'sl_lists',
     // yoman-avoda — חמישה מקורות × שני מוסדות
-    'rishon_tb_entries_rows', 'rishon_tb_cats', 'rishon_tb_subs',
-    'rishon_tb_subs_meta',
-    'ramataviv_tb_entries_rows', 'ramataviv_tb_cats', 'ramataviv_tb_subs',
-    'ramataviv_tb_subs_meta',
+    'rishon_ya_entries_rows', 'rishon_ya_cats', 'rishon_ya_subs',
+    'rishon_ya_subs_meta',
+    'ramataviv_ya_entries_rows', 'ramataviv_ya_cats', 'ramataviv_ya_subs',
+    'ramataviv_ya_subs_meta',
     // yoman-avoda — שמות גיבוי השגרה שיצאו משימוש בסבב 35
-    'rishon_tb_entries', 'rishon_tb_archive',
-    'ramataviv_tb_entries', 'ramataviv_tb_archive',
+    'rishon_ya_entries', 'rishon_ya_archive',
+    'ramataviv_ya_entries', 'ramataviv_ya_archive',
   ],
   /*  ⛔ הפרויקט שהאפליקציה חיה בו — ⚠️ שתי סכימות חיות ב-`DB_SCHEMA`,
       ⭐ וההצלבה היא מול זו של הפרויקט הזה בלבד. */
@@ -83,14 +83,14 @@ const APP = {
   fnDefRpc: 'bk_fn_def',
   fnNames: ['bk_retention_keys', 'bk_retention_sweep', 'bk_prune_layer'],
   migration: 'migrations/004_backup_retention_cron.sql',
-  allowlistMigration: 'migrations/022_backup_allowlist_restore_ys_cls_years.sql',
-  /*  ⛔ משפחת סכימה משותפת שנייה (סבב 104) — ⚠️ `tb_kv_rishon`/`tb_kv_ramataviv`
+  allowlistMigration: 'migrations/037_prefix_from_repo_name.sql',
+  /*  ⛔ משפחת סכימה משותפת שנייה (סבב 104) — ⚠️ `ya_settings_rishon`/`ya_settings_ramataviv`
       הן הבית הענני של הגדרות היומן, ⭐ והבעלות שלו: ⛔ `migration` כאן הוא
       `null` בכל ריפו שאינו הבעלים, ⚠️ ו-`since` הוא המיגרציה שמצהירה מתי
       הבעלות עברה — ⭐ המיגרציות שקדמו לה רצו ⛔ ואינן נערכות ואינן נמחקות,
       ⚠️ ומה שנמדד הוא שאין הגדרה **חדשה** מנקודת ההצהרה ואילך. */
   kvShared: {
-    names: ['tb_kv_rishon', 'tb_kv_ramataviv'],
+    names: ['ya_settings_rishon', 'ya_settings_ramataviv'],
     migration: null,
     migrationDoc: 'yoman-avoda/migrations/000_initial_schema.sql',
     since: 'migrations/031_kv_ownership_to_yoman.sql',
@@ -100,13 +100,13 @@ const APP = {
         ⭐ ולכן `null` מוצהר ⛔ ולא נשמט. */
     naming: null,
   },
-  migrationDoc: 'hanhala-ruchanit/migrations/022_backup_allowlist_restore_ys_cls_years.sql',
+  migrationDoc: 'hanhala-ruchanit/migrations/037_prefix_from_repo_name.sql',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 
 /*  ⛔ השורה שהקובץ הזה אוכף (סבב 92) — ⚠️ בעלות הסכימה המשותפת: ⭐ עותק
  *  אחד, בריפו אחד, ⛔ והנמדד הוא היעדר העותק השני. */
-export const ROWS = [154, 159, 168];
+export const ROWS = [155, 160, 169, 209];
 
 /*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
  *  ⟵ שחזור, ⭐ ושני שערים לבדם היו רוב זמן הסט: ⛔ הן רצות ברמה המלאה

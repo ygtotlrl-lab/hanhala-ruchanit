@@ -214,10 +214,10 @@ function makeSB(state) {
         }
         if (state.missingCols && q._payload &&
             ('pass_fp' in q._payload || 'pass_salt' in q._payload)) {
-          return { data: null, error: { message: 'column "pass_fp" of relation "ys_users" does not exist' } };
+          return { data: null, error: { message: 'column "pass_fp" of relation "hr_users" does not exist' } };
         }
         if (state.missingCols && q._f.some((f) => f[1] === 'pass_fp')) {
-          return { data: null, error: { message: 'column ys_users.pass_fp does not exist' } };
+          return { data: null, error: { message: 'column hr_users.pass_fp does not exist' } };
         }
         let rows = (state.tables[table] || []).slice();
         for (const [kind, col, val] of q._f) {
@@ -398,7 +398,7 @@ const USERS = () => ([
 /* ── 1. גזירת הטביעה ───────────────────────────────────────────────────── */
 sec('1. PBKDF2 — גזירה, מלח, ודטרמיניזם');
 {
-  const S = boot({ tables: { ys_users: USERS() } });
+  const S = boot({ tables: { hr_users: USERS() } });
   eq('1א. YS_PASS_ITER = 100000', S.YS_PASS_ITER, 100000);
   const s1 = S.ysRandSalt(), s2 = S.ysRandSalt();
   T('1ב. מלח באורך 32 hex', /^[0-9a-f]{32}$/.test(s1));
@@ -415,7 +415,7 @@ sec('1. PBKDF2 — גזירה, מלח, ודטרמיניזם');
   T('1ט. הטביעה אינה מכילה את הסיסמה', fpA.indexOf('123456') === -1);
 }
 {
-  const S = boot({ tables: { ys_users: [] } }, { noCrypto: true });
+  const S = boot({ tables: { hr_users: [] } }, { noCrypto: true });
   eq('1י. בלי crypto ⇒ ysRandSalt מחזירה null', S.ysRandSalt(), null);
   eq('1יא. בלי crypto ⇒ ysMakePassFp מחזירה null', await S.ysMakePassFp('123456'), null);
 }
@@ -423,9 +423,9 @@ sec('1. PBKDF2 — גזירה, מלח, ודטרמיניזם');
 /* ── 2. המטמון — ⛔ password_hash לעולם לא בדיסק ────────────────────────── */
 sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאות');
 {
-  const S = boot({ tables: { ys_users: USERS() } });
+  const S = boot({ tables: { hr_users: USERS() } });
   S.ysUsersCacheSaveAll(USERS());
-  const c = JSON.parse(LS.ys_mirror_users);
+  const c = JSON.parse(LS.hr_mirror_users);
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
   T('2ג. ⛔ אין password_hash באף רשומה', !c.some((u) => 'password_hash' in u));
@@ -439,30 +439,30 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
 }
 {
   // מטמון ישן בפורמט של סבב 21 (רשומה אחת, עם סיסמה גלויה)
-  const S = boot({ tables: { ys_users: USERS() } });
-  LS.ys_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
+  const S = boot({ tables: { hr_users: USERS() } });
+  LS.hr_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
   /*  ⛔ המראה נטענת לזיכרון לפני הקריאה (סבב 116) — ⚠️ `ysUsersCacheGet`
    *  קוראת מ-`MIRROR`, ⭐ ומסלול הכניסה טוען אותה בשורתו הראשונה. */
   S.mirrorLoadOne(S.YS_USERS_TABLE);
   S.ysUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
                        role: 'admin', active: true, pass_salt: 'aa', pass_fp: 'bb' });
-  const c = JSON.parse(LS.ys_mirror_users);
+  const c = JSON.parse(LS.hr_mirror_users);
   eq('2ח. הרשומה הישנה שרדה לצד החדשה', c.length, 2);
   T('2ט. ⭐ password_hash של הרשומה הישנה **נמחק מהדיסק בפועל**',
-    !c.some((u) => 'password_hash' in u) && String(LS.ys_mirror_users).indexOf('222222') === -1);
+    !c.some((u) => 'password_hash' in u) && String(LS.hr_mirror_users).indexOf('222222') === -1);
   eq('2י. הרשומה הישנה נותרה בלי טביעה', c.find((u) => u.client_id === '2').pass_fp, null);
   eq('2יא. אין כפילות בעדכון חוזר של אותו client_id',
     (S.ysUsersCacheSave({ client_id: '1', username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
-                          pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.ys_mirror_users).length), 2);
-  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.ys_mirror_users).find((u) => u.client_id === '1').pass_fp, 'dd');
+                          pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.hr_mirror_users).length), 2);
+  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.hr_mirror_users).find((u) => u.client_id === '1').pass_fp, 'dd');
 }
 {
-  const S = boot({ tables: { ys_users: USERS() } });
+  const S = boot({ tables: { hr_users: USERS() } });
   S.ysUsersCacheSaveAll('לא-מערך');
-  eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.ys_mirror_users, undefined);
+  eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.hr_mirror_users, undefined);
   S.ysUsersCacheSave({ client_id: '9', username: 'x', full_name: 'x', role: 'junior', active: false });
-  eq('2יד. משתמש לא-פעיל אינו נשמר', LS.ys_mirror_users, undefined);
+  eq('2יד. משתמש לא-פעיל אינו נשמר', LS.hr_mirror_users, undefined);
 }
 
 /* ── 2י. ⛔ הגירת מפתח המראה (סבב 113) ───────────────────────────────────────
@@ -475,36 +475,36 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
    ──────────────────────────────────────────────────────────────────────── */
 sec('2י. מראת המשתמשים בשכבת המראה');
 {
-  const S = boot({ tables: { ys_users: USERS() } });
+  const S = boot({ tables: { hr_users: USERS() } });
   const rows = [{ client_id: '1', username: 'a', full_name: 'א', role: 'admin',
                   active: true, pass_salt: 'aa', pass_fp: 'bb' },
                 { client_id: '2', username: 'b', full_name: 'ב', role: 'manager',
                   active: true, pass_salt: 'cc', pass_fp: 'dd' }];
-  delete LS.ys_mirror_users;
+  delete LS.hr_mirror_users;
   S.ysUsersCacheSaveAll(rows);
-  eq('2י1. ⭐ המפתח נגזר משם הטבלה', S.mirrorKey(S.YS_USERS_TABLE), 'ys_mirror_users');
-  eq('2י2. התוכן נכתב תחתיו', JSON.parse(LS.ys_mirror_users).length, 2);
+  eq('2י1. ⭐ המפתח נגזר משם הטבלה', S.mirrorKey(S.YS_USERS_TABLE), 'hr_mirror_users');
+  eq('2י2. התוכן נכתב תחתיו', JSON.parse(LS.hr_mirror_users).length, 2);
   S.MIRROR[S.YS_USERS_TABLE] = null;
   S.mirrorLoadOne(S.YS_USERS_TABLE);
   eq('2י3. ⛔ וטעינת טבלה אחת מחזירה אותו לזיכרון',
      (S.ysUsersCacheGet() || []).length, 2);
   eq('2י4. ⭐ וכל הפעילים במראה — לא רק האחרון',
-     JSON.parse(LS.ys_mirror_users).length, 2);
+     JSON.parse(LS.hr_mirror_users).length, 2);
   T('2י5. ⭐ ומשתמש שאינו הראשון נמצא בה',
-    !!JSON.parse(LS.ys_mirror_users).find((u) => u.username === 'b'));
+    !!JSON.parse(LS.hr_mirror_users).find((u) => u.username === 'b'));
 }
 
 /* ── 3. ysRefreshUsersCache ────────────────────────────────────────────── */
 sec('3. רענון מהענן');
 {
-  const state = { tables: { ys_users: USERS() } };
+  const state = { tables: { hr_users: USERS() } };
   const S = boot(state, {});
   await S.ysRefreshUsersCache();
   eq('3א. בלי משתמש מחובר — אפס פניות לרשת', SBLOG.length, 0);
-  eq('3ב. ...ואפס כתיבה למטמון', LS.ys_mirror_users, undefined);
+  eq('3ב. ...ואפס כתיבה למטמון', LS.hr_mirror_users, undefined);
 }
 {
-  const state = { tables: { ys_users: USERS() } };
+  const state = { tables: { hr_users: USERS() } };
   const S = boot(state, {});
   S.AUTH.user = { client_id: '3', role: 'junior' };
   await S.ysRefreshUsersCache();
@@ -512,13 +512,13 @@ sec('3. רענון מהענן');
   T('3ג. ⛔ password_hash אינו מבוקש בשאילתה כלל', sel.cols.indexOf('password_hash') === -1);
   T('3ד. pass_salt ו-pass_fp כן מבוקשים',
     sel.cols.indexOf('pass_salt') !== -1 && sel.cols.indexOf('pass_fp') !== -1);
-  eq('3ה. נמשכו כל הפעילים ולא רק המחובר', JSON.parse(LS.ys_mirror_users).length, 3);
+  eq('3ה. נמשכו כל הפעילים ולא רק המחובר', JSON.parse(LS.hr_mirror_users).length, 3);
 }
 
 /* ── 4. ysVerifyOffline ────────────────────────────────────────────────── */
 sec('4. אימות אופליין מול הטביעה');
 {
-  const S = boot({ tables: { ys_users: [] } });
+  const S = boot({ tables: { hr_users: [] } });
   const made = await S.ysMakePassFp('654321');
   const cu = { client_id: '5', username: 'a', active: true, pass_salt: made.salt, pass_fp: made.fp };
   eq('4א. סיסמה נכונה ⇒ ok', await S.ysVerifyOffline(cu, '654321'), 'ok');
@@ -529,7 +529,7 @@ sec('4. אימות אופליין מול הטביעה');
   eq('4ה. null ⇒ bad', await S.ysVerifyOffline(null, '654321'), 'bad');
 }
 {
-  const S = boot({ tables: { ys_users: [] } }, { noCrypto: true });
+  const S = boot({ tables: { hr_users: [] } }, { noCrypto: true });
   eq('4ו. בלי crypto ⇒ no-crypto (ולא ok!)',
     await S.ysVerifyOffline({ client_id: '5', active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
 }
@@ -552,7 +552,7 @@ async function seedFp(S, rows, pwByUser = { 1: '111111', 2: '222222', 3: '333333
 sec('5. כניסה אופליין');
 async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
   // בונה מטמון מלא כפי שהוא נראה אחרי כניסה מקוונת + רענון
-  const seed = boot({ tables: { ys_users: [] } });
+  const seed = boot({ tables: { hr_users: [] } });
   const rows = [];
   for (const u of USERS()) {
     if (!u.active) continue;
@@ -565,8 +565,8 @@ async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
 const CACHED = await withCache();
 
 async function offlineLogin(username, pass, cacheRows = CACHED) {
-  const S = boot({ netFail: true, tables: { ys_users: USERS() } });
-  LS.ys_mirror_users = JSON.stringify(cacheRows);
+  const S = boot({ netFail: true, tables: { hr_users: USERS() } });
+  LS.hr_mirror_users = JSON.stringify(cacheRows);
   DOM._m['auth-user'].value = username;
   DOM._m['auth-pass'].value = pass;
   await S._doLoginInner();
@@ -605,15 +605,15 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
   T('5יד. ...ונרשם כ-no_fp_offline', r.log.indexOf('no_fp_offline') !== -1);
 }
 {
-  const S = boot({ netFail: true, tables: { ys_users: USERS() } }, { noCrypto: true });
-  LS.ys_mirror_users = JSON.stringify(CACHED);
+  const S = boot({ netFail: true, tables: { hr_users: USERS() } }, { noCrypto: true });
+  LS.hr_mirror_users = JSON.stringify(CACHED);
   DOM._m['auth-user'].value = 'yosef'; DOM._m['auth-pass'].value = '333333';
   await S._doLoginInner();
   eq('5טו. בלי crypto ⇒ אין כניסה (נכשל סגור)', S.AUTH.user, null);
   T('5טז. ...עם הודעת חוסר תמיכה', DOM._m['auth-err'].textContent.indexOf('אינו תומך בהצפנה') !== -1);
 }
 {
-  const S = boot({ netFail: true, tables: { ys_users: USERS() } });
+  const S = boot({ netFail: true, tables: { hr_users: USERS() } });
   DOM._m['auth-user'].value = 'yosef'; DOM._m['auth-pass'].value = '333333';
   await S._doLoginInner();
   eq('5יז. מטמון ריק לגמרי ⇒ הודעת «כניסה ראשונה דורשת רשת»', S.AUTH.user, null);
@@ -631,20 +631,20 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
 sec('6. כניסה מקוונת');
 {
   const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
+  const S = boot({ tables: { hr_users: rows } });
   await seedFp(S, rows);          // ⭐ סבב 40 — האימות המקוון הוא מול הטביעה
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '222222';
   await S._doLoginInner();
-  await waitFor(() => JSON.parse(LS.ys_mirror_users || '[]').length === 3,
+  await waitFor(() => JSON.parse(LS.hr_mirror_users || '[]').length === 3,
                 'רענון המטמון אחרי כניסה מקוונת');
   T('6א. כניסה מקוונת הצליחה', !!S.AUTH.user && S.AUTH.user.username === 'moshe');
-  eq('6ב. ⭐ המטמון מכיל את כל הפעילים (לא רק את המחובר)', JSON.parse(LS.ys_mirror_users).length, 3);
-  T('6ג. ⛔ ואין בו password_hash', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
-  T('6ד. ⛔ ואין בו אף סיסמה', !['111111', '222222', '333333'].some((p) => String(LS.ys_mirror_users).indexOf(p) !== -1));
+  eq('6ב. ⭐ המטמון מכיל את כל הפעילים (לא רק את המחובר)', JSON.parse(LS.hr_mirror_users).length, 3);
+  T('6ג. ⛔ ואין בו password_hash', String(LS.hr_mirror_users).indexOf('password_hash') === -1);
+  T('6ד. ⛔ ואין בו אף סיסמה', !['111111', '222222', '333333'].some((p) => String(LS.hr_mirror_users).indexOf(p) !== -1));
 }
 {
   const rowsW = USERS();
-  const S = boot({ tables: { ys_users: rowsW } });
+  const S = boot({ tables: { hr_users: rowsW } });
   await seedFp(S, rowsW);
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '000000';
   await S._doLoginInner();
@@ -658,7 +658,7 @@ sec('6. כניסה מקוונת');
    ⛔ זו אינה ריכוך של הבדיקה אלא הפוכה שלה: כל עוד הפונקציה בקוד, יש
    מסלול שקורא את `password_hash` כדי לגזור ממנה — כלומר הקורא האחרון של
    הסיסמה הגלויה, וזה שהיה נשבר ברגע שהעמודה תימחק.
-   ⚠️ ההסרה נשענת על מדידה ולא על הנחה: כל ששת המשתמשים ב-`ys_users`
+   ⚠️ ההסרה נשענת על מדידה ולא על הנחה: כל ששת המשתמשים ב-`hr_users`
    מחזיקים `pass_salt` ו-`pass_fp` (נמדד ב-`SELECT` בלבד, 2026-08-19),
    ולכן לא נותר למי להשלים.                                            */
 sec('7. ⛔ השלמת הטביעות הוסרה');
@@ -674,7 +674,7 @@ sec('7. ⛔ השלמת הטביעות הוסרה');
 sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
+  const S = boot({ tables: { hr_users: rows } });
   S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = ''; DOM._m['um-name'].value = 'חדש';
   DOM._m['um-username'].value = 'hadash'; DOM._m['um-role'].value = 'junior';
@@ -690,7 +690,7 @@ sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
   rows[1].pass_salt = 'ישן'; rows[1].pass_fp = 'טביעה-ישנה';
-  const S = boot({ tables: { ys_users: rows } }, { noCrypto: true });
+  const S = boot({ tables: { hr_users: rows } }, { noCrypto: true });
   S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = '2'; DOM._m['um-name'].value = 'משה';
   DOM._m['um-username'].value = 'moshe'; DOM._m['um-role'].value = 'senior';
@@ -707,7 +707,7 @@ sec('8. saveUser / changeMyPassword');
 }
 {
   const rows = USERS();
-  const S = boot({ missingCols: true, tables: { ys_users: rows } });
+  const S = boot({ missingCols: true, tables: { hr_users: rows } });
   S.AUTH.user = { client_id: '1', role: 'admin' };
   DOM._m['um-id'].value = '2'; DOM._m['um-name'].value = 'משה';
   DOM._m['um-username'].value = 'moshe'; DOM._m['um-role'].value = 'senior';
@@ -719,7 +719,7 @@ sec('8. saveUser / changeMyPassword');
 }
 {
   const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
+  const S = boot({ tables: { hr_users: rows } });
   await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
   S.AUTH.user = { client_id: '2', username: 'moshe', full_name: 'משה', role: 'senior', active: true };
   DOM._m['mp-cur'].value = '222222'; DOM._m['mp-new'].value = '246810';
@@ -727,21 +727,21 @@ sec('8. saveUser / changeMyPassword');
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
-  const c = JSON.parse(LS.ys_mirror_users).find((u) => u.client_id === '2');
+  const c = JSON.parse(LS.hr_mirror_users).find((u) => u.client_id === '2');
   eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.ysPassFp('246810', c.pass_salt), c.pass_fp);
-  T('8יב. ⛔ ואין password_hash במטמון', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
+  T('8יב. ⛔ ואין password_hash במטמון', String(LS.hr_mirror_users).indexOf('password_hash') === -1);
 }
 
 /* ── 9. מעבר-משתמש ─────────────────────────────────────────────────────── */
 sec('9. confirmSwitch');
 async function doSwitch(targetId, pass, opts = {}) {
   const cloud = USERS();
-  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { ys_users: cloud } });
+  const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { hr_users: cloud } });
   /*  ⛔ היעד יושב ב-`window._ysSwitchId` מסבב 80 — ⚠️ עד אז הוא נתלה על
    *  מיכל הדיאלוג, ⭐ ומיכל אחד לכל הדיאלוגים אינו יכול לשאת מצב של אחד. */
   S._ysSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
-  LS.ys_mirror_users = JSON.stringify(opts.cache || CACHED);
+  LS.hr_mirror_users = JSON.stringify(opts.cache || CACHED);
   S.mirrorLoadOne(S.YS_USERS_TABLE);
   S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
@@ -773,40 +773,40 @@ async function doSwitch(targetId, pass, opts = {}) {
 }
 {
   const r = await doSwitch('2', '222222');
-  await waitFor(() => !!JSON.parse(LS.ys_mirror_users || '[]').find((u) => String(u.client_id) === '2'),
+  await waitFor(() => !!JSON.parse(LS.hr_mirror_users || '[]').find((u) => String(u.client_id) === '2'),
                 'רענון המטמון על המשתמש החדש');
   T('9י. מעבר מקוון עובד', r.user.client_id === '2');
-  const c = JSON.parse(LS.ys_mirror_users);
+  const c = JSON.parse(LS.hr_mirror_users);
   T('9יא. ⭐ המטמון רוענן על המשתמש **החדש** (הבאג של סבב 21)',
     !!c.find((u) => String(u.client_id) === '2'));
-  T('9יב. ⛔ ואין בו password_hash', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
+  T('9יב. ⛔ ואין בו password_hash', String(LS.hr_mirror_users).indexOf('password_hash') === -1);
 }
 {
   // ⭐ בידוד תיקון סבב 21: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
   // `ysRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
   // ולכן רק `ysUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
   const r = await doSwitch('2', '222222', { listSelectFail: true, cache: [] });
-  await waitFor(() => JSON.parse(LS.ys_mirror_users || '[]').length === 1,
+  await waitFor(() => JSON.parse(LS.hr_mirror_users || '[]').length === 1,
                 'שמירת היעד מהשורה שבידינו');
   T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.client_id === '2');
-  const c = JSON.parse(LS.ys_mirror_users || '[]');
+  const c = JSON.parse(LS.hr_mirror_users || '[]');
   T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם (באג סבב 21)',
     c.length === 1 && String(c[0].client_id) === '2');
   T('9טו. ⛔ וגם השורה הזו נכנסה בלי password_hash',
-    String(LS.ys_mirror_users).indexOf('password_hash') === -1 &&
-    String(LS.ys_mirror_users).indexOf('222222') === -1);
+    String(LS.hr_mirror_users).indexOf('password_hash') === -1 &&
+    String(LS.hr_mirror_users).indexOf('222222') === -1);
 }
 
 /* ── 10. סריקה גורפת של כל מפתחות localStorage ─────────────────────────── */
 sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיסק');
 {
   const rows = USERS();
-  const S = boot({ tables: { ys_users: rows } });
+  const S = boot({ tables: { hr_users: rows } });
   S.AUTH.user = { client_id: '1', role: 'admin' };
   await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
-  await waitFor(() => !!LS.ys_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
+  await waitFor(() => !!LS.hr_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
   DOM._m['mp-cur'].value = '111111'; DOM._m['mp-new'].value = '135790';
   DOM._m['mp-new2'].value = '135790';
   await S.changeMyPassword();

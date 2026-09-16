@@ -40,13 +40,13 @@ import { DB_SCHEMA } from './db_schema.mjs';
  *  אותו זהה בכולן. */
 const APP = {
   app: 'hanhala-ruchanit',
-  tablePrefix: 'ys_',
+  tablePrefix: 'hr_',
   dbSchema: DB_SCHEMA,
   parentChild: [
-    { parent: 'ys_sessions', child: 'ys_marks', fk: 'session_client_id',
+    { parent: 'hr_sessions', child: 'hr_marks', fk: 'session_client_id',
       fkMode: 'none', push: 'with-parent',
       why: 'סימון הנוכחות תלוי בסדר שנפתח — ⛔ ואין לו קיום בלי הסדר שלו' },
-    { parent: 'ys_sleep_sessions', child: 'ys_sleep_marks', fk: 'session_client_id',
+    { parent: 'hr_sleep_sessions', child: 'hr_sleep_marks', fk: 'session_client_id',
       fkMode: 'none', push: 'with-parent',
       why: 'סימון השינה תלוי בסדר השינה — ⛔ אותו מבנה, אותו חור' },
   ],
@@ -74,8 +74,8 @@ const APP = {
     defaultKey: 'client_id',
     keyFn: { name: '', arg: '',
       why: 'מפתח הסימון נבנה ב-`PUSH_CFG.key` שבמקום ⛔ ואין לו פונקציה בשם — ⚠️ ושלוש הטבלאות נושאות מפתח אחד, ⭐ ולכן אין מה לגזור מהטבלה' },
-    tables: { ys_sessions: 'client_id', ys_sleep_sessions: 'client_id',
-              ys_students_rows: 'client_id' },
+    tables: { hr_sessions: 'client_id', hr_sleep_sessions: 'client_id',
+              hr_students_rows: 'client_id' },
     gapWhy: {},
   },
   childMap: null,
@@ -110,7 +110,7 @@ const APP = {
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ הרשימה ריקה עד שהשורה
  *  נכנסת לטבלה, ⛔ והשער מוכרז עד אז ב-`gateNoRows` עם נימוקו: ⭐ הצהרה
  *  ריקה ולא היעדר — ⛔ שער בלי הצהרה אינו נבדל משער שההצהרה שלו נשמטה. */
-export const ROWS = [172, 173];
+export const ROWS = [173, 174];
 
 /*  ⛔ המוטציות אינן ברירת המחדל — ⚠️ כל מוטציה היא שינוי ⟵ הרצה ⟵ שחזור,
  *  ⭐ והן רצות ברמה המלאה (`--full`), בסוף הסבב ולפני מיזוג. */

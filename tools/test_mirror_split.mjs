@@ -31,10 +31,10 @@ const APP = {
   app: 'hanhala-ruchanit',
   /*  ⛔ שער פרטי להנהלה — ⚠️ **היא היחידה שרשומתה נושאת מפה של סימונים**:
    *  ⭐ בשלוש האחרות אין רשומה שמתפרקת לשורות בן, ⛔ ואין מה למדוד. */
-  tables: ['ys_sessions', 'ys_marks', 'ys_sleep_sessions', 'ys_sleep_marks',
-           'ys_students_rows', 'ys_settings', 'ys_users'],
-  stream: 'ys_sessions',
-  child: 'ys_marks',
+  tables: ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks',
+           'hr_students_rows', 'hr_settings', 'hr_users'],
+  stream: 'hr_sessions',
+  child: 'hr_marks',
   names: ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
           'mirrorWrite', 'mirrorBoot',
           'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame', '_ysSplitRecs',
@@ -215,23 +215,23 @@ console.log('· ' + APP.app + ' — סבב 116: פיצול המראה וארבע
 {
   const sb = harness();
   sb.mirrorLoad();
-  sb.ysMirrorPutRecs('ys_sessions', [rec(1, 1000, { a: { s: 'p', min: 0 }, b: { s: 'l', min: 5 } })]);
-  const rows = JSON.parse(sb._store['ys_mirror_marks']);
+  sb.ysMirrorPutRecs('hr_sessions', [rec(1, 1000, { a: { s: 'p', min: 0 }, b: { s: 'l', min: 5 } })]);
+  const rows = JSON.parse(sb._store['hr_mirror_marks']);
   assert(rows.length === 2 && rows.every((r) => r.client_id && r.session_client_id === '1'),
-    '2א · ⛔ הסימונים נכתבים כשורות ב-`ys_mirror_marks` — נמדד ' + rows.length);
-  const back = sb.ysMirrorRecs('ys_sessions');
+    '2א · ⛔ הסימונים נכתבים כשורות ב-`hr_mirror_marks` — נמדד ' + rows.length);
+  const back = sb.ysMirrorRecs('hr_sessions');
   assert(back.length === 1 && Object.keys(back[0].marks).length === 2 && back[0].marks.b.min === 5,
     '2ב · ⛔ וההרכבה מחזירה את אותה רשומה — 24 אתרי הקריאה אינם משתנים');
   const empty = sb.ysMarks({ id: '1' });
   assert(Object.keys(empty).length === 2,
-    '2ג · ⛔ ו-`ysMarks` בונה מ-`MIRROR.ys_marks` כשהרשומה חסרה סימונים');
+    '2ג · ⛔ ו-`ysMarks` בונה מ-`MIRROR.hr_marks` כשהרשומה חסרה סימונים');
 }
 
 /* ── 3 · ארבעת מקרי המיזוג ─────────────────────────────────────────────── */
 function caseSetup(localRecs) {
   const sb = harness();
   sb.mirrorLoad();
-  sb.ysMirrorPutRecs('ys_sessions', localRecs);
+  sb.ysMirrorPutRecs('hr_sessions', localRecs);
   return sb;
 }
 /*  מקרה א — סימון שנרשם אופליין ב-08:00 ועלה ב-14:00: ⛔ שורד,
@@ -239,7 +239,7 @@ function caseSetup(localRecs) {
 {
   const sb = caseSetup([rec(1, 800, { a: { s: 'p', min: 0 } })]);
   const cloud = [rec(1, 1000, { b: { s: 'e', min: 0 } })];
-  const out = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+  const out = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('hr_sessions'), 'hr_sessions');
   const m = out[0].marks;
   assert(m.a && m.a.s === 'p' && m.b && m.b.s === 'e',
     '3א · ⛔ מקרה א: הסימון שנרשם אופליין שורד ⛔ ואינו דורס את זה שמ-10:00');
@@ -247,14 +247,14 @@ function caseSetup(localRecs) {
 /*  מקרה ב — סימון שנמחק אינו חוזר, גם במחזור שני.                        */
 {
   const sb = caseSetup([rec(1, 800, { a: { s: 'p', min: 0 }, b: { s: 'l', min: 5 } })]);
-  sb.ysMirrorPutRecs('ys_sessions', [rec(1, 900, { a: { s: 'p', min: 0 } })]);
-  const tombs = sb.ysMarkTombs('ys_sessions', '1');
+  sb.ysMirrorPutRecs('hr_sessions', [rec(1, 900, { a: { s: 'p', min: 0 } })]);
+  const tombs = sb.ysMarkTombs('hr_sessions', '1');
   const cloud = [rec(1, 850, { a: { s: 'p', min: 0 }, b: { s: 'l', min: 5 } })];
-  const one = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+  const one = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('hr_sessions'), 'hr_sessions');
   assert(tombs.b > 0 && !one[0].marks.b,
     '3ב · ⛔ מקרה ב: סימון שנמחק אינו חוזר מהענן — מצבת המחיקה גוברת');
-  sb.ysMirrorPutRecs('ys_sessions', one);
-  const two = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+  sb.ysMirrorPutRecs('hr_sessions', one);
+  const two = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('hr_sessions'), 'hr_sessions');
   assert(!two[0].marks.b,
     '3ג · ⛔ וגם במחזור שני — ⚠️ המצבה נשמרת בשורות ואינה נעלמת');
 }
@@ -263,21 +263,21 @@ function caseSetup(localRecs) {
 {
   const sb = caseSetup([rec(1, 800, { a: { s: 'p', min: 0 } })]);
   const cloud = [rec(1, 1000, { b: { s: 'e', min: 0 } })];
-  const out = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+  const out = sb._ysSessionsMerge(cloud, sb.ysMirrorRecs('hr_sessions'), 'hr_sessions');
   assert(Object.keys(out[0].marks).length === 2,
     '3ד · ⛔ מקרה ג: שני מכשירים, תלמידים שונים — **שניהם שורדים**');
   const sb2 = caseSetup([rec(1, 800, { a: { s: 'p', min: 0 } })]);
   const cloud2 = [rec(1, 1000, { a: { s: 'e', min: 0 } })];
-  const out2 = sb2._ysSessionsMerge(cloud2, sb2.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+  const out2 = sb2._ysSessionsMerge(cloud2, sb2.ysMirrorRecs('hr_sessions'), 'hr_sessions');
   assert(out2[0].marks.a.s === 'e',
     '3ה · ⚠️ ואותו תלמיד בשניהם — החדש מנצח');
 }
 /*  מקרה ד — סדר שנמחק: סימוניו יורדים איתו ואינם נשארים יתומים.          */
 {
   const sb = caseSetup([rec(1, 800, { a: { s: 'p', min: 0 } })]);
-  sb.ysMirrorPutRecs('ys_sessions', [rec(1, 900, { a: { s: 'p', min: 0 } }, { deleted: true })]);
-  const rows = JSON.parse(sb._store['ys_mirror_marks']);
-  const recs = sb.ysMirrorRecs('ys_sessions');
+  sb.ysMirrorPutRecs('hr_sessions', [rec(1, 900, { a: { s: 'p', min: 0 } }, { deleted: true })]);
+  const rows = JSON.parse(sb._store['hr_mirror_marks']);
+  const recs = sb.ysMirrorRecs('hr_sessions');
   assert(rows.every((r) => r.deleted === true) && Object.keys(recs[0].marks).length === 0,
     '3ו · ⛔ מקרה ד: סדר שנמחק — סימוניו מסומנים מחוקים ואינם יתומים');
 }
@@ -300,9 +300,9 @@ if (RUN_MUT) {
       for (const n of ['ysSessionPairFor', '_ysSessionsMerge'])
         vm.runInContext(cut(n, text), sandbox, { filename: n + '.js' });
       sandbox.mirrorLoad();
-      sandbox.ysMirrorPutRecs('ys_sessions', [rec(1, 800, { a: { s: 'p', min: 0 } })]);
+      sandbox.ysMirrorPutRecs('hr_sessions', [rec(1, 800, { a: { s: 'p', min: 0 } })]);
       return sandbox._ysSessionsMerge([rec(1, 1000, { b: { s: 'e', min: 0 } })],
-        sandbox.ysMirrorRecs('ys_sessions'), 'ys_sessions');
+        sandbox.ysMirrorRecs('hr_sessions'), 'hr_sessions');
     };
     const fell = Object.keys(runWith(muted)[0].marks).length === 1;
     assert(fell, 'מוטציה · ⛔ הסרת הזוג פר-סימון מפילה את «מקרה ג» — טענה 3ד');

@@ -7,7 +7,7 @@
    `upsert` — ⚠️ **נפתר לשם טבלה ולשם עמודה**, ⭐ **ומוצלב מול `APP.dbSchema`**:
    ⛔ שם שהוא קבוע נפתר לערכו לפני ההצלבה, ⛔ ושם שאינו נפתר ואינו מוצהר מפיל.
 
-   **הנימוק המדוד:** ⛔ `from('tb_archive')` חי בקוד ⛔ וטבלה בשם הזה אינה במסד —
+   **הנימוק המדוד:** ⛔ `from('ya_archive')` חי בקוד ⛔ וטבלה בשם הזה אינה במסד —
    ⚠️ והוא שרד מפני שההצלבה היחידה הייתה מול המסד החי: ⭐ והסביבה שבה רץ הסט
    חסומה מול Supabase (`403 CONNECT`), ⛔ ולכן ההצלבה ההיא לא רצה מעולם.
 
@@ -48,8 +48,8 @@ const APP = {
    *  משותפת; ⛔ **ומה מפיל**: שם שנשאל ואינו כאן, ⛔ ושם שכאן ואין לו
    *  אתר שאילתה. ⭐ **ולמה המבנה קיים**: הצלבה מול הסכימה דורשת רשימה
    *  סגורה, ⚠️ ורשימה שאינה נמדדת משני צדדיה מתיישנת בשקט. */
-  dbTables: ['sh_backup', 'sh_sync_log', 'ys_marks', 'ys_sessions', 'ys_settings',
-             'ys_sleep_marks', 'ys_sleep_sessions', 'ys_students_rows', 'ys_users'],
+  dbTables: ['sh_backup', 'sh_sync_log', 'hr_marks', 'hr_sessions', 'hr_settings',
+             'hr_sleep_marks', 'hr_sleep_sessions', 'hr_students_rows', 'hr_users'],
   /*  ⛔ שכבת העימוד — ⚠️ הארגומנט השני שלה הוא **עמודת המיון**, ⭐ והיא
    *  אינה יושבת ב-`.order(…)`: ⛔ בלי ההצהרה הזו כל אתרי המיון האמיתיים
    *  אינם נסרקים כלל. */
@@ -67,20 +67,20 @@ const APP = {
    *  בלי הצהרה, הצהרה בלי אתר, והצהרה שנוקבת בטבלה שאינה מוצהרת.
    *  ⭐ **ולמה המבנה קיים**: שם שמדולג בשתיקה הוא בדיוק מה ששרד. */
   dbDyn: {
-    eraTbl:   { tables: ['ys_settings'],
+    eraTbl:   { tables: ['hr_settings'],
                 why: 'טבלת המפתח-ערך שעידן הנתונים נקרא ממנה — ⛔ היא של האפליקציה הזו, ⭐ ולכל אחת מספר משלה' },
-    's.name':  { tables: ['ys_sessions', 'ys_marks', 'ys_students_rows',
-                          'ys_sleep_sessions', 'ys_sleep_marks'],
+    's.name':  { tables: ['hr_sessions', 'hr_marks', 'hr_students_rows',
+                          'hr_sleep_sessions', 'hr_sleep_marks'],
                  why: 'שם המקור בגיבוי היומי — הרשימה נבנית בזמן ריצה' },
     's.table': { tables: [],
                  why: 'טבלת מפתח-ערך של מקור גיבוי, ⛔ ואין כאן מקור כזה: נמדד ואין' },
-    table:     { tables: ['ys_sessions', 'ys_marks', 'ys_sleep_sessions', 'ys_sleep_marks'],
+    table:     { tables: ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks'],
                  why: 'יעד הדחיפה במנות — האב או הבן של אחד משני המסלולים' },
-    'cfg.parent': { tables: ['ys_sessions', 'ys_sleep_sessions'],
+    'cfg.parent': { tables: ['hr_sessions', 'hr_sleep_sessions'],
                  why: 'טבלת האב של המסלול הנבחר, והמסלולים שניים' },
-    'cfg.child':  { tables: ['ys_marks', 'ys_sleep_marks'],
+    'cfg.child':  { tables: ['hr_marks', 'hr_sleep_marks'],
                  why: 'טבלת הבן של המסלול הנבחר, והמסלולים שניים' },
-    'YS_ROWS_KINDS[kind].parent': { tables: ['ys_sessions', 'ys_sleep_sessions'],
+    'YS_ROWS_KINDS[kind].parent': { tables: ['hr_sessions', 'hr_sleep_sessions'],
                  why: 'אותה טבלת אב, נקראת ישירות מהמפה ולא דרך משתנה' },
   },
   /*  ⛔ עמודת מיון שאינה ליטרל — ⚠️ **מה נכנס**: נוסח הביטוי והעמודות;
@@ -96,7 +96,7 @@ const APP = {
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ המיפוי נגזר מכאן ⛔ ואינו
  *  רשימה שנייה בבודק. */
-export const ROWS = [158, 147];
+export const ROWS = [159, 148];
 
 /*  ⛔ המרשם שהסורק מכריז — ⚠️ **מה נכנס**: שם הדפוס שהשער אוכף;
  *  ⛔ **ומה מפיל**: דפוס שאין לו מוטציה, ומוטציה שנוקבת בדפוס שאינו כאן.
