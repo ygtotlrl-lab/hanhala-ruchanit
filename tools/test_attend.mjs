@@ -179,8 +179,8 @@ console.log('  — מוטציות —');
   /*  ⛔ המוטציה שותלת מקור חדש ⛔ ולא מוסיפה לרשימת מפתחות (סבב 80) —
    *  ⚠️ שלושה-עשר מקורות ה-`kv` ירדו עם הטבלה שהופלה, ⭐ ומקורות הגיבוי
    *  כאן הם `out.push` של טבלאות. */
-  const mut = SRC.replace("    out.push({ kind: 'table', name: 'ys_settings'",
-                          "    out.push({ kind: 'table', name: 'ys_attend', order: 'key' });\n    out.push({ kind: 'table', name: 'ys_settings'");
+  const mut = SRC.replace("    out.push({ kind: 'table', name: KV_TABLE",
+                          "    out.push({ kind: 'table', name: 'ys_attend', order: 'key' });\n    out.push({ kind: 'table', name: KV_TABLE");
   const b = /sources: function \(\) \{([\s\S]*?)\n  \}\n\};/.exec(mut);
   ok('22 · מוטציה: החזרת המפתח למקורות הגיבוי מפילה את טענה 13',
     !!b && bare(b[1]) === 1);

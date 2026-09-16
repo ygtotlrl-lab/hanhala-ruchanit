@@ -180,6 +180,10 @@ function harness(seed) {
   };
   Object.assign(sandbox, APP.globals);
   sandbox.globalThis = sandbox;
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  sandbox.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(sandbox);
   for (const v of APP.vars) vm.runInContext(cutVar(v, SRC), sandbox);
   for (const n of APP.names) vm.runInContext(cut(n, SRC), sandbox, { filename: n + '.js' });

@@ -299,6 +299,10 @@ function boot(state, opts = {}) {
     ysTouchLastChanged: async () => { TOUCHES.n++; },
   };
   sandbox.window = sandbox;
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  sandbox.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(sandbox);
   vm.runInContext(MSG_DECLS + '\n' + CODE, sandbox);
   return sandbox;

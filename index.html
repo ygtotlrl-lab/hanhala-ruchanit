@@ -3396,6 +3396,9 @@ var TOAST_DEFAULT_MS = 2800;
    ══════════════════════════════════════════════════════════════════════════ */
 // ── מדיניות האחסון המקומי של האפליקציה הזו ─────────────────────────────
 // זו הטבלה **היחידה** שנבדלת בין האפליקציות; המודול שמתחתיה זהה בכולן.
+/*  ⛔ שם טבלת ההגדרות חי כאן **פעם אחת** — ⚠️ שם פזור אינו ניתן לשינוי
+ *  ממקום אחד, ⭐ ושם הטבלה נגזר מתפקידה ⛔ ולא מהיום שבו נוצרה. */
+var KV_TABLE = 'ys_settings';
 /* ── MIRROR_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────── */
 /*  ⚠️ `tables` היא **פונקציה** ⛔ ולא מערך — ⭐ `PUSH_TABLES` מוצהר אחרי
  *  הבלוק הזה, ⛔ והצהרה שקוראת אותו כאן הייתה מקבלת `undefined`.
@@ -3411,14 +3414,14 @@ var TOAST_DEFAULT_MS = 2800;
  *  ⭐ **ולמה זה קיים**: מסלול שאינו מוסיף על הלולאה הוא לולאה שנכתבה
  *  פעמיים, ⛔ ושורותיו מסתכנות בכך שלא יעלו כלל. */
 var YS_MIRROR_TABLES = ['ys_sessions', 'ys_marks', 'ys_sleep_sessions',
-                        'ys_sleep_marks', 'ys_students_rows', 'ys_settings', 'ys_users'];
+                        'ys_sleep_marks', 'ys_students_rows', KV_TABLE, 'ys_users'];
 var MIRROR_CFG = {
   prefix: 'ys_mirror_',
   app:    'ys_',
   tables: function () { return YS_MIRROR_TABLES; },
   noPush: [{ t: 'ys_marks',       via: 'ysSendRecs', adds: 'parent' },
            { t: 'ys_sleep_marks', via: 'ysSendRecs', adds: 'parent' },
-           { t: 'ys_settings',    via: 'ysCfgSet',   adds: 'queue'  },
+           { t: KV_TABLE,         via: 'ysCfgSet',   adds: 'queue'  },
            { t: 'ys_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _ysRecTs(r); },
@@ -4429,7 +4432,7 @@ var BK_CFG = {
         וגיבתה את מי שכן הצליח.
         ⛔ והתוכן עצמו לא אבד — ⚠️ הוא עבר ל-`ys_settings` בסבב 78,
         ⭐ והמקור החדש הוא הטבלה ההיא. */
-    out.push({ kind: 'table', name: 'ys_settings', key: 'ys_settings', order: 'key', ts: 'updated_at' });
+    out.push({ kind: 'table', name: KV_TABLE, key: KV_TABLE, order: 'key', ts: 'updated_at' });
     return out;
   }
 };
@@ -5347,7 +5350,7 @@ var PL_CFG = {
   stamp:  function (ts) { return ysCfgSet('ys_last_changed', ts); },
   pull:   function () { return ysPullFromCloud(); },
   remote: function () {
-    return withTimeout(SB.from('ys_settings').select('value').eq('key', 'ys_last_changed').maybeSingle())
+    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'ys_last_changed').maybeSingle())
       .then(function (r) {
         if (!r || r.error) return { ok: false, ts: null };
         return { ok: true, ts: r.data ? plNum(kvParse('ys_last_changed', r.data.value).value) : null };
@@ -5867,7 +5870,7 @@ var DATA_ERA = 1;
 var ERA_CFG = {
   prefix: 'ys_',
   client: function () { return SB; },
-  table:  function () { return 'ys_settings'; },
+  table:  function () { return KV_TABLE; },
   /*  ⛔ המוחק — ⚠️ מפתחות המראה **ואופק הפינוי שלהם**: ⭐ אופק ששרד מסנן
    *  בכתיבה את מה שהמשיכה מחזירה, ⛔ והמכשיר היה נשאר ריק אחרי הזריקה. */
   wipe:   function () {
@@ -6163,7 +6166,7 @@ function ysMirrorWriteRecs(t, recs) {
  *  מקבילה שם, ⚠️ ומיזוג מקומי עליו אינו אותו מנוע שמכריע על שורות.
  *  ⛔ **ושתי רשימות הטיפולים נשארות שטוחות** — ⚠️ הפינוי מפנה אותן
  *  **פר-רשומה**, ⭐ ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי. */
-function _ysCfgRows() { return Array.isArray(MIRROR.ys_settings) ? MIRROR.ys_settings : []; }
+function _ysCfgRows() { return Array.isArray(MIRROR[KV_TABLE]) ? MIRROR[KV_TABLE] : []; }
 function ysCfgLocalGet(key) {
   var rows = _ysCfgRows();
   for (var i = 0; i < rows.length; i++) {
@@ -6174,8 +6177,8 @@ function ysCfgLocalGet(key) {
 function ysCfgLocalSet(key, value) {
   var rows = _ysCfgRows().filter(function (r) { return r && String(r.key) !== String(key); });
   rows.push({ key: String(key), value: value, updated_at: Date.now() });
-  MIRROR.ys_settings = rows;
-  return mirrorSave('ys_settings');
+  MIRROR[KV_TABLE] = rows;
+  return mirrorSave(KV_TABLE);
 }
 /*  ⛔ מצבות הסימון של סדר אחד — ⚠️ מפה של `מזהה_תלמיד ⟵ חותמת המחיקה`,
  *  ⭐ והיא מה שמונע מסימון שנמחק לחזור מהענן. */
@@ -6273,7 +6276,7 @@ var _YS_Q_KEY = 'ys_offline_queue';
    ⛔ ולא `client_id` — ⚠️ מיפתוח לפי מזהה שנוצר במכשיר היה יוצר שתי שורות
    לאותה הגדרה, ⛔ ומיזוג בין שתיהן הוא הכרעה בלי מפתח. */
 function _ysCfgSetRaw(key, value) {
-  return SB.from('ys_settings').upsert({key: key, value: JSON.stringify(value), updated_at: Date.now()}, {onConflict: 'key'});
+  return SB.from(KV_TABLE).upsert({key: key, value: JSON.stringify(value), updated_at: Date.now()}, {onConflict: 'key'});
 }
 
 // קידום חותמת השינוי הגלובלית. המכשירים האחרים משווים **רק** מול
@@ -6820,7 +6823,7 @@ async function ysCloudGet(kvKey, win) {
    סמך כשל הוא הסקה ולא ראיה. */
 async function ysCfgUpdatedAt(key) {
   try {
-    var r = await withTimeout(SB.from('ys_settings').select('updated_at').eq('key', key).maybeSingle());
+    var r = await withTimeout(SB.from(KV_TABLE).select('updated_at').eq('key', key).maybeSingle());
     if (!r || r.error || !r.data || !r.data.updated_at) return 0;
     var t = Number(r.data.updated_at);
     return isFinite(t) ? t : 0;
@@ -6833,7 +6836,7 @@ async function ysCfgUpdatedAt(key) {
  *  שמאפשר להבחין בין «אין ערך» ל«הענן לא ענה» — ⚠️ שניהם `null`,
  *  ⛔ ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל. */
 function ysCfgGet(key, res) {
-  return withTimeout(SB.from('ys_settings').select('value').eq('key', key).maybeSingle()).then(function(r){
+  return withTimeout(SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
     var pr = r && r.data ? kvParse(key, r.data.value) : { ok: true, value: null, bad: false };
     return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? KV_BAD : null } : pr.value;
   }, function(e){
@@ -7448,7 +7451,7 @@ async function ysPushToCloud() {
   });
 
   // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי ys_settings_meta ----
-  await step('ys_settings', async function() {
+  await step(KV_TABLE, async function() {
     var meta = ysSettingsMeta();
     var settingsKeys = [
       { key: 'ys_reasons',         get: getReasons,                                       set: function(v){ ysCfgLocalSet('ys_reasons', v); } },
@@ -7639,7 +7642,7 @@ setTimeout(async function() {
   var _ep = ctxEpoch();
   try {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
-    var r = await withTimeout(SB.from('ys_settings').select('value').eq('key', 'ys_last_changed').maybeSingle());
+    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'ys_last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
       // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה

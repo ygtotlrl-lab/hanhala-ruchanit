@@ -220,6 +220,10 @@ async function callWith(scen, body) {
       return SCEN[scen].row;
     } }) }) }) };
   }
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  ctx.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(ctx);
   vm.runInContext((body || FN_SRC) + '\nthis.__f = ' + APP.stamp.fn + ';', ctx);
   if (APP.stamp.kind === 'fetch-key') return ctx.__f(KEY);

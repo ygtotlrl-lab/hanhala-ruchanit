@@ -144,6 +144,10 @@ function harness(y, m, d, extra) {
   const win = {};
   const ctx = { window: win, Date: D, Intl, console, JSON, Math, String, Number, isFinite };
   ctx.globalThis = ctx;
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  ctx.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(ctx);
   /*  ⚠️ העוזרים נבנים **בתוך** ההקשר ולא מחוצה לו (סבב 56) — כך התרחיש
    *  והשעון המזויף חולקים realm אחד. ⭐ הכשל שחייב את זה — `ysHebDate`
@@ -228,6 +232,10 @@ function diskHarness(rows, seen) {
     }
   };
   ctx.globalThis = ctx;
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  ctx.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(ctx);
   vm.runInContext(MODS + '\nthis.__api = { hwDiskFilter, hwNoteCloud };', ctx);
   ctx.__api.hwNoteCloud('ys_sessions', seen);
@@ -304,6 +312,10 @@ function mirrorHarness(store) {
     HE: new Intl.Collator('he'),
   };
   ctx.globalThis = ctx;
+  /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
+   *  מחוץ לפרוסה שהרתמה טוענת, ⭐ והיא מספקת אותו כדי שהמרשמים ייקראו:
+   *  ⛔ בלעדיו המרשם זורק בטעינה, ⚠️ והשער מדווח אפס טענות. */
+  ctx.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(ctx);
   vm.runInContext(
     [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES'),
