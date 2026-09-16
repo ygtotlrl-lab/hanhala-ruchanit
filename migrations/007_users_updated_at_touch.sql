@@ -36,7 +36,7 @@ alter table public.ys_users alter column updated_at set not null;
 -- ⚠️ **`public.users_touch_updated_at()` היא פונקציה אחת לשתי טבלאות
 --    המשתמשים שבפרויקט המשותף** (`ys_users` כאן ו-`sl_users` בשכר לימוד) —
 -- זו שהמנהל יצר, והיא מוגדרת באותו נוסח בדיוק גם
---    ב-`schar-limud/migrations/013`. ⛔ אין לגזור ממנה שם פר-אפליקציה
+--    ב-`schar-limud/migrations/013_users_active_updated.sql`. ⛔ אין לגזור ממנה שם פר-אפליקציה
 -- (`ys_touch_…`) — שתי הגדרות לאותה פונקציה בפרויקט אחד הן
 -- גרסה שנייה שאיש אינו יודע עליה.
 -- ⚠️ הטריגר נדרש כאן במיוחד מפני ש**האפליקציה עצמה כותבת שורות משתמש**

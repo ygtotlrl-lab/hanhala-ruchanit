@@ -57,7 +57,7 @@
 --      ש-`client_id` נגזר-ממפתח-המיזוג בא למנוע (הלקח של yoman, `002`).
 -- ⛔ **ואין לפתור את זה באינדקס חלקי** (`where not deleted`) — אינדקס חלקי
 --    שובר את הסקת `ON CONFLICT` של PostgREST (`42P10`), וזה הלקח המדוד של
---    `schar-limud/migrations/007`. ר' הפרק על אינדקסים למטה.
+--    `schar-limud/migrations/007_client_id_index_full.sql`. ר' הפרק על אינדקסים למטה.
 --
 -- ── מה **לא** עובר בשלב א, ובכוונה ─────────────────────────────────────────
 --   • `ys_sleep_sessions` — אותו מבנה בדיוק, ויעבור באותו דפוס בסבב ייעודי.
@@ -100,7 +100,7 @@ create table if not exists public.ys_sessions (
   synced_at      timestamptz not null default now()
 );
 
--- ⛔ **אינדקס מלא ולא חלקי** (הלקח מ-`schar-limud/migrations/007`): אינדקס עם
+-- ⛔ **אינדקס מלא ולא חלקי** (הלקח מ-`schar-limud/migrations/007_client_id_index_full.sql`): אינדקס עם
 --    `WHERE` שובר את הסקת `ON CONFLICT`, ו-PostgREST אינו יכול לצרף את התנאי —
 --    כלומר כל `upsert` נופל ב-42P10 והשמירה מפסיקה לעבוד.
 --    ⛔ אין ליצור אינדקס חלקי על העמודות האלה בשום מיגרציה עתידית.

@@ -82,6 +82,7 @@ const APP = {
           'test_signedshared.mjs',
           'test_coremod.mjs',
           'test_sistername.mjs',
+          'test_mignames.mjs',
           'test_toolsid.mjs',
           'test_filesets.mjs',
           'test_inputlayer.mjs',

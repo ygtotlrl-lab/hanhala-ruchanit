@@ -67,7 +67,7 @@ create table if not exists public.ys_sleep_sessions (
   synced_at      timestamptz not null default now()
 );
 
--- ⛔ **אינדקס מלא ולא חלקי** (הלקח מ-`schar-limud/migrations/007`): אינדקס עם
+-- ⛔ **אינדקס מלא ולא חלקי** (הלקח מ-`schar-limud/migrations/007_client_id_index_full.sql`): אינדקס עם
 --    `WHERE` שובר את הסקת `ON CONFLICT`, ו-PostgREST אינו יכול לצרף את התנאי —
 --    כלומר כל `upsert` נופל ב-42P10 והשמירה מפסיקה לעבוד.
 --    ⛔ אין ליצור אינדקס חלקי על העמודות האלה בשום מיגרציה עתידית.
