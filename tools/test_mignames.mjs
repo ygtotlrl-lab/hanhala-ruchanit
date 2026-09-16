@@ -73,6 +73,7 @@ const APP = {
     '036_rename_shared_tables_to_sh.sql': 'rename_shared_tables_to_sh_and_kv_to_tb',
     '037_prefix_from_repo_name.sql': 'round148_table_prefix_from_repo_name',
     '038_backup_policy_names_from_table.sql': '038_backup_policy_names_from_table',
+    '039_sync_log_policy_names_from_table.sql': '039_sync_log_policy_names_from_table',
   },
   /*  ⛔ קובץ שאין לו רשומה במעקב — ⚠️ **מה נכנס**: שם הקובץ ⟵ למה אין
    *  לו רשומה; ⛔ **ומה מפיל**: הצהרה שאין לה `null` במרשם, ו-`null`
@@ -110,7 +111,7 @@ const APP = {
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ המיפוי נגזר מכאן ⛔ ואינו
  *  רשימה שנייה בבודק. */
-export const ROWS = [215];
+export const ROWS = [216];
 
 /*  ⛔ המוטציות אינן ברירת המחדל — ⚠️ כל מוטציה היא שינוי ⟵ הרצה ⟵ שחזור,
  *  ⭐ והן רצות ברמה המלאה (`--full`) בסוף הסבב ולפני מיזוג. */

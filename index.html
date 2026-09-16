@@ -1557,14 +1557,12 @@ async function ysRefreshUsersCache() {
    הודעות ועוזרי רשת — נוסח משותף לכל האפליקציות
    ══════════════════════════════════════════════════════════════════════════ */
 // **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
-// להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ ושתי ההודעות שלמטה נבדלות
-// פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינן בבלוק החתום.
-var MSG_OFFLINE   = 'אין חיבור לאינטרנט — הפעולה לא בוצעה';
+// להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ וההודעה שלמטה נבדלת
+// פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינה בבלוק החתום.
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 // ⭐ תבנית שש הספרות — ⛔ נאכפת במסלולי יצירה ושינוי בלבד: ⚠️ אכיפה
 // במסלול הכניסה נועלת בחוץ סיסמה תקפה שנקבעה לפני התקן.
 var PASS_SIX_RE = /^[0-9]{6}$/;
-var MSG_PASS_SIX = '⚠️ הסיסמה חייבת להיות שש ספרות';
 // ⭐ מאז שהאימות המקוון עובר דרך הטביעה, מצב הכישלון הזה קיים גם **עם**
 // רשת. ⛔ אין לאחד אותו עם «סיסמה שגויה» — «אין למשתמש סיסמה מוגדרת»
 // אינו «סיסמה שגויה», והודעה מאוחדת שולחת אותו לנסות סיסמאות שוב ושוב
@@ -1578,23 +1576,35 @@ var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת �
    ⛔ **והמשפחה תשתית ולא מפקד** — ⚠️ אפליקציה שאינה אומרת הודעה נושאת
    אותה בכל זאת: ⭐ המושג חי בכולן, ⛔ ורשימה שנגזרת ממי שמציג אותה
    היום משתנה עם המוצר ⛔ ואיש אינו מיישר אותה בחזרה.
-   ⚠️ **ומה שנבדל בהחלטה אינו כאן** — ⛔ `MSG_OFFLINE` ו-`MSG_BAD_LOGIN`
-   נבדלים פר-אפליקציה בהחלטת מנהל, ⭐ ונשארים עם נימוקם במקומם.
+   ⛔⛔ **ונוסח הכשל נגזר מההתנהגות** — ⚠️ שלושת אתריו החיים של
+   `MSG_OFFLINE` הם **קריאה** שנכשלה, ⭐ ולא נכתב שם דבר שאפשר לסנכרן:
+   ⛔ «תסתנכרן כשהחיבור יחזור» הוא הבטחה על נתון שאינו קיים, ⚠️ והיא
+   נמדדה בשתיים. ⭐ **וההבטחה נכונה רק על כתיבה שכבר בתור** —
+   `MSG_SAVED_LOCAL` ו-`MSG_CLOUD_SYNC_FAIL`, ⛔ ושם היא נאמרת מפורשות.
+   ⚠️ **ומה שנבדל בהחלטה אינו כאן** — ⛔ `MSG_BAD_LOGIN` נבדל פר-אפליקציה
+   בהחלטת מנהל, ⭐ ונשאר עם נימוקו במקומו.
    ⛔ **וכל הודעת חסימה מתארת מצב אחר** — ⚠️ אין לאחד אותן זו עם זו ולא עם
    «סיסמה שגויה»: ⭐ הודעה מאוחדת שולחת את המשתמש להקליד שוב ושוב סיסמה
    נכונה, ⛔ במקום לומר לו את הדבר היחיד שיפתור — חיבור אחד.
    ═══════════════════════════════════════════════════════════════════════ */
 var MSG_SAVED = '✅ נשמר בהצלחה';
 var MSG_SAVED_LOCAL = '✅ נשמר במכשיר — יסונכרן כשתחזור הרשת';
+var MSG_SAVE_FAIL = '❌ השמירה נכשלה';
 var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
+var MSG_CLOUD_SYNC_FAIL = '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור';
+var MSG_OFFLINE = '📴 אין חיבור לאינטרנט — הפעולה לא בוצעה';
 var MSG_STALE_CODE = '⚠️ הגרסה הזו מיושנת — יש לעדכן';
 var MSG_DELETE = 'מחק';
 var MSG_FILL_ALL = '⚠️ נא למלא את כל השדות';
+var MSG_FILL_LOGIN = '⚠️ נא למלא שם משתמש וסיסמה';
 var MSG_LOAD_FAIL_PRE = '⚠️ טעינת הנתונים נכשלה (';
+var MSG_KV_BAD = 'ערך פגום בענן';
+var MSG_LOGIN_ERR = '❌ הכניסה נכשלה — ';
 var MSG_MY_PASS_TITLE = '🔑 שינוי הסיסמה שלי';
 var MSG_OFFLINE_LOGIN = '📴 כניסה במצב אופליין — הנתונים יסונכרנו כשהרשת תחזור';
 var MSG_PASS_CUR_BAD = '❌ הסיסמה הנוכחית שגויה';
 var MSG_PASS_MISMATCH = '⚠️ הסיסמאות החדשות אינן זהות';
+var MSG_PASS_SIX = '⚠️ הסיסמה חייבת להיות שש ספרות';
 var MSG_PASS_UPDATE_FAIL = '❌ עדכון הסיסמה נכשל: ';
 var MSG_PASS_VERIFY_FAIL = '❌ לא ניתן לאמת את הסיסמה הנוכחית: ';
 var MSG_SERVER_ERR = 'שגיאת שרת';
@@ -1641,7 +1651,13 @@ var MSG_PASS_UPDATED_X = '✅ סיסמה עודכנה!';
 var MSG_PASS_UPDATED_NO_FP = '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת';
 var MSG_UP_SLOW_FANOUT = '⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים';
 var MSG_ROWS_SYNCED = ' רשומות סונכרנו בהצלחה';
-var MSG_CLOUD_SYNC_FAIL = '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור';
+/*  ⛔ פר-אפליקציה — ⚠️ רק כאן הכניסה הראשונה דורשת חיבור: ⭐ באחיות
+ *  `MSG_OFF_UNKNOWN` אומר את אותו דבר על משתמש שאינו במראה, ⛔ וכאן
+ *  המראה כולה ריקה. */
+var MSG_OFF_FIRST_LOGIN = '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט';
+/*  ⛔ פר-אפליקציה — ⚠️ רק כאן יש דיווח על טבלאות מערכת חסרות: ⭐ שאר
+ *  האפליקציות אינן קוראות את טבלת המשתמשים בעלייה, ⛔ ואין להן אתר. */
+var MSG_TABLES_MISSING = '❌ טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
 var MSG_SOME_UNSYNCED_PRE = '⚠️ חלק מהנתונים לא סונכרנו (';
 var MSG_SOME_UNSYNCED_POST = ') — יישלחו שוב אוטומטית';
 var MSG_STUDENT_MISSING = '⚠️ תלמיד לא נמצא';
@@ -1856,7 +1872,10 @@ async function doLogin() {
     console.error('[login] unexpected:', e);
     try {
       var el = document.getElementById('auth-err');
-      if (el) { el.style.color = 'var(--bad)'; el.textContent = '❌ שגיאה בלתי צפויה בכניסה: ' + ((e && e.message) || e); }
+      /*  ⛔ כשל מערכת אינו יושב על משטח המשתמש — ⚠️ `.auth-err` שמור למה
+       *  שהמשתמש יכול לתקן בהקלדה: ⭐ והמשטח מתאפס כדי שהטופס יהיה שמיש. */
+      if (el) el.textContent = '';
+      toast(MSG_LOGIN_ERR + ((e && e.message) || e || MSG_SERVER_ERR), null, 'bad');
       var sp = document.getElementById('auth-spinner'); if (sp) sp.style.display = 'none';
       var bt = document.getElementById('auth-btn');     if (bt) bt.disabled = false;
     } catch (e2) {}
@@ -1878,7 +1897,7 @@ async function _doLoginInner() {
   function stopLoad(){ spinner.style.display='none'; btn.disabled=false; }
   function dbg(msg){ console.log('[login] '+msg); }
   errEl.textContent='';
-  if (!username || !pass) { showErr('נא למלא שם משתמש וסיסמה'); return; }
+  if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
   startLoad();
   dbg('⏳ [1/4] שולח בקשה לשרת...');
   var res = null, netFail = false;
@@ -1946,8 +1965,11 @@ async function _doLoginInner() {
     // עבר את הבדיקה הישנה ואז cache.find זרק TypeError שנבלע: ספינר תקוע בלי הודעה
     if (!Array.isArray(cache) || !cache.length) {
       ysLoginLog('login_fail', 'no_cache_offline', ysLoginDetails(username));
-      showErr(serverErr ? ('❌ שגיאת שרת: '+(serverErr.message||serverErr.code))
-                        : '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט');
+      /*  ⛔ שני סיווגים, שתי קריאות ושני משטחים — ⚠️ שגיאת שרת היא כשל
+       *  מערכת ואינה על משטח המשתמש: ⭐ והיעדר מטמון הוא מה שהמשתמש
+       *  יכול לפתור — חיבור אחד. */
+      if (serverErr) toast(MSG_LOGIN_ERR + (serverErr.message || serverErr.code || MSG_SERVER_ERR), null, 'bad');
+      else showErr(MSG_OFF_FIRST_LOGIN);
       return;
     }
     // ⚠️ ארבעה מצבים שונים, וארבע הודעות שונות (סבב 21, הורחב בסבב 22).
@@ -4262,7 +4284,7 @@ window.actRun = actRun;
    ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב. */
 function errToast(e) {
   console.error('[save]', e);
-  toast((e && (e.message || e.error_description)) || 'שגיאה בשמירה', null, 'bad');
+  toast((e && (e.message || e.error_description)) || MSG_SAVE_FAIL, null, 'bad');
 }
 function afterSave(msg) {
   closeModal();
@@ -6844,7 +6866,7 @@ async function ysCfgUpdatedAt(key) {
 function ysCfgGet(key, res) {
   return withTimeout(SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
     var pr = r && r.data ? kvParse(key, r.data.value) : { ok: true, value: null, bad: false };
-    return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? KV_BAD : null } : pr.value;
+    return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? MSG_KV_BAD : null } : pr.value;
   }, function(e){
     if (res) return { ok: false, value: null };
     throw e;
@@ -7182,19 +7204,18 @@ function ksKey(e) {
       לאותה תקלה.
    ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב: ⚠️ אחרת
       החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה. */
-var KV_BAD = 'ערך פגום בענן';
 function kvParse(key, raw) {
   if (raw === null || raw === undefined || raw === '') return { ok: true, value: null, bad: false };
   try { return { ok: true, value: JSON.parse(raw), bad: false }; }
   catch (e) {
     /*  ⛔ ההודעה יוצאת מכאן ⛔ ולא מאתר הקריאה — ⚠️ כשל שאינו אומר מה קרה
      *  שקול לכשל שקט, ⭐ ונקודת יציאה אחת היא מה שמשאיר את הנוסח אחד. */
-    console.error('[sync] ' + KV_BAD + ' [' + key + ']:', e);
+    console.error('[sync] ' + MSG_KV_BAD + ' [' + key + ']:', e);
     toast('⚠️ ' + kvBadLabel(key), null, 'bad');
     return { ok: false, value: null, bad: true };
   }
 }
-function kvBadLabel(name) { return name + ' (' + KV_BAD + ')'; }
+function kvBadLabel(name) { return name + ' (' + MSG_KV_BAD + ')'; }
 /* ═══════════════ סוף מודול ערך מפתח-ערך ═════════════════════════════════ */
 
 
@@ -7766,8 +7787,8 @@ async function ensureFirstAdmin() {
     var e = document.getElementById('auth-err');
     if (tableError) {
       if (e) {
-        e.textContent = 'טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
-        e.style.color = 'var(--warn)';
+        e.textContent = '';
+        toast(MSG_TABLES_MISSING, null, 'bad');
       }
       return;
     }
