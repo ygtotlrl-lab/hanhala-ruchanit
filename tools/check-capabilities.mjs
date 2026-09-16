@@ -143,7 +143,7 @@ const APP = {
   offlineLoginFn: 'ysVerifyOffline',
   /*  ⛔ חתימת ה-keystore — ⚠️ היא מה שהופך «מפתח קבוע» למדיד:
    *  ⭐ keystore חדש הוא גם קובץ קיים, ⛔ וחתימה שונה מפילה. */
-  keystoreSha: 'a61e77540032396c',
+  keystoreSha: 'afff0a7832f718e1',
   schemaFile: 'migrations/000_initial_schema.sql',
   /*  ⭐ שם משפך ה-`kv` (סבב 56) — `null` כשאין כאן `kv` כלל. */
   kvFallbackFn: 'ysKvGet',

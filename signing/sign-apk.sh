@@ -17,7 +17,7 @@ set -euo pipefail
 # מפתח שאיש לא התכוון אליו, והכשל היה מתגלה רק אצל משתמש מותקן.
 KS="${SIGN_KEYSTORE:?SIGN_KEYSTORE is unset — the keystore lives in GitHub Secrets, not in the repo}"
 PASS="${SIGN_PASS:?SIGN_PASS is unset — the store password lives in GitHub Secrets, not in the repo}"
-EXPECTED_SHA256='9F:68:B5:A0:0E:FA:D1:2F:19:C6:FF:E7:05:8E:D0:61:79:92:E6:99:9F:34:74:12:66:B0:93:93:E4:E1:6D:BF'
+EXPECTED_SHA256='1A:FA:BE:D0:A6:60:EF:F6:FF:40:04:C9:32:F5:A7:E3:28:01:95:4E:FA:24:FF:A4:B5:79:DF:BE:2F:B4:07:4A'
 
 IN="${1:?usage: sign-apk.sh <unsigned.apk> [output.apk]}"
 OUT="${2:-hanhala-ruchanit.apk}"
