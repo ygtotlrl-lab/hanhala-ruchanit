@@ -87,7 +87,6 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
 .stat{padding:var(--sp-6) var(--sp-7);text-align:center;border-left:1px solid var(--border)}
 .stat:last-child{border-left:none}
-.stat:hover{background:var(--card-2)}
 .stat .n{font-size:var(--fs-6);font-weight:700;color:var(--navy-ink)}
 .stat .l{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-2)}
 .mods-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
@@ -110,6 +109,8 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:var(--on-dark);border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
 .btn:hover{background:var(--navy-2);border-color:var(--navy-2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
@@ -157,11 +158,12 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .modal-overlay{display:none;position:fixed;inset:0;background:var(--veil);z-index:var(--z-4);align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
 .modal-box{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.mdl-x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
-.mdl-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
-.mdl-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
-.mdl-ft{display:flex;gap:var(--sp-5);margin-top:var(--sp-6)}
-.mdl-ft:empty{display:none}
+.sheet-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
+.sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
+.sheet-hd .x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
+.sheet-hd .x:hover{background:var(--card-2)}
+.sheet-ft{display:flex;gap:var(--sp-5);margin-top:var(--sp-6)}
+.sheet-ft:empty{display:none}
 .hidden{display:none !important}
 
 #modal-body label{display:block;color:var(--text-2);font-size:var(--fs-3);font-weight:600;margin-bottom:var(--sp-3)}
@@ -320,9 +322,11 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .auth-field label{font-size:var(--fs-3);font-weight:600;color:var(--text-2)}
 .auth-field input{border:2px solid var(--border);border-radius:var(--r-4);padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border var(--dur-3);direction:rtl}
 .auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
-.auth-field input:focus{border-color:var(--navy-ink)}
+.auth-field input:focus{border-color:var(--brand)}
 .auth-btn{width:100%;background:var(--navy-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
+.auth-btn:hover{background:var(--navy-2)}
 .auth-btn:active{background:var(--navy-2)}
+.auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
 .auth-spinner{display:none;margin:var(--sp-5) auto 0;width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
@@ -1071,21 +1075,21 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
       משאיר שני מסלולי סגירה.  -->
 <div id="modal" class="modal-overlay">
   <div class="modal-box ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="mdl-hd">
+    <div class="sheet-hd">
       <h3 id="modal-title"></h3>
-      <button class="mdl-x" data-act="modal-close" aria-label="סגירה">✕</button>
+      <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
     </div>
     <div id="modal-body"></div>
-    <div class="mdl-ft" id="modal-foot"></div>
+    <div class="sheet-ft" id="modal-foot"></div>
   </div>
 </div>
 <!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
       ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
 <div class="modal-overlay" id="ask">
   <div class="u-maxw-340 modal-box" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
-    <div class="mdl-hd"><h3 id="ask-title">אישור</h3></div>
+    <div class="sheet-hd"><h3 id="ask-title">אישור</h3></div>
     <div id="ask-body" class="u-fs-4 u-c-text2"></div>
-    <div class="mdl-ft">
+    <div class="sheet-ft">
       <button class="btn out" data-act="ask-no">ביטול</button>
       <button class="btn" data-act="ask-yes" id="ask-yes">אישור</button>
     </div>
