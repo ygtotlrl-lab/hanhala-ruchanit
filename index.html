@@ -1594,6 +1594,8 @@ var MSG_SYNC_BACK = '☁️ הסנכרון חזר לפעול';
 var MSG_CLOUD_SYNC_FAIL = '⚠️ הסנכרון לענן נכשל — הנתונים שמורים במכשיר ויישלחו כשהרשת תחזור';
 var MSG_OFFLINE = '📴 אין חיבור לאינטרנט — הפעולה לא בוצעה';
 var MSG_STALE_CODE = '⚠️ הגרסה הזו מיושנת — יש לעדכן';
+var MSG_SW_NO_WAITING = '⚠️ אין גרסה שממתינה — הדף כבר על האחרונה';
+var MSG_SW_TIMEOUT = '⚠️ העדכון לא הושלם — נסה שוב';
 var MSG_DELETE = 'מחק';
 var MSG_FILL_ALL = '⚠️ נא למלא את כל השדות';
 var MSG_FILL_LOGIN = '⚠️ נא למלא שם משתמש וסיסמה';
@@ -4356,21 +4358,24 @@ function swHideUpdate() {
 /*  ⛔ הרענון אינו כאן — ⚠️ הוא ב-`controllerchange` בלבד: ⭐ טיימר שמרענן
  *  בעצמו יורה לפני שהעובד החדש השתלט, ⛔ ואז `reg.waiting` שורד, הבאנר
  *  חוזר, והלחיצה הבאה חוזרת עליו. */
+/*  ⛔ שני כשלים נבדלים ⛔ ושני נוסחים — ⚠️ «אין עובד ממתין» הוא באנר
+ *  שגרסתו כבר הוחלה, ⭐ ו«התקרה חלפה» הוא עדכון שהתחיל ולא השתלט:
+ *  ⛔ נוסח אחד לשניהם שולח את מי שכבר מעודכן ללחוץ שוב ושוב. */
 function swApply(btn) {
   _swAccepted = true;
   busy(btn, true, 'מעדכן…');
-  if (!(_swReg && _swReg.waiting)) { swApplyFail(btn); return; }
+  if (!(_swReg && _swReg.waiting)) { swApplyFail(btn, MSG_SW_NO_WAITING); return; }
   _swReg.waiting.postMessage({ type: 'SKIP_WAITING' });
-  _swWait = setTimeout(function () { swApplyFail(btn); }, SW_APPLY_MS);
+  _swWait = setTimeout(function () { swApplyFail(btn, MSG_SW_TIMEOUT); }, SW_APPLY_MS);
 }
 /*  ⛔ עובד ממתין ששרד את הלחיצה הוא כשל ⛔ ולא מצב — ⚠️ הבאנר יורד
  *  והכשל נאמר, ⭐ ולא נשאר על המסך ומזמין לחיצה נוספת. */
-function swApplyFail(btn) {
+function swApplyFail(btn, msg) {
   _swWait = 0;
   if (_swReloaded) return;
   busy(btn, false);
   swBannerHide();
-  toast('⚠️ העדכון לא הושלם — נסה שוב', 6000, 'bad');
+  toast(msg, 6000, 'bad');
 }
 function swRegister() {
   if (!('serviceWorker' in navigator)) return;
@@ -4399,7 +4404,15 @@ function swRegister() {
         if (nw.state === 'installed' && navigator.serviceWorker.controller) swShowUpdate();
       });
     });
-    function checkForUpdate() { try { reg.update().catch(function () {}); } catch (e) {} }
+    /*  ⛔ הבאנר יורד כשהעובד מפסיק להמתין ⛔ ולא רק בלחיצה — ⚠️ באנר
+     *  שגרסתו כבר הוחלה מזמין לחיצה שאין לה מה להחיל, ⭐ והמשתמש מקבל
+     *  כשל על עדכון שהצליח. */
+    function checkForUpdate() {
+      try {
+        reg.update().then(function () { if (!reg.waiting) swBannerHide(); })
+           .catch(function () {});
+      } catch (e) {}
+    }
     checkForUpdate();
     setInterval(checkForUpdate, 30 * 60 * 1000);
   }).catch(function (err) { console.warn('[sw] registration failed:', err); });
