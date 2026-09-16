@@ -130,7 +130,7 @@ function dupHarness(modSrc) {
   if (!idEqSrc) throw new Error('idEq לא נחלצה מ-index.html — נמדדו 0 הגדרות והצפוי אחת');
   const sandbox = {
     console, Object, Array, String, Number,
-    window: { _atMarks: {}, _slMarks: {} },
+    window: { _atMarks: {}, _hrMarks: {} },
     ysMarks: (r) => (r && r.marks && typeof r.marks === 'object') ? r.marks : {},
     ysKvGet: async () => null,
     _ysSessionsMerge: (c, l) => l,
@@ -152,11 +152,11 @@ const DUP_GUARD = [
    *  ⛔ ולא את עצם המשיכה: ⭐ קריאה בלי חלון היא בדיוק מה שהצטמצם. */
   [/await _atPullSessions\(ysDayWin\(dateIso\)\);/,
     '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן, ⛔ ובחלון של יום אחד'],
-  [/await _slPullSessions\(ysDayWin\(dateIso\)\);/,
+  [/await _hrPullSessions\(ysDayWin\(dateIso\)\);/,
     '6ב2 · ואותו חלון במודול השינה'],
   [/var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,/,
     '6ג · ⛔ הבדיקה חוזרת ב-`atMarkDirty` — נקודת היצירה בפועל'],
-  [/var _slDup=atFindLiveSession\(window\._slData,window\._slPendingRec\.session,/,
+  [/var _hrDup=atFindLiveSession\(window\._hrData,window\._hrPendingRec\.session,/,
     '6ד · אותה הגנה במודול השינה — אותו מבנה רשומה, אותו חור'],
 ];
 function t3b() {

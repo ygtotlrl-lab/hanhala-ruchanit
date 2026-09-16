@@ -234,7 +234,7 @@ ok('2ב · ⭐ ואין עותק שני של מסלול הדחיפה — `ysSend
   (SRC.match(/^async function ysSendRecs/gm) || []).length === 1);
 ok('2ג · ⛔ ואין `ysRowsPushSleep` נפרדת',
   !/function ysRowsPushSleep/.test(SRC));
-ok('2ד · `slSaveData` דוחפת לשכבת השורות עם המסלול `sleep`',
+ok('2ד · `hrSaveData` דוחפת לשכבת השורות עם המסלול `sleep`',
   /pushTable\('hr_sleep_sessions',data\)/.test(SRC));
 /*  ⛔ הכתיבה הכפולה כובתה (סבב 78) — ⚠️ שכבת השורות היא הכתיבה, ⭐ ואישור
  *  ה-⏳ נשען על הצלחתה: ⛔ אין עוד ערך שלם להישען עליו.
