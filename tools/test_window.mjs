@@ -156,8 +156,8 @@ function harness(y, m, d, extra) {
    *  בתוך ההקשר נשארת מפני שהיא הדרך הנכונה ממילא. */
   vm.runInContext(CAL + '\n' + WIN + '\n' + (extra || '') + `
     this.__api = {
-      ysHwWindowKeys: ysHwWindowKeys,
-      ysHwInWindow: ysHwInWindow,
+      hrHwWindowKeys: hrHwWindowKeys,
+      hrHwInWindow: hrHwInWindow,
       iso: function (d) {
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
                '-' + String(d.getDate()).padStart(2, '0');
@@ -176,7 +176,7 @@ function harness(y, m, d, extra) {
 /* ── 1. החלון: חודש עברי נוכחי + הקודם, ולא יותר ───────────────────────── */
 const TODAY = new Date();
 const h = harness(TODAY.getFullYear(), TODAY.getMonth() + 1, TODAY.getDate());
-const keys = h.api.ysHwWindowKeys();
+const keys = h.api.hrHwWindowKeys();
 assert(keys && Object.keys(keys).length === 2,
   'החלון מחזיק בדיוק שני חודשים עבריים (' + (keys ? Object.keys(keys).join(', ') : 'null') + ')');
 
@@ -187,17 +187,17 @@ const prev = h.api.hebOfIso(prevIso);
 const backIso = h.api.shift(prevIso, -prev.day);        // היום האחרון של החודש שלפניו
 const firstIso = h.api.shift(prevIso, 1);               // א׳ בחודש הנוכחי
 
-assert(h.api.ysHwInWindow({ date_iso: todayIso }), 'רשומה של היום — בחלון (' + cur.monthName + ')');
-assert(h.api.ysHwInWindow({ date_iso: prevIso }),
+assert(h.api.hrHwInWindow({ date_iso: todayIso }), 'רשומה של היום — בחלון (' + cur.monthName + ')');
+assert(h.api.hrHwInWindow({ date_iso: prevIso }),
   'רשומה מהחודש העברי הקודם — בחלון (' + prev.monthName + ')');
-assert(!h.api.ysHwInWindow({ date_iso: backIso }),
+assert(!h.api.hrHwInWindow({ date_iso: backIso }),
   'רשומה משני חודשים עבריים אחורה — מחוץ לחלון (' + h.api.hebOfIso(backIso).monthName + ')');
-assert(h.api.ysHwInWindow({ date_iso: firstIso }) && h.api.hebOfIso(firstIso).day === 1,
+assert(h.api.hrHwInWindow({ date_iso: firstIso }) && h.api.hebOfIso(firstIso).day === 1,
   'א׳ בחודש הנוכחי — בחלון');
 
 /* ⛔ ספק משאיר בפנים — רשומה בלי תאריך ורשומה עם תאריך שאינו נקרא. */
-assert(h.api.ysHwInWindow({}), 'רשומה בלי date_iso נשארת בחלון (ספק ⇐ בפנים)');
-assert(h.api.ysHwInWindow({ date_iso: 'לא-תאריך' }), 'תאריך שאינו נקרא משאיר את הרשומה בחלון');
+assert(h.api.hrHwInWindow({}), 'רשומה בלי date_iso נשארת בחלון (ספק ⇐ בפנים)');
+assert(h.api.hrHwInWindow({ date_iso: 'לא-תאריך' }), 'תאריך שאינו נקרא משאיר את הרשומה בחלון');
 
 /*  ⚠️ בדיקת גבול אמיתית: יום אחד לפני תחילת החודש הנוכחי הוא עדיין בחלון
  *  (החודש הקודם), ⛔ ויום אחד לפני תחילת החודש הקודם כבר אינו — זה
@@ -258,7 +258,7 @@ const STATIC = [
   [/key: mirrorKey\('hr_sessions'\),/, "מפרט החלון קיים ל-hr_sessions"],
   [/function mirrorSave\(t\) \{[\s\S]{0,200}?hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/,
    'משפך הכתיבה לדיסק עובר דרך hwDiskFilter'],
-  [/try \{ hwNoteCloud\(mirrorKey\(kvKey\), r\.data\); \}/, 'הראיה העננית נרשמת במשפך הקריאה (ysCloudGet)'],
+  [/try \{ hwNoteCloud\(mirrorKey\(kvKey\), r\.data\); \}/, 'הראיה העננית נרשמת במשפך הקריאה (hrCloudGet)'],
 ];
 for (const [re, msg] of STATIC) assert(re.test(SRC), msg);
 
@@ -268,7 +268,7 @@ const raw = (SRC.match(/lsSetArray\(mirrorKey\(t\), MIRROR_CFG\.clean/g) || []).
 assert(raw === 1, '⛔ כתיבה גולמית אחת בלבד: `mirrorWrite` (נמדד ' + raw + ')');
 const flat = (SRC.match(/lsSet(?:Array)?\('hr_(?:attend_sessions|sleep_sessions|students)'/g) || []).length;
 assert(flat === 0, '⛔ אפס כתיבות למפתח שטוח שיש לו מראה (נמדד ' + flat + ')');
-assert((SRC.match(/_ysAtDiskSave\(/g) || []).length >= 6,
+assert((SRC.match(/_hrAtDiskSave\(/g) || []).length >= 6,
   'חמשת אתרי הכתיבה + ההגדרה עוברים דרך המשפך');
 
 /* ── 4. שכבת המראה — מפתח לכל טבלה, והגירה חד-פעמית (סבב 114) ──────────── */
@@ -307,7 +307,7 @@ function mirrorHarness(store) {
     hwDiskFilter: (k, rows) => rows,
     PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:',
     TOMBSTONE_TTL_MS: 90 * 86400000, Math,
-    ysWriteFail: () => {},
+    hrWriteFail: () => {},
     getDefaultStudents: () => [{ id: 0, name: 'ברירת מחדל', cls: 'a' }],
     HE: new Intl.Collator('he'),
   };
@@ -319,14 +319,14 @@ function mirrorHarness(store) {
   vm.createContext(ctx);
   vm.runInContext(
     [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES'),
-     srcVar('YS_MIRROR_TABLES'), srcVar('YS_MIRROR_STREAMS'), srcVar('YS_ROWS_KINDS'),
+     srcVar('HR_MIRROR_TABLES'), srcVar('HR_MIRROR_STREAMS'), srcVar('HR_ROWS_KINDS'),
     ].join('\n') + '\n' +
     ['mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
-     'mirrorBoot', '_ysRowSet', 'ysSessionRow', 'ysMarkRows',
-     'ysStudentRow', '_ysRecTs', 'ysRecsFromRows', 'ysMirrorRecs', '_ysMarkSame',
-     '_ysSplitRecs', 'ysMirrorPutRecs', 'ysMirrorWriteRecs',
-     '_ysCfgRows', 'ysCfgLocalGet', 'ysCfgLocalSet',
-     '_ysDiskArr', '_ysStudentsRaw', '_ysStudentsSaveRaw', '_ysStDiskSave',
+     'mirrorBoot', '_hrRowSet', 'hrSessionRow', 'hrMarkRows',
+     'hrStudentRow', '_hrRecTs', 'hrRecsFromRows', 'hrMirrorRecs', '_hrMarkSame',
+     '_hrSplitRecs', 'hrMirrorPutRecs', 'hrMirrorWriteRecs',
+     '_hrCfgRows', 'hrCfgLocalGet', 'hrCfgLocalSet',
+     '_hrDiskArr', '_hrStudentsRaw', '_hrStudentsSaveRaw', '_hrStDiskSave',
      'getStudents'].map(srcFn).join('\n'), ctx);
   return ctx;
 }
@@ -335,9 +335,9 @@ function mirrorHarness(store) {
    *  שהמירה את הצורה ירדה בסבב שאחרי זה שהריץ אותה. */
   const store = {};
   const h0 = mirrorHarness(store);
-  h0.ysMirrorPutRecs('hr_students_rows',
+  h0.hrMirrorPutRecs('hr_students_rows',
     [{ id: 1, name: 'אברהם', cls: 'a' }, { id: 2, name: 'יצחק', cls: 'b', deleted: true }]);
-  h0.ysMirrorPutRecs('hr_sessions', [{ id: 's1', updatedAt: 5, marks: { 1: { s: 'p', min: 0 } } }]);
+  h0.hrMirrorPutRecs('hr_sessions', [{ id: 's1', updatedAt: 5, marks: { 1: { s: 'p', min: 0 } } }]);
   const h = mirrorHarness(store);
   assert(JSON.parse(store['hr_mirror_sessions']).length === 1 &&
          JSON.parse(store['hr_mirror_marks']).length === 1 &&
@@ -352,10 +352,10 @@ function mirrorHarness(store) {
     '⛔ מפתח שאינו על הדיסק הוא `null` ⛔ ולא מערך ריק');
   assert(h.getStudents().length === 1 && h.getStudents()[0].name === 'אברהם',
     '⚠️ הנתונים נקראים — המצבה מהמראה, בלי המחוקים');
-  const back = h._ysDiskArr('hr_sessions');
+  const back = h._hrDiskArr('hr_sessions');
   assert(back.length === 1 && back[0].marks['1'].s === 'p',
     '⭐ קריאת הדיסק מרכיבה את הרשומה מהשורות');
-  h._ysStudentsSaveRaw([{ id: 3, name: 'יעקב', cls: 'g' }]);
+  h._hrStudentsSaveRaw([{ id: 3, name: 'יעקב', cls: 'g' }]);
   assert(JSON.parse(store['hr_mirror_students_rows'])[0].client_id === '3',
     '⛔ הכתיבה יורדת למפתח המראה בלבד, כשורה');
   const before2 = JSON.stringify(store);
@@ -409,10 +409,10 @@ mutFails('הסרת הראיה העננית', SRC.replace('try { hwNoteCloud(mirr
     D.parse = REAL.parse.bind(REAL); D.UTC = REAL.UTC.bind(REAL);
     const ctx = { window: {}, Date: D, Intl, console, JSON, Math, String, Number, isFinite };
     ctx.globalThis = ctx; vm.createContext(ctx);
-    vm.runInContext(CAL + '\n' + mut + '\nthis.__api = { ysHwInWindow };', ctx);
+    vm.runInContext(CAL + '\n' + mut + '\nthis.__api = { hrHwInWindow };', ctx);
     return ctx.__api;
   })();
-  assert(!h2.ysHwInWindow({ date_iso: prevIso }),
+  assert(!h2.hrHwInWindow({ date_iso: prevIso }),
     'מוטציה — חלון של חודש אחד מוציא את החודש הקודם (הטענה מודדת ולא מצהירה)');
 }
 

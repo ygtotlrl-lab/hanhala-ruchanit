@@ -35,16 +35,16 @@ import crypto from 'node:crypto';
 const APP = {
   app: 'hanhala-ruchanit',
   file: 'index.html',
-  /*  ⚠️ נמדד ולא הוצהר: `ysFlushQueue` הוא מסלול הריקון האוטומטי כאן —
+  /*  ⚠️ נמדד ולא הוצהר: `hrFlushQueue` הוא מסלול הריקון האוטומטי כאן —
    *  `RTY_CFG.flush` מפעיל אותו, וגם מאזין ה-`online` שבתחתית הקובץ.
    *  ⛔ התור הישן הוא פר-מפתח `kv` ואינו תור פעולות. */
-  drainFns: ['ysFlushQueue'],
+  drainFns: ['hrFlushQueue'],
   /*  משפך הכתיבה המקומית שדורך את הניסיון החוזר. */
   noteFn: 'schedulePush',
   /*  ⛔ משפך דריכה שני, מוכרז ומנומק — ⚠️ תור ההגדרות האופליין הוא כתיבה
    *  מקומית שאינה עוברת במתזמן הדחיפה: ⭐ פריט שנכנס אליו אחרי שהדחיפה
    *  כבר נכשלה ⛔ לא היה מקבל ניסיון חוזר כלל. */
-  noteExtra: ['_ysQueueAdd'],
+  noteExtra: ['_hrQueueAdd'],
   bootFn: 'loadDash',
   /*  האם לאפליקציה הזו יש פולינג שדוחף, ולכן `rtyGate()` מחווט בו.
    *  ⚠️ פולינג שמושך בלבד אינו זקוק לשער: אין מה לדחות. */

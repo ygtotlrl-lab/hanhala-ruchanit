@@ -140,20 +140,20 @@ const APP = {
   /*  ⛔ קבועי מסך הצפייה (סבב 90ג) — ⚠️ מסך «טבלת התשתית» קיים ביומן
    *  בלבד. ⛔ **והרשימה אינה נשמטת** — ⭐ שדה חסר נקרא «לא נשאל». */
   viewOnlyConsts: [],
-  offlineLoginFn: 'ysVerifyOffline',
+  offlineLoginFn: 'hrVerifyOffline',
   /*  ⛔ חתימת ה-keystore — ⚠️ היא מה שהופך «מפתח קבוע» למדיד:
    *  ⭐ keystore חדש הוא גם קובץ קיים, ⛔ וחתימה שונה מפילה. */
   keystoreSha: 'afff0a7832f718e1',
   schemaFile: 'migrations/000_initial_schema.sql',
   /*  ⭐ שם משפך ה-`kv` (סבב 56) — `null` כשאין כאן `kv` כלל. */
-  kvFallbackFn: 'ysKvGet',
+  kvFallbackFn: 'hrKvGet',
   /*  ⛔ מפתחות ה-`onConflict` המוכרזים (סבב 72) — ⚠️ המפתח הוא זהות
    *  השורה: `client_id` נוצר במכשיר, ⛔ ו-`key` הוא הזהות של טבלת מפתח-ערך. */
   conflictKeys: { client_id: 'מזהה שנוצר במכשיר', key: 'טבלת מפתח-ערך' },
   /*  ⛔ נקודת המעבר היחידה של סוד אל הדיסק (סבב 76) — ⚠️ השם נבדל בין
    *  השלוש והמנגנון אחד: ⭐ כאן השלכה לשדות מותרים, ⛔ ולכן עמודה רגישה
    *  שתיווסף לטבלה אינה עוברת אפילו אם איש לא ייגע בקוד. */
-  secretStripFn: 'ysUserSlim',
+  secretStripFn: 'hrUserSlim',
   /*  ⛔ השדה שאסור לו לשרוד את נקודת המעבר — ⚠️ השם מטעה ואין בו גיבוב,
    *  ⛔ וזו בדיוק הסיבה שהוא נמדד ולא נסמך עליו. */
   secretField: 'password_hash',
@@ -162,11 +162,11 @@ const APP = {
    *  שמחליף אותו הוא ששתי הפונקציות שלמטה גוזרות טביעה בכל יצירה. */
   passFpFillFn: null,
   userCreateFn: 'saveUser',
-  passFpMakeFn: 'ysPassFields',
+  passFpMakeFn: 'hrPassFields',
   /*  ⛔ נקודת המיון היחידה, ⛔ ושדות הסדר שמזהים משווה של ישות —
    *  ⚠️ מצבת התלמידים — שיעור ואז א״ב: ⭐ השם נבדל ביניהן
    *  ⛔ והמנגנון אחד, ⚠️ ולכן ההצהרה כאן וה-probe משותף. */
-  sortFn: 'ysSortStudents',
+  sortFn: 'hrSortStudents',
   sortFields: ['cls', 'name'],
   /*  ⛔ מסלולי הייצוא המוצהרים — ⚠️ המסלול הוא צילום או מנוע טבלה,
    *  ⛔ ובשום מקרה מסמך HTML שני: ⭐ ⛔ מנוע טבלה — ⚠️ 71 תלמידים נמשכים על פני עמודים, ⭐ וצילום היה נחתך. */
@@ -174,17 +174,17 @@ const APP = {
    *  ⚠️ **מה נכנס**: שם המטפל ומה שהפולינג אינו מכסה, ⛔ **ומה מפיל**:
    *  הצהרה שאין לה אתר — ⭐ והריקה היא «נמדד ואין». */
   netListeners: {
-    ysRevalidateOfflineLogin:
+    hrRevalidateOfflineLogin:
       'אימות מחדש של הכניסה האופליין ושליחת יומן הכניסות — ⛔ אינם בשום מסלול אחר: ⚠️ משתמש שהושבת בזמן שהמכשיר היה מנותק נשאר מחובר עד הטעינה הבאה',
   },
-  cloudPut: ['ysCfgSet', 'writeUser'],
+  cloudPut: ['hrCfgSet', 'writeUser'],
   cloudPutWhy: '',
   cloudWrites: ['savePerms', 'saveAbsenceReasons', 'atSaveCfg', 'atSaveTreats', '_hrCleanCfg',
                 'hrSaveCfg', 'hrSaveTreats', 'saveUser', 'toggleUserActive', 'changeMyPassword'],
   cloudWriteAllow: {
     writeUser: 'הפרימיטיב עצמו — ⛔ גופו בבלוק חתום משותף לכולן, ⚠️ והקידום נמדד באתרי הקריאה שמעליו',
-    ysCfgSet: 'הפרימיטיב עצמו — ⛔ אות הפולינג נכתב דרכו: ⭐ קידום בתוכו היה לולאה',
-    ysPushToCloud: 'כתיבה שמקורה במיזוג — ⛔ וקידום האות שם מחזיר את שני המכשירים למחזור אין-סופי',
+    hrCfgSet: 'הפרימיטיב עצמו — ⛔ אות הפולינג נכתב דרכו: ⭐ קידום בתוכו היה לולאה',
+    hrPushToCloud: 'כתיבה שמקורה במיזוג — ⛔ וקידום האות שם מחזיר את שני המכשירים למחזור אין-סופי',
   },
   /*  ⛔ שמירה שאינה עוברת בצינור — ⚠️ **מה נכנס**: שם הפונקציה ומה
    *  שמונע ממנה לעבור בו, ⛔ **ומה מפיל**: שם שמוצהר ובפועל עובר בו —
@@ -227,10 +227,10 @@ const APP = {
   ctxKeys: { 'AUTH.user': 'המשתמש המחובר — ⛔ כל כתיבה אליו היא החלפת הקשר' },
   /*  ⛔ אתר שכותב לשם ואינו החלפה — ⚠️ מוכרז בשמו ובנימוקו, ⭐ והכרזה
    *  שאין לה מקרה בפועל מפילה אף היא. */
-  ctxSwitchExempt: { ysRevalidateOfflineLogin: 'רענון השורה של **אותה** זהות — ⛔ ולא החלפה' },
+  ctxSwitchExempt: { hrRevalidateOfflineLogin: 'רענון השורה של **אותה** זהות — ⛔ ולא החלפה' },
   /*  ⛔ מחזורי «קרא ← מזג ← דחוף» — ⚠️ מספרם נגזר מהאפליקציה ⛔ ואינו נאכף. */
-  ctxCycles: ['ysPullFromCloud', 'ysPushToCloud'],
-  ctxRegs: ['pendConfirmPush', 'pendConfirmKv', '_ysPushedAt', '_ysLastTs'],
+  ctxCycles: ['hrPullFromCloud', 'hrPushToCloud'],
+  ctxRegs: ['pendConfirmPush', 'pendConfirmKv', '_hrPushedAt', '_hrLastTs'],
   /*  ⛔ פעולות שממתינות לכתיבה ברשת (סבב 135) — ⚠️ **מה נכנס**: פעולה
    *  שהמטפל שלה ממתין לכתיבה בענן, ⛔ **ומה מפיל**: שם שאין לו פעולה
    *  במפה, ומטפל שאינו מחזיר את ההבטחה. ⭐ **וכתיבה מקומית-תחילה אינה
@@ -310,23 +310,23 @@ const APP = {
    *  ⛔ **ולא כל קריאה צריכה חלון** — ⚠️ שלוש קטגוריות חייבות את הטבלה
    *  כולה, ⭐ וכל אחת מוכרזת כאן בשמה ובנימוקה: ⛔ החרגה שאין לה אתר
    *  בפועל מפילה אף היא. */
-  rowsLayerFns: { ysCloudGet: 2, ysRowsGetSessions: 2, ysRowsGetStudents: 1 },
+  rowsLayerFns: { hrCloudGet: 2, hrRowsGetSessions: 2, hrRowsGetStudents: 1 },
   fullPullAllow: {
-    _ysVerify:        'אימות — עֵד שהרשומה בענן: ⛔ משיכת חלון אינה עדות על מה שמחוצה לו',
-    ysHwInWindow:     'החלון החם — מנגנון פינוי נפרד, ⛔ והוא מודד את הטבלה כולה',
+    _hrVerify:        'אימות — עֵד שהרשומה בענן: ⛔ משיכת חלון אינה עדות על מה שמחוצה לו',
+    hrHwInWindow:     'החלון החם — מנגנון פינוי נפרד, ⛔ והוא מודד את הטבלה כולה',
     step:             'מיזוג המצבה במחזור הדחיפה — ⛔ מנוע ההכרעה חייב את כל הרשומות',
-    ysPullFromCloud:  'הסנכרון והמיזוג — ⛔ «אין אצלי» נקרא «נמחקה» בלי כל הרשומות',
+    hrPullFromCloud:  'הסנכרון והמיזוג — ⛔ «אין אצלי» נקרא «נמחקה» בלי כל הרשומות',
     atSaveData:       'מיזוג לפני כתיבה — ⛔ לא דורסים רשומה של מכשיר אחר',
     hrSaveData:       'מיזוג לפני כתיבה — ⛔ לא דורסים רשומה של מכשיר אחר',
     atLoadData:       'מטמון הזיכרון עם נפילה-חזרה לענן — ⚠️ הוא נטען בעלייה, ⭐ והחלון יושב באתרי המשיכה',
     hrLoadData:       'מטמון הזיכרון עם נפילה-חזרה לענן — ⚠️ הוא נטען בעלייה, ⭐ והחלון יושב באתרי המשיכה',
     openStatusHistory:'מצבת התלמידים כולה — ⚠️ 71 שורות, ⛔ ואין לה עמודת תאריך לחלון',
-    ysRowsGetSessions:'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
-    ysRowsGet:        'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
+    hrRowsGetSessions:'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
+    hrRowsGet:        'צורף המצבה בתוך שכבת השורות — ⛔ הרוסטר כולו, בלי חלון',
   },
   /*  ⛔ רשומת התלמיד נושאת את מערך ההיעדרויות — ⚠️ ולפריטים `id`
    *  ו-`deleted`, ⭐ ולכן הם ממוזגים פר-פריט. */
-  mergePoints: ['ysStudentPair', 'ysMergeMarks', 'ysSessionPairFor'],
+  mergePoints: ['hrStudentPair', 'hrMergeMarks', 'hrSessionPairFor'],
   /*  ⛔ חותמת הניקוי של כל ערך מפתח-ערך שהמכשיר ממזג — ⚠️ **מה נכנס**: שם
    *  המפתח בענן ושם מפתח החותמת שלו, ⛔ **ומה מפיל**: ערך שממוזג ואין לו
    *  חותמת, ⛔ הצהרה שאין לה אתר, ⛔ ושם שאינו נגמר ב-`_reset`. ⭐ **ולמה
@@ -356,11 +356,11 @@ const APP = {
   },
   /*  ⛔ המכווץ של כל נקודת מיזוג — ⚠️ `null` אומר «אין ברשימה ערכים
    *  שיכולים לחזור», ⛔ והנימוק יושב לצידו ⛔ ואינו נשמט. */
-  listCollapse: { ysStudentPair: 'uniqList',
-                  ysMergeMarks: null,
-                  ysSessionPairFor: null },
-  listCollapseWhy: { ysMergeMarks: 'הסימונים הם **מפה** לפי מזהה תלמיד ⛔ ולא רשימת ערכים — ⚠️ שני סימונים לאותו תלמיד אינם יכולים להתקיים במפה אחת',
-                     ysSessionPairFor: 'הזוג מעביר את המפה ל-`ysMergeMarks` ⛔ ואינו מכווץ בעצמו — ⚠️ הכיווץ יושב במקום אחד' },
+  listCollapse: { hrStudentPair: 'uniqList',
+                  hrMergeMarks: null,
+                  hrSessionPairFor: null },
+  listCollapseWhy: { hrMergeMarks: 'הסימונים הם **מפה** לפי מזהה תלמיד ⛔ ולא רשימת ערכים — ⚠️ שני סימונים לאותו תלמיד אינם יכולים להתקיים במפה אחת',
+                     hrSessionPairFor: 'הזוג מעביר את המפה ל-`hrMergeMarks` ⛔ ואינו מכווץ בעצמו — ⚠️ הכיווץ יושב במקום אחד' },
   /*  ⛔ החותמת שנושא כל פריט במערך — ⚠️ שדה בגוף הפריט, ⛔ או פונקציה
    *  שכותבת אותה למפת חותמות לצידו: ⭐ שתי הצורות חותמת פר-פריט,
    *  ⚠️ **והרשימה אינה נשמטת** — ⭐ שדה חסר נקרא «לא נשאל», וריק נקרא
@@ -375,9 +375,16 @@ const APP = {
    *  ⛔ **והרשימה אינה נשמטת** — ⚠️ שדה חסר נקרא «לא נשאל», ⭐ וריק
    *  נקרא «נמדד ואין». */
   derivedNames: {},
-  /*  ⛔ מפתחות ההגדרה שהקוד מבקש — ⚠️ כל מפתח כאן נדרש ב-`ysCfgGet`,
+  /*  ⛔ מפתחות ההגדרה שהקוד מבקש — ⚠️ כל מפתח כאן נדרש ב-`hrCfgGet`,
    *  ⛔ וכל מפתח שנדרש שם חייב להיות כאן: ⭐ והמדידה מול המסד עצמו היא
    *  פעולת מנהל. */
+  /*  ⛔ שם עוטף ההגדרה — ⚠️ **מה נכנס**: השם שהקוד קורא בו מפתח הגדרה
+   *  יחיד; ⛔ **ומה מפיל**: שם שאין לו אתר במקור, ⛔ ומפתח ב-`cfgKeys`
+   *  כשהשדה `null`. ⭐ **ולמה הוא מוצהר ואינו מוקלד בגוף**: תחילית
+   *  האפליקציה חיה בשם, ⚠️ ותחילית שהוסבה השאירה את הגוף מודד שם מת.
+   *  ⛔ **וההיעדר מוצהר `null`** ⛔ ואינו נשמט — ⚠️ שדה חסר נקרא
+   *  «לא נשאל», ⭐ ו-`null` נקרא «נמדד ואין». */
+  cfgReadFn: 'hrCfgGet',
   cfgKeys: ['hr_absence_reasons', 'hr_approvals', 'hr_attend_cfg', 'hr_attend_treats',
             'hr_perms', 'hr_reasons', 'hr_sleep_cfg', 'hr_sleep_treats'],
   /*  ⛔ פונקציה בלי קורא שנשארת בכוונה — ⚠️ כל שם נושא את הסיבה, ⛔ ושם
@@ -415,7 +422,7 @@ const APP = {
      *  ⛔ ומסלול שמחזיר מפה ריקה. ⭐ **ולמה**: `{}` נקרא אצל הקורא
      *  כ«אין חותמת», ⚠️ והוא בוחר את הענן. */
     99: (c) => {
-      const b = c.fnBody('ysCfgUpdatedAt');
+      const b = c.fnBody('hrCfgUpdatedAt');
       if (!b) return false;
       const zeros = (b.match(/(?:return\s+0|:\s*0)\s*[;)]/g) || []).length;
       return zeros >= 2 && /catch\s*\([^)]*\)[^;]*return\s+0\s*;/.test(b) &&
@@ -463,7 +470,7 @@ const APP = {
       return _r66 && (callArity(c.code, '_ysRowsPaged').every((a) => a === 3)
           && callArity(c.code, '_atPullSessions').every((a) => a === 1)
           && callArity(c.code, '_hrPullSessions').every((a) => a === 1)
-          && callArity(c.code, 'ysHebMonthWin').length >= 3);
+          && callArity(c.code, 'hrHebMonthWin').length >= 3);
     },
     /*  ⛔ ערך ולא נוכחות (סבב 72) — ⚠️ כל `upsert` נושא `onConflict`,
      *  ⛔ וכל מפתח שנכתב בקוד מוכרז ומנומק ב-`APP.conflictKeys`: ⭐ מפתח
@@ -482,20 +489,20 @@ const APP = {
      *  ממנו: מספר הסיבובים מהקבוע, ⛔ ו-`SHA-256` ו-256 הביט מהקריאה
      *  ל-`deriveBits` עצמה. ⭐ עד סבב 72 השורה נשאה «אין שער שמודד», ⛔ והיא
      *  ניתנת למדידה במלואה. */
-    191: (c) => c.hasCode(/YS_PASS_ITER\s*=\s*100000\b/)
-          && /iterations:\s*YS_PASS_ITER,\s*hash:\s*'SHA-256'/.test(c.src)
+    191: (c) => c.hasCode(/HR_PASS_ITER\s*=\s*100000\b/)
+          && /iterations:\s*HR_PASS_ITER,\s*hash:\s*'SHA-256'/.test(c.src)
           && /deriveBits\([\s\S]{0,200}?key,\s*256\)/.test(c.code),
     /*  ⛔ נקודת כניסה חיה ולא קיום פונקציה (סבב 67) —
      *  «נתיב עדכון חלקי» שאין לו אף קורא הוא קוד מת, ו-✅ עליו נקרא
      *  כעדות. ⚠️ הספירה היא >1 מפני שההגדרה עצמה נספרת גם היא. */
-    190: (c) => !!c.fnBody('ysUsersCacheSave')
-             && (c.code.match(/\bysUsersCacheSave\s*\(/g) || []).length > 1,
+    190: (c) => !!c.fnBody('hrUsersCacheSave')
+             && (c.code.match(/\bhrUsersCacheSave\s*\(/g) || []).length > 1,
     // ⛔ שלב א בלבד (סבב 36) — ה-`kv` הוא עדיין המאסטר וכל קריאה עוברת בו. הדגל
     //    הזה הוא המתג — כשהוא יכובה (שלב ב), התא חייב להפוך ל-✅.
     /*  ⛔ ערך ולא דגל (סבב 78) — ⚠️ הדגל נמחק, ⭐ ומה שנמדד הוא **היעדר
      *  כתיבת ערך שלם** למפתח שיש לו טבלה: ⛔ דגל כבוי שנשאר בקוד מעיד על
      *  כוונה, ⚠️ ואילו כתיבה שנשארה מעידה על שני מקורות אמת. */
-    151: (c) => !/ysCfgSet\('(?:hr_students|hr_sessions|hr_sleep_sessions)'/.test(c.src)
+    151: (c) => !/hrCfgSet\('(?:hr_students|hr_sessions|hr_sleep_sessions)'/.test(c.src)
           /*  ⚠️ נמדד על המקור ⛔ ולא על הקוד המולבן — ⭐ שם הטבלה הוא
            *  מחרוזת, ⛔ וההלבנה מרוקנת אותה. */
           && /await pushTable\('hr_sessions',data\)/.test(c.src)
@@ -629,8 +636,8 @@ const APP = {
     hr_login_log_queue: 'תור יומן הכניסות — אינו בענן, והוא מחסום הפינוי',
   },
   mirrorKey: 'hr_mirror_users',
-  mirrorFns: { sanitize: 'ysUserSlim', saveAll: 'ysUsersCacheSaveAll',
-               savePartial: 'ysUsersCacheSave' },
+  mirrorFns: { sanitize: 'hrUserSlim', saveAll: 'hrUsersCacheSaveAll',
+               savePartial: 'hrUsersCacheSave' },
   mirrorSecretCols: ['password', 'password_hash'],
   /*  ⛔ אוצר המילים של התפקיד (סבב 113) — ⚠️ **מה נכנס**: כל שם תפקיד
    *  שהקוד מכיר, ⭐ **והמורשה ראשון**. ⛔ **ומה מפיל**: שם מוכרז שאינו
@@ -649,7 +656,7 @@ const APP = {
    *  פונקציה. ⛔ **ומה מפיל**: שם בלי פונקציה, ושם שאין בגופו אתר. */
   roleMsgs: [],
   roleCmpExempt: {
-    ysSupervisionAccess: 'מסכי ההשגחה פתוחים למנהל וגם לדרגת הביניים — ⛔ והדרגה קיימת כאן בלבד',
+    hrSupervisionAccess: 'מסכי ההשגחה פתוחים למנהל וגם לדרגת הביניים — ⛔ והדרגה קיימת כאן בלבד',
   },
   /*  ⛔ הקלט שכל בדיקה ב-`MATRIX` קוראת (סבב 113) — ⚠️ **מה נכנס**: כל
    *  בדיקה, בתווית `doc` · `src` · `tools` · `mixed`. ⛔ **ומה מפיל**:
@@ -1189,7 +1196,7 @@ const CAPS = {
   hebdate: {
     name: 'מנוע התאריך העברי',
     docRows: ['מנוע תאריך עברי'],
-    block: { file: 'core/hebrew.js', sha: '4c9e7dc2fdbaa4ca', lines: 100,
+    block: { file: 'core/hebrew.js', sha: '63c8b66c12488adb', lines: 100,
              start: '/* ═══ מנוע התאריך העברי — מודול משותף (סבב 107)',
              end:   '/* ═══════════════ סוף מודול מנוע התאריך העברי' },
   },
@@ -2059,7 +2066,12 @@ function installGaps() {
  *  נכשל» על מסד תקין, וחי כך. ⛔ ומה שנמדד כאן הוא ההצהרה ושתי הסטיות
  *  ממנה — ⚠️ קיום המפתח במסד עצמו אינו נראה מהריפו. */
 function cfgKeyGaps() {
-  const asked = [...srcRefs.matchAll(/\b(?:ys|sl)CfgGet\(\s*'([^']+)'/g)].map((m) => m[1]);
+  /*  ⛔ הדפוס נגזר מ-`APP.cfgReadFn` ⛔ ואינו מוקלד כאן — ⚠️ שתי תחיליות
+   *  שהוקלדו בגוף שרדו הסבת תחילית, ⭐ והגוף המשיך למדוד שם מת. */
+  const fn = APP.cfgReadFn;
+  const asked = fn
+    ? [...srcRefs.matchAll(new RegExp('\\b' + fn + "\\(\\s*'([^']+)'", 'g'))].map((m) => m[1])
+    : [];
   const declared = APP.cfgKeys || [];
   const out = [];
   for (const k of new Set(asked)) if (declared.indexOf(k) < 0) out.push('נדרש ואינו מוצהר: ' + k);
@@ -2259,7 +2271,7 @@ function checkerMissions() {
  *  מסלולים שבהם היעדר ערך הוא תשובה תקפה ואין מה לרשום; ⛔ מה שנמדד הוא
  *  `catch` ריק ש**גוף ה-try שלו כותב** — מקומית או לענן. ⛔ ו-`reg.update()`
  *  אינו כתיבה — ⚠️ הוא רענון ה-service worker, ⛔ ואין לו נתון שיאבד. */
-const WRITE_CALL = /lsSet\s*\(|localStorage\s*\.\s*setItem|sessionStorage\s*\.\s*setItem|\.upsert\s*\(|\.insert\s*\(|sbSet\s*\(|ysCfgSet\s*\(|\bSB\b[\s\S]{0,80}?\.update\s*\(/;
+const WRITE_CALL = /lsSet\s*\(|localStorage\s*\.\s*setItem|sessionStorage\s*\.\s*setItem|\.upsert\s*\(|\.insert\s*\(|sbSet\s*\(|hrCfgSet\s*\(|\bSB\b[\s\S]{0,80}?\.update\s*\(/;
 /*  ⛔ גוף ה-`try` נמצא בהתאמת סוגריים ⛔ ולא בחלון של 700 תווים (סבב 80) —
  *  ⚠️ חלון קבוע מפספס `try` ארוך ממנו, ⭐ וכשל שקט בגוף ארוך הוא בדיוק
  *  הכשל שקשה יותר למצוא בעין. ⛔ והמדידה עוצרת כשלפני הסוגר אין `try`:
@@ -7065,7 +7077,7 @@ const GATES = {
    *  החיות של האחיות, ⭐ ההבחנה בין שער למודול לפי «מריץ את עצמו»,
    *  ⛔ ומפריד השם במודול רב-מילי. */
   119: { claims: { test_names: ['[name-policy]', '[name-policy-why]', '[fn-sister-prefix]',
-                                '[fn-allow]', '[gate-name]', '[module-name]',
+                                '[name-retired-prefix]', '[fn-allow]', '[gate-name]', '[module-name]',
                                 '[module-sep]', '[class-case]'] } },
   /*  ⭐ סבב 148 — ⛔ שם מיגרציה נגזר, ומותאם לרשומה שרצה: ⚠️ הדפוס והרצף
    *  מ-`000`, ⭐ המרשם שמגשר לטבלת המעקב, ⛔ וההצלבה של כל הפניה חוצת-ריפו
@@ -7612,7 +7624,7 @@ if (CORE) {
  *  אתר בפועל מפילה אף היא, ⛔ והצהרה ריקה שיש לה אתר — כך גם. */
 {
   const want = APP.viewOnlyConsts || [];
-  const ALL = ['RAW_BASE', 'YS_INF_MD'];
+  const ALL = ['RAW_BASE', 'YA_INF_MD'];
   const has = (n) => new RegExp('(?<![\\w$])' + n + '(?![\\w$])').test(code);
   const missing = want.filter((n) => !has(n));
   const stray = ALL.filter((n) => want.indexOf(n) < 0 && has(n));

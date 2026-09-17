@@ -35,7 +35,7 @@ import { execFileSync } from 'node:child_process';
 const APP = {
   app: 'hanhala-ruchanit',
   actMap: 'DOM_ACTIONS',
-  sortFn: 'ysSortStudents',
+  sortFn: 'hrSortStudents',
   cdnSym: 'supabase',
   /* ⚠️ אתרי הקריאה של מסלול הייצוא, וההחלפה שמנטרלת כל אחד — ריק כשאין ייצוא */
   exportCalls: [['createPdf(', 'createPdfZ('], ['.download', '.dnldZ']],
@@ -48,7 +48,7 @@ const APP = {
   /* ⚠️ דרגה שאיש אינו נושא — ריקה כשאין כאן מודל הרשאות */
   roleUnused: '',
   /* ⚠️ המאמת האופליין — ריק כשאין כאן כניסה */
-  verifyFn: 'ysVerifyOffline',
+  verifyFn: 'hrVerifyOffline',
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 

@@ -26,8 +26,8 @@ import { appSrc } from './appsrc.mjs';
 const APP = {
   // המפתחות שעברו לטבלאות, ואתרי הקריאה שחייבים לעבור דרך המשפך.
   keys: ['hr_sessions', 'hr_students_rows', 'hr_sleep_sessions'],
-  funnel: 'ysCloudGet',
-  rawGet: 'ysCfgGet',
+  funnel: 'hrCloudGet',
+  rawGet: 'hrCfgGet',
   minCallSites: 6,
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
@@ -116,7 +116,7 @@ const PAGED_START = '/* ═══ משיכה מסוננת בשרת — מודו�
 const PAGED_END = '/* ═══════════════ סוף מודול משיכה מסוננת בשרת';
 /*  ⛔ ההרכבה משותפת למראה ולענן (סבב 116) — ⚠️ היא יושבת מעל הבלוק
  *  שנחתך כאן, ⭐ ולכן היא נטענת בנפרד: ⛔ רתמה בלעדיה מודדת קוד שאינו רץ. */
-const ASM = ['_ysRowSet', 'ysRecsFromRows'];
+const ASM = ['_hrRowSet', 'hrRecsFromRows'];
 function cutFn(src, name) {
   const re = new RegExp('\\n(async )?function ' + name + '\\s*\\(', 'g');
   const m = re.exec(src);
@@ -139,7 +139,7 @@ function extract(src) {
   return src.slice(src.lastIndexOf('/*', i), j);
 }
 
-/* רתמה: מסד מזויף שמחזיר את מה שהתרחיש קבע, ו-`ysCfgGet` שסופר קריאות. */
+/* רתמה: מסד מזויף שמחזיר את מה שהתרחיש קבע, ו-`hrCfgGet` שסופר קריאות. */
 function run(block, tables, kvValue, opts) {
   opts = opts || {};
   const log = { kv: 0, sel: [] };
@@ -175,15 +175,15 @@ function run(block, tables, kvValue, opts) {
   };
   const ctx = {
     SB: sb,
-    YS_ROWS: true,
-    YS_ROWS_KINDS: { attend: { parent: 'hr_sessions', child: 'hr_marks', pk: 'at-sess:', note: false } },
+    HR_ROWS: true,
+    HR_ROWS_KINDS: { attend: { parent: 'hr_sessions', child: 'hr_marks', pk: 'at-sess:', note: false } },
     withTimeout: (p) => Promise.resolve(p),
-    ysCfgGet: () => { log.kv++; return Promise.resolve(kvValue); },
+    hrCfgGet: () => { log.kv++; return Promise.resolve(kvValue); },
     console,
     log
   };
   vm.createContext(ctx);
-  vm.runInContext(PAGED_USE + '\n' + ASM_USE + '\n' + block + '\nthis.__api = { ysCloudGet, ysRowsGet, ysRowsGetSessions, ysRowsGetStudents };', ctx);
+  vm.runInContext(PAGED_USE + '\n' + ASM_USE + '\n' + block + '\nthis.__api = { hrCloudGet, hrRowsGet, hrRowsGetSessions, hrRowsGetStudents };', ctx);
   return { api: ctx.__api, log, ctx };
 }
 
@@ -202,41 +202,41 @@ async function scenarios(block, label) {
   // א. שחזור מלא
   {
     const { api, log } = run(block, { hr_sessions: [SESS()], hr_marks: [MARK(), MARK({ student_id: 'st-2', status: 'l', minutes: 10 })] }, null);
-    const out = await api.ysCloudGet('hr_sessions');
+    const out = await api.hrCloudGet('hr_sessions');
     res.rebuild = out;
     res.kvTouched = log.kv;
   }
   // ב. סימון מחוק ⇐ מדולג
   {
     const { api } = run(block, { hr_sessions: [SESS()], hr_marks: [MARK({ deleted: true })] }, null);
-    res.delMark = (await api.ysCloudGet('hr_sessions'))[0].marks;
+    res.delMark = (await api.hrCloudGet('hr_sessions'))[0].marks;
   }
   // ג. סימון שחותמתו ישנה מהאב ⇐ מדולג (סימון שנמחק מהמפה)
   {
     const { api } = run(block, { hr_sessions: [SESS({ updated_at: 2000 })], hr_marks: [MARK({ updated_at: 1000 }), MARK({ student_id: 'st-9', updated_at: 2000 })] }, null);
-    res.staleMark = (await api.ysCloudGet('hr_sessions'))[0].marks;
+    res.staleMark = (await api.hrCloudGet('hr_sessions'))[0].marks;
   }
   // ד. סדר מחוק ⇐ tombstone נשמר
   {
     const { api } = run(block, { hr_sessions: [SESS({ deleted: true })], hr_marks: [] }, null);
-    res.tomb = (await api.ysCloudGet('hr_sessions'))[0];
+    res.tomb = (await api.hrCloudGet('hr_sessions'))[0];
   }
   // ה. כשל טבלה ⇐ `null` — «אין ראיה», ולא «הענן ריק»
   {
     const { api, log } = run(block, { hr_sessions: 'error' }, [{ id: 'KV' }]);
-    res.onError = await api.ysCloudGet('hr_sessions');
+    res.onError = await api.hrCloudGet('hr_sessions');
     res.onErrorKv = log.kv;
   }
   // ו. טבלה ריקה ⇐ מערך ריק — «נמדד ואין», והמיזוג מכריע לפיו
   {
     const { api, log } = run(block, { hr_sessions: [], hr_marks: [] }, [{ id: 'KV' }]);
-    res.onEmpty = await api.ysCloudGet('hr_sessions');
+    res.onEmpty = await api.hrCloudGet('hr_sessions');
     res.onEmptyKv = log.kv;
   }
   // ז. מפתח הגדרות ⇐ `hr_settings`, בלי לגעת בטבלאות הרשומות
   {
     const { api, log } = run(block, {}, [{ id: 'KV' }]);
-    res.passthru = await api.ysCloudGet('hr_attend_cfg');
+    res.passthru = await api.hrCloudGet('hr_attend_cfg');
     res.passthruSel = log.sel.length;
   }
   // ח2. יותר מעמוד אחד ⇐ נמשכים כל העמודים
@@ -244,13 +244,13 @@ async function scenarios(block, label) {
     const many = [];
     for (let i = 0; i < 1200; i++) many.push(MARK({ student_id: 'st-' + i }));
     const { api } = run(block, { hr_sessions: [SESS()], hr_marks: many }, null);
-    const out = await api.ysCloudGet('hr_sessions');
+    const out = await api.hrCloudGet('hr_sessions');
     res.paged = out[0] ? Object.keys(out[0].marks).length : 0;
   }
   // ח. המצבה — `data` מועתקת כמות שהיא
   {
     const { api } = run(block, { hr_students_rows: [{ client_id: 'x', updated_at: 5, deleted: false, data: { id: 'x', name: 'ב' } }] }, null);
-    res.students = await api.ysCloudGet('hr_students_rows');
+    res.students = await api.hrCloudGet('hr_students_rows');
   }
   return res;
 }
@@ -313,9 +313,9 @@ const sites = (code.match(new RegExp('(?<![\\w$.])' + APP.funnel + '\\(', 'g')) 
 assert(sites >= APP.minCallSites, '6ב · ' + APP.funnel + ' משמשת ב-' + sites + ' אתרים (≥' + APP.minCallSites + ')');
 /*  ⛔ מה שנאכף כאן הוא **היעדר** הנפילה-חזרה (סבב 78) — ⚠️ שורה אחת
  *  שמחזירה ערך שלם כשהטבלה לא ענתה מחזירה את מקור האמת השני, ⛔ ובשקט. */
-assert(!/return ysCfgGet\(kvKey\);\s*\n\}/.test(block),
+assert(!/return hrCfgGet\(kvKey\);\s*\n\}/.test(block),
   '6ג · ⛔ אין נפילה-חזרה לערך שלם בסוף המשפך');
-assert(/if \(!YS_ROWS_READ_KEYS\[kvKey\]\) return ysCfgGet\(kvKey\);/.test(block),
+assert(/if \(!HR_ROWS_READ_KEYS\[kvKey\]\) return hrCfgGet\(kvKey\);/.test(block),
   '6ד · ⭐ מפתח בלי טבלה מנותב לטבלת ההגדרות, ⛔ ואינו נופל אליה');
 
 console.log('— מוטציות —');
@@ -364,7 +364,7 @@ await mut('if (!r || !r.ok || !Array.isArray(r.data)) return null;', 'if (!r || 
       'מוטציה: ⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
   }
 }
-await mut('_ysRowSet(rec, \'createdBy\', r.created_by);', '',
+await mut('_hrRowSet(rec, \'createdBy\', r.created_by);', '',
   (x) => !x || !(x.rebuild && x.rebuild[0] && x.rebuild[0].createdBy === 'u1'),
   '⛔ השמטת שדה אב נתפסת');
 // מוטציית-נגד: שינוי שאינו נוגע להתנהגות אינו מפיל דבר

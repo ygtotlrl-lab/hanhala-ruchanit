@@ -91,7 +91,7 @@ const APP = {
                  why: 'טבלת האב של המסלול הנבחר, והמסלולים שניים' },
     'cfg.child':  { tables: ['hr_marks', 'hr_sleep_marks'],
                  why: 'טבלת הבן של המסלול הנבחר, והמסלולים שניים' },
-    'YS_ROWS_KINDS[kind].parent': { tables: ['hr_sessions', 'hr_sleep_sessions'],
+    'HR_ROWS_KINDS[kind].parent': { tables: ['hr_sessions', 'hr_sleep_sessions'],
                  why: 'אותה טבלת אב, נקראת ישירות מהמפה ולא דרך משתנה' },
   },
   /*  ⛔ עמודת מיון שאינה ליטרל — ⚠️ **מה נכנס**: נוסח הביטוי והעמודות;

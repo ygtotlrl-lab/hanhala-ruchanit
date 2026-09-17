@@ -119,10 +119,10 @@ ok('7 · אין צעד דחיפה למפתח', !/step\('hr_attend'/.test(SRC));
 /* ── ב. מה ש⛔ לא נגע ───────────────────────────────────────────────────── */
 ok('8 · ⛔ `hr_sessions` שרד — הנוכחית האמיתית',
   SRC.indexOf("'hr_sessions'") !== -1);
-ok('9 · ⛔ `_ysSessionsMerge` שרד', /function\s+_ysSessionsMerge/.test(SRC));
-ok('10 · ⛔ `ysMarks` שרד', /function\s+ysMarks/.test(SRC));
-ok('11 · ⛔ ענף האובייקטים של `ysMergeRecords` שרד — `hr_approvals` נשען עליו',
-  /ysMergeRecords\(\s*localAp/.test(SRC) && SRC.indexOf("'hr_approvals'") !== -1);
+ok('9 · ⛔ `_hrSessionsMerge` שרד', /function\s+_hrSessionsMerge/.test(SRC));
+ok('10 · ⛔ `hrMarks` שרד', /function\s+hrMarks/.test(SRC));
+ok('11 · ⛔ ענף האובייקטים של `hrMergeRecords` שרד — `hr_approvals` נשען עליו',
+  /hrMergeRecords\(\s*localAp/.test(SRC) && SRC.indexOf("'hr_approvals'") !== -1);
 
 /* ── ג. הגיבוי — שני הצדדים יחד ────────────────────────────────────────── */
 const srcBody = /sources: function \(\) \{([\s\S]*?)\n  \}\n\};/.exec(SRC);

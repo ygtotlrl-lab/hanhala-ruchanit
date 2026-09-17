@@ -33,25 +33,25 @@ const APP = {
   /*  ⛔ טבלת המשתמשים במראה, והקבוע שנושא את שמה — ⚠️ המפתח נגזר ממנו
    *  בשכבת המראה, ⛔ ושם שנכתב פעמיים מייצר מפתח שאיש אינו מחפש. */
   usersTable: 'hr_users',
-  tableConst: 'YS_USERS_TABLE',
+  tableConst: 'HR_USERS_TABLE',
   idKey: 'client_id',
   /*  ⛔ עמודת הסוד שלעולם אינה יורדת לדיסק — ⚠️ שמה ההיסטורי כאן,
    *  ⭐ והיא נגרעה מהמסד: ⛔ והטענה היא שגם אם תחזור, היא אינה עוברת. */
   secretCol: 'password_hash',
   /*  ⛔ שלוש פונקציות הליבה של שכבת המראה, ⛔ ופונקציית הטביעה שזורעת —
    *  ⚠️ השמות נבדלים בין שלוש האפליקציות והמנגנון אחד. */
-  fns: { slim: 'ysUserSlim', saveOne: 'ysUsersCacheSave',
-         saveAll: 'ysUsersCacheSaveAll', fp: 'ysMakePassFp' },
+  fns: { slim: 'hrUserSlim', saveOne: 'hrUsersCacheSave',
+         saveAll: 'hrUsersCacheSaveAll', fp: 'hrMakePassFp' },
   /*  ⛔ עוזר מוצהר שדרכו הנתיב מגיע למסנן — ⚠️ קריאה לעוזר שעובר במסנן
    *  אינה נתיב שני, ⭐ והוא מוצהר בשמו. */
-  slimVia: ['ysUsersCacheSlimList'],
+  slimVia: ['hrUsersCacheSlimList'],
   saveFn: 'mirrorSave',
   /*  ⛔ עוזר מוצהר שדרכו הנתיב מגיע לשמירה — ⚠️ רשימה ריקה היא
    *  «נמדד ואין» ⛔ ולא «לא נשאל». */
   saveVia: [],
   /*  ⛔ הפונקציות שרשאיות לכתוב למראת המשתמשים — ⚠️ אתר שכותב ואינו
    *  באחת מהן הוא בדיוק הנתיב שעוקף את המסנן. */
-  writeFns: ['ysUsersCacheSaveAll', 'ysUsersCacheSave'],
+  writeFns: ['hrUsersCacheSaveAll', 'hrUsersCacheSave'],
   /*  ⛔ עדכון חלקי שאינו נושא את הטביעה — ⚠️ כאן הוא **מחליף שורה**:
    *  ⭐ חוזה הקורא הוא שהוא מוסר את שורת הענן כפי שחזרה, ⛔ ושורה
    *  שנבנתה ביד מאבדת את מה שאינו בה. */
@@ -60,16 +60,16 @@ const APP = {
     'אובייקט חדש בשדות מפורשים — ⚠️ וזו ההזדמנות שבה עמודה רגישה ' +
     'שנשארה ממטמון ישן נמחקת מהדיסק',
   deps: {
-    vars: ['MIRROR_CFG', 'MIRROR', 'YS_USERS_TABLE', 'YS_PASS_ITER', 'YS_PASS_CTX'],
-    fns: ['ysWriteFail', 'mirrorKey', 'mirrorSave', 'ysUserSlim',
-          'ysUsersCacheSlimList', 'ysUsersCacheGet', 'ysUsersCacheSaveAll',
-          'ysUsersCacheSave', 'ysRandSalt', 'ysPassFp', 'ysMakePassFp'],
+    vars: ['MIRROR_CFG', 'MIRROR', 'HR_USERS_TABLE', 'HR_PASS_ITER', 'HR_PASS_CTX'],
+    fns: ['hrWriteFail', 'mirrorKey', 'mirrorSave', 'hrUserSlim',
+          'hrUsersCacheSlimList', 'hrUsersCacheGet', 'hrUsersCacheSaveAll',
+          'hrUsersCacheSave', 'hrRandSalt', 'hrPassFp', 'hrMakePassFp'],
   },
   /*  ⛔ המוטציה מחליפה את **גוף** המסנן ⛔ ולא את שמו — ⚠️ שם שהוחלף
    *  אינו שובר את המנגנון, ⭐ ומסנן זהות כן. */
   slimMut: {
-    identity: 'function ysUserSlim(u) { return u; }',
-    anti: 'function ysUserSlim(u) {\n' +
+    identity: 'function hrUserSlim(u) { return u; }',
+    anti: 'function hrUserSlim(u) {\n' +
       '  return { client_id: u.client_id, username: u.username, full_name: u.full_name,\n' +
       "           role: u.role, active: u.active, _nc: 1,\n" +
       '           pass_salt: u.pass_salt || null, pass_fp: u.pass_fp || null };\n}',

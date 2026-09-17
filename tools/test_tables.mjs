@@ -194,13 +194,13 @@ function t1() {
  *  השורות היא **הכתיבה**, ⛔ ואישור ה-⏳ ועֵד הפינוי נשענים עליה: ⚠️ עדות
  *  שנשענת על כתיבה אחרת מזו שקרתה היא ראיה למשהו שלא נמדד. */
 const WIRING = [
-  [/var YS_ROWS = true;/, '3ב · שכבת השורות פעילה (YS_ROWS=true)'],
+  [/var HR_ROWS = true;/, '3ב · שכבת השורות פעילה (HR_ROWS=true)'],
   [/var _rAt=await pushTable\('hr_sessions',data\);/,
     '3ג · `atSaveData` כותבת לשורות, ⛔ ובלי כתיבה שנייה לערך שלם'],
-  [/var r = await pushTable\('hr_students_rows', mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `ysPushToCloud`'],
-  [/if\(!\(_rAt&&_rAt\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('hr_sessions',data\);/,
+  [/var r = await pushTable\('hr_students_rows', mergedSt\);/, '3ד · המצבה נדחפת לשורות ממסלול `hrPushToCloud`'],
+  [/if\(!\(_rAt&&_rAt\.ok\)&&hrCount\(data\)\) \{ _hrQueueAdd\('hr_sessions',data\);/,
     '3ה · כתיבה שנכשלה חוזרת לתור — ⛔ ויש לה ניסיון חוזר'],
-  [/if \(!kind\) return _ysCfgSetRaw\(key, value\);/,
+  [/if \(!kind\) return _hrCfgSetRaw\(key, value\);/,
     '3ה2 · ⭐ ריקון התור מנתב לפי היעד — מפתח שיש לו טבלה חוזר אליה'],
 ];
 function t2() {
@@ -213,7 +213,7 @@ function t2() {
      ⚠️ ⛔ ועֵד הפינוי אינו נכתב כאן (סבב 102) — ⭐ שכבת הדחיפה המשותפת
      מסמנת אותו במעבר עצמו: ⛔ שני אתרי סימון לאותו עֵד הם שתי הכרעות
      על אותה ראיה. */
-  noneIn(/ysCfgSet\('hr_sessions'|ysCfgSet\('hr_students_rows'|ysCfgSet\('hr_sleep_sessions'/, SRC,
+  noneIn(/hrCfgSet\('hr_sessions'|hrCfgSet\('hr_students_rows'|hrCfgSet\('hr_sleep_sessions'/, SRC,
     '3ו · ⛔ אין כתיבת ערך שלם למפתח שיש לו טבלה — מקור אמת אחד');
   someIn(/if\(_rAt&&_rAt\.ok&&!ctxStale\(_ep\)\) pendConfirmPush\(PK_AT_SESS,_t0\)/, SRC,
     '3ז · ⭐ אישור ה-⏳ תלוי בהצלחת הכתיבה לשורות');
@@ -248,7 +248,7 @@ function extractPush(src) {
 }
 const PUSH_MOD = extractPush(SRC);
 
-/* רתמה: SB מזויף שרושם כל upsert, ו-`_ysRecTs` מינימלי. */
+/* רתמה: SB מזויף שרושם כל upsert, ו-`_hrRecTs` מינימלי. */
 function harness(modSrc, opts) {
   const o = opts || {};
   const calls = [];
@@ -257,10 +257,10 @@ function harness(modSrc, opts) {
     withTimeout: (p) => p,
     pendHas: () => !!o.pending,
     PK_AT_SESS: 'at-sess:',
-    // ⚠️ סבב 39 — `YS_ROWS_KINDS` נשענת על **שתי** הקידומות; בדף האמיתי
+    // ⚠️ סבב 39 — `HR_ROWS_KINDS` נשענת על **שתי** הקידומות; בדף האמיתי
     //    שתיהן מוגדרות יחד, ולכן הרתמה חייבת לספק את שתיהן.
     PK_SL_SESS: 'sl-sess:',
-    _ysRecTs: (r) => (r && r.updatedAt) || 0,
+    _hrRecTs: (r) => (r && r.updatedAt) || 0,
     /*  ⛔ עוזרי שכבת הדחיפה — ⚠️ הם חיים בבלוקים חתומים אחרים, ⭐ והרתמה
      *  מספקת אותם כדי שהשכבה תיטען לבדה. */
     Promise,
@@ -274,7 +274,7 @@ function harness(modSrc, opts) {
     ctxEpoch: () => 0,
     ctxStale: () => false,
     rtyNote: () => {},
-    _ysMarkPushed: () => {},
+    _hrMarkPushed: () => {},
     SB: {
       from: (t) => ({
         select: async () => ({ data: o.remote === undefined ? [] : o.remote, error: o.remoteErr || null }),
@@ -307,7 +307,7 @@ async function t3() {
   if (!MOD) return;
   const { sandbox, calls } = harness(MOD, {});
 
-  const row = sandbox.ysSessionRow(SESS);
+  const row = sandbox.hrSessionRow(SESS);
   assert(row.client_id === '111' && row.updated_at === 900,
     '4ב · `client_id` של האב נגזר מ-`id`, והחותמת מ-`updatedAt`');
   assert(JSON.stringify(row.date_heb) === JSON.stringify(SESS.date_heb),
@@ -315,7 +315,7 @@ async function t3() {
   assert(row.created_by === 'u1' && row.created_at === SESS.created_at,
     '4ד · שדות המטא מועתקים אחד לאחד (ההעברה מועתקת, לא משוחזרת)');
 
-  const marks = sandbox.ysMarkRows(SESS);
+  const marks = sandbox.hrMarkRows(SESS);
   /*  ⭐ התהפך בסבב 37א — מזהה תלמיד הוא uuid מסבב 37, ו-`student_id` הוא
       `text` מאז `008`. סימון שמפתחו אינו מספרי **חייב** להגיע לשכבת
       השורות; ⛔ דילוג כאן היה משמיט בשקט את כל הסימונים של כל תלמיד
@@ -331,10 +331,10 @@ async function t3() {
   assert(marks.length > 0 && marks.every((m) => m.date_iso === '2026-05-17'),
     '4ט · `date_iso` משוכפל לכל שורת סימון');
 
-  const st = sandbox.ysStudentRow({ id: 5, name: 'x', updatedAt: 7 });
+  const st = sandbox.hrStudentRow({ id: 5, name: 'x', updatedAt: 7 });
   assert(st.client_id === '5' && st.student_id === '5' && st.data.name === 'x',
     '4י · שורת תלמיד — גוף הרשומה ב-`data`, ורק עמודות המיזוג מחוצה לו');
-  const stU = sandbox.ysStudentRow({ id: 'a1b2-uuid', name: 'y', updatedAt: 7 });
+  const stU = sandbox.hrStudentRow({ id: 'a1b2-uuid', name: 'y', updatedAt: 7 });
   assert(stU.student_id === 'a1b2-uuid',
     '4י2 · ⭐ ותלמיד עם מזהה uuid מקבל `student_id` תקין ולא `null`');
 
@@ -391,7 +391,7 @@ async function t4() {
 
   // א. הסרת הכתיבה הכפולה מ-atSaveData.
   const mutA = SRC.replace("var _rAt=await pushTable('hr_sessions',data);",
-                           "var _rAt=await ysCfgSet('hr_sessions',data);");
+                           "var _rAt=await hrCfgSet('hr_sessions',data);");
   assert(mutA !== SRC, '5א · המוטציה אכן מחזירה את הכתיבה לערך שלם');
   assert(!WIRING[1][0].test(mutA),
     '5ב · ⛔ מוטציה שמחזירה כתיבה לערך שלם נתפסת — טענת 3ג הייתה נכשלת');
@@ -405,7 +405,7 @@ async function t4() {
   assert(idxB.some((i) => /\bwhere\b/i.test(i)),
     '5ד · ⛔ מוטציה שמכניסה אינדקס חלקי נתפסת — טענת 1ו הייתה נכשלת (42P10)');
 
-  /*  ו. החזרת הדילוג על מפתח לא-מספרי ב-`ysMarkRows` (סבב 37א) — זה
+  /*  ו. החזרת הדילוג על מפתח לא-מספרי ב-`hrMarkRows` (סבב 37א) — זה
       הפיגום שהוסר כשהעמודה הפכה ל-`text`, ו⛔ החזרתו משמיטה בשקט את כל
       הסימונים של כל תלמיד שנוסף מסבב 37 ואילך. */
   const mutSkip = SRC.replace(
@@ -413,7 +413,7 @@ async function t4() {
     "  Object.keys(marks).forEach(function (k) {\n    if (!/^\\d+$/.test(k)) return;\n");
   assert(mutSkip !== SRC, '5יא · המוטציה אכן מחזירה את הדילוג המספרי');
   const hSkip = harness(extract(mutSkip), {});
-  const marksSkip = hSkip.sandbox.ysMarkRows(SESS);
+  const marksSkip = hSkip.sandbox.hrMarkRows(SESS);
   assert(marksSkip.length === 2 && !marksSkip.some((m) => m.student_id === 'bad'),
     '5יב · ⛔ במוטנט הסימון עם ה-uuid נעלם — טענות 4ה/4ה3 היו נכשלות');
 

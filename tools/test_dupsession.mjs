@@ -107,7 +107,7 @@ const noneIn = (re, s, label) => assert(_hits(re, s) === 0,
   `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי אפס`);
 const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
   `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
-/* חילוץ מודול מניעת הכפילות + רתמה. `ysMarks` ו-`_ysSessionsMerge` מסופקים
+/* חילוץ מודול מניעת הכפילות + רתמה. `hrMarks` ו-`_hrSessionsMerge` מסופקים
    כבדלים — הבדיקה כאן היא על כלל הכפילות ועל האימוץ, לא על מנוע המיזוג. */
 const DUP_START = 'מניעת כפילות סדרים — ההגנה בנקודת היצירה';
 const DUP_END = '/* ═══ סוף מניעת כפילות סדרים';
@@ -131,9 +131,9 @@ function dupHarness(modSrc) {
   const sandbox = {
     console, Object, Array, String, Number,
     window: { _atMarks: {}, _hrMarks: {} },
-    ysMarks: (r) => (r && r.marks && typeof r.marks === 'object') ? r.marks : {},
-    ysKvGet: async () => null,
-    _ysSessionsMerge: (c, l) => l,
+    hrMarks: (r) => (r && r.marks && typeof r.marks === 'object') ? r.marks : {},
+    hrKvGet: async () => null,
+    _hrSessionsMerge: (c, l) => l,
   };
   vm.createContext(sandbox);
   vm.runInContext(idEqSrc + '\n' + modSrc, sandbox);
@@ -150,9 +150,9 @@ const DUP_GUARD = [
    *  משיכות מלאות בזו אחר זו, ⭐ 18,688 שורות כפול שתיים לפתיחת סדר אחד:
    *  ⛔ והבדיקה צריכה יום אחד — 248 שורות. ⚠️ והטענה מודדת **את החלון**
    *  ⛔ ולא את עצם המשיכה: ⭐ קריאה בלי חלון היא בדיוק מה שהצטמצם. */
-  [/await _atPullSessions\(ysDayWin\(dateIso\)\);/,
+  [/await _atPullSessions\(hrDayWin\(dateIso\)\);/,
     '6ב · בדיקת הפתיחה רצה מול מצב טרי מהענן, ⛔ ובחלון של יום אחד'],
-  [/await _hrPullSessions\(ysDayWin\(dateIso\)\);/,
+  [/await _hrPullSessions\(hrDayWin\(dateIso\)\);/,
     '6ב2 · ואותו חלון במודול השינה'],
   [/var _atDup=atFindLiveSession\(window\._atData,window\._atPendingRec\.session,/,
     '6ג · ⛔ הבדיקה חוזרת ב-`atMarkDirty` — נקודת היצירה בפועל'],

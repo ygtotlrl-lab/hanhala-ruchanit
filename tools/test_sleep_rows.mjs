@@ -142,7 +142,7 @@ function harness(modSrc, opts) {
     withTimeout: (p) => p,
     pendHas: () => !!o.pending,
     PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:',
-    _ysRecTs: (r) => (r && r.updatedAt) || 0,
+    _hrRecTs: (r) => (r && r.updatedAt) || 0,
     /*  ⛔ עוזרי שכבת הדחיפה — ⚠️ הם חיים בבלוקים חתומים אחרים, ⭐ והרתמה
      *  מספקת אותם כדי שהשכבה תיטען לבדה. */
     Promise,
@@ -156,7 +156,7 @@ function harness(modSrc, opts) {
     ctxEpoch: () => 0,
     ctxStale: () => false,
     rtyNote: () => {},
-    _ysMarkPushed: () => {},
+    _hrMarkPushed: () => {},
     SB: {
       from: (t) => ({
         /* ⚠️ ה-select מודע לטבלה (סבב 39) — מוק עיוור-לטבלה היה מחזיר את
@@ -228,12 +228,12 @@ ok('1י · ⛔ שתי המיגרציות מסומנות «רץ במסד»',
   /⛔ \*\*רץ במסד\.\*\*/.test(M009) && /⛔ \*\*רץ במסד\.\*\*/.test(M010));
 
 /* ── ב. החיווט בקוד ────────────────────────────────────────────────────── */
-ok('2א · `YS_ROWS_KINDS` מגדירה את שני המסלולים',
-  /YS_ROWS_KINDS\s*=\s*\{[\s\S]*?attend:[\s\S]*?sleep:/.test(SRC));
-ok('2ב · ⭐ ואין עותק שני של מסלול הדחיפה — `ysSendRecs` מוגדרת פעם אחת',
-  (SRC.match(/^async function ysSendRecs/gm) || []).length === 1);
-ok('2ג · ⛔ ואין `ysRowsPushSleep` נפרדת',
-  !/function ysRowsPushSleep/.test(SRC));
+ok('2א · `HR_ROWS_KINDS` מגדירה את שני המסלולים',
+  /HR_ROWS_KINDS\s*=\s*\{[\s\S]*?attend:[\s\S]*?sleep:/.test(SRC));
+ok('2ב · ⭐ ואין עותק שני של מסלול הדחיפה — `hrSendRecs` מוגדרת פעם אחת',
+  (SRC.match(/^async function hrSendRecs/gm) || []).length === 1);
+ok('2ג · ⛔ ואין `hrRowsPushSleep` נפרדת',
+  !/function hrRowsPushSleep/.test(SRC));
 ok('2ד · `hrSaveData` דוחפת לשכבת השורות עם המסלול `sleep`',
   /pushTable\('hr_sleep_sessions',data\)/.test(SRC));
 /*  ⛔ הכתיבה הכפולה כובתה (סבב 78) — ⚠️ שכבת השורות היא הכתיבה, ⭐ ואישור
@@ -246,7 +246,7 @@ ok('2ד · `hrSaveData` דוחפת לשכבת השורות עם המסלול `sl
 ok('2ה · ⭐ ואישור ה-⏳ נשען על הצלחתה',
   /if\(_rSl&&_rSl\.ok&&!ctxStale\(_ep\)\) pendConfirmPush\(PK_SL_SESS,_t0\);/.test(SRC));
 ok('2ו · ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ אחרת אין לה ניסיון חוזר',
-  /if\(!\(_rSl&&_rSl\.ok\)&&ysCount\(data\)\) \{ _ysQueueAdd\('hr_sleep_sessions',data\);/.test(SRC));
+  /if\(!\(_rSl&&_rSl\.ok\)&&hrCount\(data\)\) \{ _hrQueueAdd\('hr_sleep_sessions',data\);/.test(SRC));
 ok('2ז · שני מקורות הגיבוי רשומים ב-BK_CFG',
   /hr_sleep_sessions_rows/.test(SRC) && /hr_sleep_marks_rows/.test(SRC));
 ok('2ח · ⛔ ושניהם ברשימת-ההיתר של `004` — אחרת לא היו מתפנים לעולם',
@@ -256,8 +256,8 @@ ok('2ח · ⛔ ושניהם ברשימת-ההיתר של `004` — אחרת לא
 ok('3א · שכבת השורות מחולצת מ-index.html', !!MOD);
 if (MOD) {
   const h = harness(MOD);
-  const sMarks = h.sandbox.ysMarkRows(SLEEP, 'sleep');
-  const aMarks = h.sandbox.ysMarkRows(ATTEND);
+  const sMarks = h.sandbox.hrMarkRows(SLEEP, 'sleep');
+  const aMarks = h.sandbox.hrMarkRows(ATTEND);
   ok('3ב · ⭐ סימון שינה נושא `note`',
     sMarks.length === 3 && sMarks.every((r) => 'note' in r));
   ok('3ג · והערה אמיתית עוברת כמות שהיא',
@@ -305,23 +305,23 @@ if (RUN_MUT) {
 console.log('  — מוטציות —');
 {
   const mut = SRC.replace("var _rSl=await pushTable('hr_sleep_sessions',data);",
-                          "var _rSl=await ysCfgSet('hr_sleep_sessions',data);");
+                          "var _rSl=await hrCfgSet('hr_sleep_sessions',data);");
   ok('4א · מוטציה: החזרת הכתיבה לערך שלם מפילה את טענה 2ד',
     !/pushTable\('hr_sleep_sessions',data\)/.test(mut));
 }
 if (MOD) {
   /* ⛔ `note` שנוסף גם לנוכחות — ה-`upsert` כולו היה נדחה, לא רק השדה. */
-  const mut = MOD.replace('var wantNote = !!(YS_ROWS_KINDS[kind || \'attend\'] || {}).note;',
+  const mut = MOD.replace('var wantNote = !!(HR_ROWS_KINDS[kind || \'attend\'] || {}).note;',
                           'var wantNote = true;');
   const hm = harness(mut);
-  const aM = hm.sandbox.ysMarkRows(ATTEND);
+  const aM = hm.sandbox.hrMarkRows(ATTEND);
   ok('4ב · מוטציה: `note` גם בנוכחות מפיל את טענה 3ה', 'note' in aM[0]);
 }
 if (MOD) {
   /* ⛔ מפה משותפת לשני המסלולים — דילוג שקט על דחיפה. */
-  const mut = MOD.replace('if (_ysRowsRemote[kind]) return _ysRowsRemote[kind];',
-                          'if (_ysRowsRemote.attend) return _ysRowsRemote.attend;')
-                 .replace('_ysRowsRemote[kind] = map;', '_ysRowsRemote.attend = map;');
+  const mut = MOD.replace('if (_hrRowsRemote[kind]) return _hrRowsRemote[kind];',
+                          'if (_hrRowsRemote.attend) return _hrRowsRemote.attend;')
+                 .replace('_hrRowsRemote[kind] = map;', '_hrRowsRemote.attend = map;');
   const hm = harness(mut, { remoteBy: { hr_sleep_sessions: [{ client_id: 'dup', updated_at: 1000 }] } });
   await hm.sandbox.pushTable('hr_sleep_sessions', [{ ...SLEEP, id: 'dup' }]);
   const rr = await hm.sandbox.pushTable('hr_sessions', [{ ...ATTEND, id: 'dup' }]);

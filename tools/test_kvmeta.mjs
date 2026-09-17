@@ -36,29 +36,29 @@ const APP = {
    *  `fetch-key`**: הפונקציה מושכת בעצמה את השורה של המפתח — ⚠️ החותמת
    *  כאן היא עמודה בשורת ההגדרה, ⛔ ואין מפה שנמשכת בבת אחת. */
   stamp: {
-    fn: 'ysCfgUpdatedAt',
+    fn: 'hrCfgUpdatedAt',
     deps: [],
     kind: 'fetch-key',
     wired: [
-      ['rts\\s*=\\s*await ysCfgUpdatedAt\\(sk\\.key\\)',
+      ['rts\\s*=\\s*await hrCfgUpdatedAt\\(sk\\.key\\)',
        'צד הדחיפה קורא את החותמת מהעמודה — בלי תנאי ובלי מפה'],
-      ['remoteMeta\\[_mk\\]\\s*=\\s*await ysCfgUpdatedAt\\(_mk\\)',
+      ['remoteMeta\\[_mk\\]\\s*=\\s*await hrCfgUpdatedAt\\(_mk\\)',
        'וגם צד המשיכה קורא מהעמודה — ⛔ ולא ממפה שהיא `{}` בענן'],
     ],
     noSecond: [
-      ["ysCfgSet\\(\\s*'hr_settings_meta'",
+      ["hrCfgSet\\(\\s*'hr_settings_meta'",
        'המפה אינה עולה לענן — אין מקור אמת שני'],
-      ['YS_KV_UPDATED_AT',
+      ['HR_KV_UPDATED_AT',
        'דגל המעבר נמחק — המיגרציה הורצה והמסלול יחיד'],
-      ["remoteMeta\\s*=\\s*await ysKvGet\\(\\s*'hr_settings_meta'",
+      ["remoteMeta\\s*=\\s*await hrKvGet\\(\\s*'hr_settings_meta'",
        'והמפה אינה נקראת מהענן כחותמת — לא בדחיפה ולא במשיכה'],
     ],
     pairs: [
-      { from: 'var\\s+YS_SETTINGS_LWW_KEYS\\s*=\\s*\\[([^\\]]*)\\]',
+      { from: 'var\\s+HR_SETTINGS_LWW_KEYS\\s*=\\s*\\[([^\\]]*)\\]',
         pick: "'([^']+)'",
         into: "\\{\\s*key:\\s*'([^']+)',\\s*get:",
         min: 2,
-        label: 'כל מפתח ב-`YS_SETTINGS_LWW_KEYS` נמצא גם ברשימת הדחיפה' },
+        label: 'כל מפתח ב-`HR_SETTINGS_LWW_KEYS` נמצא גם ברשימת הדחיפה' },
     ],
     muts: [
       { n: 1, scen: 'error',

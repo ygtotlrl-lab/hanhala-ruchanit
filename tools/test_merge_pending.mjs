@@ -40,10 +40,10 @@ const APP = {
    *  השורה השתנתה. */
   dataEra: { base: 1, era: 2,
     why: 'שם הטבלה ומפתח האחסון הוסבו לתחילית שנגזרת משם הריפו — ⚠️ והמראה ממופתחת בשם: ⭐ ההגירה המקומית מכסה מכשיר שעלה, ⛔ והעידן מכסה מכשיר שההגירה נפלה בו באמצע (סבב 148)' },
-  names: ['ysRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords', 'ysPendingFor'],
+  names: ['hrRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'hrMergeRecords', 'hrPendingFor'],
   vars: ['var PEND_KV_PREFIX = ', 'var TOMBSTONE_TTL_MS = ', 'var _tombPrunePending = '],
   globals: { PK_AT_SESS: 'at-sess:', PK_SL_SESS: 'sl-sess:', PK_AT_TREAT: 'at-treat:', PK_SL_TREAT: 'sl-treat:', PK_STUDENT: 'student:' },
-  offlineFn: 'ysVerifyOffline',
+  offlineFn: 'hrVerifyOffline',
   // ⭐ סבב 38 — כלל ההכרעה עבר לליבה המשותפת, ולכן גם המוטציה מכוונת
   //    לשם. ⛔ הטענה לא נחלשה: היא עדיין דורשת שהסרת סעיף ה-⏳ תפיל את
   //    טענת הבסיס — רק שעכשיו זה קורה **בכל האפליקציות בבת אחת**.
@@ -54,16 +54,16 @@ const APP = {
   keyOf: (r) => r.id,
   tag: (r) => r && r.name,
   pendKey: (id) => 'student:' + id,
-  merge: (sb, local, remote) => sb.ysMergeRecords(local, remote, (r) => r && r.id, true, null,
-                                                  sb.ysPendingFor('hr_students_rows')),
+  merge: (sb, local, remote) => sb.hrMergeRecords(local, remote, (r) => r && r.id, true, null,
+                                                  sb.hrPendingFor('hr_students_rows')),
   /*  ⭐ שכבת ליבת המיזוג (סבב 72) — ⚠️ השמות, המעטפת והרשומה נבדלים
    *  מאלה שמעליהם, ⛔ ולכן הם יושבים בקבוצה משלהם ואינם מתמזגים בהם. */
   core: {
     app: 'hanhala-ruchanit',
-    names: ['ysRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'ysMergeRecords'],
+    names: ['hrRecTs', 'tombStamp', 'prunePastTombstones', 'tombPruneMerged', '_mergePick', 'mergeCore', 'hrMergeRecords'],
     vars: ['var TOMBSTONE_TTL_MS = ', 'var _tombPrunePending = '],
     globals: {},
-    wrapFn: 'ysMergeRecords',
+    wrapFn: 'hrMergeRecords',
     // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות מרוחקת הוכרעה מאז ומתמיד
     //    לפי הסדר. ⛔ אין ליישר את זה ל-yoman «לשם אחידות» (סבב 38).
     knobs: ["remoteDupe: 'last'", 'dedupe: true', 'keepLocal'],
@@ -71,7 +71,7 @@ const APP = {
     rec: (id, ts, tag) => ({ id: id, updatedAt: ts, name: tag }),
     tag: (r) => r && r.name,
     merge: (sb, local, remote, pend) =>
-      sb.ysMergeRecords(local, remote, (r) => r && r.id, true, null,
+      sb.hrMergeRecords(local, remote, (r) => r && r.id, true, null,
                         (k) => pend.indexOf(String(k)) !== -1),
     dupCase: { l: [], r: [{ id: 'a', updatedAt: 9, name: 'גבוה' }, { id: 'a', updatedAt: 5, name: 'אחרון' }] },
   },

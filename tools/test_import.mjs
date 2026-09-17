@@ -146,7 +146,7 @@ function run(src, opts) {
     XLSX: {},
     toast: () => {},
     esc: (x) => String(x),
-    ysWho: () => 'tester',
+    hrWho: () => 'tester',
     PK_STUDENT: 'student:',
     getStudents: () => (o.existing || []).slice(),
     saveStudents: (arr) => { saved.push(arr.slice()); return o.writeFails ? false : true; },
@@ -175,7 +175,7 @@ function run(src, opts) {
   /*  ⛔ פונקציית המיון נחתכת מהמקור ⛔ ואינה מדומה ברתמה — ⚠️ מסלול הייבוא
    *  קורא לה על הרשימה שהוא עומד לשמור, ⭐ ופונקציה מדומה כאן הייתה מאשרת
    *  ייבוא שנשען על מיון שאינו קיים באפליקציה. */
-  vm.runInContext(cutFn('ysSortStudents', src), sandbox, { filename: 'ysSortStudents.js' });
+  vm.runInContext(cutFn('hrSortStudents', src), sandbox, { filename: 'hrSortStudents.js' });
   vm.runInContext(cutFn('importStudentsFromFile', src), sandbox, { filename: 'import.js' });
   sandbox.importStudentsFromFile({ files: [{ name: 'a.csv' }], value: 'a.csv' });
   return {

@@ -106,9 +106,9 @@ function grabObj(name) {
 }
 
 const OBJS = ['USER_CFG', 'MIRROR_CFG'];
-const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMissingFpCol',
-  'ysUserSlim', 'ysUsersCacheSlimList', 'ysUsersCacheSaveAll', 'ysUsersCacheSave',
-  'ysUsersCacheGet', 'ysVerifyOffline', 'ysRefreshUsersCache',
+const FUNCS = ['hrRandSalt', 'hrPassFp', 'hrMakePassFp', 'hrPassFields', 'hrIsMissingFpCol',
+  'hrUserSlim', 'hrUsersCacheSlimList', 'hrUsersCacheSaveAll', 'hrUsersCacheSave',
+  'hrUsersCacheGet', 'hrVerifyOffline', 'hrRefreshUsersCache',
   '_doLoginInner', 'confirmSwitch', 'saveUser', 'changeMyPassword', 'withTimeout', 'isNetErr',
   /* ⛔ מגן השליחה הכפולה — ⚠️ שני מסלולי פתיחת הסדר קוראים לו עם תווית
    * משלהם, ⭐ ורתמה שאינה מחלצת אותו נופלת ב-ReferenceError. */
@@ -121,14 +121,14 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysPassFields', 'ysIsMi
   /*  ⛔ שכבת המראה (סבב 116) — ⚠️ `_doLoginInner` טוענת ממנה את המשתמשים
    *  בשורה הראשונה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
   'mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
-  'mirrorWrite', '_ysRecTs'];
-const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
+  'mirrorWrite', '_hrRecTs'];
+const VARS = ['MSG_OFFLINE', 'HR_PASS_ITER', 'HR_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
   /*  ⛔ שם טבלת המשתמשים במראה (סבב 116) — ⚠️ שלושת אתרי הכתיבה נוקבים
    *  בו, ⭐ ומפתח האחסון נגזר ממנו. */
-  'YS_USERS_TABLE', 'MIRROR', 'PUSH_TABLES',
+  'HR_USERS_TABLE', 'MIRROR', 'PUSH_TABLES',
   /*  ⛔ הודעת חסימת כתיבת המשתמש (סבב 131) — ⚠️ `USER_CFG.offMsg` מחזירה
    *  אותה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
   'MSG_OFF_USER_WRITE'];
@@ -139,7 +139,7 @@ const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'M
 const VARS_OPT = ['PASS_SIX_RE', 'MSG_PASS_SIX'];
 const hasVar = (name) => new RegExp('(?:^|\\n)var\\s+' + name + '\\s*=').test(SRC);
 
-/*  ⛔ מערך רב-שורות נחתך אף הוא בהתאמת סוגריים — ⚠️ `YS_MIRROR_TABLES`
+/*  ⛔ מערך רב-שורות נחתך אף הוא בהתאמת סוגריים — ⚠️ `HR_MIRROR_TABLES`
  *  נפרס על שתי שורות, ⭐ ו-`grabVar` לוקח את שארית השורה בלבד. */
 function grabArr(name) {
   const at = SRC.indexOf('var ' + name + ' = [');
@@ -152,7 +152,7 @@ function grabArr(name) {
   throw new Error(`המערך ${name} אינו סגור`);
 }
 
-const CODE = ['YS_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(grabVar).join(';\n') + ';\n' +
+const CODE = ['HR_MIRROR_TABLES'].map(grabArr).join(';\n') + ';\n' + VARS.map(grabVar).join(';\n') + ';\n' +
   VARS_OPT.filter(hasVar).map(grabVar).join(';\n') + ';\n' +
   OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
 
@@ -208,7 +208,7 @@ function makeSB(state) {
         SBLOG.push({ table, op: q._op, filters: q._f.slice(), cols: q._cols, payload: q._payload });
         if (state.netFail) throw new Error('Failed to fetch');
         // רשת "חצי מחוברת": שאילתה ממוקדת (‎.eq('id')‎) עוברת, משיכת הרשימה
-        // המלאה נכשלת. זה מה שמבודד את `ysUsersCacheSave(u)` מהרענון.
+        // המלאה נכשלת. זה מה שמבודד את `hrUsersCacheSave(u)` מהרענון.
         if (state.listSelectFail && q._op === 'select' && !q._f.some((f) => f[1] === 'client_id')) {
           return { data: null, error: { message: 'server error' } };
         }
@@ -271,13 +271,13 @@ function boot(state, opts = {}) {
     toast: (m) => TOASTS.push(m),
     /*  ⛔ רישום כשל הכתיבה (סבב 113) — ⚠️ הוא אינו משנה את הזרימה,
      *  ⭐ והרתמה מדמה אותו כדי שכשל אמיתי לא ייבלע ב-ReferenceError. */
-    ysWriteFail: (where, e) => TOASTS.push('[ls] ' + where + ': ' + ((e && e.message) || e)),
+    hrWriteFail: (where, e) => TOASTS.push('[ls] ' + where + ': ' + ((e && e.message) || e)),
     H: String.fromCharCode,
     AUTH: state.AUTH || { user: null, perms: null, ROLE_LABELS: {}, offlineLogin: false },
     SB: makeSB(state),
-    ysLoginLog: (a, b) => LOGINLOG.push(b),
-    ysLoginDetails: () => ({}),
-    ysLoginLogFlush: () => {},
+    hrLoginLog: (a, b) => LOGINLOG.push(b),
+    hrLoginDetails: () => ({}),
+    hrLoginLogFlush: () => {},
     loadPerms: async () => {},
     showPage: () => {},
     lkReset: () => {},   // סבב 52 — המנגנון עבר לליבה המשותפת
@@ -296,7 +296,7 @@ function boot(state, opts = {}) {
     /*  ⛔ קידום אות הפולינג מדומה ⛔ ואינו שקט — ⚠️ שלושת אתרי כתיבת
      *  המשתמש קוראים לו אחרי כתיבה שהצליחה, ⭐ והרתמה סופרת אותו:
      *  ⛔ בלעדיו הם נופלים ב-`ReferenceError` ⚠️ ולא נמדדים כלל. */
-    ysTouchLastChanged: async () => { TOUCHES.n++; },
+    hrTouchLastChanged: async () => { TOUCHES.n++; },
   };
   sandbox.window = sandbox;
   /*  ⛔ שם טבלת ההגדרות נגזר מהמקור ⛔ ואינו מוקלד כאן — ⚠️ הוא קבוע שחי
@@ -399,32 +399,32 @@ const USERS = () => ([
 sec('1. PBKDF2 — גזירה, מלח, ודטרמיניזם');
 {
   const S = boot({ tables: { hr_users: USERS() } });
-  eq('1א. YS_PASS_ITER = 100000', S.YS_PASS_ITER, 100000);
-  const s1 = S.ysRandSalt(), s2 = S.ysRandSalt();
+  eq('1א. HR_PASS_ITER = 100000', S.HR_PASS_ITER, 100000);
+  const s1 = S.hrRandSalt(), s2 = S.hrRandSalt();
   T('1ב. מלח באורך 32 hex', /^[0-9a-f]{32}$/.test(s1));
   T('1ג. מלח שונה בכל קריאה (פר-משתמש)', s1 !== s2);
-  const fpA = await S.ysPassFp('123456', s1);
-  const fpB = await S.ysPassFp('123456', s1);
-  const fpC = await S.ysPassFp('123456', s2);
-  const fpD = await S.ysPassFp('123457', s1);
+  const fpA = await S.hrPassFp('123456', s1);
+  const fpB = await S.hrPassFp('123456', s1);
+  const fpC = await S.hrPassFp('123456', s2);
+  const fpD = await S.hrPassFp('123457', s1);
   T('1ד. טביעה באורך 64 hex', /^[0-9a-f]{64}$/.test(fpA));
   eq('1ה. דטרמיניסטית לאותה סיסמה+מלח', fpA, fpB);
   T('1ו. מלח שונה ⇒ טביעה שונה (אין טבלת קשת משותפת)', fpA !== fpC);
   T('1ז. סיסמה שונה ⇒ טביעה שונה', fpA !== fpD);
-  eq('1ח. בלי מלח ⇒ null (נכשל סגור)', await S.ysPassFp('123456', null), null);
+  eq('1ח. בלי מלח ⇒ null (נכשל סגור)', await S.hrPassFp('123456', null), null);
   T('1ט. הטביעה אינה מכילה את הסיסמה', fpA.indexOf('123456') === -1);
 }
 {
   const S = boot({ tables: { hr_users: [] } }, { noCrypto: true });
-  eq('1י. בלי crypto ⇒ ysRandSalt מחזירה null', S.ysRandSalt(), null);
-  eq('1יא. בלי crypto ⇒ ysMakePassFp מחזירה null', await S.ysMakePassFp('123456'), null);
+  eq('1י. בלי crypto ⇒ hrRandSalt מחזירה null', S.hrRandSalt(), null);
+  eq('1יא. בלי crypto ⇒ hrMakePassFp מחזירה null', await S.hrMakePassFp('123456'), null);
 }
 
 /* ── 2. המטמון — ⛔ password_hash לעולם לא בדיסק ────────────────────────── */
 sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאות');
 {
   const S = boot({ tables: { hr_users: USERS() } });
-  S.ysUsersCacheSaveAll(USERS());
+  S.hrUsersCacheSaveAll(USERS());
   const c = JSON.parse(LS.hr_mirror_users);
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
@@ -442,10 +442,10 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   const S = boot({ tables: { hr_users: USERS() } });
   LS.hr_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
-  /*  ⛔ המראה נטענת לזיכרון לפני הקריאה (סבב 116) — ⚠️ `ysUsersCacheGet`
+  /*  ⛔ המראה נטענת לזיכרון לפני הקריאה (סבב 116) — ⚠️ `hrUsersCacheGet`
    *  קוראת מ-`MIRROR`, ⭐ ומסלול הכניסה טוען אותה בשורתו הראשונה. */
-  S.mirrorLoadOne(S.YS_USERS_TABLE);
-  S.ysUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
+  S.mirrorLoadOne(S.HR_USERS_TABLE);
+  S.hrUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
                        role: 'admin', active: true, pass_salt: 'aa', pass_fp: 'bb' });
   const c = JSON.parse(LS.hr_mirror_users);
   eq('2ח. הרשומה הישנה שרדה לצד החדשה', c.length, 2);
@@ -453,15 +453,15 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
     !c.some((u) => 'password_hash' in u) && String(LS.hr_mirror_users).indexOf('222222') === -1);
   eq('2י. הרשומה הישנה נותרה בלי טביעה', c.find((u) => u.client_id === '2').pass_fp, null);
   eq('2יא. אין כפילות בעדכון חוזר של אותו client_id',
-    (S.ysUsersCacheSave({ client_id: '1', username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
+    (S.hrUsersCacheSave({ client_id: '1', username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
                           pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.hr_mirror_users).length), 2);
   eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.hr_mirror_users).find((u) => u.client_id === '1').pass_fp, 'dd');
 }
 {
   const S = boot({ tables: { hr_users: USERS() } });
-  S.ysUsersCacheSaveAll('לא-מערך');
+  S.hrUsersCacheSaveAll('לא-מערך');
   eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.hr_mirror_users, undefined);
-  S.ysUsersCacheSave({ client_id: '9', username: 'x', full_name: 'x', role: 'junior', active: false });
+  S.hrUsersCacheSave({ client_id: '9', username: 'x', full_name: 'x', role: 'junior', active: false });
   eq('2יד. משתמש לא-פעיל אינו נשמר', LS.hr_mirror_users, undefined);
 }
 
@@ -481,25 +481,25 @@ sec('2י. מראת המשתמשים בשכבת המראה');
                 { client_id: '2', username: 'b', full_name: 'ב', role: 'manager',
                   active: true, pass_salt: 'cc', pass_fp: 'dd' }];
   delete LS.hr_mirror_users;
-  S.ysUsersCacheSaveAll(rows);
-  eq('2י1. ⭐ המפתח נגזר משם הטבלה', S.mirrorKey(S.YS_USERS_TABLE), 'hr_mirror_users');
+  S.hrUsersCacheSaveAll(rows);
+  eq('2י1. ⭐ המפתח נגזר משם הטבלה', S.mirrorKey(S.HR_USERS_TABLE), 'hr_mirror_users');
   eq('2י2. התוכן נכתב תחתיו', JSON.parse(LS.hr_mirror_users).length, 2);
-  S.MIRROR[S.YS_USERS_TABLE] = null;
-  S.mirrorLoadOne(S.YS_USERS_TABLE);
+  S.MIRROR[S.HR_USERS_TABLE] = null;
+  S.mirrorLoadOne(S.HR_USERS_TABLE);
   eq('2י3. ⛔ וטעינת טבלה אחת מחזירה אותו לזיכרון',
-     (S.ysUsersCacheGet() || []).length, 2);
+     (S.hrUsersCacheGet() || []).length, 2);
   eq('2י4. ⭐ וכל הפעילים במראה — לא רק האחרון',
      JSON.parse(LS.hr_mirror_users).length, 2);
   T('2י5. ⭐ ומשתמש שאינו הראשון נמצא בה',
     !!JSON.parse(LS.hr_mirror_users).find((u) => u.username === 'b'));
 }
 
-/* ── 3. ysRefreshUsersCache ────────────────────────────────────────────── */
+/* ── 3. hrRefreshUsersCache ────────────────────────────────────────────── */
 sec('3. רענון מהענן');
 {
   const state = { tables: { hr_users: USERS() } };
   const S = boot(state, {});
-  await S.ysRefreshUsersCache();
+  await S.hrRefreshUsersCache();
   eq('3א. בלי משתמש מחובר — אפס פניות לרשת', SBLOG.length, 0);
   eq('3ב. ...ואפס כתיבה למטמון', LS.hr_mirror_users, undefined);
 }
@@ -507,7 +507,7 @@ sec('3. רענון מהענן');
   const state = { tables: { hr_users: USERS() } };
   const S = boot(state, {});
   S.AUTH.user = { client_id: '3', role: 'junior' };
-  await S.ysRefreshUsersCache();
+  await S.hrRefreshUsersCache();
   const sel = SBLOG.find((q) => q.op === 'select');
   T('3ג. ⛔ password_hash אינו מבוקש בשאילתה כלל', sel.cols.indexOf('password_hash') === -1);
   T('3ד. pass_salt ו-pass_fp כן מבוקשים',
@@ -515,23 +515,23 @@ sec('3. רענון מהענן');
   eq('3ה. נמשכו כל הפעילים ולא רק המחובר', JSON.parse(LS.hr_mirror_users).length, 3);
 }
 
-/* ── 4. ysVerifyOffline ────────────────────────────────────────────────── */
+/* ── 4. hrVerifyOffline ────────────────────────────────────────────────── */
 sec('4. אימות אופליין מול הטביעה');
 {
   const S = boot({ tables: { hr_users: [] } });
-  const made = await S.ysMakePassFp('654321');
+  const made = await S.hrMakePassFp('654321');
   const cu = { client_id: '5', username: 'a', active: true, pass_salt: made.salt, pass_fp: made.fp };
-  eq('4א. סיסמה נכונה ⇒ ok', await S.ysVerifyOffline(cu, '654321'), 'ok');
-  eq('4ב. סיסמה שגויה ⇒ bad', await S.ysVerifyOffline(cu, '654322'), 'bad');
+  eq('4א. סיסמה נכונה ⇒ ok', await S.hrVerifyOffline(cu, '654321'), 'ok');
+  eq('4ב. סיסמה שגויה ⇒ bad', await S.hrVerifyOffline(cu, '654322'), 'bad');
   eq('4ג. בלי טביעה ⇒ no-fp',
-    await S.ysVerifyOffline({ client_id: '6', active: true, pass_salt: null, pass_fp: null }, '654321'), 'no-fp');
-  eq('4ד. משתמש לא-פעיל ⇒ bad', await S.ysVerifyOffline(Object.assign({}, cu, { active: false }), '654321'), 'bad');
-  eq('4ה. null ⇒ bad', await S.ysVerifyOffline(null, '654321'), 'bad');
+    await S.hrVerifyOffline({ client_id: '6', active: true, pass_salt: null, pass_fp: null }, '654321'), 'no-fp');
+  eq('4ד. משתמש לא-פעיל ⇒ bad', await S.hrVerifyOffline(Object.assign({}, cu, { active: false }), '654321'), 'bad');
+  eq('4ה. null ⇒ bad', await S.hrVerifyOffline(null, '654321'), 'bad');
 }
 {
   const S = boot({ tables: { hr_users: [] } }, { noCrypto: true });
   eq('4ו. בלי crypto ⇒ no-crypto (ולא ok!)',
-    await S.ysVerifyOffline({ client_id: '5', active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
+    await S.hrVerifyOffline({ client_id: '5', active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
 }
 
 /*  ⭐ סבב 40 — זריעת טביעות לשורות הענן.
@@ -542,7 +542,7 @@ sec('4. אימות אופליין מול הטביעה');
  *  החי: כל ששת המשתמשים מחזיקים מלח וטביעה.                          */
 async function seedFp(S, rows, pwByUser = { 1: '111111', 2: '222222', 3: '333333', 4: '444444' }) {
   for (const r of rows) {
-    const made = await S.ysMakePassFp(pwByUser[r.client_id] || r.password_hash);
+    const made = await S.hrMakePassFp(pwByUser[r.client_id] || r.password_hash);
     if (made) { r.pass_salt = made.salt; r.pass_fp = made.fp; }
   }
   return rows;
@@ -556,7 +556,7 @@ async function withCache(pwByUser = { 1: '111111', 2: '222222', 3: '333333' }) {
   const rows = [];
   for (const u of USERS()) {
     if (!u.active) continue;
-    const made = await seed.ysMakePassFp(pwByUser[u.client_id]);
+    const made = await seed.hrMakePassFp(pwByUser[u.client_id]);
     rows.push({ client_id: u.client_id, username: u.username, full_name: u.full_name, role: u.role,
                 active: true, pass_salt: made.salt, pass_fp: made.fp });
   }
@@ -653,7 +653,7 @@ sec('6. כניסה מקוונת');
 }
 
 /* ── 7. ⛔ השלמת הטביעות הוסרה (סבב 40) ──────────────────────────────────────
-   ⚠️ **הטענות כאן התהפכו במכוון.** עד סבב 40 הן אכפו ש-`ysBackfillPassFp`
+   ⚠️ **הטענות כאן התהפכו במכוון.** עד סבב 40 הן אכפו ש-`hrBackfillPassFp`
    גוזרת טביעה מהסיסמה הגלויה; מסבב 40 הן אוכפות ש**היא אינה קיימת**.
    ⛔ זו אינה ריכוך של הבדיקה אלא הפוכה שלה: כל עוד הפונקציה בקוד, יש
    מסלול שקורא את `password_hash` כדי לגזור ממנה — כלומר הקורא האחרון של
@@ -663,9 +663,9 @@ sec('6. כניסה מקוונת');
    ולכן לא נותר למי להשלים.                                            */
 sec('7. ⛔ השלמת הטביעות הוסרה');
 {
-  T('7א. ⛔ `ysBackfillPassFp` אינה בקוד', SRC.indexOf('function ysBackfillPassFp') === -1);
-  T('7ב. ⛔ ואין לה אף אתר קריאה', SRC.indexOf('ysBackfillPassFp(') === -1);
-  T('7ג. ⛔ ו-`_ysFpBackfillDone` נעלם איתה', SRC.indexOf('_ysFpBackfillDone') === -1);
+  T('7א. ⛔ `hrBackfillPassFp` אינה בקוד', SRC.indexOf('function hrBackfillPassFp') === -1);
+  T('7ב. ⛔ ואין לה אף אתר קריאה', SRC.indexOf('hrBackfillPassFp(') === -1);
+  T('7ג. ⛔ ו-`_hrFpBackfillDone` נעלם איתה', SRC.indexOf('_hrFpBackfillDone') === -1);
   T('7ד. ⭐ ואין יותר אף שאילתה ששולפת `password_hash` כדי לגזור ממנה טביעה',
     SRC.indexOf("select('id,password_hash')") === -1);
 }
@@ -682,7 +682,7 @@ sec('8. saveUser / changeMyPassword');
   await S.saveUser();
   const nu = rows.find((r) => r.username === 'hadash');
   T('8א. משתמש חדש נוצר עם מלח+טביעה', !!nu && !!nu.pass_salt && !!nu.pass_fp);
-  eq('8ב. הטביעה תואמת לסיסמה', await S.ysPassFp('567890', nu.pass_salt), nu.pass_fp);
+  eq('8ב. הטביעה תואמת לסיסמה', await S.hrPassFp('567890', nu.pass_salt), nu.pass_fp);
   /*  ⛔ כתיבת משתמש שהצליחה מקדמת את אות הפולינג — ⚠️ טבלת המשתמשים נמשכת
    *  במשיכה המוצלחת, ⭐ ובלי הקידום השינוי נשאר בלתי-נראה לכל מכשיר אחר. */
   T('8ב2. ⛔ ואות הפולינג קודמה אחרי הכתיבה', TOUCHES.n > 0);
@@ -726,9 +726,9 @@ sec('8. saveUser / changeMyPassword');
   DOM._m['mp-new2'].value = '246810';
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
-  eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
+  eq('8י. והטביעה עודכנה איתה', await S.hrPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
   const c = JSON.parse(LS.hr_mirror_users).find((u) => u.client_id === '2');
-  eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.ysPassFp('246810', c.pass_salt), c.pass_fp);
+  eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.hrPassFp('246810', c.pass_salt), c.pass_fp);
   T('8יב. ⛔ ואין password_hash במטמון', String(LS.hr_mirror_users).indexOf('password_hash') === -1);
 }
 
@@ -737,12 +737,12 @@ sec('9. confirmSwitch');
 async function doSwitch(targetId, pass, opts = {}) {
   const cloud = USERS();
   const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { hr_users: cloud } });
-  /*  ⛔ היעד יושב ב-`window._ysSwitchId` מסבב 80 — ⚠️ עד אז הוא נתלה על
+  /*  ⛔ היעד יושב ב-`window._hrSwitchId` מסבב 80 — ⚠️ עד אז הוא נתלה על
    *  מיכל הדיאלוג, ⭐ ומיכל אחד לכל הדיאלוגים אינו יכול לשאת מצב של אחד. */
-  S._ysSwitchId = targetId;
+  S._hrSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.hr_mirror_users = JSON.stringify(opts.cache || CACHED);
-  S.mirrorLoadOne(S.YS_USERS_TABLE);
+  S.mirrorLoadOne(S.HR_USERS_TABLE);
   S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
   await S.confirmSwitch();
@@ -783,8 +783,8 @@ async function doSwitch(targetId, pass, opts = {}) {
 }
 {
   // ⭐ בידוד תיקון סבב 21: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
-  // `ysRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
-  // ולכן רק `ysUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
+  // `hrRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
+  // ולכן רק `hrUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
   const r = await doSwitch('2', '222222', { listSelectFail: true, cache: [] });
   await waitFor(() => JSON.parse(LS.hr_mirror_users || '[]').length === 1,
                 'שמירת היעד מהשורה שבידינו');

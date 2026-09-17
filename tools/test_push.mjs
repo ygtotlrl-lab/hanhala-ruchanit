@@ -47,9 +47,9 @@ const APP = {
    *  שיש בהן כניסה, ⛔ **ומה מפיל**: אחת שחסרה, או עזר שקיים כאן בלבד
    *  ואין לו נימוק — ⭐ ושכבה שנבדלת היא התנהגות שנייה באותו מקש. */
   passFns: {
-    fp: 'ysPassFp',
-    make: 'ysMakePassFp',
-    fields: 'ysPassFields',
+    fp: 'hrPassFp',
+    make: 'hrMakePassFp',
+    fields: 'hrPassFields',
   },
   passScreen: { open: 'myPasswordModal', open_act: 'my-pass', act: 'my-pass-save' },
   /*  ⛔ מסך ניהול משתמשים קיים כאן — ⚠️ **הוא נגזר ממספר המשתמשים**,
@@ -60,7 +60,7 @@ const APP = {
    *  קריאה, ואתר קריאה שאין לו הצהרה. ⭐ **ולמה המבנה קיים**: מסלול
    *  דחיפה שמפסיק לכתוב ליומן נעלם בשקט, ⚠️ ויומן ראיות שחסרה בו דחיפה
    *  אינו ראיה. */
-  syncLogPoints: { fn: 'ysSyncLog', actions: ['pull', 'push', 'touch_failed', 'dropped_legacy'] },
+  syncLogPoints: { fn: 'hrSyncLog', actions: ['pull', 'push', 'touch_failed', 'dropped_legacy'] },
   /*  ⛔ מה נרשם ב-`user_name` — ⚠️ יש כאן כניסה — ⛔ `user_name` הוא שם המשתמש המחובר: ⭐ **וההיעדר
    *  מוצהר `null`** ⛔ ואינו נשמט — ⚠️ שדה חסר נקרא «לא נשאל», ⭐ וריק
    *  נקרא «נמדד ואין». */

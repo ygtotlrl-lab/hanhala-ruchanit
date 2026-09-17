@@ -31,10 +31,10 @@ const APP = {
   file: 'index.html',
   bootFn: 'loadDash',
   /*  פונקציית המשיכה — מה ש-`PL_CFG.pull` מפעיל. */
-  syncFn: 'ysPullFromCloud',
+  syncFn: 'hrPullFromCloud',
   /*  משפכי הכתיבה לענן שחייבים לקדם את החותמת. ⚠️ כאן זה משפך אחד:
-   *  `ysTouchLastChanged()`, שכל כותב ענן בהנהלה כבר קורא לו. */
-  touchFns: ['ysTouchLastChanged'],
+   *  `hrTouchLastChanged()`, שכל כותב ענן בהנהלה כבר קורא לו. */
+  touchFns: ['hrTouchLastChanged'],
   every: 3000,
   stampKey: 'hr_last_changed',
 };

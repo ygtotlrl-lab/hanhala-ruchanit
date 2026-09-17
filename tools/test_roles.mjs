@@ -111,7 +111,7 @@ function makeCtx() {
   vm.createContext(ctx);
   vm.runInContext(
     [decl('ROLE_ADMIN')].join('\n') + '\n' +
-    ['isAdminOf', 'isAdmin', 'ysSupervisionAccess', 'sessSet', 'sessGet',
+    ['isAdminOf', 'isAdmin', 'hrSupervisionAccess', 'sessSet', 'sessGet',
      'sessClear', 'canAccess', 'canEdit'].map(fn).join('\n'), ctx);
   return ctx;
 }
@@ -132,7 +132,7 @@ sect('א. ⛔ ההשוואה היא ל-`admin` בדיוק');
 sect('ב. ⭐ דרגת הביניים — ההשגחה בלבד');
 {
   const c = makeCtx();
-  const say = (role) => { c.sessSet(role === null ? null : { role: role }); return c.ysSupervisionAccess(); };
+  const say = (role) => { c.sessSet(role === null ? null : { role: role }); return c.hrSupervisionAccess(); };
   ok('⭐ מנהל נכנס להשגחה', say('admin'));
   ok('⭐ ודרגת הביניים נכנסת אף היא', say('manager'));
   ok('⛔ והדרגה שמתחתיה אינה', !say('junior'));

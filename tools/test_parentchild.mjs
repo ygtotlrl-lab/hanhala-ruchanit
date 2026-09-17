@@ -79,7 +79,7 @@ const APP = {
     gapWhy: {},
   },
   childMap: null,
-  pushWriter: { fn: 'ysSendRecs', first: 'cfg.parent', then: 'cfg.child',
+  pushWriter: { fn: 'hrSendRecs', first: 'cfg.parent', then: 'cfg.child',
                 why: 'האב והבן נכתבים בקריאה אחת, ⛔ ואין שם טבלה ליטרלי שאפשר למדוד ברשימה' },
   /*  ⚠️ רתמת הירושה — ⛔ שורות הבן **נגזרות** מרשומת האב בכל דחיפה,
    *  ⭐ ולכן הירושה היא הגזירה עצמה: ⛔ הרתמה חותכת את הגוזר ומריצה אותו,
@@ -88,7 +88,7 @@ const APP = {
     why: 'שורת הסימון נגזרת מרשומת הסדר — ⛔ והמחיקה והחותמת נלקחות ממנה',
     cols: ['deleted', 'updated_at'],
     cut: (src) => {
-      const a = src.indexOf('function ysMarkRows(');
+      const a = src.indexOf('function hrMarkRows(');
       if (a < 0) return '';
       let d = 0;
       for (let k = src.indexOf('{', a); k < src.length; k++) {
@@ -97,9 +97,9 @@ const APP = {
       }
       return '';
     },
-    stubs: () => ({ YS_ROWS_KINDS: { attend: { note: false } },
-                    _ysRecTs: (r) => (r && r.updatedAt) || r.updated_at || 0 }),
-    call: (sb, parent) => sb.ysMarkRows(Object.assign({}, parent,
+    stubs: () => ({ HR_ROWS_KINDS: { attend: { note: false } },
+                    _hrRecTs: (r) => (r && r.updatedAt) || r.updated_at || 0 }),
+    call: (sb, parent) => sb.hrMarkRows(Object.assign({}, parent,
       { updatedAt: parent.updated_at }), 'attend')[0],
     mutStamp: (code) => code.replace('updated_at: ts', 'updated_at: Date.now()'),
     mutDel: (code) => code.replace('deleted: del,', 'deleted: false,'),
