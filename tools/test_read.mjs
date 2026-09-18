@@ -110,7 +110,7 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 const START = 'שלב ב — מקור הקריאה עובר לטבלאות (סבב 55)';
 const END = '/* ═══ סוף שכבת השורות';
 /*  ⛔ העימוד עבר למודול המשותף (סבב 87) — ⚠️ הוא יושב מחוץ לבלוק שנחתך
- *  כאן, ⭐ ולכן הוא נטען לסביבה בנפרד: ⛔ רתמה שאין בה `_ysRowsPaged`
+ *  כאן, ⭐ ולכן הוא נטען לסביבה בנפרד: ⛔ רתמה שאין בה `_rowsPaged`
  *  מודדת קוד שאינו רץ. */
 const PAGED_START = '/* ═══ משיכה מסוננת בשרת — מודול משותף';
 const PAGED_END = '/* ═══════════════ סוף מודול משיכה מסוננת בשרת';
@@ -353,7 +353,7 @@ await mut('if (!r || !r.ok || !Array.isArray(r.data)) return null;', 'if (!r || 
 /*  ⛔ המוטציה הזו נוגעת במודול המשותף ⛔ ולא בשכבת השורות — ⚠️ העימוד עבר
  *  לשם, ⭐ והמוטציה חייבת לרוץ על הקוד שבאמת מבצע אותו. */
 {
-  const b = PAGED.replace('if (res.data.length < YS_ROWS_PAGE) return out;', 'return out;');
+  const b = PAGED.replace('if (res.data.length < ROWS_PAGE) return out;', 'return out;');
   if (b === PAGED) bad('מוטציה לא הוחלה: ⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
   else {
     PAGED_USE = b;

@@ -104,30 +104,24 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 
 /* ── חילוץ: לוח התאריכים העברי + עוזרי החלון ───────────────────────────── */
 const L = SRC.split('\n');
-const calFrom = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
-/*  ⛔ העוגן הוא סמן סוף מוצהר ⛔ ולא שם פונקציה (סבב 107) — ⚠️ המנוע יצא
- *  לבלוק חתום, ⭐ ועוגן שנמתח עד שמו בלע את כל מה שביניהם. */
-const calEnd = L.findIndex((l, i) => i > calFrom && l.startsWith('// ═══ סוף אזור התאריך העברי'));
-const calTo = calFrom;
 const winFrom = L.findIndex((l) => l.includes('חלון החודש העברי — עוזר פרטי'));
 let winEnd = -1;
 for (let i = winFrom; i < L.length; i++) { if (L[i].startsWith('/* ── HW_CFG')) { winEnd = i - 1; break; } }
-assert(calFrom >= 0 && calEnd > calTo, 'לוח התאריכים העברי אותר ב-index.html');
-/*  ⛔ המנוע יצא לבלוק חתום (סבב 107) — ⚠️ ולכן האזור הוא **שניים**: שכבת
- *  התצוגה שעד סמן הסוף המוצהר, ⛔ והבלוק החתום שמחזיק את המנוע עצמו:
- *  ⭐ עוגן אחד שנמתח מזה לזה היה בולע את כל מה שביניהם ⛔ ומריץ חצי
- *  אפליקציה ב-`vm`. */
+/*  ⛔ המנוע כולו בבלוק החתום ⛔ ואינו ב-`index.html` (סבב 154) — ⚠️ הלוח
+ *  והגימטריה ישבו בקובץ ונשאו תחילית של אפליקציה: ⭐ והעוגן היחיד הוא
+ *  סמן הבלוק. */
+assert(!/^window\.(DAYS_HEB|MONTHS_HEB|heb[A-Z])/m.test(readFileSync(join(ROOT, 'index.html'), 'utf8')),
+       'אף הגדרה של מנוע התאריך אינה ב-index.html');
 const engFrom = L.findIndex((l) => l.startsWith('/* ═══ מנוע התאריך העברי — מודול משותף'));
 const engTo = L.findIndex((l, i) => i > engFrom && l.startsWith('/* ═══════════════ סוף מודול מנוע התאריך העברי'));
-assert(engFrom >= 0 && engTo > engFrom, 'הבלוק החתום של מנוע התאריך אותר ב-index.html');
+assert(engFrom >= 0 && engTo > engFrom, 'הבלוק החתום של מנוע התאריך אותר');
 const ENG = L.slice(engFrom, engTo + 1).join('\n');
 
 assert(winFrom >= 0 && winEnd > winFrom, 'בלוק חלון החודש העברי אותר ב-index.html');
 /*  ⛔ הבלוק מצורף פעם אחת ⛔ ולא פעמיים (סבב 107) — ⚠️ באחת האפליקציות הוא
  *  יושב **בתוך** האזור ובאחרת מחוצה לו: ⭐ צירוף עיוור היה מגדיר את המנוע
  *  פעמיים, ⛔ וההגדרה השנייה הייתה מבטלת כל מוטציה שנעשתה בראשונה. */
-const REG = L.slice(calFrom, calEnd + 1).join('\n');
-const CAL = REG.includes(ENG) ? REG : REG + '\n' + ENG;
+const CAL = ENG;
 const WIN = L.slice(winFrom, winEnd + 1).join('\n');
 
 /*  שעון מזויף: `new Date()` ללא ארגומנטים מחזיר את היום שהתרחיש קבע,
@@ -150,9 +144,9 @@ function harness(y, m, d, extra) {
   ctx.KV_TABLE = (/(?:^|\n)\s*var\s+KV_TABLE\s*=\s*'([^']+)'/.exec(SRC) || [])[1];
   vm.createContext(ctx);
   /*  ⚠️ העוזרים נבנים **בתוך** ההקשר ולא מחוצה לו (סבב 56) — כך התרחיש
-   *  והשעון המזויף חולקים realm אחד. ⭐ הכשל שחייב את זה — `ysHebDate`
+   *  והשעון המזויף חולקים realm אחד. ⭐ הכשל שחייב את זה — `hebDate`
    *  שבדקה `d instanceof Date` ונפלה-חזרה ל«היום» בשקט — **תוקן בסבב 57**
-   *  (`_ysIsDate`, ו-`tools/test_date.mjs` אוכף זאת), ⛔ והבנייה
+   *  (`_hebIsDate`, ו-`tools/test_date.mjs` אוכף זאת), ⛔ והבנייה
    *  בתוך ההקשר נשארת מפני שהיא הדרך הנכונה ממילא. */
   vm.runInContext(CAL + '\n' + WIN + '\n' + (extra || '') + `
     this.__api = {
@@ -162,7 +156,7 @@ function harness(y, m, d, extra) {
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
                '-' + String(d.getDate()).padStart(2, '0');
       },
-      hebOfIso: function (s) { return window.ysHebDate(new Date(Date.parse(s + 'T12:00:00'))); },
+      hebOfIso: function (s) { return window.hebDate(new Date(Date.parse(s + 'T12:00:00'))); },
       shift: function (s, n) {
         var t = new Date(Date.parse(s + 'T12:00:00'));
         t = new Date(t.getFullYear(), t.getMonth(), t.getDate() + n, 12, 0, 0);
