@@ -64,8 +64,12 @@ let RAN = 0;
 let PRE_MUT = null;
 const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
- *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
-const SUBRUN = !!process.env.GATE_SUBRUN;
+ *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו.
+ *  ⛔ **ושומר הרקורסיה הוא ריצת-משנה אף הוא** — ⚠️ הסט רץ שם על **עותק
+ *  סינתטי** שאין לצידו אחיות ואין בו `.git`, ⭐ ולכן שער שמשווה מול אחות
+ *  או קורא את סט המעקב מגיע לחלק מטענותיו **בכוונה**: ⛔ והריצפה נמדדת
+ *  על עץ אמיתי ⛔ ולא שם. */
+const SUBRUN = !!process.env.GATE_SUBRUN || !!process.env.R33_INNER;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
  *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
  *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
@@ -110,7 +114,7 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 const START = 'שלב ב — מקור הקריאה עובר לטבלאות (סבב 55)';
 const END = '/* ═══ סוף שכבת השורות';
 /*  ⛔ העימוד עבר למודול המשותף (סבב 87) — ⚠️ הוא יושב מחוץ לבלוק שנחתך
- *  כאן, ⭐ ולכן הוא נטען לסביבה בנפרד: ⛔ רתמה שאין בה `_ysRowsPaged`
+ *  כאן, ⭐ ולכן הוא נטען לסביבה בנפרד: ⛔ רתמה שאין בה `_rowsPaged`
  *  מודדת קוד שאינו רץ. */
 const PAGED_START = '/* ═══ משיכה מסוננת בשרת — מודול משותף';
 const PAGED_END = '/* ═══════════════ סוף מודול משיכה מסוננת בשרת';
@@ -236,7 +240,7 @@ async function scenarios(block, label) {
   // ז. מפתח הגדרות ⇐ `hr_settings`, בלי לגעת בטבלאות הרשומות
   {
     const { api, log } = run(block, {}, [{ id: 'KV' }]);
-    res.passthru = await api.hrCloudGet('hr_attend_cfg');
+    res.passthru = await api.hrCloudGet('attend_cfg');
     res.passthruSel = log.sel.length;
   }
   // ח2. יותר מעמוד אחד ⇐ נמשכים כל העמודים
@@ -353,7 +357,7 @@ await mut('if (!r || !r.ok || !Array.isArray(r.data)) return null;', 'if (!r || 
 /*  ⛔ המוטציה הזו נוגעת במודול המשותף ⛔ ולא בשכבת השורות — ⚠️ העימוד עבר
  *  לשם, ⭐ והמוטציה חייבת לרוץ על הקוד שבאמת מבצע אותו. */
 {
-  const b = PAGED.replace('if (res.data.length < YS_ROWS_PAGE) return out;', 'return out;');
+  const b = PAGED.replace('if (res.data.length < ROWS_PAGE) return out;', 'return out;');
   if (b === PAGED) bad('מוטציה לא הוחלה: ⛔ ויתור על העמוד השני מחזיר תמונה חתוכה בשקט');
   else {
     PAGED_USE = b;
