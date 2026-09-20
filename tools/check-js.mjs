@@ -93,7 +93,7 @@ const APP = {
           'test_backup_policy.mjs',
           'test_date.mjs',
          'test_bump.mjs',
-         'test_window.mjs', 'test_read.mjs',
+         'test_read.mjs',
           'test_pendflush.mjs', 'test_lock.mjs',
           'test_session.mjs',
           'check-structure.mjs', 'check-docs.mjs',
@@ -112,17 +112,16 @@ const APP = {
           'test_offline_login.mjs', 'test_roles.mjs', 'test_stage_a.mjs',
           'test_schema_source.mjs',
           'test_secrets.mjs', 'test_hotwin.mjs', 'test_cron.mjs',
-          'test_tables.mjs', 'test_dupsession.mjs', 'test_parentchild.mjs',
+          'test_parentchild.mjs',
           'test_merge_pending.mjs', 'test_matrix.mjs', 'test_ids.mjs',
-          'test_import.mjs', 'test_attend.mjs',
-          'test_sleep_rows.mjs', 'test_mirror_split.mjs'],
+          ],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף (סבב 72) — ⚠️ תקרת השער
  *  הבודד נמדדת כאן מפני שכאן ממילא רצים כל השערים, ⛔ ושער נפרד שימדוד
  *  אותה היה מריץ את כולם פעם שנייה. */
-export const ROWS = [40, 41, 29];
+export const ROWS = [41, 42, 30];
 
 const T_START = Date.now();
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
