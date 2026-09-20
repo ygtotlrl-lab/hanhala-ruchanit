@@ -1113,22 +1113,6 @@ import { readNum, uniqList, uniqHas } from './core/util.js';
 import { newClientId, idEq, mergeCore, tombPruneMerged, tombBoot,
          ctxEpoch, ctxSwitch, ctxStale } from './core/sync.js';
 import './core/hebrew.js';
-// ============================================================
-/* ══════════════════════════════════════════════════════════════════════════
-   תאריך עברי — מקור אמת יחיד
-   ══════════════════════════════════════════════════════════════════════════
-   ⚠️ המנוע הוא `Intl.DateTimeFormat('en-u-ca-hebrew')`, ו-`hebDate`
-   היא הפונקציה שכל צרכן תאריך עובר דרכה. ⛔ אין למחוק את `_hcST`
-   (סבב 7) — היא רשת הנפילה-חזרה כשאין Intl, והיא אומתה מול מימוש
-   אריתמטי של הלוח הקבוע ולא מול ICU.
-   ══════════════════════════════════════════════════════════════════════════ */
-// מנוע החישוב: הלוח העברי המובנה בדפדפן (Intl 'he-u-ca-hebrew').
-// שכבת התצוגה (גימטריה / שמות חודשים / תווית שנה) נשארת שלנו, כדי
-// שהפורמט בכל המסכים יישאר זהה. אם Intl חסר או מחזיר תוצאה לא צפויה —
-// נפילה-חזרה למנוע הטבלאי הפנימי (_hcHTable, מוגדר בהמשך הקובץ).
-// ============================================================
-
-// ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
@@ -2061,9 +2045,10 @@ function hrHebYearInfo(hy){
   window._hrYearCache[hy]=info;
   return info;
 };
-// מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה הטבלה הפנימית
-function _hcBaseST(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
-function _hcBase(hy){return hrHebYearInfo(hy)||_hcBaseST(hy);};
+// מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה טבלת המנוע
+// ⛔ הטבלה נקראת דרך `hebYearBase` ⛔ ולא ישירות — ⚠️ `_hcST` הוא מצבו
+// הפנימי של המודול, ⭐ וקריאה ישירה בו היא תלות שבורה שאינה זורקת.
+function _hcBase(hy){return hrHebYearInfo(hy)||window.hebYearBase(hy);};
 // עברי → גרגוריאני Date
 // העוגן הוא צהריים ולא חצות: הוספת מכפלות של 24 שעות מחצות "נופלת" ליום הקודם
 // במעבר לשעון חורף (24 שעות = 23 שעות שעון) — זה החזיר תאריך מוקדם ביום.

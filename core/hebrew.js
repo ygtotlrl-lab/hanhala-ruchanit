@@ -183,6 +183,12 @@ window._hcHTable=function(d){
   var df=Math.round((td-b.jd)/86400000),c=0;
   for(var mi=0;mi<b.ml.length;mi++){if(df<c+b.ml[mi])return{hy:b.hy,mi:mi,day:df-c+1};c+=b.ml[mi];}
   return{hy:b.hy,mi:0,day:1};};
+/*  ⛔ קריאת בסיס השנה עוברת כאן ⛔ ולא בטבלה עצמה — ⚠️ `_hcST` הוא מצבו
+ *  הפנימי של המודול, ⭐ וקורא חיצוני שנוגע בו ישירות הוא תלות שבורה ביום
+ *  שהמבנה ישתנה: ⛔ והיא אינה זורקת. */
+window.hebYearBase=function(hy){
+  for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===+hy)return window._hcST[i];}
+  return null;};
 // ---- הפונקציה המרכזית ----
 // מחזירה {year, monthIndex, monthName, day, dayLabel, yearLabelFull, ok, src}
 /*  ⛔ מטמון הגזירה — ⚠️ `formatToParts` וארבע גזירות הגימטריה רצות בכל
