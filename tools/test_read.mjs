@@ -236,7 +236,7 @@ async function scenarios(block, label) {
   // ז. מפתח הגדרות ⇐ `hr_settings`, בלי לגעת בטבלאות הרשומות
   {
     const { api, log } = run(block, {}, [{ id: 'KV' }]);
-    res.passthru = await api.hrCloudGet('hr_attend_cfg');
+    res.passthru = await api.hrCloudGet('attend_cfg');
     res.passthruSel = log.sel.length;
   }
   // ח2. יותר מעמוד אחד ⇐ נמשכים כל העמודים

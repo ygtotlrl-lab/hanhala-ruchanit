@@ -1948,7 +1948,7 @@ async function loadPerms() {
    *  קיים **שגיאה**: ⛔ המסלול נפל לעותק המקומי כאילו אין רשת. */
   var res = null;
   try {
-    res = await hrCfgGet('hr_perms', true);
+    res = await hrCfgGet('perms', true);
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
@@ -2482,7 +2482,7 @@ function getDefaultReasons() {
 }
 
 function getAbsenceReasons() {
-  try { return hrCfgLocalGet('hr_absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  try { return hrCfgLocalGet('absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 };
 
 async function saveAbsenceReasons() {
@@ -2496,8 +2496,8 @@ async function saveAbsenceReasons() {
       reasons[type].push(v);
     });
   });
-  hrCfgLocalSet('hr_absence_reasons', reasons);
-  hrSettingsTouch('hr_absence_reasons');
+  hrCfgLocalSet('absence_reasons', reasons);
+  hrSettingsTouch('absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
    *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
@@ -2507,7 +2507,7 @@ async function saveAbsenceReasons() {
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
   toast(MSG_REASONS_SAVED);
   try {
-    var r = await hrCfgSet('hr_absence_reasons', reasons);
+    var r = await hrCfgSet('absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
     /*  ⛔ אות הפולינג מקודם בנקודת המעבר האחת — ⚠️ כתיבה ידנית של
      *  `hr_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
@@ -3063,7 +3063,7 @@ async function savePerms() {
   // upsert דרך hrCfgSet במקום select-ואז-update/insert: ל-`.single()` יש error
   // גם כשהשורה חסרה וגם בכשל רשת, ולכן כשל זמני נפל לענף ה-insert → שגיאת
   // מפתח כפול → נבלעה → "✅ הרשאות נשמרו!" בזמן שהענן לא השתנה.
-  var res = await hrCfgSet('hr_perms', p);
+  var res = await hrCfgSet('perms', p);
   if (res && res.error) {
     // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
     toast(MSG_PERMS_SAVE_FAIL + (res.error.message || res.error.code || MSG_NO_LINK) +
@@ -5271,13 +5271,13 @@ var PL_CFG = {
   seen:   function () { return _hrLastTs; },
   note:   function (ts) { _hrLastTs = ts; },
   ok:     function () { _hrMarkSynced(); },
-  stamp:  function (ts) { return hrCfgSet('hr_last_changed', ts); },
+  stamp:  function (ts) { return hrCfgSet('last_changed', ts); },
   pull:   function () { return hrPullFromCloud(); },
   remote: function () {
-    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle())
+    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle())
       .then(function (r) {
         if (!r || r.error) return { ok: false, ts: null };
-        return { ok: true, ts: r.data ? plNum(kvParse('hr_last_changed', r.data.value).value) : null };
+        return { ok: true, ts: r.data ? plNum(kvParse('last_changed', r.data.value).value) : null };
       }, function () { return { ok: false, ts: null }; });
   },
 };
@@ -6234,7 +6234,7 @@ async function hrTouchLastChanged() {
 // hrCfgSet עם נפילה-חזרה לתור — תחליף שקוף, באותו חוזה
 async function hrCfgSet(key, value) {
   // ⛔ לעולם לא להכניס לתור את מפתח החותמת (נרשם בסבב 67) — הוא תמיד נגזר
-  if (key === 'hr_last_changed') {
+  if (key === 'last_changed') {
     try { return await _hrCfgSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
   }
   try {
@@ -6362,7 +6362,7 @@ async function hrFlushQueue() {
     // היחיד שהפולינג במכשירים האחרים משווה מולו, ולכן חותמת
     // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
     // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
-    try { await _hrCfgSetRaw('hr_last_changed', ts); if (!ctxStale(_ep)) _hrLastTs = ts; }
+    try { await _hrCfgSetRaw('last_changed', ts); if (!ctxStale(_ep)) _hrLastTs = ts; }
     catch(e){
       console.warn('[sync] חותמת hr_last_changed לא נכתבה:', e && e.message);
       try { hrSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
@@ -6416,7 +6416,7 @@ var HR_ROWS = true;
 /* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
    ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
    דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
-var HR_SETTINGS_LWW_KEYS = ['hr_reasons', 'hr_absence_reasons'];
+var HR_SETTINGS_LWW_KEYS = ['reasons', 'absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -7364,14 +7364,14 @@ async function hrPushToCloud() {
   if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
 
   // ---- approvals: מיזוג אובייקט לפי sid ----
-  await step('hr_approvals', async function() {
+  await step('approvals', async function() {
     var localAp = getApprovals();
-    var remoteAp = null; try { remoteAp = await hrCfgGet('hr_approvals'); } catch(e3) {}
+    var remoteAp = null; try { remoteAp = await hrCfgGet('approvals'); } catch(e3) {}
     var mergedAp = hrMergeRecords(localAp, remoteAp, null, true);
     if (ctxStale(_ep)) return {};
-    hrCfgLocalSet('hr_approvals', mergedAp);
-    var r = await hrCfgSet('hr_approvals', mergedAp);
-    hrSyncLog('push', 'hr_approvals', hrCount(mergedAp), {local_count: hrCount(localAp), remote_count: hrCount(remoteAp), result_count: hrCount(mergedAp)});
+    hrCfgLocalSet('approvals', mergedAp);
+    var r = await hrCfgSet('approvals', mergedAp);
+    hrSyncLog('push', 'approvals', hrCount(mergedAp), {local_count: hrCount(localAp), remote_count: hrCount(remoteAp), result_count: hrCount(mergedAp)});
     return r;
   });
 
@@ -7379,8 +7379,8 @@ async function hrPushToCloud() {
   await step(KV_TABLE, async function() {
     var meta = hrSettingsMeta();
     var settingsKeys = [
-      { key: 'hr_reasons',         get: getReasons,                                       set: function(v){ hrCfgLocalSet('hr_reasons', v); } },
-      { key: 'hr_absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ hrCfgLocalSet('hr_absence_reasons', v); } }
+      { key: 'reasons',         get: getReasons,                                       set: function(v){ hrCfgLocalSet('reasons', v); } },
+      { key: 'absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ hrCfgLocalSet('absence_reasons', v); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -7412,7 +7412,7 @@ async function hrPushToCloud() {
   // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
   // "שינוי" שלא קיים בענן
   if (pushed > 0 && !ctxStale(_ep)) {
-    await hrCfgSet('hr_last_changed', ts);
+    await hrCfgSet('last_changed', ts);
     if (ctxStale(_ep)) return;
     _hrLastTs = ts;
     console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
@@ -7471,16 +7471,16 @@ async function hrPullFromCloud() {
       if (pullMigrated) schedulePush();
     }
     // approvals: מיזוג לפי sid עם updatedAt
-    var ap = await hrCfgGet('hr_approvals');
+    var ap = await hrCfgGet('approvals');
     if (ctxStale(_ep)) return;
     if (ap && typeof ap === 'object') {
-      hrCfgLocalSet('hr_approvals', hrMergeRecords(getApprovals(), ap, null, true));
+      hrCfgLocalSet('approvals', hrMergeRecords(getApprovals(), ap, null, true));
     }
     // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
-    var rs = await hrCfgGet('hr_reasons');
-    if (rs && Array.isArray(rs) && (remoteMeta['hr_reasons'] || 0) >= (meta['hr_reasons'] || 0)) {
-      hrCfgLocalSet('hr_reasons', rs);
-      if (remoteMeta['hr_reasons']) { meta['hr_reasons'] = remoteMeta['hr_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
+    var rs = await hrCfgGet('reasons');
+    if (rs && Array.isArray(rs) && (remoteMeta['reasons'] || 0) >= (meta['reasons'] || 0)) {
+      hrCfgLocalSet('reasons', rs);
+      if (remoteMeta['reasons']) { meta['reasons'] = remoteMeta['reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
@@ -7514,10 +7514,10 @@ async function hrPullFromCloud() {
         hrUpdateQueueBadge();
       }
     }
-    var abR = await hrCfgGet('hr_absence_reasons');
-    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['hr_absence_reasons'] || 0) >= (meta['hr_absence_reasons'] || 0)) {
-      hrCfgLocalSet('hr_absence_reasons', abR);
-      if (remoteMeta['hr_absence_reasons']) { meta['hr_absence_reasons'] = remoteMeta['hr_absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
+    var abR = await hrCfgGet('absence_reasons');
+    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['absence_reasons'] || 0) >= (meta['absence_reasons'] || 0)) {
+      hrCfgLocalSet('absence_reasons', abR);
+      if (remoteMeta['absence_reasons']) { meta['absence_reasons'] = remoteMeta['absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     /*  ⛔ `hr_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
      *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
@@ -7525,10 +7525,10 @@ async function hrPullFromCloud() {
      *  המשיכה: ⚠️ משיכה של שורה מחוקה מחזירה אותה למסך כאילו היא חיה. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
-      var _atCfgV = await hrCfgGet('hr_attend_cfg');
-      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; hrCfgLocalSet('hr_attend_cfg', _atCfgV); }
-      var _hrCfgV = await hrCfgGet('hr_sleep_cfg');
-      if (_hrCfgV && typeof _hrCfgV === 'object') { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('hr_sleep_cfg', _hrCfgV); }
+      var _atCfgV = await hrCfgGet('attend_cfg');
+      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; hrCfgLocalSet('attend_cfg', _atCfgV); }
+      var _hrCfgV = await hrCfgGet('sleep_cfg');
+      if (_hrCfgV && typeof _hrCfgV === 'object') { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('sleep_cfg', _hrCfgV); }
     } catch (eCfg) { hrWriteFail('hrPullFromCloud', eCfg); }
     // ---- הרשאות: משיכה שוטפת ----
     // עד היום hr_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
@@ -7536,7 +7536,7 @@ async function hrPullFromCloud() {
     // plTick). עטוף בנפרד: כשל כאן לא מפיל את שאר המשיכה, ומטריצה פגומה
     // או ריקה נדחית ב-hrApplyPerms במקום לנעול את המשתמש מחוץ לכל המודולים.
     try {
-      var pmV = await hrCfgGet('hr_perms');
+      var pmV = await hrCfgGet('perms');
       if (ctxStale(_ep)) return;
       if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
@@ -7567,7 +7567,7 @@ setTimeout(async function() {
   var _ep = ctxEpoch();
   try {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
-    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle());
+    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
       // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
@@ -7577,7 +7577,7 @@ setTimeout(async function() {
       return;
     }
     if (r.data) {
-      var remoteTs = parseInt(kvParse('hr_last_changed', r.data.value).value) || 0;
+      var remoteTs = parseInt(kvParse('last_changed', r.data.value).value) || 0;
       if (ctxStale(_ep)) return;
       _hrLastTs = remoteTs;
       await hrPullFromCloud();
@@ -7790,8 +7790,8 @@ function saveStudents(s){
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך hrPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('hr_reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function getApprovals(){try{var v=hrCfgLocalGet('hr_approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
 }
@@ -8694,13 +8694,13 @@ async function _atPullSessions(win) {
   return true;
 }
 async function _atPullCfg() {
-  var r = null; try { r = await hrCfgGet('hr_attend_cfg', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('attend_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._atCfg = r.value; hrCfgLocalSet('hr_attend_cfg', r.value); }
+  if (r.value) { window._atCfg = r.value; hrCfgLocalSet('attend_cfg', r.value); }
   return true;
 }
 async function _atPullTreats() {
-  var r = null; try { r = await hrCfgGet('hr_attend_treats', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('attend_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
    *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
@@ -8745,15 +8745,15 @@ function atDefaultCfg() {
  *  רשאי להמתין לרשת, ⭐ וההגדרות הן מה שקובע אילו כפתורי סדר להציג. */
 function atCachedCfg() {
   if (window._atCfg) return window._atCfg;
-  try { var p=hrCfgLocalGet('hr_attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
+  try { var p=hrCfgLocalGet('attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
   return null;
 }
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
-  hrCfgLocalSet('hr_attend_cfg',cfg);
+  hrCfgLocalSet('attend_cfg',cfg);
   // בלי קידום hr_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
   // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
-  try { var r=await hrCfgSet('hr_attend_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('atSaveCfg', e); }
+  try { var r=await hrCfgSet('attend_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('atSaveCfg', e); }
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
@@ -8801,7 +8801,7 @@ async function atSaveData(data) {
 async function atLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ⚠️ הציור הראשון של מסך ההשגחה קורא
   //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
-  try { var v=await hrCfgGet('hr_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  try { var v=await hrCfgGet('attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -8817,12 +8817,12 @@ async function atSaveTreats(data) {
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
     // מדריכים שרשמו טיפול במקביל מחקו זה את זה. אותה סמנטיקה כמו הסדרים.
-    var _tRemote=null; try { _tRemote=await hrCfgGet('hr_attend_treats'); } catch(eR){}
+    var _tRemote=null; try { _tRemote=await hrCfgGet('attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
       data=_hrSessionsMerge(_tRemote, data, 'hr_attend_treats');
       lsSetArray('hr_attend_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('hr_attend_treats',data);
+    var r=await hrCfgSet('attend_treats',data);
     if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _hrMarkPushed('hr_attend_treats'); await hrTouchLastChanged(); }
   } catch (e) { hrWriteFail('atSaveTreats', e); }
   window._atTreats=data;
@@ -10310,13 +10310,13 @@ async function _hrPullSessions(win) {
   return true;
 }
 async function _hrPullCfg() {
-  var r = null; try { r = await hrCfgGet('hr_sleep_cfg', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('sleep_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('hr_sleep_cfg', window._hrCfg); }
+  if (r.value) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('sleep_cfg', window._hrCfg); }
   return true;
 }
 async function _hrPullTreats() {
-  var r = null; try { r = await hrCfgGet('hr_sleep_treats', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('sleep_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ ראה `_atPullTreats` — מפתח שטרם נכתב אינו מוחק את הדיסק. */
   if (Array.isArray(r.value)) { window._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
@@ -10355,22 +10355,22 @@ function _hrCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = hrDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { hrCfgLocalSet('hr_sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
-    try { hrCfgSet('hr_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) hrTouchLastChanged(); }); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+    try { hrCfgLocalSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+    try { hrCfgSet('sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) hrTouchLastChanged(); }); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
   }
   return cfg;
 }
 /*  ⛔ ראה `atCachedCfg` — שני המודולים הם אותו דפוס בדיוק. */
 function hrCachedCfg() {
   if (window._hrCfg) return window._hrCfg;
-  try { var p=hrCfgLocalGet('hr_sleep_cfg'); if(p){ window._hrCfg=_hrCleanCfg(p); return window._hrCfg; } } catch(e){}
+  try { var p=hrCfgLocalGet('sleep_cfg'); if(p){ window._hrCfg=_hrCleanCfg(p); return window._hrCfg; } } catch(e){}
   return null;
 }
 async function hrSaveCfg(cfg) {
   window._hrCfg=cfg;
-  hrCfgLocalSet('hr_sleep_cfg',cfg);
+  hrCfgLocalSet('sleep_cfg',cfg);
   // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
-  try { var r=await hrCfgSet('hr_sleep_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('hrSaveCfg', e); }
+  try { var r=await hrCfgSet('sleep_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('hrSaveCfg', e); }
 }
 async function hrLoadData() {
   if (window._hrData) return window._hrData;
@@ -10415,7 +10415,7 @@ async function hrSaveData(data) {
 }
 async function hrLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ר' `atLoadTreats`.
-  try { var v=await hrCfgGet('hr_sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
+  try { var v=await hrCfgGet('sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._hrTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -10430,12 +10430,12 @@ async function hrSaveTreats(data) {
   lsSetArray('hr_sleep_treats', data, _hrRecTs);
   try {
     // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
-    var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('hr_sleep_treats'); } catch(eR){}
+    var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
       data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
       lsSetArray('hr_sleep_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('hr_sleep_treats',data);
+    var r=await hrCfgSet('sleep_treats',data);
     if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _hrMarkPushed('hr_sleep_treats'); await hrTouchLastChanged(); }
   } catch (e) { hrWriteFail('hrSaveTreats', e); }
   window._hrTreats=data;
