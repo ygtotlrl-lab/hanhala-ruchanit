@@ -408,8 +408,8 @@
 <!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ עד סבב 80
       כל דיאלוג בנה מיכל משלו וסגר אותו בדרך משלו, ⛔ ומיכל שהוחלף חלקית
       משאיר שני מסלולי סגירה.  -->
-<div id="modal" class="modal-overlay">
-  <div class="modal-box ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+<div class="veil" id="modal">
+  <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="sheet-hd">
       <h3 id="modal-title"></h3>
       <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
@@ -420,8 +420,8 @@
 </div>
 <!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
       ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
-<div class="modal-overlay" id="ask">
-  <div class="u-maxw-340 modal-box" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
+<div class="veil" id="ask">
+  <div class="sheet u-maxw-340" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
     <div class="sheet-hd"><h3 id="ask-title">אישור</h3></div>
     <div id="ask-body" class="u-fs-4 u-c-text2"></div>
     <div class="sheet-ft">
