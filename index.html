@@ -17,672 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/vfs_fonts.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>
-:root{
-  /*  ⛔ מרחק הטוסט מתחתית המסך — ⚠️ הערך היחיד שנבדל בשכבת הטוסט:
-   *  סרגל ניווט תחתון, ⛔ ורק מתחת לנקודת השבירה שבה הוא יורד —
-   *  ⚠️ והנקודה נגזרת מהסולם ⛔ ואינה כתובה כאן. */
-  --toast-bottom:26px;
-  /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בכולן,
-   *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
-  /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד בכולן,
-   *  ⭐ והגוון בלבד נבדל: ⛔ רכיב שמייצג את האפליקציה נגזר ממנו
-   *  ⛔ ולא מדיו הטקסט — ⚠️ הבאנרים בכל הגוונים נראו זהים.
-   *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
-  --brand:var(--navy-fill); --on-brand:#ffffff;
-
-
---brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
-/*  ⛔ גווני הסימון — ⚠️ שבעה קודים, ⭐ וכל אחד אסימון אחד: ⛔ הם ירדו
- *  משש מפות זהות שחיו בקוד, ⚠️ וכולן נשאו את אותם שבעה ליטרלים.
- *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ וכל גוון עומד ב-4.5 מולו:
- *  ⭐ גוון האיחור הוכהה מ-#dd6b20, ⛔ שנמדד 3.39 ונפל מהיחס. */
---at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
---navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy-2:#234a8a;--navy-3:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
-/*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
- *  ⭐ והגוון בלבד נבדל בין האפליקציות: ⛔ מסך שאינו קריא מתוקן בגוון
- *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
-@media (prefers-color-scheme:dark){
-  :root{
-    --on-brand:#ffffff;
-
-    --bg:#0d151d; --card:#131e29; --card-2:#0d151d;
-    --brand-edge:rgba(255,255,255,.4);
-    --bad:#ff9d9d; --bad-line:#5c2323; --bad-soft:#2b1616;
-    --warn:#f2b56e;   --warn-line:#5c3c18;   --warn-soft:#2b2012;
-    --ok:#84dba6;     --ok-line:#1f4d35;     --ok-soft:#12251c;
-    --info:#93c3f7;   --info-soft:#111d2a;
-    --brand-wash:rgba(255,255,255,.13);
-    --text:#e8eef5; --text-2:#c2cfdc; --text-3:#93a5b8;
-    --border:#24333f;
-    --at-p:#84dba6; --at-l:#f2b56e; --at-e:#ff9d9d; --at-x:#ff9d9d;
-    --at-ap:#93c3f7; --at-ak:#c4b5fd; --at-a:#7dd3fc;
-    --navy-ink:#7fb2f0; --navy-fill:#1a3a6b;
-    --navy-2:#234a8a; --navy-3:#0f2347;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
-    --shadow-lg:0 12px 40px rgba(0,0,0,.5);
-    --shadow-brand:rgba(0,0,0,.5); --shadow-brand-soft:rgba(0,0,0,.35);
-  }
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-body.locked{overflow:hidden}
-header{background:linear-gradient(135deg,var(--navy-3),var(--navy-fill),var(--navy-2));padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px var(--sh-2);position:sticky;top:0;z-index:var(--z-2)}
-.hl{display:flex;align-items:center;gap:var(--sp-6)}
-.logo{width:60px;height:60px;object-fit:contain;border-radius:var(--r-5);background:var(--card);padding:var(--sp-2);}
-.hdiv{width:1px;height:48px;background:var(--fill-dark)}
-.htxt{color:var(--on-dark-2);font-size:var(--fs-3);line-height:var(--lh-3)}
-.htxt strong{display:block;font-size:var(--fs-4);color:var(--on-dark);font-weight:700}
-nav{display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
-.nb{background:none;border:none;color:var(--on-dark-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-2);cursor:pointer;font-family:Heebo;font-size:var(--fs-3);font-weight:500;display:flex;align-items:center;gap:var(--sp-3);transition:all var(--dur-3);white-space:nowrap}
-.nb:hover{background:var(--brand-wash);color:var(--on-brand)}
-.nb.on{background:var(--fill-dark);color:var(--on-dark);font-weight:600}
-main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
-.pg{display:none;overflow-x:hidden}.pg.on{display:block}
-#pg-home{min-height:calc(100vh - 76px);background:linear-gradient(160deg,var(--bg),var(--bg) 50%,var(--bg))}
-.hero{background:linear-gradient(135deg,var(--navy-3),var(--navy-fill),var(--navy-2));color:var(--on-dark);padding:var(--sp-7) var(--sp-7) var(--sp-7);position:relative;overflow:hidden}
-.hero-date{font-size:var(--fs-3);opacity:var(--op-5);margin-bottom:var(--sp-3)}
-.hero-title{font-size:var(--fs-6);font-weight:700;margin-bottom:var(--sp-2)}
-.hero-sub{font-size:var(--fs-4);opacity:var(--op-6)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
-.stat{padding:var(--sp-6) var(--sp-7);text-align:center;border-left:1px solid var(--border)}
-.stat:last-child{border-left:none}
-.stat .n{font-size:var(--fs-6);font-weight:700;color:var(--navy-ink)}
-.stat .l{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-2)}
-.mods-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
-.mods-lbl{font-size:var(--fs-3);font-weight:600;color:var(--text-2);margin-bottom:var(--sp-6);display:flex;align-items:center;gap:var(--sp-5);text-transform:uppercase;letter-spacing:var(--ls-1)}
-.mods-lbl::before{content:"";width:3px;height:16px;background:var(--navy-fill);border-radius:var(--r-1);display:inline-block}
-.mods{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
-.mod{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);padding:var(--sp-7) var(--sp-7);cursor:pointer;display:flex;align-items:flex-start;gap:var(--sp-6);transition:all var(--dur-3);box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
-.mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 var(--r-5) var(--r-5) 0;transition:width var(--dur-3)}
-.mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow-lg);transform:translateY(-2px)}
-.mod:hover::before{width:6px}
-.mod-ic{width:48px;height:48px;border-radius:var(--r-4);background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:var(--fs-6);flex-shrink:0;transition:transform var(--dur-3)}
-.mod:hover .mod-ic{transform:scale(1.08)}
-.mod-info{flex:1}
-.mod-name{font-size:var(--fs-4);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
-.mod-desc{font-size:var(--fs-2);color:var(--text-3);line-height:var(--lh-3)}
-.inner{padding:var(--sp-7) var(--sp-7);max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
-.ptitle{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
-.back{background:none;border:1.5px solid var(--border);color:var(--text-2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
-.back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
-.gap{flex:1}
-.btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:var(--on-dark);border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
-.btn:hover{background:var(--navy-2);border-color:var(--navy-2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
-.btn:active{transform:translateY(1px)}
-.btn:disabled{opacity:var(--op-4);cursor:default}
-.btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
-/* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
-   הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
-.btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
-.btn.out:hover{background:var(--card-2)}
-table{width:100%;border-collapse:collapse}
-thead{background:linear-gradient(135deg,var(--navy-fill),var(--navy-2))}
-th{color:var(--on-dark);font-weight:600;padding:var(--sp-5) var(--sp-6);text-align:right;font-size:var(--fs-3)}
-td{padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--border);font-size:var(--fs-4);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--card-2)}
-
-
-
-
-
-
-.ab{padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);border:1.5px solid var(--border);cursor:pointer;font-size:var(--fs-3);font-family:Heebo;font-weight:500;background:var(--card);color:var(--text-2);transition:all var(--dur-2)}
-.ab:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
-.ab.sp{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok);font-weight:600}
-
-
-.sw{position:relative;width:100%}
-#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);z-index:var(--z-3);max-height:240px;overflow-y:auto;display:none;animation:ddFade var(--dur-1) ease}
-#search-dropdown.open{display:block}
-@keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.sd-item{padding:var(--sp-4) var(--sp-6);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background var(--dur-1)}
-.sd-item:last-child{border-bottom:none}
-.sd-item:first-child{border-radius:var(--r-5) var(--r-5) 0 0}
-.sd-item:last-child:first-child{border-radius:var(--r-5)}
-.sd-item:hover,.sd-item:focus{background:var(--card-2);outline:none}
-.sd-name{font-weight:600;font-size:var(--fs-3);color:var(--text)}
-.sd-name mark{background:var(--warn-soft);border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
-.sd-cls{background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
-.sw input{width:100%;padding:var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-7);background:var(--card);border:1.5px solid var(--navy-ink);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);transition:border-color var(--dur-3),box-shadow var(--dur-3)}
-.sw input::placeholder{color:var(--text-3)}
-.sw input:focus{outline:none;border-color:var(--navy-ink);box-shadow:0 0 0 3px var(--shadow-brand-soft)}
-.sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
-input[type=date],input[type=month]{padding:var(--sp-4) var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);cursor:pointer}
-input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy-ink)}
-.badge{display:inline-block;padding:var(--sp-2) var(--sp-5);border-radius:var(--r-6);font-size:var(--fs-2);font-weight:600}
-
-
-
-.modal-overlay{display:none;position:fixed;inset:0;background:var(--veil);z-index:var(--z-4);align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
-.modal-box{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
-.modal-overlay.open{display:flex}
-.sheet-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
-.sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
-.sheet-hd .x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
-.sheet-hd .x:hover{background:var(--card-2)}
-.sheet-ft{display:flex;gap:var(--sp-5);margin-top:var(--sp-6)}
-.sheet-ft:empty{display:none}
-.hidden{display:none !important}
-
-#modal-body label{display:block;color:var(--text-2);font-size:var(--fs-3);font-weight:600;margin-bottom:var(--sp-3)}
-#modal-body input{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
-#modal-body input:focus{outline:none;border-color:var(--navy-ink)}
-.cs{text-align:center;padding:var(--sp-7) var(--sp-7);background:var(--card);border-radius:var(--r-5);border:1px solid var(--border);box-shadow:var(--shadow)}
-.cs .ci{font-size:var(--fs-7);margin-bottom:var(--sp-6);opacity:var(--op-4)}
-.cs h3{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-4)}
-.cs p{color:var(--text-2);font-size:var(--fs-4)}
-.rs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-5);margin-bottom:var(--sp-6)}
-.rc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-6);text-align:center;box-shadow:var(--shadow)}
-.rc .n{font-size:var(--fs-6);font-weight:700;color:var(--navy-ink)}
-.rc .l{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-2)}
-.empty{color:var(--text-3);text-align:center;padding:var(--sp-7) var(--sp-5);font-size:var(--fs-3)}
-.ld{text-align:center;padding:var(--sp-7);color:var(--text-3)}
-/* ⛔ מובייל-תחילה: שתי הרשתות מצטמצמות בברירת המחדל ⛔ ואינן מורחבות
-   בשאילתה — ⚠️ ההרחבה היא מה שנכתב כשאילתה. */
-.mods{grid-template-columns:repeat(2,1fr)}
-.stats{grid-template-columns:repeat(2,1fr)}
-/* קונטיינר - padding קטן, כמו מחלקת ה-`app` */
-.inner{padding:var(--sp-6)}
-.mods-wrap{padding:var(--sp-6)}
-.hero{padding:var(--sp-6) var(--sp-6) var(--sp-7)}
-.hero-title{font-size:var(--fs-5)}
-
-/* סטטיסטיקות */
-.stats{grid-template-columns:repeat(2,1fr)}
-.stat{padding:var(--sp-5) var(--sp-4)}
-.stat .n{font-size:var(--fs-6)}
-
-/* כותרת עליונה */
-header{height:60px;padding:0 var(--sp-5)}
-.logo{width:46px;height:46px}
-.hdiv{display:none}
-.htxt{font-size:var(--fs-2)}
-.htxt strong{font-size:var(--fs-3)}
-
-/* nav - גלילה אופקית */
-nav{gap:var(--sp-1);overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-nav::-webkit-scrollbar{display:none}
-.nb{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-2);gap:var(--sp-2);min-height:44px;flex-shrink:0;white-space:nowrap}
-
-/* מודולים - עמודה אחת, רוחב מלא */
-.mods{grid-template-columns:1fr;gap:var(--sp-5)}
-.mod{padding:var(--sp-6) var(--sp-6);gap:var(--sp-5);width:100%}
-.mod-ic{width:48px;height:48px;font-size:var(--fs-5);border-radius:var(--r-4)}
-.mod-name{font-size:var(--fs-4)}
-.mod-desc{font-size:var(--fs-3)}
-.mods-lbl{font-size:var(--fs-2);margin-bottom:var(--sp-5)}
-
-/* דפים פנימיים */
-.ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-6)}
-table{font-size:var(--fs-3)}
-th{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-2)}
-td{padding:var(--sp-4) var(--sp-5)}
-.btn{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-3);min-height:44px}
-
-.nb{padding:var(--sp-4) var(--sp-4)}
-header{height:56px}
-.logo{width:40px;height:40px}
-
-/* ===== ניווט תחתון — מובייל בלבד ===== */
-.bottom-nav{display:none}
-/*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
-:root{--toast-bottom:80px}
-body{padding-bottom:var(--sp-7)}
-.bottom-nav{
-  display:flex;
-  position:fixed;
-  bottom:0;left:0;right:0;
-  height:64px;
-  background:linear-gradient(135deg,var(--navy-3),var(--navy-fill));
-  border-top:1px solid var(--fill-dark);
-  z-index:var(--z-2);
-  align-items:center;
-  justify-content:space-around;
-  box-shadow:0 -2px 12px var(--sh-2);
-  padding:0 var(--sp-2);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-}
-.bn{
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  flex:1;height:100%;gap:var(--sp-2);
-  background:none;border:none;
-  color:var(--on-dark-3);
-  font-family:Heebo;font-size:var(--fs-1);font-weight:500;
-  cursor:pointer;transition:all var(--dur-3);
-  padding:var(--sp-2) var(--sp-1);border-radius:var(--r-3);
-  -webkit-tap-highlight-color:transparent;
-}
-.bn .bn-ic{font-size:var(--fs-5);line-height:var(--lh-1)}
-.bn.on{color:var(--on-dark)}
-.bn.on .bn-ic{transform:scale(1.15)}
-.bn:active{background:var(--fill-dark)}
-/* הסתר nav עליון במובייל */
-nav{display:none}
-/* הסתר מפריד אבל הצג טקסט במובייל */
-.hdiv{display:none}
-.htxt{display:flex;font-size:var(--fs-1)}
-.htxt strong{font-size:var(--fs-2)}
-.htxt span{font-size:var(--fs-1)}
-header{justify-content:space-between;padding:0 var(--sp-6)}
-.hl{gap:var(--sp-5)}
-/* ⛔ שלוש ההרחבות — ⚠️ הן מבטלות את ברירת המחדל הצרה, ⛔ ואינן מוסיפות
-   לה: ⭐ כל ערך כאן הוא מה שחל מעל נקודת השבירה שלו. */
-@media (min-width:640px){
-  .nb{padding:var(--sp-4) var(--sp-5)}
-  header{height:60px}
-  .logo{width:46px;height:46px}
-}
-@media (min-width:900px){
-  :root{--toast-bottom:26px}
-  body{padding-bottom:0}
-  .inner{padding:var(--sp-7) var(--sp-7)}
-  .mods-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
-  .hero{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
-  .hero-title{font-size:var(--fs-6)}
-  .stat{padding:var(--sp-6) var(--sp-7)}
-  .stat .n{font-size:var(--fs-6)}
-  header{height:76px;padding:0 var(--sp-7)}
-  .logo{width:60px;height:60px}
-  .hdiv{display:block}
-  .htxt{display:block;font-size:var(--fs-3)}
-  .htxt strong{font-size:var(--fs-4)}
-  .htxt span{font-size:inherit}
-  .hl{gap:var(--sp-6)}
-  nav{display:flex;gap:var(--sp-2);flex-wrap:wrap;overflow-x:visible;scrollbar-width:auto}
-  .nb{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-3);gap:var(--sp-3);min-height:auto;flex-shrink:1}
-  .bottom-nav{display:none}
-  .mods{grid-template-columns:repeat(2,1fr);gap:var(--sp-6)}
-  .mod{padding:var(--sp-7) var(--sp-7);gap:var(--sp-6);width:auto}
-  .mod-ic{font-size:var(--fs-6)}
-  .mod-name{font-size:var(--fs-4)}
-  .mod-desc{font-size:var(--fs-2)}
-  .mods-lbl{font-size:var(--fs-3);margin-bottom:var(--sp-6)}
-  .ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-7)}
-  table{font-size:inherit}
-  th{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-3)}
-  td{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-4)}
-  .btn{padding:var(--sp-4) var(--sp-7);font-size:var(--fs-3);min-height:auto}
-}
-@media (min-width:1200px){
-  .mods{grid-template-columns:repeat(3,1fr)}
-  .stats{grid-template-columns:repeat(4,1fr)}
-}
-
-/* ===== כניסה ===== */
-#auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--navy-3),var(--navy-fill),var(--navy-2));display:flex;align-items:center;justify-content:center;z-index:var(--z-7);flex-direction:column}
-#auth-screen.hidden{display:none}
-.auth-box{background:var(--card);border-radius:var(--r-6);padding:var(--sp-7) var(--sp-7);width:90%;max-width:340px;box-shadow:0 20px 60px var(--sh-3);text-align:center}
-.auth-logo{width:72px;height:72px;margin:0 auto var(--sp-6);border-radius:var(--r-5);overflow:hidden;background:var(--card-2);display:flex;align-items:center;justify-content:center}
-.auth-logo img{width:100%;height:100%;object-fit:contain}
-.auth-title{font-size:var(--fs-5);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
-.auth-sub{font-size:var(--fs-3);color:var(--text-3);margin-bottom:var(--sp-7)}
-.auth-field{display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-6);text-align:right}
-.auth-field label{font-size:var(--fs-3);font-weight:600;color:var(--text-2)}
-.auth-field input{border:2px solid var(--border);border-radius:var(--r-4);padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border var(--dur-3);direction:rtl}
-.auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
-.auth-field input:focus{border-color:var(--brand)}
-.auth-btn{width:100%;background:var(--navy-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
-.auth-btn:hover{background:var(--navy-2)}
-.auth-btn:active{background:var(--navy-2)}
-.auth-btn:disabled{opacity:var(--op-3);cursor:default}
-.auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
-.auth-spinner{display:none;margin:var(--sp-5) auto 0;width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
-@keyframes auth-spin{to{transform:rotate(360deg)}}
-#pg-settings .ss{background:var(--card);border-radius:var(--r-5);padding:var(--sp-6);margin-bottom:var(--sp-6);border:1px solid var(--border)}
-#pg-settings .ss-t{font-size:var(--fs-4);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-5);padding-bottom:var(--sp-4);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.ur{display:flex;align-items:center;gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)}
-.ur:last-child{border-bottom:none}
-.ur-name{flex:1;font-weight:600;font-size:var(--fs-3)}
-.ur-role{font-size:var(--fs-2);padding:var(--sp-2) var(--sp-4);border-radius:var(--r-6);font-weight:600}
-.role-admin{background:var(--warn-soft);color:var(--warn)}
-.role-manager{background:var(--info-soft);color:var(--info)}
-.role-junior{background:var(--ok-soft);color:var(--ok)}
-.ua{display:flex;gap:var(--sp-3)}
-.ua button{border:1px solid var(--border);background:var(--card);border-radius:var(--r-3);padding:var(--sp-3) var(--sp-4);cursor:pointer;font-size:var(--fs-2);font-family:Heebo;transition:all var(--dur-2)}
-.ua button:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
-.ua button.del:hover{border-color:var(--bad);color:var(--bad)}
-.pt{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
-.pt th{background:var(--navy-fill);color:var(--on-dark);padding:var(--sp-4) var(--sp-4);font-weight:600;text-align:center}
-.pt th:first-child{text-align:right}
-.pt td{padding:var(--sp-4) var(--sp-4);border-bottom:1px solid var(--border);text-align:center}
-.pt td:first-child{text-align:right;font-weight:500}
-.pt tr:hover td{background:var(--card-2)}
-.ps{border:1px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);font-family:Heebo;font-size:var(--fs-2);cursor:pointer;outline:none}
-.ps:focus{border-color:var(--navy-ink)}
-
-/* ═══ שכבת הטוסט — מודול משותף (סבב 87ב) ════════════════════════════════════
-   זהה בית-לבית בכל האפליקציות. ⛔ שני סיווגי המצב נשענים על אסימוני
-   המצב — ⚠️ צמד הפוך שמתחלף יחד, ⭐ והנייטרלי כתוב במפורש: אין לו מצב.
-   ⛔ מיכל אחד ובתוכו `div` לכל הודעה — ⚠️ הנימוק המדוד: בשלוש מהן היה
-      אלמנט **קבוע** אחד, ⛔ והודעה שנייה דרסה את הראשונה: ⭐ «נשמר»
-      ו«שגיאת רשת» ברצף השאירו על המסך אחת בלבד.
-   ⛔ ו-`--toast-bottom` הוא הערך היחיד שנבדל — ⚠️ לשתיים מהן יש סרגל
-      תחתון קבוע, ⭐ ולטוסט שיושב מתחתיו אין מי שיראה אותו. */
-#toasts{position:fixed;inset-inline:0;bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom));z-index:var(--z-5);display:grid;gap:var(--sp-4);justify-items:center;pointer-events:none;padding:0 var(--sp-6)}
-.toast{background:var(--chip);color:var(--on-chip);border-radius:var(--r-6);padding:var(--sp-5) var(--sp-7);font-size:var(--fs-3);font-weight:600;line-height:var(--lh-3);box-shadow:0 6px 20px var(--sh-2);max-width:92vw;text-align:center;animation:toastUp var(--dur-3) ease-out}
-.toast.bad{background:var(--bad);color:var(--bad-soft)}
-.toast.good{background:var(--ok);color:var(--ok-soft)}
-@keyframes toastUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-/* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
-/* ================================================================= מעדכן */
-#updater{
-  position:fixed;inset-inline:0;z-index:var(--z-6);
-  bottom:calc(var(--toast-bottom) + env(safe-area-inset-bottom) + 46px);
-  display:none;justify-content:center;padding:var(--sp-5) var(--sp-6)}
-#updater.show{display:flex}
-#updater .in{
-  background:var(--brand);color:var(--on-brand);border-radius:var(--r-5);padding:var(--sp-5) var(--sp-5) var(--sp-5) var(--sp-6);
-  display:flex;align-items:center;gap:var(--sp-5);box-shadow:var(--shadow-lg);
-  font-size:var(--fs-3);font-weight:700;max-width:520px;width:100%
-}
-#updater button{
-  margin-inline-start:auto;background:var(--on-brand);color:var(--brand);border:0;border-radius:var(--r-4);
-  padding:var(--sp-4) var(--sp-6);font-family:inherit;font-weight:700;cursor:pointer;font-size:var(--fs-3);flex:none
-}
-#updater button.x{
-  margin-inline-start:0;background:none;color:var(--on-brand);opacity:var(--op-5);padding:0 var(--sp-2);font-size:var(--fs-4)}
-/* ═══ סולמות הערך החזותי — מודול משותף (סבב 141) ═════════════════════════
-   ⛔ שמונה סולמות, ⛔ ואותן דרגות בכל האפליקציות — ⚠️ כל ערך חזותי
-      נגזר מהם ⛔ ואינו נבחר לכל אתר בנפרד: ⭐ ערך שנבחר באתר הוא סולם שלא
-      הוגדר, ⛔ ושני אתרים שנבדלים בפיקסל אחד הם שני ערכים שאיש לא הכריע
-      ביניהם.
-   ⛔ **ומספר הדרגות נגזר מהערכים שהיו בפועל** ⛔ ואינו נבחר — ⚠️ אשכול
-      משוקלל בסולם לוגריתמי על כל הערכים שבכל הריפו, ⭐ ותקרה של שבע.
-   ⛔ **ודרגה שאין לה קורא באפליקציה אחת נשארת** — ⚠️ הסולם הוא תשתית,
-      ⭐ ולא מפקד של מה שמשמש היום: ⛔ דרגה יורדת רק כשאין לה קורא בכולן.
-   ⛔ **והמחלקות שכאן הן אלה שחיות בכולן** — ⚠️ מחלקה שחיה בחלקן יושבת
-      בבלוק הפרטי שמתחת: ⭐ מחלקה בבלוק משותף שאין לה קורא באחת מהן היא
-      סלקטור בלי קורא, ⛔ והשער מפיל עליה.
-   ⛔ **ואין כאן `!important`** — ⚠️ `display` ו-`color` נכתבים מ-JS בזמן
-      ריצה, ⭐ וסגנון מוטבע שנכתב אחר כך חייב לגבור עליהן: ⛔ הקדימות באה
-      מהמיקום — ⚠️ הבלוק יושב בסוף הגיליון, אחרי כל כלל אחר.
-   ⛔ **ו-`--z-*` הוא סדר ולא גודל** — ⚠️ הדרגה נבחרת לפי **תפקיד**
-      השכבה — תוכן · סרגל · תפריט · מודאל · טוסט · באנר · נעילה — ⭐ ולא
-      לפי המספר שהיה שם: ⛔ מספר שנבחר לכל אתר הוא מרוץ שאיש אינו מכריע בו.
-   ⛔ **והמשך נמדד בשניות ולא באלפיות** — ⚠️ והכתיב אחיד, בלי
-      אפס מוביל: ⭐ `.15s` ו-`0.15s` הם אותו ערך בשני כתיבים, ⛔ ושני כתיבים
-      הם שני חיפושים.
-   ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב.
-   ═══════════════════════════════════════════════════════════════════════ */
-:root{
---fs-1:.65rem;--fs-2:.75rem;--fs-3:.85rem;--fs-4:.95rem;--fs-5:1.2rem;--fs-6:1.7rem;--fs-7:2.8rem;
---sp-1:2px;--sp-2:4px;--sp-3:6px;--sp-4:8px;--sp-5:12px;--sp-6:16px;--sp-7:24px;
---r-1:4px;--r-2:6px;--r-3:8px;--r-4:10px;--r-5:14px;--r-6:20px;--r-7:999px;
---z-1:1;--z-2:10;--z-3:20;--z-4:30;--z-5:40;--z-6:50;--z-7:60;
---dur-1:.12s;--dur-2:.15s;--dur-3:.2s;--dur-4:.3s;--dur-5:.6s;--dur-6:.7s;--ease:cubic-bezier(.2,.8,.3,1);
---op-1:.3;--op-2:.4;--op-3:.5;--op-4:.6;--op-5:.7;--op-6:.8;--op-7:.85;
---lh-1:1;--lh-2:1.3;--lh-3:1.45;--lh-4:1.6;--lh-5:1.75;--lh-6:2;
---ls-1:.3px;--ls-2:1px;--ls-3:4px;--ls-n1:-.4px;--ls-n2:-1px;
---chip:#1A1A1A;--on-chip:#FFFFFF;--veil:rgba(10,20,30,.5);--veil-deep:rgba(0,0,0,.75);
---alert:#B3261E;--on-alert:#FFFFFF;
---sh-1:rgba(0,0,0,.10);--sh-2:rgba(0,0,0,.22);--sh-3:rgba(0,0,0,.35);
---on-dark:#FFFFFF;--on-dark-2:rgba(255,255,255,.9);--on-dark-3:rgba(255,255,255,.65);--fill-dark:rgba(255,255,255,.15)
-}
-.u-ai-c{align-items:center}
-.u-d-flex{display:flex}
-.u-fs-2{font-size:var(--fs-2)}
-.u-fs-3{font-size:var(--fs-3)}
-.u-fw-700{font-weight:700}
-.u-fx-1{flex:1}
-.u-g-5{gap:var(--sp-5)}
-.u-mt-2{margin-top:var(--sp-2)}
-.u-mt-5{margin-top:var(--sp-5)}
-/* ═══ סוף CSS הסולמות ═══════════════════════════════════════════════════ */
-/* ══ מחלקות הסולם הפרטיות — אינן חיות בכולן ═════════════════════════════
-   ⚠️ כל מחלקה כאן משרתת אתר שקיים באפליקציה הזו בלבד, ⛔ ולכן אינה בבלוק
-   המשותף: ⭐ מחלקה משותפת שאין לה קורא כאן היא סלקטור בלי קורא. */
-.u-ai-fs{align-items:flex-start}
-.u-atv{--at:var(--text-3)}
-.u-atv-a{--at:var(--at-a)}
-.u-atv-ak{--at:var(--at-ak)}
-.u-atv-ap{--at:var(--at-ap)}
-.u-atv-e{--at:var(--at-e)}
-.u-atv-l{--at:var(--at-l)}
-.u-atv-p{--at:var(--at-p)}
-.u-atv-x{--at:var(--at-x)}
-.u-bb-1-solid-border{border-bottom:1px solid var(--border)}
-.u-bb-1-solid-card-2{border-bottom:1px solid var(--card-2)}
-.u-bb-2-solid-border{border-bottom:2px solid var(--border)}
-.u-bb-3-solid-navy-fill{border-bottom:3px solid var(--navy-fill)}
-.u-bb-3-solid-transparent{border-bottom:3px solid transparent}
-.u-bd-1-solid-border{border:1px solid var(--border)}
-.u-bd-1-solid-warn-line{border:1px solid var(--warn-line)}
-.u-bd-15-dashed-border{border:1.5px dashed var(--border)}
-.u-bd-15-dashed-bad-line{border:1.5px dashed var(--bad-line)}
-.u-bd-15-dashed-ok-line{border:1.5px dashed var(--ok-line)}
-.u-bd-15-dashed-warn-line{border:1.5px dashed var(--warn-line)}
-.u-bd-15-solid-border{border:1.5px solid var(--border)}
-.u-bd-15-solid-brand-edge{border:1.5px solid var(--brand-edge)}
-.u-bd-15-solid-bad-line{border:1.5px solid var(--bad-line)}
-.u-bd-15-solid-navy-fill{border:1.5px solid var(--navy-fill)}
-.u-bd-15-solid-ok-line{border:1.5px solid var(--ok-line)}
-.u-bd-15-solid-warn{border:1.5px solid var(--warn)}
-.u-bd-15-solid-warn-line{border:1.5px solid var(--warn-line)}
-.u-bd-2-solid-border{border:2px solid var(--border)}
-.u-bd-2-solid-bad-line{border:2px solid var(--bad-line)}
-.u-bd-2-solid-ok-line{border:2px solid var(--ok-line)}
-.u-bd-2-solid-warn-line{border:2px solid var(--warn-line)}
-.u-bd-none{border:none}
-.u-bd-ty{border:1.5px solid var(--ty-line)}
-.u-bf-blur-4{backdrop-filter:blur(4px)}
-.u-bg-bg{background:var(--bg)}
-.u-bg-border{background:var(--border)}
-.u-bg-brand-wash{background:var(--brand-wash)}
-.u-bg-card{background:var(--card)}
-.u-bg-card-2{background:var(--card-2)}
-.u-bg-bad-soft{background:var(--bad-soft)}
-.u-bg-info-soft{background:var(--info-soft)}
-.u-bg-navy-fill{background:var(--navy-fill)}
-.u-bg-none{background:none}
-.u-bg-ok-soft{background:var(--ok-soft)}
-.u-bg-ty{background:var(--ty-bg)}
-.u-bg-ty-line{background:var(--ty-line);color:var(--ty)}
-.u-bg-warn-soft{background:var(--warn-soft)}
-.u-bot-72{bottom:72px}
-.u-bt-1-solid-border{border-top:1px solid var(--border)}
-.u-bt-15-solid-border{border-top:1.5px solid var(--border)}
-.u-bt-ty{border-top:2px solid var(--ty-line)}
-.u-bx-border-box{box-sizing:border-box}
-.u-c-at{color:var(--at)}
-.u-c-bad{color:var(--bad)}
-.u-c-info{color:var(--info)}
-.u-c-navy-ink{color:var(--navy-ink)}
-.u-c-ok{color:var(--ok)}
-.u-c-on-brand{color:var(--on-brand)}
-.u-c-text{color:var(--text)}
-.u-c-text2{color:var(--text-2)}
-.u-c-text3{color:var(--text-3)}
-.u-c-ty{color:var(--ty)}
-.u-c-warn{color:var(--warn)}
-.u-clr-btn:hover{border-color:var(--bad);color:var(--bad)}
-.u-cur-def{cursor:default}
-.u-cur-p{cursor:pointer}
-.u-d-block{display:block}
-.u-d-grid{display:grid}
-.u-d-iflex{display:inline-flex}
-.u-d-none{display:none}
-.u-dir-ltr{direction:ltr}
-.u-dir-rtl{direction:rtl}
-.u-fd-col{flex-direction:column}
-.u-ff-heebo{font-family:Heebo}
-.u-fs-1{font-size:var(--fs-1)}
-.u-fs-4{font-size:var(--fs-4)}
-.u-fs-5{font-size:var(--fs-5)}
-.u-fs-6{font-size:var(--fs-6)}
-.u-fs-7{font-size:var(--fs-7)}
-.u-fsh-0{flex-shrink:0}
-.u-fw-300{font-weight:300}
-.u-fw-400{font-weight:400}
-.u-fw-500{font-weight:500}
-.u-fw-600{font-weight:600}
-.u-fwr-wrap{flex-wrap:wrap}
-.u-fx-2{flex:2}
-.u-g-1{gap:var(--sp-1)}
-.u-g-2{gap:var(--sp-2)}
-.u-g-3{gap:var(--sp-3)}
-.u-g-4{gap:var(--sp-4)}
-.u-g-6{gap:var(--sp-6)}
-.u-gtc-repeat-7-34{grid-template-columns:repeat(7,34px)}
-.u-gtc-repeat-auto-fill-minmax-140-1fr{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
-.u-gtc-repeat-auto-fit-minmax-200-1fr{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.u-h-1{height:1px}
-.u-h-28{height:28px}
-.u-h-32{height:32px}
-.u-h-58{height:58px}
-.u-hcd{background:none;color:var(--text);font-weight:400}
-.u-hcd-sel{background:var(--navy-fill);color:var(--on-brand);font-weight:700}
-.u-hcd-today{background:var(--bg);color:var(--navy-ink);font-weight:700}
-.u-jc-c{justify-content:center}
-.u-jc-fe{justify-content:flex-end}
-.u-jc-sb{justify-content:space-between}
-.u-left-0{left:0}
-.u-left-50p{left:50%}
-.u-lh-1{line-height:var(--lh-1)}
-.u-lh-13{line-height:var(--lh-2)}
-.u-lh-16{line-height:var(--lh-4)}
-.u-lh-17{line-height:var(--lh-5)}
-.u-lh-18{line-height:var(--lh-5)}
-.u-ls-4{letter-spacing:var(--ls-3)}
-.u-m-0-0-6{margin:0 0 var(--sp-6)}
-.u-m-0-n7-n7{margin:0 calc(-1 * var(--sp-7)) calc(-1 * var(--sp-7))}
-.u-m-3-0-5{margin:var(--sp-3) 0 var(--sp-5)}
-.u-m-5-0{margin:var(--sp-5) 0}
-.u-m-5-0-4{margin:var(--sp-5) 0 var(--sp-4)}
-.u-maxh-220{max-height:220px}
-.u-maxh-60vh{max-height:60vh}
-.u-maxw-340{max-width:340px}
-.u-maxw-400{max-width:400px}
-.u-mb-1{margin-bottom:var(--sp-1)}
-.u-mb-2{margin-bottom:var(--sp-2)}
-.u-mb-3{margin-bottom:var(--sp-3)}
-.u-mb-4{margin-bottom:var(--sp-4)}
-.u-mb-5{margin-bottom:var(--sp-5)}
-.u-mb-6{margin-bottom:var(--sp-6)}
-.u-mb-7{margin-bottom:var(--sp-7)}
-.u-mb-n1{margin-bottom:calc(-1 * var(--sp-1))}
-.u-minh-18{min-height:18px}
-.u-minw-0{min-width:0}
-.u-minw-140{min-width:140px}
-.u-minw-190{min-width:190px}
-.u-minw-200{min-width:200px}
-.u-minw-252{min-width:252px}
-.u-minw-54{min-width:54px}
-.u-minw-60{min-width:60px}
-.u-minw-80{min-width:80px}
-.u-minw-90{min-width:90px}
-.u-mk-off{background:var(--card);color:var(--text-2);border:2px solid var(--border)}
-.u-mk-on{background:var(--card);color:var(--at);border:2px solid var(--at);box-shadow:0 0 0 2px var(--at);transform:scale(1.06)}
-.u-mr-1{margin-right:var(--sp-1)}
-.u-mr-2{margin-right:var(--sp-2)}
-.u-mr-3{margin-right:var(--sp-3)}
-.u-mt-3{margin-top:var(--sp-3)}
-.u-mt-4{margin-top:var(--sp-4)}
-.u-mt-6{margin-top:var(--sp-6)}
-.u-mt-n4{margin-top:calc(-1 * var(--sp-4))}
-.u-op-25{opacity:var(--op-1)}
-.u-op-3{opacity:var(--op-1)}
-.u-op-45{opacity:var(--op-3)}
-.u-op-5{opacity:var(--op-3)}
-.u-op-55{opacity:var(--op-4)}
-.u-op-6{opacity:var(--op-4)}
-.u-op-7{opacity:var(--op-5)}
-.u-op-75{opacity:var(--op-6)}
-.u-op-8{opacity:var(--op-6)}
-.u-op-85{opacity:var(--op-7)}
-.u-ov-h{overflow:hidden}
-.u-ovx-a{overflow-x:auto}
-.u-ovy-a{overflow-y:auto}
-.u-p-0-2{padding:0 var(--sp-2)}
-.u-p-1-0{padding:var(--sp-1) 0}
-.u-p-1-3{padding:var(--sp-1) var(--sp-3)}
-.u-p-1-4{padding:var(--sp-1) var(--sp-4)}
-.u-p-1-5{padding:var(--sp-1) var(--sp-5)}
-.u-p-2-0{padding:var(--sp-2) 0}
-.u-p-2-3{padding:var(--sp-2) var(--sp-3)}
-.u-p-2-4{padding:var(--sp-2) var(--sp-4)}
-.u-p-2-5{padding:var(--sp-2) var(--sp-5)}
-.u-p-3-0{padding:var(--sp-3) 0}
-.u-p-3-1{padding:var(--sp-3) var(--sp-1)}
-.u-p-3-4{padding:var(--sp-3) var(--sp-4)}
-.u-p-3-5{padding:var(--sp-3) var(--sp-5)}
-.u-p-3-6{padding:var(--sp-3) var(--sp-6)}
-.u-p-3-6-5{padding:var(--sp-3) var(--sp-6) var(--sp-5)}
-.u-p-4{padding:var(--sp-4)}
-.u-p-4-0{padding:var(--sp-4) 0}
-.u-p-4-5{padding:var(--sp-4) var(--sp-5)}
-.u-p-4-6{padding:var(--sp-4) var(--sp-6)}
-.u-p-4-6-2{padding:var(--sp-4) var(--sp-6) var(--sp-2)}
-.u-p-4-7{padding:var(--sp-4) var(--sp-7)}
-.u-p-5{padding:var(--sp-5)}
-.u-p-5-5{padding:var(--sp-5) var(--sp-5)}
-.u-p-5-6{padding:var(--sp-5) var(--sp-6)}
-.u-p-5-7{padding:var(--sp-5) var(--sp-7)}
-.u-p-6{padding:var(--sp-6)}
-.u-p-6-6{padding:var(--sp-6) var(--sp-6)}
-.u-p-7{padding:var(--sp-7)}
-.u-p-7-6{padding:var(--sp-7) var(--sp-6)}
-.u-p-7-7{padding:var(--sp-7) var(--sp-7)}
-.u-pb-0{padding-bottom:0}
-.u-pe-none{pointer-events:none}
-.u-pos-abs{position:absolute}
-.u-pos-fix{position:fixed}
-.u-pos-rel{position:relative}
-.u-pr-3{padding-right:var(--sp-3)}
-.u-pr-4{padding-right:var(--sp-4)}
-.u-pt-6{padding-top:var(--sp-6)}
-.u-r-2{border-radius:var(--r-2)}
-.u-r-3{border-radius:var(--r-3)}
-.u-r-4{border-radius:var(--r-4)}
-.u-r-5{border-radius:var(--r-5)}
-.u-r-6{border-radius:var(--r-6)}
-.u-r-7{border-radius:var(--r-7)}
-.u-r-radius{border-radius:var(--radius)}
-.u-sh-shadow{box-shadow:var(--shadow)}
-.u-sh-shadow-lg{box-shadow:var(--shadow-lg)}
-.u-ta-c{text-align:center}
-.u-ta-l{text-align:left}
-.u-ta-r{text-align:right}
-.u-td-u{text-decoration:underline}
-.u-tf-rotate-0deg{transform:rotate(0deg)}
-.u-tf-translatex-50p{transform:translateX(-50%)}
-.u-top-50{top:50px}
-.u-tov-e{text-overflow:ellipsis}
-.u-tr-all-15s{transition:all var(--dur-2)}
-.u-tr-all-2s{transition:all var(--dur-3)}
-.u-tr-border-color-15s{transition:border-color var(--dur-2)}
-.sup-card{transition:box-shadow var(--dur-2),border-color var(--dur-2)}
-.sup-card:hover{box-shadow:var(--shadow);border-color:var(--navy-ink)}
-.u-tr-transform-2s{transition:transform var(--dur-3)}
-.u-ty{--ty:var(--text);--ty-line:var(--border);--ty-bg:var(--card-2)}
-.u-ty-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
-.u-ty-left{--ty:var(--bad);--ty-line:var(--bad-line);--ty-bg:var(--bad-soft)}
-.u-ty-off{--ty:var(--text-3);--ty-line:var(--border);--ty-bg:var(--card-2)}
-.u-ty-suspended{--ty:var(--warn);--ty-line:var(--warn-line);--ty-bg:var(--warn-soft)}
-.u-us-none{user-select:none}
-.u-v-color-bad{--color:var(--bad)}
-.u-v-color-info{--color:var(--info)}
-.u-v-color-navy-fill{--color:var(--navy-fill)}
-.u-v-color-ok{--color:var(--ok)}
-.u-v-color-warn{--color:var(--warn)}
-.u-v-icbg-bad-soft{--icbg:var(--bad-soft)}
-.u-v-icbg-info-soft{--icbg:var(--info-soft)}
-.u-v-icbg-ok-soft{--icbg:var(--ok-soft)}
-.u-v-icbg-warn-soft{--icbg:var(--warn-soft)}
-.u-w-100p{width:100%}
-.u-w-22{width:22px}
-.u-w-28{width:28px}
-.u-w-32{width:32px}
-.u-w-54{width:54px}
-.u-w-80{width:80px}
-.u-w-90{width:90px}
-.u-w-a{width:auto}
-.u-ws-nw{white-space:nowrap}
-.u-z-3{z-index:var(--z-3)}
-.u-z-5{z-index:var(--z-5)}
-/* ══ סוף המחלקות הפרטיות ═══════════════════════════════════════════════ */
-</style>
+<link rel="stylesheet" href="app.css">
 </head>
 <body>
 
@@ -1113,133 +448,6 @@ import { readNum, uniqList, uniqHas } from './core/util.js';
 import { newClientId, idEq, mergeCore, tombPruneMerged, tombBoot,
          ctxEpoch, ctxSwitch, ctxStale } from './core/sync.js';
 import './core/hebrew.js';
-// ============================================================
-/* ══════════════════════════════════════════════════════════════════════════
-   תאריך עברי — מקור אמת יחיד
-   ══════════════════════════════════════════════════════════════════════════
-   ⚠️ המנוע הוא `Intl.DateTimeFormat('en-u-ca-hebrew')`, ו-`ysHebDate`
-   היא הפונקציה שכל צרכן תאריך עובר דרכה. ⛔ אין למחוק את `_hcST`
-   (סבב 7) — היא רשת הנפילה-חזרה כשאין Intl, והיא אומתה מול מימוש
-   אריתמטי של הלוח הקבוע ולא מול ICU.
-   ══════════════════════════════════════════════════════════════════════════ */
-// מנוע החישוב: הלוח העברי המובנה בדפדפן (Intl 'he-u-ca-hebrew').
-// שכבת התצוגה (גימטריה / שמות חודשים / תווית שנה) נשארת שלנו, כדי
-// שהפורמט בכל המסכים יישאר זהה. אם Intl חסר או מחזיר תוצאה לא צפויה —
-// נפילה-חזרה למנוע הטבלאי הפנימי (_hcHTable, מוגדר בהמשך הקובץ).
-// ============================================================
-window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
-window.MONTHS_HEB     =["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
-window.MONTHS_HEB_LEAP=["תשרי","חשון","כסלו","טבת","שבט","אדר א׳","אדר ב׳","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
-window.YS_DOW_HEB=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
-
-// שנה מעוברת — מחזור 19 השנים (7 שנים מעוברות)
-window.ysHebIsLeap=function(hy){return ((7*(+hy)+1)%19)<7;};
-window.ysHebMonthNames=function(hy){return window.ysHebIsLeap(hy)?window.MONTHS_HEB_LEAP:window.MONTHS_HEB;};
-
-// גימטריה — מספר → אותיות (כולל ט״ו/ט״ז). sep = התו שלפני האות האחרונה
-window.ysGematria=function(n,sep){
-  n=Math.floor(Math.abs(+n))||0;
-  if(!n) return '';
-  if(n>=1000) n=n%1000;
-  var HUN=['','ק','ר','ש','ת'],TENS=['','י','כ','ל','מ','נ','ס','ע','פ','צ'],ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
-  var s='',h=Math.floor(n/100),r=n%100;
-  while(h>4){s+='ת';h-=4;}
-  s+=HUN[h]||'';
-  if(r===15) s+='טו';
-  else if(r===16) s+='טז';
-  else s+=TENS[Math.floor(r/10)]+ONES[r%10];
-  if(sep===undefined) sep='״';
-  if(!sep||!s) return s;
-  if(s.length===1) return s+'׳';
-  return s.slice(0,-1)+sep+s.slice(-1);
-};
-window.ysHebDayLabel=function(day){var T=window.DAYS_HEB;return (T&&T[day])||window.ysGematria(day)||String(day);};
-// תווית שנה מלאה — ה׳תשפ״ו
-window.ysHebYearLabelFull=function(hy){
-  var ONES=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],th=Math.floor((+hy)/1000);
-  return ((th>0&&th<10)?ONES[th]+'׳':'')+window.ysGematria((+hy)%1000,'״');
-};
-
-// ---- קריאת הלוח העברי של הדפדפן ----
-// שמות החודשים נקראים באנגלית ('en-u-ca-hebrew') כי הם יציבים בין גרסאות ICU,
-// וממופים לאינדקס בטבלאות התצוגה שלנו.
-window._ysMICodeLeap={tishri:0,heshvan:1,kislev:2,tevet:3,shevat:4,adar1:5,adar2:6,nisan:7,iyar:8,sivan:9,tamuz:10,av:11,elul:12};
-window._ysMICodeStd ={tishri:0,heshvan:1,kislev:2,tevet:3,shevat:4,adar:5,nisan:6,iyar:7,sivan:8,tamuz:9,av:10,elul:11};
-window._ysMonthCode=function(name){
-  var s=(name||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-  if(s.indexOf('adar')===0){
-    var t=s.slice(4);
-    if(t==='i'||t==='1'||t==='a') return 'adar1';
-    if(t==='ii'||t==='2'||t==='b') return 'adar2';
-    return 'adar';
-  }
-  if(s.indexOf('tishr')===0) return 'tishri';
-  if(s.indexOf('hesh')!==-1||s.indexOf('chesh')!==-1) return 'heshvan';
-  if(s.indexOf('kislev')===0||s.indexOf('chislev')===0) return 'kislev';
-  if(s.indexOf('tevet')===0||s.indexOf('teveth')===0) return 'tevet';
-  if(s.indexOf('shevat')===0||s.indexOf('shvat')===0||s.indexOf('shebat')===0) return 'shevat';
-  if(s.indexOf('nisan')===0||s.indexOf('nissan')===0) return 'nisan';
-  if(s.indexOf('iyar')===0||s.indexOf('iyyar')===0) return 'iyar';
-  if(s.indexOf('sivan')===0) return 'sivan';
-  if(s.indexOf('tamuz')===0||s.indexOf('tammuz')===0) return 'tamuz';
-  if(s==='av'||s==='ab') return 'av';
-  if(s.indexOf('elul')===0) return 'elul';
-  return null;
-};
-window._ysIntlFmt=null;window._ysIntlOK=null;
-// גרגוריאני → {hy,mi,day,leap} דרך Intl. מחזיר null אם לא זמין / תוצאה לא צפויה
-window.ysIntlHeb=function(d){
-  try{
-    if(window._ysIntlOK===false) return null;
-    if(!window._ysIntlFmt){
-      if(typeof Intl==='undefined'||!Intl.DateTimeFormat){window._ysIntlOK=false;return null;}
-      var f=new Intl.DateTimeFormat('en-u-ca-hebrew',{year:'numeric',month:'long',day:'numeric'});
-      var ro=f.resolvedOptions?f.resolvedOptions():null;
-      if(!ro||ro.calendar!=='hebrew'||!f.formatToParts){window._ysIntlOK=false;return null;}
-      window._ysIntlFmt=f;window._ysIntlOK=true;
-    }
-    var o={};
-    window._ysIntlFmt.formatToParts(d).forEach(function(p){o[p.type]=p.value;});
-    var hy=parseInt(String(o.year||'').replace(/[^0-9]/g,''),10);
-    var day=parseInt(String(o.day||'').replace(/[^0-9]/g,''),10);
-    var code=window._ysMonthCode(o.month);
-    if(!(hy>=4000&&hy<=7000)||!(day>=1&&day<=30)||!code) return null;
-    var leap=window.ysHebIsLeap(hy);
-    var mi=leap?window._ysMICodeLeap[code]:window._ysMICodeStd[code];
-    if(mi===undefined){
-      // אי-התאמה בין חישוב העיבור לשם החודש — סימן שמשהו לא צפוי; לא מנחשים
-      return null;
-    }
-    return {hy:hy,mi:mi,day:day,leap:leap};
-  }catch(e){ window._ysIntlOK=false; return null; }
-};
-
-/*  ⛔ אין לבדוק `d instanceof Date` ואין ליפול-חזרה ל«היום» (סבב 57) —
- *  `instanceof` תלוי-realm: אובייקט תאריך שנוצר ב-realm אחר (iframe,
- *  רתמת `vm`) מחזיר `false`, והשורה שהייתה כאן החליפה אותו **בשקט**
- *  בתאריך של היום. שני כשלים בשורה אחת — בדיקה שתלויה במי יצר את
- *  האובייקט, ⛔ ונפילה-חזרה שקטה שמציגה תאריך שגוי כאילו הוא נכון.
- *  ⭐ הבדיקה כאן היא על **החוזה** (`getTime` שמחזיר מספר) ואינה
- *  תלוית-realm; ⛔ וקלט שאינו עובר אותה מוחזר כ«לא תקף» ונרשם.
- *  ⚠️ קריאה **בלי ארגומנט** היא חוזה קיים ומשמעה «היום» — היא נשארת,
- *  ורק ארגומנט שנמסר ואינו תאריך תקף נחשב שגיאה.                       */
-window._ysIsDate=function(d){
-  return !!d&&typeof d.getTime==='function'&&!isNaN(d.getTime());
-};
-window._ysBadDates=[];
-window._ysBadDate=function(where,d){
-  var got;
-  try{ got=Object.prototype.toString.call(d); }catch(e){ got='?'; }
-  window._ysBadDates.push({at:Date.now(),where:where,got:got});
-  if(window._ysBadDates.length>12) window._ysBadDates.shift();
-  try{ console.warn('ysHebDate: קלט שאינו תאריך תקף ב-'+where+' — '+got); }catch(e){}
-};
-window._ysHebNone=function(src){
-  return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',
-          yearLabelFull:'',ok:false,src:src};
-};
-
-// ═══ סוף אזור התאריך העברי ═══════════════════════════════════════════════
 
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
 var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
@@ -1787,9 +995,9 @@ function errMsg(e) {
    ⛔ ותקרת בטיחות ללולאה שתלויה בגודל התשובה — ⚠️ מסד שמחזיר עמוד מלא
       לנצח תולה את הדף.
    ═══════════════════════════════════════════════════════════════════════ */
-var YS_ROWS_PAGE = 1000;
-var YS_ROWS_CAP = 500000;
-async function _ysRowsPaged(mkQuery, order, win) {
+var ROWS_PAGE = 1000;
+var ROWS_CAP = 500000;
+async function _rowsPaged(mkQuery, order, win) {
   var out = [], from = 0;
   for (;;) {
     var q = mkQuery();
@@ -1798,12 +1006,12 @@ async function _ysRowsPaged(mkQuery, order, win) {
       if (win.to) q = q.lte(win.col, win.to);
     }
     if (order) q = q.order(order, { ascending: true });
-    var res = await withTimeout(q.range(from, from + YS_ROWS_PAGE - 1));
+    var res = await withTimeout(q.range(from, from + ROWS_PAGE - 1));
     if (!res || res.error || !Array.isArray(res.data)) return null;
     out = out.concat(res.data);
-    if (res.data.length < YS_ROWS_PAGE) return out;
-    from += YS_ROWS_PAGE;
-    if (from > YS_ROWS_CAP) return out;
+    if (res.data.length < ROWS_PAGE) return out;
+    from += ROWS_PAGE;
+    if (from > ROWS_CAP) return out;
   }
 }
 /* ═══════════════ סוף מודול משיכה מסוננת בשרת ═══════════════════════════ */
@@ -2068,7 +1276,7 @@ async function loadPerms() {
    *  קיים **שגיאה**: ⛔ המסלול נפל לעותק המקומי כאילו אין רשת. */
   var res = null;
   try {
-    res = await hrCfgGet('hr_perms', true);
+    res = await hrCfgGet('perms', true);
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
@@ -2134,11 +1342,11 @@ function saveRefresh() {
 
 
 // ---- לוח שנה עברי ויזואלי לטופס סטאטוס ----
-// שמות חודשים / ימים — אותן טבלאות תצוגה של ysHebDate (מקור אמת יחיד)
+// שמות חודשים / ימים — אותן טבלאות תצוגה של hebDate (מקור אמת יחיד)
 /* ══════════════════════════════════════════════════════════════════════════
    בורר התאריך העברי — לוח קופץ (`_hc*`)
    ══════════════════════════════════════════════════════════════════════════ */
-function _hcMN(hy){return window.ysHebMonthNames(hy);};
+function _hcMN(hy){return window.hebMonthNames(hy);};
 window._hcVw={};
 // בניית נתוני שנה עברית מלוח הדפדפן: {hy,lb,jd (א׳ תשרי),ml[],leap}
 window._hrYearCache={};
@@ -2147,18 +1355,18 @@ function hrHebYearInfo(hy){
   if(window._hrYearCache[hy]!==undefined) return window._hrYearCache[hy];
   var info=null;
   try{
-    var leap=window.ysHebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
+    var leap=window.hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
     // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
     for(k=0;k<45;k++){
       d=new Date(hy-3761,8,1+k,12,0,0);
-      r=window.ysIntlHeb(d);
+      r=window.hebIntl(d);
       if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
     }
     if(start){
       var ml=[],cur=start,total=0,ok=true;
       for(var m=0;m<nM;m++){
         var p=new Date(cur.getTime()+29*86400000);
-        var pr=window.ysIntlHeb(new Date(p.getFullYear(),p.getMonth(),p.getDate(),12,0,0));
+        var pr=window.hebIntl(new Date(p.getFullYear(),p.getMonth(),p.getDate(),12,0,0));
         if(!pr){ok=false;break;}
         var len=(pr.day===1)?29:30;
         ml.push(len);total+=len;
@@ -2172,9 +1380,10 @@ function hrHebYearInfo(hy){
   window._hrYearCache[hy]=info;
   return info;
 };
-// מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה הטבלה הפנימית
-function _hcBaseST(hy){for(var i=0;i<window._hcST.length;i++){if(window._hcST[i].hy===hy)return window._hcST[i];}return null;};
-function _hcBase(hy){return hrHebYearInfo(hy)||_hcBaseST(hy);};
+// מציאת בסיס שנה — לוח הדפדפן, ובנפילה-חזרה טבלת המנוע
+// ⛔ הטבלה נקראת דרך `hebYearBase` ⛔ ולא ישירות — ⚠️ `_hcST` הוא מצבו
+// הפנימי של המודול, ⭐ וקריאה ישירה בו היא תלות שבורה שאינה זורקת.
+function _hcBase(hy){return hrHebYearInfo(hy)||window.hebYearBase(hy);};
 // עברי → גרגוריאני Date
 // העוגן הוא צהריים ולא חצות: הוספת מכפלות של 24 שעות מחצות "נופלת" ליום הקודם
 // במעבר לשעון חורף (24 שעות = 23 שעות שעון) — זה החזיר תאריך מוקדם ביום.
@@ -2186,12 +1395,12 @@ function _hcG(hy,mi,day){
   return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);};
 // גרגוריאני → עברי {hy,mi,day} — עובר דרך המקור היחיד
 function _hcH(d){
-  var h=window.ysHebDate(d);
+  var h=window.hebDate(d);
   return {hy:h.year,mi:h.monthIndex,day:h.day};};
 // תווית שנה — ⛔ הצורה האחת של המנוע
-function _hcYL(hy){return window.ysHebYearLabelFull(hy)||String(hy);};
+function _hcYL(hy){return window.hebYearLabelFull(hy)||String(hy);};
 // פורמט תצוגה
-function _hcFmt(hy,mi,day){return window.ysHebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);};
+function _hcFmt(hy,mi,day){return window.hebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);};
 // ניווט חודש
 function _hcNav(pfx,dir){
   var v=window._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
@@ -2232,7 +1441,7 @@ function _hcDraw(pfx){
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
     var st=isSel?'u-hcd-sel':isToday?'u-hcd-today':'u-hcd';
     h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
-      'class="u-ff-heebo u-fs-2 u-p-3-1 u-bd-none u-r-2 u-cur-p u-ta-c '+st+'">'+window.ysHebDayLabel(d)+'</button>';
+      'class="u-ff-heebo u-fs-2 u-p-3-1 u-bd-none u-r-2 u-cur-p u-ta-c '+st+'">'+window.hebDayLabel(d)+'</button>';
   }
   h+='</div></div>';pop.innerHTML=h;};
 /*  ⛔ סוג הסטטוס עובר במחלקה ⛔ ולא בשלוש מפות גוונים — ⚠️ שלוש המפות
@@ -2601,7 +1810,7 @@ function getDefaultReasons() {
 }
 
 function getAbsenceReasons() {
-  try { return hrCfgLocalGet('hr_absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  try { return hrCfgLocalGet('absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
 };
 
 async function saveAbsenceReasons() {
@@ -2615,8 +1824,8 @@ async function saveAbsenceReasons() {
       reasons[type].push(v);
     });
   });
-  hrCfgLocalSet('hr_absence_reasons', reasons);
-  hrSettingsTouch('hr_absence_reasons');
+  hrCfgLocalSet('absence_reasons', reasons);
+  hrSettingsTouch('absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה (סבב 89) —
    *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
@@ -2626,7 +1835,7 @@ async function saveAbsenceReasons() {
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
   toast(MSG_REASONS_SAVED);
   try {
-    var r = await hrCfgSet('hr_absence_reasons', reasons);
+    var r = await hrCfgSet('absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
     /*  ⛔ אות הפולינג מקודם בנקודת המעבר האחת — ⚠️ כתיבה ידנית של
      *  `hr_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
@@ -3182,7 +2391,7 @@ async function savePerms() {
   // upsert דרך hrCfgSet במקום select-ואז-update/insert: ל-`.single()` יש error
   // גם כשהשורה חסרה וגם בכשל רשת, ולכן כשל זמני נפל לענף ה-insert → שגיאת
   // מפתח כפול → נבלעה → "✅ הרשאות נשמרו!" בזמן שהענן לא השתנה.
-  var res = await hrCfgSet('hr_perms', p);
+  var res = await hrCfgSet('perms', p);
   if (res && res.error) {
     // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
     toast(MSG_PERMS_SAVE_FAIL + (res.error.message || res.error.code || MSG_NO_LINK) +
@@ -4630,7 +3839,7 @@ function _bkLayer(bkey, s) {
  *  יש: ⛔ אי-התאמה מחזירה `null` ⛔ ונכשלת בקול, ⚠️ ואינה שומרת חצי גיבוי. */
 async function _bkReadRows(c, s, win) {
   var sel = s.cols || '*';
-  var rows = await _ysRowsPaged(function () {
+  var rows = await _rowsPaged(function () {
     var q = c.from(s.name).select(sel);
     if (s.eq) q = q.eq(s.eq[0], s.eq[1]);
     return q;
@@ -5390,13 +4599,13 @@ var PL_CFG = {
   seen:   function () { return _hrLastTs; },
   note:   function (ts) { _hrLastTs = ts; },
   ok:     function () { _hrMarkSynced(); },
-  stamp:  function (ts) { return hrCfgSet('hr_last_changed', ts); },
+  stamp:  function (ts) { return hrCfgSet('last_changed', ts); },
   pull:   function () { return hrPullFromCloud(); },
   remote: function () {
-    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle())
+    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle())
       .then(function (r) {
         if (!r || r.error) return { ok: false, ts: null };
-        return { ok: true, ts: r.data ? plNum(kvParse('hr_last_changed', r.data.value).value) : null };
+        return { ok: true, ts: r.data ? plNum(kvParse('last_changed', r.data.value).value) : null };
       }, function () { return { ok: false, ts: null }; });
   },
 };
@@ -5637,10 +4846,10 @@ function hrHwWindowKeys() {
   var stamp = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
   if (_hrHwWinKeys && _hrHwWinDay === stamp) return _hrHwWinKeys;
   var cur = null, prev = null;
-  try { cur = window.ysHebDate(now); } catch (e) { cur = null; }
+  try { cur = window.hebDate(now); } catch (e) { cur = null; }
   if (!cur || !cur.ok || !(cur.day > 0)) return null;
   try {
-    prev = window.ysHebDate(new Date(now.getFullYear(), now.getMonth(),
+    prev = window.hebDate(new Date(now.getFullYear(), now.getMonth(),
                                      now.getDate() - cur.day, 12, 0, 0));
   } catch (e2) { prev = null; }
   if (!prev || !prev.ok) return null;
@@ -5658,7 +4867,7 @@ function hrHwInWindow(rec) {
   var keys = hrHwWindowKeys();
   if (!keys) return true;
   var h = null;
-  try { h = window.ysHebDate(new Date(t)); } catch (e) { h = null; }
+  try { h = window.hebDate(new Date(t)); } catch (e) { h = null; }
   if (!h || !h.ok) return true;
   return !!keys[h.year + ':' + h.monthIndex];
 }
@@ -6290,7 +5499,7 @@ function initDateFields(){
    *  התנהגויות, ⚠️ ובאג שיתוקן באחד היה נשאר בשני. */
   var hdEl=document.getElementById('hdate');
   var _now=new Date();
-  if(hdEl) hdEl.textContent='יום '+window.YS_DOW_HEB[_now.getDay()]+', '+hebrewDate(_now);
+  if(hdEl) hdEl.textContent='יום '+window.HEB_DOW[_now.getDay()]+', '+hebrewDate(_now);
 }
 
 // לא קוראים loadDash ו-initDateFields ישירות — נקרא אחרי login
@@ -6353,7 +5562,7 @@ async function hrTouchLastChanged() {
 // hrCfgSet עם נפילה-חזרה לתור — תחליף שקוף, באותו חוזה
 async function hrCfgSet(key, value) {
   // ⛔ לעולם לא להכניס לתור את מפתח החותמת (נרשם בסבב 67) — הוא תמיד נגזר
-  if (key === 'hr_last_changed') {
+  if (key === 'last_changed') {
     try { return await _hrCfgSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
   }
   try {
@@ -6481,7 +5690,7 @@ async function hrFlushQueue() {
     // היחיד שהפולינג במכשירים האחרים משווה מולו, ולכן חותמת
     // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
     // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
-    try { await _hrCfgSetRaw('hr_last_changed', ts); if (!ctxStale(_ep)) _hrLastTs = ts; }
+    try { await _hrCfgSetRaw('last_changed', ts); if (!ctxStale(_ep)) _hrLastTs = ts; }
     catch(e){
       console.warn('[sync] חותמת hr_last_changed לא נכתבה:', e && e.message);
       try { hrSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
@@ -6535,7 +5744,7 @@ var HR_ROWS = true;
 /* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח (סבב 63).
    ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
    דחיפה ומשיכה — ⛔ לא ייבדלו בשקט; זה בדיוק ההפרש שנמצא בסבב 63. */
-var HR_SETTINGS_LWW_KEYS = ['hr_reasons', 'hr_absence_reasons'];
+var HR_SETTINGS_LWW_KEYS = ['reasons', 'absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד (סבב 39).
    ⛔ ואין כאן עותק שני של הדפוס: השינה נוספה כ**תצורה** ולא כהעתקה של
@@ -6801,8 +6010,8 @@ async function hrRowsGetSessions(kind, win) {
     /*  ⛔ שתי המשיכות במקביל ⛔ ולא בזו אחר זו — ⚠️ אין ביניהן תלות,
      *  ⭐ וההמתנה היא של האיטית מבין השתיים ⛔ ולא של סכומן. */
     var both = await Promise.all([
-      _ysRowsPaged(function () { return SB.from(cfg.parent).select(scols); }, 'client_id', win),
-      _ysRowsPaged(function () { return SB.from(cfg.child).select(mcols); }, 'client_id', win)
+      _rowsPaged(function () { return SB.from(cfg.parent).select(scols); }, 'client_id', win),
+      _rowsPaged(function () { return SB.from(cfg.child).select(mcols); }, 'client_id', win)
     ]);
     var rs = both[0], rm = both[1];
     if (!rs || !rm) return { ok: false, data: null };
@@ -6818,7 +6027,7 @@ async function hrRowsGetStudents() {
   try {
     /*  ⛔ המצבה נמשכת מלאה ⛔ ואין לה חלון — ⚠️ אין בטבלה עמודת תאריך,
      *  ⭐ והיא 71 שורות: ⛔ חלון על מפתח שאינו תאריך הוא מנגנון שני. */
-    var rs = await _ysRowsPaged(function () {
+    var rs = await _rowsPaged(function () {
       return SB.from('hr_students_rows').select('client_id,updated_at,deleted,data');
     }, 'client_id', null);
     if (!rs) return { ok: false, data: null };
@@ -7483,14 +6692,14 @@ async function hrPushToCloud() {
   if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
 
   // ---- approvals: מיזוג אובייקט לפי sid ----
-  await step('hr_approvals', async function() {
+  await step('approvals', async function() {
     var localAp = getApprovals();
-    var remoteAp = null; try { remoteAp = await hrCfgGet('hr_approvals'); } catch(e3) {}
+    var remoteAp = null; try { remoteAp = await hrCfgGet('approvals'); } catch(e3) {}
     var mergedAp = hrMergeRecords(localAp, remoteAp, null, true);
     if (ctxStale(_ep)) return {};
-    hrCfgLocalSet('hr_approvals', mergedAp);
-    var r = await hrCfgSet('hr_approvals', mergedAp);
-    hrSyncLog('push', 'hr_approvals', hrCount(mergedAp), {local_count: hrCount(localAp), remote_count: hrCount(remoteAp), result_count: hrCount(mergedAp)});
+    hrCfgLocalSet('approvals', mergedAp);
+    var r = await hrCfgSet('approvals', mergedAp);
+    hrSyncLog('push', 'approvals', hrCount(mergedAp), {local_count: hrCount(localAp), remote_count: hrCount(remoteAp), result_count: hrCount(mergedAp)});
     return r;
   });
 
@@ -7498,8 +6707,8 @@ async function hrPushToCloud() {
   await step(KV_TABLE, async function() {
     var meta = hrSettingsMeta();
     var settingsKeys = [
-      { key: 'hr_reasons',         get: getReasons,                                       set: function(v){ hrCfgLocalSet('hr_reasons', v); } },
-      { key: 'hr_absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ hrCfgLocalSet('hr_absence_reasons', v); } }
+      { key: 'reasons',         get: getReasons,                                       set: function(v){ hrCfgLocalSet('reasons', v); } },
+      { key: 'absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ hrCfgLocalSet('absence_reasons', v); } }
     ];
     var lastErr = null;
     for (var i = 0; i < settingsKeys.length; i++) {
@@ -7531,7 +6740,7 @@ async function hrPushToCloud() {
   // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
   // "שינוי" שלא קיים בענן
   if (pushed > 0 && !ctxStale(_ep)) {
-    await hrCfgSet('hr_last_changed', ts);
+    await hrCfgSet('last_changed', ts);
     if (ctxStale(_ep)) return;
     _hrLastTs = ts;
     console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
@@ -7590,16 +6799,16 @@ async function hrPullFromCloud() {
       if (pullMigrated) schedulePush();
     }
     // approvals: מיזוג לפי sid עם updatedAt
-    var ap = await hrCfgGet('hr_approvals');
+    var ap = await hrCfgGet('approvals');
     if (ctxStale(_ep)) return;
     if (ap && typeof ap === 'object') {
-      hrCfgLocalSet('hr_approvals', hrMergeRecords(getApprovals(), ap, null, true));
+      hrCfgLocalSet('approvals', hrMergeRecords(getApprovals(), ap, null, true));
     }
     // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
-    var rs = await hrCfgGet('hr_reasons');
-    if (rs && Array.isArray(rs) && (remoteMeta['hr_reasons'] || 0) >= (meta['hr_reasons'] || 0)) {
-      hrCfgLocalSet('hr_reasons', rs);
-      if (remoteMeta['hr_reasons']) { meta['hr_reasons'] = remoteMeta['hr_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
+    var rs = await hrCfgGet('reasons');
+    if (rs && Array.isArray(rs) && (remoteMeta['reasons'] || 0) >= (meta['reasons'] || 0)) {
+      hrCfgLocalSet('reasons', rs);
+      if (remoteMeta['reasons']) { meta['reasons'] = remoteMeta['reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
@@ -7633,10 +6842,10 @@ async function hrPullFromCloud() {
         hrUpdateQueueBadge();
       }
     }
-    var abR = await hrCfgGet('hr_absence_reasons');
-    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['hr_absence_reasons'] || 0) >= (meta['hr_absence_reasons'] || 0)) {
-      hrCfgLocalSet('hr_absence_reasons', abR);
-      if (remoteMeta['hr_absence_reasons']) { meta['hr_absence_reasons'] = remoteMeta['hr_absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
+    var abR = await hrCfgGet('absence_reasons');
+    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['absence_reasons'] || 0) >= (meta['absence_reasons'] || 0)) {
+      hrCfgLocalSet('absence_reasons', abR);
+      if (remoteMeta['absence_reasons']) { meta['absence_reasons'] = remoteMeta['absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     /*  ⛔ `hr_cls_years` אינו נמשך עוד — ⚠️ המחזור נגזר משנת הלימודים,
      *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
@@ -7644,10 +6853,10 @@ async function hrPullFromCloud() {
      *  המשיכה: ⚠️ משיכה של שורה מחוקה מחזירה אותה למסך כאילו היא חיה. */
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
-      var _atCfgV = await hrCfgGet('hr_attend_cfg');
-      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; hrCfgLocalSet('hr_attend_cfg', _atCfgV); }
-      var _hrCfgV = await hrCfgGet('hr_sleep_cfg');
-      if (_hrCfgV && typeof _hrCfgV === 'object') { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('hr_sleep_cfg', _hrCfgV); }
+      var _atCfgV = await hrCfgGet('attend_cfg');
+      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; hrCfgLocalSet('attend_cfg', _atCfgV); }
+      var _hrCfgV = await hrCfgGet('sleep_cfg');
+      if (_hrCfgV && typeof _hrCfgV === 'object') { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('sleep_cfg', _hrCfgV); }
     } catch (eCfg) { hrWriteFail('hrPullFromCloud', eCfg); }
     // ---- הרשאות: משיכה שוטפת ----
     // עד היום hr_perms נטען **רק** ב-loadPerms בכניסה, ולכן שינוי הרשאות הגיע
@@ -7655,7 +6864,7 @@ async function hrPullFromCloud() {
     // plTick). עטוף בנפרד: כשל כאן לא מפיל את שאר המשיכה, ומטריצה פגומה
     // או ריקה נדחית ב-hrApplyPerms במקום לנעול את המשתמש מחוץ לכל המודולים.
     try {
-      var pmV = await hrCfgGet('hr_perms');
+      var pmV = await hrCfgGet('perms');
       if (ctxStale(_ep)) return;
       if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
@@ -7686,7 +6895,7 @@ setTimeout(async function() {
   var _ep = ctxEpoch();
   try {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
-    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'hr_last_changed').maybeSingle());
+    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle());
     if (r.error) {
       // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
       // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
@@ -7696,7 +6905,7 @@ setTimeout(async function() {
       return;
     }
     if (r.data) {
-      var remoteTs = parseInt(kvParse('hr_last_changed', r.data.value).value) || 0;
+      var remoteTs = parseInt(kvParse('last_changed', r.data.value).value) || 0;
       if (ctxStale(_ep)) return;
       _hrLastTs = remoteTs;
       await hrPullFromCloud();
@@ -7909,8 +7118,8 @@ function saveStudents(s){
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך hrPushToCloud והפיל את כל הדחיפה — כל
 // המפתחות הפסיקו להגיע לענן בשקט. מוגנים כמו getStudents.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('hr_reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function getApprovals(){try{var v=hrCfgLocalGet('hr_approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
 }
@@ -8033,9 +7242,9 @@ function renderStudents(){
 // ⚠️ שנת הלימודים מתגלגלת באלול ⛔ ולא בתשרי — הבוגרים עוזבים בסוף אלול,
 //    ⭐ והמחזור שנרשם להם הוא זה שנפתח מיד אחריהם.
 function hrSchoolYear(now) {
-  var h = window.ysHebDate(now || new Date());
+  var h = window.hebDate(now || new Date());
   if (!h.ok) return 0;
-  return (h.monthIndex === window.ysHebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
+  return (h.monthIndex === window.hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
 }
 // ⚠️ המחזור הוא שנת ה**סיום** ולא שנת הכניסה — ⭐ הוא זהה לכל מי שסיים יחד,
 //    ולכן ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה אחריה, וא׳ את שלאחריה.
@@ -8046,7 +7255,7 @@ function hrCycleFor(cls, now) {
   var hy = y + add[cls];
   // ⚠️ שנה שמאיות עגולה נותנת שתי ספרות אפס ⛔ ואין לה צורה מקוצרת —
   //    התווית המלאה היא מה שנשאר, ⭐ ולא מחרוזת ריקה שנקראת «אין מחזור».
-  return window.ysGematria(hy % 100, '״') || window.ysHebYearLabelFull(hy);
+  return window.hebGematria(hy % 100, '״') || window.hebYearLabelFull(hy);
 }
 
 // -------- הפעלה/השבתה של תלמיד --------
@@ -8454,7 +7663,7 @@ async function openStatusHistory(sid) {
     if (!v) return '—';
     var d = new Date(v);
     if (isNaN(d.getTime())) return '—';
-    var h = window.ysHebDate(d);
+    var h = window.hebDate(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
@@ -8813,13 +8022,13 @@ async function _atPullSessions(win) {
   return true;
 }
 async function _atPullCfg() {
-  var r = null; try { r = await hrCfgGet('hr_attend_cfg', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('attend_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._atCfg = r.value; hrCfgLocalSet('hr_attend_cfg', r.value); }
+  if (r.value) { window._atCfg = r.value; hrCfgLocalSet('attend_cfg', r.value); }
   return true;
 }
 async function _atPullTreats() {
-  var r = null; try { r = await hrCfgGet('hr_attend_treats', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('attend_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
    *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
@@ -8864,15 +8073,15 @@ function atDefaultCfg() {
  *  רשאי להמתין לרשת, ⭐ וההגדרות הן מה שקובע אילו כפתורי סדר להציג. */
 function atCachedCfg() {
   if (window._atCfg) return window._atCfg;
-  try { var p=hrCfgLocalGet('hr_attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
+  try { var p=hrCfgLocalGet('attend_cfg'); if(p){ window._atCfg=p; return p; } } catch(e){}
   return null;
 }
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
-  hrCfgLocalSet('hr_attend_cfg',cfg);
+  hrCfgLocalSet('attend_cfg',cfg);
   // בלי קידום hr_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
   // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
-  try { var r=await hrCfgSet('hr_attend_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('atSaveCfg', e); }
+  try { var r=await hrCfgSet('attend_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('atSaveCfg', e); }
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
@@ -8920,7 +8129,7 @@ async function atSaveData(data) {
 async function atLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ⚠️ הציור הראשון של מסך ההשגחה קורא
   //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
-  try { var v=await hrCfgGet('hr_attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  try { var v=await hrCfgGet('attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -8936,12 +8145,12 @@ async function atSaveTreats(data) {
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — הכותב הישן דרס את כל המערך, כך ששני
     // מדריכים שרשמו טיפול במקביל מחקו זה את זה. אותה סמנטיקה כמו הסדרים.
-    var _tRemote=null; try { _tRemote=await hrCfgGet('hr_attend_treats'); } catch(eR){}
+    var _tRemote=null; try { _tRemote=await hrCfgGet('attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
       data=_hrSessionsMerge(_tRemote, data, 'hr_attend_treats');
       lsSetArray('hr_attend_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('hr_attend_treats',data);
+    var r=await hrCfgSet('attend_treats',data);
     if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _hrMarkPushed('hr_attend_treats'); await hrTouchLastChanged(); }
   } catch (e) { hrWriteFail('atSaveTreats', e); }
   window._atTreats=data;
@@ -9761,7 +8970,7 @@ function _atPaintArchive(el, records, warn) {
           return ia-ib;
         });
         var hd0=entries[0].hd;
-        var dayLabel=window.ysHebDayLabel(hd0.day)+' '+mName;
+        var dayLabel=window.hebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         // כותרת יום
@@ -10429,13 +9638,13 @@ async function _hrPullSessions(win) {
   return true;
 }
 async function _hrPullCfg() {
-  var r = null; try { r = await hrCfgGet('hr_sleep_cfg', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('sleep_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('hr_sleep_cfg', window._hrCfg); }
+  if (r.value) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('sleep_cfg', window._hrCfg); }
   return true;
 }
 async function _hrPullTreats() {
-  var r = null; try { r = await hrCfgGet('hr_sleep_treats', true); } catch (e) {}
+  var r = null; try { r = await hrCfgGet('sleep_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   /*  ⛔ ראה `_atPullTreats` — מפתח שטרם נכתב אינו מוחק את הדיסק. */
   if (Array.isArray(r.value)) { window._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
@@ -10474,22 +9683,22 @@ function _hrCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = hrDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { hrCfgLocalSet('hr_sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
-    try { hrCfgSet('hr_sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) hrTouchLastChanged(); }); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+    try { hrCfgLocalSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+    try { hrCfgSet('sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) hrTouchLastChanged(); }); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
   }
   return cfg;
 }
 /*  ⛔ ראה `atCachedCfg` — שני המודולים הם אותו דפוס בדיוק. */
 function hrCachedCfg() {
   if (window._hrCfg) return window._hrCfg;
-  try { var p=hrCfgLocalGet('hr_sleep_cfg'); if(p){ window._hrCfg=_hrCleanCfg(p); return window._hrCfg; } } catch(e){}
+  try { var p=hrCfgLocalGet('sleep_cfg'); if(p){ window._hrCfg=_hrCleanCfg(p); return window._hrCfg; } } catch(e){}
   return null;
 }
 async function hrSaveCfg(cfg) {
   window._hrCfg=cfg;
-  hrCfgLocalSet('hr_sleep_cfg',cfg);
+  hrCfgLocalSet('sleep_cfg',cfg);
   // ראה atSaveCfg — הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
-  try { var r=await hrCfgSet('hr_sleep_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('hrSaveCfg', e); }
+  try { var r=await hrCfgSet('sleep_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('hrSaveCfg', e); }
 }
 async function hrLoadData() {
   if (window._hrData) return window._hrData;
@@ -10534,7 +9743,7 @@ async function hrSaveData(data) {
 }
 async function hrLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון (סבב 85) — ר' `atLoadTreats`.
-  try { var v=await hrCfgGet('hr_sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
+  try { var v=await hrCfgGet('sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._hrTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -10549,12 +9758,12 @@ async function hrSaveTreats(data) {
   lsSetArray('hr_sleep_treats', data, _hrRecTs);
   try {
     // ראה atSaveTreats — מיזוג ברמת רשומה במקום דריסת המערך כולו.
-    var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('hr_sleep_treats'); } catch(eR){}
+    var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
       data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
       lsSetArray('hr_sleep_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('hr_sleep_treats',data);
+    var r=await hrCfgSet('sleep_treats',data);
     if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _hrMarkPushed('hr_sleep_treats'); await hrTouchLastChanged(); }
   } catch (e) { hrWriteFail('hrSaveTreats', e); }
   window._hrTreats=data;
@@ -11210,7 +10419,7 @@ function _hrPaintArchive(el, records, warn) {
           return ia-ib;
         });
         var hd0=entries[0].hd;
-        var dayLabel=window.ysHebDayLabel(hd0.day)+' '+mName;
+        var dayLabel=window.hebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+

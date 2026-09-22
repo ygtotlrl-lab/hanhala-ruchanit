@@ -62,8 +62,12 @@ let RAN = 0;
 let PRE_MUT = null;
 const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
 /*  ⛔ הדגל נלכד ברישום ⛔ ולא בסגירה — ⚠️ שער שמריץ שער אחר מציב אותו
- *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו. */
-const SUBRUN = !!process.env.GATE_SUBRUN;
+ *  **אחרי** הרישום, ⭐ ולכן הוא חל על הילד ⛔ ולא על עצמו.
+ *  ⛔ **ושומר הרקורסיה הוא ריצת-משנה אף הוא** — ⚠️ הסט רץ שם על **עותק
+ *  סינתטי** שאין לצידו אחיות ואין בו `.git`, ⭐ ולכן שער שמשווה מול אחות
+ *  או קורא את סט המעקב מגיע לחלק מטענותיו **בכוונה**: ⛔ והריצפה נמדדת
+ *  על עץ אמיתי ⛔ ולא שם. */
+const SUBRUN = !!process.env.GATE_SUBRUN || !!process.env.R33_INNER;
 /*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
  *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
  *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
@@ -116,24 +120,19 @@ const someIn = (re, s, label) => assert(_hits(re, s) >= 1,
 
 /* ── חילוץ: לוח התאריכים העברי עד צרכני התצוגה ─────────────────────────── */
 const L = SRC.split('\n');
-const from = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
-/*  ⛔ העוגן הוא סמן סוף מוצהר ⛔ ולא שם פונקציה — ⚠️ עוגן שהוא שם נשבר
- *  ברגע שהפונקציה נמחקת, ⛔ והשער מאתר אז אזור ריק ונופל על קוד תקין. */
-const to = L.findIndex((l, i) => i > from && l.startsWith('// ═══ סוף אזור התאריך העברי'));
-assert(from >= 0 && to > from, 'אזור לוח התאריכים העברי אותר ב-index.html');
-/*  ⛔ המנוע יצא לבלוק חתום (סבב 107) — ⚠️ ולכן האזור הוא **שניים**: שכבת
- *  התצוגה שעד סמן הסוף המוצהר, ⛔ והבלוק החתום שמחזיק את המנוע עצמו:
- *  ⭐ עוגן אחד שנמתח מזה לזה היה בולע את כל מה שביניהם ⛔ ומריץ חצי
- *  אפליקציה ב-`vm`. */
+/*  ⛔ העוגן הוא סמן מוצהר ⛔ ולא שם פונקציה — ⚠️ עוגן שהוא שם נשבר ברגע
+ *  שהפונקציה נמחקת, ⛔ והשער מאתר אז אזור ריק ונופל על קוד תקין. */
 const engFrom = L.findIndex((l) => l.startsWith('/* ═══ מנוע התאריך העברי — מודול משותף'));
 const engTo = L.findIndex((l, i) => i > engFrom && l.startsWith('/* ═══════════════ סוף מודול מנוע התאריך העברי'));
-assert(engFrom >= 0 && engTo > engFrom, 'הבלוק החתום של מנוע התאריך אותר ב-index.html');
+assert(engFrom >= 0 && engTo > engFrom, 'הבלוק החתום של מנוע התאריך אותר');
 const ENG = L.slice(engFrom, engTo + 1).join('\n');
-/*  ⛔ הבלוק מצורף פעם אחת ⛔ ולא פעמיים (סבב 107) — ⚠️ באחת האפליקציות הוא
- *  יושב **בתוך** האזור ובאחרת מחוצה לו: ⭐ צירוף עיוור היה מגדיר את המנוע
- *  פעמיים, ⛔ וההגדרה השנייה הייתה מבטלת כל מוטציה שנעשתה בראשונה. */
-const REG = L.slice(from, to + 1).join('\n');
-const CAL = REG.includes(ENG) ? REG : REG + '\n' + ENG;
+/*  ⛔ המנוע כולו בבלוק החתום ⛔ ואינו ב-`index.html` — ⚠️ הלוח, הגימטריה
+ *  והקריאה מ-`Intl` ישבו בקובץ ונשאו תחילית של אפליקציה: ⭐ והטענה כאן
+ *  היא ששום הגדרה של המנוע לא נשארה מחוץ למודול. */
+const IDXSRC = readFileSync(join(ROOT, 'index.html'), 'utf8');
+assert(!/^window\.(DAYS_HEB|MONTHS_HEB|heb[A-Z])/m.test(IDXSRC),
+       'אף הגדרה של מנוע התאריך אינה ב-index.html');
+const CAL = ENG;
 
 /* ── 1. טענות סטטיות ───────────────────────────────────────────────────── */
 /*  ⚠️ הטענות נמדדות על **קוד** ולא על הערות (סבב 57) — ההערה שמסבירה
@@ -143,11 +142,11 @@ const CODE = CAL.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^\s*\/\/.*$/gm, ' ')
 
 noneIn(/instanceof\s+Date/, CODE,
        '⛔ אין `instanceof Date` באזור הלוח — הבדיקה אינה תלוית-realm');
-someIn(/window\._ysIsDate\s*=\s*function/, CODE,
-       'שער הקלט `_ysIsDate` קיים');
+someIn(/window\._hebIsDate\s*=\s*function/, CODE,
+       'שער הקלט `_hebIsDate` קיים');
 someIn(/typeof\s+d\.getTime\s*===\s*'function'/, CODE,
        'שער הקלט נבדק על החוזה (`getTime`) ולא על הטיפוס');
-someIn(/window\._ysBadDate\(/, CODE,
+someIn(/window\._hebBadDate\(/, CODE,
        '⛔ קלט פגום נרשם ואינו נבלע');
 
 /* ── רתמה: שעון מזויף + Date זר ────────────────────────────────────────── */
@@ -167,18 +166,18 @@ function harness(calSrc) {
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(calSrc + `
-    this.__api = { heb: function (d) { return window.ysHebDate(d); },
-                   hebNoArg: function () { return window.ysHebDate(); },
-                   names: function (hy) { return window.ysHebMonthNames(hy); },
-                   isLeap: function (hy) { return window.ysHebIsLeap(hy); },
+    this.__api = { heb: function (d) { return window.hebDate(d); },
+                   hebNoArg: function () { return window.hebDate(); },
+                   names: function (hy) { return window.hebMonthNames(hy); },
+                   isLeap: function (hy) { return window.hebIsLeap(hy); },
                    text: function (d) { return window.hebrewDate(d); },
                    textNoArg: function () { return window.hebrewDate(); },
                    /*  ⛔ מונה גזירות — ⚠️ הוא מותקן **לפני** הקריאה הראשונה,
                     *  ⭐ ולכן המטמון קר כשהמדידה מתחילה. */
-                   spy: function () { var n = 0, orig = window.ysIntlHeb;
-                                      window.ysIntlHeb = function (d) { n++; return orig(d); };
+                   spy: function () { var n = 0, orig = window.hebIntl;
+                                      window.hebIntl = function (d) { n++; return orig(d); };
                                       return function () { return n; }; },
-                   log: function () { return window._ysBadDates || []; } };`, ctx);
+                   log: function () { return window._hebBadDates || []; } };`, ctx);
   /*  ⚠️ **תאריך מה-realm של הבודק** — `REAL` ולא `FakeDate`. זה בדיוק
    *  אובייקט התאריך ש-`instanceof` היה דוחה, והוא תקף לחלוטין.        */
   return { api: ctx.__api, foreign: (y, m, d) => new REAL(y, m - 1, d, 12, 0, 0) };
@@ -212,7 +211,7 @@ assert(H.api.textNoArg() !== '', 'hebrewDate בלי ארגומנט נשאר «ה
 const log = H.api.log();
 assert(log.length > 0 && log.length <= 12,
        `הכשלים נרשמו (${log.length} רשומות) והרישום מוגבל ל-12`);
-assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === 'hebrewDate'),
+assert(log.some((e) => e.where === 'hebDate') && log.some((e) => e.where === 'hebrewDate'),
        'הרישום מציין את המקום שבו הקלט נדחה');
 
 /* ── 2ב. חודשי אדר — שנה מעוברת מול פשוטה ──────────────────────────────── */
@@ -276,7 +275,7 @@ if (RUN_MUT) {
   const HIT = '  if(hit) return Object.assign({},hit);';
   const mutCache = CAL.replace(HIT, '  if(false) return Object.assign({},hit);');
   if (mutCache === CAL) {
-    bad('המוטציה לא נתפסה — שורת פגיעת המטמון לא נמצאה בגוף ysHebDate. ' +
+    bad('המוטציה לא נתפסה — שורת פגיעת המטמון לא נמצאה בגוף hebDate. ' +
         'מיישרים את המחרוזת שבשער לשורה שבקוד');
   } else {
     const Hm2 = harness(mutCache);
@@ -288,7 +287,7 @@ if (RUN_MUT) {
            'הטענה על מספר הגזירות אמיתית');
   }
   /*  ⛔ מוטציית-נגד — ⚠️ תקרת ניקוי אחרת היא שינוי חי, ⛔ ואסור לה להפיל. */
-  const cnt = CAL.replace('window._ysHebCacheN>=4000', 'window._ysHebCacheN>=9000');
+  const cnt = CAL.replace('window._hebCacheN>=4000', 'window._hebCacheN>=9000');
   const Hn2 = harness(cnt);
   const stop3 = Hn2.api.spy();
   for (let i = 0; i < 60; i++) Hn2.api.heb(Hn2.foreign(2026, 6, 1 + (i % 5)));
@@ -299,7 +298,7 @@ if (RUN_MUT) {
 
 /* ── 3. מוטציה — החזרת השורה הישנה חייבת להחזיר את הבאג ────────────────── */
 const mutated = CAL
-  .replace(/if\(d===undefined\|\|d===null\) d=new Date\(\);\n\s*if\(!window\._ysIsDate\(d\)\)\{[^\n]*\n/,
+  .replace(/if\(d===undefined\|\|d===null\) d=new Date\(\);\n\s*if\(!window\._hebIsDate\(d\)\)\{[^\n]*\n/,
            '  d=(d instanceof Date&&!isNaN(d.getTime()))?d:new Date();\n');
 if (mutated === CAL) {
   bad('המוטציה לא נתפסה — שורת שער הקלט לא נמצאה');
