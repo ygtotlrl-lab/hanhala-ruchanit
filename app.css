@@ -150,6 +150,13 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 .veil{display:none;position:fixed;inset:0;background:var(--veil);z-index:var(--z-4);align-items:center;justify-content:center;backdrop-filter:blur(2px);direction:rtl}
 .sheet{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--navy-ink);max-height:85vh;overflow-y:auto}
 .veil.open{display:flex}
+.sheet-bd:empty{display:none}
+#ask .sheet{max-width:340px}
+#ask-body{font-size:var(--fs-4);color:var(--text-2)}
+#ask .sheet-ft button{flex:1;display:inline-flex;align-items:center;justify-content:center;background:var(--card);color:var(--navy-ink);border:2px solid var(--navy-ink);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3)}
+#ask .sheet-ft button:hover{background:var(--card-2)}
+#ask .sheet-ft button.danger{background:var(--navy-fill);color:var(--on-dark);border-color:var(--navy-fill);box-shadow:var(--shadow)}
+#ask .sheet-ft button.danger:hover{background:var(--navy-2);border-color:var(--navy-2)}
 .sheet-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
 .sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
 .sheet-hd .x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
@@ -524,7 +531,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-m-3-0-5{margin:var(--sp-3) 0 var(--sp-5)}
 .u-m-5-0{margin:var(--sp-5) 0}
 .u-maxh-220{max-height:220px}
-.u-maxw-340{max-width:340px}
 .u-maxw-400{max-width:400px}
 .u-mb-1{margin-bottom:var(--sp-1)}
 .u-mb-2{margin-bottom:var(--sp-2)}

@@ -408,25 +408,25 @@
 <!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ עד סבב 80
       כל דיאלוג בנה מיכל משלו וסגר אותו בדרך משלו, ⛔ ומיכל שהוחלף חלקית
       משאיר שני מסלולי סגירה.  -->
-<div class="veil" id="modal">
+<div id="modal" class="veil">
   <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="sheet-hd">
       <h3 id="modal-title"></h3>
       <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
     </div>
-    <div id="modal-body"></div>
+    <div class="sheet-bd" id="modal-body"></div>
     <div class="sheet-ft" id="modal-foot"></div>
   </div>
 </div>
 <!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
       ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
-<div class="veil" id="ask">
-  <div class="sheet u-maxw-340" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
-    <div class="sheet-hd"><h3 id="ask-title">אישור</h3></div>
-    <div id="ask-body" class="u-fs-4 u-c-text2"></div>
+<div id="ask" class="veil">
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
+    <div class="sheet-hd"><h3 id="ask-title"></h3></div>
+    <div class="sheet-bd" id="ask-body"></div>
     <div class="sheet-ft">
-      <button class="btn out" data-act="ask-no">ביטול</button>
-      <button class="btn" data-act="ask-yes" id="ask-yes">אישור</button>
+      <button data-act="ask-no">ביטול</button>
+      <button class="danger" data-act="ask-yes" id="ask-yes">אישור</button>
     </div>
   </div>
 </div>
