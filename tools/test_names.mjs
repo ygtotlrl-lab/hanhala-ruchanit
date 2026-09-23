@@ -42,10 +42,10 @@ import { fileURLToPath } from 'node:url';
 import { PEERS } from './peers.mjs';
 import { whiten } from './whiten.mjs';
 import { appSrc, CORE_FILES } from './appsrc.mjs';
+import { FACTS } from './app-facts.mjs';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
-  app: 'hanhala-ruchanit',
   /*  ⛔ מרשם הדפוסים — ⚠️ **מה נכנס**: תחום ⟵ הדפוס שלו והנימוק
    *  התפקידי; ⛔ **ומה מפיל**: תחום שהשער מודד ואינו מוצהר, תחום
    *  שמוצהר ואינו נמדד, ⛔ ונימוק ריק. ⭐ **ולמה המבנה קיים**: בלעדיו
@@ -262,7 +262,7 @@ const toolFiles = fs.readdirSync(join(ROOT, 'tools'))
  *  ⛔ **ואחות שאינה על הדיסק מדווחת בשמה** ⛔ ואינה נספרת כטענה שעברה. */
 const sisterPrefix = [], sisterMissing = [], sisterNoDecl = [];
 for (const p of PEERS) {
-  if (p === APP.app) continue;
+  if (p === FACTS.slug) continue;
   const f = join(SIBS, p, 'tools', 'test_period.mjs');
   if (!fs.existsSync(f)) { sisterMissing.push(p); continue; }
   const m = /tablePrefix\s*:\s*['"]([a-z]+)_['"]/.exec(fs.readFileSync(f, 'utf8'));
@@ -270,7 +270,7 @@ for (const p of PEERS) {
 }
 
 /* ── המדידות ───────────────────────────────────────────────────────────── */
-console.log(`· ${APP.app} — סבב 148: שם נגזר מדפוס מוצהר`);
+console.log(`· ${FACTS.slug} — סבב 148: שם נגזר מדפוס מוצהר`);
 
 /* 1. המרשם עצמו — ⛔ ארבעת התחומים, ובשני הכיוונים */
 const MEASURED = ['fn', 'gate', 'module', 'cls', 'token', 'msg'];
@@ -342,7 +342,7 @@ is(hits.length === 0,
  *  ⚠️ ולא שאל אם השם עצמו נכון. */
 {
   const own = APP.namePolicy.prefix;
-  const all = new Map([...live, ...(own ? [[own, APP.app]] : [])]);
+  const all = new Map([...live, ...(own ? [[own, FACTS.slug]] : [])]);
   const bad = [];
   let scanned = 0;
   for (const f of CORE_FILES) {
@@ -453,7 +453,7 @@ is(catNum.length === 0,
 const sisTok = new Set();
 const tokMissing = [];
 for (const p of PEERS) {
-  if (p === APP.app) continue;
+  if (p === FACTS.slug) continue;
   const f = join(SIBS, p, 'index.html');
   const c = join(SIBS, p, 'app.css');
   if (!fs.existsSync(f)) { tokMissing.push(p); continue; }
@@ -541,7 +541,7 @@ is(m8.length === 1,
  *  אחות, ⛔ ותחיליתה של האפליקציה עצמה — ⭐ שני הצדדים. */
 {
   const own = APP.namePolicy.prefix;
-  const all = new Map([...live, ...(own ? [[own, APP.app]] : [])]);
+  const all = new Map([...live, ...(own ? [[own, FACTS.slug]] : [])]);
   const sis = [...live.keys()][0] || 'zz';
   const hit = (nm) => { const pf = prefixOf(nm); return !!(pf && all.has(pf)); };
   is(hit(sis + 'Foo') && [...allNames('function ' + sis + 'Foo(){}')].filter(hit).length === 1,
@@ -623,6 +623,6 @@ is(prefixOf('MSG_OFFLINE') === 'msg' && !live.has('msg')
 
 }
 
-console.log(bad ? `\n❌ ${APP.app}: ${n} טענות, ${bad} נכשלו`
+console.log(bad ? `\n❌ ${FACTS.slug}: ${n} טענות, ${bad} נכשלו`
                 : `\n✓ סבב 148 (שם נגזר מדפוס מוצהר) — ${n} טענות עברו, 0 נכשלו`);
 process.exit(bad ? 1 : 0);

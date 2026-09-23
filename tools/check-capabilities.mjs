@@ -41,6 +41,7 @@ import { CORE_FILES, SHEET_FILE } from './appsrc.mjs';
 import { bodyOf, scopeOf } from './scope.mjs';
 import { PEERS, APP_COLS, COL_NOTE, ROW_CELLS } from './peers.mjs';
 import crypto from 'node:crypto';
+import { FACTS } from './app-facts.mjs';
 
 /*  ⭐ שורת שכבת האייקונים נמדדת ע"י `audit` של שער סבב 66 — ⛔ ולא ע"י probe משלה
  *  (סבב 66): מדידת פיקסלים היא מאות שורות, ומימוש שני היה נסחף מהראשון
@@ -96,12 +97,9 @@ const APP = {
    *  בשתיים בלבד, ⛔ והיעדר בשתיים האחרות הוא החלטה רשומה. */
   kvMeta: { table: 'hr_settings_meta', why: '' },
   sealExempt: { 'check-capabilities': 'רץ בתוך תהליך של שער אחר, והסגירה בסוף `run` ולא במאזין' },
-  app: 'hanhala-ruchanit',
-  file: 'index.html',
   docs: 'CLAUDE.md',
   bootFn: 'loadDash',
   settingsFn: 'showSettingsModule',
-  matrixCol: 2,
   /*  ⚠️ אין כאן יכולת משותפת שנעדרת (סבב 52). */
   /*  ⛔ אזור שצבעיו ליטרליים בכוונה — ⚠️ **ההיעדר מוצהר ריק** ⛔ ואינו
    *  נשמט: ⭐ שדה חסר נקרא «לא נשאל», וריק נקרא «נמדד ואין». */
@@ -406,6 +404,7 @@ const APP = {
     'um-err': 'הודעת מסך ניהול המשתמשים — ⛔ צמודה לשורה שנדחתה',
   },
   orphanAllow: {
+    'deep-check.mjs:deepCheck': 'נקודת הכניסה של הבדיקה העמוקה — ⛔ הזרימה קוראת לה בשמה מתוך ה-YAML, ⚠️ ושום קובץ JS אינו קורא לה',
     canEdit: 'שכבת ההרשאות — ⛔ `canAccess` ו-`canEdit` הן זוג, ⚠️ ומחיקת אחת מהן מותירה מודל הרשאות בלי דרגת עריכה',
   },
   /*  ⛔ אסימון שנשאר בשני התפקידים — ⚠️ כל שם נושא את סיבתו, ⛔ ושם
@@ -816,7 +815,7 @@ const APP = {
  *  מה שהטבלה דורשת — הפילה אותו על קוד תקין. ⛔ והמדידה נשארת «ערך ולא
  *  קיום»: הפעולה חייבת להיות **בגוף** המפה ולקרוא לפונקציה. */
 function domEntry(fn, s) {
-  const text = s === undefined ? readOnce(APP.file) : s;
+  const text = s === undefined ? readOnce(FACTS.entry) : s;
   if (new RegExp('onclick="[^"]*' + fn + '\\s*\\(').test(text)) return true;
   const i = text.indexOf('var DOM_ACTIONS');
   if (i < 0) return false;
@@ -1679,8 +1678,8 @@ const _CLEAN_RUN = !changed && (!over || Object.keys(over).length === 0);
  *  מדווח «אינו מוצא» על קוד שרץ: ⛔ והקובץ נשאר **ראשון**, ⚠️ שכל
  *  היסט שנמדד בו נשאר כפי שהוא.
  *  ⛔ **והמודול נעטף ב-`<script>`** — ⚠️ ההלבנה מלבינה מה שאינו בתוכו. */
-const src = [APP.file, SHEET_FILE].concat(CORE_FILES).filter((f) => fs.existsSync(f))
-  .map((f) => (f === APP.file ? readOnce(f)
+const src = [FACTS.entry, SHEET_FILE].concat(CORE_FILES).filter((f) => fs.existsSync(f))
+  .map((f) => (f === FACTS.entry ? readOnce(f)
                : f === SHEET_FILE ? '\n<style data-sheet="app">\n' + readOnce(f) + '\n</style>'
                                   : '\n<script type="module">\n' + readOnce(f) + '\n</script>'))
   .join('');
@@ -1937,7 +1936,7 @@ function _tableRowMap() {
       if (cells.length < ROW_CELLS - 1) continue;
       /*  ⛔ אין לצמצם את `allOk` לתא האפליקציה (סבב 69) — ⚠️ ההערה
        *  משותפת לכולן, ולכן היא לגיטימית כל עוד תא אחד אינו ✅. */
-      out[m[1]] = { cell: cells[3 + APP.matrixCol].trim(), note: cells[COL_NOTE].trim(),
+      out[m[1]] = { cell: cells[3 + FACTS.col].trim(), note: cells[COL_NOTE].trim(),
                     allOk: APP_COLS.every((k) => cells[k].indexOf('✅') >= 0) };
     }
     return out;
@@ -2275,7 +2274,7 @@ function modalGaps() {
    *  **בין** הריפו: ⭐ מי שמעתיק רכיב מאחות מביא איתו את הצורה השנייה. */
   {
     const peerIdx = (p) => `../${p}/index.html`;
-    const others = PEERS.filter((p) => p !== APP.app);
+    const others = PEERS.filter((p) => p !== FACTS.slug);
     const near = others.filter((p) => fs.existsSync(peerIdx(p)));
     for (const peer of (near.length ? others : [])) {
       if (!fs.existsSync(peerIdx(peer))) {
@@ -2748,7 +2747,7 @@ const MONTH_STR = /(["'])((?:[^\\]|\\.)*?)\1/g;
  *  ⚠️ הלוח יצא למודול המשותף: ⭐ קריאה מהקובץ בלבד הייתה מדווחת «אין
  *  מערך חודשים» על עץ תקין. */
 function monthFormGaps() {
-  const src = [APP.file].concat(CORE_FILES).filter((f) => fs.existsSync(f))
+  const src = [FACTS.entry].concat(CORE_FILES).filter((f) => fs.existsSync(f))
     .map((f) => readOnce(f)).join('\n');
   const out = [];
   let arrays = 0, adar = 0, m;
@@ -2875,7 +2874,7 @@ function gateKindGaps() {
 const KVMETA_NAME = /\b[a-z][a-z0-9]{0,3}_[a-z0-9_]*meta\b/g;
 function kvMetaGaps() {
   const d = APP.kvMeta || {};
-  const found = [...new Set(readOnce(APP.file).match(KVMETA_NAME) || [])].sort();
+  const found = [...new Set(readOnce(FACTS.entry).match(KVMETA_NAME) || [])].sort();
   const out = [];
   /*  ⛔ אותה שכבה חיה בשני מרחבי שמות ⛔ ובכוונה — ⚠️ בענן המפתח בלי
    *  תחילית, שהטבלה כבר נושאת אותה, ⭐ ובמכשיר הוא נושא אותה: ⛔ האחסון
@@ -3023,7 +3022,7 @@ function gateSealGaps() {
    *  ויישר שם את הריצפה מקבע את האובדן. ⛔ וריפו אחות שאינה על הדיסק
    *  נאמרת ⛔ ואינה מדולגת בשתיקה. */
   const peerDir = (p) => `../${p}/tools`;
-  const others = FLOOR_PEERS.filter((p) => p !== APP.app);
+  const others = FLOOR_PEERS.filter((p) => p !== FACTS.slug);
   const near = others.filter((p) => fs.existsSync(peerDir(p)));
   /*  ⛔ אפס אחיות אינו «אחות חסרה» — ⚠️ הוא עותק בודד של הריפו: ⭐ השערים
    *  מריצים את הבודק על עותק זמני, ⛔ ושם אין ולא אמורות להיות אחיות.
@@ -5892,7 +5891,7 @@ function ctxGuardGaps() {
  *  ⚠️ הליבה יצאה מ-`index.html`, ⭐ ושער שקורא אותה מהמודול קורא את
  *  המקור לכל דבר: ⛔ דפוס שמכיר את `index.html` בלבד היה מסווג אותו
  *  «אינו קורא את המקור», ⚠️ ומוציא אותו מהמדידה בשקט. */
-const SRC_READ = /readFileSync\([^)]*index\.html|rd\('index\.html'\)|readOnce\(APP\.file\)|readFileSync\([^)]*APP\.file|appSrc\(|CORE_FILES|readFileSync\([^)]*'core'/;
+const SRC_READ = /readFileSync\([^)]*index\.html|rd\('index\.html'\)|readOnce\((?:APP\.file|FACTS\.entry)\)|readFileSync\([^)]*(?:APP\.file|FACTS\.entry)|appSrc\(|CORE_FILES|readFileSync\([^)]*'core'/;
 function scanKindGaps() {
   const out = [];
   let names;
@@ -7560,7 +7559,10 @@ const GATES = {
   182: { claims: { test_parentchild: ['[pc-rowkey]'] } },
   /*  ⭐ סבב 148 — ⛔ בלוק חתום נמדד כמו כל קוד: ⚠️ שם מת בתוך בלוק
    *  שאין לו קורא באף אחות, ⭐ ודילוג שאינו אומר מה אינו נמדד בגללו. */
-  208: { claims: { test_signeddead: ['[signed-dead]', '[skip-why]'] } },
+  208: { claims: { test_signeddead: ['[signed-dead]', '[skip-why]'],
+                   /*  ⭐ סבב 171 — ⛔ שדה בבלוק הקלט מוצהר רק כשאין לו מקור בעץ:
+                    *  ⚠️ ערך שניתן לגזור, ⭐ שדה בלי נימוק, ⛔ וגזירה משוכפלת. */
+                   test_declscan: ['[decl-derivable]', '[decl-why]', '[decl-once]'] } },
   /*  ⭐ סבב 148 — ⛔ ערך בקובץ תיאור נמדד מול מקורו: ⚠️ המרשם, הגזירה
    *  שקוראת את מקור האמת, ⭐ ופורמט אחד לתאריך. */
   135: { claims: { test_docfacts: ['[doc-fact]', '[doc-date]'] } },
@@ -7678,7 +7680,8 @@ const GATES = {
   137: { claims: { test_coremod: ['[asset-file]'] } },
   138: { claims: { test_iconlayer: ['gen-icons', 'מצהיר את ', 'ריק נושא הערת נימוק במקומו'], test_icons: 'master' } },
   141: { claim: 'margin' },
-  43: { manual: 'השוואת זמנים בין הריפו אינה בהישג ידו של שער שרץ בריפו אחד — ⛔ נאכפת בתוצאתה בלבד' },
+  /*  ⭐ סבב 171 — ⛔ הזרימה שרצה מחוץ לסט: ⚠️ השורה נוקבת בה, ⭐ והיא זהה בכולן ואינה נוקבת בשם ריפו. */
+  43: { claims: { test_build: ['[flow-row]', '[flow-deep]'] } },
   /*  ⛔ מה שאינו ניתן לאכיפה מכנית נרשם ככזה (סבב 169) — ⚠️ התא נמדד מול
    *  ה-probe שלו בשלושת החלקים, ⭐ ו-⭕ נושא תקן על הקוד ⛔ ולא כלל עבודה. */
   55: { claims: { 'check-capabilities': 'אין פרק פערים נפרד',
@@ -7713,7 +7716,9 @@ const GATES = {
   36: { claims: { 'check-comments': 'לכל אחד שינוי, תווית',
                   'check-capabilities': '[claim-mut]' } },
   37: { claim: 'שם הטענה שתיפול' },
-  34: { claim: ['כיסוי הטבלה', 'הפניות GATES'] },
+  /*  ⭐ סבב 171 — ⛔ הדרך הרביעית: ⚠️ זרימה ושורה נוקבות זו בזו, ⭐ מופעלת ביד בלבד, ⛔ ואין ⭕ שנימוקו תקציב הזמן. */
+  34: { claims: { 'check-capabilities': ['כיסוי הטבלה', 'הפניות GATES'],
+                  test_build: ['[flow-row]', '[flow-dispatch]', '[flow-budget]'] } },
   47: { claim: 'ועמודת התקן שלה אוסרת במפורש' },
   48: { claim: ['מספור רציף ובלי כפילויות', 'nameSignGaps', 'catOrderGaps'] },
   49: { claims: { 'check-capabilities': ['הערה ריקה', 'COUNT_NOTE'],
@@ -8343,7 +8348,7 @@ if (CORE) {
  *  שהוא קורא בשמן, ⛔ ומי שנוגע בהם קורא את מקור האפליקציה.
  *  ⛔ **והפרישה נעצרת בשמות שאינם פונקציות בקובץ** — ⚠️ בלי העצירה כל
  *  בדיקה הייתה מושכת את הקובץ כולו, ⭐ וכולן היו נמדדות אותו דבר. */
-const SRC_TOUCH = /(?<![\w$.])(src|code|srcRefs)(?![\w$])|APP\.file/;
+const SRC_TOUCH = /(?<![\w$.])(src|code|srcRefs)(?![\w$])|APP\.file|FACTS\.entry/;
 function fnTextMap() {
   const capTxt = readOnce('tools/check-capabilities.mjs');
   return memoByHash('fntext', capTxt, () => {

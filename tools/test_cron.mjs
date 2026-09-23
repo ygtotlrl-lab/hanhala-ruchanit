@@ -26,6 +26,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB_SCHEMA } from './db-schema.mjs';
+import { FACTS } from './app-facts.mjs';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 /* ⚠️ פר-אפליקציה — הפרויקט שהאפליקציה חיה בו והבעלות על מיגרציית הגיבוי נבדלים ביניהן */
@@ -38,13 +39,14 @@ import { DB_SCHEMA } from './db-schema.mjs';
    האחיות מחייב עדכון כאן באותו סבב. */
 /* ⚠️ סוף פר-אפליקציה */
 const APP = {
-  name: 'hanhala-ruchanit',
+  /*  ⭐ מפתחות הגיבוי שהרשימה במסד חייבת להכיל — ⛔ **אינו נגזר**: שמות טבלאות שהגיבוי כותב, ⚠️ והמסד הוא מה שנמדד מולם */
   keys: [// סבב 36, שלב א — שלושת מקורות ה-`kind:'table'` של שכבת השורות.
          'hr_sessions_rows', 'hr_marks_rows', 'hr_students_rows',
          // סבב 39 — שכבת השורות של השינה, אב ובן.
          'hr_sleep_sessions_rows', 'hr_sleep_marks_rows',
          // סבב 80 — ההגדרות, שירשו את שלושה-עשר מפתחות ה-`kv`.
          'hr_settings'],
+  /*  ⭐ קידומות מפתחות הגיבוי — ⛔ **אינו נגזר**: מוסד שהגיבוי נושא בשמו, ⚠️ ואין קובץ שמצהיר עליו */
   prefixes: [''],
   /*  ⛔ שנים-עשר מפתחות שהאפליקציה **חדלה לכתוב** בסבב 80 ⛔ ואינם
       יורדים מרשימת-ההיתר — ⚠️ לכל אחד מהם יש עדיין עותקי גיבוי במסד,
@@ -557,7 +559,7 @@ async function tLive() {
 }
 
 /* ── הרצה ──────────────────────────────────────────────────────────────── */
-console.log('· ' + APP.name + ' — סבב 35ג: פינוי גיבויים אוטומטי במסד');
+console.log('· ' + FACTS.slug + ' — סבב 35ג: פינוי גיבויים אוטומטי במסד');
 t1();
 /*  ⛔ ההגדרה החיה נקראת בכל ריפו ⛔ ולא בבעלים בלבד — ⚠️ כל אחד מהם פונה
  *  למסד שלו, ⭐ ושם טבלה שהוסב מפיל את הפונקציה אצל כולם. */
@@ -635,7 +637,7 @@ t5();
       (defines.length ? ' (' + defines.join(' · ') + ')' : '') +
       '. מוחקים את העותק — הבעלות היא של ריפו אחד');
     const owner = (APP.migrationDoc || '').split('/')[0];
-    assert(owner && owner !== APP.name,
+    assert(owner && owner !== FACTS.slug,
       '6ב · ⛔ ו-`migrationDoc` מצביע על ריפו הבעלים — נמדד «' + owner +
       '» והצפוי שם ריפו אחר. מיישרים את ההצהרה לקובץ שבריפו שמחזיק אותה');
   } else {
@@ -679,7 +681,7 @@ t5();
       '» ואילך והצפוי אפס' + (defines.length ? ' (' + defines.join(' · ') + ')' : '') +
       '. כותבים את השינוי במיגרציה של ריפו הבעלים');
     const own = (K.migrationDoc || '').split('/')[0];
-    assert(own && own !== APP.name,
+    assert(own && own !== FACTS.slug,
       '6ו · ⛔ ו-`migrationDoc` מצביע על ריפו הבעלים — נמדד «' + own +
       '» והצפוי שם ריפו אחר. מיישרים את ההצהרה לקובץ שבריפו שמחזיק אותה');
     if (K.since) {

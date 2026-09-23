@@ -22,10 +22,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import vm from 'node:vm';
+import { FACTS } from './app-facts.mjs';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
-  app: 'hanhala-ruchanit',
   /*  ⛔ שכבת החותמת הפר-מפתחית — ⚠️ **מה נכנס**: שם הטבלה שהחותמת יושבת
    *  בה ⟵ ומספר האתרים שנוקבים בשמה במקור; ⛔ **ומה מפיל**: אתר שנוסף או
    *  ירד בלי שהמספר עודכן. ⭐ **ולמה המבנה קיים**: שם שהוסב במקום אחד
@@ -173,7 +173,7 @@ const noneIn = (re, s, label) => ok(_hits(re, s) === 0,
 const someIn = (re, s, label) => ok(_hits(re, s) >= 1,
   `${label} — נמדדו ${_hits(re, s)} מופעים והצפוי לפחות 1`);
 
-console.log('\n— שכבת החותמת הפר-מפתחית (' + APP.app + ') —');
+console.log('\n— שכבת החותמת הפר-מפתחית (' + FACTS.slug + ') —');
 
 /* ── א. ⛔ שכבת החותמת חיה במקור, ובמספר האתרים שהוצהר ──────────────────── */
 /*  ⛔ נמדד על המקור הגולמי (סבב 145) — ⚠️ שם הטבלה חי כליטרל מחרוזת,
