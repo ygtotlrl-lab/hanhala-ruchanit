@@ -27,6 +27,7 @@ import { execFileSync } from 'node:child_process';
 
 import fs from 'node:fs';
 import { FACTS } from './app-facts.mjs';
+import { declCases, dumpCases } from './decl-cases.mjs';
 
 /* ── APP — הדבר היחיד שנבדל בין הריפו ──────────────────────────────────── */
 const APP = {
@@ -36,23 +37,24 @@ const APP = {
    *  מספר שורה**: מספר זז בכל עריכה, ⛔ והכרזה שזזה מכסה שורה אחרת.
    *  ⚠️ **וההיעדר מוצהר ריק** ⛔ ואינו נשמט. */
   secretAllow: [
-    /*  ⭐ **שם** הסוד ⛔ ולא ערכו — ⚠️ הוא מה שה-workflow מבקש מ-GitHub Secrets, ⛔ והוא ציבורי מעצם טבעו: ⭐ הערך עצמו לעולם אינו בעץ */
-    { file: "android/README.md", anchor: "KEYSTORE_B64" },
-    /*  ⭐ מפתח ה-`anon` של Supabase — ⛔ הוא נועד לרוץ בדפדפן ומוגש עם הדף בכל טעינה: ⚠️ הגבול הוא RLS וההרשאות שבמסד, ⛔ ולא סודיות המפתח */
-    { file: "index.html", anchor: "xbtskqobynewvnckaaz.supabase.co','" },
-    /*  ⭐ שם האלגוריתם שמועבר ל-`importKey` — ⛔ ולא ערך: ⚠️ מה שנגזר הוא הטביעה, והחומר שנכנס הוא מה שהמשתמש הקליד */
-    { file: "index.html", anchor: "'PBKDF2'" },
-    /*  ⭐ שם משתנה של שדה האימות במסך שינוי הסיסמה — ⛔ ולא ערך: ⚠️ ההשוואה היא בין שני מה שהוקלד */
-    { file: "index.html", anchor: "MSG_PASS_MISMATCH_X" },
-    /*  ⭐ חתימת התוכן של המפתח — ⛔ היא **זהותו** ואינה פותחת אותו: ⚠️ היא מודפסת מכל APK חתום, ⛔ ושער שנופל עליה חוסם את השורה שדורשת אותה */
-    { file: "tools/check-capabilities.mjs", anchor: "keystoreSha:" },
-    /*  ⭐ מזהה מכשיר סינתטי בקבוע בדיקה — ⛔ אין לו מקבילה במסד ולא באחסון של אף מכשיר: ⚠️ הוא הקלט של המוטציה ושל מוטציית-הנגד */
-    { file: "tools/test_devid.mjs", anchor: "APP.deviceKey" },
-    /*  ⭐ שם מפתח גיבוי בקבוע בדיקה — ⛔ ולא אישור: ⚠️ הוא נבחר כדי ליפול תחת תבנית `PRE_*` שהפינוי אינו נוגע בה */
-    { file: "tools/test_stage_a.mjs", anchor: "PRE_SYNC_UNIFY_k1" },
+    { anchor: "KEYSTORE_B64", file: "android/README.md",
+      why: '⭐ **שם** הסוד ⛔ ולא ערכו — ⚠️ הוא מה שה-workflow מבקש מ-GitHub Secrets, ⛔ והוא ציבורי מעצם טבעו: ⭐ הערך עצמו לעולם אינו בעץ' },
+    { anchor: "xbtskqobynewvnckaaz.supabase.co','", file: "index.html",
+      why: '⭐ מפתח ה-`anon` של Supabase — ⛔ הוא נועד לרוץ בדפדפן ומוגש עם הדף בכל טעינה: ⚠️ הגבול הוא RLS וההרשאות שבמסד, ⛔ ולא סודיות המפתח' },
+    { anchor: "'PBKDF2'", file: "index.html",
+      why: '⭐ שם האלגוריתם שמועבר ל-`importKey` — ⛔ ולא ערך: ⚠️ מה שנגזר הוא הטביעה, והחומר שנכנס הוא מה שהמשתמש הקליד' },
+    { anchor: "MSG_PASS_MISMATCH_X", file: "index.html",
+      why: '⭐ שם משתנה של שדה האימות במסך שינוי הסיסמה — ⛔ ולא ערך: ⚠️ ההשוואה היא בין שני מה שהוקלד' },
+    { anchor: "keystoreSha:", file: "tools/check-capabilities.mjs",
+      why: '⭐ חתימת התוכן של המפתח — ⛔ היא **זהותו** ואינה פותחת אותו: ⚠️ היא מודפסת מכל APK חתום, ⛔ ושער שנופל עליה חוסם את השורה שדורשת אותה' },
+    { anchor: "APP.deviceKey", file: "tools/test_devid.mjs",
+      why: '⭐ מזהה מכשיר סינתטי בקבוע בדיקה — ⛔ אין לו מקבילה במסד ולא באחסון של אף מכשיר: ⚠️ הוא הקלט של המוטציה ושל מוטציית-הנגד' },
+    { anchor: "PRE_SYNC_UNIFY_k1", file: "tools/test_stage_a.mjs",
+      why: '⭐ שם מפתח גיבוי בקבוע בדיקה — ⛔ ולא אישור: ⚠️ הוא נבחר כדי ליפול תחת תבנית `PRE_*` שהפינוי אינו נוגע בה' },
   ],
 };
 /* ── סוף APP ───────────────────────────────────────────────────────────── */
+const CASE = declCases(import.meta.url, APP);
 
 /*  ⛔ השורות בטבלת התשתית שהקובץ הזה אוכף — ⚠️ המיפוי נגזר מכאן ⛔ ואינו
  *  רשימה שנייה בבודק. */
@@ -98,6 +100,7 @@ const FLOOR_MAX = (() => {
   return r ? Number(r[2]) : EXPECTED;
 })();
 process.on('exit', () => {
+  dumpCases();
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
   if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
@@ -256,6 +259,8 @@ for (const [f, txt] of TEXT) SITES.push(...credLines(f, txt));
     '. מסירים את הערך מהקובץ, או מכריזים ב-APP.secretAllow עם הנימוק למה אינו סוד');
 }
 {
+  for (const a of APP.secretAllow)
+    if (SITES.some((s) => covers(a, s, TEXT.get(s.file)))) CASE('secretAllow', a.anchor);
   const stale = APP.secretAllow.filter((a) =>
     !SITES.some((s) => covers(a, s, TEXT.get(s.file))));
   t(n++, stale.length === 0,
