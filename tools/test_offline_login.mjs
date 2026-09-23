@@ -35,7 +35,7 @@ import { appSrc } from './appsrc.mjs';
  *  רשימה שנייה בבודק. */
 export const ROWS = [200];
 
-/*  ⛔ המוטציות אינן ברירת המחדל (סבב 92) — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
+/*  ⛔ המוטציות אינן ברירת המחדל — ⚠️ כל מוטציה היא שינוי ⟵ הרצה
  *  ⟵ שחזור, ⭐ ושני שערים לבדם היו רוב זמן הסט: ⛔ הן רצות ברמה המלאה
  *  (`--full`), בסוף הסבב ולפני מיזוג, ⚠️ ולא בכל הרצה בזמן העבודה. */
 const RUN_MUT = process.env.GATE_MUT === '1';
@@ -118,21 +118,21 @@ const FUNCS = ['hrRandSalt', 'hrPassFp', 'hrMakePassFp', 'hrPassFields', 'hrIsMi
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
    * המזהה שהיא קוראת לו ביצירה. */
   'writeUser', '_writeUserSend', 'newClientId',
-  /*  ⛔ שכבת המראה (סבב 116) — ⚠️ `_doLoginInner` טוענת ממנה את המשתמשים
+  /*  ⛔ שכבת המראה — ⚠️ `_doLoginInner` טוענת ממנה את המשתמשים
    *  בשורה הראשונה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
   'mirrorKey', 'mirrorTables', 'mirrorLoadOne', 'mirrorLoad', 'mirrorSave',
   'mirrorWrite', '_hrRecTs'];
 const VARS = ['MSG_OFFLINE', 'HR_PASS_ITER', 'HR_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
-  /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
+  /* ⭐ שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
   'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
-  /*  ⛔ שם טבלת המשתמשים במראה (סבב 116) — ⚠️ שלושת אתרי הכתיבה נוקבים
+  /*  ⛔ שם טבלת המשתמשים במראה — ⚠️ שלושת אתרי הכתיבה נוקבים
    *  בו, ⭐ ומפתח האחסון נגזר ממנו. */
   'HR_USERS_TABLE', 'MIRROR', 'PUSH_TABLES',
-  /*  ⛔ הודעת חסימת כתיבת המשתמש (סבב 131) — ⚠️ `USER_CFG.offMsg` מחזירה
+  /*  ⛔ הודעת חסימת כתיבת המשתמש — ⚠️ `USER_CFG.offMsg` מחזירה
    *  אותה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
   'MSG_OFF_USER_WRITE'];
-/*  ⛔ **מה נכנס** (סבב 131): שם שאינו קיים בהכרח במקור, ⛔ **ומה מפיל**:
+/*  ⛔ **מה נכנס**: שם שאינו קיים בהכרח במקור, ⛔ **ומה מפיל**:
  *  אין — ⚠️ הוא נמשך רק כשהוא נמצא: ⭐ והמבנה קיים מפני שאפליקציה בלי
  *  מסך שיוצר או משנה סיסמה אין לה מה להצהיר, ⛔ ורתמה שדורשת שם כזה
  *  נופלת שם ב-`ReferenceError`. */
@@ -264,12 +264,12 @@ function boot(state, opts = {}) {
      *  מדמה את שניהם, ⭐ שהנמדד כאן הוא **מה נכתב** ⛔ ולא הפינוי. */
     lsSetArray: (k, arr) => { LS[k] = JSON.stringify(arr); return true; },
     hwDiskFilter: (k, rows) => rows,
-    /*  ⛔ הקריאה מהאחסון עוברת גם היא במודול (סבב 67) — `lsGet` החליף
+    /*  ⛔ הקריאה מהאחסון עוברת גם היא במודול — `lsGet` החליף
      *  את `localStorage.getItem` בכל אתר שמחוץ למודול, ורתמה בלי
      *  הדמה הזו קוראת `undefined` במקום את המטמון. */
     lsGet: (k, fb) => (k in LS ? LS[k] : (fb === undefined ? null : fb)),
     toast: (m) => TOASTS.push(m),
-    /*  ⛔ רישום כשל הכתיבה (סבב 113) — ⚠️ הוא אינו משנה את הזרימה,
+    /*  ⛔ רישום כשל הכתיבה — ⚠️ הוא אינו משנה את הזרימה,
      *  ⭐ והרתמה מדמה אותו כדי שכשל אמיתי לא ייבלע ב-ReferenceError. */
     hrWriteFail: (where, e) => TOASTS.push('[ls] ' + where + ': ' + ((e && e.message) || e)),
     H: String.fromCharCode,
@@ -280,12 +280,12 @@ function boot(state, opts = {}) {
     hrLoginLogFlush: () => {},
     loadPerms: async () => {},
     showPage: () => {},
-    lkReset: () => {},   // סבב 52 — המנגנון עבר לליבה המשותפת
+    lkReset: () => {},   // המנגנון עבר לליבה המשותפת
     ctxEpoch: () => CTX.n,
     ctxSwitch: () => { CTX.n++; return CTX.n; },
     ctxStale: (ep) => ep !== CTX.n,
     initDateFields: () => {},
-    /*  ⛔ מסלול סגירה אחד מסבב 80 — ⚠️ שלוש פונקציות הסגירה הנפרדות ירדו
+    /*  ⛔ מסלול סגירה אחד — ⚠️ שלוש פונקציות הסגירה הנפרדות ירדו
      *  עם המיכלים שלהן, ⭐ והרתמה מדמה את היחידה שנשארה. */
     closeModal: () => {},
     openModal: () => {},
@@ -321,7 +321,7 @@ const GATE_ID = new URL(import.meta.url).pathname.split('/').pop();
 const FLOOR = { shared: 0, app: 104, appWhy: 'הכניסה האופליין — קיימת בשלוש, ומספר המסלולים נגזר ממסך ניהול המשתמשים שיש או שאין' };
 const EXPECTED = FLOOR.shared + FLOOR.app;
 let RAN = 0;
-/*  ⛔ המונה נלכד בכניסה לשלב המוטציות (סבב 119) — ⚠️ `null` הוא תהליך
+/*  ⛔ המונה נלכד בכניסה לשלב המוטציות — ⚠️ `null` הוא תהליך
  *  שלא הגיע לשם, ⛔ ואפס הוא שער שכל גופו מוטציות: ⭐ ההבחנה היא מה
  *  שמבדיל ריצה חלקית מדילוג מוצהר. */
 let PRE_MUT = null;
@@ -332,12 +332,12 @@ const mutStage = () => { if (PRE_MUT === null) PRE_MUT = RAN; };
  *  סינתטי** שאין לצידו אחיות ואין בו `.git`, ⭐ ולכן שער שמשווה מול אחות
  *  או קורא את סט המעקב מגיע לחלק מטענותיו **בכוונה**: ⛔ והריצפה נמדדת
  *  על עץ אמיתי ⛔ ולא שם. */
-const SUBRUN = !!process.env.GATE_SUBRUN || !!process.env.R33_INNER;
-/*  ⛔ הריצפה נמדדת בשני הכיוונים (סבב 118) — ⚠️ **מה נכנס**: מספר הטענות
+const SUBRUN = !!process.env.GATE_SUBRUN || !!process.env.GATE_INNER;
+/*  ⛔ הריצפה נמדדת בשני הכיוונים — ⚠️ **מה נכנס**: מספר הטענות
  *  שרצו עד שלב המוטציות; ⛔ **ומה מפיל**: פחות מהמוצהר — ריצה חלקית —
  *  ⛔ ויותר ממנו — ריצפה מיושנת. ⭐ **ולמה שני הכיוונים**: ריצפה שאינה
- *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד
- *  (סבב 119)** — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
+ *  מתעדכנת מפסיקה למדוד את מה שנוסף. ⛔ **וההשהיה על שלב המוטציות בלבד**
+ *  — ⚠️ `mutStage` לוכדת את המונה בכניסה אליו, ⭐ ומה שהוא
  *  מוסיף אינו נספר בתקרה: ⛔ השהיה על הרמה המלאה כולה השאירה תשעה שערים
  *  בלי מדידה באף כיוון. ⚠️ ושער שמספרו משתנה גם בלי המוטציות מוכרז
  *  ב-`APP.floorRange` ומקבל את הטווח ב-`GATE_FLOOR_RANGE`. */
@@ -351,7 +351,7 @@ process.on('exit', () => {
    *  סינתטי מגיע לחלק מטענותיו בכוונה, ⭐ והרצפה נמדדת על עץ אמיתי. */
   if (!process.argv[1] || !process.argv[1].endsWith(GATE_ID)) return;
   if (SUBRUN) return;
-  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר (סבב 119) —
+  /*  ⛔ אפס שנמדד בכניסה לשלב המוטציות הוא דילוג מוצהר —
    *  ⚠️ שער שכל גופו מוטציות אינו רץ ברמה המהירה, ⭐ ואפס כזה אינו
    *  ריצה חלקית: ⛔ ו-`null` — תהליך שלא הגיע לשם — כן. */
   if (PRE_MUT === 0 && process.env.GATE_MUT !== '1') {
@@ -442,11 +442,11 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
     !Object.values(LS).some((v) => ['111111', '222222', '333333'].some((p) => String(v).indexOf(p) !== -1)));
 }
 {
-  // מטמון ישן בפורמט של סבב 21 (רשומה אחת, עם סיסמה גלויה)
+  // מטמון ישן בפורמט (רשומה אחת, עם סיסמה גלויה)
   const S = boot({ tables: { hr_users: USERS() } });
   LS.hr_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
-  /*  ⛔ המראה נטענת לזיכרון לפני הקריאה (סבב 116) — ⚠️ `hrUsersCacheGet`
+  /*  ⛔ המראה נטענת לזיכרון לפני הקריאה — ⚠️ `hrUsersCacheGet`
    *  קוראת מ-`MIRROR`, ⭐ ומסלול הכניסה טוען אותה בשורתו הראשונה. */
   S.mirrorLoadOne(S.HR_USERS_TABLE);
   S.hrUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
@@ -469,7 +469,7 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
   eq('2יד. משתמש לא-פעיל אינו נשמר', LS.hr_mirror_users, undefined);
 }
 
-/* ── 2י. ⛔ הגירת מפתח המראה (סבב 113) ───────────────────────────────────────
+/* ── 2י. ⛔ הגירת מפתח המראה ─────────────────────────────────────────────────
    ⛔ מה נאכף: המפתח הישן נקרא, נכתב לחדש, ⛔ ורק אחר כך נמחק — ⚠️ ומי
    שכבר יש לו מפתח חדש אינו נוגע בישן. ⭐ והכניסה האופליין עובדת אחרי
    ההמרה **גם למשתמש שאינו האחרון**: ⛔ המראה מחזיקה את כל הפעילים,
@@ -538,8 +538,8 @@ sec('4. אימות אופליין מול הטביעה');
     await S.hrVerifyOffline({ client_id: '5', active: true, pass_salt: 'aa', pass_fp: 'bb' }, 'x'), 'no-crypto');
 }
 
-/*  ⭐ סבב 40 — זריעת טביעות לשורות הענן.
- *  עד סבב 40 השורות בפיקסטורה נשארו בלי `pass_fp`, ומסלולי האימות
+/*  ⭐ זריעת טביעות לשורות הענן.
+ *  בעבר השורות בפיקסטורה נשארו בלי `pass_fp`, ומסלולי האימות
  *  המקוונים עבדו מפני שהם השוו מול `password_hash` הגלוי. מרגע שהם
  *  משווים מול הטביעה, שורת ענן בלי טביעה **אינה יכולה להיכנס** — וזה
  *  בדיוק הנכון. הפונקציה הזו מביאה את הפיקסטורה למצב המדוד של המסד
@@ -624,7 +624,7 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
   T('5יח. ...ונרשם כ-no_cache_offline', LOGINLOG.indexOf('no_cache_offline') !== -1);
 }
 {
-  // מטמון בפורמט הישן של סבב 21 — סיסמה גלויה, בלי טביעה
+  // מטמון בפורמט הישן — סיסמה גלויה, בלי טביעה
   const legacy = [{ client_id: '3', username: 'yosef', password_hash: '333333', full_name: 'יוסף', role: 'junior', active: true }];
   const r = await offlineLogin('yosef', '333333', legacy);
   eq('5יט. ⛔ מטמון ישן: סיסמה גלויה **אינה** מתקבלת כטביעה', r.user, null);
@@ -636,7 +636,7 @@ sec('6. כניסה מקוונת');
 {
   const rows = USERS();
   const S = boot({ tables: { hr_users: rows } });
-  await seedFp(S, rows);          // ⭐ סבב 40 — האימות המקוון הוא מול הטביעה
+  await seedFp(S, rows);          // ⭐ האימות המקוון הוא מול הטביעה
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '222222';
   await S._doLoginInner();
   await waitFor(() => JSON.parse(LS.hr_mirror_users || '[]').length === 3,
@@ -656,9 +656,9 @@ sec('6. כניסה מקוונת');
   T('6ו. ...ונרשמה כ-wrong_credentials_online', LOGINLOG.indexOf('wrong_credentials_online') !== -1);
 }
 
-/* ── 7. ⛔ השלמת הטביעות הוסרה (סבב 40) ──────────────────────────────────────
-   ⚠️ **הטענות כאן התהפכו במכוון.** עד סבב 40 הן אכפו ש-`hrBackfillPassFp`
-   גוזרת טביעה מהסיסמה הגלויה; מסבב 40 הן אוכפות ש**היא אינה קיימת**.
+/* ── 7. ⛔ השלמת הטביעות הוסרה ───────────────────────────────────────────────
+   ⚠️ **הטענות כאן התהפכו במכוון.** בעבר הן אכפו ש-`hrBackfillPassFp`
+   גוזרת טביעה מהסיסמה הגלויה; הן אוכפות ש**היא אינה קיימת**.
    ⛔ זו אינה ריכוך של הבדיקה אלא הפוכה שלה: כל עוד הפונקציה בקוד, יש
    מסלול שקורא את `password_hash` כדי לגזור ממנה — כלומר הקורא האחרון של
    הסיסמה הגלויה, וזה שהיה נשבר ברגע שהעמודה תימחק.
@@ -724,7 +724,7 @@ sec('8. saveUser / changeMyPassword');
 {
   const rows = USERS();
   const S = boot({ tables: { hr_users: rows } });
-  await seedFp(S, rows);          // ⭐ סבב 40 — הסיסמה הנוכחית מאומתת מול הטביעה
+  await seedFp(S, rows);          // ⭐ הסיסמה הנוכחית מאומתת מול הטביעה
   S.AUTH.user = { client_id: '2', username: 'moshe', full_name: 'משה', role: 'senior', active: true };
   DOM._m['mp-cur'].value = '222222'; DOM._m['mp-new'].value = '246810';
   DOM._m['mp-new2'].value = '246810';
@@ -741,10 +741,10 @@ sec('9. confirmSwitch');
 async function doSwitch(targetId, pass, opts = {}) {
   const cloud = USERS();
   const S = boot({ netFail: !!opts.offline, listSelectFail: !!opts.listSelectFail, tables: { hr_users: cloud } });
-  /*  ⛔ היעד יושב ב-`window._hrSwitchId` מסבב 80 — ⚠️ עד אז הוא נתלה על
+  /*  ⛔ היעד יושב ב-`window._hrSwitchId` — ⚠️ עד אז הוא נתלה על
    *  מיכל הדיאלוג, ⭐ ומיכל אחד לכל הדיאלוגים אינו יכול לשאת מצב של אחד. */
   S._hrSwitchId = targetId;
-  await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
+  await seedFp(S, cloud);         // ⭐ גם מעבר-משתמש מקוון מאמת מול הטביעה
   LS.hr_mirror_users = JSON.stringify(opts.cache || CACHED);
   S.mirrorLoadOne(S.HR_USERS_TABLE);
   S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
@@ -754,7 +754,7 @@ async function doSwitch(targetId, pass, opts = {}) {
 }
 {
   const r = await doSwitch('3', '333333', { offline: true });
-  T('9א. ⭐ מעבר-משתמש אופליין עובד שוב (נשבר בסבב 21)', r.user.client_id === '3');
+  T('9א. ⭐ מעבר-משתמש אופליין עובד', r.user.client_id === '3');
   eq('9ב. ...בלי הודעת שגיאה', r.err, '');
   T('9ג. ...ומסומן אופליין', r.S.AUTH.offlineLogin === true);
 }
@@ -781,12 +781,12 @@ async function doSwitch(targetId, pass, opts = {}) {
                 'רענון המטמון על המשתמש החדש');
   T('9י. מעבר מקוון עובד', r.user.client_id === '2');
   const c = JSON.parse(LS.hr_mirror_users);
-  T('9יא. ⭐ המטמון רוענן על המשתמש **החדש** (הבאג של סבב 21)',
+  T('9יא. ⭐ המטמון רוענן על המשתמש **החדש**',
     !!c.find((u) => String(u.client_id) === '2'));
   T('9יב. ⛔ ואין בו password_hash', String(LS.hr_mirror_users).indexOf('password_hash') === -1);
 }
 {
-  // ⭐ בידוד תיקון סבב 21: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
+  // ⭐ בידוד התיקון: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
   // `hrRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
   // ולכן רק `hrUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
   const r = await doSwitch('2', '222222', { listSelectFail: true, cache: [] });
@@ -794,7 +794,7 @@ async function doSwitch(targetId, pass, opts = {}) {
                 'שמירת היעד מהשורה שבידינו');
   T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.client_id === '2');
   const c = JSON.parse(LS.hr_mirror_users || '[]');
-  T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם (באג סבב 21)',
+  T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם',
     c.length === 1 && String(c[0].client_id) === '2');
   T('9טו. ⛔ וגם השורה הזו נכנסה בלי password_hash',
     String(LS.hr_mirror_users).indexOf('password_hash') === -1 &&
@@ -807,7 +807,7 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   const rows = USERS();
   const S = boot({ tables: { hr_users: rows } });
   S.AUTH.user = { client_id: '1', role: 'admin' };
-  await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
+  await seedFp(S, rows);          // ⭐ הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
   await waitFor(() => !!LS.hr_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
@@ -821,10 +821,10 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   T('10ג. ...והמטמון בכל זאת מכיל טביעות', /"pass_fp":"[0-9a-f]{64}"/.test(all));
 }
 
-console.log(`\n${bad ? '❌' : '✅'} סבב 22: ${ok} טענות עברו, ${bad} נכשלו`);
+console.log(`\n${bad ? '❌' : '✅'} ${ok} טענות עברו, ${bad} נכשלו`);
 process.exit(bad ? 1 : 0);
 
-/*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות (סבב 92) — ⚠️ הן רצות ברמה
+/*  ⛔ מכאן ולמטה מוטציות ובדיקות שלמות — ⚠️ הן רצות ברמה
  *  המלאה בלבד: ⛔ הרמה המהירה עוצרת כאן עם קוד היציאה של הטענות
  *  שכבר רצו, ⭐ והכיסוי שלהן אינו יורד. */
 mutStage();
@@ -833,12 +833,12 @@ if (!RUN_MUT) {
   process.exit(failures ? 1 : 0);
 }
 /* ───────────────────────────────────────────────────────────────────────────
-   ⛔ מוטציה ומוטציית-נגד — סבב 67
+   ⛔ מוטציה ומוטציית-נגד
    ───────────────────────────────────────────────────────────────────────────
    ⛔ שער נכנס עם מוטציה, או עם נימוק כתוב מדוע אינו ניתן למוטציה.
    ⚠️ בלעדיה אין שום ראיה שהשער **מסוגל** ליפול: 97 טענות שעוברות על עץ
    תקין נראות כרשת ביטחון ופועלות כאישור. ⛔ והמוטציה רצה על **עותק
-   בתיקייה זמנית** ולא על העץ (הלקח של סבב 42ג).
+   בתיקייה זמנית** ולא על העץ.
    ⚠️ הרצת-המשנה מסומנת ב-`RD67_MUT` — ⛔ בלעדיו המוטציה הייתה מריצה את
    עצמה שוב בתוך העותק, לאין סוף.
    ──────────────────────────────────────────────────────────────────────── */
@@ -863,13 +863,13 @@ if (!process.env.RD67_MUT) {
     const st = _run(d);
     const fell = st !== 0;
     console.log((fell === expectFail ? '  ok   ' : '  FAIL ') + label);
-    /*  ⛔ יציאה מיידית ולא `exitCode` (סבב 67) — סיכום השער קורא
+    /*  ⛔ יציאה מיידית ולא `exitCode` — סיכום השער קורא
      *  ל-`process.exit` בסופו, והוא היה דורס כשל מוטציה בשקט. */
     if (fell !== expectFail) process.exit(1);
     _m.rmSync(d, { recursive: true, force: true });
   };
 
-  console.log('\n— מוטציות (סבב 67) —');
+  console.log('\n— מוטציות —');
   _mut('⛔ ביטול בדיקת הטביעה בכניסה האופליין מפיל', 'index.html',
        (s) => s.replace(/pass_fp/g, 'pass_fp_x'), true);
   _mut('⭐ מוטציית-נגד: פונקציה חדשה וחיה ב-index.html ⛔ אינה מפילה', 'index.html',
