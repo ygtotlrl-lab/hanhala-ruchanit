@@ -1613,7 +1613,6 @@ function saveStudentStatus(type) {
   if (!s) return;
 
   if (!Array.isArray(s.absences)) s.absences = [];
-  _migrateStudentLegacy(s);
   /*  ⛔ חותמת לפריט ⛔ ולא לרשומה בלבד — ⚠️ בלעדיה המיזוג פר-פריט אינו יכול
    *  להכריע, ⭐ ומיזוג ברמת הרשומה היה מחליף את המערך כולו. */
   var nw = {id: Date.now(), type: type, reason: reason, from: from, to: to || null,
@@ -2558,11 +2557,7 @@ async function refreshDashStats() {
 }
 
 async function loadDash(){
-  /*  ⛔ הגירת התחילית **ראשונה** (סבב 148) — ⚠️ לפני שכבת המראה ולפני כל
-   *  קורא: ⭐ המראה נטענת ממפתח שנבנה משם הטבלה, ⛔ וקריאה לפני ההגירה
-   *  הייתה מוצאת מפתח ריק ומרוקנת את המסך. */
-  try { migratePrefixKeys(); } catch (e) { console.error('[lsmig] ההגירה נכשלה', e); }
-  // ⭐ שכבת המראה ראשונה — ⛔ ההגירה והטעינה לפני כל קורא: ⚠️ קורא שרץ
+  // ⭐ שכבת המראה ראשונה — ⛔ הטעינה לפני כל קורא: ⚠️ קורא שרץ
   //    לפניה מקבל `undefined` ונופל לברירת המחדל.
   try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
@@ -6792,11 +6787,8 @@ async function hrPullFromCloud() {
     var s = await hrCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
-      var pullMigrated = false;
-      s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
       var mergedS = hrMergeWithDropLog(_hrStudentsRaw(), s, function(r){ return r.id; }, false, 'hr_students_rows');
       _hrStudentsSaveRaw(mergedS);
-      if (pullMigrated) schedulePush();
     }
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await hrCfgGet('approvals');
@@ -6910,8 +6902,6 @@ setTimeout(async function() {
       _hrLastTs = remoteTs;
       await hrPullFromCloud();
       await hrFlushQueue(); // שלח פעולות שניצרו אופליין
-    } else {
-      _runLegacyMigration();
     }
   } catch(e) { console.log('[ys-sync] init:', e.message||e); }
   hrUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
@@ -7395,101 +7385,6 @@ function getAllRelevantAbsences(s) {
   }
   return [];
 }
-
-/* ═══ הגירת התחילית — הגירה מקומית חד-פעמית (סבב 148) ═════════════════════
-   ⛔ **סורקת את `localStorage` עצמו** — ⚠️ ולא רשימת שמות: ⭐ חלק מהמפתחות
-      נבנים בזמן ריצה מקידומת (אופק הפינוי · המראה · יומן הפינוי), ⛔ ורשימה
-      מוקלדת הייתה מפספסת אותם בשקט — ⚠️ ובדיוק במקום שאין מי שיבחין.
-   ⛔ **והתור שלא נדחף וזהות המכשיר ראשונים** — ⚠️ שינוי שמם בלי הגירה מאבד
-      אותם: ⭐ התור אינו ניתן לשחזור, ⛔ וזהות חדשה מייתמת כל מה שסומן עליה.
-   ⛔ **וההגירה אידמפוטנטית** — ⚠️ קוראת · כותבת · ורק אז מוחקת: ⭐ מכשיר
-      שנסגר באמצע אינו מאבד דבר, ⛔ וריצה שנייה אינה משנה דבר.
-   ⛔ **ומפתח שערכו נוקב בשם הישן מתוקן בשדה** — ⚠️ ולא במחרוזת כולה:
-      ⭐ טקסט שהמשתמש הקליד עלול לשאת את אותן שתי אותיות, ⛔ ורישה גורפת
-      הייתה כותבת אותן מחדש.
-   ⚠️ **והיא יורדת בסבב שאחרי זה שהריץ אותה** — ⛔ אלא אם הוכרזה
-      ב-`APP.migrateKeep` עם סבבה.
-   ══════════════════════════════════════════════════════════════════════ */
-/*  ⛔ ההגירה מצהירה את סבבה כאן (סבב 148) — ⚠️ ולא בפרק הסבב: ⭐ פרק סבב
- *  נגזם, ⛔ וההצהרה נשארת ליד הקוד שהיא מתארת. */
-function migratePrefixKeys() {
-  var from = 'ys_', to = 'hr_';
-  /*  ⛔ הראשונים בסדר — ⚠️ התור שלא נדחף וזהות המכשיר. */
-  var first = ['pending', 'device_id', 'offline_queue', 'login_log_queue'];
-  /*  ⛔ מפתחות שערכם נושא שם ישן בשדה `key` — ⚠️ תור הכתיבות ויומן הכניסות. */
-  var deep = ['offline_queue', 'login_log_queue'];
-  var keys = [];
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf(from) === 0) keys.push(k);
-    }
-  } catch (e) { console.error('[lsmig] סריקת האחסון נכשלה', e); return { before: -1, moved: 0 }; }
-  var before = keys.length;
-  if (!before) return { before: 0, moved: 0 };
-  var rank = function (key) {
-    for (var j = 0; j < first.length; j++) if (key.indexOf(from + first[j]) === 0) return j;
-    return first.length;
-  };
-  keys.sort(function (a, b) { return rank(a) - rank(b) || (a < b ? -1 : (a > b ? 1 : 0)); });
-  var moved = 0;
-  for (var n = 0; n < keys.length; n++) {
-    var old = keys[n], neu = old.split(from).join(to);
-    if (neu === old) { moved++; continue; }
-    try {
-      var v = localStorage.getItem(old);
-      /*  ⛔ כותבים לפני שמוחקים — ⚠️ ויעד שכבר קיים אינו נדרס: ⭐ ריצה
-       *  שנייה מוצאת אותו שם, ⛔ והמקור יורד בלי לאבד דבר. */
-      if (v !== null && localStorage.getItem(neu) === null) {
-        localStorage.setItem(neu, migratePrefixValue(neu, v, from, to, deep));
-      }
-      localStorage.removeItem(old);
-      moved++;
-    } catch (e) { console.error('[lsmig] מפתח שלא הוגר: ' + old, e); }
-  }
-  /*  ⛔ המדידה בשני הכיוונים — ⚠️ פער בין מה שנמדד למה שהוגר הוא אובדן:
-   *  ⭐ והוא נרשם ברעש ⛔ ואינו נבלע. */
-  if (moved !== before) console.error('[lsmig] ⛔ ' + moved + ' מתוך ' + before + ' — פער בהגירה');
-  else console.log('[lsmig] ' + moved + ' מפתחות הוגרו מ-' + from + ' ל-' + to);
-  return { before: before, moved: moved };
-}
-/*  ⛔ השם שבתוך הערך — ⚠️ שדה `key` במערך JSON, ⭐ ולא המחרוזת כולה:
- *  ⛔ ערך שאינו מערך, וערך פגום, נשמרים כפי שהם — ⚠️ הגירה אינה מקום
- *  לתקן בו נתון. */
-function migratePrefixValue(key, val, from, to, deep) {
-  for (var i = 0; i < deep.length; i++) {
-    if (key.indexOf(to + deep[i]) !== 0) continue;
-    try {
-      var q = JSON.parse(val);
-      if (!Array.isArray(q)) return val;
-      for (var j = 0; j < q.length; j++) {
-        if (q[j] && typeof q[j].key === 'string') q[j].key = q[j].key.split(from).join(to);
-      }
-      return JSON.stringify(q);
-    } catch (e) { return val; }
-  }
-  return val;
-}
-
-function _migrateStudentLegacy(s) {
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1) {
-    if (!Array.isArray(s.absences)) s.absences = [];
-    var legacyId = s.statusFrom ? new Date(s.statusFrom).getTime() : (Date.now() - 1);
-    s.absences.unshift({id: legacyId, type: s.status, reason: s.statusReason||'', from: s.statusFrom||new Date().toISOString(), to: s.statusTo||null, updatedAt: legacyId});
-    s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
-    return true;
-  }
-  return false;
-}
-
-function _runLegacyMigration() {
-  var students = getStudents();
-  var changed = false;
-  students.forEach(function(s) { if (_migrateStudentLegacy(s)) changed = true; });
-  if (changed) { saveStudents(students); schedulePush(); }
-}
-
-
 
 function openAttendanceEdit(sid) {
   var students = getStudents();
