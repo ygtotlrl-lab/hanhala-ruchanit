@@ -29,7 +29,7 @@
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
     <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
-    <button class="auth-btn" id="auth-btn" data-act="login" data-ksave>כניסה למערכת</button>
+    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="⏳ בודק…" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
 
@@ -810,6 +810,8 @@ async function hrRefreshUsersCache() {
 // להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ וההודעה שלמטה נבדלת
 // פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינה במודול המשותף.
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
+/*  ⚠️ תווית הכפתור בזמן בדיקה ברשת — ⭐ `actRun` קורא אותה מ-`data-busy`. */
+var MSG_BUSY_CHECK = '⏳ בודק…';
 // ⭐ תבנית שש הספרות — ⛔ נאכפת במסלולי יצירה ושינוי בלבד: ⚠️ אכיפה
 // במסלול הכניסה נועלת בחוץ סיסמה תקפה שנקבעה לפני התקן.
 var PASS_SIX_RE = /^[0-9]{6}$/;
@@ -980,8 +982,9 @@ function hrLoginLog(action, branch, details) {
 async function hrLoginLogFlush() { return logFlush(); }
 
 // עטיפת ביטחון: doLogin היא async, ולכן כל זריקה בלתי-צפויה בתוכה הופכת
-// ל-unhandled rejection — הספינר נשאר מסתובב, הכפתור מושבת, ואפס משוב למשתמש.
-// כאן כל כישלון מסתיים בהודעה גלויה ובכפתור פעיל.
+// ל-unhandled rejection — הספינר נשאר מסתובב, ואפס משוב למשתמש.
+// כאן כל כישלון מסתיים בהודעה גלויה. ⛔ והכפתור אינו מושבת כאן — ⚠️ הניתוב
+// (`actRun`) מנטרל אותו עד שההבטחה נגמרת, ⭐ ומחזיר אותו בכל מסלול.
 async function doLogin() {
   try {
     await _doLoginInner();
@@ -993,8 +996,7 @@ async function doLogin() {
        *  שהמשתמש יכול לתקן בהקלדה: ⭐ והמשטח מתאפס כדי שהטופס יהיה שמיש. */
       if (el) el.textContent = '';
       toast(MSG_LOGIN_ERR + ((e && e.message) || e || MSG_SERVER_ERR), null, 'bad');
-      var sp = document.getElementById('auth-spinner'); if (sp) sp.style.display = 'none';
-      var bt = document.getElementById('auth-btn');     if (bt) bt.disabled = false;
+      var sp = document.getElementById('auth-spinner'); if (sp) sp.classList.remove('on');
     } catch (e2) {}
   }
 }
@@ -1008,10 +1010,9 @@ async function _doLoginInner() {
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
   var spinner = document.getElementById('auth-spinner');
-  var btn     = document.getElementById('auth-btn');
-  function showErr(msg){ errEl.style.color='var(--bad)'; errEl.textContent=msg; spinner.style.display='none'; btn.disabled=false; }
-  function startLoad(){ errEl.textContent=''; spinner.style.display='block'; btn.disabled=true; }
-  function stopLoad(){ spinner.style.display='none'; btn.disabled=false; }
+  function showErr(msg){ errEl.textContent=msg; spinner.classList.remove('on'); }
+  function startLoad(){ errEl.textContent=''; spinner.classList.add('on'); }
+  function stopLoad(){ spinner.classList.remove('on'); }
   function dbg(msg){ console.log('[login] '+msg); }
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
@@ -1864,8 +1865,8 @@ var DOM_ACTIONS = {
   /*  ⛔ שורת הסיבה נמחקת מההורה של הכפתור — ⚠️ המבנה חי ב-DOM,
    *  ⭐ והמטפל קורא אותו משם ולא מסגור שנתפר לשורה. */
   'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
-  'at-open-session':     function (el) { atOpenSession(el.dataset.sid, el.dataset.sname, el); },
-  'sl-open-session':     function (el) { hrOpenSession(el.dataset.sid, el.dataset.sname, el); },
+  'at-open-session':     function (el) { return atOpenSession(el.dataset.sid, el.dataset.sname); },
+  'sl-open-session':     function (el) { return hrOpenSession(el.dataset.sid, el.dataset.sname); },
   /*  ⛔ שלוש התראות התשתית מנותבות במפה — ⚠️ הכפתור נבנה ב-JS,
    *  ⭐ והמאזין הישיר שעליו היה בדיוק ההיקף שיצא מהמנגנון. */
   'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.style.display = 'none'; },
@@ -5600,7 +5601,7 @@ function atFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
     btn.onmouseover=function(){this.style.background='var(--info-soft)';};
     btn.onmouseout=function(){this.style.background='var(--card-2)';};
-    btn.dataset.act='at-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
+    btn.dataset.act='at-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
 }
@@ -5878,18 +5879,16 @@ function hrAdoptSession(rec) {
 /* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
 
 // פתיחת סדר חדש
-async function atOpenSession(sessId, sessName, btn) {
+async function atOpenSession(sessId, sessName) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
   if(window._atCurrentSessionId){toast(MSG_CLOSE_SESSION_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
-  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה — ⚠️ הנימוק המדוד: הפתיחה
-   *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
-   *  ⛔ לא היה חיווי, ⚠️ ולחיצה שנייה בזמן ההמתנה שלחה בקשה נוספת.
-   *  ⛔ והשחרור יושב ב-`finally` — ⚠️ כל יציאה מוקדמת מחזירה את הכפתור. */
-  busy(btn, true, '⏳ בודק…');
-  try {
+  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה — ⚠️ הפתיחה ממתינה למשיכה
+   *  **בכוונה**, ⭐ ובלי חיווי ההמתנה נראית כמסך תקוע ולחיצה שנייה שולחת
+   *  בקשה נוספת: ⛔ והניטרול בניתוב — ⚠️ רשומת המפה מחזירה את ההבטחה,
+   *  ⭐ ו-`data-busy` על הכפתור נותן את התווית. */
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   /*  ⛔⛔ משיכה **אחת** ⛔ ומסוננת ליום שנבחר — ⚠️ הנימוק המדוד:
    *  כאן היו **שתי** משיכות מלאות בזו אחר זו של אותן טבלאות, ⭐ ואף אחת
@@ -5955,7 +5954,6 @@ async function atOpenSession(sessId, sessName, btn) {
   window._atCurrentSessionId=rec.id;
 
   _atMountOpenSession(sessName, dateHeb);
-  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -7195,7 +7193,7 @@ function hrFillSessionBtns() {
       'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
     btn.onmouseover=function(){this.style.background='var(--info-soft)';};
     btn.onmouseout=function(){this.style.background='var(--card-2)';};
-    btn.dataset.act='sl-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
+    btn.dataset.act='sl-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
 }
@@ -7345,14 +7343,12 @@ async function hrEditSession(recId) {
   hrRenderStudents();
 };
 
-async function hrOpenSession(sessId, sessName, btn) {
+async function hrOpenSession(sessId, sessName) {
   if(window._hrCurrentSessionId){toast(MSG_CLOSE_REPORT_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||hrGetLogicalDate();
   if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
-  // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
-  busy(btn, true, '⏳ בודק…');
-  try {
+  // ⛔ ההמתנה מכוונת — ⚠️ והחיווי מהניתוב, כמו בפתיחת סדר נוכחות
   // ⛔ ר' הנימוק ב-atOpenSession — משיכה אחת מסוננת ליום שנבחר
   await _hrPullSessions(hrDayWin(dateIso));
   var allData=window._hrData||[];
@@ -7402,7 +7398,6 @@ async function hrOpenSession(sessId, sessName, btn) {
   window._hrCurrentSessionId=rec.id;
 
   _hrMountOpenSession(sessName, dateHeb);
-  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח

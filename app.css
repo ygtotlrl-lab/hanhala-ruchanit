@@ -341,6 +341,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
 .auth-spinner{display:none;margin:var(--sp-5) auto 0;width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
+.auth-spinner.on{display:block}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
 #pg-settings .ss{background:var(--card);border-radius:var(--r-5);padding:var(--sp-6);margin-bottom:var(--sp-6);border:1px solid var(--border)}
 #pg-settings .ss-t{font-size:var(--fs-4);font-weight:700;color:var(--navy-ink);margin-bottom:var(--sp-5);padding-bottom:var(--sp-4);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
