@@ -1,4 +1,4 @@
-package com.hanhala.ruchanit;
+package @@PACKAGE@@;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
