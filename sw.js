@@ -5,7 +5,7 @@
  *  ⚠️ כל הלוגיקה יושבת במודול המשותף שלמטה — זהה בית-לבית
  *  בכל האפליקציות. ⛔ מה שנבדל יושב ב-SW_CFG בלבד.
  */
-var CACHE_NAME = 'hanhala-ruchanit-v206'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
+var CACHE_NAME = 'hanhala-ruchanit-v207'; // ⛔ מכאן נגזרת גרסת האפליקציה — ⚠️ ואין לה ליטרל שני ב-index.html
 
 // קבצים מקומיים — חובה. './' ו-'./index.html' הם אותו קובץ בשני מפתחות.
 var CORE = [
@@ -15,6 +15,7 @@ var CORE = [
   './core/util.js',
   './core/sync.js',
   './core/storage.js',
+  './core/mirror.js',
   './core/backup.js',
   './core/auth.js',
   './core/ui.js',

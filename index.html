@@ -456,9 +456,10 @@ import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
          pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
          plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
          sbWatch, schedulePush, tombBoot, tombPruneMerged } from './core/sync.js';
-import { MIRROR, hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
-         lsRemove, lsSet, lsSetArray, mirrorBoot, mirrorKey, mirrorLoadOne,
-         mirrorSave, mirrorTables, mirrorWrite } from './core/storage.js';
+import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
+         lsRemove, lsSet, lsSetArray } from './core/storage.js';
+import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
+         mirrorTables, mirrorWrite } from './core/mirror.js';
 import { bkBoot, logAction, logFlush } from './core/backup.js';
 import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
@@ -809,7 +810,7 @@ async function hrRefreshUsersCache() {
    ══════════════════════════════════════════════════════════════════════════ */
 // **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
 // להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ וההודעה שלמטה נבדלת
-// פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינה בבלוק החתום.
+// פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינה במודול המשותף.
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 // ⭐ תבנית שש הספרות — ⛔ נאכפת במסלולי יצירה ושינוי בלבד: ⚠️ אכיפה
 // במסלול הכניסה נועלת בחוץ סיסמה תקפה שנקבעה לפני התקן.
@@ -823,8 +824,8 @@ var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת �
    ⛔ ההודעה היא קבוע ⛔ ואינה ליטרל באתר התצוגה — ⚠️ טקסט שנכתב במקום
    שבו הוא נאמר נכתב שוב במסך הבא, ⭐ ושני ניסוחים לאותו מצב הם שני
    מסלולים בעיני הקורא.
-   ⚠️ **ומה שיותר מאפליקציה אחת אומרת אינו כאן** — ⛔ הוא בבלוק החתום,
-   ⭐ ששם החתימה היא מה שמודד את זהות הנוסח. */
+   ⚠️ **ומה שיותר מאפליקציה אחת אומרת אינו כאן** — ⛔ הוא במודול המשותף,
+   ⭐ ששם הנוסח אחד לכל הריפו. */
 var MSG_PERMS_CHANGED_PRE = '🔒 ההרשאות שלך עודכנו — ';
 var MSG_PERMS_CHANGED_POST = ' אינו זמין עוד';
 var MSG_USER_DISABLED_OUT = '⚠️ המשתמש הושבת — מתנתק';
