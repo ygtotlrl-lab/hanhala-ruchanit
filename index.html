@@ -464,7 +464,8 @@ import { bkBoot, logAction, logFlush } from './core/backup.js';
 import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
-         modalEsc, openModal, swApply, swHideUpdate, toast, uiNoDialog } from './core/ui.js';
+         modalEsc, openModal, pullRender, swApply, swHideUpdate, toast,
+         uiNoDialog } from './core/ui.js';
 import './core/hebrew.js';
 
 /*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
@@ -4222,6 +4223,17 @@ async function hrPushToCloud() {
   }
 }
 
+/*  ⛔ הציור שאחרי משיכה — ⚠️ רכיבים תלויי-הגדרות שמוצגים כרגע, ⭐ והוא עובר
+ *  ב-`pullRender`: ⛔ כמה משתמשים עובדים יחד, ⚠️ ושמירה של אחד מושכת אצל
+ *  השני באמצע סימון. */
+function hrPullDraw() {
+  try {
+    if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
+    if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
+  } catch (eRf) { console.error('[pull] רענון בוררי הסדר נכשל', eRf); }
+  if (typeof renderStudents === 'function') renderStudents();
+  if (typeof refreshDashStats === 'function') refreshDashStats();
+}
 async function hrPullFromCloud() {
   /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק לפני כל כתיבה מקומית — ⚠️ המחזור מושך,
    *  ממזג וכותב לדיסק, ⭐ והמשתמש יכול להתחלף בין המשיכה לכתיבה: ⛔ מה
@@ -4324,13 +4336,7 @@ async function hrPullFromCloud() {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
       }
     } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
-    // רענון רכיבים תלויי-הגדרות שמוצגים כרגע (בוררי סוג סדר, רשימות)
-    try {
-      if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
-      if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
-    } catch (eRf) { hrWriteFail('hrPullFromCloud', eRf); }
-    if (typeof renderStudents === 'function') renderStudents();
-    if (typeof refreshDashStats === 'function') refreshDashStats();
+    pullRender(hrPullDraw);
     hrRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
     hrSyncLog('pull', null, null); // אבחון שלב א: משיכה מוצלחת
   } catch(e) { console.error('[ys-sync] pull error:', e); }
