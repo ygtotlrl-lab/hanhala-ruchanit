@@ -29,7 +29,7 @@
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
     <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
-    <button class="auth-btn" id="auth-btn" data-act="login" data-ksave>כניסה למערכת</button>
+    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="⏳ בודק…" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
 
@@ -59,17 +59,17 @@
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
-  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-5 u-sh-shadow u-pe-none u-ws-nw"></div>
-  <div id="user-avatar-wrap" class="u-pos-rel u-d-none u-ai-c">
-    <button data-act="user-menu-toggle" class="u-d-flex u-ai-c u-g-4 u-p-4-6 u-bg-brand-wash u-bd-15-solid-brand-edge u-r-6 u-cur-p u-ff-heebo u-fs-3 u-fw-600 u-c-on-brand u-ws-nw u-bf-blur-4 u-tr-all-2s">
+  <div id="ys-sync-badge" class="hidden u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-5 u-sh-shadow u-pe-none u-ws-nw"></div>
+  <div id="user-avatar-wrap" class="u-pos-rel hidden u-d-flex u-ai-c">
+    <button data-act="user-menu-toggle" class="u-d-flex u-ai-c u-g-4 u-p-4-6 u-bg-on-brand-wash u-bd-15-solid-on-brand-edge u-r-6 u-cur-p u-ff-heebo u-fs-3 u-fw-600 u-c-on-brand u-ws-nw u-bf-blur-4 u-tr-all-2s">
       <span class="u-fs-4">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-3 u-ov-h u-dir-rtl">
-      <div id="user-menu-name" class="u-p-5-6 u-fw-700 u-fs-4 u-c-navy-ink u-bb-1-solid-border"></div>
+    <div id="user-menu" class="hidden u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-3 u-ov-h u-dir-rtl">
+      <div id="user-menu-name" class="u-p-5-6 u-fw-700 u-fs-4 u-c-brand-ink u-bb-1-solid-border"></div>
       <div id="user-menu-role" class="u-p-3-6-5 u-fs-2 u-c-text3 u-bb-1-solid-border"></div>
       <div id="user-menu-others" class="u-bb-1-solid-border"></div>
-      <button data-act="my-pass" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-bb-1-solid-border u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-navy-ink u-fw-600">שינוי הסיסמה שלי 🔑</button>
+      <button data-act="my-pass" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-bb-1-solid-border u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-brand-ink u-fw-600">שינוי הסיסמה שלי 🔑</button>
       <button data-act="menu-logout" class="u-w-100p u-p-5-6 u-bg-none u-bd-none u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-bad u-fw-600">יציאה מהמערכת 🚪</button>
     </div>
   </div>
@@ -90,7 +90,7 @@
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
-      <button class="u-v-color-navy-fill u-v-icbg-info-soft mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="u-v-color-brand-fill u-v-icbg-info-soft mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">👥</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
       <button class="u-v-color-ok u-v-icbg-ok-soft mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">✅</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
       <button class="mod-tone-info mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">🌙</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
       <button class="u-v-color-warn u-v-icbg-warn-soft mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
@@ -102,7 +102,7 @@
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="u-d-none btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" data-chg="import-students"></div>
 
 
 <!-- Filter Tabs -->
@@ -146,7 +146,7 @@
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
     <div id="at-pullStale" class="at-pull-warn"></div>
     <!-- תצוגת רישום -->
-    <div id="at-view-reg" class="u-d-none">
+    <div id="at-view-reg" class="hidden">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
       <div id="at-reg-picker">
         <div class="card-pane">
@@ -167,7 +167,7 @@
         <div id="at-today-sessions"></div>
       </div>
       <!-- שלב ב׳: רשימת תלמידים -->
-      <div id="at-reg-list" class="u-d-none">
+      <div id="at-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="at-reg-header" class="at-reg-bar-info"></div>
           <button data-act="at-session-close" class="at-close-btn">✅ שמור וסגור</button>
@@ -176,7 +176,7 @@
       </div>
     </div>
     <!-- תצוגת ארכיון -->
-    <div id="at-view-arc" class="u-d-none">
+    <div id="at-view-arc" class="hidden">
       <div class="export-row">
         <button data-act="at-export" data-fmt="excel" class="export-xls-btn">📊 Excel</button>
         <button data-act="at-export" data-fmt="pdf" class="export-pdf-btn">📄 PDF</button>
@@ -184,7 +184,7 @@
       <div id="at-arc-list"></div>
     </div>
     <!-- תצוגת השגחה -->
-    <div id="at-view-sup" class="u-d-none">
+    <div id="at-view-sup" class="hidden">
       <div id="at-sup-content"></div>
     </div>
   </div>
@@ -207,7 +207,7 @@
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" class="at-tab-btn">📋 השגחה</button>
     </div>
     <div id="sl-pullStale" class="at-pull-warn"></div>
-    <div id="sl-view-reg" class="u-d-none">
+    <div id="sl-view-reg" class="hidden">
       <div id="sl-reg-picker">
         <div class="card-pane">
           <div class="filter-row">
@@ -225,7 +225,7 @@
         </div>
         <div id="sl-today-sessions"></div>
       </div>
-      <div id="sl-reg-list" class="u-d-none">
+      <div id="sl-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="sl-reg-header" class="at-reg-bar-info"></div>
           <button data-act="sl-session-close" class="at-close-btn">✅ שמור וסגור</button>
@@ -233,14 +233,14 @@
         <div id="sl-students"></div>
       </div>
     </div>
-    <div id="sl-view-arc" class="u-d-none">
+    <div id="sl-view-arc" class="hidden">
       <div class="export-row">
         <button data-act="sl-export" data-fmt="excel" class="export-xls-btn">📊 Excel</button>
         <button data-act="sl-export" data-fmt="pdf" class="export-pdf-btn">📄 PDF</button>
       </div>
       <div id="sl-arc-list"></div>
     </div>
-    <div id="sl-view-sup" class="u-d-none">
+    <div id="sl-view-sup" class="hidden">
       <div id="sl-sup-content"></div>
     </div>
   </div>
@@ -287,7 +287,7 @@
     </div>
 
     <!-- הגדרות מצבת תלמידים -->
-    <div id="settings-students" class="u-d-none">
+    <div id="settings-students" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
       <div class="ss ksave">
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
@@ -315,7 +315,7 @@
     </div>
 
     <!-- הגדרות מודול סדרים -->
-    <div id="settings-attend" class="u-d-none">
+    <div id="settings-attend" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>✅ הגדרות סדרים</span></div>
       <div class="ss ksave">
         <div class="u-d-flex u-fd-col u-g-6">
@@ -337,7 +337,7 @@
         </div>
       </div>
     </div>
-    <div id="settings-sleep" class="u-d-none">
+    <div id="settings-sleep" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss ksave">
         <div class="u-bg-card u-bd-15-solid-border u-r-radius u-p-6 u-maxw-400">
@@ -350,7 +350,7 @@
         </div>
       </div>
     </div>
-    <div id="settings-exams" class="u-d-none">
+    <div id="settings-exams" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -358,7 +358,7 @@
         <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
       </div>
     </div>
-    <div id="settings-files" class="u-d-none">
+    <div id="settings-files" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📁 הגדרות תיקים</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -366,7 +366,7 @@
         <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
       </div>
     </div>
-    <div id="settings-reports" class="u-d-none">
+    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📊 הגדרות דוחות</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -376,7 +376,7 @@
     </div>
 
     <!-- הגדרות מערכת - משתמשים והרשאות -->
-    <div id="settings-system" class="u-d-none">
+    <div id="settings-system" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" data-act="user-add-open">➕ הוסף</button></div>
@@ -405,9 +405,9 @@
 </main>
 
 
-<!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ בעבר
-      כל דיאלוג בנה מיכל משלו וסגר אותו בדרך משלו, ⛔ ומיכל שהוחלף חלקית
-      משאיר שני מסלולי סגירה.  -->
+<!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ מיכל
+      לכל דיאלוג הוא דרך סגירה לכל דיאלוג, ⛔ ומיכל שהוחלף חלקית משאיר
+      שני מסלולי סגירה.  -->
 <div id="modal" class="veil">
   <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="sheet-hd">
@@ -464,7 +464,8 @@ import { bkBoot, logAction, logFlush } from './core/backup.js';
 import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
-         modalEsc, openModal, swApply, swHideUpdate, toast, uiNoDialog } from './core/ui.js';
+         modalEsc, openModal, pullRender, swApply, swHideUpdate, toast,
+         uiNoDialog } from './core/ui.js';
 import './core/hebrew.js';
 
 /*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
@@ -579,8 +580,7 @@ function canEdit(moduleId) {
 }
 
 // ---- החלטת מדיניות: כפתורי מסכים חסומים נשארים גלויים ----
-// **אין להסתיר כפתורי ניווט או כרטיסי מודולים לפי canAccess.** הייתה כאן
-// `hrApplyPermsToUI()` שעשתה בדיוק את זה, והיא הוסרה בכוונה: כפתור שנעלם משאיר את
+// **אין להסתיר כפתורי ניווט או כרטיסי מודולים לפי canAccess** — כפתור שנעלם משאיר את
 // איש הצוות בלי לדעת שהמסך בכלל קיים, ולכן גם בלי לדעת שאפשר לבקש גישה. כפתור
 // גלוי שמחזיר "אין הרשאה" מוסר את המידע הזה.
 // האכיפה לא נחלשת — היא פשוט יושבת בנקודה אחת: `showPage` בודק `canAccess(pg)`
@@ -662,8 +662,8 @@ function hrApplyPerms(p) {
    ⚠️ **והמחיר שולם במודע:** מסך «ניהול משתמשים» חדל להציג את הסיסמה
    הנוכחית — אין מאין לקרוא אותה. **קביעת** סיסמה חדשה עובדת כשהייתה.
 
-   ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** זו הנקודה שכל
-   הסבב עומד עליה: `hrUserSlim` היא נקודת המעבר היחידה אל המטמון, והיא
+   ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** ⭐ `hrUserSlim`
+   היא נקודת המעבר היחידה אל המטמון, והיא
    בונה אובייקט **חדש** בשדות מפורשים — לא `Object.assign` ולא `delete`,
    שהיו מעבירים שדה חדש שיתווסף לטבלה בעתיד בלי שאיש ישים לב.
    ══════════════════════════════════════════════════════════════════════════ */
@@ -727,8 +727,8 @@ function hrIsMissingFpCol(err) {
    ══════════════════════════════════════════════════════════════════════════ */
 // ⚠️ **הורחב בחזרה** אחרי הצמצום — ר' הפרק שמעל.
 // המבנה הוא **מערך** של רשומות דקות; שני הקוראים (`doLogin`
-// ו-`confirmSwitch`) נשארו על `Array.isArray` + `find`, ולכן מטמון ישן
-// (מלפני הסבב, או) נקרא בלי הגירה — ⛔ אבל הוא **נדרס בכל
+// ו-`confirmSwitch`) קוראים ב-`Array.isArray` + `find`, ולכן מטמון ישן
+// נקרא בלי הגירה — ⛔ אבל הוא **נדרס בכל
 // כתיבה**, כולל דרך `hrUserSlim` על הרשומות שכבר בו: כך `password_hash`
 // שנשאר על הדיסק ממטמון ישן **נמחק בהזדמנות הראשונה**, ולא שורד לנצח.
 // המחיר: רשומה ישנה מאבדת את יכולת האימות עד הרענון המקוון הבא, וזה
@@ -811,10 +811,12 @@ async function hrRefreshUsersCache() {
 // להצמיד סמל בסוף המשפט — הוא תמיד בתחילתו. ⛔ וההודעה שלמטה נבדלת
 // פר-אפליקציה בהחלטת מנהל — ⚠️ ולכן אינה במודול המשותף.
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
+/*  ⚠️ תווית הכפתור בזמן בדיקה ברשת — ⭐ `actRun` קורא אותה מ-`data-busy`. */
+var MSG_BUSY_CHECK = '⏳ בודק…';
 // ⭐ תבנית שש הספרות — ⛔ נאכפת במסלולי יצירה ושינוי בלבד: ⚠️ אכיפה
 // במסלול הכניסה נועלת בחוץ סיסמה תקפה שנקבעה לפני התקן.
 var PASS_SIX_RE = /^[0-9]{6}$/;
-// ⭐ מאז שהאימות המקוון עובר דרך הטביעה, מצב הכישלון הזה קיים גם **עם**
+// ⭐ האימות המקוון עובר דרך הטביעה, ⚠️ ולכן מצב הכישלון הזה קיים גם **עם**
 // רשת. ⛔ אין לאחד אותו עם «סיסמה שגויה» — «אין למשתמש סיסמה מוגדרת»
 // אינו «סיסמה שגויה», והודעה מאוחדת שולחת אותו לנסות סיסמאות שוב ושוב
 // במקום לומר לו את הדבר היחיד שיפתור: שמנהל יקבע לו סיסמה.
@@ -942,10 +944,9 @@ async function hrRevalidateOfflineLogin() {
 /* ══════════════════════════════════════════════════════════════════════════
    יומן ניסיונות הכניסה
    ══════════════════════════════════════════════════════════════════════════ */
-/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה — ⚠️ הנימוק המדוד:
- *  אותו ערך היה כתוב כאן וגם ב-`CACHE_NAME` שב-`sw.js`, ⛔ והוא נסחף
- *  **13 גרסאות**: ⭐ `sw_version` ביומן הכניסה דיווח v96 בעוד שהקוד שרץ
- *  היה v109, ⚠️ וכל רשומת כניסה מאז נשאה גרסה שגויה.
+/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה — ⚠️ ערך שנכתב כאן וגם
+ *  ב-`CACHE_NAME` שב-`sw.js` נסחף, ⭐ ו-`sw_version` ביומן הכניסה מדווח
+ *  גרסה שאינה הקוד שרץ.
  *  ⭐ **שם המטמון החי הוא הערך** — ⛔ הוא נוצר מ-`CACHE_NAME` עצמו, ⚠️ ולכן
  *  זו קריאה מהמקום שבו הערך נקבע ⛔ ולא מקור שני.
  *  ⛔ **ובזמן עדכון עשויים לחיות שני מטמונים** — ⚠️ הנבחר הוא בעל המספר
@@ -982,8 +983,9 @@ function hrLoginLog(action, branch, details) {
 async function hrLoginLogFlush() { return logFlush(); }
 
 // עטיפת ביטחון: doLogin היא async, ולכן כל זריקה בלתי-צפויה בתוכה הופכת
-// ל-unhandled rejection — הספינר נשאר מסתובב, הכפתור מושבת, ואפס משוב למשתמש.
-// כאן כל כישלון מסתיים בהודעה גלויה ובכפתור פעיל.
+// ל-unhandled rejection — הספינר נשאר מסתובב, ואפס משוב למשתמש.
+// כאן כל כישלון מסתיים בהודעה גלויה. ⛔ והכפתור אינו מושבת כאן — ⚠️ הניתוב
+// (`actRun`) מנטרל אותו עד שההבטחה נגמרת, ⭐ ומחזיר אותו בכל מסלול.
 async function doLogin() {
   try {
     await _doLoginInner();
@@ -995,8 +997,7 @@ async function doLogin() {
        *  שהמשתמש יכול לתקן בהקלדה: ⭐ והמשטח מתאפס כדי שהטופס יהיה שמיש. */
       if (el) el.textContent = '';
       toast(MSG_LOGIN_ERR + ((e && e.message) || e || MSG_SERVER_ERR), null, 'bad');
-      var sp = document.getElementById('auth-spinner'); if (sp) sp.style.display = 'none';
-      var bt = document.getElementById('auth-btn');     if (bt) bt.disabled = false;
+      var sp = document.getElementById('auth-spinner'); if (sp) sp.classList.remove('on');
     } catch (e2) {}
   }
 }
@@ -1010,10 +1011,9 @@ async function _doLoginInner() {
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
   var spinner = document.getElementById('auth-spinner');
-  var btn     = document.getElementById('auth-btn');
-  function showErr(msg){ errEl.style.color='var(--bad)'; errEl.textContent=msg; spinner.style.display='none'; btn.disabled=false; }
-  function startLoad(){ errEl.textContent=''; spinner.style.display='block'; btn.disabled=true; }
-  function stopLoad(){ spinner.style.display='none'; btn.disabled=false; }
+  function showErr(msg){ errEl.textContent=msg; spinner.classList.remove('on'); }
+  function startLoad(){ errEl.textContent=''; spinner.classList.add('on'); }
+  function stopLoad(){ spinner.classList.remove('on'); }
   function dbg(msg){ console.log('[login] '+msg); }
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
@@ -1022,10 +1022,10 @@ async function _doLoginInner() {
   var res = null, netFail = false;
   try {
     // ⭐ השורה נשלפת לפי **שם המשתמש בלבד**, וההשוואה היא מול
-    // הטביעה (`hrVerifyOffline`), בדיוק כמו במסלול האופליין. עד הסבב הזה
-    // כאן ישב `.eq('password_hash', pass)` — כלומר הסיסמה הגלויה שבענן
-    // הייתה **המפתח שפותח את הכניסה**, וכל מי שהחזיק את מפתח ה-anon
-    // (שיושב ב-`index.html` הציבורי) יכול היה לקרוא אותה.
+    // הטביעה (`hrVerifyOffline`), בדיוק כמו במסלול האופליין. ⛔ סינון
+    // ב-`.eq('password_hash', pass)` הופך את הסיסמה הגלויה שבענן **למפתח
+    // שפותח את הכניסה**, ⚠️ וכל מי שמחזיק את מפתח ה-anon (שיושב
+    // ב-`index.html` הציבורי) יכול לקרוא אותה.
     res = await withTimeout(SB.from('hr_users')
       .select('*')
       .eq('username', username)
@@ -1141,7 +1141,7 @@ async function _doLoginInner() {
     var wrap = document.getElementById('user-avatar-wrap');
     var hdru = document.getElementById('hdr-username');
     if (hdru) hdru.textContent = u.full_name;
-    if (wrap) wrap.style.display = 'flex';
+    if (wrap) wrap.classList.remove('hidden');
     var mn = document.getElementById('user-menu-name');
     if (mn) mn.textContent = u.full_name;
     var mr = document.getElementById('user-menu-role');
@@ -1161,7 +1161,7 @@ function doLogout() {
   lkStop();
   document.getElementById('auth-screen').classList.remove('hidden');
   var wrap = document.getElementById('user-avatar-wrap');
-  if (wrap) wrap.style.display = 'none';
+  if (wrap) wrap.classList.add('hidden');
   document.getElementById('auth-user').value = '';
   document.getElementById('auth-pass').value = '';
   document.getElementById('auth-err').textContent = '';
@@ -1321,7 +1321,7 @@ function _hcDraw(pfx){
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
   var selH=selIso?_hcH(new Date(selIso)):null;
   var todH=_hcH(new Date());
-  var bs='u-bd-none u-bg-none u-cur-p u-fs-5 u-c-navy-ink u-p-1-5 u-lh-1';
+  var bs='u-bd-none u-bg-none u-cur-p u-fs-5 u-c-brand-ink u-p-1-5 u-lh-1';
   var maxMi=(b.ml.length-1);
   var hasPrev=v.mi>0||!!_hcBase(v.hy-1),hasNext=v.mi<maxMi||!!_hcBase(v.hy+1);
   // בגריד RTL: DOM[0]=ימין=ראשון, DOM[6]=שמאל=שבת
@@ -1331,7 +1331,7 @@ function _hcDraw(pfx){
   // כותרת ניווט — חץ ימני=חודש הקודם, שמאלי=הבא
   h+='<div class="u-d-flex u-jc-sb u-ai-c u-mb-5">';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" class="'+bs+(hasPrev?'':' u-op-25 u-cur-def')+'"'+(hasPrev?'':' disabled')+'>›</button>';
-  h+='<span class="u-fw-700 u-fs-4 u-c-navy-ink">'+_hcMN(v.hy)[v.mi]+'&nbsp;'+_hcYL(v.hy)+'</span>';
+  h+='<span class="u-fw-700 u-fs-4 u-c-brand-ink">'+_hcMN(v.hy)[v.mi]+'&nbsp;'+_hcYL(v.hy)+'</span>';
   h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" class="'+bs+(hasNext?'':' u-op-25 u-cur-def')+'"'+(hasNext?'':' disabled')+'>‹</button>';
   h+='</div>';
   // כותרת ימים: DOM[0]=ימין=א׳(ראשון) → DOM[6]=שמאל=ש׳(שבת)
@@ -1370,25 +1370,25 @@ function atvCls(code) {
  *  שקורא מצב פתיחה מאלמנט שהוסתר במחלקה. */
 function uiShown(el) {
   if (!el) return false;
-  return (el.style.display || getComputedStyle(el).display) !== 'none';
+  return getComputedStyle(el).display !== 'none';
 }
 // פתיחה/סגירה
 function _hcOpen(pfx){
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
-  if(uiShown(pop)){pop.style.display='none';return;}
-  document.querySelectorAll('.hc-pop').forEach(function(p){p.style.display='none';});
+  if(uiShown(pop)){pop.classList.add('hidden');return;}
+  document.querySelectorAll('.hc-pop').forEach(function(p){p.classList.add('hidden');});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
   var vh=iso?_hcH(new Date(iso)):_hcH(new Date());
   window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // מיקום fixed — מחושב מהטריגר, חסין לכל overflow:hidden בהורים
+  // ⛔ והערכים למשתני CSS ⛔ ולא לתגית — ⚠️ הכלל של `.hc-pop` קורא אותם.
   var trg=document.getElementById(pfx+'_trg');
   if(trg){
     var r=trg.getBoundingClientRect();
-    pop.style.top=(r.bottom+4)+'px';
-    pop.style.right=(window.innerWidth-r.right)+'px';
-    pop.style.left='auto';
+    pop.style.setProperty('--pop-top',(r.bottom+4)+'px');
+    pop.style.setProperty('--pop-right',(window.innerWidth-r.right)+'px');
   }
-  pop.style.display='block';};
+  pop.classList.remove('hidden');};
 // בחירת יום
 function _hcPick(pfx,hy,mi,day){
   var g=_hcG(hy,mi,day);
@@ -1400,7 +1400,7 @@ function _hcPick(pfx,hy,mi,day){
     if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
-  var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';
+  var pop=document.getElementById(pfx+'_pop');if(pop)pop.classList.add('hidden');
   // רענון רשימת סדרים לתאריך הנבחר
   if(pfx==='at_date'&&typeof atRenderTodaySessions==='function') atRenderTodaySessions();};
 // קריאת ערך → ISO string
@@ -1418,14 +1418,12 @@ function _hcToggle(){
   var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
   if(!btn||!wr)return;
   var open=!uiShown(wr);
+  wr.classList.toggle('hidden',!open);
+  btn.classList.toggle('on',open);
   if(open){
-    wr.style.display='block';
     btn.textContent='✕ הסר תאריך סיום';
-    btn.style.background='var(--bad-soft)';btn.style.color='var(--bad)';btn.style.borderColor='var(--bad-line)';
   } else {
-    wr.style.display='none';
     btn.textContent='+ הוסף תאריך סיום';
-    btn.style.background='var(--card-2)';btn.style.color='var(--navy-ink)';btn.style.borderColor='var(--border)';
     // ניקוי הערכים
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
@@ -1439,14 +1437,14 @@ function _hcBuild(pfx,initH,tv){
   }else{label='בחר תאריך עברי';}
   var iso='';
   if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=dayIso(g);}
-  var trg='u-d-flex u-ai-c u-jc-sb u-cur-p u-p-4-5 u-bd-15-solid-border u-r-4 u-bg-bg u-ff-heebo u-fs-4 u-c-navy-ink u-fw-600 u-bx-border-box u-tr-border-color-15s';
+  var trg='u-d-flex u-ai-c u-jc-sb u-cur-p u-p-4-5 u-bd-15-solid-border u-r-4 u-bg-bg u-ff-heebo u-fs-4 u-c-brand-ink u-fw-600 u-bx-border-box u-tr-border-color-15s';
   return '<div class="u-pos-rel">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" class="'+trg+'">'+
       '<span id="'+pfx+'_lbl">'+label+'</span>'+
       '<span class="u-fs-3 u-op-5 u-mr-2">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-5 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
+    '<div id="'+pfx+'_pop" class="hidden u-pos-fix u-z-5 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
     (tv!==undefined?'<div class="u-mt-3 u-d-flex u-ai-c u-g-3"><span class="u-fs-3 u-c-text3 u-ws-nw">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-fx-1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
@@ -1455,7 +1453,7 @@ document.addEventListener('mousedown',function(e){
     if(!uiShown(p))return;
     var pfx=p.id.replace('_pop','');
     var tr=document.getElementById(pfx+'_trg');
-    if(!p.contains(e.target)&&(!tr||!tr.contains(e.target)))p.style.display='none';
+    if(!p.contains(e.target)&&(!tr||!tr.contains(e.target)))p.classList.add('hidden');
   });});
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1490,8 +1488,8 @@ function openStatusForm(type) {
         _hcBuild('sfmF', todayHeb, defaultTime) +
       '</div>' +
       '<div>' +
-        '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="u-p-4-6 u-bd-15-solid-border u-r-3 u-bg-bg u-c-navy-ink u-ff-heebo u-fs-3 u-fw-600 u-cur-p u-mb-5">+ הוסף תאריך סיום</button>' +
-        '<div id="sfmT_wrap" class="u-d-none">' +
+        '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="u-p-4-6 u-bd-15-solid-border u-r-3 u-bg-bg u-c-brand-ink u-ff-heebo u-fs-3 u-fw-600 u-cur-p u-mb-5">+ הוסף תאריך סיום</button>' +
+        '<div id="sfmT_wrap" class="hidden">' +
           '<label class="'+lbl+'">תאריך סיום</label>' +
           _hcBuild('sfmT', null, '') +
         '</div>' +
@@ -1540,10 +1538,10 @@ function saveStudentStatus(type) {
 
 async function toggleUserMenu() {
   var m = document.getElementById('user-menu');
-  if (uiShown(m)) { m.style.display='none'; return; }
-  m.style.display = 'block';
+  if (uiShown(m)) { m.classList.add('hidden'); return; }
+  m.classList.remove('hidden');
   var othersEl = document.getElementById('user-menu-others');
-  if (!othersEl) { m.style.display='block'; return; }
+  if (!othersEl) return;
   othersEl.innerHTML = '<div class="u-p-4-6 u-fs-2 u-c-text3">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
@@ -1557,11 +1555,11 @@ async function toggleUserMenu() {
   var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
   othersEl.innerHTML = '<div class="u-p-4-6-2 u-fs-2 u-c-text3">'+label+'</div>' +
     others.map(function(u){
-      return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="u-w-100p u-p-4-6 u-bg-none u-bd-none u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-navy-ink u-d-flex u-ai-c u-g-4"><span class=\"u-op-6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
+      return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="u-w-100p u-p-4-6 u-bg-none u-bd-none u-cur-p u-ta-r u-ff-heebo u-fs-3 u-c-brand-ink u-d-flex u-ai-c u-g-4"><span class=\"u-op-6\">👤</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
 }
 function closeUserMenu() {
-  document.getElementById('user-menu').style.display = 'none';
+  document.getElementById('user-menu').classList.add('hidden');
 }
 // קורא ה-data-attributes של כפתור החלפת המשתמש. אין להחזיר קוד JS מורכב
 // לתוך מאפיין onclick — שם עם מרכאה או גרש שובר את המאפיין.
@@ -1576,7 +1574,7 @@ function switchUser(id, name) {
   var enterTxt = H(1499,1504,1497,1505,1492);
   window._hrSwitchId = id;
   openModal(String.fromCharCode(128100) + ' ' + H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513),
-    '<div class="u-fw-700 u-fs-4 u-c-navy-ink u-mb-2 u-ta-c" id="switch-name"></div>'+
+    '<div class="u-fw-700 u-fs-4 u-c-brand-ink u-mb-2 u-ta-c" id="switch-name"></div>'+
     '<div class="u-fs-3 u-c-text3 u-mb-6 u-ta-c">'+subTitle+'</div>'+
     '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" class="u-bd-2-solid-border u-r-3 u-p-5 u-ff-heebo u-fs-5 u-ta-c u-ls-4 u-w-100p u-mb-4">'+
     '<div id="switch-err" class="u-c-bad u-fs-3 u-minh-18"></div>',
@@ -1647,7 +1645,7 @@ async function confirmSwitch() {
   if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
   lkReset();
   showPage('home');
-  toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name);
+  toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name, null, 'good');
 }
 // סגור בלחיצה מחוץ
 
@@ -1655,26 +1653,22 @@ async function confirmSwitch() {
 function showSettingsHome() {
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
-    if (el) el.style.display = 'none';
+    if (el) el.classList.add('hidden');
   });
   var h = document.getElementById('settings-home');
-  if (h) h.style.display = '';
+  if (h) h.classList.remove('hidden');
 }
 
 /* ⛔⛔ אזור ההגדרות — הערת הגנה משותפת לכל האפליקציות
    ⛔ **אין להוסיף שער סיסמה נפרד מעל מסך ההגדרות.** ההרשאה נגזרת
    מהמשתמש המחובר בלבד, ואין שכבה שנייה מעליה.
 
-   **הרקע — וזו אינה זהירות תיאורטית.** באחת האפליקציות היה שער כזה בדיוק
-   (`admin_pass` ב-`sl_settings`), והוא הוסר משתי סיבות שכל
-   אחת מהן מספיקה לבדה:
-   1. הוא יצר **שכבת הרשאה כפולה** שלא הייתה קיימת באף אחת
-      מהאחרות — מנגנון שני עם מסך משלו, מסלול שינוי משלו ותחזוקה
-      משלו, לאותו אדם.
-   2. **בהתקנה טרייה הוא נפל חזרה למחרוזת `'admin'`** — כלומר השער
-      נפתח לכל מי שהקליד «admin». מה שעמד בין ההתקנה לשער
-      הפתוח היה שורת זריעה בקובץ הסכימה; הגנה שתלויה בכך
-      שמישהו הריץ קובץ אינה הגנה.
+   **הנימוק — שתי סיבות, וכל אחת מהן מספיקה לבדה:**
+   1. שער כזה הוא **שכבת הרשאה כפולה** — מנגנון שני עם מסך משלו,
+      מסלול שינוי משלו ותחזוקה משלו, לאותו אדם.
+   2. **בהתקנה טרייה שער כזה נופל חזרה לערך ברירת מחדל** — ⚠️ ונפתח
+      לכל מי שמקליד אותו: ⛔ הגנה שתלויה בכך שמישהו הריץ שורת זריעה
+      בקובץ הסכימה אינה הגנה.
 
    ⛔ **ואין לזרוע ערך ברירת מחדל לסיסמה או לתפקיד בשום מקום** — לא
    בסכימה, לא במיגרציה, לא בקוד ולא בקובץ בדיקה. ברירת מחדל
@@ -1691,13 +1685,13 @@ function showSettingsHome() {
    שב-`showPage`, מעל מטריצת `hr_perms`. העמודה היא `NOT NULL` בלי DEFAULT.
    ═════════════════════════════════════════════════════════════════════ */
 function showSettingsModule(mod) {
-  document.getElementById('settings-home').style.display = 'none';
+  document.getElementById('settings-home').classList.add('hidden');
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
-    if (el) el.style.display = 'none';
+    if (el) el.classList.add('hidden');
   });
   var target = document.getElementById('settings-'+mod);
-  if (target) target.style.display = '';
+  if (target) target.classList.remove('hidden');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') renderAttendSettings();
@@ -1737,7 +1731,7 @@ async function saveAbsenceReasons() {
    *  ⚠️ והמתנה לה לפני הטוסט הראתה מסך שלא הגיב ⛔ והמשתמש לחץ שוב.
    *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
-  toast(MSG_REASONS_SAVED);
+  toast(MSG_REASONS_SAVED, null, 'good');
   try {
     var r = await hrCfgSet('absence_reasons', reasons);
     console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
@@ -1756,13 +1750,14 @@ function renderAbsenceReasons() {
     el.innerHTML = '';
     (reasons[type]||[]).forEach(function(r) {
       var row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:6px;align-items:center';
+      row.className = 'edit-row';
       var inp = document.createElement('input');
       inp.value = r;
-      inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+      inp.className = 'sess-field';
+      inp.setAttribute('aria-label', 'סיבה');
       var btn = document.createElement('button');
       btn.textContent = '✕';
-      btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
+      btn.className = 'row-del-btn';
       btn.dataset.act = 'reason-row-del';
       row.appendChild(inp);
       row.appendChild(btn);
@@ -1774,13 +1769,14 @@ function addAbsenceReason(type) {
   var el = document.getElementById('reasons-'+type);
   if (!el) return;
   var div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.className = 'edit-row';
   var inp = document.createElement('input');
   inp.placeholder = 'סיבה חדשה...';
-  inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+  inp.className = 'sess-field';
+  inp.setAttribute('aria-label', 'סיבה חדשה');
   var btn = document.createElement('button');
   btn.textContent = '✕';
-  btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
+  btn.className = 'row-del-btn';
   btn.dataset.act = 'reason-row-del';
   div.appendChild(inp);
   div.appendChild(btn);
@@ -1800,7 +1796,7 @@ function showConstruction() {
     '<p class="u-c-text2 u-fs-3 u-lh-16 u-ta-c">' +
       H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) +
       '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p>',
-    '<button data-act="modal-close" class="u-fx-1 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-p-5-7 u-fs-4 u-ff-heebo u-cur-p">' + H(1492,1489,1504,1514,1497) + '</button>');
+    '<button data-act="modal-close" class="u-fx-1 u-bg-brand-fill u-c-on-brand u-bd-none u-r-3 u-p-5-7 u-fs-4 u-ff-heebo u-cur-p">' + H(1492,1489,1504,1514,1497) + '</button>');
 }
 
 function showDenied() {
@@ -1821,8 +1817,8 @@ function renderSettings() {
   var admin = isAdmin();
   var su = document.getElementById('ss-users');
   var sp = document.getElementById('ss-perms');
-  if (su) su.style.display = admin ? '' : 'none';
-  if (sp) sp.style.display = admin ? '' : 'none';
+  if (su) su.classList.toggle('hidden', !admin);
+  if (sp) sp.classList.toggle('hidden', !admin);
 }
 
 // ---- רשימת משתמשים ----
@@ -1870,11 +1866,11 @@ var DOM_ACTIONS = {
   /*  ⛔ שורת הסיבה נמחקת מההורה של הכפתור — ⚠️ המבנה חי ב-DOM,
    *  ⭐ והמטפל קורא אותו משם ולא מסגור שנתפר לשורה. */
   'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
-  'at-open-session':     function (el) { atOpenSession(el.dataset.sid, el.dataset.sname, el); },
-  'sl-open-session':     function (el) { hrOpenSession(el.dataset.sid, el.dataset.sname, el); },
+  'at-open-session':     function (el) { return atOpenSession(el.dataset.sid, el.dataset.sname); },
+  'sl-open-session':     function (el) { return hrOpenSession(el.dataset.sid, el.dataset.sname); },
   /*  ⛔ שלוש התראות התשתית מנותבות במפה — ⚠️ הכפתור נבנה ב-JS,
    *  ⭐ והמאזין הישיר שעליו היה בדיוק ההיקף שיצא מהמנגנון. */
-  'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.style.display = 'none'; },
+  'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.remove(); },
   'pend-alert-ok':       function () { pendAlertDismiss(); },
   'lk-stay':             function () { lkReset(); },
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
@@ -1938,19 +1934,18 @@ var DOM_ACTIONS = {
   'hc-open':          function (el) { _hcOpen(el.getAttribute('data-pfx')); },
   /*  ⛔ הכפתור הפנימי גובר על השורה העוטפת בלי `stopPropagation` —
    *  ⚠️ `closest('[data-act]')` מחזיר את הפנימי ביותר, ⭐ ולכן שני הצדדים
-   *  מואצלים ורק אחד מהם רץ; ⛔ בעבר העוטף היה `onclick` מוטבע,
-   *  ⛔ והוא זה שחייב את ההגנה. */
+   *  מואצלים ורק אחד מהם רץ: ⛔ `stopPropagation` אינו נחוץ. */
   'toggle-panel':     function (el) {
                         var e = document.getElementById(el.getAttribute('data-panel'));
-                        if (e) e.style.display = uiShown(e) ? 'none' : 'block';
+                        if (e) e.classList.toggle('hidden', uiShown(e));
                       },
   'toggle-next':      function (el) {
                         var pnl = el.nextElementSibling;
                         if (!pnl) return;
                         var open = uiShown(pnl);
-                        pnl.style.display = open ? 'none' : 'block';
+                        pnl.classList.toggle('hidden', open);
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
-                        if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+                        if (chev) chev.classList.toggle('open', !open);
                       },
   'at-edit-session':  function (el) { return atEditSession(el.getAttribute('data-id')); },
   'at-del-session':   function (el) { atDeleteSession(el.getAttribute('data-id')); },
@@ -2108,7 +2103,7 @@ async function renderUsersList() {
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
     el.innerHTML = '<div class="u-c-bad ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
       '<div class="u-fs-2 u-c-text3 u-mt-2">' + esc(em) + '</div>' +
-      '<button data-act="users-render" class="u-mt-5 u-p-4-6 u-bg-navy-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fs-3 u-cur-p">נסה שוב</button></div>';
+      '<button data-act="users-render" class="u-mt-5 u-p-4-6 u-bg-brand-fill u-c-on-brand u-bd-none u-r-3 u-ff-heebo u-fs-3 u-cur-p">נסה שוב</button></div>';
     return;
   }
   var data = res.data;
@@ -2148,7 +2143,7 @@ async function renderUsersList() {
 function openAddUser() {
   openUserModal('הוסף משתמש');
   document.getElementById('um-role').value = 'junior';
-  document.getElementById('um-pass-hint').style.display = 'none';
+  document.getElementById('um-pass-hint').classList.add('hidden');
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
 }
 function openEditUser(u) {
@@ -2227,7 +2222,7 @@ async function saveUser() {
    *  ⭐ ושתי ההודעות כאן הן שני מסלולים: ⛔ קריאה אחת הייתה צובעת את שניהם
    *  באותו צבע. */
   if (noFp) toast(MSG_USER_SAVED_NO_FP, null, 'bad');
-  else toast(MSG_USER_SAVED);
+  else toast(MSG_USER_SAVED, null, 'good');
   hrRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
@@ -2250,7 +2245,7 @@ async function toggleUserActive(id, current) {
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין
   hrRefreshUsersCache();
   renderUsersList();
-  toast(current ? MSG_USER_OFF : MSG_USER_ON);
+  toast(current ? MSG_USER_OFF : MSG_USER_ON, null, 'good');
 }
 
 // ---- טבלת הרשאות ----
@@ -2272,7 +2267,7 @@ function renderPermsTable() {
       sel += '</select>';
       // מנהל תמיד edit ב-settings
       if (m.id === 'settings' && role === ROLE_ADMIN) {
-        row += '<td><span class="u-c-navy-ink u-fw-600">✏️ עריכה</span></td>';
+        row += '<td><span class="u-c-brand-ink u-fw-600">✏️ עריכה</span></td>';
       } else {
         row += '<td>'+sel+'</td>';
       }
@@ -2308,7 +2303,7 @@ async function savePerms() {
   // **רק** מול hr_last_changed. בלי הקידום הזה עדכון הרשאות היה נשאר בלתי-נראה
   // להם עד היציאה-והכניסה הבאה — בדיוק מה שהמעבר לרענון החי בא לפתור.
   await hrTouchLastChanged();
-  toast(MSG_PERMS_SAVED);
+  toast(MSG_PERMS_SAVED, null, 'good');
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2400,7 +2395,7 @@ async function changeMyPassword() {
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
    *  ⭐ והשדות חדלים להתקיים איתו. */
   closeModal();
-  if (made.pass_fp) toast(MSG_PASS_UPDATED_X);
+  if (made.pass_fp) toast(MSG_PASS_UPDATED_X, null, 'good');
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');
 }
 
@@ -2409,7 +2404,7 @@ async function changeMyPassword() {
 
 
 
-// hebrewDate כבר כולל את שם היום — כאן רק שם נרדף (בעבר שוכפל "יום X, יום X,")
+// hebrewDate כבר כולל את שם היום — ⛔ ואין להוסיף אותו כאן: "יום X, יום X,"
 
 
 // רענון נתוני כרטיסי הסיכום בדף הבית
@@ -2795,20 +2790,19 @@ var RTY_CFG = {
 /* ── LK_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
 /* ⚠️ `active()` הוא «יש משתמש מחובר», ו-`lock()` הוא מסלול היציאה של
    האפליקציה. ⛔ אין להוסיף כאן הודעה משלה — חלון האזהרה של
-   הליבה הוא ההודעה, ותוספת פר-אפליקציה הייתה מחזירה בדיוק את ההפרש
-   שהסבב הזה סגר. */
+   הליבה הוא ההודעה, ותוספת פר-אפליקציה היא נוסח שני לאותה אזהרה,
+   ⛔ שנבדל מהאחיות. */
 var LK_CFG = {
   active: function () { return sessActive(); },
   lock:   function () { doLogout(); },
 };
 /* ── SESS_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-/* ⚠️ `legacy` הוא רשימת מפתחות ה-localStorage שהאפליקציה **שמרה בהם סשן
-   בעבר** ואינה שומרת בהם עוד. ⛔ אין למחוק שם מהרשימה גם אחרי
-   שהמנגנון הישן ירד מהקוד — המפתח עצמו עדיין יושב על הדיסק של
-   כל מכשיר שכבר נכנסו בו פעם, והוא מחזיק `id`, `username` ו-`role`. */
+/* ⚠️ `legacy` הוא רשימת מפתחות ה-localStorage של סשן **שהאפליקציה אינה
+   כותבת אליהם** — ⛔ ואין למחוק שם מהרשימה: המפתח עצמו עדיין יושב על
+   הדיסק של כל מכשיר שנכנסו בו, והוא מחזיק `id`, `username` ו-`role`. */
 var SESS_CFG = {
-  /* ⛔ כאן נכנס מפתח סשן שנשמר בדיסק בעבר — ⚠️ והמנגנון
-     נשאר דרוך למקרה עתידי. */
+  /* ⚠️ ריק — ⭐ אין מפתח סשן על הדיסק שצריך להסיר, ⛔ והמנגנון נשאר
+     דרוך. */
   legacy: [],
 };
 
@@ -2918,9 +2912,8 @@ function hrHwInWindow(rec) {
 }
 
 /* ── HW_CFG — הדבר היחיד שנבדל בין האפליקציות ───────────────────────────── */
-/* ⭐ **המודול הופעל.** בעבר הוא היה רדום מסיבה טכנית: הנתונים
-   נקראו כמפתחות `kv` שלמים, ⛔ ו«פינוי» מעל ערך `kv` שלם היה מוחק את הערך
-   כולו ולא רשומות ישנות שבתוכו. הקריאה היא פר-שורה
+/* ⭐ **המודול פעיל** — ⛔ «פינוי» מעל ערך `kv` שלם היה מוחק את הערך
+   כולו ולא רשומות ישנות שבתוכו, ⚠️ והקריאה היא פר-שורה
    (`hrCloudGet` ← `hrRowsGet`), ולכן לרשומה שתפונה מהדיסק יש מאיפה לחזור.
    ⚠️ הספק היחיד הוא `hr_sessions` — המפתח הגדול כאן (360KB) והיחיד
    שיש לו שכבת שורות **ושדה תאריך פר-רשומה**. ⛔ `hr_students_rows` אינו בחלון
@@ -3339,9 +3332,9 @@ function hrUpdateQueueBadge() {
     var n = q.length;
     if (n > 0) {
       badge.textContent = '⏳ ' + n + ' רשומות ממתינות לסנכרון';
-      badge.style.display = '';
+      badge.classList.remove('hidden');
     } else {
-      badge.style.display = 'none';
+      badge.classList.add('hidden');
     }
   } catch(e) {}
 }
@@ -3416,7 +3409,7 @@ async function hrFlushQueue() {
       try { hrSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
       toast(MSG_UP_SLOW_FANOUT, null, 'bad');
     }
-    toast('☁️ ' + nOk + MSG_ROWS_SYNCED);
+    toast('☁️ ' + nOk + MSG_ROWS_SYNCED, null, 'good');
   }
   lsSet(_HR_Q_KEY, JSON.stringify(failed));
   hrUpdateQueueBadge();
@@ -3426,10 +3419,8 @@ async function hrFlushQueue() {
 /* ══════════════════════════════════════════════════════════════════════════
    שכבת השורות — טבלאות מובנות, שלב א
    ══════════════════════════════════════════════════════════════════════════
-   הנהלה רוחנית הייתה האחרונה בארגון שנתוניה יושבים כמפתחות `kv` שלמים
-   (מטריצת היכולות — שורת הנתונים בטבלאות מובנות). נמדד: `hr_sessions` הוא 360KB, ולכן
-   **כל סימון נוכחות בודד דורס את מלוא הערך**. הדפוס כאן:
-   מיגרציות אדיטיביות, כתיבה כפולה, והמתג בסבב נפרד.
+   ⚠️ מפתח `kv` שלם נדרס כולו בכל כתיבה — ⭐ ו-`hr_sessions` הוא המפתח
+   הגדול כאן, ⛔ ולכן **סימון נוכחות בודד היה דורס את מלוא הערך**.
 
    ⛔ הטבלאות הן המאסטר, ⛔ ואין עוד ערך שלם ב-`kv` — ⚠️ השקילות אומתה מול
       המסד לפני המעבר: 345 סדרי נוכחות · 988 סימוני שינה · 71 תלמידים ·
@@ -3540,7 +3531,7 @@ function hrMarkRows(rec, kind) {
   var ts = Math.round(Number(_hrRecTs(rec)) || 0);
   Object.keys(marks).forEach(function (k) {
     // ⛔ מפתח הסימון עובר כמחרוזת, בלי המרה מספרית —
-    //    `hr_marks.student_id` הוא `text` מאז `migrations/008`, ומזהה תלמיד
+    //    `hr_marks.student_id` הוא `text`, ומזהה תלמיד
     //    שנוצר במכשיר הוא uuid. `Number(k)` היה מחזיר `NaN` לכל תלמיד
     //    שנוסף ואילך, כלומר סימוניו לא היו מגיעים לשכבת השורות.
     var m = marks[k] || {};
@@ -3572,7 +3563,7 @@ function hrStudentRow(rec) {
   if (!rec || rec.id == null) return null;
   return {
     client_id: String(rec.id),
-    // ⛔ מחרוזת ולא מספר — העמודה היא `text` מאז `migrations/008`,
+    // ⛔ מחרוזת ולא מספר — העמודה היא `text`,
     //    ומזהה תלמיד הוא uuid. עיגול מספרי כאן היה מאפס אותו.
     student_id: String(rec.id),
     updated_at: Math.round(Number(_hrRecTs(rec)) || 0),
@@ -3821,8 +3812,8 @@ var DEV_CFG = { key: 'hr_device_id' };
 
 // ⚠️ `hrSyncLog` היא **מעטפת דקה** מעל מודול הגיבוי והיומן המשותף
 // — הליבה עברה לשם ומשותפת לכל האפליקציות.
-// ⛔ אין להחזיר לכאן מימוש עצמאי — שני מימושים כמעט-זהים הם בדיוק
-//    מה שהסבב הזה בא לסלק, והם נסחפים בשקט זה מזה.
+// ⛔ אין להחזיר לכאן מימוש עצמאי — שני מימושים כמעט-זהים נסחפים
+//    בשקט זה מזה.
 // ⛔ ואין לעטוף כאן את `bkMaybeDaily` — עוטף מתיר לקרוא לגיבוי מכל מקום,
 //    והוא נתלה במסלול הדחיפה והושבת ל-25 יום. נקודת ההפעלה היחידה היא
 //    `bkBoot()` מ-`loadDash()`.
@@ -3915,7 +3906,7 @@ var USER_CFG = {
 
 // חיבור ההנהלה לליבה המשותפת. ⛔ החתימה לא השתנתה.
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק הוכרעה
-//    מאז ומתמיד לפי **הסדר** (האחרון גובר) ולא לפי החותמת. ⛔ אין ליישר
+//    לפי **הסדר** (האחרון גובר) ולא לפי החותמת. ⛔ אין ליישר
 //    את זה ל-yoman «לשם אחידות» — זו התנהגות קיימת שנמדדה, וכל
 //    שינוי בה משנה איזו רשומה שורדת.
 // ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — בענף האובייקטים
@@ -4198,10 +4189,9 @@ async function hrPushToCloud() {
     if (ctxStale(_ep)) return {};
     lsSet('hr_settings_meta', JSON.stringify(meta));
     /* ⛔ המפה אינה עולה לענן — מפה שנכתבת לצד `updated_at` היא
-       מקור אמת שני, וזה בדיוק מה שיש להסיר
-       כשהמבנה תוקן.
+       מקור אמת שני.
        ⛔ ומחיקת המפתח מהמסד היא פעולת מנהל ואינה נעשית כאן —
-       כיבוי ומחיקה בסבבים נפרדים, אחרת אין חלון לגלות טעות. */
+       ⚠️ כיבוי ומחיקה בנפרד, אחרת אין חלון לגלות טעות. */
     return lastErr ? {error: lastErr} : {};
   });
 
@@ -4229,10 +4219,21 @@ async function hrPushToCloud() {
     }
   } else if (_hrPushWarned) {
     _hrPushWarned = false;
-    toast(MSG_SYNC_BACK);
+    toast(MSG_SYNC_BACK, null, 'good');
   }
 }
 
+/*  ⛔ הציור שאחרי משיכה — ⚠️ רכיבים תלויי-הגדרות שמוצגים כרגע, ⭐ והוא עובר
+ *  ב-`pullRender`: ⛔ כמה משתמשים עובדים יחד, ⚠️ ושמירה של אחד מושכת אצל
+ *  השני באמצע סימון. */
+function hrPullDraw() {
+  try {
+    if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
+    if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
+  } catch (eRf) { console.error('[pull] רענון בוררי הסדר נכשל', eRf); }
+  if (typeof renderStudents === 'function') renderStudents();
+  if (typeof refreshDashStats === 'function') refreshDashStats();
+}
 async function hrPullFromCloud() {
   /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק לפני כל כתיבה מקומית — ⚠️ המחזור מושך,
    *  ממזג וכותב לדיסק, ⭐ והמשתמש יכול להתחלף בין המשיכה לכתיבה: ⛔ מה
@@ -4335,13 +4336,7 @@ async function hrPullFromCloud() {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
       }
     } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
-    // רענון רכיבים תלויי-הגדרות שמוצגים כרגע (בוררי סוג סדר, רשימות)
-    try {
-      if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
-      if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
-    } catch (eRf) { hrWriteFail('hrPullFromCloud', eRf); }
-    if (typeof renderStudents === 'function') renderStudents();
-    if (typeof refreshDashStats === 'function') refreshDashStats();
+    pullRender(hrPullDraw);
     hrRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
     hrSyncLog('pull', null, null); // אבחון שלב א: משיכה מוצלחת
   } catch(e) { console.error('[ys-sync] pull error:', e); }
@@ -4362,10 +4357,8 @@ setTimeout(async function() {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
     var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle());
     if (r.error) {
-      // כאן ישב ניסיון "יצירה אוטומטית" של טבלת kv מול פרויקט Supabase זר
-      // (hdcsqajavhxsbscgnpob) עם JWT מוטבע משלו. הוא לא יכול היה לעבוד — הטבלה
-      // החסרה היא של הפרויקט **שלנו** — והוא הדליף מפתח anon של פרויקט אחר.
-      // הוסר. טבלה חסרה = תקלת תשתית שמדווחת בקונסול, לא משהו שהלקוח מתקן.
+      // ⛔ אין כאן «יצירה אוטומטית» של הטבלה — ⚠️ טבלה חסרה היא תקלת
+      // תשתית שמדווחת בקונסול, ⭐ ולא משהו שהלקוח מתקן.
       console.log('[ys-sync] init error:', r.error.message);
       return;
     }
@@ -4450,17 +4443,12 @@ function selectSearchStudent(sid) {
 /* ══════════════════════════════════════════════════════════════════════════
    הגדרה ראשונית של המסד
    ══════════════════════════════════════════════════════════════════════════
-   ⛔ **אין ליצור כאן משתמש עם סיסמת ברירת מחדל** — מסלול
-   האתחול `admin`/`123456` הוסר משלושת אתריו; מה שנשאר הוא דיווח
-   שהטבלה ריקה והפניה ליצירה ידנית.
+   ⛔ **אין ליצור כאן משתמש עם סיסמת ברירת מחדל** — ⚠️ מסלול האתחול
+   הוא דיווח שהטבלה ריקה והפניה ליצירה ידנית.
    ══════════════════════════════════════════════════════════════════════════ */
-// Supabase service role key נדרש ליצירת טבלאות - עושים זאת דרך insert עם fallback
-
 // ⛔ **אין ליצור כאן משתמש עם סיסמת ברירת מחדל**.
-// בעבר הפונקציה הזו הריצה `insert` של `admin` / `123456` על טבלה ריקה,
-// והיא רצה בקוד העליון בכל טעינת דף אצל **כל מבקר**. אומת חיצונית שהמשתמש
-// אינו קיים במסד היום (שישה משתמשים אמיתיים בלבד), כלומר המסלול מעולם לא
-// ירה בייצור — אבל טבלה שתתרוקן לרגע, פרויקט חדש, או שחזור שנכשל למחצה היו
+// ⚠️ מסלול שמכניס `admin` / `123456` לטבלה ריקה רץ בכל טעינת דף אצל **כל
+// מבקר** — ⛔ וטבלה שתתרוקן לרגע, פרויקט חדש, או שחזור שנכשל למחצה
 // מספיקים כדי לפתוח את המערכת לסיסמה שכתובה בקוד הציבורי. מסלול האתחול
 // **מדווח** מה חסר ומפנה ליצירת המשתמש הראשון ידנית; הוא אינו מייצר סוד.
 async function ensureFirstAdmin() {
@@ -4470,7 +4458,7 @@ async function ensureFirstAdmin() {
       error.code === '42P01' ||
       (error.message && error.message.indexOf('hr_users') !== -1)
     );
-    // ⛔ מסך ההתקנה הוסר — מה שנשאר הוא **דיווח** במסך הכניסה,
+    // ⛔ אין כאן מסך התקנה — ⚠️ רק **דיווח** במסך הכניסה,
     //    ואין כאן סכימה, אין תיבת העתקה ואין המתנה אוטומטית. הטיפול
     //    בטבלה חסרה הוא הרצת `migrations/000_initial_schema.sql` מול המסד.
     var e = document.getElementById('auth-err');
@@ -4484,7 +4472,7 @@ async function ensureFirstAdmin() {
     if (!error && (!data || data.length === 0)) {
       if (e) {
         e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
-        e.style.color = 'var(--warn)';
+        e.classList.add('u-c-warn');
       }
     }
   } catch(e) { console.error('setup error:', e); }
@@ -4496,7 +4484,6 @@ ensureFirstAdmin();
 /* ══════════════════════════════════════════════════════════════════════════
    מצבת התלמידים — רשימה, סטטוסים והיעדרויות
    ══════════════════════════════════════════════════════════════════════════ */
-// ADMIN_PASS ו-isLoggedIn הוסרו - מוחלף במערכת auth
 var currentFilter='all';
 var editingStudentId=null;
 var H=String.fromCharCode; // קיצור ליצירת תווים עבריים
@@ -4606,12 +4593,12 @@ function renderStudents(){
 
   // כפתור "ניהול רשימה" — admin only
   var btnML=document.getElementById('btn-manage-list');
-  if(btnML) btnML.style.display=isAdmin()?'':'none';
+  if(btnML) btnML.classList.toggle('hidden',!isAdmin());
 
   // מונה כפתורי סינון — רק תלמידים פעילים
   var tabsRow=document.getElementById('class-tabs-row');
   var swInner=document.getElementById('sw-inner');
-  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
+  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.setProperty('--sw-w',tw+'px');}
   var ea=document.getElementById('ct-all');
   if(ea)ea.textContent='הכל ('+activeSts.length+')';
   var ea2=document.getElementById('ct-a');
@@ -4664,7 +4651,7 @@ function renderStudents(){
   activeSts.forEach(function(s){
     if(getActiveAbsences(s).length>0)absent++;else present++;
   });
-  if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
+  if(sumEl){sumEl.classList.add('u-ai-c');sumEl.innerHTML=
     '<span class="u-c-ok u-d-iflex u-ai-c u-lh-1 u-g-2">&#x2705; נוכחים: '+present+'</span>'+
     '<span class="u-c-bad u-d-iflex u-ai-c u-lh-1 u-g-2">&#x274C; אינם נוכחים: '+absent+'</span>'+
     '<span class="u-c-text2 u-d-iflex u-ai-c u-lh-1">סה"כ: '+activeSts.length+'</span>';}
@@ -4678,12 +4665,12 @@ function renderStudents(){
     var presIcon=isPresent
       ?'<span class="u-d-iflex u-ai-c u-g-3 u-bg-ok-soft u-c-ok u-bd-15-solid-ok-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2713; נוכח</span>'
       :'<span class="u-d-iflex u-ai-c u-g-3 u-bg-bad-soft u-c-bad u-bd-15-solid-bad-line u-p-3-6 u-r-7 u-fs-3 u-fw-600 u-ws-nw">&#x2715; אינו נוכח</span>';
-    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" class="u-bg-navy-fill u-c-on-brand u-bd-none u-w-32 u-h-32 u-r-7 u-cur-p u-fs-5 u-fw-300 u-d-iflex u-ai-c u-jc-c u-lh-1" title="עריכת סטטוס">+</button>';
+    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" class="u-bg-brand-fill u-c-on-brand u-bd-none u-w-32 u-h-32 u-r-7 u-cur-p u-fs-5 u-fw-300 u-d-iflex u-ai-c u-jc-c u-lh-1" title="עריכת סטטוס">+</button>';
     html+='<div id="st-row-'+s.id+'" class="'+bg+' u-bb-1-solid-border u-p-4-5 u-d-flex u-ai-c u-g-5">';
     html+='<div class="st-row-main">';
     html+='<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
     html+='<div class="badge-row">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" class="u-bg-bg u-bd-none u-cur-p u-fs-4 u-c-navy-ink u-w-28 u-h-28 u-r-3 u-d-iflex u-ai-c u-jc-c" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" class="u-bg-bg u-bd-none u-cur-p u-fs-4 u-c-brand-ink u-w-28 u-h-28 u-r-3 u-d-iflex u-ai-c u-jc-c" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span class="u-bg-info-soft u-c-info u-p-1-4 u-r-5 u-fs-2 u-ws-nw">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
@@ -4735,7 +4722,7 @@ function setStudentInactive(sid){
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+MSG_MARKED_INACTIVE);
+  toast('✅ '+s.name+MSG_MARKED_INACTIVE, null, 'good');
 };
 
 function setStudentActive(sid){
@@ -4746,12 +4733,12 @@ function setStudentActive(sid){
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+MSG_MARKED_ACTIVE);
+  toast('✅ '+s.name+MSG_MARKED_ACTIVE, null, 'good');
 };
 
 // -------- דיאלוג ניהול רשימה --------
-/*  ⛔ הפעולה עוברת ב-`data-mk` ובדלגציה — ⚠️ בעבר היא הייתה מחרוזת
- *  JS בתוך `onclick`, ⛔ כלומר קוד שנבנה מחרוזת ורץ ב-`eval` של הדפדפן. */
+/*  ⛔ הפעולה עוברת ב-`data-mk` ובדלגציה — ⚠️ ולא כמחרוזת JS בתוך
+ *  `onclick`, ⛔ שהיא קוד שנבנה מחרוזת ורץ ב-`eval` של הדפדפן. */
 var MANAGE_PICK = {
   'add':    function () { openAddStudent(); },
   'deact':  function () { openDeactivateStudentDlg(); },
@@ -4772,7 +4759,7 @@ function openManageListDlg(){
   ];
   var rows=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
-      'class="u-d-flex u-ai-c u-g-6 u-w-100p u-p-5-6 u-bg-card u-bd-none u-bb-1-solid-card-2 u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-ta-r u-dir-rtl '+(item.cls||'u-c-navy-ink')+'">'+
+      'class="u-d-flex u-ai-c u-g-6 u-w-100p u-p-5-6 u-bg-card u-bd-none u-bb-1-solid-card-2 u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-ta-r u-dir-rtl '+(item.cls||'u-c-brand-ink')+'">'+
       '<span class="u-fs-5 u-w-28 u-ta-c">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
@@ -4830,7 +4817,7 @@ function doYearTransition(){
   saveStudents(students);
   schedulePush();
   filterClass('all');
-  toast(MSG_YEAR_ROLL_DONE+changed+MSG_STUDENTS_UPDATED);
+  toast(MSG_YEAR_ROLL_DONE+changed+MSG_STUDENTS_UPDATED, null, 'good');
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4921,7 +4908,7 @@ function openCurrentStatusModal() {
     '</div>';
   }).join('');
   openModal(s.name, absencesHtml +
-    '<button data-act="status-picker-open" class="u-w-100p u-p-5 u-r-4 u-bd-15-solid-navy-fill u-bg-card u-c-navy-ink u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-mt-2">➕ הוסף סיבה נוספת</button>', '');
+    '<button data-act="status-picker-open" class="u-w-100p u-p-5 u-r-4 u-bd-15-solid-brand-fill u-bg-card u-c-brand-ink u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-mt-2">➕ הוסף סיבה נוספת</button>', '');
 };
 
 // רענון לשונית ההשגחה הפעילה (נוכחות/שינה) — כדי שתלמיד שחזר לנוכח ירד מהרשימה מיד
@@ -4949,7 +4936,7 @@ function cancelStudentStatus() {
   renderStudents();
   hrRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
   closeModal();
-  toast(MSG_STATUS_REVERTED + s.name);
+  toast(MSG_STATUS_REVERTED + s.name, null, 'good');
 };
 
 function cancelSingleAbsence(absenceId) {
@@ -4973,7 +4960,7 @@ function cancelSingleAbsence(absenceId) {
     openCurrentStatusModal();
   } else {
     closeModal();
-    toast(MSG_STATUS_REVERTED + s.name);
+    toast(MSG_STATUS_REVERTED + s.name, null, 'good');
   }
 };
 
@@ -4992,7 +4979,7 @@ function studentFormHtml(sid){
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" class="st-form-input">'+
     /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
      *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="u-w-100p u-p-5 u-r-4 u-bd-15-solid-navy-fill u-bg-card u-c-navy-ink u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-mb-2">📜 היסטוריית סטטוסים</button>' : '');
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="u-w-100p u-p-5 u-r-4 u-bd-15-solid-brand-fill u-bg-card u-c-brand-ink u-ff-heebo u-fs-4 u-fw-600 u-cur-p u-mb-2">📜 היסטוריית סטטוסים</button>' : '');
 }
 // -------- היסטוריית הסטטוסים --------
 /*  ⛔ ההיסטוריה נקראת מהענן ⛔ ולא מהעותק שבמכשיר — ⚠️ הדיסק מחזיק את מה
@@ -5092,7 +5079,7 @@ function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
   var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
-  if(!name){toast(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501));return;}
+  if(!name){toast(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501), null, 'bad');return;}
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
@@ -5195,8 +5182,8 @@ function importStudentsFromFile(input) {
         existing=hrSortStudents(existing);
         // אין מיספור-מחדש — id חייב להישאר יציב למיזוג בין מכשירים
         // ⛔ תוצאת הכתיבה המקומית נבדקת לפני כל דיווח הצלחה —
-        //    באחסון מלא `saveStudents` מחזירה `false`, ועד הסבב הזה הסיכום
-        //    «N תלמידים נוספו בהצלחה» הוצג בכל מקרה. זה בדיוק כישלון שקט.
+        //    באחסון מלא `saveStudents` מחזירה `false`, ⚠️ וסיכום «N תלמידים
+        //    נוספו בהצלחה» בכל מקרה הוא כישלון שקט.
         wrote = (saveStudents(existing) !== false);
         if (wrote) {
           // ⛔ סימון ⏳ לכל שורה מיובאת — בלעדיו הייבוא אינו נספר
@@ -5248,7 +5235,8 @@ function confirmDeleteAll() {
   var n = hrTombstoneStudents(getStudents().map(function(s){ return s.id; }));
   schedulePush();
   renderStudents();
-  toast(n ? ('🗑️ ' + n + MSG_STUDENTS_WIPED) : MSG_NO_STUDENTS_WIPE);
+  if (n) toast('🗑️ ' + n + MSG_STUDENTS_WIPED, null, 'good');
+  else toast(MSG_NO_STUDENTS_WIPE);
 };
 
 function downloadImportTemplate() {
@@ -5284,9 +5272,8 @@ function printStudents() {
     if (!pRows.length) pRows = [['-','-','-']];
     if (!aRows.length) aRows = [['-','-','-']];
     var fontName = hrPdfFont();
-    /*  ⛔ שתי השורות האלה היו **תמונת canvas** בעבר — ⚠️ מעקף ל-bidi
-     *  של pdfmake 0.2, ⭐ ומחירו היה שהכותרת והסיכום אינם ניתנים לחיפוש
-     *  בקובץ. ⛔ מ-0.3 ה-bidi בספרייה עצמה, ⛔ ואין עוד סיבה לתמונה. */
+    /*  ⛔ שתי השורות האלה טקסט ⛔ ולא **תמונת canvas** — ⚠️ ה-bidi בספרייה
+     *  עצמה, ⭐ ותמונה הייתה משאירה את הכותרת והסיכום בלי חיפוש בקובץ. */
     var subtitleTxt = {text:'דוח'+NB+'נוכחות'+NB+'—'+NB+today, fontSize:11, color:'#555',
                        alignment:'center', margin:[0,0,0,14], direction:'ltr'};
     var summaryTxt  = {text:'סה״כ:'+NB+students.length+NB+'|'+NB+'נוכחים:'+NB+present.length+NB+
@@ -5368,7 +5355,7 @@ function _hrDiskArr(lsKey) {
 function _hrPullStaleMark(el, bad) {
   if (!el) return;
   el.textContent = bad ? '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר' : '';
-  el.style.display = bad ? 'block' : 'none';
+  el.classList.toggle('on', !!bad);
 }
 /*  ⛔ המשיכה מחזירה **האם הענן ענה** ⛔ ולא את הנתון — ⚠️
  *  `atLoadData` נופלת-חזרה לדיסק ומחזירה מערך גם כשהמשיכה נכשלה, ⭐ ולכן
@@ -5555,8 +5542,8 @@ function _atPaintReg() {
   // ודא שלוח הבחירה מוצג, רשימה מוסתרת
   var pk=document.getElementById('at-reg-picker');
   var rl=document.getElementById('at-reg-list');
-  if(pk) pk.style.display='';
-  if(rl) rl.style.display='none';
+  if(pk) pk.classList.remove('hidden');
+  if(rl) rl.classList.add('hidden');
 }
 
 // טעינה ראשית של המודול
@@ -5617,11 +5604,8 @@ function atFillSessionBtns() {
   atSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
-    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
-    btn.onmouseout=function(){this.style.background='var(--card-2)';};
-    btn.dataset.act='at-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
+    btn.className='sess-pick-btn';
+    btn.dataset.act='at-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
 }
@@ -5632,12 +5616,8 @@ function atShowTab(tab) {
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('at-view-'+t);
     var b=document.getElementById('at-tab-'+t);
-    if(v) v.style.display=(t===tab)?'block':'none';
-    if(b){
-      b.style.borderBottomColor=(t===tab)?'var(--navy-ink)':'transparent';
-      b.style.color=(t===tab)?'var(--navy-ink)':'var(--text-2)';
-      b.style.fontWeight=(t===tab)?'700':'600';
-    }
+    if(v) v.classList.toggle('hidden',t!==tab);
+    if(b) b.className=(t===tab)?'at-tab-btn-on':'at-tab-btn';
   });
   // רישום: רק מרנדר אם סדר פתוח
   if(tab==='reg' && window._atCurrentSessionId) atRenderStudents();
@@ -5828,8 +5808,8 @@ async function atEditSession(recId) {
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+rec.session+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
-  document.getElementById('at-reg-picker').style.display='none';
-  document.getElementById('at-reg-list').style.display='block';
+  document.getElementById('at-reg-picker').classList.add('hidden');
+  document.getElementById('at-reg-list').classList.remove('hidden');
   atRenderStudents();
 };
 
@@ -5899,18 +5879,16 @@ function hrAdoptSession(rec) {
 /* ═══ סוף מניעת כפילות סדרים ═══════════════════════════════════════════ */
 
 // פתיחת סדר חדש
-async function atOpenSession(sessId, sessName, btn) {
+async function atOpenSession(sessId, sessName) {
   // מנע פתיחת סדר חדש בזמן שסדר אחר פתוח
   if(window._atCurrentSessionId){toast(MSG_CLOSE_SESSION_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('at_date_iso')||{}).value;
   if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
-  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה — ⚠️ הנימוק המדוד: הפתיחה
-   *  ממתינה למשיכה **בכוונה**, ⭐ וההמתנה הזו נראתה למשתמש כמסך תקוע:
-   *  ⛔ לא היה חיווי, ⚠️ ולחיצה שנייה בזמן ההמתנה שלחה בקשה נוספת.
-   *  ⛔ והשחרור יושב ב-`finally` — ⚠️ כל יציאה מוקדמת מחזירה את הכפתור. */
-  busy(btn, true, '⏳ בודק…');
-  try {
+  /*  ⛔ חיווי וכפתור מושבת לאורך ההמתנה — ⚠️ הפתיחה ממתינה למשיכה
+   *  **בכוונה**, ⭐ ובלי חיווי ההמתנה נראית כמסך תקוע ולחיצה שנייה שולחת
+   *  בקשה נוספת: ⛔ והניטרול בניתוב — ⚠️ רשומת המפה מחזירה את ההבטחה,
+   *  ⭐ ו-`data-busy` על הכפתור נותן את התווית. */
   // בדוק כפילות — אותו סדר ואותו יום, מול המצב הטרי ביותר שיש
   /*  ⛔⛔ משיכה **אחת** ⛔ ומסוננת ליום שנבחר — ⚠️ הנימוק המדוד:
    *  כאן היו **שתי** משיכות מלאות בזו אחר זו של אותן טבלאות, ⭐ ואף אחת
@@ -5976,7 +5954,6 @@ async function atOpenSession(sessId, sessName, btn) {
   window._atCurrentSessionId=rec.id;
 
   _atMountOpenSession(sessName, dateHeb);
-  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -5988,8 +5965,8 @@ function _atMountOpenSession(sessName, dateHeb) {
     '<span class="rec-title">'+sessName+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
-  document.getElementById('at-reg-picker').style.display='none';
-  document.getElementById('at-reg-list').style.display='block';
+  document.getElementById('at-reg-picker').classList.add('hidden');
+  document.getElementById('at-reg-list').classList.remove('hidden');
   atRenderStudents();
 }
 
@@ -6086,7 +6063,7 @@ function atCancelStudentStatusFromReg(sid) {
   atMarkDirty();
   atRenderStudents();
   renderStudents();
-  toast(MSG_STATUS_REVERTED+s.name);
+  toast(MSG_STATUS_REVERTED+s.name, null, 'good');
 };
 
 // החלת סימון (אחרי אישור אם נדרש)
@@ -6250,10 +6227,10 @@ async function atCloseSession() {
   window._atCurrentSessionId=null;
   window._atMarks={};
   window._atPendingRec=null;
-  document.getElementById('at-reg-list').style.display='none';
-  document.getElementById('at-reg-picker').style.display='';
+  document.getElementById('at-reg-list').classList.add('hidden');
+  document.getElementById('at-reg-picker').classList.remove('hidden');
   atRenderTodaySessions();
-  toast(msg);
+  toast(msg, null, 'good');
 };
 
 // -------- ארכיון --------
@@ -6312,7 +6289,7 @@ function _atPaintArchive(el, records, warn) {
       ' class="arc-year-head">'+
       '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="arc-year-chev">▾</span>'+
     '</div>';
-    html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
+    html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' u-pr-3">';
 
     var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
     months.forEach(function(mi){
@@ -6325,7 +6302,7 @@ function _atPaintArchive(el, records, warn) {
         ' class="arc-month-head">'+
         '<span class="u-fx-1">📆 '+mName+'</span><span class="arc-month-chev">▾</span>'+
       '</div>';
-      html+='<div id="'+mId+'" class="'+(isMonthCur?'u-d-block':'u-d-none')+' u-pr-4">';
+      html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' u-pr-4">';
 
       var _arcSessOrder={};
       atSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
@@ -6343,12 +6320,12 @@ function _atPaintArchive(el, records, warn) {
         html+='<div class="u-mb-4">';
         // כותרת יום
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
-          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
+          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-brand-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
           '<span class="u-fx-1">'+dayLabel+(isToday?' — <span class="u-c-warn">היום</span>':'')+
           ' <span class="arc-day-count">('+entries.length+' סדרים)</span></span>'+
           '<span class="arc-day-chev">▾</span>'+
         '</div>';
-        html+='<div id="'+dId+'" class="'+(isToday?'u-d-block':'u-d-none')+' u-pr-4">';
+        html+='<div id="'+dId+'" class="'+(isToday?'':'hidden')+' u-pr-4">';
 
         entries.forEach(function(entry){
           var rec=entry.rec;
@@ -6362,7 +6339,7 @@ function _atPaintArchive(el, records, warn) {
           html+='<div class="arc-sess-summary">'+summary+'</div>';
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" class="arc-sess-body">';
+          html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var _mk2=hrMarks(rec);
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -6402,7 +6379,7 @@ async function atDeleteSessionConfirmed(id) {
   await atSaveData(data);
   atRenderArchive();
   atRenderTodaySessions();   // רענן גם את רשימת הסדרים בלשונית רישום
-  toast(MSG_ROW_DELETED);
+  toast(MSG_ROW_DELETED, null, 'good');
 };
 
 // -------- ייצוא — דיאלוג סינון --------
@@ -6476,7 +6453,7 @@ async function atExportExcel(fromIso,toIso) {
     a.href=url; a.download='sdariim-'+dayToday()+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-    toast(MSG_EXPORT_OK);
+    toast(MSG_EXPORT_OK, null, 'good');
   } catch(e){console.error('[Excel ERROR]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
@@ -6583,7 +6560,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!_hcBase(hy+1);
 
   // כותרת ניווט
-  var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-navy-ink';
+  var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-brand-ink';
   var navHtml='<div class="sup-nav-bar">'+
     '<button data-act="at-sup-nav" data-dir="-1" class="'+navStyle+(hasPrev?'':' u-op-3 u-cur-def')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span class="sup-nav-label">'+mLabel+'</span>'+
@@ -6662,7 +6639,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     html+='<span class="sup-chev-icon sup-chev">›</span>';
     html+='</div>';
     // פאנל פרטים
-    html+='<div class="sup-card-body">';
+    html+='<div class="sup-card-body hidden">';
     html+='<div class="u-mb-6">';
     html+='<div class="panel-head-sm">➕ הוסף טיפול</div>';
     html+='<div class="chip-row ksave">';
@@ -6720,7 +6697,7 @@ async function atAddTreat(sid) {
   await atSaveTreats(treats);
   if(noteEl) noteEl.value='';
   atRenderSupervision();
-  toast(MSG_CARE_SAVED);
+  toast(MSG_CARE_SAVED, null, 'good');
 };
 
 function atDeleteTreat(id) {
@@ -6742,7 +6719,7 @@ async function atDeleteTreatConfirmed(id) {
   pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
   atRenderSupervision();
-  toast(MSG_DELETED_MARK);
+  toast(MSG_DELETED_MARK, null, 'good');
 };
 
 // -------- פירוט חודשי לתלמיד (🔍) --------
@@ -6819,7 +6796,7 @@ async function atEditMark(recId, sid, newCode) {
   atRenderTodaySessions();
   atRenderArchive();
   atRenderSupervision();
-  toast(MSG_MARK_UPDATED);
+  toast(MSG_MARK_UPDATED, null, 'good');
   await _p;
 };
 
@@ -6866,7 +6843,7 @@ function atCheckAlert() {
   openModal(MSG_ABSENCE_ALERT,
     '<p class="u-fs-3 u-c-text2 u-mb-6 u-ta-c">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
     '<div class="u-maxh-220 u-ovy-a">'+list+'</div>',
-    '<button data-act="modal-close" class="u-fx-1 u-bg-navy-fill u-c-on-brand u-bd-none u-r-4 u-p-5-7 u-ff-heebo u-fs-4 u-cur-p">הבנתי</button>');
+    '<button data-act="modal-close" class="u-fx-1 u-bg-brand-fill u-c-on-brand u-bd-none u-r-4 u-p-5-7 u-ff-heebo u-fs-4 u-cur-p">הבנתי</button>');
 }
 
 // -------- הגדרות מודול --------
@@ -6906,7 +6883,7 @@ function atAddSession() {
   if(!sc) return;
   var div=document.createElement('div');
   div.setAttribute('data-sess-row','1');
-  div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:2px';
+  div.className='edit-row u-mb-1';
   div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" class="sess-field">'+
     '<input data-sess-time="1" aria-label="שעת הסדר" type="time" class="cfg-row-input">'+
     '<button data-act="row-remove" class="row-del-btn">✕</button>';
@@ -6916,7 +6893,7 @@ function atAddTreatRow() {
   var tc=document.getElementById('at-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.className='edit-row';
   div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="sess-field"><button data-act="row-remove" class="row-del-btn">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
@@ -6959,7 +6936,7 @@ async function atSaveSettingsCfg() {
   window._atCfg=null; // כפיית טעינה מחדש
   await atSaveCfg(cfg);
   window._atCfg=cfg;
-  toast(MSG_SETTINGS_SAVED);
+  toast(MSG_SETTINGS_SAVED, null, 'good');
 };
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -7071,11 +7048,9 @@ async function hrLoadData() {
   window._hrData=[]; return window._hrData;
 }
 
-// הוסר: slCleanupTestRecords (יולי 2026). "ניקוי חד-פעמי" שרץ בכל פתיחת מודול
-// השינה והתאים רשומות **לפי שם הסדר** ('בדיקה'/'בדיקות') — כלומר סדר לגיטימי
-// בשם כזה סומן למחיקה. בפועל הוא גם לא מחק כלום: hrSaveData ממזג עם הענן,
-// והרשומות שהוא "ניקה" חזרו מיד — אבל הוא כן כתב מחדש את כל מערך השינה
-// ודיווח "✅ ניקוי הושלם". אין להחזיר אותו; מחיקה = tombstone מפורש בלבד.
+// ⛔ אין «ניקוי» שמתאים רשומות **לפי שם הסדר** — ⚠️ סדר לגיטימי בשם כזה
+// מסומן למחיקה, ⭐ ו-hrSaveData ממזג עם הענן, כך שהרשומות «המנוקות» חוזרות
+// מיד. ⛔ מחיקה = tombstone מפורש בלבד.
 async function hrSaveData(data) {
   /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
    *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
@@ -7162,8 +7137,8 @@ function _hrPaintReg() {
 
   var pk=document.getElementById('sl-reg-picker');
   var rl=document.getElementById('sl-reg-list');
-  if(pk) pk.style.display='';
-  if(rl) rl.style.display='none';
+  if(pk) pk.classList.remove('hidden');
+  if(rl) rl.classList.add('hidden');
 }
 
 // טעינה ראשית של מודול שינה
@@ -7214,11 +7189,8 @@ function hrFillSessionBtns() {
   hrSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
-    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
-    btn.onmouseout=function(){this.style.background='var(--card-2)';};
-    btn.dataset.act='sl-open-session';btn.dataset.sid=s.id;btn.dataset.sname=s.name;
+    btn.className='sess-pick-btn';
+    btn.dataset.act='sl-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
 }
@@ -7228,12 +7200,8 @@ function hrShowTab(tab) {
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('sl-view-'+t);
     var b=document.getElementById('sl-tab-'+t);
-    if(v) v.style.display=(t===tab)?'block':'none';
-    if(b){
-      b.style.borderBottomColor=(t===tab)?'var(--navy-ink)':'transparent';
-      b.style.color=(t===tab)?'var(--navy-ink)':'var(--text-2)';
-      b.style.fontWeight=(t===tab)?'700':'600';
-    }
+    if(v) v.classList.toggle('hidden',t!==tab);
+    if(b) b.className=(t===tab)?'at-tab-btn-on':'at-tab-btn';
   });
   if(tab==='reg' && window._hrCurrentSessionId) hrRenderStudents();
   if(tab==='arc') hrRenderArchive();
@@ -7363,19 +7331,17 @@ async function hrEditSession(recId) {
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+rec.session+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
+  document.getElementById('sl-reg-picker').classList.add('hidden');
+  document.getElementById('sl-reg-list').classList.remove('hidden');
   hrRenderStudents();
 };
 
-async function hrOpenSession(sessId, sessName, btn) {
+async function hrOpenSession(sessId, sessName) {
   if(window._hrCurrentSessionId){toast(MSG_CLOSE_REPORT_FIRST, null, 'bad');return;}
   var dateIso=(document.getElementById('sl_date_iso')||{}).value||hrGetLogicalDate();
   if(!dateIso){toast(MSG_PICK_DATE_FIRST, null, 'bad');return;}
 
-  // ⛔ ר' הנימוק ב-atOpenSession — ההמתנה מכוונת, ⚠️ והחיווי הוא מה שחסר בה
-  busy(btn, true, '⏳ בודק…');
-  try {
+  // ⛔ ההמתנה מכוונת — ⚠️ והחיווי מהניתוב, כמו בפתיחת סדר נוכחות
   // ⛔ ר' הנימוק ב-atOpenSession — משיכה אחת מסוננת ליום שנבחר
   await _hrPullSessions(hrDayWin(dateIso));
   var allData=window._hrData||[];
@@ -7425,7 +7391,6 @@ async function hrOpenSession(sessId, sessName, btn) {
   window._hrCurrentSessionId=rec.id;
 
   _hrMountOpenSession(sessName, dateHeb);
-  } finally { busy(btn, false); }
 };
 /*  ⛔ ההרכבה נפרדת מהבדיקה — ⚠️ הפתיחה **חייבת** להמתין למשיכה: ⭐ היא
  *  מחליטה אם נוצרת רשומה שנייה לאותו סדר, ⛔ וציור לפני התשובה היה פותח
@@ -7437,8 +7402,8 @@ function _hrMountOpenSession(sessName, dateHeb) {
     '<span class="rec-title">'+sessName+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
+  document.getElementById('sl-reg-picker').classList.add('hidden');
+  document.getElementById('sl-reg-list').classList.remove('hidden');
   hrRenderStudents();
 }
 
@@ -7530,7 +7495,7 @@ function hrCancelStudentStatusFromReg(sid) {
   hrMarkDirty();
   hrRenderStudents();
   renderStudents();
-  toast(MSG_STATUS_REVERTED+s.name);
+  toast(MSG_STATUS_REVERTED+s.name, null, 'good');
 };
 
 function hrApplyMark(sid, code) {
@@ -7698,10 +7663,10 @@ async function hrCloseSession() {
   window._hrCurrentSessionId=null;
   window._hrMarks={};
   window._hrPendingRec=null;
-  document.getElementById('sl-reg-list').style.display='none';
-  document.getElementById('sl-reg-picker').style.display='';
+  document.getElementById('sl-reg-list').classList.add('hidden');
+  document.getElementById('sl-reg-picker').classList.remove('hidden');
   hrRenderTodaySessions();
-  toast(msg);
+  toast(msg, null, 'good');
 };
 
 // -------- ארכיון --------
@@ -7757,7 +7722,7 @@ function _hrPaintArchive(el, records, warn) {
       ' class="arc-year-head">'+
       '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="arc-year-chev">▾</span>'+
     '</div>';
-    html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
+    html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' u-pr-3">';
 
     var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
     months.forEach(function(mi){
@@ -7769,7 +7734,7 @@ function _hrPaintArchive(el, records, warn) {
         ' class="arc-month-head">'+
         '<span class="u-fx-1">📆 '+mName+'</span><span class="arc-month-chev">▾</span>'+
       '</div>';
-      html+='<div id="'+mId+'" class="'+(isMonthCur?'u-d-block':'u-d-none')+' u-pr-4">';
+      html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' u-pr-4">';
 
       var _arcSessOrder={};
       hrSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
@@ -7786,12 +7751,12 @@ function _hrPaintArchive(el, records, warn) {
         var isToday=iso===todayIso;
         html+='<div class="u-mb-4">';
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
-          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-navy-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
+          'class="u-d-flex u-ai-c u-g-4 u-p-3-5 u-r-2 u-cur-p u-fw-600 u-fs-3 u-c-brand-ink u-mb-2 u-us-none '+(isToday?'u-bg-warn-soft u-bd-1-solid-warn-line':'u-bg-card-2 u-bd-1-solid-border')+'">'+
           '<span class="u-fx-1">'+dayLabel+(isToday?' — <span class="u-c-warn">היום</span>':'')+
           ' <span class="arc-day-count">('+entries.length+' דוחות)</span></span>'+
           '<span class="arc-day-chev">▾</span>'+
         '</div>';
-        html+='<div id="'+dId+'" class="'+(isToday?'u-d-block':'u-d-none')+' u-pr-4">';
+        html+='<div id="'+dId+'" class="'+(isToday?'':'hidden')+' u-pr-4">';
 
         entries.forEach(function(entry){
           var rec=entry.rec;
@@ -7805,7 +7770,7 @@ function _hrPaintArchive(el, records, warn) {
           html+='<div class="arc-sess-summary">'+summary+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" class="arc-sess-body">';
+          html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var _mk2=hrMarks(rec);
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -7846,7 +7811,7 @@ async function hrDeleteSessionConfirmed(id) {
   await hrSaveData(data);
   hrRenderArchive();
   hrRenderTodaySessions();
-  toast(MSG_ROW_DELETED);
+  toast(MSG_ROW_DELETED, null, 'good');
 };
 
 // -------- ייצוא --------
@@ -7919,7 +7884,7 @@ async function hrExportExcel(fromIso,toIso) {
     a.href=url; a.download='shinah-'+dayToday()+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-    toast(MSG_EXPORT_OK);
+    toast(MSG_EXPORT_OK, null, 'good');
   } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
@@ -8018,7 +7983,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   var hasPrev=mi>0||!!_hcBase(hy-1);
   var hasNext=mi<curMax||!!_hcBase(hy+1);
 
-  var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-navy-ink';
+  var navStyle='u-bg-none u-bd-none u-fs-5 u-cur-p u-p-2-5 u-c-brand-ink';
   var navHtml='<div class="sup-nav-bar">'+
     '<button data-act="sl-sup-nav" data-dir="-1" class="'+navStyle+(hasPrev?'':' u-op-3 u-cur-def')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span class="sup-nav-label">'+mLabel+'</span>'+
@@ -8092,7 +8057,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     html+='</div>';
     html+='<span class="sup-chev-icon sl-sup-chev">›</span>';
     html+='</div>';
-    html+='<div class="sup-card-body">';
+    html+='<div class="sup-card-body hidden">';
     html+='<div class="u-mb-6">';
     html+='<div class="panel-head-sm">➕ הוסף טיפול</div>';
     html+='<div class="chip-row ksave">';
@@ -8147,7 +8112,7 @@ async function hrAddTreat(sid) {
   await hrSaveTreats(treats);
   if(noteEl) noteEl.value='';
   hrRenderSupervision();
-  toast(MSG_CARE_SAVED);
+  toast(MSG_CARE_SAVED, null, 'good');
 };
 
 function hrDeleteTreat(id) {
@@ -8168,7 +8133,7 @@ async function hrDeleteTreatConfirmed(id) {
   pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await hrSaveTreats(treats);
   hrRenderSupervision();
-  toast(MSG_DELETED_MARK);
+  toast(MSG_DELETED_MARK, null, 'good');
 };
 
 // -------- פירוט חודשי לתלמיד --------
@@ -8245,7 +8210,7 @@ async function hrEditMark(recId, sid, newCode) {
   hrRenderTodaySessions();
   hrRenderArchive();
   hrRenderSupervision();
-  toast(MSG_MARK_UPDATED);
+  toast(MSG_MARK_UPDATED, null, 'good');
   await _p;
 };
 
@@ -8275,7 +8240,7 @@ function hrAddTreatRow() {
   var tc=document.getElementById('sl-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.className='edit-row';
   div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="sess-field"><button data-act="row-remove" class="row-del-btn">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
@@ -8296,7 +8261,7 @@ async function hrSaveSettingsCfg() {
   window._hrCfg=null;
   await hrSaveCfg(cfg);
   window._hrCfg=cfg;
-  toast(MSG_SETTINGS_SAVED);
+  toast(MSG_SETTINGS_SAVED, null, 'good');
 };
 // ==================== סוף מודול זמן שינה ====================
 
