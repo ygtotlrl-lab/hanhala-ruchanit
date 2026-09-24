@@ -14,8 +14,9 @@ self.APP = Object.freeze({
   /*  ⛔ תחילית הטבלאות והאחסון — ⚠️ כל אות בה פותחת מילה בשם הריפו, בסדר. */
   prefix: 'hr_',
   colors: { theme: '#1a3c6e', background: '#1a3c6e' },
-  /*  ⚠️ דף האופליין של ה-service worker — ⭐ צבע הרקע והדיו שלו, והסמל. */
-  offline: { bg: '#1a3a6b', ink: '#FFFFFF', mark: '📴' },
+  /*  ⚠️ דף האופליין של ה-service worker — ⭐ רקע ודיו לכל מצב, והסמל:
+      ⛔ הכהה הוא אסימוני הערכה הכהה של האפליקציה. */
+  offline: { light: { bg: '#1a3a6b', ink: '#FFFFFF' }, dark: { bg: '#0d151d', ink: '#e8eef5' }, mark: '📴' },
   /*  ⚠️ המפתח הוא מפתח `anon` ציבורי — ⛔ ולא מפתח שירות: ההרשאות במסד. */
   supabase: {
     url: 'https://kxbtskqobynewvnckaaz.supabase.co',
@@ -23,9 +24,15 @@ self.APP = Object.freeze({
   },
   android: {
     package: 'com.hanhala.ruchanit',
+    /*  ⛔ הכתובת שהמעטפת טוענת — ⚠️ וממנה נגזר המקור היחיד שגשר השיתוף מקבל. */
+    url: 'https://ygtotlrl-lab.github.io/hanhala-ruchanit/',
+    /*  ⚠️ המשפט שלם ⛔ ולא שם בלבד — ⭐ הפועל מתאים למין השם. */
+    offlineLine: 'הנהלה רוחנית לא הצליחה להתחבר.',
+    /*  ⚠️ צבע כפתור הניסיון החוזר בדף האופליין של המעטפת. */
+    accent: '#1a3c6e',
     /*  ⛔ `versionCode` לעולם אינו יורד, ⚠️ ומקודם בכל שינוי תחת `android/` —
         ⭐ בלי קידום המכשיר המותקן אינו מקבל את ה-APK החדש. */
-    versionCode: 20,
+    versionCode: 21,
     versionName: '15.0',
     launcherBg: { kind: 'solid', color: '#FFFFFF' },
     /*  ⚠️ גשר השיתוף — ⭐ `FileProvider` ו-`androidx`, רק באפליקציה שמייצאת קובץ. */

@@ -2,18 +2,19 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<link rel="manifest" href="manifest.json">
-<script src="app.config.js"></script>
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.59b21341.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.fd071042.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.f0bbfa3a.png">
 <meta name="theme-color" content="#1a3c6e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title></title>
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<script src="app.config.js"></script>
+<script src="core/boot.js"></script>
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.f0bbfa3a.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.59b21341.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.fd071042.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/vfs_fonts.js"></script>
@@ -22,22 +23,6 @@
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
-
-<!-- ===== מסך כניסה ===== -->
-<div id="auth-screen">
-  <div class="auth-box ksave">
-    <div class="auth-logo"><img src="icons/icon-512.092edf48.png" alt="לוגו"></div>
-    <div class="auth-title">הנהלה רוחנית</div>
-    <div class="auth-sub">מערכת ניהול הישיבה</div>
-    <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
-    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
-    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="⏳ בודק…" data-ksave>כניסה למערכת</button>
-    <div class="auth-err" id="auth-err"></div>
-    <div class="auth-spinner" id="auth-spinner"></div>
-
-  </div>
-</div>
-
 
 <header>
   <div class="hl">
@@ -76,7 +61,144 @@
     </div>
   </div>
 </header>
-<main>
+<nav class="bottom-nav">
+  <button class="bn on" data-pg="home" data-act="page-nav" data-page="home">
+    <span class="bn-ic">🏠</span><span>ראשי</span>
+  </button>
+  <button class="bn" data-pg="students" data-act="page-nav" data-page="students">
+    <span class="bn-ic">👥</span><span>מצבת</span>
+  </button>
+  <button class="bn" data-pg="attend" data-act="page-nav" data-page="attend">
+    <span class="bn-ic">✅</span><span>סדרים</span>
+  </button>
+  <button class="bn" data-pg="sleep" data-act="page-nav" data-page="sleep">
+    <span class="bn-ic">🌙</span><span>שינה</span>
+  </button>
+  <button class="bn" data-pg="exams" data-act="page-nav" data-page="exams">
+    <span class="bn-ic">📝</span><span>מבחנים</span>
+  </button>
+  <button class="bn" data-pg="reports" data-act="page-nav" data-page="reports">
+    <span class="bn-ic">📊</span><span>דוחות</span>
+  </button>
+  <button class="bn" data-pg="settings" data-act="page-nav" data-page="settings">
+    <span class="bn-ic">⚙️</span><span>הגדרות</span>
+  </button>
+</nav>
+<main id="view"><div class="view-loading" role="status" aria-label="טוען"><span class="view-spin"></span></div></main>
+
+
+<!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ מיכל
+      לכל דיאלוג הוא דרך סגירה לכל דיאלוג, ⛔ ומיכל שהוחלף חלקית משאיר
+      שני מסלולי סגירה.  -->
+<div id="modal" class="veil">
+  <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="sheet-hd">
+      <h3 id="modal-title"></h3>
+      <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
+    </div>
+    <div class="sheet-bd" id="modal-body"></div>
+    <div class="sheet-ft" id="modal-foot"></div>
+  </div>
+</div>
+<!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
+      ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
+<div id="ask" class="veil">
+  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
+    <div class="sheet-hd"><h3 id="ask-title"></h3></div>
+    <div class="sheet-bd" id="ask-body"></div>
+    <div class="sheet-ft">
+      <button data-act="ask-no">ביטול</button>
+      <button class="danger" data-act="ask-yes" id="ask-yes">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<div id="updater">
+  <div class="in">
+    <span>🔄 גרסה חדשה זמינה</span>
+    <button data-act="sw-apply">עדכן עכשיו</button>
+    <button class="x" data-act="sw-dismiss" aria-label="סגור">✕</button>
+  </div>
+</div>
+
+<script type="module">
+/*  ⛔ הליבה המשותפת נטענת כמודול ⛔ ואינה מוכפלת כאן — ⚠️ והמסמך עצמו הוא
+ *  מודול: ⭐ סקריפט קלאסי רץ **לפני** כל מודול, ⛔ וקריאה אליו בעלייה
+ *  הייתה מוצאת `undefined`. */
+import { MSG_CLOUD_SYNC_FAIL, MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
+         MSG_LOGIN_ERR, MSG_MY_PASS_TITLE, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO,
+         MSG_OFF_NO_FP, MSG_OFF_UNKNOWN, MSG_OFF_USER_WRITE,
+         MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL,
+         MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, MSG_SYNC_BACK, appConfigure,
+         dayIso, dayNoon, dayToday, getDeviceId, isNetErr, kvParse, readNum,
+         uniqHas, uniqList, withTimeout } from './core/util.js';
+import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
+         eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
+         pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
+         plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
+         sbWatch, schedulePush, tombBoot, tombPruneMerged } from './core/sync.js';
+import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
+         lsRemove, lsSet, lsSetArray } from './core/storage.js';
+import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
+         mirrorTables, mirrorWrite } from './core/mirror.js';
+import { bkBoot, logAction, logFlush } from './core/backup.js';
+import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
+         sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
+import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
+         modalEsc, openModal, pullRender, swApply, swHideUpdate, toast,
+         uiNoDialog } from './core/ui.js';
+import './core/hebrew.js';
+
+/*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
+ *  ⭐ והשומר קורא אותה בזמן הקריאה ⛔ ולא בזמן המסירה. */
+document.title = self.APP.name;
+appConfigure({
+  get BK_CFG() { return BK_CFG; },
+  get DATA_ERA() { return DATA_ERA; },
+  get DEV_CFG() { return DEV_CFG; },
+  get DOM_ACTIONS() { return DOM_ACTIONS; },
+  get ERA_CFG() { return ERA_CFG; },
+  get HW_CFG() { return HW_CFG; },
+  get LK_CFG() { return LK_CFG; },
+  get LS_CFG() { return LS_CFG; },
+  get MIRROR_CFG() { return MIRROR_CFG; },
+  get PEND_CFG() { return PEND_CFG; },
+  get PL_CFG() { return PL_CFG; },
+  get PUSH_CFG() { return PUSH_CFG; },
+  get RTY_CFG() { return RTY_CFG; },
+  get SESS_CFG() { return SESS_CFG; },
+  get TOAST_DEFAULT_MS() { return TOAST_DEFAULT_MS; },
+  get USER_CFG() { return USER_CFG; },
+  get saveRefresh() { return saveRefresh; }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   המסכים — מצוירים בקוד, לתוך `#view`
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ הקליפה ב-HTML נושאת מבנה בלבד — כותרת · ניווט · מיכל תוכן · שכבות:
+   ⚠️ ותוכן המסכים כאן, ⭐ ו-`mountView()` מציירת אותם לפני כל קוד שמחפש
+   אלמנט בתוכם. ⛔ אין להזיז את הקריאה אליה מטה.
+   ⛔ ומסך הכניסה הוא מסך כמו כל מסך — ⚠️ במיכל, ⭐ ושכבה מלאה מעל הכותרת. */
+function screenLoginHTML() {
+  return `
+<div id="auth-screen">
+  <div class="auth-box ksave">
+    <div class="auth-logo"><img src="icons/icon-512.092edf48.png" alt="לוגו"></div>
+    <div class="auth-title">הנהלה רוחנית</div>
+    <div class="auth-sub">מערכת ניהול הישיבה</div>
+    <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
+    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
+    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="⏳ בודק…" data-ksave>כניסה למערכת</button>
+    <div class="auth-err" id="auth-err"></div>
+    <div class="auth-spinner" id="auth-spinner"></div>
+
+  </div>
+</div>
+`;
+}
+function screenHomeHTML() {
+  return `
 <div class="pg on" id="pg-home">
   <div class="hero">
     <div class="hero-date" id="hdate"></div>
@@ -102,6 +224,10 @@
     </div>
   </div>
 </div>
+`;
+}
+function screenStudentsHTML() {
+  return `
 <div class="pg" id="pg-students">
 <div class="inner">
 <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
@@ -133,6 +259,10 @@
 </div>
 
 </div>
+`;
+}
+function screenAttendHTML() {
+  return `
 <div class="pg" id="pg-attend">
   <div class="inner">
     <div class="ptitle">
@@ -191,12 +321,20 @@
     </div>
   </div>
 </div>
+`;
+}
+function screenReportsHTML() {
+  return `
 <div class="pg" id="pg-reports">
   <div class="inner">
     <div class="ptitle ksave"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>📊 הצג</button></div>
     <div id="rc"></div>
   </div>
 </div>
+`;
+}
+function screenSleepHTML() {
+  return `
 <div class="pg" id="pg-sleep">
   <div class="inner">
     <div class="ptitle">
@@ -247,9 +385,20 @@
     </div>
   </div>
 </div>
+`;
+}
+function screenExamsHTML() {
+  return `
 <div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
+`;
+}
+function screenFilesHTML() {
+  return `
 <div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
-<!-- ===== דף הגדרות ===== -->
+`;
+}
+function screenSettingsHTML() {
+  return `
 <div class="pg" id="pg-settings">
   <div class="inner">
 
@@ -403,95 +552,21 @@
 
   </div>
 </div>
-
-</main>
-
-
-<!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ מיכל
-      לכל דיאלוג הוא דרך סגירה לכל דיאלוג, ⛔ ומיכל שהוחלף חלקית משאיר
-      שני מסלולי סגירה.  -->
-<div id="modal" class="veil">
-  <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="sheet-hd">
-      <h3 id="modal-title"></h3>
-      <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
-    </div>
-    <div class="sheet-bd" id="modal-body"></div>
-    <div class="sheet-ft" id="modal-foot"></div>
-  </div>
-</div>
-<!--  ⛔ מיכל האישור — ⚠️ «כן/לא» הוא דפוס אחד ולא דיאלוג לכל מחיקה:
-      ⭐ הגוף הוא `textContent`, ⛔ ודיאלוג שדורש HTML עובר ב-`openModal`. -->
-<div id="ask" class="veil">
-  <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
-    <div class="sheet-hd"><h3 id="ask-title"></h3></div>
-    <div class="sheet-bd" id="ask-body"></div>
-    <div class="sheet-ft">
-      <button data-act="ask-no">ביטול</button>
-      <button class="danger" data-act="ask-yes" id="ask-yes">אישור</button>
-    </div>
-  </div>
-</div>
-
-<div id="toasts" aria-live="polite"></div>
-<div id="updater">
-  <div class="in">
-    <span>🔄 גרסה חדשה זמינה</span>
-    <button data-act="sw-apply">עדכן עכשיו</button>
-    <button class="x" data-act="sw-dismiss" aria-label="סגור">✕</button>
-  </div>
-</div>
-
-<script type="module">
-/*  ⛔ הליבה המשותפת נטענת כמודול ⛔ ואינה מוכפלת כאן — ⚠️ והמסמך עצמו הוא
- *  מודול: ⭐ סקריפט קלאסי רץ **לפני** כל מודול, ⛔ וקריאה אליו בעלייה
- *  הייתה מוצאת `undefined`. */
-import { MSG_CLOUD_SYNC_FAIL, MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
-         MSG_LOGIN_ERR, MSG_MY_PASS_TITLE, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO,
-         MSG_OFF_NO_FP, MSG_OFF_UNKNOWN, MSG_OFF_USER_WRITE,
-         MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL,
-         MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, MSG_SYNC_BACK, appConfigure,
-         dayIso, dayNoon, dayToday, getDeviceId, isNetErr, kvParse, readNum,
-         uniqHas, uniqList, withTimeout } from './core/util.js';
-import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
-         eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
-         pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
-         plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
-         sbWatch, schedulePush, tombBoot, tombPruneMerged } from './core/sync.js';
-import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
-         lsRemove, lsSet, lsSetArray } from './core/storage.js';
-import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
-         mirrorTables, mirrorWrite } from './core/mirror.js';
-import { bkBoot, logAction, logFlush } from './core/backup.js';
-import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
-         sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
-import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
-         modalEsc, openModal, pullRender, swApply, swHideUpdate, toast,
-         uiNoDialog } from './core/ui.js';
-import './core/hebrew.js';
-
-/*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
- *  ⭐ והשומר קורא אותה בזמן הקריאה ⛔ ולא בזמן המסירה. */
-document.title = self.APP.name;
-appConfigure({
-  get BK_CFG() { return BK_CFG; },
-  get DATA_ERA() { return DATA_ERA; },
-  get DEV_CFG() { return DEV_CFG; },
-  get DOM_ACTIONS() { return DOM_ACTIONS; },
-  get ERA_CFG() { return ERA_CFG; },
-  get HW_CFG() { return HW_CFG; },
-  get LK_CFG() { return LK_CFG; },
-  get LS_CFG() { return LS_CFG; },
-  get MIRROR_CFG() { return MIRROR_CFG; },
-  get PEND_CFG() { return PEND_CFG; },
-  get PL_CFG() { return PL_CFG; },
-  get PUSH_CFG() { return PUSH_CFG; },
-  get RTY_CFG() { return RTY_CFG; },
-  get SESS_CFG() { return SESS_CFG; },
-  get TOAST_DEFAULT_MS() { return TOAST_DEFAULT_MS; },
-  get USER_CFG() { return USER_CFG; },
-  get saveRefresh() { return saveRefresh; }
-});
+`;
+}
+function mountView() {
+  var v = document.getElementById('view');
+  if (!v) { console.error('[ui] אין מיכל תוכן — #view'); return; }
+  v.innerHTML = screenLoginHTML() + screenHomeHTML() +
+    screenStudentsHTML() +
+    screenAttendHTML() +
+    screenReportsHTML() +
+    screenSleepHTML() +
+    screenExamsHTML() +
+    screenFilesHTML() +
+    screenSettingsHTML();
+}
+mountView();
 
 var SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key));
 
@@ -8270,31 +8345,10 @@ async function hrSaveSettingsCfg() {
 
 // ==================== סוף מודול שמירת סדרים ====================
 
+/*  ⛔ העלייה הסתיימה — ⚠️ קריאה אחת, בסוף האתחול: ⭐ שומר העלייה ממתין לה. */
+bootOk();
 </script>
 
-<nav class="bottom-nav">
-  <button class="bn on" data-pg="home" data-act="page-nav" data-page="home">
-    <span class="bn-ic">🏠</span><span>ראשי</span>
-  </button>
-  <button class="bn" data-pg="students" data-act="page-nav" data-page="students">
-    <span class="bn-ic">👥</span><span>מצבת</span>
-  </button>
-  <button class="bn" data-pg="attend" data-act="page-nav" data-page="attend">
-    <span class="bn-ic">✅</span><span>סדרים</span>
-  </button>
-  <button class="bn" data-pg="sleep" data-act="page-nav" data-page="sleep">
-    <span class="bn-ic">🌙</span><span>שינה</span>
-  </button>
-  <button class="bn" data-pg="exams" data-act="page-nav" data-page="exams">
-    <span class="bn-ic">📝</span><span>מבחנים</span>
-  </button>
-  <button class="bn" data-pg="reports" data-act="page-nav" data-page="reports">
-    <span class="bn-ic">📊</span><span>דוחות</span>
-  </button>
-  <button class="bn" data-pg="settings" data-act="page-nav" data-page="settings">
-    <span class="bn-ic">⚙️</span><span>הגדרות</span>
-  </button>
-</nav>
 
 </body>
 </html>
