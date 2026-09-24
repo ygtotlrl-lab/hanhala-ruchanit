@@ -8,7 +8,10 @@
 # מי שמחזיק את שניהם חותם APK שאנדרואיד מקבל כעדכון לגיטימי. הם חיים
 # ב-GitHub Secrets, נמשכים בזמן בנייה, ומגיעים לכאן דרך הסביבה.
 #
-# Requires Android build-tools on PATH (zipalign + apksigner).
+# ⛔ טביעת המפתח נקראת מהתצורה — ⚠️ `signSha256` שב-`app.config.js`, ⭐ והקובץ
+# הזה אינו נושא ערך של אפליקציה.
+#
+# Requires Android build-tools on PATH (zipalign + apksigner) and node.
 # Usage: SIGN_KEYSTORE=<path> SIGN_PASS=<store-pass> \
 #          ./sign-apk.sh <unsigned.apk> [output.apk]
 set -euo pipefail
@@ -17,10 +20,14 @@ set -euo pipefail
 # מפתח שאיש לא התכוון אליו, והכשל היה מתגלה רק אצל משתמש מותקן.
 KS="${SIGN_KEYSTORE:?SIGN_KEYSTORE is unset — the keystore lives in GitHub Secrets, not in the repo}"
 PASS="${SIGN_PASS:?SIGN_PASS is unset — the store password lives in GitHub Secrets, not in the repo}"
-EXPECTED_SHA256='1A:FA:BE:D0:A6:60:EF:F6:FF:40:04:C9:32:F5:A7:E3:28:01:95:4E:FA:24:FF:A4:B5:79:DF:BE:2F:B4:07:4A'
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+command -v node >/dev/null || { echo "❌ node not on PATH — the fingerprint is read from app.config.js" >&2; exit 1; }
+EXPECTED_SHA256="$(node "$ROOT/tools/gen-app.mjs" --get signSha256)"
+printf '%s' "$EXPECTED_SHA256" | grep -qE '^([0-9A-F]{2}:){31}[0-9A-F]{2}$' || {
+  echo "❌ app.config.js carries no valid signSha256 — refusing to sign" >&2; exit 1; }
 
 IN="${1:?usage: sign-apk.sh <unsigned.apk> [output.apk]}"
-OUT="${2:-hanhala-ruchanit.apk}"
+OUT="${2:-app-signed.apk}"
 ALIGNED="${OUT%.apk}-aligned.apk"
 
 for tool in zipalign apksigner keytool; do
@@ -43,15 +50,9 @@ if ! printf '%s\n' "$KSINFO" | grep -qF "SHA256: $EXPECTED_SHA256"; then
   exit 1
 fi
 
-# ⭐ הבדל מכוון: ה-alias נגזר מהמפתח ⛔ ואינו מוקלד — ⚠️ בשאר הדפוס ערך
-# פר-אפליקציה נכתב כערך פרטי בראש הקובץ, ⭐ וכאן הוא נקרא מהמפתח עצמו.
-# שלושה נימוקים, וכל אחד מהם לבדו מספיק:
-#   1. ⛔ ה-alias נבדל בין הריפו — ⚠️ והוא ערך פרטי שלישי: ⭐ השורה אומרת
-#      **שניים**, ומספר שגדל הוא מספר שאיש כבר אינו סופר.
-#   2. ⛔ ה-workflow זהה בית-לבית בחמישה — ⚠️ ולכן אי אפשר להעביר אותו
-#      משם: ⭐ סוד שלישי היה ידית שלישית שהמנהל צריך לתחזק.
-#   3. ⛔ וה-workflow אינו רשאי להריץ `keytool` — ⚠️ אין
-#      לוגיקת חתימה בגוף ה-YAML: ⭐ מסלול חתימה שני הוא מה שנסחף.
+# ⛔ ה-alias נגזר מהמפתח ⛔ ואינו מוקלד — ⚠️ הוא נבדל בין האפליקציות, ⭐ והמפתח
+# עצמו הוא המקור היחיד שאינו יכול לסטות ממנו: ⛔ ערך מוקלד היה עוד ערך
+# אפליקציה מחוץ לתצורה, ⚠️ וסוד נוסף היה ידית שהמנהל צריך לתחזק.
 # ⛔ ומפתח שאין בו בדיוק מפתח פרטי אחד נופל כאן ולא בשלב החתימה, שבו
 # ההודעה כבר אינה אומרת מה חסר.
 ALIAS="$(printf '%s\n' "$KSINFO" | sed -n 's/^Alias name: //p')"
