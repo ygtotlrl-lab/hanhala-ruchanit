@@ -67,7 +67,32 @@ header{background:linear-gradient(135deg,var(--navy-3),var(--navy-fill),var(--na
 .htxt strong{display:block;font-size:var(--fs-4);color:var(--on-dark);font-weight:700}
 nav{display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
 .nb{background:none;border:none;color:var(--on-dark-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-2);cursor:pointer;font-family:Heebo;font-size:var(--fs-3);font-weight:500;display:flex;align-items:center;gap:var(--sp-3);transition:all var(--dur-3);white-space:nowrap}
-.nb:hover{background:var(--brand-wash);color:var(--on-brand)}
+/*  ⛔ `:hover` חל רק במכשיר שיש לו ריחוף — ⚠️ במגע הוא נשאר על הרכיב
+ *  אחרי הלחיצה, ⭐ והלחצן נראה לחוץ עד שנוגעים במקום אחר: ⛔ המשוב במגע
+ *  הוא `:active` בלבד, ⚠️ ולכן הוא נשאר מחוץ לבלוק.
+ *  ⚠️ **והבלוק יושב כאן ולא בסוף הגיליון** — ⛔ כלל ריחוף שיורד אל אחרי
+ *  `.active` או `:active` באותה סגוליות גובר עליהם. */
+@media (hover:hover){
+  .nb:hover{background:var(--brand-wash);color:var(--on-brand)}
+  .mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+  .mod:hover::before{width:6px}
+  .mod:hover .mod-ic{transform:scale(1.08)}
+  .back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
+  .btn:hover{background:var(--navy-2);border-color:var(--navy-2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+  .btn.out:hover{background:var(--card-2)}
+  tr:hover td{background:var(--card-2)}
+  .ab:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
+  .sd-item:hover{background:var(--card-2);outline:none}
+  #ask .sheet-ft button:hover{background:var(--card-2)}
+  #ask .sheet-ft button.danger:hover{background:var(--navy-2);border-color:var(--navy-2)}
+  .sheet-hd .x:hover{background:var(--card-2)}
+  .auth-btn:hover{background:var(--navy-2)}
+  .ua button:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
+  .ua button.del:hover{border-color:var(--bad);color:var(--bad)}
+  .pt tr:hover td{background:var(--card-2)}
+  .clr-btn:hover{border-color:var(--bad);color:var(--bad)}
+  .sup-card:hover{box-shadow:var(--shadow);border-color:var(--navy-ink)}
+}
 .nb.on{background:var(--fill-dark);color:var(--on-dark);font-weight:600}
 main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .pg{display:none;overflow-x:hidden}.pg.on{display:block}
@@ -87,33 +112,26 @@ main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .mods{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-6)}
 .mod{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);padding:var(--sp-7) var(--sp-7);cursor:pointer;display:flex;align-items:flex-start;gap:var(--sp-6);transition:all var(--dur-3);box-shadow:var(--shadow);text-align:right;position:relative;overflow:hidden}
 .mod::before{content:"";position:absolute;top:0;right:0;width:4px;height:100%;background:var(--color,var(--navy-fill));border-radius:0 var(--r-5) var(--r-5) 0;transition:width var(--dur-3)}
-.mod:hover{border-color:var(--color,var(--navy-ink));box-shadow:var(--shadow-lg);transform:translateY(-2px)}
-.mod:hover::before{width:6px}
 .mod-ic{width:48px;height:48px;border-radius:var(--r-4);background:var(--icbg,var(--bg));display:flex;align-items:center;justify-content:center;font-size:var(--fs-6);flex-shrink:0;transition:transform var(--dur-3)}
-.mod:hover .mod-ic{transform:scale(1.08)}
 .mod-info{flex:1}
 .mod-name{font-size:var(--fs-4);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
 .mod-desc{font-size:var(--fs-2);color:var(--text-3);line-height:var(--lh-3)}
 .inner{padding:var(--sp-7) var(--sp-7);max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:var(--fs-5);font-weight:700;color:var(--navy-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text-2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
-.back:hover{border-color:var(--navy-ink);color:var(--navy-ink);background:var(--card-2)}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--navy-fill);color:var(--on-dark);border:2px solid var(--navy-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
-.btn:hover{background:var(--navy-2);border-color:var(--navy-2);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--navy-ink);border-color:var(--navy-ink)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
 .btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
-.btn.out:hover{background:var(--card-2)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy-fill),var(--navy-2))}
 th{color:var(--on-dark);font-weight:600;padding:var(--sp-5) var(--sp-6);text-align:right;font-size:var(--fs-3)}
 td{padding:var(--sp-5) var(--sp-6);border-bottom:1px solid var(--border);font-size:var(--fs-4);vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--card-2)}
 
 
 
@@ -121,7 +139,6 @@ tr:hover td{background:var(--card-2)}
 
 
 .ab{padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);border:1.5px solid var(--border);cursor:pointer;font-size:var(--fs-3);font-family:Heebo;font-weight:500;background:var(--card);color:var(--text-2);transition:all var(--dur-2)}
-.ab:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
 .ab.sp{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok);font-weight:600}
 
 
@@ -133,7 +150,7 @@ tr:hover td{background:var(--card-2)}
 .sd-item:last-child{border-bottom:none}
 .sd-item:first-child{border-radius:var(--r-5) var(--r-5) 0 0}
 .sd-item:last-child:first-child{border-radius:var(--r-5)}
-.sd-item:hover,.sd-item:focus{background:var(--card-2);outline:none}
+.sd-item:focus-visible{background:var(--card-2);outline:none}
 .sd-name{font-weight:600;font-size:var(--fs-3);color:var(--text)}
 .sd-name mark{background:var(--warn-soft);border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
 .sd-cls{background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
@@ -154,13 +171,10 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 #ask .sheet{max-width:340px}
 #ask-body{font-size:var(--fs-4);color:var(--text-2)}
 #ask .sheet-ft button{flex:1;display:inline-flex;align-items:center;justify-content:center;background:var(--card);color:var(--navy-ink);border:2px solid var(--navy-ink);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3)}
-#ask .sheet-ft button:hover{background:var(--card-2)}
 #ask .sheet-ft button.danger{background:var(--navy-fill);color:var(--on-dark);border-color:var(--navy-fill);box-shadow:var(--shadow)}
-#ask .sheet-ft button.danger:hover{background:var(--navy-2);border-color:var(--navy-2)}
 .sheet-hd{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);margin-bottom:var(--sp-6)}
 .sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--navy-ink)}
 .sheet-hd .x{background:none;border:none;font-size:var(--fs-5);line-height:var(--lh-1);cursor:pointer;color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
-.sheet-hd .x:hover{background:var(--card-2)}
 .sheet-ft{display:flex;gap:var(--sp-5);margin-top:var(--sp-6)}
 .sheet-ft:empty{display:none}
 .hidden{display:none !important}
@@ -323,7 +337,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
 .auth-field input:focus{border-color:var(--brand)}
 .auth-btn{width:100%;background:var(--navy-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
-.auth-btn:hover{background:var(--navy-2)}
 .auth-btn:active{background:var(--navy-2)}
 .auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
@@ -340,14 +353,11 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .role-junior{background:var(--ok-soft);color:var(--ok)}
 .ua{display:flex;gap:var(--sp-3)}
 .ua button{border:1px solid var(--border);background:var(--card);border-radius:var(--r-3);padding:var(--sp-3) var(--sp-4);cursor:pointer;font-size:var(--fs-2);font-family:Heebo;transition:all var(--dur-2)}
-.ua button:hover{border-color:var(--navy-ink);color:var(--navy-ink)}
-.ua button.del:hover{border-color:var(--bad);color:var(--bad)}
 .pt{width:100%;border-collapse:collapse;font-size:var(--fs-3)}
 .pt th{background:var(--navy-fill);color:var(--on-dark);padding:var(--sp-4) var(--sp-4);font-weight:600;text-align:center}
 .pt th:first-child{text-align:right}
 .pt td{padding:var(--sp-4) var(--sp-4);border-bottom:1px solid var(--border);text-align:center}
 .pt td:first-child{text-align:right;font-weight:500}
-.pt tr:hover td{background:var(--card-2)}
 .ps{border:1px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);font-family:Heebo;font-size:var(--fs-2);cursor:pointer;outline:none}
 .ps:focus{border-color:var(--navy-ink)}
 
@@ -403,6 +413,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
    ⛔ **והמשך נמדד בשניות ולא באלפיות** — ⚠️ והכתיב אחיד, בלי
       אפס מוביל: ⭐ `.15s` ו-`0.15s` הם אותו ערך בשני כתיבים, ⛔ ושני כתיבים
       הם שני חיפושים.
+   ⛔ **ותחת הפחתת תנועה כל `--dur-N` הוא אפס** — ⚠️ כל מעבר ואנימציה
+      נגזרים מהסולם, ⭐ ואפס בו מכבה את כולם: ⛔ ו-`0s` ולא `0` — משך בלי
+      יחידה אינו ערך תקף, ⚠️ והמאפיין נזרק בשקט.
    ⛔ שינוי כאן — כל האפליקציות **וכל עותקי השער**, באותו סבב.
    ═══════════════════════════════════════════════════════════════════════ */
 :root{
@@ -418,6 +431,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 --alert:#B3261E;--on-alert:#FFFFFF;
 --sh-1:rgba(0,0,0,.10);--sh-2:rgba(0,0,0,.22);--sh-3:rgba(0,0,0,.35);
 --on-dark:#FFFFFF;--on-dark-2:rgba(255,255,255,.9);--on-dark-3:rgba(255,255,255,.65);--fill-dark:rgba(255,255,255,.15)
+}
+@media (prefers-reduced-motion:reduce){
+  :root{--dur-1:0s;--dur-2:0s;--dur-3:0s;--dur-4:0s;--dur-5:0s;--dur-6:0s}
 }
 .u-mt-2{margin-top:var(--sp-2)}
 .u-mt-5{margin-top:var(--sp-5)}
@@ -483,7 +499,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-c-text3{color:var(--text-3)}
 .u-c-ty{color:var(--ty)}
 .u-c-warn{color:var(--warn)}
-.clr-btn:hover{border-color:var(--bad);color:var(--bad)}
 .u-cur-def{cursor:default}
 .u-cur-p{cursor:pointer}
 .u-d-block{display:block}
@@ -605,7 +620,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .u-tr-all-2s{transition:all var(--dur-3)}
 .u-tr-border-color-15s{transition:border-color var(--dur-2)}
 .sup-card{transition:box-shadow var(--dur-2),border-color var(--dur-2)}
-.sup-card:hover{box-shadow:var(--shadow);border-color:var(--navy-ink)}
 .u-ty{--ty:var(--text);--ty-line:var(--border);--ty-bg:var(--card-2)}
 .u-ty-off{--ty:var(--text-3);--ty-line:var(--border);--ty-bg:var(--card-2)}
 .u-us-none{user-select:none}
