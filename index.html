@@ -449,8 +449,8 @@ import { MSG_CLOUD_SYNC_FAIL, MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
          MSG_OFF_NO_FP, MSG_OFF_UNKNOWN, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL,
          MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, MSG_SYNC_BACK, appConfigure,
-         getDeviceId, isNetErr, kvParse, readNum, uniqHas, uniqList,
-         withTimeout } from './core/util.js';
+         dayIso, dayNoon, dayToday, getDeviceId, isNetErr, kvParse, readNum,
+         uniqHas, uniqList, withTimeout } from './core/util.js';
 import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
          pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
@@ -490,7 +490,6 @@ appConfigure({
 });
 
 var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
-var _d=new Date();var TODAY=_d.getFullYear()+'-'+String(_d.getMonth()+1).padStart(2,'0')+'-'+String(_d.getDate()).padStart(2,'0');
 
 /*  ⛔ רישום הגופן ל-PDF יושב כאן ⛔ ובנקודה אחת — ⚠️ שלושה מסלולי ייצוא
  *  רשמו אותו כל אחד לעצמו, ⭐ ושלוש נקודות רישום הן שלושה מקומות לשכוח
@@ -1264,7 +1263,7 @@ function hrHebYearInfo(hy){
     var leap=window.hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
     // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
     for(k=0;k<45;k++){
-      d=new Date(hy-3761,8,1+k,12,0,0);
+      d=dayNoon(hy-3761,8,1+k);
       r=window.hebIntl(d);
       if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
     }
@@ -1272,12 +1271,12 @@ function hrHebYearInfo(hy){
       var ml=[],cur=start,total=0,ok=true;
       for(var m=0;m<nM;m++){
         var p=new Date(cur.getTime()+29*86400000);
-        var pr=window.hebIntl(new Date(p.getFullYear(),p.getMonth(),p.getDate(),12,0,0));
+        var pr=window.hebIntl(dayNoon(p));
         if(!pr){ok=false;break;}
         var len=(pr.day===1)?29:30;
         ml.push(len);total+=len;
         var nx=new Date(cur.getTime()+len*86400000);
-        cur=new Date(nx.getFullYear(),nx.getMonth(),nx.getDate(),12,0,0);
+        cur=dayNoon(nx);
       }
       if(ok&&ml.length===nM&&total>=353&&total<=385)
         info={hy:hy,jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
@@ -1296,9 +1295,9 @@ function _hcBase(hy){return hrHebYearInfo(hy)||window.hebYearBase(hy);};
 function _hcG(hy,mi,day){
   var b=_hcBase(hy);if(!b)return new Date();
   var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
-  var anchor=new Date(b.jd.getFullYear(),b.jd.getMonth(),b.jd.getDate(),12,0,0);
+  var anchor=dayNoon(b.jd);
   var d=new Date(anchor.getTime()+c*86400000);
-  return new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);};
+  return dayNoon(d);};
 // גרגוריאני → עברי {hy,mi,day} — עובר דרך המקור היחיד
 function _hcH(d){
   var h=window.hebDate(d);
@@ -1393,12 +1392,12 @@ function _hcOpen(pfx){
 // בחירת יום
 function _hcPick(pfx,hy,mi,day){
   var g=_hcG(hy,mi,day);
-  var iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');
+  var iso=dayIso(g);
   var el=document.getElementById(pfx+'_iso');if(el)el.value=iso;
   var lb=document.getElementById(pfx+'_lbl');
   if(lb){
     var lbTxt=_hcFmt(hy,mi,day);
-    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[new Date(iso+'T12:00:00').getDay()]+' '+lbTxt;}
+    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
   var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';
@@ -1439,7 +1438,7 @@ function _hcBuild(pfx,initH,tv){
     if(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'){var _BD_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];var _bdG=_hcG(initH.hy,initH.mi,initH.day);label='יום '+_BD_DOW[_bdG.getDay()]+' '+label;}
   }else{label='בחר תאריך עברי';}
   var iso='';
-  if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=g.getFullYear()+'-'+String(g.getMonth()+1).padStart(2,'0')+'-'+String(g.getDate()).padStart(2,'0');}
+  if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=dayIso(g);}
   var trg='u-d-flex u-ai-c u-jc-sb u-cur-p u-p-4-5 u-bd-15-solid-border u-r-4 u-bg-bg u-ff-heebo u-fs-4 u-c-navy-ink u-fw-600 u-bx-border-box u-tr-border-color-15s';
   return '<div class="u-pos-rel">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" class="'+trg+'">'+
@@ -2415,7 +2414,7 @@ async function changeMyPassword() {
 
 // רענון נתוני כרטיסי הסיכום בדף הבית
 async function refreshDashStats() {
-  var todayIso = new Date().toISOString().split('T')[0];
+  var todayIso = dayToday();
 
   // תלמידים פעילים (active !== false)
   var allSts = getStudents();
@@ -2697,7 +2696,7 @@ function _hrRecTs(r) {
   if (!r || typeof r !== 'object') return 0;
   if (r.updated_at != null) return Number(r.updated_at) || 0;
   if (r.updatedAt) return Number(r.updatedAt) || 0;
-  if (r.date_iso) { var t = Date.parse(r.date_iso + 'T12:00:00'); return isFinite(t) ? t : 0; }
+  if (r.date_iso) { var t = dayNoon(r.date_iso).getTime(); return isFinite(t) ? t : 0; }
   if (r.created_at) { var c = Date.parse(r.created_at); return isFinite(c) ? c : 0; }
   return 0;
 }
@@ -2890,14 +2889,13 @@ var PUSH_CFG = {
 var _hrHwWinKeys = null, _hrHwWinDay = '';
 function hrHwWindowKeys() {
   var now = new Date();
-  var stamp = now.getFullYear() + '-' + now.getMonth() + '-' + now.getDate();
+  var stamp = dayToday();
   if (_hrHwWinKeys && _hrHwWinDay === stamp) return _hrHwWinKeys;
   var cur = null, prev = null;
   try { cur = window.hebDate(now); } catch (e) { cur = null; }
   if (!cur || !cur.ok || !(cur.day > 0)) return null;
   try {
-    prev = window.hebDate(new Date(now.getFullYear(), now.getMonth(),
-                                     now.getDate() - cur.day, 12, 0, 0));
+    prev = window.hebDate(dayNoon(now.getFullYear(), now.getMonth(), now.getDate() - cur.day));
   } catch (e2) { prev = null; }
   if (!prev || !prev.ok) return null;
   var keys = {};
@@ -2909,7 +2907,7 @@ function hrHwWindowKeys() {
 function hrHwInWindow(rec) {
   var iso = rec && rec.date_iso;
   if (!iso) return true;
-  var t = Date.parse(String(iso).slice(0, 10) + 'T12:00:00');
+  var t = dayNoon(String(iso)).getTime();
   if (!isFinite(t)) return true;
   var keys = hrHwWindowKeys();
   if (!keys) return true;
@@ -3214,8 +3212,8 @@ function pendConfirmKv(kvKey, t0) {
 function initDateFields(){
   var dpEl=document.getElementById('dp');
   var rmEl=document.getElementById('rm');
-  if(dpEl) dpEl.value=TODAY;
-  if(rmEl) rmEl.value=TODAY.substring(0,7);
+  if(dpEl) dpEl.value=dayToday();
+  if(rmEl) rmEl.value=dayToday().substring(0,7);
   /*  ⛔ שם היום מורכב באתר התצוגה ⛔ ולא במנוע — ⚠️ המנוע מחזיר תאריך
    *  עברי, ⭐ ושם היום הוא לוח לועזי: ⛔ שני מימושים לאותו שם היו שתי
    *  התנהגויות, ⚠️ ובאג שיתוקן באחד היה נשאר בשני. */
@@ -3686,23 +3684,19 @@ HR_ROWS_READ_KEYS.hr_sleep_sessions = 'sleep';
  *  **רציף**, ⭐ ולכן `.gte`/`.lte` על `date_iso` מכסים אותו בדיוק ⛔ ואין
  *  צורך לרדת לרשימת ימים. ⛔ והמנוע הוא `_hcG` ⛔ ולא חשבון ידני — ⚠️ שני
  *  מנועי תאריך הם שני לוחות. */
-function _hrWinIso(d) {
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
-         '-' + String(d.getDate()).padStart(2, '0');
-}
 function hrHebMonthWin(hy, mi) {
   var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var i = Math.max(0, Math.min(mi, b.ml.length - 1));
-  return { col: 'date_iso', from: _hrWinIso(_hcG(hy, i, 1)),
-           to: _hrWinIso(_hcG(hy, i, b.ml[i])) };
+  return { col: 'date_iso', from: dayIso(_hcG(hy, i, 1)),
+           to: dayIso(_hcG(hy, i, b.ml[i])) };
 }
 function hrHebYearWin(hy) {
   var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var last = b.ml.length - 1;
-  return { col: 'date_iso', from: _hrWinIso(_hcG(hy, 0, 1)),
-           to: _hrWinIso(_hcG(hy, last, b.ml[last])) };
+  return { col: 'date_iso', from: dayIso(_hcG(hy, 0, 1)),
+           to: dayIso(_hcG(hy, last, b.ml[last])) };
 }
 /*  ⛔ חלון היום שבו רושמים — ⚠️ לשונית הרישום מציגה את סדרי **היום**,
  *  ⭐ ולכן זה כל מה שהיא צריכה מהענן. */
@@ -3710,7 +3704,7 @@ function hrHebYearWin(hy) {
  *  את **היום שנבחר בבורר**, ⭐ שאינו בהכרח היום: ⛔ ברירת המחדל משאירה את
  *  שני אתרי הקריאה הקיימים כמות שהם. */
 function hrDayWin(iso) {
-  var t = iso ? String(iso) : _hrWinIso(new Date());
+  var t = iso ? String(iso) : dayIso(new Date());
   return { col: 'date_iso', from: t, to: t };
 }
 /* שחזור רשומת ה-`kv` משתי הטבלאות — ההיפוך המדויק של `hrSessionRow`
@@ -5312,7 +5306,7 @@ function printStudents() {
       ],
       defaultStyle:{font:fontName, alignment:'right'}
     };
-    pdfMake.createPdf(docDef).download('nochechut-'+new Date().toISOString().split('T')[0]+'.pdf');
+    pdfMake.createPdf(docDef).download('nochechut-'+dayToday()+'.pdf');
   } catch(e) {
     console.error('[PDF:ERR]', e);
     toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'bad');
@@ -5325,7 +5319,7 @@ function printStudents() {
    ══════════════════════════════════════════════════════════════════════════ */
 // ימי שבוע בעברית
 var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-function atDow(isoDate){return AT_DOW[new Date(isoDate+'T12:00:00').getDay()];}
+function atDow(isoDate){return AT_DOW[dayNoon(isoDate).getDay()];}
 
 // סיכום סטאטוסים — מוחזר כ-HTML
 // סדר: נוכחים | חיסורים | היעדרויות | איחורים | אישורים | בבית | מנוחה
@@ -5591,7 +5585,7 @@ async function loadAttend() {
   atShowTab(window._atView||'reg');
   _hrPullStaleMark(el, !(_okAt[0]&&_okAt[1]));
 
-  var _todayIsoR=new Date().toISOString().split('T')[0];
+  var _todayIsoR=dayToday();
   var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
   // סשן פתוח של היום? הצע להמשיך אותו במקום להתחיל חדש
   try {
@@ -5698,7 +5692,7 @@ async function hrRefreshApprovalMarks(sid) {
     var student = getStudents().find(function(x){ return idEq(x.id, sid); });
     if (!student) return;
     var sidKey = String(sid);
-    var todayIso = new Date().toISOString().split('T')[0];
+    var todayIso = dayToday();
 
     function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
       var data = null;
@@ -5749,7 +5743,7 @@ function atRenderTodaySessions() {
   var data=window._atData||[];
   // תאריך נבחר בבורר (אם לא נבחר — היום)
   var selIso=(document.getElementById('at_date_iso')||{}).value;
-  var todayIso=new Date().toISOString().split('T')[0];
+  var todayIso=dayToday();
   var filterIso=selIso||todayIso;
   var isToday=filterIso===todayIso;
   var cfg=window._atCfg||atDefaultCfg();
@@ -6289,7 +6283,7 @@ function _atPaintArchive(el, records, warn) {
 
   // חודש עברי נוכחי
   var todG=new Date();
-  var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
+  var todayIso=dayToday();
   var todH=_hcH(todG);
   var curHY=todH.hy, curMI=todH.mi;
 
@@ -6479,7 +6473,7 @@ async function atExportExcel(fromIso,toIso) {
     var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
-    a.href=url; a.download='sdariim-'+new Date().toISOString().split('T')[0]+'.xls';
+    a.href=url; a.download='sdariim-'+dayToday()+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
     toast(MSG_EXPORT_OK);
@@ -6529,7 +6523,7 @@ async function atExportPdf(fromIso,toIso) {
     contentArr.push({table:{widths:['auto','auto','*','auto','auto','auto'],body:body},margin:[0,0,0,10]});
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
-    pdfMake.createPdf(dd).download('sdariim-'+new Date().toISOString().split('T')[0]+'.pdf');
+    pdfMake.createPdf(dd).download('sdariim-'+dayToday()+'.pdf');
   } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 // -------- השגחה --------
@@ -6710,7 +6704,7 @@ async function atAddTreat(sid) {
   var rec={
     id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
     sid:sid,
-    date_iso:now.toISOString().split('T')[0],
+    date_iso:dayToday(),
     date_heb:_hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
@@ -6972,7 +6966,7 @@ async function atSaveSettingsCfg() {
    מודול זמן השינה — אותו דפוס כמו הנוכחות, מפתחות `hr_sleep_*`
    ══════════════════════════════════════════════════════════════════════════ */
 var HR_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-function hrDow(isoDate){return HR_DOW[new Date(isoDate+'T12:00:00').getDay()];}
+function hrDow(isoDate){return HR_DOW[dayNoon(isoDate).getDay()];}
 
 function hrSummaryHtml(cnts){
   var parts=[];
@@ -6989,13 +6983,8 @@ function hrSummaryHtml(cnts){
 
 // תאריך לוגי — לפני 12:00 = לילה הקודם
 function hrGetLogicalDate() {
-  var now=new Date();
-  if(now.getHours()<12){
-    var prev=new Date(now);
-    prev.setDate(prev.getDate()-1);
-    return prev.toISOString().split('T')[0];
-  }
-  return now.toISOString().split('T')[0];
+  if(new Date().getHours()<12) return dayToday(-1);
+  return dayToday();
 }
 
 window._hrCfg = null;
@@ -7151,7 +7140,7 @@ function _hrPaintReg() {
   var dw=document.getElementById('sl-date-wrap');
   if(dw){
     var logIso=hrGetLogicalDate();
-    var logDate=new Date(logIso+'T12:00:00');
+    var logDate=dayNoon(logIso);
     var todH=_hcH(logDate);
     dw.innerHTML=_hcBuild('sl_date',todH);
     var _HR_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
@@ -7293,7 +7282,7 @@ function hrRenderTodaySessions() {
   var selIso=(document.getElementById('sl_date_iso')||{}).value;
   var logIso=hrGetLogicalDate();
   var filterIso=selIso||logIso;
-  var isToday=filterIso===new Date().toISOString().split('T')[0];
+  var isToday=filterIso===dayToday();
   var isLogical=filterIso===logIso;
   var cfg=window._hrCfg||hrDefaultCfg();
   var sessOrder={};
@@ -7741,7 +7730,7 @@ function _hrPaintArchive(el, records, warn) {
   var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'אירוע',ap:'אישור',ak:'בבית',a:'מנוחה'};
 
   var todG=new Date();
-  var todayIso=todG.getFullYear()+'-'+String(todG.getMonth()+1).padStart(2,'0')+'-'+String(todG.getDate()).padStart(2,'0');
+  var todayIso=dayToday();
   var todH=_hcH(todG);
   var curHY=todH.hy, curMI=todH.mi;
 
@@ -7927,7 +7916,7 @@ async function hrExportExcel(fromIso,toIso) {
     var blob=new Blob(['\uFEFF'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
-    a.href=url; a.download='shinah-'+new Date().toISOString().split('T')[0]+'.xls';
+    a.href=url; a.download='shinah-'+dayToday()+'.xls';
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
     toast(MSG_EXPORT_OK);
@@ -7978,7 +7967,7 @@ async function hrExportPdf(fromIso,toIso) {
     contentArr.push({table:{widths:['auto','auto','*','auto','auto','auto'],body:body},margin:[0,0,0,10]});
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
-    pdfMake.createPdf(dd).download('shinah-'+new Date().toISOString().split('T')[0]+'.pdf');
+    pdfMake.createPdf(dd).download('shinah-'+dayToday()+'.pdf');
   } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
@@ -8142,7 +8131,7 @@ async function hrAddTreat(sid) {
   var rec={
     id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
     sid:sid,
-    date_iso:now.toISOString().split('T')[0],
+    date_iso:dayToday(),
     date_heb:_hcH(now),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',

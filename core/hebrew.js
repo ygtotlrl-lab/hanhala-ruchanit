@@ -8,6 +8,8 @@
    ⛔ ושינוי כאן — בכל הריפו שנושאים אותו, באותו סבב.
    ════════════════════════════════════════════════════════════════════ */
 
+import { dayNoon } from './util.js';
+
 /* ═══ מנוע התאריך העברי — מודול משותף ═════════════════════════════════════
    ⛔ מנוע אחד לכל צרכני התאריך — ⚠️ `hebDate` מעל `Intl`, ⛔ ובנפילה-חזרה
       טבלה אריתמטית: ⭐ ואין תלות ב-CDN.
@@ -195,7 +197,7 @@ window.hebDate=function(d){
   var hit=window._hebCache[ck];
   if(hit) return Object.assign({},hit);
   // צהריים מקומיים — מנטרל הבדלי אזור-זמן/שעון-קיץ בגבול היממה
-  var nd=new Date(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0);
+  var nd=dayNoon(d);
   var r=window.hebIntl(nd),src='intl';
   if(!r){ r=(typeof window._hcHTable==='function')?window._hcHTable(nd):null; src='table'; }
   if(!r||!r.hy){ return window._hebNone('none'); }
