@@ -6,12 +6,13 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <link rel="manifest" href="manifest.json">
+<script src="app.config.js"></script>
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.59b21341.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16.fd071042.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.f0bbfa3a.png">
 <meta name="theme-color" content="#1a3c6e">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>הנהלה רוחנית</title>
+<title></title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.3.11/pdfmake.min.js"></script>
@@ -471,6 +472,7 @@ import './core/hebrew.js';
 
 /*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
  *  ⭐ והשומר קורא אותה בזמן הקריאה ⛔ ולא בזמן המסירה. */
+document.title = self.APP.name;
 appConfigure({
   get BK_CFG() { return BK_CFG; },
   get DATA_ERA() { return DATA_ERA; },
@@ -491,7 +493,7 @@ appConfigure({
   get saveRefresh() { return saveRefresh; }
 });
 
-var SB=sbWatch(supabase.createClient('https://kxbtskqobynewvnckaaz.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4YnRza3FvYnluZXd2bmNrYWF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzMDI4NDAsImV4cCI6MjA4ODg3ODg0MH0.WLwPgTJp0Y-p1AuzeXhuHDPWEbWRanVMrvEN4V9Xbeg'));
+var SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key));
 
 /*  ⛔ רישום הגופן ל-PDF יושב כאן ⛔ ובנקודה אחת — ⚠️ שלושה מסלולי ייצוא
  *  רשמו אותו כל אחד לעצמו, ⭐ ושלוש נקודות רישום הן שלושה מקומות לשכוח
@@ -955,7 +957,7 @@ async function hrRevalidateOfflineLogin() {
  *  ⛔ **וכשל מחזיר מחרוזת ריקה** ⛔ ולא ערך מוקלד — ⚠️ «לא ידוע» עדיף על
  *  גרסה שגויה שנרשמת כעובדה. */
 var HR_APP_VER = '';
-var HR_VER_PREFIX = 'hanhala-ruchanit-';
+var HR_VER_PREFIX = self.APP.id + '-';
 async function hrAppVerBoot() {
   try {
     if (!self.caches || !caches.keys) return HR_APP_VER;
@@ -2553,8 +2555,8 @@ var KV_TABLE = 'hr_settings';
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
                         'hr_sleep_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
 var MIRROR_CFG = {
-  prefix: 'hr_mirror_',
-  app:    'hr_',
+  prefix: self.APP.prefix + 'mirror_',
+  app:    self.APP.prefix,
   tables: function () { return HR_MIRROR_TABLES; },
   noPush: [{ t: 'hr_marks',       via: 'hrSendRecs', adds: 'parent' },
            { t: 'hr_sleep_marks', via: 'hrSendRecs', adds: 'parent' },
@@ -2571,11 +2573,11 @@ var MIRROR_CFG = {
    ⛔ חלון אחד לאב ולבניו — ⚠️ בן שחלונו קצר מאביו משאיר סדר בלי
    סימונים: ⭐ והחלון נגזר מסוג האפליקציה, ⛔ ולכן אחד לכל הרשומות. */
 var LS_CFG = {
-  /*  ⛔ קידומת המטמון — ⚠️ **מה נכנס**: הערך שב-`SW_CFG.prefix` שב-`sw.js`,
+  /*  ⛔ קידומת המטמון — ⚠️ **מה נכנס**: שם האפליקציה שבתצורה — אותו מקור של `SW_CFG.prefix`,
    *  ⭐ **וזה המקור**: ⛔ סינון המטמון לפי קידומת האחסון הוא צירוף מקרי
    *  ⛔ ולא מנגנון — ⚠️ שם אחסון שישתנה יחזיר רשימה ריקה, ⭐ וסימן דחייה
    *  שנשען על מחרוזת ריקה מת בשקט: ⛔ הבאנר חוזר בכל טעינה בלי דרך לצאת. */
-  cachePrefix: 'hanhala-ruchanit-',
+  cachePrefix: self.APP.id + '-',
   logKey: 'hr_ls_log',
   hzPrefix: 'hr_ls_hz_',
   /*  ⛔ מפתח סימן הדחייה של באנר העדכון — ⚠️ **מה נכנס**: שם
@@ -2960,7 +2962,7 @@ var HW_CFG = {
  *  ⛔ ולא לפניה** — ⚠️ סדר הפוך זורק תור שטרם הוגר. */
 var DATA_ERA = 2;
 var ERA_CFG = {
-  prefix: 'hr_',
+  prefix: self.APP.prefix,
   client: function () { return SB; },
   table:  function () { return KV_TABLE; },
   /*  ⛔ המוחק — ⚠️ מפתחות המראה **ואופק הפינוי שלהם**: ⭐ אופק ששרד מסנן
