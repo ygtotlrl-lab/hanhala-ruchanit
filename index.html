@@ -59,13 +59,13 @@
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
-  <div id="ys-sync-badge" class="u-d-none u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-5 u-sh-shadow u-pe-none u-ws-nw"></div>
-  <div id="user-avatar-wrap" class="u-pos-rel u-d-none u-ai-c">
+  <div id="ys-sync-badge" class="hidden u-pos-fix u-bot-72 u-left-50p u-tf-translatex-50p u-bg-warn-soft u-c-warn u-r-7 u-p-3-6 u-ff-heebo u-fs-2 u-fw-700 u-z-5 u-sh-shadow u-pe-none u-ws-nw"></div>
+  <div id="user-avatar-wrap" class="u-pos-rel hidden u-d-flex u-ai-c">
     <button data-act="user-menu-toggle" class="u-d-flex u-ai-c u-g-4 u-p-4-6 u-bg-brand-wash u-bd-15-solid-brand-edge u-r-6 u-cur-p u-ff-heebo u-fs-3 u-fw-600 u-c-on-brand u-ws-nw u-bf-blur-4 u-tr-all-2s">
       <span class="u-fs-4">👤</span>
       <span id="hdr-username"></span>
     </button>
-    <div id="user-menu" class="u-d-none u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-3 u-ov-h u-dir-rtl">
+    <div id="user-menu" class="hidden u-pos-abs u-left-0 u-top-50 u-bg-card u-r-4 u-sh-shadow-lg u-minw-190 u-z-3 u-ov-h u-dir-rtl">
       <div id="user-menu-name" class="u-p-5-6 u-fw-700 u-fs-4 u-c-navy-ink u-bb-1-solid-border"></div>
       <div id="user-menu-role" class="u-p-3-6-5 u-fs-2 u-c-text3 u-bb-1-solid-border"></div>
       <div id="user-menu-others" class="u-bb-1-solid-border"></div>
@@ -102,7 +102,7 @@
 </div>
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="u-d-none btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="u-d-none" data-chg="import-students"></div>
 
 
 <!-- Filter Tabs -->
@@ -146,7 +146,7 @@
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
     <div id="at-pullStale" class="at-pull-warn"></div>
     <!-- תצוגת רישום -->
-    <div id="at-view-reg" class="u-d-none">
+    <div id="at-view-reg" class="hidden">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
       <div id="at-reg-picker">
         <div class="card-pane">
@@ -167,7 +167,7 @@
         <div id="at-today-sessions"></div>
       </div>
       <!-- שלב ב׳: רשימת תלמידים -->
-      <div id="at-reg-list" class="u-d-none">
+      <div id="at-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="at-reg-header" class="at-reg-bar-info"></div>
           <button data-act="at-session-close" class="at-close-btn">✅ שמור וסגור</button>
@@ -176,7 +176,7 @@
       </div>
     </div>
     <!-- תצוגת ארכיון -->
-    <div id="at-view-arc" class="u-d-none">
+    <div id="at-view-arc" class="hidden">
       <div class="export-row">
         <button data-act="at-export" data-fmt="excel" class="export-xls-btn">📊 Excel</button>
         <button data-act="at-export" data-fmt="pdf" class="export-pdf-btn">📄 PDF</button>
@@ -184,7 +184,7 @@
       <div id="at-arc-list"></div>
     </div>
     <!-- תצוגת השגחה -->
-    <div id="at-view-sup" class="u-d-none">
+    <div id="at-view-sup" class="hidden">
       <div id="at-sup-content"></div>
     </div>
   </div>
@@ -207,7 +207,7 @@
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" class="at-tab-btn">📋 השגחה</button>
     </div>
     <div id="sl-pullStale" class="at-pull-warn"></div>
-    <div id="sl-view-reg" class="u-d-none">
+    <div id="sl-view-reg" class="hidden">
       <div id="sl-reg-picker">
         <div class="card-pane">
           <div class="filter-row">
@@ -225,7 +225,7 @@
         </div>
         <div id="sl-today-sessions"></div>
       </div>
-      <div id="sl-reg-list" class="u-d-none">
+      <div id="sl-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="sl-reg-header" class="at-reg-bar-info"></div>
           <button data-act="sl-session-close" class="at-close-btn">✅ שמור וסגור</button>
@@ -233,14 +233,14 @@
         <div id="sl-students"></div>
       </div>
     </div>
-    <div id="sl-view-arc" class="u-d-none">
+    <div id="sl-view-arc" class="hidden">
       <div class="export-row">
         <button data-act="sl-export" data-fmt="excel" class="export-xls-btn">📊 Excel</button>
         <button data-act="sl-export" data-fmt="pdf" class="export-pdf-btn">📄 PDF</button>
       </div>
       <div id="sl-arc-list"></div>
     </div>
-    <div id="sl-view-sup" class="u-d-none">
+    <div id="sl-view-sup" class="hidden">
       <div id="sl-sup-content"></div>
     </div>
   </div>
@@ -287,7 +287,7 @@
     </div>
 
     <!-- הגדרות מצבת תלמידים -->
-    <div id="settings-students" class="u-d-none">
+    <div id="settings-students" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
       <div class="ss ksave">
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
@@ -315,7 +315,7 @@
     </div>
 
     <!-- הגדרות מודול סדרים -->
-    <div id="settings-attend" class="u-d-none">
+    <div id="settings-attend" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>✅ הגדרות סדרים</span></div>
       <div class="ss ksave">
         <div class="u-d-flex u-fd-col u-g-6">
@@ -337,7 +337,7 @@
         </div>
       </div>
     </div>
-    <div id="settings-sleep" class="u-d-none">
+    <div id="settings-sleep" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>🌙 הגדרות שינה</span></div>
       <div class="ss ksave">
         <div class="u-bg-card u-bd-15-solid-border u-r-radius u-p-6 u-maxw-400">
@@ -350,7 +350,7 @@
         </div>
       </div>
     </div>
-    <div id="settings-exams" class="u-d-none">
+    <div id="settings-exams" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -358,7 +358,7 @@
         <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
       </div>
     </div>
-    <div id="settings-files" class="u-d-none">
+    <div id="settings-files" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📁 הגדרות תיקים</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -366,7 +366,7 @@
         <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
       </div>
     </div>
-    <div id="settings-reports" class="u-d-none">
+    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📊 הגדרות דוחות</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
@@ -376,7 +376,7 @@
     </div>
 
     <!-- הגדרות מערכת - משתמשים והרשאות -->
-    <div id="settings-system" class="u-d-none">
+    <div id="settings-system" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" data-act="user-add-open">➕ הוסף</button></div>
@@ -1140,7 +1140,7 @@ async function _doLoginInner() {
     var wrap = document.getElementById('user-avatar-wrap');
     var hdru = document.getElementById('hdr-username');
     if (hdru) hdru.textContent = u.full_name;
-    if (wrap) wrap.style.display = 'flex';
+    if (wrap) wrap.classList.remove('hidden');
     var mn = document.getElementById('user-menu-name');
     if (mn) mn.textContent = u.full_name;
     var mr = document.getElementById('user-menu-role');
@@ -1160,7 +1160,7 @@ function doLogout() {
   lkStop();
   document.getElementById('auth-screen').classList.remove('hidden');
   var wrap = document.getElementById('user-avatar-wrap');
-  if (wrap) wrap.style.display = 'none';
+  if (wrap) wrap.classList.add('hidden');
   document.getElementById('auth-user').value = '';
   document.getElementById('auth-pass').value = '';
   document.getElementById('auth-err').textContent = '';
@@ -1369,25 +1369,25 @@ function atvCls(code) {
  *  שקורא מצב פתיחה מאלמנט שהוסתר במחלקה. */
 function uiShown(el) {
   if (!el) return false;
-  return (el.style.display || getComputedStyle(el).display) !== 'none';
+  return getComputedStyle(el).display !== 'none';
 }
 // פתיחה/סגירה
 function _hcOpen(pfx){
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
-  if(uiShown(pop)){pop.style.display='none';return;}
-  document.querySelectorAll('.hc-pop').forEach(function(p){p.style.display='none';});
+  if(uiShown(pop)){pop.classList.add('hidden');return;}
+  document.querySelectorAll('.hc-pop').forEach(function(p){p.classList.add('hidden');});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
   var vh=iso?_hcH(new Date(iso)):_hcH(new Date());
   window._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // מיקום fixed — מחושב מהטריגר, חסין לכל overflow:hidden בהורים
+  // ⛔ והערכים למשתני CSS ⛔ ולא לתגית — ⚠️ הכלל של `.hc-pop` קורא אותם.
   var trg=document.getElementById(pfx+'_trg');
   if(trg){
     var r=trg.getBoundingClientRect();
-    pop.style.top=(r.bottom+4)+'px';
-    pop.style.right=(window.innerWidth-r.right)+'px';
-    pop.style.left='auto';
+    pop.style.setProperty('--pop-top',(r.bottom+4)+'px');
+    pop.style.setProperty('--pop-right',(window.innerWidth-r.right)+'px');
   }
-  pop.style.display='block';};
+  pop.classList.remove('hidden');};
 // בחירת יום
 function _hcPick(pfx,hy,mi,day){
   var g=_hcG(hy,mi,day);
@@ -1399,7 +1399,7 @@ function _hcPick(pfx,hy,mi,day){
     if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
-  var pop=document.getElementById(pfx+'_pop');if(pop)pop.style.display='none';
+  var pop=document.getElementById(pfx+'_pop');if(pop)pop.classList.add('hidden');
   // רענון רשימת סדרים לתאריך הנבחר
   if(pfx==='at_date'&&typeof atRenderTodaySessions==='function') atRenderTodaySessions();};
 // קריאת ערך → ISO string
@@ -1417,14 +1417,12 @@ function _hcToggle(){
   var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
   if(!btn||!wr)return;
   var open=!uiShown(wr);
+  wr.classList.toggle('hidden',!open);
+  btn.classList.toggle('on',open);
   if(open){
-    wr.style.display='block';
     btn.textContent='✕ הסר תאריך סיום';
-    btn.style.background='var(--bad-soft)';btn.style.color='var(--bad)';btn.style.borderColor='var(--bad-line)';
   } else {
-    wr.style.display='none';
     btn.textContent='+ הוסף תאריך סיום';
-    btn.style.background='var(--card-2)';btn.style.color='var(--navy-ink)';btn.style.borderColor='var(--border)';
     // ניקוי הערכים
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
@@ -1445,7 +1443,7 @@ function _hcBuild(pfx,initH,tv){
       '<span class="u-fs-3 u-op-5 u-mr-2">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="u-d-none u-pos-fix u-z-5 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
+    '<div id="'+pfx+'_pop" class="hidden u-pos-fix u-z-5 u-bg-card u-bd-15-solid-border u-r-5 u-sh-shadow-lg hc-pop"></div>'+
     (tv!==undefined?'<div class="u-mt-3 u-d-flex u-ai-c u-g-3"><span class="u-fs-3 u-c-text3 u-ws-nw">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="u-p-4-5 u-bd-15-solid-border u-r-3 u-ff-heebo u-fs-3 u-fx-1"></div>':'')+
   '</div>';};
 // סגירה בלחיצה מחוץ ללוח
@@ -1454,7 +1452,7 @@ document.addEventListener('mousedown',function(e){
     if(!uiShown(p))return;
     var pfx=p.id.replace('_pop','');
     var tr=document.getElementById(pfx+'_trg');
-    if(!p.contains(e.target)&&(!tr||!tr.contains(e.target)))p.style.display='none';
+    if(!p.contains(e.target)&&(!tr||!tr.contains(e.target)))p.classList.add('hidden');
   });});
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1490,7 +1488,7 @@ function openStatusForm(type) {
       '</div>' +
       '<div>' +
         '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="u-p-4-6 u-bd-15-solid-border u-r-3 u-bg-bg u-c-navy-ink u-ff-heebo u-fs-3 u-fw-600 u-cur-p u-mb-5">+ הוסף תאריך סיום</button>' +
-        '<div id="sfmT_wrap" class="u-d-none">' +
+        '<div id="sfmT_wrap" class="hidden">' +
           '<label class="'+lbl+'">תאריך סיום</label>' +
           _hcBuild('sfmT', null, '') +
         '</div>' +
@@ -1539,10 +1537,10 @@ function saveStudentStatus(type) {
 
 async function toggleUserMenu() {
   var m = document.getElementById('user-menu');
-  if (uiShown(m)) { m.style.display='none'; return; }
-  m.style.display = 'block';
+  if (uiShown(m)) { m.classList.add('hidden'); return; }
+  m.classList.remove('hidden');
   var othersEl = document.getElementById('user-menu-others');
-  if (!othersEl) { m.style.display='block'; return; }
+  if (!othersEl) return;
   othersEl.innerHTML = '<div class="u-p-4-6 u-fs-2 u-c-text3">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
@@ -1560,7 +1558,7 @@ async function toggleUserMenu() {
     }).join('');
 }
 function closeUserMenu() {
-  document.getElementById('user-menu').style.display = 'none';
+  document.getElementById('user-menu').classList.add('hidden');
 }
 // קורא ה-data-attributes של כפתור החלפת המשתמש. אין להחזיר קוד JS מורכב
 // לתוך מאפיין onclick — שם עם מרכאה או גרש שובר את המאפיין.
@@ -1654,10 +1652,10 @@ async function confirmSwitch() {
 function showSettingsHome() {
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
-    if (el) el.style.display = 'none';
+    if (el) el.classList.add('hidden');
   });
   var h = document.getElementById('settings-home');
-  if (h) h.style.display = '';
+  if (h) h.classList.remove('hidden');
 }
 
 /* ⛔⛔ אזור ההגדרות — הערת הגנה משותפת לכל האפליקציות
@@ -1686,13 +1684,13 @@ function showSettingsHome() {
    שב-`showPage`, מעל מטריצת `hr_perms`. העמודה היא `NOT NULL` בלי DEFAULT.
    ═════════════════════════════════════════════════════════════════════ */
 function showSettingsModule(mod) {
-  document.getElementById('settings-home').style.display = 'none';
+  document.getElementById('settings-home').classList.add('hidden');
   ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
-    if (el) el.style.display = 'none';
+    if (el) el.classList.add('hidden');
   });
   var target = document.getElementById('settings-'+mod);
-  if (target) target.style.display = '';
+  if (target) target.classList.remove('hidden');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'attend') renderAttendSettings();
@@ -1751,13 +1749,14 @@ function renderAbsenceReasons() {
     el.innerHTML = '';
     (reasons[type]||[]).forEach(function(r) {
       var row = document.createElement('div');
-      row.style.cssText = 'display:flex;gap:6px;align-items:center';
+      row.className = 'edit-row';
       var inp = document.createElement('input');
       inp.value = r;
-      inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+      inp.className = 'sess-field';
+      inp.setAttribute('aria-label', 'סיבה');
       var btn = document.createElement('button');
       btn.textContent = '✕';
-      btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
+      btn.className = 'row-del-btn';
       btn.dataset.act = 'reason-row-del';
       row.appendChild(inp);
       row.appendChild(btn);
@@ -1769,13 +1768,14 @@ function addAbsenceReason(type) {
   var el = document.getElementById('reasons-'+type);
   if (!el) return;
   var div = document.createElement('div');
-  div.style.cssText = 'display:flex;gap:6px;align-items:center';
+  div.className = 'edit-row';
   var inp = document.createElement('input');
   inp.placeholder = 'סיבה חדשה...';
-  inp.style.cssText = 'flex:1;border:1.5px solid var(--border);border-radius:8px;padding:6px 10px;font-family:Heebo;font-size:.85rem';
+  inp.className = 'sess-field';
+  inp.setAttribute('aria-label', 'סיבה חדשה');
   var btn = document.createElement('button');
   btn.textContent = '✕';
-  btn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--bad);font-size:1rem';
+  btn.className = 'row-del-btn';
   btn.dataset.act = 'reason-row-del';
   div.appendChild(inp);
   div.appendChild(btn);
@@ -1816,8 +1816,8 @@ function renderSettings() {
   var admin = isAdmin();
   var su = document.getElementById('ss-users');
   var sp = document.getElementById('ss-perms');
-  if (su) su.style.display = admin ? '' : 'none';
-  if (sp) sp.style.display = admin ? '' : 'none';
+  if (su) su.classList.toggle('hidden', !admin);
+  if (sp) sp.classList.toggle('hidden', !admin);
 }
 
 // ---- רשימת משתמשים ----
@@ -1869,7 +1869,7 @@ var DOM_ACTIONS = {
   'sl-open-session':     function (el) { return hrOpenSession(el.dataset.sid, el.dataset.sname); },
   /*  ⛔ שלוש התראות התשתית מנותבות במפה — ⚠️ הכפתור נבנה ב-JS,
    *  ⭐ והמאזין הישיר שעליו היה בדיוק ההיקף שיצא מהמנגנון. */
-  'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.style.display = 'none'; },
+  'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.remove(); },
   'pend-alert-ok':       function () { pendAlertDismiss(); },
   'lk-stay':             function () { lkReset(); },
   'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
@@ -1936,15 +1936,15 @@ var DOM_ACTIONS = {
    *  מואצלים ורק אחד מהם רץ: ⛔ `stopPropagation` אינו נחוץ. */
   'toggle-panel':     function (el) {
                         var e = document.getElementById(el.getAttribute('data-panel'));
-                        if (e) e.style.display = uiShown(e) ? 'none' : 'block';
+                        if (e) e.classList.toggle('hidden', uiShown(e));
                       },
   'toggle-next':      function (el) {
                         var pnl = el.nextElementSibling;
                         if (!pnl) return;
                         var open = uiShown(pnl);
-                        pnl.style.display = open ? 'none' : 'block';
+                        pnl.classList.toggle('hidden', open);
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
-                        if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+                        if (chev) chev.classList.toggle('open', !open);
                       },
   'at-edit-session':  function (el) { return atEditSession(el.getAttribute('data-id')); },
   'at-del-session':   function (el) { atDeleteSession(el.getAttribute('data-id')); },
@@ -2142,7 +2142,7 @@ async function renderUsersList() {
 function openAddUser() {
   openUserModal('הוסף משתמש');
   document.getElementById('um-role').value = 'junior';
-  document.getElementById('um-pass-hint').style.display = 'none';
+  document.getElementById('um-pass-hint').classList.add('hidden');
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
 }
 function openEditUser(u) {
@@ -3331,9 +3331,9 @@ function hrUpdateQueueBadge() {
     var n = q.length;
     if (n > 0) {
       badge.textContent = '⏳ ' + n + ' רשומות ממתינות לסנכרון';
-      badge.style.display = '';
+      badge.classList.remove('hidden');
     } else {
-      badge.style.display = 'none';
+      badge.classList.add('hidden');
     }
   } catch(e) {}
 }
@@ -4466,7 +4466,7 @@ async function ensureFirstAdmin() {
     if (!error && (!data || data.length === 0)) {
       if (e) {
         e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
-        e.style.color = 'var(--warn)';
+        e.classList.add('u-c-warn');
       }
     }
   } catch(e) { console.error('setup error:', e); }
@@ -4587,12 +4587,12 @@ function renderStudents(){
 
   // כפתור "ניהול רשימה" — admin only
   var btnML=document.getElementById('btn-manage-list');
-  if(btnML) btnML.style.display=isAdmin()?'':'none';
+  if(btnML) btnML.classList.toggle('hidden',!isAdmin());
 
   // מונה כפתורי סינון — רק תלמידים פעילים
   var tabsRow=document.getElementById('class-tabs-row');
   var swInner=document.getElementById('sw-inner');
-  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.width=tw+'px';}
+  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.setProperty('--sw-w',tw+'px');}
   var ea=document.getElementById('ct-all');
   if(ea)ea.textContent='הכל ('+activeSts.length+')';
   var ea2=document.getElementById('ct-a');
@@ -4645,7 +4645,7 @@ function renderStudents(){
   activeSts.forEach(function(s){
     if(getActiveAbsences(s).length>0)absent++;else present++;
   });
-  if(sumEl){sumEl.style.alignItems='center';sumEl.innerHTML=
+  if(sumEl){sumEl.classList.add('u-ai-c');sumEl.innerHTML=
     '<span class="u-c-ok u-d-iflex u-ai-c u-lh-1 u-g-2">&#x2705; נוכחים: '+present+'</span>'+
     '<span class="u-c-bad u-d-iflex u-ai-c u-lh-1 u-g-2">&#x274C; אינם נוכחים: '+absent+'</span>'+
     '<span class="u-c-text2 u-d-iflex u-ai-c u-lh-1">סה"כ: '+activeSts.length+'</span>';}
@@ -5348,7 +5348,7 @@ function _hrDiskArr(lsKey) {
 function _hrPullStaleMark(el, bad) {
   if (!el) return;
   el.textContent = bad ? '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר' : '';
-  el.style.display = bad ? 'block' : 'none';
+  el.classList.toggle('on', !!bad);
 }
 /*  ⛔ המשיכה מחזירה **האם הענן ענה** ⛔ ולא את הנתון — ⚠️
  *  `atLoadData` נופלת-חזרה לדיסק ומחזירה מערך גם כשהמשיכה נכשלה, ⭐ ולכן
@@ -5535,8 +5535,8 @@ function _atPaintReg() {
   // ודא שלוח הבחירה מוצג, רשימה מוסתרת
   var pk=document.getElementById('at-reg-picker');
   var rl=document.getElementById('at-reg-list');
-  if(pk) pk.style.display='';
-  if(rl) rl.style.display='none';
+  if(pk) pk.classList.remove('hidden');
+  if(rl) rl.classList.add('hidden');
 }
 
 // טעינה ראשית של המודול
@@ -5597,10 +5597,7 @@ function atFillSessionBtns() {
   atSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
-    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
-    btn.onmouseout=function(){this.style.background='var(--card-2)';};
+    btn.className='sess-pick-btn';
     btn.dataset.act='at-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
@@ -5612,12 +5609,8 @@ function atShowTab(tab) {
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('at-view-'+t);
     var b=document.getElementById('at-tab-'+t);
-    if(v) v.style.display=(t===tab)?'block':'none';
-    if(b){
-      b.style.borderBottomColor=(t===tab)?'var(--navy-ink)':'transparent';
-      b.style.color=(t===tab)?'var(--navy-ink)':'var(--text-2)';
-      b.style.fontWeight=(t===tab)?'700':'600';
-    }
+    if(v) v.classList.toggle('hidden',t!==tab);
+    if(b) b.className=(t===tab)?'at-tab-btn-on':'at-tab-btn';
   });
   // רישום: רק מרנדר אם סדר פתוח
   if(tab==='reg' && window._atCurrentSessionId) atRenderStudents();
@@ -5808,8 +5801,8 @@ async function atEditSession(recId) {
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+rec.session+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
-  document.getElementById('at-reg-picker').style.display='none';
-  document.getElementById('at-reg-list').style.display='block';
+  document.getElementById('at-reg-picker').classList.add('hidden');
+  document.getElementById('at-reg-list').classList.remove('hidden');
   atRenderStudents();
 };
 
@@ -5965,8 +5958,8 @@ function _atMountOpenSession(sessName, dateHeb) {
     '<span class="rec-title">'+sessName+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
-  document.getElementById('at-reg-picker').style.display='none';
-  document.getElementById('at-reg-list').style.display='block';
+  document.getElementById('at-reg-picker').classList.add('hidden');
+  document.getElementById('at-reg-list').classList.remove('hidden');
   atRenderStudents();
 }
 
@@ -6227,8 +6220,8 @@ async function atCloseSession() {
   window._atCurrentSessionId=null;
   window._atMarks={};
   window._atPendingRec=null;
-  document.getElementById('at-reg-list').style.display='none';
-  document.getElementById('at-reg-picker').style.display='';
+  document.getElementById('at-reg-list').classList.add('hidden');
+  document.getElementById('at-reg-picker').classList.remove('hidden');
   atRenderTodaySessions();
   toast(msg);
 };
@@ -6289,7 +6282,7 @@ function _atPaintArchive(el, records, warn) {
       ' class="arc-year-head">'+
       '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="arc-year-chev">▾</span>'+
     '</div>';
-    html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
+    html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' u-pr-3">';
 
     var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
     months.forEach(function(mi){
@@ -6302,7 +6295,7 @@ function _atPaintArchive(el, records, warn) {
         ' class="arc-month-head">'+
         '<span class="u-fx-1">📆 '+mName+'</span><span class="arc-month-chev">▾</span>'+
       '</div>';
-      html+='<div id="'+mId+'" class="'+(isMonthCur?'u-d-block':'u-d-none')+' u-pr-4">';
+      html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' u-pr-4">';
 
       var _arcSessOrder={};
       atSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
@@ -6325,7 +6318,7 @@ function _atPaintArchive(el, records, warn) {
           ' <span class="arc-day-count">('+entries.length+' סדרים)</span></span>'+
           '<span class="arc-day-chev">▾</span>'+
         '</div>';
-        html+='<div id="'+dId+'" class="'+(isToday?'u-d-block':'u-d-none')+' u-pr-4">';
+        html+='<div id="'+dId+'" class="'+(isToday?'':'hidden')+' u-pr-4">';
 
         entries.forEach(function(entry){
           var rec=entry.rec;
@@ -6339,7 +6332,7 @@ function _atPaintArchive(el, records, warn) {
           html+='<div class="arc-sess-summary">'+summary+'</div>';
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" class="arc-sess-body">';
+          html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var _mk2=hrMarks(rec);
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -6639,7 +6632,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     html+='<span class="sup-chev-icon sup-chev">›</span>';
     html+='</div>';
     // פאנל פרטים
-    html+='<div class="sup-card-body">';
+    html+='<div class="sup-card-body hidden">';
     html+='<div class="u-mb-6">';
     html+='<div class="panel-head-sm">➕ הוסף טיפול</div>';
     html+='<div class="chip-row ksave">';
@@ -6883,7 +6876,7 @@ function atAddSession() {
   if(!sc) return;
   var div=document.createElement('div');
   div.setAttribute('data-sess-row','1');
-  div.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:2px';
+  div.className='edit-row u-mb-1';
   div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" class="sess-field">'+
     '<input data-sess-time="1" aria-label="שעת הסדר" type="time" class="cfg-row-input">'+
     '<button data-act="row-remove" class="row-del-btn">✕</button>';
@@ -6893,7 +6886,7 @@ function atAddTreatRow() {
   var tc=document.getElementById('at-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.className='edit-row';
   div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="sess-field"><button data-act="row-remove" class="row-del-btn">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
@@ -7137,8 +7130,8 @@ function _hrPaintReg() {
 
   var pk=document.getElementById('sl-reg-picker');
   var rl=document.getElementById('sl-reg-list');
-  if(pk) pk.style.display='';
-  if(rl) rl.style.display='none';
+  if(pk) pk.classList.remove('hidden');
+  if(rl) rl.classList.add('hidden');
 }
 
 // טעינה ראשית של מודול שינה
@@ -7189,10 +7182,7 @@ function hrFillSessionBtns() {
   hrSortedSessions(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
-    btn.style.cssText='padding:10px 20px;background:var(--bg);border:2px solid var(--border);border-radius:10px;'+
-      'font-family:Heebo;font-size:.9rem;font-weight:700;color:var(--navy-ink);cursor:pointer;transition:all var(--dur-3)';
-    btn.onmouseover=function(){this.style.background='var(--info-soft)';};
-    btn.onmouseout=function(){this.style.background='var(--card-2)';};
+    btn.className='sess-pick-btn';
     btn.dataset.act='sl-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     el.appendChild(btn);
   });
@@ -7203,12 +7193,8 @@ function hrShowTab(tab) {
   ['reg','arc','sup'].forEach(function(t){
     var v=document.getElementById('sl-view-'+t);
     var b=document.getElementById('sl-tab-'+t);
-    if(v) v.style.display=(t===tab)?'block':'none';
-    if(b){
-      b.style.borderBottomColor=(t===tab)?'var(--navy-ink)':'transparent';
-      b.style.color=(t===tab)?'var(--navy-ink)':'var(--text-2)';
-      b.style.fontWeight=(t===tab)?'700':'600';
-    }
+    if(v) v.classList.toggle('hidden',t!==tab);
+    if(b) b.className=(t===tab)?'at-tab-btn-on':'at-tab-btn';
   });
   if(tab==='reg' && window._hrCurrentSessionId) hrRenderStudents();
   if(tab==='arc') hrRenderArchive();
@@ -7338,8 +7324,8 @@ async function hrEditSession(recId) {
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+rec.session+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
+  document.getElementById('sl-reg-picker').classList.add('hidden');
+  document.getElementById('sl-reg-list').classList.remove('hidden');
   hrRenderStudents();
 };
 
@@ -7409,8 +7395,8 @@ function _hrMountOpenSession(sessName, dateHeb) {
     '<span class="rec-title">'+sessName+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
-  document.getElementById('sl-reg-picker').style.display='none';
-  document.getElementById('sl-reg-list').style.display='block';
+  document.getElementById('sl-reg-picker').classList.add('hidden');
+  document.getElementById('sl-reg-list').classList.remove('hidden');
   hrRenderStudents();
 }
 
@@ -7670,8 +7656,8 @@ async function hrCloseSession() {
   window._hrCurrentSessionId=null;
   window._hrMarks={};
   window._hrPendingRec=null;
-  document.getElementById('sl-reg-list').style.display='none';
-  document.getElementById('sl-reg-picker').style.display='';
+  document.getElementById('sl-reg-list').classList.add('hidden');
+  document.getElementById('sl-reg-picker').classList.remove('hidden');
   hrRenderTodaySessions();
   toast(msg);
 };
@@ -7729,7 +7715,7 @@ function _hrPaintArchive(el, records, warn) {
       ' class="arc-year-head">'+
       '<span class="u-fx-1">📅 '+_hcYL(hy)+'</span><span class="arc-year-chev">▾</span>'+
     '</div>';
-    html+='<div id="'+yId+'" class="'+(isYearCur?'u-d-block':'u-d-none')+' u-pr-3">';
+    html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' u-pr-3">';
 
     var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
     months.forEach(function(mi){
@@ -7741,7 +7727,7 @@ function _hrPaintArchive(el, records, warn) {
         ' class="arc-month-head">'+
         '<span class="u-fx-1">📆 '+mName+'</span><span class="arc-month-chev">▾</span>'+
       '</div>';
-      html+='<div id="'+mId+'" class="'+(isMonthCur?'u-d-block':'u-d-none')+' u-pr-4">';
+      html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' u-pr-4">';
 
       var _arcSessOrder={};
       hrSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
@@ -7763,7 +7749,7 @@ function _hrPaintArchive(el, records, warn) {
           ' <span class="arc-day-count">('+entries.length+' דוחות)</span></span>'+
           '<span class="arc-day-chev">▾</span>'+
         '</div>';
-        html+='<div id="'+dId+'" class="'+(isToday?'u-d-block':'u-d-none')+' u-pr-4">';
+        html+='<div id="'+dId+'" class="'+(isToday?'':'hidden')+' u-pr-4">';
 
         entries.forEach(function(entry){
           var rec=entry.rec;
@@ -7777,7 +7763,7 @@ function _hrPaintArchive(el, records, warn) {
           html+='<div class="arc-sess-summary">'+summary+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
-          html+='<div id="'+sId+'" class="arc-sess-body">';
+          html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var _mk2=hrMarks(rec);
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.id)===String(sid2);});
@@ -8064,7 +8050,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     html+='</div>';
     html+='<span class="sup-chev-icon sl-sup-chev">›</span>';
     html+='</div>';
-    html+='<div class="sup-card-body">';
+    html+='<div class="sup-card-body hidden">';
     html+='<div class="u-mb-6">';
     html+='<div class="panel-head-sm">➕ הוסף טיפול</div>';
     html+='<div class="chip-row ksave">';
@@ -8247,7 +8233,7 @@ function hrAddTreatRow() {
   var tc=document.getElementById('sl-cfg-treats');
   if(!tc) return;
   var div=document.createElement('div');
-  div.style.cssText='display:flex;gap:6px;align-items:center';
+  div.className='edit-row';
   div.innerHTML='<input aria-label="שם הטיפול" placeholder="שם הטיפול" class="sess-field"><button data-act="row-remove" class="row-del-btn">✕</button>';
   tc.appendChild(div);div.querySelector('input').focus();
 };
