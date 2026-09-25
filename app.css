@@ -25,8 +25,7 @@
 --on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
 /*  ⛔ גווני הסימון — ⚠️ שבעה קודים, ⭐ וכל אחד אסימון אחד: ⛔ הם ירדו
  *  משש מפות זהות שחיו בקוד, ⚠️ וכולן נשאו את אותם שבעה ליטרלים.
- *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ וכל גוון עומד ב-4.5 מולו:
- *  ⭐ גוון האיחור הוכהה מ-#dd6b20, ⛔ שנמדד 3.39 ונפל מהיחס. */
+ *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ אחד לכל השבעה. */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 /*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
