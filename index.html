@@ -147,7 +147,7 @@ import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
          mirrorTables, mirrorWrite } from './core/mirror.js';
 import { bkBoot, logAction, logFlush } from './core/backup.js';
-import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
+import { ROLE_ADMIN, authLog, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
          modalEsc, openModal, pullRender, shellBare, swApply, swHideUpdate,
@@ -1022,47 +1022,6 @@ async function hrRevalidateOfflineLogin() {
   } catch(e) {}
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   יומן ניסיונות הכניסה
-   ══════════════════════════════════════════════════════════════════════════ */
-/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה — ⚠️ ערך שנכתב כאן וגם
- *  ב-`CACHE_NAME` שב-`sw.js` נסחף, ⭐ ו-`sw_version` ביומן הכניסה מדווח
- *  גרסה שאינה הקוד שרץ.
- *  ⭐ **שם המטמון החי הוא הערך** — ⛔ הוא נוצר מ-`CACHE_NAME` עצמו, ⚠️ ולכן
- *  זו קריאה מהמקום שבו הערך נקבע ⛔ ולא מקור שני.
- *  ⛔ **ובזמן עדכון עשויים לחיות שני מטמונים** — ⚠️ הנבחר הוא בעל המספר
- *  הגבוה, ⭐ שהוא הגרסה שהופעלה.
- *  ⛔ **וכשל מחזיר מחרוזת ריקה** ⛔ ולא ערך מוקלד — ⚠️ «לא ידוע» עדיף על
- *  גרסה שגויה שנרשמת כעובדה. */
-var HR_APP_VER = '';
-var HR_VER_PREFIX = self.APP.id + '-';
-async function hrAppVerBoot() {
-  try {
-    if (!self.caches || !caches.keys) return HR_APP_VER;
-    var names = await caches.keys();
-    var mine = (names || []).filter(function (n) { return String(n).indexOf(HR_VER_PREFIX) === 0; });
-    if (!mine.length) return HR_APP_VER;
-    mine.sort(function (a, b) {
-      var na = parseInt(String(a).replace(/^.*-v/, ''), 10) || 0;
-      var nb = parseInt(String(b).replace(/^.*-v/, ''), 10) || 0;
-      return na - nb;
-    });
-    HR_APP_VER = mine[mine.length - 1];
-  } catch (e) { console.warn('[ver] hrAppVerBoot', e); }
-  return HR_APP_VER;
-}
-function hrLoginDetails(username) {
-  // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
-  return { typed_username: username || '', online: !!navigator.onLine, sw_version: HR_APP_VER };
-}
-// ⚠️ התור והריקון עברו למודול המשותף. המפתח נשאר
-// `hr_login_log_queue` **בכוונה** — `LS_CFG.pending()` בודק אותו, ושינוי שמו
-// היה מנתק בשקט את ההגנה שמדלגת על פינוי הרשומות הישנות כשיש משהו שטרם עלה.
-function hrLoginLog(action, branch, details) {
-  logAction(action, branch, 0, details || null);
-}
-async function hrLoginLogFlush() { return logFlush(); }
-
 // עטיפת ביטחון: doLogin היא async, ולכן כל זריקה בלתי-צפויה בתוכה הופכת
 // ל-unhandled rejection — הספינר נשאר מסתובב, ואפס משוב למשתמש.
 // כאן כל כישלון מסתיים בהודעה גלויה. ⛔ והכפתור אינו מושבת כאן — ⚠️ הניתוב
@@ -1129,11 +1088,11 @@ async function _doLoginInner() {
   var onlineRow = (!netFail && res && !res.error) ? res.data : null;
   var onlineVerdict = onlineRow ? await hrVerifyOffline(onlineRow, pass) : null;
   if (onlineVerdict === 'no-fp') {
-    hrLoginLog('login_fail', 'no_fp_online', hrLoginDetails(username));
+    authLog(false, 'no_fp_online', username);
     showErr(MSG_NO_FP_ONLINE); return;
   }
   if (onlineVerdict === 'no-crypto') {
-    hrLoginLog('login_fail', 'no_crypto_online', hrLoginDetails(username));
+    authLog(false, 'no_crypto_online', username);
     showErr(MSG_NO_CRYPTO); return;
   }
   var authoritativeNo = (!netFail && res && !res.error && (!res.data || onlineVerdict === 'bad'));
@@ -1143,28 +1102,28 @@ async function _doLoginInner() {
     ctxSwitch();
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
-    hrLoginLog('login_ok', 'online', hrLoginDetails(username));
+    authLog(true, 'online', username);
     // השורה כבר בידינו מהאימות — נשמרת ישירות, כדי שגם אם הרענון המלא
     // שאחריה ייכשל, המשתמש הזה לפחות יוכל להיכנס אופליין בפעם הבאה.
     hrUsersCacheSave(onlineUser);
     //...ומיד אחריה הרענון המלא: **כל** המשתמשים הפעילים, בלי
     // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
     hrRefreshUsersCache();
-    hrLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
+    logFlush();            // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
-    hrLoginLog('login_fail', 'wrong_credentials_online', hrLoginDetails(username));
+    authLog(false, 'wrong_credentials_online', username);
     showErr('❌ ' + MSG_BAD_LOGIN); return;
   } else {
     // אין רשת / פסק זמן / שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) —
     // בכל אלה השרת לא ענה תשובה סמכותית, ולכן מנסים את העותק המקומי.
     dbg(netFail ? 'אין רשת — מנסה אימות מקומי (מראת המשתמשים)'
                : 'שגיאת שרת — מנסה אימות מקומי (מראת המשתמשים)');
-    hrLoginLog('login_fail', netFail ? 'net_error' : 'server_error', hrLoginDetails(username));
+    authLog(false, netFail ? 'net_error' : 'server_error', username);
     var cache = hrUsersCacheGet();
     // Array.isArray ולא cache.length — ערך תקין-כ-JSON שאינו מערך (למשל מחרוזת)
     // עבר את הבדיקה הישנה ואז cache.find זרק TypeError שנבלע: ספינר תקוע בלי הודעה
     if (!Array.isArray(cache) || !cache.length) {
-      hrLoginLog('login_fail', 'no_cache_offline', hrLoginDetails(username));
+      authLog(false, 'no_cache_offline', username);
       /*  ⛔ שני סיווגים, שתי קריאות ושני משטחים — ⚠️ שגיאת שרת היא כשל
        *  מערכת ואינה על משטח המשתמש: ⭐ והיעדר מטמון הוא מה שהמשתמש
        *  יכול לפתור — חיבור אחד. */
@@ -1181,7 +1140,7 @@ async function _doLoginInner() {
       cu = cache.find(function(u){ return u && u.username === username; });
     } catch(eF) { console.warn('[login] cache.find failed:', eF); }
     if (!cu) {
-      hrLoginLog('login_fail', 'unknown_user_offline', hrLoginDetails(username));
+      authLog(false, 'unknown_user_offline', username);
       showErr(MSG_OFF_UNKNOWN);
       return;
     }
@@ -1189,15 +1148,15 @@ async function _doLoginInner() {
     // אין `password_hash` במטמון כלל. ר' הפרק בראש מודול הכניסה.
     var verdict = await hrVerifyOffline(cu, pass);
     if (verdict === 'no-fp') {
-      hrLoginLog('login_fail', 'no_fp_offline', hrLoginDetails(username));
+      authLog(false, 'no_fp_offline', username);
       showErr(MSG_OFF_NO_FP); return;
     }
     if (verdict === 'no-crypto') {
-      hrLoginLog('login_fail', 'no_crypto_offline', hrLoginDetails(username));
+      authLog(false, 'no_crypto_offline', username);
       showErr(MSG_OFF_NO_CRYPTO); return;
     }
     if (verdict !== 'ok') {
-      hrLoginLog('login_fail', 'wrong_credentials_offline', hrLoginDetails(username));
+      authLog(false, 'wrong_credentials_offline', username);
       showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
     var lu = cu;
@@ -1205,7 +1164,7 @@ async function _doLoginInner() {
     AUTH.user = lu;
     AUTH.offlineLogin = true;
     hrUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
-    hrLoginLog('login_ok', 'offline', hrLoginDetails(username));
+    authLog(true, 'offline', username);
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
@@ -1692,20 +1651,20 @@ async function confirmSwitch() {
     try {
       cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.client_id)===String(window._hrSwitchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
-    if(!cu){errEl.textContent=MSG_OFF_UNKNOWN;return;}
+    if(!cu){authLog(false,'switch_unknown_user_offline',String(window._hrSwitchId));errEl.textContent=MSG_OFF_UNKNOWN;return;}
     var verdict=await hrVerifyOffline(cu,pass);
-    if(verdict==='no-fp'){errEl.textContent=MSG_OFF_NO_FP;return;}
-    if(verdict==='no-crypto'){errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
-    if(verdict!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(verdict==='no-fp'){authLog(false,'switch_no_fp_offline',cu.username);errEl.textContent=MSG_OFF_NO_FP;return;}
+    if(verdict==='no-crypto'){authLog(false,'switch_no_crypto_offline',cu.username);errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
+    if(verdict!=='ok'){authLog(false,'switch_wrong_credentials_offline',cu.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=cu;
     AUTH.offlineLogin=true;
   } else {
-    if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(window._hrSwitchId));errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     // ⭐ ההכרעה מול הטביעה, בדיוק כמו בענף האופליין שמעל.
     var vOn=await hrVerifyOffline(res.data,pass);
-    if(vOn==='no-fp'){errEl.textContent=MSG_NO_FP_ONLINE;return;}
-    if(vOn==='no-crypto'){errEl.textContent=MSG_NO_CRYPTO;return;}
-    if(vOn!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(vOn==='no-fp'){authLog(false,'switch_no_fp_online',res.data.username);errEl.textContent=MSG_NO_FP_ONLINE;return;}
+    if(vOn==='no-crypto'){authLog(false,'switch_no_crypto_online',res.data.username);errEl.textContent=MSG_NO_CRYPTO;return;}
+    if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=res.data;
     AUTH.offlineLogin=false;
     // ⚠️ **לפני** ‎AUTH.user=u‎ שלמטה — ולכן שומרים את `u` במפורש ולא קוראים
@@ -1715,6 +1674,7 @@ async function confirmSwitch() {
   closeModal();
   ctxSwitch();
   AUTH.user=u;
+  authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
   // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
   // הרענון המלא מושך את כל המשתמשים הפעילים; באופליין אין רשת
   // והקריאה נופלת בשקט, ולכן היא מותנית.
@@ -4445,7 +4405,7 @@ setTimeout(async function() {
 window.addEventListener('online', function() {
   console.log('[ys-queue] network online — revalidating session');
   hrRevalidateOfflineLogin();
-  hrLoginLogFlush();
+  logFlush();
 });
 
 // ============ סוף סנכרון הענן ============
