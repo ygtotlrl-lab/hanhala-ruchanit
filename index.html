@@ -1556,7 +1556,7 @@ function openStatusForm(type) {
   var defaultTime = String(now.getHours()).padStart(2,'0')+':'+String(mins).padStart(2,'0');
   var todayHeb = _hcH(now);
 
-  var reasonOptions = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
+  var reasonOptionsHtml = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'sf-lbl';
   var inp = 'sf-inp';
 
@@ -1565,7 +1565,7 @@ function openStatusForm(type) {
     '<div class="abs-tone '+tyCls(type)+' sf-dates">' +
       '<div>' +
         '<label class="'+lbl+'">סיבה</label>' +
-        '<select aria-label="סיבת ההיעדרות" id="sfm-reason" class="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptions+'<option value="אחר">אחר</option></select>' +
+        '<select aria-label="סיבת ההיעדרות" id="sfm-reason" class="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptionsHtml+'<option value="אחר">אחר</option></select>' +
       '</div>' +
       '<div>' +
         '<label class="'+lbl+'">תאריך התחלה</label>' +
@@ -2197,12 +2197,12 @@ async function renderUsersList() {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeCls = u.active ? '' : ' is-inactive';
-    return '<div class="ur'+activeCls+'" data-row-id="'+u.client_id+'">' +
+    return '<div class="ur'+activeCls+'" data-row-id="'+esc(u.client_id)+'">' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
-      '<span class="ur-role '+roleClass+'">'+esc(roleLabel)+'</span>' +
+      '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
-        '<button data-act="user-edit" data-uid="'+u.client_id+'" data-uname="'+u.full_name.replace(/"/g,'&quot;')+
-        '" data-uusername="'+u.username+'" data-urole="'+u.role+'">✏️</button>' +
+        '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
+        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'">✏️</button>' +
         '<button data-act="user-up" data-id="'+esc(u.client_id)+'" title="הזז למעלה" class="user-move">⬆️</button>' +
         '<button data-act="user-down" data-id="'+esc(u.client_id)+'" title="הזז למטה" class="user-move">⬇️</button>' +
         '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
@@ -2344,16 +2344,16 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id]||{})[role] || 'none';
-      var sel = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
+      var selHtml = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
-        sel += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
+        selHtml += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
-      sel += '</select>';
+      selHtml += '</select>';
       // מנהל תמיד edit ב-settings
       if (m.id === 'settings' && role === ROLE_ADMIN) {
         row += '<td><span class="um-edit">✏️ עריכה</span></td>';
       } else {
-        row += '<td>'+sel+'</td>';
+        row += '<td>'+selHtml+'</td>';
       }
     });
     return row + '</tr>';
@@ -4711,11 +4711,11 @@ function renderStudents(){
       //    במסד שכל רשומה שנשאה את הישן נושאת גם את החדש, ⭐ ולכן הנפילה
       //    לא נבחרה מעולם; ⛔ ושני שדות לאותו מושג הם שני מקורות אמת.
       var yr=s.cycle||'';
-      var badge=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
+      var badgeHtml=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
       return '<div class="'+bg+' st-row-off">'+
         '<div class="st-row-main">'+
           '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>'+
-          '<div class="badge-row">'+badge+'</div>'+
+          '<div class="badge-row">'+badgeHtml+'</div>'+
         '</div>'+
         '<div class="st-row-act">'+
           '<button data-act="st-activate" data-id="'+esc(s.id)+'" class="st-activate">↩ החזר לפעיל</button>'+
@@ -4841,24 +4841,24 @@ function openManageListDlg(){
     {icon:'🗑️',label:'מחק הכל',k:'delall',cls:'menu-danger'},
     {icon:'🔄',label:'מעבר שנתי',k:'year',cls:'menu-warn'}
   ];
-  var rows=ITEMS.map(function(item){
+  var rowsHtml=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
       'class="admin-item '+(item.cls||'menu-plain')+'">'+
       '<span class="admin-ico">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
-  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rows+'</div>','');
+  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHtml+'</div>','');
 };
 
 // -------- דיאלוג: סמן תלמיד כלא פעיל --------
 function openDeactivateStudentDlg(){
   var students=hrSortStudents(getStudents().filter(function(s){return s.active!==false;}));
-  var opts=students.map(function(s){
+  var optsHtml=students.map(function(s){
     return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
   openModal(MSG_MARK_INACTIVE_TITLE,
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="deact-sel">'+
-      '<option value="">-- בחר תלמיד --</option>'+opts+
+      '<option value="">-- בחר תלמיד --</option>'+optsHtml+
     '</select>'+
     '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
@@ -4974,7 +4974,7 @@ function openCurrentStatusModal() {
   var _now = new Date();
   var absencesHtml = activeAbsences.map(function(a) {
     var isFuture = a.from && new Date(a.from) > _now;
-    var badge = isFuture
+    var badgeHtml = isFuture
       ? '<span class="abs-future">⏳ עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
     var cancelId = a.id === 'legacy' ? '' : String(a.id);
@@ -4982,12 +4982,12 @@ function openCurrentStatusModal() {
       '<div class="abs-card-head">' +
         '<div class="status-head-row">' +
           '<span class="abs-ico">' + (TI[a.type]||'📋') + '</span>' +
-          '<span class="abs-type-label">' + (TL[a.type]||a.type) + '</span>' +
-          badge +
+          '<span class="abs-type-label">' + esc(TL[a.type]||a.type) + '</span>' +
+          badgeHtml +
         '</div>' +
         '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
-      (a.reason ? '<div class="abs-reason">סיבה: ' + a.reason + '</div>' : '') +
+      (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
       '<div class="abs-dates">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
@@ -5282,21 +5282,21 @@ function importStudentsFromFile(input) {
       var icon = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
       var title = wrote ? (added + ' תלמידים נוספו בהצלחה')
                         : 'הייבוא נכשל — אין מקום באחסון המכשיר';
-      var body = '';
+      var bodyHtml = '';
       if (!wrote) {
-        body += '<div class="import-err"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
+        bodyHtml += '<div class="import-err"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
                 'הכתיבה המקומית נכשלה, ולכן שום דבר לא נוסף. פנה מקום ונסה שוב.</div>';
       }
-      if (wrote && skipped > 0) body += '<div>' + skipped + ' שורות ריקות דולגו</div>';
+      if (wrote && skipped > 0) bodyHtml += '<div>' + skipped + ' שורות ריקות דולגו</div>';
       if (wrote && failed.length > 0) {
-        body += '<div class="import-fail"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
-        body += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
+        bodyHtml += '<div class="import-fail"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
+        bodyHtml += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       // ⚠️ הסיכום הוא הדיווח היחיד למשתמש כאן, ולכן הוא נבנה מהאמת ולא
       //    מהכוונה: כשל כתיבה מקומית משנה את האייקון, את הכותרת ואת הגוף.
       openModal(icon + ' ' + title,
         '<div class="import-done">' +
-        (body || '<div>הכל תקין!</div>') + '</div>',
+        (bodyHtml || '<div>הכל תקין!</div>') + '</div>',
         '<button class="modal-ok btn" data-act="modal-close">סגור</button>');
     } catch(err) {
       toast(MSG_FILE_READ_FAIL + (err.message||err), null, 'bad');
@@ -5827,11 +5827,11 @@ function atRenderTodaySessions() {
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-    var summary=atSummaryHtml(cnts);
+    var summaryHtml=atSummaryHtml(cnts);
     html+='<div data-act="at-edit-session" data-id="'+esc(rec.id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.id)+
-      '<div class="day-sess-summary">'+summary+'</div>'+
+      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
   });
@@ -5890,7 +5890,7 @@ async function atEditSession(recId) {
   window._atCurrentSessionId=recId;
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
-    '<span class="rec-title">'+rec.session+'</span>'+
+    '<span class="rec-title">'+esc(rec.session)+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
   document.getElementById('at-reg-picker').classList.add('hidden');
   document.getElementById('at-reg-list').classList.remove('hidden');
@@ -6046,7 +6046,7 @@ async function atOpenSession(sessId, sessName) {
 function _atMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
-    '<span class="rec-title">'+sessName+'</span>'+
+    '<span class="rec-title">'+esc(sessName)+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
   document.getElementById('at-reg-picker').classList.add('hidden');
@@ -6117,7 +6117,7 @@ function atShowOverrideDialog(sid, student) {
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
-  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+a.reason+'</div>':'';
+  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
   var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
@@ -6219,14 +6219,14 @@ function atRenderStudents() {
     var isLate=marks.s==='l';
     var hasMark=!!(marks.s);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
-    var autoHint='';
+    var autoHintHtml='';
     var am=atAutoMark(s);
     if(am&&isMark&&!window._atCleared[s.id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
-      if(aLbl) autoHint='<span class="mark-hint">('+aLbl+')</span>';
+      if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
     }
     var isPendingLate=isLate&&!!window._atPending[String(s.id)];
-    var lateField=isLate?
+    var lateFieldHtml=isLate?
       '<div class="late-field">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
         'data-inp="at-late" data-kent="at-late" data-id="'+esc(s.id)+'" '+
@@ -6236,9 +6236,9 @@ function atRenderStudents() {
       '</div>':'';
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
-      '<div class="at-row-class">'+cls+'</div>'+
-      '<div class="at-row-name">'+esc(s.name)+autoHint+'</div>'+
-      lateField+
+      '<div class="at-row-class">'+esc(cls)+'</div>'+
+      '<div class="at-row-name">'+esc(s.name)+autoHintHtml+'</div>'+
+      lateFieldHtml+
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.id):'')+
         mkBtn(s.id,'p','✓')+
@@ -6415,12 +6415,12 @@ function _atPaintArchive(el, records, warn) {
           var rec=entry.rec;
           var cnts={};
           Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-          var summary=atSummaryHtml(cnts);
+          var summaryHtml=atSummaryHtml(cnts);
           var sId=uid();
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
-          html+='<div class="arc-sess-summary">'+summary+'</div>';
+          html+='<div class="arc-sess-summary">'+summaryHtml+'</div>';
           html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
@@ -6436,7 +6436,7 @@ function _atPaintArchive(el, records, warn) {
             var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
             var mkc=atvCls(m2.s);
             return '<div class="arc-mark-row">'+
-              '<span>'+sn+'</span><span class="'+mkc+' arc-mark">'+lbl+'</span></div>';
+              '<span>'+esc(sn)+'</span><span class="'+mkc+' arc-mark">'+esc(lbl)+'</span></div>';
           });
           html+=rows.join('')+'</div></div>';
         });
@@ -6699,12 +6699,12 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
     // תאריך + יום הערה אחרונה
     var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
-    var lastLabel='';
+    var lastHtml='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
       var ltDateStr=ltHd?_hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
-      lastLabel='<span class="badge-ok">📝 יום '+atDow(ltIso)+' '+ltDateStr+'</span>';
+      lastHtml='<span class="badge-ok">📝 יום '+atDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     var alert20=st.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
@@ -6713,7 +6713,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     html+='<div id="'+cardId+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div class="sup-card-class">'+esc(clsLabel)+'</div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div class="rec-last">'+lastLabel+'</div>':'')+'</div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHtml?'<div class="rec-last">'+lastHtml+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<span class="rec-abs">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span class="rec-late">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -6739,7 +6739,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
         var hd=t.date_heb;
         var dl=hd?_hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div class="treat-row">'+
-          '<span class="rec-muted">'+dl+'</span>'+
+          '<span class="rec-muted">'+esc(dl)+'</span>'+
           '<span class="treat-type">'+esc(t.type)+'</span>'+
           (t.note?'<span class="rec-muted">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
@@ -6815,8 +6815,8 @@ function atSupDetail(sid) {
   var name=st?st.name:'תלמיד';
   var records=(window._atSupRecords&&window._atSupRecords[sid])||[];
 
-  var rows='';
-  if(!records.length){rows='<div class="loading-note">אין חיסורים בחודש זה</div>';}
+  var rowsHtml='';
+  if(!records.length){rowsHtml='<div class="loading-note">אין חיסורים בחודש זה</div>';}
   else{
     records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
@@ -6824,19 +6824,19 @@ function atSupDetail(sid) {
       var dowStr='יום '+atDow(r.date_iso);
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(ARC_LBL_DET[r.mark]||r.mark);
       var mkc=atvCls(r.mark);
-      rows+='<div class="mark-hist-row">';
-      rows+='<span class="mark-hist-dow">'+(dowStr)+'</span>';
-      rows+='<span class="mark-hist-date">'+hbr+'</span>';
-      rows+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
-      rows+='<span class="'+mkc+' hist-mark">'+esc(lbl)+'</span>';
-      rows+='<button data-act="at-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
+      rowsHtml+='<div class="mark-hist-row">';
+      rowsHtml+='<span class="mark-hist-dow">'+(dowStr)+'</span>';
+      rowsHtml+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
+      rowsHtml+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
+      rowsHtml+='<span class="'+mkc+' hist-mark">'+esc(lbl)+'</span>';
+      rowsHtml+='<button data-act="at-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         ' class="mark-edit-btn">✏️ ערוך</button>';
-      rows+='</div>';
+      rowsHtml+='</div>';
     });
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    '<div class="scroll-pane">'+rows+'</div>','');
+    '<div class="scroll-pane">'+rowsHtml+'</div>','');
 };
 
 function atSupEditMarkDlg(recId, sid, curMark) {
@@ -6849,13 +6849,13 @@ function atSupEditMarkDlg(recId, sid, curMark) {
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
   ];
-  var btns=CODES.map(function(cd){
+  var btnsHtml=CODES.map(function(cd){
     var active=cd.c===curMark?'mark-on':'mark-off';
     return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' mark-pick">'+cd.lbl+'</button>';
   }).join('');
   openModal(MSG_EDIT_MARK,
-    '<div class="chip-row">'+btns+'</div>',
+    '<div class="chip-row">'+btnsHtml+'</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>');
 };
 
@@ -6918,7 +6918,7 @@ function atCheckAlert() {
   });
   if(!alerts.length) return;
 
-  var list=alerts.slice(0,10).map(function(s){
+  var listHtml=alerts.slice(0,10).map(function(s){
     return '<div class="alert-row">'+esc(s.name)+
       (s.absent>=20?'<span class="alert-abs"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span class="alert-late"> — '+s.lateMin+' דק׳ איחור</span>':'')+
@@ -6926,7 +6926,7 @@ function atCheckAlert() {
   }).join('');
   openModal(MSG_ABSENCE_ALERT,
     '<p class="alert-lead">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div class="alert-list">'+list+'</div>',
+    '<div class="alert-list">'+listHtml+'</div>',
     '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
 }
 
@@ -6947,7 +6947,7 @@ function _atPaintSettings() {
     sc.innerHTML=cfg.sessions.map(function(s){
       return '<div data-sess-row="1" class="sess-edit-row">'+
         '<input aria-label="שם הסדר" data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" class="sess-field">'+
-        '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+(s.startTime||'')+'" class="cfg-row-input">'+
+        '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+esc(s.startTime||'')+'" class="cfg-row-input">'+
         '<button data-act="row-remove" class="row-del-btn">✕</button>'+
       '</div>';
     }).join('');
@@ -7353,11 +7353,11 @@ function hrRenderTodaySessions() {
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-    var summary=hrSummaryHtml(cnts);
+    var summaryHtml=hrSummaryHtml(cnts);
     html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(PK_SL_SESS+rec.id)+
-      '<div class="day-sess-summary">'+summary+'</div>'+
+      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
   });
@@ -7413,7 +7413,7 @@ async function hrEditSession(recId) {
   window._hrCurrentSessionId=recId;
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
-    '<span class="rec-title">'+rec.session+'</span>'+
+    '<span class="rec-title">'+esc(rec.session)+'</span>'+
     '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
   document.getElementById('sl-reg-picker').classList.add('hidden');
   document.getElementById('sl-reg-list').classList.remove('hidden');
@@ -7483,7 +7483,7 @@ async function hrOpenSession(sessId, sessName) {
 function _hrMountOpenSession(sessName, dateHeb) {
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
-    '<span class="rec-title">'+sessName+'</span>'+
+    '<span class="rec-title">'+esc(sessName)+'</span>'+
     '<span class="rec-date">'+_hcFmt(dateHeb.hy,dateHeb.mi,dateHeb.day)+'</span>';
 
   document.getElementById('sl-reg-picker').classList.add('hidden');
@@ -7549,7 +7549,7 @@ function hrShowOverrideDialog(sid, student) {
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
-  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+a.reason+'</div>':'';
+  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
   var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
@@ -7645,14 +7645,14 @@ function hrRenderStudents() {
     var isLate=marks.s==='l';
     var hasMark=!!(marks.s);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
-    var autoHint='';
+    var autoHintHtml='';
     var am=hrAutoMark(s);
     if(am&&isMark&&!window._hrCleared[s.id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
-      if(aLbl) autoHint='<span class="mark-hint">('+aLbl+')</span>';
+      if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
     }
     var isPendingLate=isLate&&!!window._hrPending[String(s.id)];
-    var lateField=isLate?
+    var lateFieldHtml=isLate?
       '<div class="late-field">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
         'data-inp="sl-late" data-kent="sl-late" data-id="'+esc(s.id)+'" '+
@@ -7667,9 +7667,9 @@ function hrRenderStudents() {
       ' class="late-min-inp">';
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
-      '<div class="at-row-class">'+cls+'</div>'+
-      '<div class="at-row-name">'+esc(s.name)+autoHint+'</div>'+
-      lateField+
+      '<div class="at-row-class">'+esc(cls)+'</div>'+
+      '<div class="at-row-name">'+esc(s.name)+autoHintHtml+'</div>'+
+      lateFieldHtml+
       noteField+
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.id):'')+
@@ -7846,12 +7846,12 @@ function _hrPaintArchive(el, records, warn) {
           var rec=entry.rec;
           var cnts={};
           Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-          var summary=hrSummaryHtml(cnts);
+          var summaryHtml=hrSummaryHtml(cnts);
           var sId=uid();
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
-          html+='<div class="arc-sess-summary">'+summary+'</div>';
+          html+='<div class="arc-sess-summary">'+summaryHtml+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
@@ -7868,7 +7868,7 @@ function _hrPaintArchive(el, records, warn) {
             var noteStr=m2.note?(' — '+m2.note):'';
             var mkc=atvCls(m2.s);
             return '<div class="arc-mark-row">'+
-              '<span>'+sn+'</span><span class="'+mkc+' arc-mark">'+lbl+noteStr+'</span></div>';
+              '<span>'+esc(sn)+'</span><span class="'+mkc+' arc-mark">'+esc(lbl)+esc(noteStr)+'</span></div>';
           });
           html+=rows.join('')+'</div></div>';
         });
@@ -8118,12 +8118,12 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
     var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
-    var lastLabel='';
+    var lastHtml='';
     if(lastTreat){
       var ltHd=lastTreat.date_heb;
       var ltIso=lastTreat.date_iso||'';
       var ltDateStr=ltHd?_hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
-      lastLabel='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+ltDateStr+'</span>';
+      lastHtml='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     var alert20=st.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
@@ -8132,7 +8132,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     html+='<div id="'+cardId+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div class="sup-card-class">'+esc(clsLabel)+'</div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastLabel?'<div class="rec-last">'+lastLabel+'</div>':'')+'</div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHtml?'<div class="rec-last">'+lastHtml+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<span class="rec-abs">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span class="rec-late">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -8157,7 +8157,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
         var hd=t.date_heb;
         var dl=hd?_hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
         return '<div class="treat-row">'+
-          '<span class="rec-muted">'+dl+'</span>'+
+          '<span class="rec-muted">'+esc(dl)+'</span>'+
           '<span class="treat-type">'+esc(t.type)+'</span>'+
           (t.note?'<span class="rec-muted">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
@@ -8229,8 +8229,8 @@ function hrSupDetail(sid) {
   var name=st?st.name:'תלמיד';
   var records=(window._hrSupRecords&&window._hrSupRecords[sid])||[];
 
-  var rows='';
-  if(!records.length){rows='<div class="loading-note">אין אירועים בחודש זה</div>';}
+  var rowsHtml='';
+  if(!records.length){rowsHtml='<div class="loading-note">אין אירועים בחודש זה</div>';}
   else{
     records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
       var hd=r.date_heb;
@@ -8239,19 +8239,19 @@ function hrSupDetail(sid) {
       var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(HR_LBL_DET[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
       var mkc=atvCls(r.mark);
-      rows+='<div class="mark-hist-row">';
-      rows+='<span class="mark-hist-dow">'+dowStr+'</span>';
-      rows+='<span class="mark-hist-date">'+hbr+'</span>';
-      rows+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
-      rows+='<span class="'+mkc+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span>';
-      rows+='<button data-act="sl-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
+      rowsHtml+='<div class="mark-hist-row">';
+      rowsHtml+='<span class="mark-hist-dow">'+dowStr+'</span>';
+      rowsHtml+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
+      rowsHtml+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
+      rowsHtml+='<span class="'+mkc+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span>';
+      rowsHtml+='<button data-act="sl-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         ' class="mark-edit-btn">✏️ ערוך</button>';
-      rows+='</div>';
+      rowsHtml+='</div>';
     });
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    '<div class="scroll-pane">'+rows+'</div>','');
+    '<div class="scroll-pane">'+rowsHtml+'</div>','');
 };
 
 function hrSupEditMarkDlg(recId, sid, curMark) {
@@ -8264,13 +8264,13 @@ function hrSupEditMarkDlg(recId, sid, curMark) {
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
   ];
-  var btns=CODES.map(function(cd){
+  var btnsHtml=CODES.map(function(cd){
     var active=cd.c===curMark?'mark-on':'mark-off';
     return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' mark-pick">'+cd.lbl+'</button>';
   }).join('');
   openModal(MSG_EDIT_MARK,
-    '<div class="chip-row">'+btns+'</div>',
+    '<div class="chip-row">'+btnsHtml+'</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>');
 };
 
