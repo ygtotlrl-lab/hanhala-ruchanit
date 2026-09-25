@@ -141,13 +141,13 @@ import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
          pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
          plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
-         sbWatch, schedulePush, tombBoot, tombPruneMerged } from './core/sync.js';
+         sbWatch, schedulePush, tombAt, tombBoot, tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
          mirrorTables, mirrorWrite } from './core/mirror.js';
 import { bkBoot, logAction, logFlush } from './core/backup.js';
-import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
+import { ROLE_ADMIN, authLog, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
          modalEsc, openModal, pullRender, shellBare, swApply, swHideUpdate,
@@ -1022,47 +1022,6 @@ async function hrRevalidateOfflineLogin() {
   } catch(e) {}
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   יומן ניסיונות הכניסה
-   ══════════════════════════════════════════════════════════════════════════ */
-/*  ⛔⛔ הגרסה **נגזרת** ⛔ ואינה מוקלדת פעם שנייה — ⚠️ ערך שנכתב כאן וגם
- *  ב-`CACHE_NAME` שב-`sw.js` נסחף, ⭐ ו-`sw_version` ביומן הכניסה מדווח
- *  גרסה שאינה הקוד שרץ.
- *  ⭐ **שם המטמון החי הוא הערך** — ⛔ הוא נוצר מ-`CACHE_NAME` עצמו, ⚠️ ולכן
- *  זו קריאה מהמקום שבו הערך נקבע ⛔ ולא מקור שני.
- *  ⛔ **ובזמן עדכון עשויים לחיות שני מטמונים** — ⚠️ הנבחר הוא בעל המספר
- *  הגבוה, ⭐ שהוא הגרסה שהופעלה.
- *  ⛔ **וכשל מחזיר מחרוזת ריקה** ⛔ ולא ערך מוקלד — ⚠️ «לא ידוע» עדיף על
- *  גרסה שגויה שנרשמת כעובדה. */
-var HR_APP_VER = '';
-var HR_VER_PREFIX = self.APP.id + '-';
-async function hrAppVerBoot() {
-  try {
-    if (!self.caches || !caches.keys) return HR_APP_VER;
-    var names = await caches.keys();
-    var mine = (names || []).filter(function (n) { return String(n).indexOf(HR_VER_PREFIX) === 0; });
-    if (!mine.length) return HR_APP_VER;
-    mine.sort(function (a, b) {
-      var na = parseInt(String(a).replace(/^.*-v/, ''), 10) || 0;
-      var nb = parseInt(String(b).replace(/^.*-v/, ''), 10) || 0;
-      return na - nb;
-    });
-    HR_APP_VER = mine[mine.length - 1];
-  } catch (e) { console.warn('[ver] hrAppVerBoot', e); }
-  return HR_APP_VER;
-}
-function hrLoginDetails(username) {
-  // לעולם לא רושמים סיסמה — לא גלויה ולא מגובבת
-  return { typed_username: username || '', online: !!navigator.onLine, sw_version: HR_APP_VER };
-}
-// ⚠️ התור והריקון עברו למודול המשותף. המפתח נשאר
-// `hr_login_log_queue` **בכוונה** — `LS_CFG.pending()` בודק אותו, ושינוי שמו
-// היה מנתק בשקט את ההגנה שמדלגת על פינוי הרשומות הישנות כשיש משהו שטרם עלה.
-function hrLoginLog(action, branch, details) {
-  logAction(action, branch, 0, details || null);
-}
-async function hrLoginLogFlush() { return logFlush(); }
-
 // עטיפת ביטחון: doLogin היא async, ולכן כל זריקה בלתי-צפויה בתוכה הופכת
 // ל-unhandled rejection — הספינר נשאר מסתובב, ואפס משוב למשתמש.
 // כאן כל כישלון מסתיים בהודעה גלויה. ⛔ והכפתור אינו מושבת כאן — ⚠️ הניתוב
@@ -1129,11 +1088,11 @@ async function _doLoginInner() {
   var onlineRow = (!netFail && res && !res.error) ? res.data : null;
   var onlineVerdict = onlineRow ? await hrVerifyOffline(onlineRow, pass) : null;
   if (onlineVerdict === 'no-fp') {
-    hrLoginLog('login_fail', 'no_fp_online', hrLoginDetails(username));
+    authLog(false, 'no_fp_online', username);
     showErr(MSG_NO_FP_ONLINE); return;
   }
   if (onlineVerdict === 'no-crypto') {
-    hrLoginLog('login_fail', 'no_crypto_online', hrLoginDetails(username));
+    authLog(false, 'no_crypto_online', username);
     showErr(MSG_NO_CRYPTO); return;
   }
   var authoritativeNo = (!netFail && res && !res.error && (!res.data || onlineVerdict === 'bad'));
@@ -1143,28 +1102,28 @@ async function _doLoginInner() {
     ctxSwitch();
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
-    hrLoginLog('login_ok', 'online', hrLoginDetails(username));
+    authLog(true, 'online', username);
     // השורה כבר בידינו מהאימות — נשמרת ישירות, כדי שגם אם הרענון המלא
     // שאחריה ייכשל, המשתמש הזה לפחות יוכל להיכנס אופליין בפעם הבאה.
     hrUsersCacheSave(onlineUser);
     //...ומיד אחריה הרענון המלא: **כל** המשתמשים הפעילים, בלי
     // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
     hrRefreshUsersCache();
-    hrLoginLogFlush();     // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
+    logFlush();            // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
-    hrLoginLog('login_fail', 'wrong_credentials_online', hrLoginDetails(username));
+    authLog(false, 'wrong_credentials_online', username);
     showErr('❌ ' + MSG_BAD_LOGIN); return;
   } else {
     // אין רשת / פסק זמן / שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) —
     // בכל אלה השרת לא ענה תשובה סמכותית, ולכן מנסים את העותק המקומי.
     dbg(netFail ? 'אין רשת — מנסה אימות מקומי (מראת המשתמשים)'
                : 'שגיאת שרת — מנסה אימות מקומי (מראת המשתמשים)');
-    hrLoginLog('login_fail', netFail ? 'net_error' : 'server_error', hrLoginDetails(username));
+    authLog(false, netFail ? 'net_error' : 'server_error', username);
     var cache = hrUsersCacheGet();
     // Array.isArray ולא cache.length — ערך תקין-כ-JSON שאינו מערך (למשל מחרוזת)
     // עבר את הבדיקה הישנה ואז cache.find זרק TypeError שנבלע: ספינר תקוע בלי הודעה
     if (!Array.isArray(cache) || !cache.length) {
-      hrLoginLog('login_fail', 'no_cache_offline', hrLoginDetails(username));
+      authLog(false, 'no_cache_offline', username);
       /*  ⛔ שני סיווגים, שתי קריאות ושני משטחים — ⚠️ שגיאת שרת היא כשל
        *  מערכת ואינה על משטח המשתמש: ⭐ והיעדר מטמון הוא מה שהמשתמש
        *  יכול לפתור — חיבור אחד. */
@@ -1181,7 +1140,7 @@ async function _doLoginInner() {
       cu = cache.find(function(u){ return u && u.username === username; });
     } catch(eF) { console.warn('[login] cache.find failed:', eF); }
     if (!cu) {
-      hrLoginLog('login_fail', 'unknown_user_offline', hrLoginDetails(username));
+      authLog(false, 'unknown_user_offline', username);
       showErr(MSG_OFF_UNKNOWN);
       return;
     }
@@ -1189,15 +1148,15 @@ async function _doLoginInner() {
     // אין `password_hash` במטמון כלל. ר' הפרק בראש מודול הכניסה.
     var verdict = await hrVerifyOffline(cu, pass);
     if (verdict === 'no-fp') {
-      hrLoginLog('login_fail', 'no_fp_offline', hrLoginDetails(username));
+      authLog(false, 'no_fp_offline', username);
       showErr(MSG_OFF_NO_FP); return;
     }
     if (verdict === 'no-crypto') {
-      hrLoginLog('login_fail', 'no_crypto_offline', hrLoginDetails(username));
+      authLog(false, 'no_crypto_offline', username);
       showErr(MSG_OFF_NO_CRYPTO); return;
     }
     if (verdict !== 'ok') {
-      hrLoginLog('login_fail', 'wrong_credentials_offline', hrLoginDetails(username));
+      authLog(false, 'wrong_credentials_offline', username);
       showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
     var lu = cu;
@@ -1205,7 +1164,7 @@ async function _doLoginInner() {
     AUTH.user = lu;
     AUTH.offlineLogin = true;
     hrUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
-    hrLoginLog('login_ok', 'offline', hrLoginDetails(username));
+    authLog(true, 'offline', username);
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
@@ -1692,20 +1651,20 @@ async function confirmSwitch() {
     try {
       cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.client_id)===String(window._hrSwitchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
-    if(!cu){errEl.textContent=MSG_OFF_UNKNOWN;return;}
+    if(!cu){authLog(false,'switch_unknown_user_offline',String(window._hrSwitchId));errEl.textContent=MSG_OFF_UNKNOWN;return;}
     var verdict=await hrVerifyOffline(cu,pass);
-    if(verdict==='no-fp'){errEl.textContent=MSG_OFF_NO_FP;return;}
-    if(verdict==='no-crypto'){errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
-    if(verdict!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(verdict==='no-fp'){authLog(false,'switch_no_fp_offline',cu.username);errEl.textContent=MSG_OFF_NO_FP;return;}
+    if(verdict==='no-crypto'){authLog(false,'switch_no_crypto_offline',cu.username);errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
+    if(verdict!=='ok'){authLog(false,'switch_wrong_credentials_offline',cu.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=cu;
     AUTH.offlineLogin=true;
   } else {
-    if(res.error||!res.data){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(window._hrSwitchId));errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     // ⭐ ההכרעה מול הטביעה, בדיוק כמו בענף האופליין שמעל.
     var vOn=await hrVerifyOffline(res.data,pass);
-    if(vOn==='no-fp'){errEl.textContent=MSG_NO_FP_ONLINE;return;}
-    if(vOn==='no-crypto'){errEl.textContent=MSG_NO_CRYPTO;return;}
-    if(vOn!=='ok'){errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(vOn==='no-fp'){authLog(false,'switch_no_fp_online',res.data.username);errEl.textContent=MSG_NO_FP_ONLINE;return;}
+    if(vOn==='no-crypto'){authLog(false,'switch_no_crypto_online',res.data.username);errEl.textContent=MSG_NO_CRYPTO;return;}
+    if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=res.data;
     AUTH.offlineLogin=false;
     // ⚠️ **לפני** ‎AUTH.user=u‎ שלמטה — ולכן שומרים את `u` במפורש ולא קוראים
@@ -1715,6 +1674,7 @@ async function confirmSwitch() {
   closeModal();
   ctxSwitch();
   AUTH.user=u;
+  authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
   // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
   // הרענון המלא מושך את כל המשתמשים הפעילים; באופליין אין רשת
   // והקריאה נופלת בשקט, ולכן היא מותנית.
@@ -2070,8 +2030,7 @@ var DOM_ACTIONS = {
   'rpt-load':            function () { loadR(); },
   'absence-reasons-save': function () { return saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
-                            var id = el.getAttribute('data-id');
-                            if (id) cancelSingleAbsence(id); else cancelStudentStatus();
+                            cancelSingleAbsence(el.getAttribute('data-id'));
                           },
   'status-picker-open':   function () { openStatusPickerModal(); },
   'student-status-save':  function () { return runSave(function () { return saveStudentStatus(window._currentStatusType); }); },
@@ -3415,14 +3374,15 @@ function hrUpdateQueueBadge() {
  *  היא הייתה נופלת כ«שריד בלי חותמת», ⚠️ ומשיכת חודש אחד הייתה גורפת
  *  מהדיסק את כל השאר. */
 function _hrSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
-  // משודרג: מיזוג ברמת רשומה עם updatedAt + tombstones (היה: הוספה-בלבד לפי id).
-  // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection) — אך מתועדת.
+  // מיזוג ברמת רשומה עם updatedAt + tombstones.
+  // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection).
   if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
   if (!Array.isArray(localArr)) return cloudArr;
   /*  ⛔ הזוג נגזר מהזרימה ⛔ ואינו מוקלד — ⚠️ מפתח שאין לו שכבת שורות
    *  (הטיפולים) ממוזג ברמת הרשומה, ⭐ כפי שהיה. */
   var pair = HR_MIRROR_STREAMS[logKey] ? hrSessionPairFor(logKey) : null;
-  return hrMergeWithDropLog(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, logKey || 'sessions', pair);
+  return hrMergeRecords(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, null,
+                        hrPendingFor(logKey || 'sessions'), pair);
 }
 /* ⛔ שליחת פריט מהתור — ⚠️ שכבת השורות מחזירה `{ok}` והכתיבה להגדרות
    מחזירה `{error}`, ⭐ והתור מכיר חוזה אחד בלבד: ⛔ החזרת `{ok:false}`
@@ -3582,6 +3542,7 @@ function hrSessionRow(rec) {
     deleted_by: rec.deletedBy == null ? null : String(rec.deletedBy),
     open: (typeof rec.open === 'boolean') ? rec.open : null,
     deleted: !!rec.deleted,
+    deleted_at: rec.deleted ? tombAt(_hrRecTs(rec)) : null,
     updated_at: Math.round(Number(_hrRecTs(rec)) || 0)
   };
 }
@@ -3614,6 +3575,7 @@ function hrMarkRows(rec, kind) {
       status: (m.s == null) ? null : String(m.s),
       minutes: Math.round(Number(m.min) || 0),
       deleted: del,
+      deleted_at: del ? tombAt(ts) : null,
       updated_at: ts
     };
     // ⛔ `note` נוסף למסלול השינה בלבד — ל-`hr_marks` של הנוכחות
@@ -3639,6 +3601,7 @@ function hrStudentRow(rec) {
     student_id: String(rec.id),
     updated_at: Math.round(Number(_hrRecTs(rec)) || 0),
     deleted: !!rec.deleted,
+    deleted_at: rec.deleted ? tombAt(_hrRecTs(rec)) : null,
     data: rec
   };
 }
@@ -3943,7 +3906,7 @@ var HE = _heColl || { compare: function (a, b) { return String(a).localeCompare(
 function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
 // מיזוג גנרי ברמת רשומה — עובד על מערכים (getKey) ועל אובייקטים (מפתח = שם המאפיין).
-// keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt (נתוני legacy) שורדת
+// keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt שורדת
 // כשהענן קיים. false = מניעת "תחיית מתים" של רשומות שנמחקו פיזית בקוד הישן;
 // true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend, approvals).
 // ⛔ **רשומה מקומית מסומנת ⏳ מנצחת ללא תלות בחותמת — אין להסיר את
@@ -4138,18 +4101,6 @@ function hrStudentPair(loc, rem, k, pend) {
   return out;
 }
 
-// עוזר: מיזוג עם איסוף רשומות שנפלו + לוג dropped_legacy לשחזור ידני
-function hrMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey, mergePair) {
-  var dropped = [];
-  var merged = hrMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); },
-                              hrPendingFor(logKey), mergePair);
-  if (dropped.length) {
-    console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sh_sync_log)');
-    hrSyncLog('dropped_legacy', logKey, dropped.length, { records: dropped });
-  }
-  return merged;
-}
-
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
 function _hrStudentsRaw() { return hrMirrorRecs('hr_students_rows') || []; }
@@ -4202,8 +4153,8 @@ async function hrPushToCloud() {
     var localSt = _hrStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
-    var mergedSt = hrMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'hr_students_rows',
-                                      hrStudentPair);
+    var mergedSt = hrMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false, null,
+                                  hrPendingFor('hr_students_rows'), hrStudentPair);
     if (ctxStale(_ep)) return {};
     _hrStudentsSaveRaw(mergedSt);
     var r = await pushTable('hr_students_rows', mergedSt);
@@ -4332,7 +4283,8 @@ async function hrPullFromCloud() {
     var s = await hrCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
-      var mergedS = hrMergeWithDropLog(_hrStudentsRaw(), s, function(r){ return r.id; }, false, 'hr_students_rows');
+      var mergedS = hrMergeRecords(_hrStudentsRaw(), s, function(r){ return r.id; }, false, null,
+                                   hrPendingFor('hr_students_rows'));
       _hrStudentsSaveRaw(mergedS);
     }
     // approvals: מיזוג לפי sid עם updatedAt
@@ -4349,7 +4301,7 @@ async function hrPullFromCloud() {
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
-    // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
+    // resurrection; רשומות מקומיות ללא updatedAt לא מוחזרות (anti-resurrection).
     var atSess = await hrCloudGet('hr_sessions');
     if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
@@ -4453,7 +4405,7 @@ setTimeout(async function() {
 window.addEventListener('online', function() {
   console.log('[ys-queue] network online — revalidating session');
   hrRevalidateOfflineLogin();
-  hrLoginLogFlush();
+  logFlush();
 });
 
 // ============ סוף סנכרון הענן ============
@@ -4896,25 +4848,15 @@ function doYearTransition(){
    ══════════════════════════════════════════════════════════════════════════ */
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
-  if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
-  }
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusFrom || new Date(s.statusFrom) <= now) && (!s.statusTo || new Date(s.statusTo) >= now)) {
-    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
-  }
-  return [];
+  if (!Array.isArray(s.absences)) return [];
+  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
 }
 
 // מחזירה את כל ההיעדרויות שטרם פגו, כולל עתידיות (לתצוגה בדיאלוג)
 function getAllRelevantAbsences(s) {
   var now = new Date();
-  if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
-  }
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
-    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
-  }
-  return [];
+  if (!Array.isArray(s.absences)) return [];
+  return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
 }
 
 function openAttendanceEdit(sid) {
@@ -4964,7 +4906,6 @@ function openCurrentStatusModal() {
     var badgeHtml = isFuture
       ? '<span class="abs-future">⏳ עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
-    var cancelId = a.id === 'legacy' ? '' : String(a.id);
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
       '<div class="abs-card-head">' +
         '<div class="status-head-row">' +
@@ -4972,7 +4913,7 @@ function openCurrentStatusModal() {
           '<span class="abs-type-label">' + esc(TL[a.type]||a.type) + '</span>' +
           badgeHtml +
         '</div>' +
-        '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" class="abs-cancel">בטל</button>' +
+        '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
       '<div class="abs-dates">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
@@ -4991,25 +4932,6 @@ function hrRefreshSupervisionViews() {
     if (uiShown(sv) && typeof hrRenderSupervision === 'function') hrRenderSupervision();
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
-function cancelStudentStatus() {
-  var sid = window._statusSid;
-  var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, sid);});
-  if (!s) return;
-  s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
-  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if (Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = hrWho(); });
-  s.present = true;
-  s.updatedAt = Date.now();
-  saveStudents(students);
-  schedulePush();
-  hrRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
-  renderStudents();
-  hrRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
-  closeModal();
-  toast(MSG_STATUS_REVERTED + s.name, null, 'good');
-};
-
 function cancelSingleAbsence(absenceId) {
   var sid = window._statusSid;
   var students = getStudents();
@@ -5077,12 +4999,6 @@ async function openStatusHistory(sid) {
   }
   var s = rows.find(function (x) { return idEq(x.id, sid); });
   var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
-  /*  ⚠️ הכתיב הישן החזיק סטטוס יחיד על הרשומה ⛔ ואינו נשמט מההיסטוריה —
-   *  ⭐ תלמיד שלא נגעו בו מאז נראה בלעדיו כמי שמעולם לא היה לו סטטוס. */
-  if (s && !list.length && s.status && ['approved', 'suspended', 'left'].indexOf(s.status) !== -1) {
-    list.push({ id: 'legacy', type: s.status, reason: s.statusReason || '',
-                from: s.statusFrom || '', to: s.statusTo || null });
-  }
   var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
   var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
   var fmt = function (v) {
@@ -6120,7 +6036,6 @@ function atCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return String(x.id)===String(sid);});
   if(!s) return;
-  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
   if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
   s.present=true;
@@ -6759,7 +6674,7 @@ async function atAddTreat(sid) {
     by:AUTH.user?AUTH.user.client_id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
     created_at:now.toISOString(),
-    updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נחשבת legacy ונופלת
+    updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נופלת
   };
   var treats=await atLoadTreats();
   treats.push(rec);
@@ -7553,7 +7468,6 @@ function hrCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s) return;
-  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
   if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
   s.present=true;
