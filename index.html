@@ -147,8 +147,10 @@ import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
          mirrorTables, mirrorWrite } from './core/mirror.js';
 import { bkBoot, logAction } from './core/backup.js';
-import { ROLE_ADMIN, authLog, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
-         sessActive, sessGet, sessSet, writeUser } from './core/auth.js';
+import { AUTH_USER_COLS, ROLE_ADMIN, authLog, authPassFields, authUsersTable,
+         authVerify, isAdmin, isAdminOf, lkBoot, lkReset, lkStop, sessActive,
+         sessGet, sessSet, usersGet, usersRefresh, usersSanitize, usersSaveOne,
+         writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
          modalEsc, openModal, pullRender, shellBare, swApply, swHideUpdate,
          toast, uiNoDialog } from './core/ui.js';
@@ -718,174 +720,6 @@ function hrApplyPerms(p) {
 
 // ---- כניסה ----
 /* ══════════════════════════════════════════════════════════════════════════
-   טביעת סיסמה — PBKDF2-SHA256
-   ══════════════════════════════════════════════════════════════════════════
-   **הבעיה שהטביעה פותרת.** מראה שמצומצמת למשתמש המחובר בלבד נועדה
-   לכך שלא יישבו סיסמאות של כל הצוות על כל מכשיר. הצמצום
-   נכון מבחינת חשיפה — ו**פוגע בדרישה תפעולית מחייבת**: משגיחים עובדים
-   בישיבה בלי קליטה, וכל משתמש חייב להיכנס אופליין בכל מכשיר, תמיד. בצמצום
-   משגיח שקיבל מכשיר שמישהו אחר נכנס בו לאחרונה פשוט **אינו יכול
-   להיכנס**. הדרישה קודמת לשיקול האחסון.
-
-   **הפתרון.** המטמון חוזר להחזיק את **כל המשתמשים הפעילים**, אבל בלי
-   הסיסמה: לכל משתמש נשמרים `pass_salt` + `pass_fp` — טביעת PBKDF2-SHA256
-   ב-`HR_PASS_ITER` סיבובים, עם **מלח פר-משתמש**. מכשיר שאבד חושף טביעות, לא
-   סיסמאות; והשהיית ה-100k היא מה שהופך ניחוש-בכוח על העותק שבדיסק ליקר
-   גם מול סיסמה בת שש ספרות.
-
-   ⭐ **ההחלטה «סיסמה גלויה בענן» בוטלה ב-2026-08-19, בהחלטת המנהל.**
-   עד אז `password_hash` הייתה **המפתח שפותח את הכניסה**, וזו הייתה בחירה
-   תפעולית מתועדת: המנהל רצה לראות ולנהל סיסמאות מתוך «ניהול משתמשים».
-   ⭐ **וצעד ב הושלם בהחלטתו:** אין בקוד אף מסלול שכותב את העמודה, ואין
-   אף מסלול שקורא אותה. ⛔ **אין להחזיר לא כתיבה ולא קריאה בשום מסלול** —
-   מפתח ה-anon יושב ב-`index.html` הציבורי, ולכן כל מי שהחזיק אותו יכול
-   היה לקרוא את הסיסמאות ולהיכנס בזהות של כל אחד.
-   ⚠️ **והמחיר שולם במודע:** מסך «ניהול משתמשים» חדל להציג את הסיסמה
-   הנוכחית — אין מאין לקרוא אותה. **קביעת** סיסמה חדשה עובדת כשהייתה.
-
-   ⛔ **`password_hash` לעולם לא נכתב ל-localStorage.** ⭐ `hrUserSlim`
-   היא נקודת המעבר היחידה אל המטמון, והיא
-   בונה אובייקט **חדש** בשדות מפורשים — לא `Object.assign` ולא `delete`,
-   שהיו מעבירים שדה חדש שיתווסף לטבלה בעתיד בלי שאיש ישים לב.
-   ══════════════════════════════════════════════════════════════════════════ */
-var HR_PASS_ITER = 100000;
-// המלח הנשמר הוא אקראי פר-משתמש; הקידומת מוסיפה הפרדת-הקשר, כך שטבלה
-// מחושבת מראש עבור אפליקציה אחרת על אותו origin אינה תקפה כאן.
-var HR_PASS_CTX = 'hanhala-ruchanit/hr_users/v1/';
-// 16 בתים אקראיים כ-hex. מחזירה null כשאין crypto — והקורא **נכשל סגור**
-// (לא נשמרת טביעה, ולא נשארת טביעה ישנה; ר' `saveUser`).
-function hrRandSalt() {
-  try {
-    if (typeof crypto === 'undefined' || !crypto || !crypto.getRandomValues) return null;
-    var b = new Uint8Array(16); crypto.getRandomValues(b);
-    var h = ''; for (var i = 0; i < b.length; i++) h += (b[i] + 0x100).toString(16).slice(1);
-    return h;
-  } catch (e) { return null; }
-}
-// PBKDF2-SHA256 → hex בן 64 תווים. מחזירה null כשאין `crypto.subtle`
-// (הקשר לא-מאובטח / WebView ישן) — וגם כאן הקורא נכשל סגור.
-// המנגנון משותף, פרט למלח הפר-משתמש.
-async function hrPassFp(pass, salt) {
-  try {
-    if (!salt) return null;
-    if (typeof crypto === 'undefined' || !crypto || !crypto.subtle || !crypto.subtle.importKey) return null;
-    var enc = new TextEncoder();
-    var key = await crypto.subtle.importKey('raw', enc.encode(String(pass == null ? '' : pass)), 'PBKDF2', false, ['deriveBits']);
-    var bits = await crypto.subtle.deriveBits(
-      { name: 'PBKDF2', salt: enc.encode(HR_PASS_CTX + String(salt)), iterations: HR_PASS_ITER, hash: 'SHA-256' }, key, 256);
-    var b = new Uint8Array(bits), h = '';
-    for (var i = 0; i < b.length; i++) h += (b[i] + 0x100).toString(16).slice(1);
-    return h;
-  } catch (e) { console.warn('[pass] גזירת טביעה נכשלה', e); return null; }
-}
-// גוזרת מלח+טביעה לסיסמה חדשה. מחזירה {salt, fp} או null בכישלון.
-async function hrMakePassFp(pass) {
-  var salt = hrRandSalt();
-  if (!salt) return null;
-  var fp = await hrPassFp(pass, salt);
-  return fp ? { salt: salt, fp: fp } : null;
-}
-/*  ⛔ שדות הכתיבה לסיסמה — ⚠️ **מה נכנס**: סיסמה שהוקלדה, ⛔ **ומה מפיל**:
- *  כשל גזירה — ⭐ והוא **מאפס את שני השדות** ואינו מדלג: ⚠️ טביעה ישנה
- *  ששרדה שינוי סיסמה הייתה פותחת את הכניסה האופליין עם הסיסמה הקודמת,
- *  לנצח. ⛔ **וכל מסלול שכותב סיסמה עובר כאן** — ⚠️ שתי גזירות מקומיות
- *  הן שני מקומות שבהם האיפוס עלול להישכח. */
-async function hrPassFields(pass) {
-  var made = await hrMakePassFp(pass);
-  return made ? { pass_salt: made.salt, pass_fp: made.fp }
-              : { pass_salt: null, pass_fp: null };
-}
-// זיהוי תשובת שרת שאומרת "העמודות עדיין לא קיימות" — כלומר מיגרציית
-// הטביעה טרם הורצה. ⚠️ בלי הבדיקה הזו כל שמירת משתמש הייתה **נכשלת
-// לגמרי** בחלון שבין דחיפת הקוד להרצת המיגרציה. ר' הנפילה-חזרה בקוראים.
-function hrIsMissingFpCol(err) {
-  var m = ((err && (err.message || err.details || err.code || '')) + '').toLowerCase();
-  return m.indexOf('pass_fp') !== -1 || m.indexOf('pass_salt') !== -1;
-}
-
-/* ══════════════════════════════════════════════════════════════════════════
-   כניסה אופליין — טביעת PBKDF2 במקום סיסמה על הדיסק
-   ══════════════════════════════════════════════════════════════════════════ */
-// ⚠️ **הורחב בחזרה** אחרי הצמצום — ר' הפרק שמעל.
-// המבנה הוא **מערך** של רשומות דקות; שני הקוראים (`doLogin`
-// ו-`confirmSwitch`) קוראים ב-`Array.isArray` + `find`, ולכן מטמון ישן
-// נקרא בלי הגירה — ⛔ אבל הוא **נדרס בכל
-// כתיבה**, כולל דרך `hrUserSlim` על הרשומות שכבר בו: כך `password_hash`
-// שנשאר על הדיסק ממטמון ישן **נמחק בהזדמנות הראשונה**, ולא שורד לנצח.
-// המחיר: רשומה ישנה מאבדת את יכולת האימות עד הרענון המקוון הבא, וזה
-// בדיוק הנכון — סיסמה גלויה על הדיסק אינה תחליף לטביעה.
-/*  ⛔ שם מפתח אחד לשלוש האפליקציות — ⚠️ `<קידומת>_mirror_users`:
- *  ⭐ שלושתן מחזיקות את **אותו** מנגנון — עותק מקומי של טבלת המשתמשים
- *  לכניסה אופליין — ⛔ ושלושה שמות לאותו מנגנון הם שלושה חיפושים.
- *  ⚠️ **וההגירה מקומית וחד-פעמית**: ⛔ המפתח הישן נקרא, נכתב לחדש,
- *  ⛔ ורק כתיבה שהצליחה מתירה למחוק אותו — ⚠️ מחיקה לפני כתיבה מוצלחת
- *  הייתה נועלת בחוץ מכשיר שאין לו רשת. */
-/*  ⛔ המפתח נגזר משם הטבלה ⛔ ואינו מוקלד — ⚠️ המראה היא
- *  `MIRROR.hr_users`, ⭐ ושם שנכתב פעמיים מייצר מפתח שאיש אינו מחפש. */
-var HR_USERS_TABLE = 'hr_users';
-function hrUserSlim(u) {
-  // ⛔ שדות מפורשים בלבד — **`password_hash` אינו ביניהם, ולעולם לא יהיה.**
-  return { client_id: u.client_id, username: u.username, full_name: u.full_name,
-           role: u.role, active: u.active,
-           pass_salt: u.pass_salt || null, pass_fp: u.pass_fp || null };
-}
-function hrUsersCacheSlimList(rows) {
-  return (Array.isArray(rows) ? rows : [])
-    .filter(function (u) { return u && u.active === true && u.client_id != null; })
-    .map(hrUserSlim);
-}
-// החלפת המטמון כולו — נקראת אחרי משיכה מוצלחת של רשימת המשתמשים.
-// משתמש שהושבת או נמחק בענן נושר כאן, ולכן אינו נשאר בר-כניסה אופליין.
-function hrUsersCacheSaveAll(rows) {
-  try {
-    if (!Array.isArray(rows)) return;
-    MIRROR[HR_USERS_TABLE] = hrUsersCacheSlimList(rows);
-    mirrorSave(HR_USERS_TABLE);
-  } catch (e) { hrWriteFail('hrUsersCacheSaveAll', e); }
-}
-// עדכון שורה אחת בתוך המטמון הקיים, בלי לאבד את השאר (כניסה, מעבר-משתמש,
-// שינוי סיסמה עצמי). שאר הרשומות עוברות שוב דרך `hrUserSlim` — זו
-// ההזדמנות שבה `password_hash` ממטמון ישן נמחק מהדיסק.
-function hrUsersCacheSave(user) {
-  try {
-    if (!user || user.active !== true) return;
-    var rest = hrUsersCacheSlimList(hrUsersCacheGet())
-      .filter(function (u) { return String(u.client_id) !== String(user.client_id); });
-    rest.push(hrUserSlim(user));
-    MIRROR[HR_USERS_TABLE] = rest;
-    mirrorSave(HR_USERS_TABLE);
-  } catch (e) { hrWriteFail('hrUsersCacheSave', e); }
-}
-function hrUsersCacheGet() {
-  var v = MIRROR[HR_USERS_TABLE];
-  return Array.isArray(v) ? v : null;
-}
-// אימות אופליין מול הטביעה. מחזירה אחת מארבע: 'ok' · 'bad' (סיסמה שגויה)
-// · 'no-fp' (אין טביעה לרשומה) · 'no-crypto' (הדפדפן לא תומך).
-// ⚠️ שלושת הכישלונות **אינם** אותו דבר, ולכן אינם מקבלים אותה הודעה:
-// «סיסמה שגויה» על היעדר טביעה הוא כשל שקט שמוביל את המשתמש להקליד שוב
-// ושוב סיסמה נכונה לחלוטין. זה בדיוק הבאג שתוקן ב-`confirmSwitch`.
-async function hrVerifyOffline(cu, pass) {
-  if (!cu || cu.active !== true) return 'bad';
-  if (!cu.pass_salt || !cu.pass_fp) return 'no-fp';
-  var fp = await hrPassFp(pass, cu.pass_salt);
-  if (!fp) return 'no-crypto';
-  return (fp === cu.pass_fp) ? 'ok' : 'bad';
-}
-// רענון העותק המקומי מהענן — בכל הזדמנות מקוונת (fire-and-forget, לא חוסם).
-// מושך את **כל המשתמשים הפעילים**, ⛔ **בלי `password_hash`** — הוא אינו
-// מבוקש בשאילתה כלל, כך שגם באג עתידי במסלול השמירה לא יוכל לדלוף אותו.
-// בלי משתמש מחובר אין קריאה לרשת — אין למי לרענן, ואין סיבה למשוך את
-// רשימת הצוות למכשיר של מי שטרם נכנס.
-async function hrRefreshUsersCache() {
-  try {
-    if (!AUTH.user || AUTH.user.client_id == null) return;
-    var res = await SB.from('hr_users').select('client_id,username,full_name,role,active,pass_salt,pass_fp')
-      .eq('active', true);
-    if (!res.error && Array.isArray(res.data)) hrUsersCacheSaveAll(res.data);
-  } catch(e) {}
-}
-/* ══════════════════════════════════════════════════════════════════════════
    הודעות ועוזרי רשת — נוסח משותף לכל האפליקציות
    ══════════════════════════════════════════════════════════════════════════ */
 // **סמל אחד לכל מצב:** ✅ הצלחה, ⚠️ אזהרה, ❌ שגיאה. אין להשתמש ב-✓/✔, ואין
@@ -910,7 +744,6 @@ var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת �
    ⭐ ששם הנוסח אחד לכל הריפו. */
 var MSG_PERMS_CHANGED_PRE = '🔒 ההרשאות שלך עודכנו — ';
 var MSG_PERMS_CHANGED_POST = ' אינו זמין עוד';
-var MSG_USER_DISABLED_OUT = '⚠️ המשתמש הושבת — מתנתק';
 var MSG_SERVER_DOWN_LOCAL = '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך';
 var MSG_OFFLINE_LOGIN_LATER = '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור';
 var MSG_PICK_REASON = '⚠️ יש לבחור סיבה';
@@ -1007,21 +840,6 @@ var MSG_DEL_ROW_BODY = 'הרשומה תימחק לצמיתות מהארכיון.
 // ---- מגבלת זמן לשאילתות אימות ----
 // supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
 // ה-fetch לא מצליח ולא נכשל — והספינר היה מסתובב לנצח בלי שום הודעה.
-// אימות מחדש שקט אחרי כניסה אופליין — כשהרשת חוזרת
-async function hrRevalidateOfflineLogin() {
-  if (!AUTH.user || !AUTH.offlineLogin) return;
-  try {
-    var res = await SB.from('hr_users').select('*').eq('client_id', AUTH.user.client_id).eq('active', true).maybeSingle();
-    if (res.error) return; // הרשת עדיין לא יציבה — ננסה בהזדמנות הבאה
-    if (!res.data) { toast(MSG_USER_DISABLED_OUT, null, 'bad'); doLogout(); return; }
-    AUTH.user = res.data;
-    AUTH.offlineLogin = false;
-    hrUsersCacheSave(res.data);   // השורה כבר בידינו — אין צורך במשיכה נוספת
-    try { loadPerms(); } catch(e2) {}
-    console.log('[login] אימות אופליין אושרר מול הענן');
-  } catch(e) {}
-}
-
 // עטיפת ביטחון: doLogin היא async, ולכן כל זריקה בלתי-צפויה בתוכה הופכת
 // ל-unhandled rejection — הספינר נשאר מסתובב, ואפס משוב למשתמש.
 // כאן כל כישלון מסתיים בהודעה גלויה. ⛔ והכפתור אינו מושבת כאן — ⚠️ הניתוב
@@ -1046,7 +864,7 @@ async function _doLoginInner() {
   /*  ⛔ טעינת המראה רצה כאן ⛔ ולא בפונקציית העלייה — ⚠️ העלייה רצה
    *  **אחרי** הכניסה, ⭐ והקורא הראשון של המראה הוא מסלול הכניסה
    *  האופליין עצמו: ⛔ טעינה שרצה אחריו הייתה מגיעה מאוחר מדי. */
-  mirrorLoadOne(HR_USERS_TABLE);
+  mirrorLoadOne(authUsersTable());
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
@@ -1062,12 +880,12 @@ async function _doLoginInner() {
   var res = null, netFail = false;
   try {
     // ⭐ השורה נשלפת לפי **שם המשתמש בלבד**, וההשוואה היא מול
-    // הטביעה (`hrVerifyOffline`), בדיוק כמו במסלול האופליין. ⛔ סינון
+    // הטביעה (`authVerify`), בדיוק כמו במסלול האופליין. ⛔ סינון
     // ב-`.eq('password_hash', pass)` הופך את הסיסמה הגלויה שבענן **למפתח
     // שפותח את הכניסה**, ⚠️ וכל מי שמחזיק את מפתח ה-anon (שיושב
     // ב-`index.html` הציבורי) יכול לקרוא אותה.
-    res = await withTimeout(SB.from('hr_users')
-      .select('*')
+    res = await withTimeout(SB.from(authUsersTable())
+      .select(AUTH_USER_COLS.join(','))
       .eq('username', username)
       .eq('active', true)
       .maybeSingle());
@@ -1086,7 +904,7 @@ async function _doLoginInner() {
   // התאימה» — בשני המקרים השרת ענה תשובה סמכותית, ו⛔ אסור ליפול אחריה
   // לעותק המקומי (אחרת סיסמה שהוחלפה בענן הייתה ממשיכה לפתוח מהמטמון).
   var onlineRow = (!netFail && res && !res.error) ? res.data : null;
-  var onlineVerdict = onlineRow ? await hrVerifyOffline(onlineRow, pass) : null;
+  var onlineVerdict = onlineRow ? await authVerify(onlineRow, pass) : null;
   if (onlineVerdict === 'no-fp') {
     authLog(false, 'no_fp_online', username);
     showErr(MSG_NO_FP_ONLINE); return;
@@ -1102,13 +920,10 @@ async function _doLoginInner() {
     ctxSwitch();
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
-    authLog(true, 'online', username);
     // השורה כבר בידינו מהאימות — נשמרת ישירות, כדי שגם אם הרענון המלא
-    // שאחריה ייכשל, המשתמש הזה לפחות יוכל להיכנס אופליין בפעם הבאה.
-    hrUsersCacheSave(onlineUser);
-    //...ומיד אחריה הרענון המלא: **כל** המשתמשים הפעילים, בלי
-    // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
-    hrRefreshUsersCache();
+    // שאחרי הכניסה ייכשל, המשתמש הזה לפחות יוכל להיכנס אופליין בפעם הבאה.
+    usersSaveOne(onlineUser);
+    authLog(true, 'online', username);
   } else if (authoritativeNo) {
     authLog(false, 'wrong_credentials_online', username);
     showErr('❌ ' + MSG_BAD_LOGIN); return;
@@ -1118,7 +933,7 @@ async function _doLoginInner() {
     dbg(netFail ? 'אין רשת — מנסה אימות מקומי (מראת המשתמשים)'
                : 'שגיאת שרת — מנסה אימות מקומי (מראת המשתמשים)');
     authLog(false, netFail ? 'net_error' : 'server_error', username);
-    var cache = hrUsersCacheGet();
+    var cache = usersGet();
     // Array.isArray ולא cache.length — ערך תקין-כ-JSON שאינו מערך (למשל מחרוזת)
     // עבר את הבדיקה הישנה ואז cache.find זרק TypeError שנבלע: ספינר תקוע בלי הודעה
     if (!Array.isArray(cache) || !cache.length) {
@@ -1145,7 +960,7 @@ async function _doLoginInner() {
     }
     // ⛔ ההשוואה היא מול **טביעת PBKDF2** ולא מול סיסמה שמורה —
     // אין `password_hash` במטמון כלל. ר' הפרק בראש מודול הכניסה.
-    var verdict = await hrVerifyOffline(cu, pass);
+    var verdict = await authVerify(cu, pass);
     if (verdict === 'no-fp') {
       authLog(false, 'no_fp_offline', username);
       showErr(MSG_OFF_NO_FP); return;
@@ -1162,7 +977,6 @@ async function _doLoginInner() {
     ctxSwitch();
     AUTH.user = lu;
     AUTH.offlineLogin = true;
-    hrUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
     authLog(true, 'offline', username);
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
@@ -1632,7 +1446,7 @@ async function confirmSwitch() {
   var res=null, netFail=false;
   try {
     // ⭐ לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
-    res=await withTimeout(SB.from('hr_users').select('*').eq('client_id',window._hrSwitchId).eq('active',true).single());
+    res=await withTimeout(SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',window._hrSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; } // כולל פסק זמן
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -1645,13 +1459,13 @@ async function confirmSwitch() {
     // סיסמה שמורה להשוות אליה. שלושת מצבי הכישלון שאינם «סיסמה שגויה»
     // מקבלים הודעה משלהם: הודעת סיסמה על מצב שאינו כזה היא **כשל שקט**
     // שמוביל את המשתמש להקליד שוב ושוב סיסמה נכונה לחלוטין.
-    var cache=hrUsersCacheGet();
+    var cache=usersGet();
     var cu=null;
     try {
       cu=(Array.isArray(cache)?cache:[]).find(function(x){return x&&String(x.client_id)===String(window._hrSwitchId);});
     } catch(eF){ console.warn('[switch] cache.find failed:', eF); cu=null; }
     if(!cu){authLog(false,'switch_unknown_user_offline',String(window._hrSwitchId));errEl.textContent=MSG_OFF_UNKNOWN;return;}
-    var verdict=await hrVerifyOffline(cu,pass);
+    var verdict=await authVerify(cu,pass);
     if(verdict==='no-fp'){authLog(false,'switch_no_fp_offline',cu.username);errEl.textContent=MSG_OFF_NO_FP;return;}
     if(verdict==='no-crypto'){authLog(false,'switch_no_crypto_offline',cu.username);errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
     if(verdict!=='ok'){authLog(false,'switch_wrong_credentials_offline',cu.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
@@ -1660,24 +1474,19 @@ async function confirmSwitch() {
   } else {
     if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(window._hrSwitchId));errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     // ⭐ ההכרעה מול הטביעה, בדיוק כמו בענף האופליין שמעל.
-    var vOn=await hrVerifyOffline(res.data,pass);
+    var vOn=await authVerify(res.data,pass);
     if(vOn==='no-fp'){authLog(false,'switch_no_fp_online',res.data.username);errEl.textContent=MSG_NO_FP_ONLINE;return;}
     if(vOn==='no-crypto'){authLog(false,'switch_no_crypto_online',res.data.username);errEl.textContent=MSG_NO_CRYPTO;return;}
     if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
     u=res.data;
     AUTH.offlineLogin=false;
-    // ⚠️ **לפני** ‎AUTH.user=u‎ שלמטה — ולכן שומרים את `u` במפורש ולא קוראים
-    // ל-`hrRefreshUsersCache()`, שהייתה מרעננת את המשתמש **הקודם**.
-    hrUsersCacheSave(u);
+    // ⚠️ `u` נשמר במפורש — ⭐ הרענון המלא רץ מ-`authLog`, אחרי ‎AUTH.user=u‎.
+    usersSaveOne(u);
   }
   closeModal();
   ctxSwitch();
   AUTH.user=u;
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
-  // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
-  // הרענון המלא מושך את כל המשתמשים הפעילים; באופליין אין רשת
-  // והקריאה נופלת בשקט, ולכן היא מותנית.
-  if(!AUTH.offlineLogin) hrRefreshUsersCache();
   await loadPerms();
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;
@@ -2241,7 +2050,7 @@ async function saveUser() {
     if (!PASS_SIX_RE.test(pass)) { errEl.textContent = MSG_PASS_SIX; return; }
     // ⭐ הטביעה נגזרת ליד הסיסמה, בכל יצירה ובכל שינוי — ⛔ ובנקודת
     // הגזירה האחת, שהאיפוס בכשל יושב בה.
-    var made = await hrPassFields(pass);
+    var made = await authPassFields(pass);
     obj.pass_salt = made.pass_salt; obj.pass_fp = made.pass_fp;
     if (!made.pass_fp) noFp = true;
   }
@@ -2264,7 +2073,7 @@ async function saveUser() {
    *  באותו צבע. */
   if (noFp) toast(MSG_USER_SAVED_NO_FP, null, 'bad');
   else toast(MSG_USER_SAVED, null, 'good');
-  hrRefreshUsersCache();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
+  usersRefresh();   // הרשומה החדשה/המעודכנת נכנסת לעותק המקומי מיד
   renderUsersList();
 }
 
@@ -2284,7 +2093,7 @@ async function toggleUserActive(id, current) {
    *  מכשיר אחר עד לשינוי נתונים אחר. */
   await hrTouchLastChanged();
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין
-  hrRefreshUsersCache();
+  usersRefresh();
   renderUsersList();
   toast(current ? MSG_USER_OFF : MSG_USER_ON, null, 'good');
 }
@@ -2400,17 +2209,17 @@ async function changeMyPassword() {
   // כ"הסיסמה הנוכחית שגויה"; ה-update לא נבדק כלל והציג "✅ עודכנה" גם בכישלון.
   // ⭐ אימות הסיסמה הנוכחית מול הטביעה ולא מול הטקסט הגלוי.
   var chk;
-  try { chk = await withTimeout(SB.from('hr_users').select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
+  try { chk = await withTimeout(SB.from(authUsersTable()).select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
   catch (e) { toast(MSG_PASS_NEEDS_NET, null, 'bad'); return; }
   if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
-  var vOld = await hrVerifyOffline(chk.data, oldPass);
+  var vOld = await authVerify(chk.data, oldPass);
   if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP, null, 'bad'); return; }
   if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
   if (vOld !== 'ok')        { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
   // ⭐ הטביעה נגזרת בכל שינוי סיסמה, ⛔ ובנקודת גזירה אחת — שתי
   // גזירות מקומיות הן שני מקומות שבהם האיפוס בכשל עלול להישכח.
-  var made = await hrPassFields(newPass);
+  var made = await authPassFields(newPass);
   var updObj = { pass_salt: made.pass_salt, pass_fp: made.pass_fp };
   /*  ⛔ אין כאן נפילה-חזרה כשעמודות הטביעה חסרות — ⚠️ עד היום היא כתבה את
    *  הסיסמה הגלויה במקומן, ⭐ ובלעדיה אין **מה** לכתוב: שינוי שלא נכתב
@@ -2429,9 +2238,9 @@ async function changeMyPassword() {
   // ⚠️ בלי זה הטביעה שבמטמון נשארת של הסיסמה **הישנה**, והכניסה האופליין
   // הייתה דוחה את הסיסמה החדשה — או, גרוע מכך, מקבלת את הישנה.
   try {
-    hrUsersCacheSave({ client_id: _u.client_id, username: _u.username, full_name: _u.full_name,
-                       role: _u.role, active: true,
-                       pass_salt: made.pass_salt, pass_fp: made.pass_fp });
+    usersSaveOne({ client_id: _u.client_id, username: _u.username, full_name: _u.full_name,
+                   role: _u.role, active: true,
+                   pass_salt: made.pass_salt, pass_fp: made.pass_fp });
   } catch (e3) {}
   /*  ⛔ אין ניקוי שדות לפני הסגירה — ⚠️ `closeModal` מרוקן את גוף המודאל,
    *  ⭐ והשדות חדלים להתקיים איתו. */
@@ -2600,7 +2409,7 @@ var MIRROR_CFG = {
            { t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _hrRecTs(r); },
-  clean:  function (t, rows) { return rows; },
+  clean:  function (t, rows) { return t === authUsersTable() ? usersSanitize(rows) : rows; },
   fail:   function (where, e) { hrWriteFail(where, e); },
 };
 /* ══════════════════════════════════════════════════════════════════════════
@@ -3927,9 +3736,14 @@ var USER_CFG = {
    *  במקום אחר בקובץ בכל אפליקציה, ⭐ וקריאה בהשמה נותנת `undefined`
    *  באחת מהן בשקט. */
   offMsg: function () { return MSG_OFF_USER_WRITE; },
-  from: function () { return SB.from('hr_users'); },
+  from: function () { return SB.from(authUsersTable()); },
   run: function (q) { return withTimeout(q); },
-  missingFp: hrIsMissingFpCol,
+  revalidated: function (row) {
+    AUTH.user = row;
+    AUTH.offlineLogin = false;
+    try { loadPerms(); } catch (e) { console.warn('[perms] loadPerms', e); }
+  },
+  logout: function (msg) { toast(msg, null, 'bad'); doLogout(); },
   /*  ⛔ התשובה מוחזרת כפי שהיא — ⚠️ הקוראים בודקים `res.error` בעצמם
    *  ומרעננים את המטמון: ⭐ ריענון מכאן היה רץ גם על החלפת דגל `active`,
    *  ⛔ שהקורא שלה מרענן ממילא. */
@@ -4358,7 +4172,7 @@ async function hrPullFromCloud() {
       }
     } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
     pullRender(hrPullDraw);
-    hrRefreshUsersCache(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
+    usersRefresh(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
     hrSyncLog('pull', null, null); // אבחון שלב א: משיכה מוצלחת
   } catch(e) { console.error('[ys-sync] pull error:', e); }
 }
@@ -4393,16 +4207,6 @@ setTimeout(async function() {
   } catch(e) { console.log('[ys-sync] init:', e.message||e); }
   hrUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
 }, 1500);
-
-/*  ⛔ מה שנשאר כאן הוא **מה שהפולינג אינו מכסה** — ⚠️ התג ⏳ מצויר מהמאזין
- *  המשותף, ⭐ וריקון התור נדרך מ-`RTY_CFG.flush` באותו אירוע: ⛔ שני אלה
- *  היו כאן מסלול שני לאותה הכרעה.
- *  ⛔ **ואימות הכניסה אינו באף מסלול אחר** — ⚠️ משתמש שהושבת בזמן שהמכשיר
- *  היה מנותק נשאר מחובר עד הטעינה הבאה. */
-window.addEventListener('online', function() {
-  console.log('[ys-queue] network online — revalidating session');
-  hrRevalidateOfflineLogin();
-});
 
 // ============ סוף סנכרון הענן ============
 
