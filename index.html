@@ -141,7 +141,7 @@ import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
          pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
          plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
-         sbWatch, schedulePush, tombBoot, tombPruneMerged } from './core/sync.js';
+         sbWatch, schedulePush, tombAt, tombBoot, tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
@@ -3582,6 +3582,7 @@ function hrSessionRow(rec) {
     deleted_by: rec.deletedBy == null ? null : String(rec.deletedBy),
     open: (typeof rec.open === 'boolean') ? rec.open : null,
     deleted: !!rec.deleted,
+    deleted_at: rec.deleted ? tombAt(_hrRecTs(rec)) : null,
     updated_at: Math.round(Number(_hrRecTs(rec)) || 0)
   };
 }
@@ -3614,6 +3615,7 @@ function hrMarkRows(rec, kind) {
       status: (m.s == null) ? null : String(m.s),
       minutes: Math.round(Number(m.min) || 0),
       deleted: del,
+      deleted_at: del ? tombAt(ts) : null,
       updated_at: ts
     };
     // ⛔ `note` נוסף למסלול השינה בלבד — ל-`hr_marks` של הנוכחות
@@ -3639,6 +3641,7 @@ function hrStudentRow(rec) {
     student_id: String(rec.id),
     updated_at: Math.round(Number(_hrRecTs(rec)) || 0),
     deleted: !!rec.deleted,
+    deleted_at: rec.deleted ? tombAt(_hrRecTs(rec)) : null,
     data: rec
   };
 }
