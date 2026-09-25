@@ -10,6 +10,10 @@
    *  סרגל ניווט תחתון, ⛔ ורק מתחת לנקודת השבירה שבה הוא יורד —
    *  ⚠️ והנקודה נגזרת מהסולם ⛔ ואינה כתובה כאן. */
   --toast-bottom:26px;
+  /*  ⛔ רוחב עמודת התוכן — ⚠️ המיכל וכל פס קבוע קוראים אותו: ⭐ ערך
+   *  שכל צרכניו קוראים ממקום אחד משתנה פעם אחת, ⛔ ופס שרוחבו מוקלד
+   *  נפרד מהעמודה ביום שהיא משתנה. */
+  --col:1100px;
   /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בכולן,
    *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
   /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד בכולן,
@@ -111,6 +115,7 @@ header{height:56px}
   display:flex;
   position:fixed;
   bottom:0;left:0;right:0;
+  max-width:var(--col);margin:0 auto;
   height:64px;
   background:linear-gradient(135deg,var(--deep-2),var(--brand-fill));
   border-top:1px solid var(--fill-dark);
@@ -175,7 +180,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 @media (hover:hover){
   .clr-btn:hover{border-color:var(--bad);color:var(--bad)}
 }
-.inner{padding:var(--sp-7) var(--sp-7);max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
+.inner{padding:var(--sp-7) var(--sp-7);max-width:var(--col);width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text-2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
 .gap{flex:1}
