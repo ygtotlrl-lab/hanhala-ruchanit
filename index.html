@@ -146,7 +146,7 @@ import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
          mirrorTables, mirrorWrite } from './core/mirror.js';
-import { bkBoot, logAction, logFlush } from './core/backup.js';
+import { bkBoot, logAction } from './core/backup.js';
 import { ROLE_ADMIN, authLog, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
@@ -1109,7 +1109,6 @@ async function _doLoginInner() {
     //...ומיד אחריה הרענון המלא: **כל** המשתמשים הפעילים, בלי
     // סיסמאות. זה מה שמאפשר למשגיח אחר להיכנס אופליין באותו מכשיר.
     hrRefreshUsersCache();
-    logFlush();            // שלח רשומות שהצטברו באופליין — הרשת מוכחת-עובדת כעת
   } else if (authoritativeNo) {
     authLog(false, 'wrong_credentials_online', username);
     showErr('❌ ' + MSG_BAD_LOGIN); return;
@@ -4398,13 +4397,11 @@ setTimeout(async function() {
 /*  ⛔ מה שנשאר כאן הוא **מה שהפולינג אינו מכסה** — ⚠️ התג ⏳ מצויר מהמאזין
  *  המשותף, ⭐ וריקון התור נדרך מ-`RTY_CFG.flush` באותו אירוע: ⛔ שני אלה
  *  היו כאן מסלול שני לאותה הכרעה.
- *  ⛔ **ואימות הכניסה ושליחת יומן הכניסות אינם באף מסלול אחר** — ⚠️ משתמש
- *  שהושבת בזמן שהמכשיר היה מנותק נשאר מחובר עד הטעינה הבאה, ⭐ ורשומות
- *  היומן שנצברו אופליין נשלחות רק בכניסה מקוונת הבאה. */
+ *  ⛔ **ואימות הכניסה אינו באף מסלול אחר** — ⚠️ משתמש שהושבת בזמן שהמכשיר
+ *  היה מנותק נשאר מחובר עד הטעינה הבאה. */
 window.addEventListener('online', function() {
   console.log('[ys-queue] network online — revalidating session');
   hrRevalidateOfflineLogin();
-  logFlush();
 });
 
 // ============ סוף סנכרון הענן ============
