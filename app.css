@@ -10,6 +10,10 @@
    *  סרגל ניווט תחתון, ⛔ ורק מתחת לנקודת השבירה שבה הוא יורד —
    *  ⚠️ והנקודה נגזרת מהסולם ⛔ ואינה כתובה כאן. */
   --toast-bottom:26px;
+  /*  ⛔ רוחב עמודת התוכן — ⚠️ המיכל וכל פס קבוע קוראים אותו: ⭐ ערך
+   *  שכל צרכניו קוראים ממקום אחד משתנה פעם אחת, ⛔ ופס שרוחבו מוקלד
+   *  נפרד מהעמודה ביום שהיא משתנה. */
+  --col:1100px;
   /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בכולן,
    *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
   /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד בכולן,
@@ -21,8 +25,7 @@
 --on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
 /*  ⛔ גווני הסימון — ⚠️ שבעה קודים, ⭐ וכל אחד אסימון אחד: ⛔ הם ירדו
  *  משש מפות זהות שחיו בקוד, ⚠️ וכולן נשאו את אותם שבעה ליטרלים.
- *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ וכל גוון עומד ב-4.5 מולו:
- *  ⭐ גוון האיחור הוכהה מ-#dd6b20, ⛔ שנמדד 3.39 ונפל מהיחס. */
+ *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ אחד לכל השבעה. */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 /*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
@@ -111,6 +114,7 @@ header{height:56px}
   display:flex;
   position:fixed;
   bottom:0;left:0;right:0;
+  max-width:var(--col);margin:0 auto;
   height:64px;
   background:linear-gradient(135deg,var(--deep-2),var(--brand-fill));
   border-top:1px solid var(--fill-dark);
@@ -161,9 +165,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   .btn.out:hover{background:var(--card-2)}
 }
 @media (hover:hover){
-  .ab:hover{border-color:var(--brand-ink);color:var(--brand-ink)}
-}
-@media (hover:hover){
   .sd-item:hover{background:var(--card-2);outline:none}
 }
 @media (hover:hover){
@@ -175,7 +176,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 @media (hover:hover){
   .clr-btn:hover{border-color:var(--bad);color:var(--bad)}
 }
-.inner{padding:var(--sp-7) var(--sp-7);max-width:1100px;width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
+.inner{padding:var(--sp-7) var(--sp-7);max-width:var(--col);width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
 .back{background:none;border:1.5px solid var(--border);color:var(--text-2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
 .gap{flex:1}
@@ -186,8 +187,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 /* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
    הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
 .btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
-.ab{padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);border:1.5px solid var(--border);cursor:pointer;font-size:var(--fs-3);font-family:Heebo;font-weight:500;background:var(--card);color:var(--text-2);transition:all var(--dur-2)}
-.ab.sp{background:var(--ok-soft);border-color:var(--ok-line);color:var(--ok);font-weight:600}
 .sw{position:relative;width:100%}
 /*  ⛔ רוחב שורת החיפוש נמדד בזמן ריצה — ⚠️ ונכתב ב-`setProperty`, ⭐ והכלל
  *  הזה הוא שקורא אותו: ⛔ בלי מדידה נשאר רוחב ההורה. */
@@ -207,7 +206,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .sw input::placeholder{color:var(--text-3)}
 .sw input:focus{outline:none;border-color:var(--brand-ink);box-shadow:0 0 0 3px var(--shadow-brand-soft)}
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
-.badge{display:inline-block;padding:var(--sp-2) var(--sp-5);border-radius:var(--r-6);font-size:var(--fs-2);font-weight:600}
 .veil{align-items:center;backdrop-filter:blur(2px);direction:rtl}
 .sheet{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--brand-ink);max-height:85vh;overflow-y:auto}
 .sheet-bd:empty{display:none}
@@ -226,10 +224,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .cs .ci{font-size:var(--fs-7);margin-bottom:var(--sp-6);opacity:var(--op-4)}
 .cs h3{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);margin-bottom:var(--sp-4)}
 .cs p{color:var(--text-2);font-size:var(--fs-4)}
-.rs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-5);margin-bottom:var(--sp-6)}
-.rc{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-6);text-align:center;box-shadow:var(--shadow)}
-.rc .n{font-size:var(--fs-6);font-weight:700;color:var(--brand-ink)}
-.rc .l{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-2)}
 .empty{color:var(--text-3);text-align:center;padding:var(--sp-7) var(--sp-5);font-size:var(--fs-3)}
 .ld{text-align:center;padding:var(--sp-7);color:var(--text-3)}
 /* קונטיינר - padding קטן, כמו מחלקת ה-`app` */
@@ -633,9 +627,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 /* ── הגדרות ── */
 @media (hover:hover){
   .ua button:hover{border-color:var(--brand-ink);color:var(--brand-ink)}
-}
-@media (hover:hover){
-  .ua button.del:hover{border-color:var(--bad);color:var(--bad)}
 }
 @media (hover:hover){
   .pt tr:hover td{background:var(--card-2)}
