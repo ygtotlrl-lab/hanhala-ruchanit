@@ -81,6 +81,9 @@ td{padding:var(--sp-4) var(--sp-5)}
 body{padding-bottom:var(--sp-7)}
 
 /* ══ קליפה ═════════════════════════════════════════════════════════════ */
+/*  ⛔ שורש הקליפה אינו תיבה — ⚠️ הוא קיים כדי לשאת את המצב החשוף, ⭐ והכותרת
+ *  הדביקה והסרגל ממשיכים להתנהג כילדי `body`. */
+#shell{display:contents}
 header{background:linear-gradient(135deg,var(--deep-2),var(--brand-fill),var(--deep-1));padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px var(--sh-2);position:sticky;top:0;z-index:var(--z-2)}
 .hl{display:flex;align-items:center;gap:var(--sp-6)}
 .logo{width:60px;height:60px;object-fit:contain;border-radius:var(--r-5);background:var(--card);padding:var(--sp-2);}
