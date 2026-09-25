@@ -2070,8 +2070,7 @@ var DOM_ACTIONS = {
   'rpt-load':            function () { loadR(); },
   'absence-reasons-save': function () { return saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
-                            var id = el.getAttribute('data-id');
-                            if (id) cancelSingleAbsence(id); else cancelStudentStatus();
+                            cancelSingleAbsence(el.getAttribute('data-id'));
                           },
   'status-picker-open':   function () { openStatusPickerModal(); },
   'student-status-save':  function () { return runSave(function () { return saveStudentStatus(window._currentStatusType); }); },
@@ -3415,14 +3414,15 @@ function hrUpdateQueueBadge() {
  *  היא הייתה נופלת כ«שריד בלי חותמת», ⚠️ ומשיכת חודש אחד הייתה גורפת
  *  מהדיסק את כל השאר. */
 function _hrSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
-  // משודרג: מיזוג ברמת רשומה עם updatedAt + tombstones (היה: הוספה-בלבד לפי id).
-  // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection) — אך מתועדת.
+  // מיזוג ברמת רשומה עם updatedAt + tombstones.
+  // רשומה מקומית-בלבד ללא updatedAt לא חוזרת (anti-resurrection).
   if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
   if (!Array.isArray(localArr)) return cloudArr;
   /*  ⛔ הזוג נגזר מהזרימה ⛔ ואינו מוקלד — ⚠️ מפתח שאין לו שכבת שורות
    *  (הטיפולים) ממוזג ברמת הרשומה, ⭐ כפי שהיה. */
   var pair = HR_MIRROR_STREAMS[logKey] ? hrSessionPairFor(logKey) : null;
-  return hrMergeWithDropLog(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, logKey || 'sessions', pair);
+  return hrMergeRecords(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, null,
+                        hrPendingFor(logKey || 'sessions'), pair);
 }
 /* ⛔ שליחת פריט מהתור — ⚠️ שכבת השורות מחזירה `{ok}` והכתיבה להגדרות
    מחזירה `{error}`, ⭐ והתור מכיר חוזה אחד בלבד: ⛔ החזרת `{ok:false}`
@@ -3946,7 +3946,7 @@ var HE = _heColl || { compare: function (a, b) { return String(a).localeCompare(
 function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
 // מיזוג גנרי ברמת רשומה — עובד על מערכים (getKey) ועל אובייקטים (מפתח = שם המאפיין).
-// keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt (נתוני legacy) שורדת
+// keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt שורדת
 // כשהענן קיים. false = מניעת "תחיית מתים" של רשומות שנמחקו פיזית בקוד הישן;
 // true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend, approvals).
 // ⛔ **רשומה מקומית מסומנת ⏳ מנצחת ללא תלות בחותמת — אין להסיר את
@@ -4141,18 +4141,6 @@ function hrStudentPair(loc, rem, k, pend) {
   return out;
 }
 
-// עוזר: מיזוג עם איסוף רשומות שנפלו + לוג dropped_legacy לשחזור ידני
-function hrMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey, mergePair) {
-  var dropped = [];
-  var merged = hrMergeRecords(local, remote, getKey, keepUnversionedLocal, function(r){ dropped.push(r); },
-                              hrPendingFor(logKey), mergePair);
-  if (dropped.length) {
-    console.warn('[ys-sync] ' + logKey + ': ' + dropped.length + ' legacy records dropped in merge (logged to sh_sync_log)');
-    hrSyncLog('dropped_legacy', logKey, dropped.length, { records: dropped });
-  }
-  return merged;
-}
-
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
 function _hrStudentsRaw() { return hrMirrorRecs('hr_students_rows') || []; }
@@ -4205,8 +4193,8 @@ async function hrPushToCloud() {
     var localSt = _hrStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
-    var mergedSt = hrMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'hr_students_rows',
-                                      hrStudentPair);
+    var mergedSt = hrMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false, null,
+                                  hrPendingFor('hr_students_rows'), hrStudentPair);
     if (ctxStale(_ep)) return {};
     _hrStudentsSaveRaw(mergedSt);
     var r = await pushTable('hr_students_rows', mergedSt);
@@ -4335,7 +4323,8 @@ async function hrPullFromCloud() {
     var s = await hrCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
-      var mergedS = hrMergeWithDropLog(_hrStudentsRaw(), s, function(r){ return r.id; }, false, 'hr_students_rows');
+      var mergedS = hrMergeRecords(_hrStudentsRaw(), s, function(r){ return r.id; }, false, null,
+                                   hrPendingFor('hr_students_rows'));
       _hrStudentsSaveRaw(mergedS);
     }
     // approvals: מיזוג לפי sid עם updatedAt
@@ -4352,7 +4341,7 @@ async function hrPullFromCloud() {
     }
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
-    // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
+    // resurrection; רשומות מקומיות ללא updatedAt לא מוחזרות (anti-resurrection).
     var atSess = await hrCloudGet('hr_sessions');
     if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
@@ -4899,25 +4888,15 @@ function doYearTransition(){
    ══════════════════════════════════════════════════════════════════════════ */
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
-  if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
-  }
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusFrom || new Date(s.statusFrom) <= now) && (!s.statusTo || new Date(s.statusTo) >= now)) {
-    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
-  }
-  return [];
+  if (!Array.isArray(s.absences)) return [];
+  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
 }
 
 // מחזירה את כל ההיעדרויות שטרם פגו, כולל עתידיות (לתצוגה בדיאלוג)
 function getAllRelevantAbsences(s) {
   var now = new Date();
-  if (Array.isArray(s.absences) && s.absences.length > 0) {
-    return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
-  }
-  if (s.status && ['approved','suspended','left'].indexOf(s.status) !== -1 && (!s.statusTo || new Date(s.statusTo) >= now)) {
-    return [{id: 'legacy', type: s.status, reason: s.statusReason, from: s.statusFrom, to: s.statusTo}];
-  }
-  return [];
+  if (!Array.isArray(s.absences)) return [];
+  return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
 }
 
 function openAttendanceEdit(sid) {
@@ -4967,7 +4946,6 @@ function openCurrentStatusModal() {
     var badgeHtml = isFuture
       ? '<span class="abs-future">⏳ עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
-    var cancelId = a.id === 'legacy' ? '' : String(a.id);
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
       '<div class="abs-card-head">' +
         '<div class="status-head-row">' +
@@ -4975,7 +4953,7 @@ function openCurrentStatusModal() {
           '<span class="abs-type-label">' + esc(TL[a.type]||a.type) + '</span>' +
           badgeHtml +
         '</div>' +
-        '<button data-act="status-abs-cancel" data-id="' + esc(cancelId) + '" class="abs-cancel">בטל</button>' +
+        '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
       '<div class="abs-dates">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
@@ -4994,25 +4972,6 @@ function hrRefreshSupervisionViews() {
     if (uiShown(sv) && typeof hrRenderSupervision === 'function') hrRenderSupervision();
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
-function cancelStudentStatus() {
-  var sid = window._statusSid;
-  var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, sid);});
-  if (!s) return;
-  s.status = null; s.statusReason = null; s.statusFrom = null; s.statusTo = null;
-  // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
-  if (Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = hrWho(); });
-  s.present = true;
-  s.updatedAt = Date.now();
-  saveStudents(students);
-  schedulePush();
-  hrRefreshApprovalMarks(s.id); // רענון סדרים פתוחים של היום
-  renderStudents();
-  hrRefreshSupervisionViews(); // רענון מיידי של לשונית ההשגחה הפעילה
-  closeModal();
-  toast(MSG_STATUS_REVERTED + s.name, null, 'good');
-};
-
 function cancelSingleAbsence(absenceId) {
   var sid = window._statusSid;
   var students = getStudents();
@@ -5080,12 +5039,6 @@ async function openStatusHistory(sid) {
   }
   var s = rows.find(function (x) { return idEq(x.id, sid); });
   var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
-  /*  ⚠️ הכתיב הישן החזיק סטטוס יחיד על הרשומה ⛔ ואינו נשמט מההיסטוריה —
-   *  ⭐ תלמיד שלא נגעו בו מאז נראה בלעדיו כמי שמעולם לא היה לו סטטוס. */
-  if (s && !list.length && s.status && ['approved', 'suspended', 'left'].indexOf(s.status) !== -1) {
-    list.push({ id: 'legacy', type: s.status, reason: s.statusReason || '',
-                from: s.statusFrom || '', to: s.statusTo || null });
-  }
   var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
   var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
   var fmt = function (v) {
@@ -6123,7 +6076,6 @@ function atCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return String(x.id)===String(sid);});
   if(!s) return;
-  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
   if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
   s.present=true;
@@ -6762,7 +6714,7 @@ async function atAddTreat(sid) {
     by:AUTH.user?AUTH.user.client_id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
     created_at:now.toISOString(),
-    updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נחשבת legacy ונופלת
+    updatedAt:now.getTime() // חובה למיזוג — רשומה בלי updatedAt נופלת
   };
   var treats=await atLoadTreats();
   treats.push(rec);
@@ -7556,7 +7508,6 @@ function hrCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.id, sid);});
   if(!s) return;
-  s.status=null; s.statusReason=null; s.statusFrom=null; s.statusTo=null;
   // tombstone לכל היעדרות (deleted=true+updatedAt) במקום ריקון פיזי — מונע תחיית-מתים במיזוג
   if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
   s.present=true;
