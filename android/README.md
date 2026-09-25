@@ -41,10 +41,6 @@ network — כתובת האפליקציה, `android.url` שבתצורה.
 לבדוק.
 <!-- SHARED:end -->
 
-⚠️ **וכאן זה קרה בפועל:** ה-APK הראשון נחתם במפתח זמני שישב ב-`/tmp` ואבד,
-ולכן המעבר ממנו למעטפת הנוכחית הוא **הסרה + התקנה** חד-פעמית —
-וההסרה מוחקת את מחיצת האחסון של האפליקציה הישנה.
-
 <!-- SHARED:start id="android-icons" -->
 ## אייקונים
 
@@ -121,16 +117,10 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 | **קובץ** | ⛔ אינו בריפו — GitHub Secret `KEYSTORE_B64`, מפוענח לקובץ זמני בזמן בנייה ונמחק אחריה (PKCS12, RSA 4096) |
 | **alias** | ⛔ אינו מוקלד — `sign-apk.sh` גוזר אותו מהמפתח עצמו |
 | **storepass / keypass** | ⛔ אינה בריפו — GitHub Secret `KEYSTORE_PASS` |
-| **תוקף** | 10,000 יום — 2026-09-15 עד 2054-01-31 |
 | **SHA256** | טביעת המפתח — `signSha256` שבתצורה |
-| **DN** | `CN=hanhala, OU=Yeshiva, O=Yeshiva, L=Rishon LeZion, ST=Israel, C=IL` |
 
 אימות: `keytool -list -v -keystore <עותק מקומי> -storepass <הערך שב-KEYSTORE_PASS>`,
 ואחרי חתימה — ש-`apksigner verify --print-certs` מחזיר את אותו SHA256.
-
-⚠️ **ה-APK הראשון נבנה מחוץ לריפו במפתח זמני שאבד**,
-ולכן מעבר ממנו הוא **הסרה + התקנה** חד-פעמית. לפני המעבר לוודא באפליקציה
-הישנה ש«⏳ ממתין לסנכרון» מציג **0**.
 
 ⚠️ **בסביבת הענן אין Android SDK ו-`dl.google.com` חסום** — הדרך המעשית
 היא ה-workflow. ⛔ ולא PWABuilder: הוא יודע לייצר TWA בלבד.
@@ -138,34 +128,6 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 ### פרטי המעטפת
 שם החבילה, `versionCode` ו-SDK — מהתצורה ומ-`tools/gen-app.mjs`;
 `usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
-
-<!-- SHARED:start id="android-smali-scope" -->
-## תיקון URL ב-APK קיים ובנוי (בלי מקור) — smali בלבד
-
-⚠️ **הפרק הזה רלוונטי רק ל-APK ישן שנבנה לפני `android/`.** בנייה רגילה היום
-היא מ-`android/` דרך `.github/workflows/build-apk.yml`, והמעטפת טוענת מהרשת —
-ולכן אין בה URL שצריך לתקן.
-⛔ **smali בלבד — לא binary patch.** עריכה בינארית של ה-APK שוברת את החתימה
-ואינה ניתנת לאימות, ⛔ והחתימה מחדש היא במפתח הקבוע של הריפו בלבד — ר' הפרק
-«Sign with the PERMANENT key» שלמעלה.
-⭐ **שני הקבצים שנושאים את ה-URL הם `MainActivity.smali` ו-`MainActivity$2.smali`**
-— ⛔ וההוראה זהה בכל הריפו; הכתובת עצמה, שם תיקיית העבודה והמפתח הם
-פר-אפליקציה, ⛔ ויושבים בבלוק שמתחת.
-<!-- SHARED:end -->
-
-```bash
-apktool d <app>.apk -o /tmp/hanhala_work -f
-rm -rf /tmp/hanhala_work/build          # חובה לפני בנייה חוזרת
-apktool b /tmp/hanhala_work -o built.apk
-zipalign -f 4 built.apk aligned.apk
-SIGN_KEYSTORE=<עותק מקומי של המפתח> SIGN_PASS=<הערך שב-KEYSTORE_PASS> \
-  signing/sign-apk.sh aligned.apk output.apk
-```
-
-⚠️ **המפתח הישן שישב ב-`/tmp` אבד**, והמפתח הקבוע הוא
-`signing/hanhala.keystore` — ⛔ הקובץ אינו בריפו, ⚠️ והוא נמשך
-מ-GitHub Secrets בזמן הבנייה; לכן מעבר מה-APK הישן הוא **הסרה + התקנה**
-חד-פעמית.
 
 <!-- SHARED:start id="android-cache-apk" -->
 ### ⚠️ Cache APK — כלל זהב
