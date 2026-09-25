@@ -1,20 +1,16 @@
 # הנהלה רוחנית — Native WebView APK
 
 A native Android **WebView** shell (not a TWA) that loads the **live site** over the
-network:
-
-```
-https://ygtotlrl-lab.github.io/hanhala-ruchanit/
-```
+network — כתובת האפליקציה, `android.url` שבתצורה.
 
 ## מה בפנים
 
 | | |
 |---|---|
-| **Package ID** | `com.hanhala.ruchanit` |
-| **טוען** | `https://ygtotlrl-lab.github.io/hanhala-ruchanit/` — **מהרשת**, לא מנכסים מוטבעים |
-| **versionCode** | 19 — ⛔ עולה בכל שינוי תחת `android/`: ⚠️ מכשיר אינו מתקין מעל גרסה שאינה גבוהה ממנה |
-| **minSdk / targetSdk** | 21 / 34 |
+| **Package ID** | שם החבילה — `android.package` שבתצורה |
+| **טוען** | כתובת האפליקציה — `android.url` שבתצורה — **מהרשת**, לא מנכסים מוטבעים |
+| **versionCode** | ⛔ עולה בכל שינוי ב-APK: ⚠️ מכשיר אינו מתקין מעל גרסה שאינה גבוהה ממנה |
+| **minSdk / targetSdk** | נוצרים ב-`tools/gen-app.mjs` — ⛔ זהים בכולן |
 | **WebView** | JavaScript, DOM storage (localStorage — שם יושבים מפתחות ה-`hr_*` וה-pending), DB. **בלי** גישת `file://` ובלי mixed content פתוח — האתר הוא https בלבד, `usesCleartextTraffic=false` |
 | **ניווט** | כל `http`/`https` **נשאר בתוך המעטפת**. שאר הסכימות (`tel:`, `mailto:`, `whatsapp:`, …) נמסרות למערכת |
 | **בורר קבצים** | `WebChromeClient.onShowFileChooser` מחובר ל-`<input type=file>` (ייבוא תלמידים מ-Excel) |
@@ -126,8 +122,7 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 | **alias** | ⛔ אינו מוקלד — `sign-apk.sh` גוזר אותו מהמפתח עצמו |
 | **storepass / keypass** | ⛔ אינה בריפו — GitHub Secret `KEYSTORE_PASS` |
 | **תוקף** | 10,000 יום — 2026-09-15 עד 2054-01-31 |
-| **SHA256** | `1A:FA:BE:D0:A6:60:EF:F6:FF:40:04:C9:32:F5:A7:E3:28:01:95:4E:FA:24:FF:A4:B5:79:DF:BE:2F:B4:07:4A` |
-| **SHA1** | `D6:9E:A6:1A:17:F4:B7:3D:57:90:7E:B7:66:FC:0C:04:67:96:97:9D` |
+| **SHA256** | טביעת המפתח — `signSha256` שבתצורה |
 | **DN** | `CN=hanhala, OU=Yeshiva, O=Yeshiva, L=Rishon LeZion, ST=Israel, C=IL` |
 
 אימות: `keytool -list -v -keystore <עותק מקומי> -storepass <הערך שב-KEYSTORE_PASS>`,
@@ -141,7 +136,7 @@ gradle :app:assembleRelease        # או: ./gradlew :app:assembleRelease
 היא ה-workflow. ⛔ ולא PWABuilder: הוא יודע לייצר TWA בלבד.
 
 ### פרטי המעטפת
-package `com.hanhala.ruchanit`, versionCode 3, minSdk 21 / targetSdk 34,
+שם החבילה, `versionCode` ו-SDK — מהתצורה ומ-`tools/gen-app.mjs`;
 `usesCleartextTraffic=false`; ה-artifact הוא `hanhala-ruchanit-apk`.
 
 <!-- SHARED:start id="android-smali-scope" -->

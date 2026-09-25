@@ -2,10 +2,10 @@
 
 ## פרטי ריפו
 - **ריפו:** `ygtotlrl-lab/hanhala-ruchanit`
-- **GitHub Pages:** `https://ygtotlrl-lab.github.io/hanhala-ruchanit/`
+- **GitHub Pages:** כתובת האפליקציה — `android.url` שבתצורה
 - **טוקן:** מנוהל ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ
 - **קובץ ראשי:** `index.html`
-- **Supabase:** project `kxbtskqobynewvnckaaz` | טבלאות `kv`, `hr_*` (ראה למטה)
+- **Supabase:** project — `supabase.url` שבתצורה | טבלאות `kv`, `hr_*` (ראה למטה)
 
 ---
 
