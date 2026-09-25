@@ -148,7 +148,7 @@ import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
          mirrorTables, mirrorWrite } from './core/mirror.js';
 import { bkBoot, logAction, logFlush } from './core/backup.js';
 import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
-         sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
+         sessActive, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
          modalEsc, openModal, pullRender, shellBare, swApply, swHideUpdate,
          toast, uiNoDialog } from './core/ui.js';
@@ -171,7 +171,6 @@ appConfigure({
   get PL_CFG() { return PL_CFG; },
   get PUSH_CFG() { return PUSH_CFG; },
   get RTY_CFG() { return RTY_CFG; },
-  get SESS_CFG() { return SESS_CFG; },
   get TOAST_DEFAULT_MS() { return TOAST_DEFAULT_MS; },
   get USER_CFG() { return USER_CFG; },
   get saveRefresh() { return saveRefresh; }
@@ -2547,8 +2546,6 @@ async function loadDash(){
   // עמידות אחסון: מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של hrPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
-  // מודל הסשן — נקודת ההפעלה היחידה של המודול.
-  try { sessBoot(); } catch (e) { console.warn('[sess] sessBoot', e); }
   // סימוני "ממתין לסנכרון" — נטענים לפני המשיכה, כך שרשומה שלא
   // אושרה בסשן הקודם מוצגת כממתינה כבר בשנייה הראשונה.
   try { pendBoot(); } catch (e) { console.warn('[pend] pendBoot', e); }
@@ -2880,16 +2877,6 @@ var LK_CFG = {
   active: function () { return sessActive(); },
   lock:   function () { doLogout(); },
 };
-/* ── SESS_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-/* ⚠️ `legacy` הוא רשימת מפתחות ה-localStorage של סשן **שהאפליקציה אינה
-   כותבת אליהם** — ⛔ ואין למחוק שם מהרשימה: המפתח עצמו עדיין יושב על
-   הדיסק של כל מכשיר שנכנסו בו, והוא מחזיק `id`, `username` ו-`role`. */
-var SESS_CFG = {
-  /* ⚠️ ריק — ⭐ אין מפתח סשן על הדיסק שצריך להסיר, ⛔ והמנגנון נשאר
-     דרוך. */
-  legacy: [],
-};
-
 /*  ⛔ דרגת הביניים — ⚠️ מסכי ההשגחה פתוחים למנהל **וגם** לדרגה שמעל
  *  הצוות: ⭐ זו הדרגה שמטריצת ההרשאות מחזיקה כאן ואין לה מקבילה בשתיים
  *  האחרות, ⛔ ולכן ההשוואה הזו יושבת מחוץ לבלוק המשותף.
