@@ -187,8 +187,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--brand-ink);border-color:var(--brand-ink)}
-/* ⭐ כפתור קטן — ⛔ אותה הצהרה שקיימת בשתי האחיות: ⚠️ עד היום המחלקה
-   הוחלה על שמונה כפתורים ולא היה לה כלל, ⭐ והם נמדדו בגודל המלא. */
+/* ⭐ כפתור קטן — ⚠️ מחלקה שמוחלת בלי כלל משלה נמדדת בגודל המלא. */
 .btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
 .sw{position:relative;width:100%}
 /*  ⛔ רוחב שורת החיפוש נמדד בזמן ריצה — ⚠️ ונכתב ב-`setProperty`, ⭐ והכלל
