@@ -24,6 +24,9 @@
 </head>
 <body>
 
+<!--  ⛔ שורש הקליפה — כותרת · ניווט · מיכל תוכן: ⚠️ והיא מתחילה חשופה, ⭐ והמסגרת
+      נחשפת רק יחד עם המסך הפנימי — ⛔ ולא בטעינה ובכניסה. -->
+<div id="shell" class="is-bare">
 <header>
   <div class="hl">
     <img class="hdr-logo logo" src="icons/icon-512.092edf48.png" alt="לוגו ישיבה">
@@ -85,6 +88,7 @@
   </button>
 </nav>
 <main id="view"><div class="view-loading" role="status" aria-label="טוען"><span class="view-spin"></span></div></main>
+</div>
 
 
 <!--  ⛔ מיכל המודאל היחיד — ⚠️ מסלול סגירה אחד לכל הדיאלוגים: ⭐ מיכל
@@ -146,8 +150,8 @@ import { bkBoot, logAction, logFlush } from './core/backup.js';
 import { ROLE_ADMIN, isAdmin, isAdminOf, lkBoot, lkReset, lkStop,
          sessActive, sessBoot, sessGet, sessSet, writeUser } from './core/auth.js';
 import { actRun, ask, busy, closeAsk, closeModal, esc, ksKey, modalBackdrop,
-         modalEsc, openModal, pullRender, swApply, swHideUpdate, toast,
-         uiNoDialog } from './core/ui.js';
+         modalEsc, openModal, pullRender, shellBare, swApply, swHideUpdate,
+         toast, uiNoDialog } from './core/ui.js';
 import './core/hebrew.js';
 
 /*  ⛔ התצורה נמסרת למודולים בשומרי קריאה — ⚠️ חלקה מוגדר בהמשך הדף,
@@ -1215,6 +1219,7 @@ async function _doLoginInner() {
   // משניים (שם משתמש/תפקיד). כל אחד מהם עטוף כך ששגיאה בודדת לא תעצור את האתחול
   // (הבאג: data.role — data מוגדר רק בענף האונליין — הפיל את כל הזנב באופליין).
   document.getElementById('auth-screen').classList.add('hidden');
+  shellBare(false);
   try {
     var wrap = document.getElementById('user-avatar-wrap');
     var hdru = document.getElementById('hdr-username');
@@ -1238,6 +1243,7 @@ function doLogout() {
   AUTH.user = null;
   lkStop();
   document.getElementById('auth-screen').classList.remove('hidden');
+  shellBare(true);
   var wrap = document.getElementById('user-avatar-wrap');
   if (wrap) wrap.classList.add('hidden');
   document.getElementById('auth-user').value = '';
