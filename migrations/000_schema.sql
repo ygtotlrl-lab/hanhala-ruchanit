@@ -176,6 +176,7 @@ grant execute on function public.bk_retention_sweep(integer,integer) to service_
 select cron.schedule('bk_prune_layers', '10 3 * * *', 'select public.bk_prune_layer(''ANCHOR:'', 4), public.bk_prune_layer(''DIFF:'', 30);');
 select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30, 7);');
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
+select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 
 -- ─── הנהלה רוחנית ──────────────────────────────────────────────────────
 
