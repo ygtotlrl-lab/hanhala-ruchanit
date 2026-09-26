@@ -2497,7 +2497,7 @@ function _hrMarkParent(r) { return r ? r.session_client_id : null; }
  *  ⭐ ו«אין ראיה» אינו «הענן ריק». */
 function _hrVerifyRows(mkQuery) {
   return function () {
-    if (!HR_ROWS || !SB) return Promise.resolve({ ok: false, rows: [] });
+    if (!SB) return Promise.resolve({ ok: false, rows: [] });
     return _rowsPaged(mkQuery, 'client_id', null)
       .then(function (rs) { return Array.isArray(rs) ? { ok: true, rows: rs } : { ok: false, rows: [] }; },
             function () { return { ok: false, rows: [] }; });
@@ -3258,7 +3258,6 @@ async function hrFlushQueue() {
       אינו מצטרף לאב, ולכן סימון של סדר מחוק שהיה נשאר `deleted=false`
       היה נקרא כרשומה חיה.
    ══════════════════════════════════════════════════════════════════════════ */
-var HR_ROWS = true;
 
 /* ⭐ חותמת ההגדרות נקראת מ-`updated_at` של השורה — ⛔ ולא ממפה בתוך הערך.
   ⛔ העמודה קיימת ב-`hr_settings`, ⭐ ונושאת את חותמת המכשיר שכתב.
@@ -3297,7 +3296,6 @@ var _hrRowsRemote = { attend: null, sleep: null };
       רק קובעת מה כבר בענן. */
 async function hrRowsRemoteLoad(kind) {
   kind = kind || 'attend';
-  if (!HR_ROWS) return null;
   if (_hrRowsRemote[kind]) return _hrRowsRemote[kind];
   try {
     var res = await withTimeout(SB.from(HR_ROWS_KINDS[kind].parent).select('client_id,updated_at'));
@@ -3416,7 +3414,7 @@ async function hrRowsUpsert(table, rows) {
    ⛔ ו-`null` הוא «אין ראיה» ⛔ ולא «אין מה לדחוף» — ⚠️ שכבת השורות כבויה
    או שאין קלט, ⭐ ואז אין לסמן את עֵד הפינוי. */
 async function hrPushDirty(key, arr) {
-  if (!HR_ROWS || !Array.isArray(arr)) return null;
+  if (!Array.isArray(arr)) return null;
   var kind = HR_ROWS_READ_KEYS[key];
   if (!kind) return null;
   if (kind === 'students') return arr;
@@ -3482,7 +3480,6 @@ async function hrSendRecs(key, recs) {
       דחיפה חותמת מחדש את כל סימוני הסדר בחותמת האב, ולכן סימון שנשאר
       נושא בדיוק את חותמת האב וסימון שנמחק נשאר מאחור.
    ══════════════════════════════════════════════════════════════════════════ */
-var HR_ROWS_READ = true;
 var HR_ROWS_READ_KEYS = { hr_sessions: 'attend', hr_students_rows: 'students' };
 /* ⭐ מפתח השינה נכנס למפה — `hrCloudGet` קורא אותו מהטבלאות,
    בדיוק כמו נוכחות ותלמידים. */
@@ -3527,7 +3524,7 @@ function _hrRowSet(rec, k, v) { if (v !== null && v !== undefined) rec[k] = v; }
 async function hrRowsGetSessions(kind, win) {
   kind = kind || 'attend';
   var cfg = HR_ROWS_KINDS[kind];
-  if (!cfg || !HR_ROWS || !SB) return { ok: false, data: null };
+  if (!cfg || !SB) return { ok: false, data: null };
   try {
     var scols = 'client_id,session,date_iso,date_heb,filled_by,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at';
     var mcols = 'session_client_id,student_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
@@ -3547,7 +3544,7 @@ async function hrRowsGetSessions(kind, win) {
 }
 /* המצבה — כאן `data` מחזיקה את הרשומה כולה, ולכן השחזור הוא העתקה. */
 async function hrRowsGetStudents() {
-  if (!HR_ROWS || !SB) return { ok: false, data: null };
+  if (!SB) return { ok: false, data: null };
   try {
     /*  ⛔ המצבה נמשכת מלאה ⛔ ואין לה חלון — ⚠️ אין בטבלה עמודת תאריך,
      *  ⭐ והיא 71 שורות: ⛔ חלון על מפתח שאינו תאריך הוא מנגנון שני. */
@@ -3565,7 +3562,7 @@ async function hrRowsGetStudents() {
 }
 async function hrRowsGet(kvKey, win) {
   var k = HR_ROWS_READ_KEYS[kvKey];
-  if (!HR_ROWS_READ || !k) return { ok: false, data: null };
+  if (!k) return { ok: false, data: null };
   return (k === 'students') ? hrRowsGetStudents() : hrRowsGetSessions(k, win);
 }
 /* ⭐ משפך הקריאה היחיד — מערך או `null`, ⛔ ואין נפילה-חזרה ל-`kv`:
