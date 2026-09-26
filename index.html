@@ -2569,14 +2569,8 @@ var BK_CFG = {
   //    ריקה ומנגנון הסינון של המודול נשאר דרוך לסוד עתידי.
   secrets: [],
   sources: function () {
-    /* ⭐ שלושת מקורות ה-`kind:'table'` הראשונים כאן: שכבת השורות
-       של שלב א. ⚠️ מפתח הגיבוי נגזר משם הטבלה בתוספת `_rows`, ⛔ פרט
-       ל-`hr_students_rows` ששמו כבר נושא אותה. ⛔ ושלושתם נוספו באותו סבב
-       לרשימת-ההיתר של `migrations/004` — מפתח גיבוי שאינו שם
-       אינו מתפנה לעולם, וזה בדיוק ההיסט שנמדד.
-       ⚠️ מקורות ה-`kv` **נשארים בינתיים** — ⛔ האפליקציה אינה כותבת אליהם
-       עוד, ⭐ והסרתם היא פעולת מנהל: ⚠️ רשימת-ההיתר של הפינוי יושבת
-       במיגרציה שכבר רצה, ⛔ ומפתח גיבוי שיצא מהרשימה אינו מתפנה לעולם. */
+    /* ⚠️ מפתח הגיבוי נגזר משם הטבלה בתוספת `_rows`, ⛔ פרט
+       ל-`hr_students_rows` ששמו כבר נושא אותה. */
     var out = [
       { kind: 'table', name: 'hr_sessions',       key: 'hr_sessions_rows',  order: 'client_id', ts: 'updated_at' },
       { kind: 'table', name: 'hr_marks',          key: 'hr_marks_rows',     order: 'client_id', ts: 'updated_at' },
@@ -4278,7 +4272,7 @@ async function ensureFirstAdmin() {
     );
     // ⛔ אין כאן מסך התקנה — ⚠️ רק **דיווח** במסך הכניסה,
     //    ואין כאן סכימה, אין תיבת העתקה ואין המתנה אוטומטית. הטיפול
-    //    בטבלה חסרה הוא הרצת `migrations/000_initial_schema.sql` מול המסד.
+    //    בטבלה חסרה הוא הרצת `migrations/000_schema.sql` מול המסד.
     var e = document.getElementById('auth-err');
     if (tableError) {
       if (e) {
