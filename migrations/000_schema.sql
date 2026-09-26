@@ -189,7 +189,6 @@ create table if not exists public.hr_marks (
   minutes smallint,
   deleted boolean not null default false,
   updated_at bigint not null,
-  synced_at timestamp with time zone not null default now(),
   deleted_at timestamp with time zone,
   deleted_by text,
   constraint hr_marks_pkey PRIMARY KEY (client_id)
@@ -208,7 +207,6 @@ create table if not exists public.hr_sessions (
   open boolean,
   deleted boolean not null default false,
   updated_at bigint not null,
-  synced_at timestamp with time zone not null default now(),
   deleted_at timestamp with time zone,
   constraint hr_sessions_pkey PRIMARY KEY (client_id)
 );
@@ -235,7 +233,6 @@ create table if not exists public.hr_sleep_marks (
   note text,
   deleted boolean not null default false,
   updated_at bigint not null,
-  synced_at timestamp with time zone not null default now(),
   deleted_at timestamp with time zone,
   deleted_by text,
   constraint hr_sleep_marks_pkey PRIMARY KEY (client_id)
@@ -254,7 +251,6 @@ create table if not exists public.hr_sleep_sessions (
   open boolean,
   deleted boolean not null default false,
   updated_at bigint not null,
-  synced_at timestamp with time zone not null default now(),
   deleted_at timestamp with time zone,
   constraint hr_sleep_sessions_pkey PRIMARY KEY (client_id)
 );
@@ -265,7 +261,6 @@ create table if not exists public.hr_students_rows (
   updated_at bigint not null,
   deleted boolean not null default false,
   data jsonb not null,
-  synced_at timestamp with time zone not null default now(),
   deleted_at timestamp with time zone,
   deleted_by text,
   constraint hr_students_rows_pkey PRIMARY KEY (client_id)
