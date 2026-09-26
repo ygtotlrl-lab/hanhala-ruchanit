@@ -2035,9 +2035,6 @@ async function saveUser() {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
-  /*  ⚠️ הנפילה-חזרה על עמודות הטביעה יושבת בבלוק המשותף — ⛔ והדגל שהיא
-   *  מחזירה הוא מה שמבדיל «נשמר» מ«נשמר בלי הכנה לכניסה ללא רשת». */
-  if (res._noFp) noFp = true;
   /*  ⛔ כתיבת משתמש שהצליחה מקדמת את אות הפולינג — ⚠️ טבלת המשתמשים
    *  נמשכת במשיכה המוצלחת, ⭐ ובלי הקידום השינוי נשאר בלתי-נראה לכל
    *  מכשיר אחר עד לשינוי נתונים אחר. */
