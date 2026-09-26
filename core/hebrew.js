@@ -123,7 +123,7 @@ window._hebBadDate=function(where,d){
   try{ got=Object.prototype.toString.call(d); }catch(e){ got='?'; }
   window._hebBadDates.push({at:Date.now(),where:where,got:got});
   if(window._hebBadDates.length>12) window._hebBadDates.shift();
-  try{ console.warn('hebDate: קלט שאינו תאריך תקף ב-'+where+' — '+got); }catch(e){}
+  try{ console.warn('[heb] hebDate: קלט שאינו תאריך תקף ב-'+where+' — '+got); }catch(e){}
 };
 window._hebNone=function(src){
   return {year:0,monthIndex:0,monthName:'',day:0,dayLabel:'',

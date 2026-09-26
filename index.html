@@ -1514,7 +1514,7 @@ function showSettingsHome() {
       בקובץ הסכימה אינה הגנה.
 
    ⛔ **ואין לזרוע ערך ברירת מחדל לסיסמה או לתפקיד בשום מקום** — לא
-   בסכימה, לא במיגרציה, לא בקוד ולא בקובץ בדיקה. ברירת מחדל
+   בקובץ הסכימה, לא בקוד ולא בקובץ בדיקה. ברירת מחדל
    לסיסמה היא חשבון שסיסמתו ידועה לכל העולם;
    ברירת מחדל לתפקיד היא הרשאה שניתנת למי שאיש לא החליט
    להעניק לו אותה. תפקיד נכתב **במפורש** ביצירת המשתמש.
@@ -3541,7 +3541,7 @@ function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 //    שעות, בעוד שעריכה שנמחקת בשקט אינה משאירה עקבות.
 //    ⚠️ ההגנה חלה **רק על התנגשות מפתח**, ואינה משנה דבר בכלל
 //    `keepUnversionedLocal` — רשומה מקומית-בלבד מוכרעת לפיו.
-/*  ⛔ הדבר היחיד שנבדל בין שלוש האפליקציות שיש בהן כניסה — ⚠️ הלקוח,
+/*  ⛔ הדבר היחיד שנבדל בין האפליקציות שיש בהן כניסה — ⚠️ הלקוח,
  *  שם הטבלה, הודעת הניתוק, ומה נעשה **אחרי** שהתשובה חזרה: ⭐ הכתיבה
  *  עצמה זהה בית-לבית. */
 var USER_CFG = {
@@ -3846,7 +3846,7 @@ async function hrPullFromCloud() {
     pullRender(hrPullDraw);
     usersRefresh(); // עדכון עותק המשתמשים המקומי בכל משיכה מוצלחת (fire-and-forget)
     hrSyncLog('pull', null, null); // משיכה מוצלחת
-  } catch(e) { console.error('[ys-sync] pull error:', e); }
+  } catch(e) { console.error('[sync] pull error:', e); }
 }
 
 // ⛔ אין להחזיר כאן `setInterval` — הפולינג הוא המודול המשותף
@@ -3866,7 +3866,7 @@ setTimeout(async function() {
     if (r.error) {
       // ⛔ אין כאן «יצירה אוטומטית» של הטבלה — ⚠️ טבלה חסרה היא תקלת
       // תשתית שמדווחת בקונסול, ⭐ ולא משהו שהלקוח מתקן.
-      console.log('[ys-sync] init error:', r.error.message);
+      console.log('[sync] init error:', r.error.message);
       return;
     }
     if (r.data) {
@@ -3875,7 +3875,7 @@ setTimeout(async function() {
       _hrLastTs = remoteTs;
       await hrPullFromCloud();
     }
-  } catch(e) { console.log('[ys-sync] init:', e.message||e); }
+  } catch(e) { console.log('[sync] init:', e.message||e); }
 }, 1500);
 
 // ============ סוף סנכרון הענן ============
@@ -3968,7 +3968,7 @@ async function ensureFirstAdmin() {
         e.classList.add('users-empty');
       }
     }
-  } catch(e) { console.error('setup error:', e); }
+  } catch(e) { console.error('[users] setup error:', e); }
 }
 
 ensureFirstAdmin();
@@ -4061,8 +4061,8 @@ function saveStudents(s){
 // ⛔ הגטרים מוגנים כמו getStudents — ערך פגום אחד (חיתוך באמצע כתיבה /
 // פינוי מכסה) זורק מתוך hrPushToCloud ומפיל את כל הדחיפה, וכל המפתחות
 // מפסיקים להגיע לענן בשקט.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[ys] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[ys] hr_approvals פגום — נטען ריק:',e.message);return {};}}
+function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[settings] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[settings] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
 }
@@ -4751,7 +4751,7 @@ function printStudents() {
     };
     pdfMake.createPdf(docDef).download('nochechut-'+dayToday()+'.pdf');
   } catch(e) {
-    console.error('[PDF:ERR]', e);
+    console.error('[pdf]', e);
     toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'bad');
   }
 }
@@ -5245,7 +5245,7 @@ async function atEditSession(recId) {
       window._atData=data;
       atSaveData(data); // דחיפה ממוזגת לענן (fire-and-forget)
     }
-  } catch(eAp){ console.warn('[approval-refresh:edit]', eAp); }
+  } catch(eAp){ console.warn('[approval-refresh] edit', eAp); }
   // מלא תאריך
   var dw=document.getElementById('at-date-wrap');
   if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('at_date',rec.date_heb);
@@ -5898,7 +5898,7 @@ async function atExportExcel(fromIso,toIso) {
     document.body.appendChild(a); a.click();
     setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
     toast(MSG_EXPORT_OK, null, 'good');
-  } catch(e){console.error('[Excel ERROR]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
+  } catch(e){console.error('[excel]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 };
 
 async function atExportPdf(fromIso,toIso) {
@@ -6254,7 +6254,7 @@ function atCheckAlert() {
   // new Date("2026-04-28") = UTC midnight = 03:00 Israel, קטן מ-12:00 מקומי
   var _mG=_hcG(curHY,curMI,1);
   var monthBeg=new Date(_mG.getFullYear(),_mG.getMonth(),_mG.getDate(),0,0,0);
-  console.log('[atCheckAlert] חודש עברי:', _hcMN(curHY)[curMI], curHY,
+  console.log('[attend] atCheckAlert — חודש עברי:', _hcMN(curHY)[curMI], curHY,
     '| תחילת חודש גרגוריאנית:', monthBeg.toISOString(),
     '| רשומות סה"כ:', data.length);
 
@@ -6760,7 +6760,7 @@ async function hrEditSession(recId) {
       window._hrData=data;
       hrSaveData(data);
     }
-  } catch(eAp2){ console.warn('[approval-refresh:sl-edit]', eAp2); }
+  } catch(eAp2){ console.warn('[approval-refresh] sl-edit', eAp2); }
   var dw=document.getElementById('sl-date-wrap');
   if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('sl_date',rec.date_heb);
   var fl=document.getElementById('sl-filler');
