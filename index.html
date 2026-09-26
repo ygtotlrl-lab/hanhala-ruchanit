@@ -136,7 +136,7 @@ import { MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
          MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, appConfigure,
          dayIso, dayNoon, dayToday, getDeviceId, isNetErr, kvParse, readNum,
          uniqHas, uniqList, withTimeout } from './core/util.js';
-import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
+import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKeys, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
          pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
          plBoot, plNum, plTouch, pushDirty, pushTable, rtyBoot, runSave,
@@ -678,6 +678,7 @@ function hrCurrentPage() {
 
 // מקור יחיד לקליטת מטריצת הרשאות חדשה (כניסה או משיכה מהענן):
 // AUTH.perms + hr_perms_cache. מחזיר true אם המטריצה השתנתה.
+var HR_PERMS_KEY = 'hr_perms_cache';
 function hrApplyPerms(p) {
   if (!p || typeof p !== 'object' || Array.isArray(p)) return false;
   var next = JSON.stringify(p);
@@ -688,7 +689,7 @@ function hrApplyPerms(p) {
   // כניסה אופליין אחרי עדכון הרשאות מחזירה את המטריצה **הישנה**.
   // `lsSet` כבר מרימה באנר בעצמה; כאן נרשם גם ליומן.
   try {
-    if (!lsSet('hr_perms_cache', next)) {
+    if (!lsSet(HR_PERMS_KEY, next)) {
       console.warn('[perms] העותק המקומי של ההרשאות לא נשמר');
     }
   } catch (e) { console.warn('[perms] lsSet זרקה:', e && e.message); }
@@ -1041,7 +1042,7 @@ async function loadPerms() {
   }
   // אין רשת / פסק זמן / שגיאת שרת / ערך פגום — עותק מקומי, ואם אין: ברירות מחדל
   try {
-    var c = lsGet('hr_perms_cache');
+    var c = lsGet(HR_PERMS_KEY);
     if (c) {
       hrApplyPerms(JSON.parse(c));
       console.log('[perms] נטען מעותק מקומי', res && res.ok ? '(אין ערך בענן)' : '(אין רשת)');
@@ -1654,11 +1655,12 @@ function renderSettings() {
 }
 
 // ---- רשימת משתמשים ----
+var HR_ORDER_KEY = 'hr_user_order';
 function getUserOrder() {
-  try { return JSON.parse(lsGet('hr_user_order') || '[]'); } catch(e) { return []; }
+  try { return JSON.parse(lsGet(HR_ORDER_KEY) || '[]'); } catch(e) { return []; }
 }
 function saveUserOrder(ids) {
-  lsSet('hr_user_order', JSON.stringify(ids));
+  lsSet(HR_ORDER_KEY, JSON.stringify(ids));
 }
 function sortUsersByOrder(data) {
   var order = getUserOrder();
@@ -2387,6 +2389,14 @@ var LS_CFG = {
    *  המטמון שנדחה, ⛔ **ומה מפיל**: שם בלי תחילית האפליקציה —
    *  ⭐ ה-origin משותף, וסימן בלי תחילית נדרס בכל דחייה. */
   dismissKey: 'hr_sw_dismissed',
+  /*  ⛔ המרשם — כל מפתח שהאפליקציה כותבת תחת התחילית: ⚠️ מפתח שאינו כאן
+   *  נמחק בעלייה, ⭐ והשמות נגזרים מהתצורה ומהכותבים ⛔ ואינם מוקלדים שוב. */
+  keys: function () {
+    return [LS_CFG.logKey, LS_CFG.dismissKey, DEV_CFG.key, PEND_CFG.key,
+            BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY, HR_ORDER_KEY]
+      .concat(eraKeys(), mirrorTables().map(mirrorKey),
+              Object.keys(HR_SET_FLAT).map(function (k) { return HR_SET_FLAT[k]; }));
+  },
 
   /*  ⭐ סוג האפליקציה — ⚠️ ממנו נגזר חלון הפינוי, ⛔ ואין מספר ימים באף
    *  רשומה: ⭐ והנימוק אומר על מה החישוב שלה נפרש. */
@@ -2553,6 +2563,11 @@ var BK_CFG = {
 /* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
 var PEND_CFG = {
   app: 'hanhala-ruchanit', key: 'hr_pending',
+  /*  ⛔ קידומות הסימון — ⚠️ נגזרות ממפת הסימונים, ⭐ ⏳ שקידומתו אינה
+   *  כאן יורד בעלייה: ⛔ אין לו כותב, ⚠️ ואין שורה שתידחף ותוריד אותו. */
+  marks: function () {
+    return [PK_SET].concat(Object.keys(PEND_KV_PREFIX).map(function (k) { return PEND_KV_PREFIX[k]; }));
+  },
   // השהיית ציור: בתום ההחזקה, תגית ⏳ שנותרה צריכה להיכנס לשורות
   // שכבר רונדרו בלעדיה. שלושת המסכים שמציירים pendTag — מצבת התלמידים ושני
   // מסכי "סדרי היום". כולם אידמפוטנטיים וכותבים לאלמנטים קבועים ב-DOM
@@ -5123,9 +5138,10 @@ async function hrRefreshApprovalMarks(sid) {
     var sidKey = String(sid);
     var todayIso = dayToday();
 
+    /*  ⛔ הקריאה בנקודת הדיסק האחת ⛔ ואינה כותבת בעצמה — ⚠️ השמירה היא
+     *  `saveFn`, ⭐ ומפתח שטוח שנקרא וננכתב כאן היה מקור אמת שני. */
     function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
-      var data = null;
-      try { data = JSON.parse(lsGet(lsKey) || 'null'); } catch(e0) {}
+      var data = _hrDiskArr(lsKey);
       if (!Array.isArray(data)) return;
       var changed = false;
       data.forEach(function(rec){
@@ -5149,7 +5165,6 @@ async function hrRefreshApprovalMarks(sid) {
         }
       });
       if (changed) {
-        lsSet(lsKey, JSON.stringify(data));
         try { saveFn(data); } catch (eS) { hrWriteFail('refreshSet', eS); }
       }
     }
