@@ -7,10 +7,14 @@
 
 ## הפעלה ראשונה
 
-1. הריצו את `migrations/000_initial_schema.sql` מול פרויקט ה-Supabase
-   (`supabase.url` שבתצורה) דרך ה-SQL Editor. הקובץ אידמפוטנטי.
+1. הריצו את `migrations/000_schema.sql` מול פרויקט ה-Supabase
+   (`supabase.url` שבתצורה) דרך ה-SQL Editor — הוא הסכימה החיה, והרצה חוזרת
+   אינה משנה דבר.
 2. צרו את המשתמש הראשון **ידנית** ב-SQL Editor — ⛔ אין משתמש ברירת מחדל ואין
-   סיסמה שכתובה בריפו. ההוראה, עם מצייני מקום, נמצאת בקובץ ההתקנה.
+   סיסמה בריפו. הטביעה נגזרת בקונסולה של הדף עצמו:
+   `(await import('./core/auth.js')).authMakePassFp('<שש ספרות>')` מחזירה
+   `{salt, fp}`, והם נכנסים ל-`pass_salt` ול-`pass_fp` של שורה ב-`hr_users`,
+   עם `role` שהוא `'admin'`.
 
 ## מסכים
 

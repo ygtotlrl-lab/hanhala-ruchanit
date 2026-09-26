@@ -5,7 +5,7 @@
 - **GitHub Pages:** כתובת האפליקציה — `android.url` שבתצורה
 - **טוקן:** מנוהל ב-Windows Credential Manager (host `github.com`) — לעולם לא בקובץ
 - **קובץ ראשי:** `index.html`
-- **Supabase:** project — `supabase.url` שבתצורה | טבלאות `kv`, `hr_*` (ראה למטה)
+- **Supabase:** project — `supabase.url` שבתצורה | טבלאות `hr_*`
 
 ---
 
@@ -22,21 +22,14 @@ grant all on public.TABLE_NAME to service_role;
 alter table public.TABLE_NAME enable row level security;
 ```
 
+⚠️ **הסיבה:** `GRANT` הוא **אדיטיבי בלבד ואינו מסיר דבר**, ופרויקט Supabase
+סטנדרטי מגיע עם `alter default privileges … grant all on tables` — כלומר
+**כל טבלה נולדת עם `DELETE` ו-`TRUNCATE`**. מחיקה כאן היא תמיד `deleted=true`,
+ולכן ההרשאות האלה מיותרות בהגדרה ומסוכנות בפועל: מפתח ה-anon יושב גלוי
+ב-`index.html` הציבורי.
+
 ⚠️ **ושמות הטבלאות נגזרים מתפקידן** — ⭐ `<תחילית>_settings` · `_users` ·
 `_entries`: ⛔ ולא לפי מה שנשמע טוב.
 <!-- SHARED:end -->
 
-⚠️ **הסיבה:** `GRANT` הוא **אדיטיבי בלבד ואינו מסיר דבר**, ופרויקט Supabase
-סטנדרטי מגיע עם `alter default privileges … grant all on tables` — כלומר
-**כל טבלה נולדת עם `DELETE` ו-`TRUNCATE`**. מחיקה בארגון היא תמיד `deleted=true`
-(כלל ברזל 6 סעיף 1), ולכן ההרשאות האלה מיותרות בהגדרה ומסוכנות בפועל: מפתח
-ה-anon יושב גלוי ב-`index.html` הציבורי. ר' `migrations/001`+`002`.
-
-מקור האמת המלא לסכימה: `migrations/000_initial_schema.sql`.
-
----
-
-⛔ **הקובץ הזה מחזיק לקוח · צורך · הסכימה וההרשאות** — ⛔ ותו לא. התקנה,
-הפעלה ופיתוח יושבים ב-[README.md](README.md), והמעטפת והחתימה
-ב-[android/README.md](android/README.md). ⛔ תיאור שחוזר משם נסחף בשקט,
-⛔ ופרק «מצב נוכחי» לא יחזור: צילום מצב הוא היסטוריה, והכלל אוסר.
+מקור האמת המלא לסכימה: `migrations/000_schema.sql`.
