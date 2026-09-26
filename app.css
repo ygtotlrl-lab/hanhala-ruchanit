@@ -274,7 +274,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .sf-inp{border:1.5px solid var(--border);background:var(--card);font-family:Heebo;font-size:var(--fs-4);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3);width:100%}
 .sf-lbl{font-size:var(--fs-3);color:var(--text-2);display:block;font-weight:600;margin-bottom:var(--sp-3)}
 .sf-save{border:1.5px solid var(--ty-line);background:var(--ty-bg);color:var(--ty);cursor:pointer;font-family:Heebo;font-size:var(--fs-4);font-weight:600;padding:var(--sp-4) var(--sp-7);border-radius:var(--r-4)}
-.sync-badge{font-size:var(--fs-2);font-weight:700;background:var(--warn-soft);bottom:72px;color:var(--warn);font-family:Heebo;left:50%;padding:var(--sp-3) var(--sp-6);pointer-events:none;position:fixed;border-radius:var(--r-7);box-shadow:var(--shadow);transform:translateX(-50%);white-space:nowrap;z-index:var(--z-5)}
 .table-scroll{overflow-x:auto}
 .tile-ico{font-size:var(--fs-6)}
 .user-menu-empty{font-size:var(--fs-2);color:var(--text-3);padding:var(--sp-4) var(--sp-6)}
