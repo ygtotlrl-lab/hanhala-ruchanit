@@ -49,7 +49,6 @@
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
-  <div id="ys-sync-badge" class="hidden sync-badge"></div>
   <div id="user-avatar-wrap" class="hidden avatar-wrap">
     <button data-act="user-menu-toggle" class="avatar-btn">
       <span class="avatar-ico">👤</span>
@@ -130,17 +129,17 @@
 /*  ⛔ הליבה המשותפת נטענת כמודול ⛔ ואינה מוכפלת כאן — ⚠️ והמסמך עצמו הוא
  *  מודול: ⭐ סקריפט קלאסי רץ **לפני** כל מודול, ⛔ וקריאה אליו בעלייה
  *  הייתה מוצאת `undefined`. */
-import { MSG_CLOUD_SYNC_FAIL, MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
+import { MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
          MSG_LOGIN_ERR, MSG_MY_PASS_TITLE, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO,
          MSG_OFF_NO_FP, MSG_OFF_UNKNOWN, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL,
-         MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, MSG_SYNC_BACK, appConfigure,
+         MSG_PASS_VERIFY_FAIL, MSG_SERVER_ERR, appConfigure,
          dayIso, dayNoon, dayToday, getDeviceId, isNetErr, kvParse, readNum,
          uniqHas, uniqList, withTimeout } from './core/util.js';
 import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
-         pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
-         plBoot, plNum, plTouch, pushTable, rtyBoot, rtyNote, runSave,
+         pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
+         plBoot, plNum, plTouch, pushDirty, pushTable, rtyBoot, runSave,
          sbWatch, schedulePush, tombAt, tombBoot, tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
@@ -759,8 +758,6 @@ var MSG_ACTION_FAILED = '❌ הפעולה נכשלה: ';
 var MSG_NO_LINK = 'אין חיבור';
 var MSG_USER_OFF = '🔴 משתמש הושבת';
 var MSG_USER_ON = '🟢 משתמש הופעל';
-var MSG_PERMS_SAVE_FAIL = '❌ שמירת ההרשאות נכשלה: ';
-var MSG_WILL_RESEND = ' — הן יישלחו שוב כשהרשת תחזור';
 var MSG_PERMS_SAVED = '✅ הרשאות נשמרו!';
 var MSG_NO_USER_SESSION = '❌ אין משתמש מחובר';
 var MSG_FILL_ALL_X = '❌ נא למלא את כל השדות';
@@ -769,16 +766,12 @@ var MSG_PASS_NEEDS_NET = '❌ אין חיבור — לא ניתן לשנות ס�
 var MSG_USER_SWITCHED_MID = '❌ המשתמש המחובר התחלף — הסיסמה לא שונתה';
 var MSG_PASS_UPDATED_X = '✅ סיסמה עודכנה!';
 var MSG_PASS_UPDATED_NO_FP = '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת';
-var MSG_UP_SLOW_FANOUT = '⚠️ הנתונים עלו — אך העדכון עשוי להתעכב במכשירים האחרים';
-var MSG_ROWS_SYNCED = ' רשומות סונכרנו בהצלחה';
 /*  ⛔ פר-אפליקציה — ⚠️ כאן הכניסה הראשונה דורשת חיבור: ⭐ המראה כולה
  *  ריקה עד המשיכה הראשונה, ⛔ ו-`MSG_OFF_UNKNOWN` מתאר משתמש אחד שאינו בה. */
 var MSG_OFF_FIRST_LOGIN = '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט';
 /*  ⛔ פר-אפליקציה — ⚠️ כאן טבלת המשתמשים נקראת בעלייה, ⭐ וטבלה חסרה
  *  נאמרת לפני הכניסה ⛔ ולא נקראת כ«סיסמה שגויה». */
 var MSG_TABLES_MISSING = '❌ טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
-var MSG_SOME_UNSYNCED_PRE = '⚠️ חלק מהנתונים לא סונכרנו (';
-var MSG_SOME_UNSYNCED_POST = ') — יישלחו שוב אוטומטית';
 var MSG_STUDENT_MISSING = '⚠️ תלמיד לא נמצא';
 var MSG_MARKED_INACTIVE = ' סומן כלא פעיל';
 var MSG_MARKED_ACTIVE = ' הוחזר לפעיל';
@@ -1039,7 +1032,7 @@ async function loadPerms() {
   } catch(e) {
     res = null; // פסק זמן או זריקה אמיתית
   }
-  if (res && res.ok && res.value) {
+  if (res && res.ok && res.value && !hrSetPending('perms')) {
     try {
       // hrApplyPerms שומר גם את העותק המקומי ומחיל על התצוגה — מימוש אחד
       hrApplyPerms(res.value);
@@ -1570,8 +1563,6 @@ async function saveAbsenceReasons() {
       reasons[type].push(v);
     });
   });
-  hrCfgLocalSet('absence_reasons', reasons);
-  hrSettingsTouch('absence_reasons');
   console.log('[absence-reasons] saving:', reasons);
   /*  ⛔ ההצלחה מסומנת אחרי **השמירה המקומית** ⛔ ולא אחרי הדחיפה —
    *  ⚠️ הנימוק המדוד: הכתיבה לדיסק סינכרונית בראש פונקציית השמירה, ⭐ ולכן
@@ -1580,14 +1571,7 @@ async function saveAbsenceReasons() {
    *  ⛔ **וההמתנה נשארת בסוף** — ⚠️ נקודת הניתוב משחררת את הכפתור לפיה,
    *  ⭐ וכשל דחיפה מסומן בתג הממתינים ⛔ ולא בהודעת כשל שנייה. */
   toast(MSG_REASONS_SAVED, null, 'good');
-  try {
-    var r = await hrCfgSet('absence_reasons', reasons);
-    console.log('[absence-reasons] KV result:', r && r.error ? 'ERROR: '+r.error.message : 'OK');
-    /*  ⛔ אות הפולינג מקודם בנקודת המעבר האחת — ⚠️ כתיבה ידנית של
-     *  `hr_last_changed` כאן הייתה מסלול שני לאותו קידום, ⭐ ומסלול
-     *  שני הוא מקום שני שבו הוא יכול להישכח. */
-    await hrTouchLastChanged();
-  } catch(e) { console.error('[absence-reasons] save error:', e); }
+  return hrCfgSet('absence_reasons', reasons);
 };
 
 function renderAbsenceReasons() {
@@ -2128,22 +2112,10 @@ async function savePerms() {
     });
     p[m.id]['admin'] = (m.id === 'settings') ? 'edit' : p[m.id]['admin'];
   });
-  // upsert דרך hrCfgSet ולא select-ואז-update/insert: ל-`.single()` יש error
-  // גם כשהשורה חסרה וגם בכשל רשת, ולכן כשל זמני נופל לענף ה-insert → שגיאת
-  // מפתח כפול → נבלעת → "✅ הרשאות נשמרו!" בזמן שהענן לא השתנה.
-  var res = await hrCfgSet('perms', p);
-  if (res && res.error) {
-    // AUTH.perms לא מתעדכן — עדיף להציג את המטריצה שבאמת בתוקף מאשר כזו שלא נשמרה
-    toast(MSG_PERMS_SAVE_FAIL + (res.error.message || res.error.code || MSG_NO_LINK) +
-          MSG_WILL_RESEND, null, 'bad');
-    return;
-  }
-  // AUTH.perms + hr_perms_cache + רענון התצוגה — הכל דרך hrApplyPerms
+  /*  ⭐ ההרשאות מקומיות-תחילה, כמו כל הגדרה — ⚠️ העריכה חלה במכשיר מיד,
+   *  ⛔ ועולה לענן בשכבת הדחיפה: ⚠️ `hrApplyPerms` היא מקור האמת לקליטה. */
   hrApplyPerms(p);
-  // hr_perms נמשך ב-hrPullFromCloud, ו-`plTick` במכשירים האחרים משווה
-  // **רק** מול hr_last_changed. בלי הקידום הזה עדכון הרשאות נשאר בלתי-נראה
-  // להם עד היציאה-והכניסה הבאה.
-  await hrTouchLastChanged();
+  await hrCfgSet('perms', p);
   toast(MSG_PERMS_SAVED, null, 'good');
 }
 
@@ -2384,7 +2356,7 @@ var KV_TABLE = 'hr_settings';
  *  הוא מבנה שמנוע המיזוג אינו מכריע עליו.
  *  ⚠️ **ומה שאינו נדחף בשכבת הדחיפה מוכרז ב-`noPush`** — ⛔ **מה נכנס**:
  *  שם הטבלה, המסלול שדוחף אותה, וסוג התוספת שלו על הלולאה; ⛔ **מה מפיל**:
- *  מסלול שאין לו גוף, סוג שאינו אחד משלושה, ומסלול שאינו מוסיף דבר.
+ *  מסלול שאין לו גוף, סוג שאינו אחד משניים — רשומת אב או סוד, ומסלול שאינו מוסיף דבר.
  *  ⭐ **ולמה זה קיים**: מסלול שאינו מוסיף על הלולאה הוא לולאה שנכתבה
  *  פעמיים, ⛔ ושורותיו מסתכנות בכך שלא יעלו כלל. */
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
@@ -2395,7 +2367,6 @@ var MIRROR_CFG = {
   tables: function () { return HR_MIRROR_TABLES; },
   noPush: [{ t: 'hr_marks',       via: 'hrSendRecs', adds: 'parent' },
            { t: 'hr_sleep_marks', via: 'hrSendRecs', adds: 'parent' },
-           { t: KV_TABLE,         via: 'hrCfgSet',   adds: 'queue'  },
            { t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return _hrRecTs(r); },
@@ -2464,11 +2435,9 @@ var LS_CFG = {
     { t: 'hr_users',         why: 'משתמשים — שורה למשתמש, ⚠️ והיא מסלול הכניסה האופליין' }
   ],
 
-  // ⛔ כל עוד יש משהו בתור האופליין — לא מפנים כלום, בשתי הרשימות.
+  // ⛔ כל עוד יש משהו בתור יומן הכניסות — לא מפנים כלום, בשתי הרשימות.
   pending: function () {
     try {
-      var q = JSON.parse(lsGet('hr_offline_queue') || '[]');
-      if (Array.isArray(q) && q.length) return true;
       var l = JSON.parse(lsGet('hr_login_log_queue') || '[]');
       return Array.isArray(l) && l.length > 0;
     } catch (e) { return true; }   // ספק = לא מפנים
@@ -2483,7 +2452,7 @@ var LS_CFG = {
 };
 
 /* ── עֵד הדחיפה פר-מפתח ─────────────────────────────────────────────────
-   נכתב **רק** אחרי `hrCfgSet` שלא החזירה `error` — כלומר אותה עדות בדיוק
+   נכתב **רק** אחרי דחיפה שחזרה `ok` — כלומר אותה עדות בדיוק
    שמזינה את `pendConfirmPush`. כל רשומה שגילה קטן ממנו הייתה בתוך המערך
    שנדחף בהצלחה. ⛔ אין לגזור אותו ממשיכה. */
 var _hrPushedAt = {};
@@ -2585,17 +2554,8 @@ var BK_CFG = {
 };
 
 /* ── PEND_CFG — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-// `extra` — התור כאן הוא **פר-מפתח** ולא פר-רשומה, ולכן הוא
-// לא נכנס למפת הסימונים. הוא כן חייב להופיע במונה, אחרת המשתמש רואה "0
-// ממתינות" בזמן שארבעה מפתחות תקועים בתור.
 var PEND_CFG = {
   app: 'hanhala-ruchanit', key: 'hr_pending',
-  extra: function () {
-    try {
-      var q = JSON.parse(lsGet('hr_offline_queue') || '[]');
-      return (Array.isArray(q) && q.length) ? (q.length + ' מפתחות בתור') : '';
-    } catch (e) { return ''; }
-  },
   // השהיית ציור: בתום ההחזקה, תגית ⏳ שנותרה צריכה להיכנס לשורות
   // שכבר רונדרו בלעדיה. שלושת המסכים שמציירים pendTag — מצבת התלמידים ושני
   // מסכי "סדרי היום". כולם אידמפוטנטיים וכותבים לאלמנטים קבועים ב-DOM
@@ -2608,11 +2568,10 @@ var PEND_CFG = {
 };
 
 /* ── RTY_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה «ממתין» הוא גם סימון ⏳ וגם מפתח שתקוע ב-`hr_offline_queue` —
-   ו-`PEND_CFG.extra()` כבר מוסיף את השני למונה, ולכן `pendCount()` מכסה
-   את שניהם. הריקון הוא `hrFlushQueue`, ⛔ ולא מסלול שני. */
+/* ⭐ «ממתין» הוא סימון ⏳ בלבד — ⚠️ גם הגדרה: ⛔ הריקון הוא מחזור הדחיפה,
+   ⛔ ולא מסלול שני. */
 var RTY_CFG = {
-  flush:   function () { return hrFlushQueue(); },
+  flush:   function () { return hrPushToCloud(); },
   pending: function () { try { return pendCount() > 0; } catch (e) { return false; } },
 };
 /* ── LK_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
@@ -2636,9 +2595,9 @@ function hrSupervisionAccess() {
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה החותמת היא שורת `hr_last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
-   שאינו נכנס לתור האופליין — והיא נכתבת ממשפך אחד,
-   `hrTouchLastChanged()`, שכל כותב ענן כאן כבר קורא לו.
+/* ⚠️ בהנהלה החותמת היא שורת `last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
+   שאינו עובר בשכבת הדחיפה — והיא נכתבת ממשפך אחד, `plTouch`: ⭐ שכבת
+   הדחיפה קוראת לו, ⚠️ וכתיבת משתמש דרך `hrTouchLastChanged()`.
    ⚠️ `ok()` הוא `_hrMarkSynced()` — חותמת **תצוגה** בלבד. ⛔ אין להזין
    ממנה את עֵד הפינוי — הוא `_hrPushedAt` פר-מפתח. */
 var PL_CFG = {
@@ -2647,7 +2606,7 @@ var PL_CFG = {
   seen:   function () { return _hrLastTs; },
   note:   function (ts) { _hrLastTs = ts; },
   ok:     function () { _hrMarkSynced(); },
-  stamp:  function (ts) { return hrCfgSet('last_changed', ts); },
+  stamp:  function (ts) { return hrStampWrite(ts); },
   pull:   function () { return hrPullFromCloud(); },
   remote: function () {
     return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle())
@@ -2662,8 +2621,9 @@ var PL_CFG = {
    סיסמאות, ⭐ ודחיפת-מצב שלה הייתה כותבת סיסמה ריקה לכל המשתמשים:
    ⛔ מסלולה הוא `writeUser`, שדורש רשת.
    ⚠️ הסדרים לפני המצבה — ⛔ הסימון מפנה לתלמיד, ⭐ והמצבה היא מה שהוא
-   מצביע אליו. */
-var PUSH_TABLES = ['hr_sessions', 'hr_sleep_sessions', 'hr_students_rows'];
+   מצביע אליו.
+   ⭐ וההגדרות אחרונות — ⚠️ אין להן אב ואין להן בן. */
+var PUSH_TABLES = ['hr_sessions', 'hr_sleep_sessions', 'hr_students_rows', KV_TABLE];
 /*  ⛔ ההקשר שנלכד לפני ההמתנה הראשונה — ⚠️ `mark` רץ אחרי `await`, ⭐ וקריאת
  *  הגלובלי בו הייתה זוקפת את הצלחת הדחיפה של משתמש אחד לחשבון השני. */
 var _hrPushEp = 0;
@@ -2671,17 +2631,26 @@ var PUSH_CFG = {
   tables: PUSH_TABLES,
   chunk:  500,
   delay:  400,
-  dirty:  function (t, ctx) { _hrPushEp = ctxEpoch(); return hrPushDirty(t, ctx); },
+  /*  ⚠️ `ctx` הוא המערך שהכותב כבר מחזיק — ⭐ ובלעדיו העותק שבמראה:
+   *  ⛔ מחזור שנדחף בלי קלט הוא «אין ראיה», ⚠️ וההגדרות היו נשארות ⏳. */
+  dirty:  function (t, ctx) {
+    _hrPushEp = ctxEpoch();
+    if (t === KV_TABLE) return hrSetDirtyRows();
+    return hrPushDirty(t, Array.isArray(ctx) ? ctx : hrLocalRecs(t));
+  },
   key:    function (t, row) {
+    if (t === KV_TABLE) return row ? PK_SET + row.key : null;
     var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
     return (c && row && row.id != null) ? (c.pk + row.id) : null;
   },
-  send:   function (t, rows) { return hrSendRecs(t, rows); },
+  send:   function (t, rows) { return t === KV_TABLE ? hrSetSend(rows) : hrSendRecs(t, rows); },
   /*  ⛔ הסימונים נדחפים בתוך הסדר — ⚠️ `hrSendRecs` מחזירה שגיאה כשאחד
    *  מהם נכשל, ⭐ ולכן עֵד האב הוא גם עֵד הבן: ⛔ בלי עֵד הבן הפינוי
    *  משאיר אותם יתומים. */
   mark:   function (t) {
     if (ctxStale(_hrPushEp)) return;
+    /*  ⭐ הטיפולים יושבים בטבלת ההגדרות — ⚠️ ועֵד הפינוי שלהם הוא עֵדה. */
+    if (t === KV_TABLE) { Object.keys(HR_SET_FLAT).forEach(function (k) { _hrMarkPushed(HR_SET_FLAT[k]); }); return; }
     _hrMarkPushed(t);
     var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
     if (c && c.child) _hrMarkPushed(c.child);
@@ -2775,7 +2744,7 @@ var HW_CFG = {
  *  ⚠️ וההגירה המקומית מכסה מכשיר שעלה, ⛔ ואינה מכסה מכשיר שההגירה
  *  נפלה בו באמצע: ⭐ ולכן העידן קודם, ⛔ **ואחרי ההגירה
  *  ⛔ ולא לפניה** — ⚠️ סדר הפוך זורק תור שטרם הוגר. */
-var DATA_ERA = 2;
+var DATA_ERA = 3;
 var ERA_CFG = {
   prefix: self.APP.prefix,
   client: function () { return SB; },
@@ -3000,18 +2969,17 @@ function _hrStDiskSave(rows) {
    `pendConfirmPush(prefix, t0)` — דחיפה מוצלחת של `hr_sessions`
    מאשרת כל סימון סדר שנרשם **לפני שהצילום נלקח**.
    ───────────────────────────────────────────────────────────────────────── */
-var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:',
-    PK_AT_TREAT = 'at-treat:', PK_SL_TREAT = 'sl-treat:', PK_STUDENT = 'student:';
-// מיפוי מפתח kv → קידומת הסימונים שהוא נושא. משמש גם את ריקון התור.
+var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:', PK_STUDENT = 'student:',
+    PK_SET = 'setting:';
+// מיפוי מפתח kv → קידומת הסימונים שהוא נושא.
 var PEND_KV_PREFIX = {
   'hr_sessions': PK_AT_SESS, 'hr_sleep_sessions': PK_SL_SESS,
-  'hr_attend_treats': PK_AT_TREAT, 'hr_sleep_treats': PK_SL_TREAT,
   'hr_students_rows': PK_STUDENT
 };
-function pendConfirmKv(kvKey, t0) {
-  var pfx = PEND_KV_PREFIX[kvKey];
-  if (pfx) pendConfirmPush(pfx, t0);
-}
+/*  ⛔ הגדרה שהעותק המקומי שלה שטוח ⛔ ואינו שורה במראה — ⚠️ **מה נכנס**:
+ *  מפתח ההגדרה ⟵ המפתח המקומי; ⭐ **ולמה**: הפינוי מפנה אותן פר-רשומה,
+ *  ⛔ ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי. */
+var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
 
 
@@ -3048,29 +3016,63 @@ function _hrMarkSynced() { _hrLastSyncAt = Date.now(); }
 // `hr_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
 async function hrSyncNow() {
   await hrPullFromCloud();
-  try { await hrFlushQueue(); } catch (e) { hrWriteFail('hrSyncNow', e); }
+  await hrPushToCloud();
   _hrMarkSynced();
 }
 
-// ===== תור האופליין =====
-var _HR_Q_KEY = 'hr_offline_queue';
-
-/* ⛔ בית ההגדרות בענן הוא `hr_settings` ⛔ ולא `kv` — ⚠️ מפתח `kv` הוא ערך
-   חופשי בטבלה משותפת לכל האפליקציות, ⭐ והטבלה המובנית היא מפתח ראשי
-   `key` בטבלה שהיא של האפליקציה הזו בלבד. ⛔ ו-`onConflict` הוא `key`
-   ⛔ ולא `client_id` — ⚠️ מיפתוח לפי מזהה שנוצר במכשיר היה יוצר שתי שורות
-   לאותה הגדרה, ⛔ ומיזוג בין שתיהן הוא הכרעה בלי מפתח. */
-function _hrCfgSetRaw(key, value) {
-  return SB.from(KV_TABLE).upsert({key: key, value: JSON.stringify(value), updated_at: Date.now()}, {onConflict: 'key'});
+/* ══════════════════════════════════════════════════════════════════════════
+   ההגדרות — מקומיות-תחילה, ונדחפות בשכבת הדחיפה
+   ══════════════════════════════════════════════════════════════════════════
+   ⛔ `hrCfgSet` אינה פונה לענן — ⚠️ הערך נכתב במכשיר, המפתח מסומן
+   ⏳ `setting:<מפתח>` ונדחף ב-`schedulePush`: ⭐ כשל רשת משאיר את הסימון,
+   ⛔ והניסיון החוזר הוא זה של כל טבלה.
+   ⛔ והמשיכה מדלגת על מפתח שנושא ⏳ — ⚠️ ערך מרוחק היה דורס את מה שטרם
+   עלה.
+   ⛔ `onConflict` הוא `key` ⛔ ולא `client_id` — ⚠️ מיפתוח לפי מזהה שנוצר
+   במכשיר היה יוצר שתי שורות לאותה הגדרה.
+   ══════════════════════════════════════════════════════════════════════════ */
+function hrSetPending(key) { return pendHas(PK_SET + key); }
+function hrSetLocal(key) {
+  var flat = HR_SET_FLAT[key];
+  if (!flat) return hrCfgLocalGet(key);
+  try { var v = JSON.parse(lsGet(flat) || 'null'); return Array.isArray(v) ? v : null; }
+  catch (e) { return null; }
+}
+async function hrCfgSet(key, value) {
+  var flat = HR_SET_FLAT[key];
+  if (flat) lsSetArray(flat, value, _hrRecTs);
+  else hrCfgLocalSet(key, value);
+  pendMark(PK_SET + key);
+  schedulePush();
+  return {};
+}
+function hrSetDirtyRows() {
+  var out = [];
+  Object.keys(pendAll()).forEach(function (pk) {
+    if (pk.indexOf(PK_SET) !== 0) return;
+    var k = pk.slice(PK_SET.length);
+    out.push({ key: k, value: JSON.stringify(hrSetLocal(k)), updated_at: Date.now() });
+  });
+  return out;
+}
+function hrSetSend(rows) {
+  return withTimeout(SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
+}
+/*  ⛔ אות הפולינג — ⚠️ הכתיבה היחידה לטבלת ההגדרות שאינה בשכבת הדחיפה:
+ *  ⭐ היא החותמת של הדחיפה עצמה. */
+function hrStampWrite(ts) {
+  return SB.from(KV_TABLE).upsert({key: 'last_changed', value: JSON.stringify(ts), updated_at: Date.now()}, {onConflict: 'key'});
+}
+/*  ⭐ העותק המקומי של טבלה נדחפת — ⚠️ המקור שמחזור הדחיפה קורא כשאין
+ *  לו קלט מהכותב. */
+function hrLocalRecs(t) {
+  return t === 'hr_students_rows' ? _hrStudentsRaw() : hrMirrorRecs(t);
 }
 
 // קידום חותמת השינוי הגלובלית. המכשירים האחרים משווים **רק** מול
-// hr_last_changed — כתיבה ל-kv בלי הקידום הזה נשארת בלתי-נראית להם לנצח.
-// כל כותב ענן (נתונים *והגדרות*) חייב לקרוא לזה אחרי כתיבה מוצלחת.
-// ⭐ הגוף הוא `plTouch()` שבמודול המשותף; הפונקציה קיימת
-//    בשמה מפני שהיא **המשפך** שכל הכותבים כאן קוראים לו. ⛔ אין לפצל
-//    אותה לשני נתיבים — קידום חותמת ממקום שאינו כתיבה מוצלחת
-//    מכריז על שינוי שלא קרה, והמכשירים האחרים מושכים לחינם.
+// last_changed — כתיבה בלי הקידום הזה נשארת בלתי-נראית להם לנצח.
+// ⭐ הגוף הוא `plTouch()` שבמודול המשותף; ⚠️ שכבת הדחיפה קוראת לו בעצמה,
+//    ⛔ וכתיבת משתמש — שאינה בה — קוראת לו כאן.
 /* ══════════════════════════════════════════════════════════════════════════
    רישום כשל כתיבה שנבלע — `hrWriteFail`
    ══════════════════════════════════════════════════════════════════════════
@@ -3089,73 +3091,6 @@ function hrWriteFail(where, e) {
 async function hrTouchLastChanged() {
   return await plTouch();
 }
-
-// hrCfgSet עם נפילה-חזרה לתור — תחליף שקוף, באותו חוזה
-async function hrCfgSet(key, value) {
-  // ⛔ לעולם לא להכניס לתור את מפתח החותמת — הוא תמיד נגזר
-  if (key === 'last_changed') {
-    try { return await _hrCfgSetRaw(key, value); } catch(e) { return {error:{message:e.message}}; }
-  }
-  try {
-    var r = await _hrCfgSetRaw(key, value);
-    if (r && r.error) {
-      _hrQueueAdd(key, value);
-    } else {
-      _hrQueueRemove(key);
-    }
-    hrUpdateQueueBadge();
-    return r;
-  } catch(e) {
-    _hrQueueAdd(key, value);
-    hrUpdateQueueBadge();
-    return {error: {message: e.message || 'offline'}};
-  }
-}
-
-function _hrQueueAdd(key, value) {
-  try {
-    var q = JSON.parse(lsGet(_HR_Q_KEY) || '[]');
-    q = q.filter(function(x){return x.key !== key;});
-    q.push({key: key, value: value, ts: Date.now()});
-    lsSet(_HR_Q_KEY, JSON.stringify(q));
-    /*  ⚠️ משפך התור היחיד כאן, ⛔ ולכן זו נקודת הדריכה היחידה של מודול
-     *  הניסיון החוזר. ⛔ **ואיתה המתזמן** — ⚠️ הניקוז של התור הזה הוא
-     *  מודול הניסיון החוזר, ⭐ אבל הפריט שנכנס אליו הוא כתיבה מקומית
-     *  שממתינה לענן: ⛔ משפך שדורך את האחד ולא את השני מייצר שני זמני
-     *  תגובה לאותה פעולה. ⚠️ והמתזמן מושהה ומאחד, ⭐ ולכן קריאה נוספת
-     *  אינה מחזור סנכרון נוסף. */
-    rtyNote();
-    schedulePush();
-  } catch(e) { console.error('[ys-queue] add error:', e); }
-}
-function _hrQueueRemove(key) {
-  try {
-    var q = JSON.parse(lsGet(_HR_Q_KEY) || '[]');
-    q = q.filter(function(x){return x.key !== key;});
-    lsSet(_HR_Q_KEY, JSON.stringify(q));
-  } catch (e) { hrWriteFail('_hrQueueRemove', e); }
-}
-function _hrQueueGet(key) {
-  try {
-    var q = JSON.parse(lsGet(_HR_Q_KEY) || '[]');
-    var item = q.find(function(x){return x.key === key;});
-    return item ? item.value : null;
-  } catch(e) { return null; }
-}
-function hrUpdateQueueBadge() {
-  try {
-    var badge = document.getElementById('ys-sync-badge');
-    if (!badge) return;
-    var q = JSON.parse(lsGet(_HR_Q_KEY) || '[]');
-    var n = q.length;
-    if (n > 0) {
-      badge.textContent = '⏳ ' + n + ' רשומות ממתינות לסנכרון';
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-  } catch(e) {}
-}
 // ממזג שני מערכי סדרים לפי מזהה רשומה (פריטים מקומיים בלבד מתווספים בסוף)
 /*  ⛔ `keepLocal` נדלק כשהצד המרוחק הוא **חלון** ⛔ ולא הטבלה — ⚠️ רשומה
  *  מקומית שמחוץ לחלון לא נשאלה כלל, ⭐ והיעדרותה אינה עדות: ⛔ בלי הדגל
@@ -3172,69 +3107,6 @@ function _hrSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
   return hrMergeRecords(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, null,
                         hrPendingFor(logKey || 'sessions'), pair);
 }
-/* ⛔ שליחת פריט מהתור — ⚠️ שכבת השורות מחזירה `{ok}` והכתיבה להגדרות
-   מחזירה `{error}`, ⭐ והתור מכיר חוזה אחד בלבד: ⛔ החזרת `{ok:false}`
-   כמות שהיא הייתה נספרת כהצלחה, והפריט היה יורד מהתור בלי שעלה. */
-async function _hrQueueSend(key, value) {
-  var kind = HR_ROWS_READ_KEYS[key];
-  if (!kind) return _hrCfgSetRaw(key, value);
-
-  var r = await pushTable(key, value);
-  return (r && r.ok) ? {} : { error: { message: 'rows:' + key } };
-}
-async function hrFlushQueue() {
-  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
-   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
-   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
-  var _ep = ctxEpoch();
-  var q;
-  try { q = JSON.parse(lsGet(_HR_Q_KEY) || '[]'); } catch(e) { return; }
-  if (!q.length) return;
-  console.log('[ys-queue] flushing', q.length, 'items');
-  var failed = [];
-  var nOk = 0;
-  for (var i = 0; i < q.length; i++) {
-    var item = q[i];
-    try {
-      /* ⛔ היעד נגזר מהמפתח ⛔ ולא מהתור — ⚠️ מפתח שיש לו טבלה חוזר
-         **אליה**, ⭐ ומפתח הגדרות ל-`hr_settings`: ⛔ ריקון שכותב הכול
-         לאותו מקום היה מחזיר את הרשומות לערך שלם, ⚠️ כלומר למקור אמת שני. */
-      var r = await _hrQueueSend(item.key, item.value);
-      if (r && r.error) {
-        failed.push(item);
-      } else {
-        nOk++;
-        // ה-t0 של פריט בתור הוא **הרגע שבו הוא נכנס אליו** — הערך שנשלח עכשיו
-        // הוא הצילום מאותו רגע, ולכן הוא מאשר רק סימונים שקדמו לו.
-        if (!ctxStale(_ep)) pendConfirmKv(item.key, item.ts);
-        // עֵד הפינוי — אותה עדות בדיוק. הריקון הוא דחיפה שהצליחה.
-        if (!ctxStale(_ep)) _hrMarkPushed(item.key);
-        /* ⛔ התור נושא מפתחות הגדרות בלבד — ⚠️ הרשומות נכתבות ישירות
-           לשכבת השורות, ⛔ ואינן עוברות כאן: ⭐ שכפול של מסלול הכתיבה
-           הוא מנוע מיזוג שני, ⛔ והחזרתו לכאן דורסת בערך שנכנס לתור. */
-        console.log('[ys-queue] flushed', item.key);
-      }
-    } catch(e) { failed.push(item); }
-  }
-  if (nOk > 0) {
-    var ts = Date.now();
-    // ⛔ כשל חותמת אינו נבלע — `hr_last_changed` הוא האות
-    // היחיד שהפולינג במכשירים האחרים משווה מולו, ולכן חותמת
-    // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
-    // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
-    try { await _hrCfgSetRaw('last_changed', ts); if (!ctxStale(_ep)) _hrLastTs = ts; }
-    catch(e){
-      console.warn('[sync] חותמת hr_last_changed לא נכתבה:', e && e.message);
-      try { hrSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
-      toast(MSG_UP_SLOW_FANOUT, null, 'bad');
-    }
-    toast('☁️ ' + nOk + MSG_ROWS_SYNCED, null, 'good');
-  }
-  lsSet(_HR_Q_KEY, JSON.stringify(failed));
-  hrUpdateQueueBadge();
-}
-// ===== סוף תור האופליין =====
-
 /* ══════════════════════════════════════════════════════════════════════════
    שכבת השורות — טבלאות מובנות
    ══════════════════════════════════════════════════════════════════════════
@@ -3245,8 +3117,8 @@ async function hrFlushQueue() {
    ⛔ והכתיבה לשורות **היא** שקובעת הצלחה — ⚠️ עֵד הפינוי (`_hrPushedAt`),
       אישור ה-⏳ ו-`hrTouchLastChanged` נשענים עליה: ⭐ עדות שנשענת על
       כתיבה אחרת מזו שקרתה היא ראיה למשהו שלא נמדד.
-   ⛔ וכתיבה שנכשלה חוזרת לתור — ⚠️ `hrRowsUpsert` נכשלת סגור ומדלגת בשקט,
-      ⛔ ובלי התור רשומה שנכתבה אופליין לא הייתה מנסה לעלות שוב לעולם.
+   ⛔ וכתיבה שנכשלה נשארת ⏳ — ⚠️ `hrRowsUpsert` נכשלת סגור, ⭐ ומחזור
+      הדחיפה מנסה שוב כל עוד הסימון עומד.
 
    ⭐ שתי טבלאות, אב ובן: `hr_sessions` (מטא הסדר) ו-`hr_marks` (שורה
       לסימון). מטא הסדר אינה משוכפלת לכל סימון — `filled_by_name` היה
@@ -3258,18 +3130,6 @@ async function hrFlushQueue() {
       אינו מצטרף לאב, ולכן סימון של סדר מחוק שהיה נשאר `deleted=false`
       היה נקרא כרשומה חיה.
    ══════════════════════════════════════════════════════════════════════════ */
-
-/* ⭐ חותמת ההגדרות נקראת מ-`updated_at` של השורה — ⛔ ולא ממפה בתוך הערך.
-  ⛔ העמודה קיימת ב-`hr_settings`, ⭐ ונושאת את חותמת המכשיר שכתב.
-   ⛔ אין להחזיר את `hr_settings_meta` כמקור חותמת מרוחקת — ⚠️ הערך בענן
-   הוא `{}`, ולכן `rts` ממנו תמיד 0 ו«האחרון שדוחף מנצח».
-   ⚠️ המפה **המקומית** נשארת — היא נושאת את `lts`, חותמת הכתיבה של המכשיר
-   הזה, שאין לה מקבילה בענן. */
-
-/* ⭐ שלושת מפתחות ההגדרות שההכרעה עליהם היא LWW פר-מפתח.
-   ⚠️ הרשימה יושבת כאן ולא בשני אתרי הקריאה, כדי ששני צידי המסלול —
-   דחיפה ומשיכה — ⛔ לא ייבדלו בשקט. */
-var HR_SETTINGS_LWW_KEYS = ['reasons', 'absence_reasons'];
 
 /* ⭐ שני מסלולי הסדרים — נוכחות ושינה — עוברים באותו קוד.
    ⛔ ואין כאן עותק שני של הדפוס: השינה היא **תצורה** ולא העתקה של
@@ -3591,19 +3451,6 @@ async function hrCloudGet(kvKey, win) {
 // מסלול הטעינה המרכזי: כל מודול (נוכחות, שינה, הגדרות) ו-hrPullFromCloud עוברים
 // כאן. בלי timeout ברשת "חצי מחוברת" ה-fetch לא מצליח ולא נכשל — ספינר "⏳ טוען"
 // שמסתובב לנצח. דחייה כאן מתגלגלת ל-catch של הקורא, שנופל ל-localStorage מיד.
-/* ⛔ חותמת השורה של מפתח `kv` — ⚠️ **נכשלת סגור ומחזירה 0**.
-   0 פירושו «אין ראיה שהענן חדש יותר», ולכן המסלול דוחף את המקומי
-   במקום לאמץ ערך מרוחק על סמך חוסר-ידיעה — ⛔ אימוץ על
-   סמך כשל הוא הסקה ולא ראיה. */
-async function hrCfgUpdatedAt(key) {
-  try {
-    var r = await withTimeout(SB.from(KV_TABLE).select('updated_at').eq('key', key).maybeSingle());
-    if (!r || r.error || !r.data || !r.data.updated_at) return 0;
-    var t = Number(r.data.updated_at);
-    return isFinite(t) ? t : 0;
-  } catch (e) { return 0; }
-}
-
 /*  ⛔ «אין שורה» אינה כשל — ⚠️ מפתח שטרם נכתב אינו שגיאת רשת,
  *  ⛔ ואינו מצדיק אזהרה למשתמש: ⭐ `maybeSingle` מחזיר `data:null` נקי,
  *  בעוד ש-`single` מסמן שגיאה על היעדר שורה. ⛔ והדגל `res` הוא מה
@@ -3756,12 +3603,15 @@ function hrMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isP
   return out;
 }
 
-// פרדיקט ה-⏳ לפי מפתח ה-kv — נגזר מ-`PEND_KV_PREFIX`, אותה מפה
-// בדיוק שמשמשת את `pendConfirmKv` בריקון התור. מפתח שאין לו קידומת סימונים
-// (`hr_approvals`) מחזיר `null`, והמיזוג שלו לא משתנה כלל.
+// פרדיקט ה-⏳ לפי מפתח ה-kv — נגזר מ-`PEND_KV_PREFIX`. ⭐ והטיפולים הם
+// הגדרה אחת: ⚠️ כל רשומה בהם ממתינה כל עוד ההגדרה ממתינה. מפתח שאין לו
+// סימון מחזיר `null`, והמיזוג שלו לא משתנה כלל.
 // ⚠️ הקידומת חייבת להיגזר מהמפה ולא להיכתב כאן שוב — שני מקורות לאותו מיפוי
 //    הם בדיוק איך שסימון נכתב תחת מפתח אחד ונקרא תחת אחר.
 function hrPendingFor(kvKey) {
+  for (var sk in HR_SET_FLAT) {
+    if (HR_SET_FLAT[sk] === kvKey) return function () { return hrSetPending(sk); };
+  }
   var pfx = PEND_KV_PREFIX[kvKey];
   if (!pfx) return null;
   return function (k) { return pendHas(pfx + k); };
@@ -3887,142 +3737,29 @@ function hrStudentPair(loc, rem, k, pend) {
 function _hrStudentsRaw() { return hrMirrorRecs('hr_students_rows') || []; }
 function _hrStudentsSaveRaw(s) { _hrStDiskSave(s); }
 
-// updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
-function hrSettingsMeta() { try { return JSON.parse(lsGet('hr_settings_meta') || '{}'); } catch(e) { return {}; } }
-function hrSettingsTouch(key) { var m = hrSettingsMeta(); m[key] = Date.now(); lsSet('hr_settings_meta', JSON.stringify(m)); }
-
-// זוכר אם כבר הזהרנו על כשל סנכרון, כדי לא להציף בטוסטים בכל דחיפה
-var _hrPushWarned = false;
-
+/*  ⛔ מחזור הדחיפה — ⚠️ המצבה ממוזגת מול הענן לפני שהיא נדחפת, ⭐ וכל
+ *  השאר נדחף מהעותק המקומי בשכבת הדחיפה: ⛔ ואין מסלול שני. */
 async function hrPushToCloud() {
-  var ts = Date.now();
-  var failed = [], pushed = 0, kvMissing = false;
-  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ המחזור פותח כמה
-   *  הלוך-ושוב לרשת, ⭐ והמשתמש יכול להתחלף באמצע: ⛔ כל כתיבה שאחריו
-   *  כותבת את מה שנמזג עבור הקודם, ⚠️ וכל רישום הצלחה נזקף לחדש. */
+  var _t0 = Date.now();   // לפני קריאת המצב המקומי — עריכה שנעשית באמצע אינה נזקפת לדחיפה הזו
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ המשתמש יכול להתחלף
+   *  באמצע: ⛔ כל כתיבה שאחריו כותבת את מה שנמזג עבור הקודם. */
   var _ep = ctxEpoch();
-
-  // כל קטגוריה עומדת בפני עצמה. ⛔ לא try אחד גדול סביב הכול — ערך
-  // localStorage פגום אחד זורק ועוצר את הדחיפה לפני שנכתב *שום* מפתח,
-  // ותלמידים, אישורים והגדרות מפסיקים להסתנכרן בשקט.
-  async function step(label, fn) {
-    if (ctxStale(_ep)) return;
-    try {
-      var r = await fn();
-      if (ctxStale(_ep)) return;
-      if (r && r.error) {
-        failed.push(label);
-        var m = r.error.message || r.error.code || '';
-        if (String(m).indexOf('kv') !== -1) kvMissing = true;
-        console.error('[ys-sync] ' + label + ' נכשל:', m);
-      } else { pushed++; }
-    } catch (e) {
-      failed.push(label);
-      console.error('[ys-sync] ' + label + ' זרק:', e && e.message);
-    }
-  }
-
-  // ⛔ אין לתלות את הגיבוי היומי במסלול הדחיפה — ⚠️ תלוי בו, הוא רץ
-  //    רק כשמישהו כותב. בתקופה שבה הנתונים סטטיים (חופשה) אין דחיפה,
-  //    אין גיבוי, ואין שום סימן — בדיוק כשתקלה עוברת בלי שיבחינו בה.
-  //    נקודת ההפעלה היא `bkBoot()` ב-`loadDash()`, לצד `lsBoot()`.
-
   // ---- students: מיזוג ברמת רשומה (id יציב + tombstones) ----
-  await step('hr_students_rows', async function() {
-    var _t0 = Date.now();   // לפני קריאת המצב המקומי — עריכה שנעשית באמצע אינה נזקפת לדחיפה הזו
+  try {
     var localSt = _hrStudentsRaw();
     if (!localSt.length) localSt = getStudents(); // ריצה ראשונה על ברירות מחדל
     var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
-    var mergedSt = hrMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false, null,
-                                  hrPendingFor('hr_students_rows'), hrStudentPair);
-    if (ctxStale(_ep)) return {};
-    _hrStudentsSaveRaw(mergedSt);
-    var r = await pushTable('hr_students_rows', mergedSt);
-    if (ctxStale(_ep)) return {};
-    if (r && r.ok) pendConfirmPush(PK_STUDENT, _t0);
-    else if (mergedSt.length) { _hrQueueAdd('hr_students_rows', mergedSt); hrUpdateQueueBadge(); }
-    hrSyncLog('push', 'hr_students_rows', hrCount(mergedSt), {local_count: hrCount(localSt), remote_count: hrCount(remoteSt), result_count: hrCount(mergedSt)});
-    /* ⛔ `step` מזהה כישלון לפי `error` ⛔ ולא לפי `ok` — ⚠️ החזרת `{ok:false}`
-       כמות שהיא הייתה נספרת כהצלחה, ⭐ והמשתמש היה רואה «סונכרן» על דחיפה
-       שלא עברה. ⛔ ומערך ריק אינו כישלון — ⚠️ אין מה לדחוף. */
-    if (r && r.ok) return {};
-    return mergedSt.length ? { error: { message: 'hr_students_rows' } } : {};
-  });
-
-  // טבלת ההגדרות חסרה — אין טעם להמשיך
-  if (kvMissing) { console.log('[ys-sync] kv table missing, skipping push'); return; }
-
-  // ---- approvals: מיזוג אובייקט לפי sid ----
-  await step('approvals', async function() {
-    var localAp = getApprovals();
-    var remoteAp = null; try { remoteAp = await hrCfgGet('approvals'); } catch(e3) {}
-    var mergedAp = hrMergeRecords(localAp, remoteAp, null, true);
-    if (ctxStale(_ep)) return {};
-    hrCfgLocalSet('approvals', mergedAp);
-    var r = await hrCfgSet('approvals', mergedAp);
-    hrSyncLog('push', 'approvals', hrCount(mergedAp), {local_count: hrCount(localAp), remote_count: hrCount(remoteAp), result_count: hrCount(mergedAp)});
-    return r;
-  });
-
-  // ---- הגדרות קטנות: LWW ברמת המפתח השלם לפי hr_settings_meta ----
-  await step(KV_TABLE, async function() {
-    var meta = hrSettingsMeta();
-    var settingsKeys = [
-      { key: 'reasons',         get: getReasons,                                       set: function(v){ hrCfgLocalSet('reasons', v); } },
-      { key: 'absence_reasons', get: function(){ return getAbsenceReasons(); }, set: function(v){ hrCfgLocalSet('absence_reasons', v); } }
-    ];
-    var lastErr = null;
-    for (var i = 0; i < settingsKeys.length; i++) {
-      var sk = settingsKeys[i];
-      /* ⚠️ הצד המקומי (`lts`) הוא המפה, והמרוחק (`rts`) הוא העמודה — זו
-         חותמת הכתיבה של **המכשיר הזה** מול חותמת השורה בענן. */
-      var lts = meta[sk.key] || 0;
-      var rts = await hrCfgUpdatedAt(sk.key);
-      if (rts > lts) {
-        // הענן חדש יותר — אמץ מקומית במקום לדרוס
-        var rv = null; try { rv = await hrCfgGet(sk.key); } catch(e5) {}
-        if (rv != null) { sk.set(rv); meta[sk.key] = rts; }
-      } else {
-        // מפתח הגדרות אחד שנכשל לא מפיל את השאר
-        try { var rr = await hrCfgSet(sk.key, sk.get()); if (rr && rr.error) lastErr = rr.error; }
-        catch (e6) { lastErr = {message: e6 && e6.message}; }
-      }
-    }
-    if (ctxStale(_ep)) return {};
-    lsSet('hr_settings_meta', JSON.stringify(meta));
-    /* ⛔ המפה אינה עולה לענן — מפה שנכתבת לצד `updated_at` היא
-       מקור אמת שני.
-       ⛔ ומחיקת המפתח מהמסד היא פעולת מנהל ואינה נעשית כאן —
-       ⚠️ כיבוי ומחיקה בנפרד, אחרת אין חלון לגלות טעות. */
-    return lastErr ? {error: lastErr} : {};
-  });
-
-  // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
-  // "שינוי" שלא קיים בענן
-  if (pushed > 0 && !ctxStale(_ep)) {
-    await hrCfgSet('last_changed', ts);
     if (ctxStale(_ep)) return;
-    _hrLastTs = ts;
-    console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
-  }
-
-  // אינדיקציה אמיתית למשתמש. hrCfgSet כבר הכניס כל כתיבה שנכשלה לתור הלא-מקוון
-  // (ומעדכן את תג התור), ולכן ההודעה מבטיחה שליחה חוזרת — וזה נכון.
-  /*  ⛔ תוצאת מחזור הדחיפה נמסרת למודול העידן — ⚠️ המחזור כאן
-   *  פר-קטגוריה, ⭐ ו-`failed` הוא מה שלא עלה: ⛔ וקטגוריה אחת שנכשלה
-   *  חוסמת את הזריקה כולה. */
-  eraNotePush({ ok: !failed.length, still: failed.slice() });
-  if (failed.length) {
-    if (!_hrPushWarned) {
-      _hrPushWarned = true;
-      toast(pushed === 0
-        ? MSG_CLOUD_SYNC_FAIL
-        : MSG_SOME_UNSYNCED_PRE + failed.join(', ') + MSG_SOME_UNSYNCED_POST, null, 'bad');
-    }
-  } else if (_hrPushWarned) {
-    _hrPushWarned = false;
-    toast(MSG_SYNC_BACK, null, 'good');
-  }
+    _hrStudentsSaveRaw(hrMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false, null,
+                                      hrPendingFor('hr_students_rows'), hrStudentPair));
+  } catch (e) { hrWriteFail('hrPushToCloud', e); }
+  var r = await pushDirty(null);
+  if (ctxStale(_ep)) return;
+  if (r.ok) pendConfirmPush(PK_STUDENT, _t0);
+  if (r.n) hrSyncLog('push', null, r.n);
+  /*  ⛔ תוצאת מחזור הדחיפה נמסרת למודול העידן — ⚠️ `still` הוא מה שלא
+   *  עלה: ⛔ ושורה אחת בו חוסמת את הזריקה כולה. */
+  eraNotePush(r);
 }
 
 /*  ⛔ הציור שאחרי משיכה — ⚠️ רכיבים תלויי-הגדרות שמוצגים כרגע, ⭐ והוא עובר
@@ -4042,22 +3779,6 @@ async function hrPullFromCloud() {
    *  שנמזג עבור הקודם היה יורד לדיסק אחרי שהחדש כבר נכנס. */
   var _ep = ctxEpoch();
   try {
-    /* ⭐ מטא הגדרות מהענן — החותמת המרוחקת להכרעת ה-LWW על שלושת מפתחות
-       ההגדרות הקטנים, והיא נקראת מ-`updated_at` של השורה.
-       ⛔ אין לחזור למפה `hr_settings_meta` — היא `{}` בענן,
-       כלומר `remoteMeta[k]` ממנה תמיד 0: התנאי `0 >= meta[k]` נכשל לכל
-       מפתח שהמכשיר **ערך אי-פעם**, ⛔ ומכשיר שערך הגדרה חירש לשינוי שלה
-       ממכשיר אחר. ⚠️ וצד הדחיפה קורא מאותה עמודה — ⛔ מפה בצד המשיכה
-       בלבד היא «מקור אמת שני».
-       ⛔ נכשל-סגור נשמר — `hrCfgUpdatedAt` מחזירה 0 בכשל, ואפס אינו
-       מאמץ ערך מרוחק על מכשיר שערך מקומית. */
-    var remoteMeta = {};
-    for (var _mi = 0; _mi < HR_SETTINGS_LWW_KEYS.length; _mi++) {
-      var _mk = HR_SETTINGS_LWW_KEYS[_mi];
-      remoteMeta[_mk] = await hrCfgUpdatedAt(_mk);
-    }
-    var meta = hrSettingsMeta();
-
     // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר
     var s = await hrCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
@@ -4069,15 +3790,13 @@ async function hrPullFromCloud() {
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await hrCfgGet('approvals');
     if (ctxStale(_ep)) return;
-    if (ap && typeof ap === 'object') {
+    if (ap && typeof ap === 'object' && !hrSetPending('approvals')) {
       hrCfgLocalSet('approvals', hrMergeRecords(getApprovals(), ap, null, true));
     }
-    // reasons: LWW ברמת המפתח — אמץ מהענן רק אם אינו ישן מהמקומי
+    // ⛔ הגדרה שנושאת ⏳ אינה נדרסת — ⚠️ הערך המקומי טרם עלה.
     var rs = await hrCfgGet('reasons');
-    if (rs && Array.isArray(rs) && (remoteMeta['reasons'] || 0) >= (meta['reasons'] || 0)) {
-      hrCfgLocalSet('reasons', rs);
-      if (remoteMeta['reasons']) { meta['reasons'] = remoteMeta['reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
-    }
+    if (ctxStale(_ep)) return;
+    if (rs && Array.isArray(rs) && !hrSetPending('reasons')) hrCfgLocalSet('reasons', rs);
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
     // resurrection; רשומות מקומיות ללא updatedAt לא מוחזרות (anti-resurrection).
@@ -4086,14 +3805,8 @@ async function hrPullFromCloud() {
     if (atSess && Array.isArray(atSess)) {
       var _atLocal = hrMirrorRecs('hr_sessions') || [];
       var _atMerge = _hrSessionsMerge(atSess, _atLocal, 'hr_sessions');
-      var _atPending = _hrQueueGet('hr_sessions');
-      if (_atPending) _atMerge = _hrSessionsMerge(_atMerge, _atPending, 'hr_sessions');
       _hrAtDiskSave(_atMerge);
       window._atData = _atMerge;
-      if (_atPending && _atMerge.length > atSess.length) {
-        _hrQueueAdd('hr_sessions', _atMerge);
-        hrUpdateQueueBadge();
-      }
     }
     // טען נתוני שינה
     var hrSess = await hrCloudGet('hr_sleep_sessions');
@@ -4101,19 +3814,13 @@ async function hrPullFromCloud() {
     if (hrSess && Array.isArray(hrSess)) {
       var _hrLocal2 = hrMirrorRecs('hr_sleep_sessions') || [];
       var _hrMerge = _hrSessionsMerge(hrSess, _hrLocal2, 'hr_sleep_sessions');
-      var _hrPending = _hrQueueGet('hr_sleep_sessions');
-      if (_hrPending) _hrMerge = _hrSessionsMerge(_hrMerge, _hrPending, 'hr_sleep_sessions');
       _hrSlDiskSave(_hrMerge);
       window._hrData = _hrMerge;
-      if (_hrPending && _hrMerge.length > hrSess.length) {
-        _hrQueueAdd('hr_sleep_sessions', _hrMerge);
-        hrUpdateQueueBadge();
-      }
     }
     var abR = await hrCfgGet('absence_reasons');
-    if (abR && typeof abR === 'object' && !Array.isArray(abR) && (remoteMeta['absence_reasons'] || 0) >= (meta['absence_reasons'] || 0)) {
+    if (ctxStale(_ep)) return;
+    if (abR && typeof abR === 'object' && !Array.isArray(abR) && !hrSetPending('absence_reasons')) {
       hrCfgLocalSet('absence_reasons', abR);
-      if (remoteMeta['absence_reasons']) { meta['absence_reasons'] = remoteMeta['absence_reasons']; lsSet('hr_settings_meta', JSON.stringify(meta)); }
     }
     /*  ⛔ `hr_cls_years` אינו נמשך — ⚠️ המחזור נגזר משנת הלימודים,
      *  ואין לו קורא: מפתח שממשיכים למשוך בלי לקרוא הוא נתון שנראה חי.
@@ -4122,9 +3829,11 @@ async function hrPullFromCloud() {
     // רענון הגדרות הסדרים (cfg) — שמות/שעות סדרים שהשתנו ממכשיר אחר
     try {
       var _atCfgV = await hrCfgGet('attend_cfg');
-      if (_atCfgV && typeof _atCfgV === 'object') { window._atCfg = _atCfgV; hrCfgLocalSet('attend_cfg', _atCfgV); }
+      if (ctxStale(_ep)) return;
+      if (_atCfgV && typeof _atCfgV === 'object' && !hrSetPending('attend_cfg')) { window._atCfg = _atCfgV; hrCfgLocalSet('attend_cfg', _atCfgV); }
       var _hrCfgV = await hrCfgGet('sleep_cfg');
-      if (_hrCfgV && typeof _hrCfgV === 'object') { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('sleep_cfg', _hrCfgV); }
+      if (ctxStale(_ep)) return;
+      if (_hrCfgV && typeof _hrCfgV === 'object' && !hrSetPending('sleep_cfg')) { window._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('sleep_cfg', _hrCfgV); }
     } catch (eCfg) { hrWriteFail('hrPullFromCloud', eCfg); }
     // ---- הרשאות: משיכה שוטפת ----
     // hr_perms נמשך גם כאן ולא רק ב-loadPerms בכניסה — שינוי הרשאות מגיע
@@ -4133,7 +3842,7 @@ async function hrPullFromCloud() {
     try {
       var pmV = await hrCfgGet('perms');
       if (ctxStale(_ep)) return;
-      if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
+      if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length && !hrSetPending('perms')) {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
       }
     } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
@@ -4168,10 +3877,8 @@ setTimeout(async function() {
       if (ctxStale(_ep)) return;
       _hrLastTs = remoteTs;
       await hrPullFromCloud();
-      await hrFlushQueue(); // שלח פעולות שניצרו אופליין
     }
   } catch(e) { console.log('[ys-sync] init:', e.message||e); }
-  hrUpdateQueueBadge(); // הצג תור ממתין מסשלחייה קודמת
 }, 1500);
 
 // ============ סוף סנכרון הענן ============
@@ -5131,7 +4838,7 @@ async function _atPullSessions(win) {
 async function _atPullCfg() {
   var r = null; try { r = await hrCfgGet('attend_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._atCfg = r.value; hrCfgLocalSet('attend_cfg', r.value); }
+  if (r.value && !hrSetPending('attend_cfg')) { window._atCfg = r.value; hrCfgLocalSet('attend_cfg', r.value); }
   return true;
 }
 async function _atPullTreats() {
@@ -5139,7 +4846,7 @@ async function _atPullTreats() {
   if (!r || !r.ok) return false;
   /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
    *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
-  if (Array.isArray(r.value)) { window._atTreats = r.value; lsSetArray('hr_attend_treats', r.value, _hrRecTs); }
+  if (Array.isArray(r.value) && !hrSetPending('attend_treats')) { window._atTreats = r.value; lsSetArray('hr_attend_treats', r.value, _hrRecTs); }
   else if (!Array.isArray(window._atTreats)) window._atTreats = hrCachedArr('_atTreats', 'hr_attend_treats') || [];
   return true;
 }
@@ -5185,10 +4892,7 @@ function atCachedCfg() {
 }
 async function atSaveCfg(cfg) {
   window._atCfg=cfg;
-  hrCfgLocalSet('attend_cfg',cfg);
-  // בלי קידום hr_last_changed שינוי שם סדר/שעת התחלה נשאר מקומי — מכשיר אחר
-  // ממשיך לחשב atAutoMark מול השעה הישנה. כשל כתיבה נכנס לתור, והפלאש מקדם.
-  try { var r=await hrCfgSet('attend_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('atSaveCfg', e); }
+  return hrCfgSet('attend_cfg',cfg);
 }
 async function atLoadData() {
   if (window._atData) return window._atData;
@@ -5219,11 +4923,8 @@ async function atSaveData(data) {
     /* ⛔ שכבת השורות היא הכתיבה היחידה ⛔ ואין לה עותק שני — ⚠️ כתיבה
        נוספת של ערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
+    /* ⛔ כתיבה שנכשלה נשארת ⏳ — ⭐ ומחזור הדחיפה מנסה שוב. */
     var _rAt=await pushTable('hr_sessions',data);
-    /* ⛔ כתיבה שנכשלה חוזרת לתור ⛔ ואינה נשכחת — ⚠️ בלי זה רשומה שנכתבה
-       אופליין הייתה יושבת על הדיסק עד העריכה הבאה, ⭐ ואם לא הייתה כזו —
-       לנצח: ⛔ הדחיפה היחידה שהייתה מנסה שוב היא זו שהמשתמש יזם. */
-    if(!(_rAt&&_rAt.ok)&&hrCount(data)) { _hrQueueAdd('hr_sessions',data); hrUpdateQueueBadge(); }
     // ⚠️ רק כתיבה שהצליחה היא ראיה — ⭐ ואותה עדות בדיוק מזינה את הסימון ⏳
     //    ואת עֵד הפינוי `_hrPushedAt`.
     if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
@@ -5235,7 +4936,8 @@ async function atSaveData(data) {
 async function atLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון — ⚠️ הציור הראשון של מסך ההשגחה קורא
   //    ממנה בלי להמתין, ⛔ ובלעדיה הוא ממתין לרשת לפני שהוא מצייר משהו.
-  try { var v=await hrCfgGet('attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
+  // ⛔ ורשימה ⏳ נקראת מהמכשיר — ⚠️ הענן טרם קיבל אותה.
+  if (!hrSetPending('attend_treats')) try { var v=await hrCfgGet('attend_treats'); if(Array.isArray(v)){window._atTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_attend_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._atTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -5256,8 +4958,7 @@ async function atSaveTreats(data) {
       data=_hrSessionsMerge(_tRemote, data, 'hr_attend_treats');
       lsSetArray('hr_attend_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('attend_treats',data);
-    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _hrMarkPushed('hr_attend_treats'); await hrTouchLastChanged(); }
+    if (!ctxStale(_ep)) await hrCfgSet('attend_treats',data);
   } catch (e) { hrWriteFail('atSaveTreats', e); }
   window._atTreats=data;
   return data;
@@ -6438,8 +6139,6 @@ async function atAddTreat(sid) {
   };
   var treats=await atLoadTreats();
   treats.push(rec);
-  // ⚠️ סימון ⏳ נרשם לפני הדחיפה; `atSaveTreats` מאשרת רק אם הכתיבה לענן הצליחה.
-  pendMark(PK_AT_TREAT+rec.id);
   await atSaveTreats(treats);
   if(noteEl) noteEl.value='';
   atRenderSupervision();
@@ -6462,7 +6161,6 @@ async function atDeleteTreatConfirmed(id) {
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
   if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); atRenderSupervision(); return; }
-  pendMark(PK_AT_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await atSaveTreats(treats);
   atRenderSupervision();
   toast(MSG_DELETED_MARK, null, 'good');
@@ -6726,7 +6424,7 @@ async function _hrPullSessions(win) {
 async function _hrPullCfg() {
   var r = null; try { r = await hrCfgGet('sleep_cfg', true); } catch (e) {}
   if (!r || !r.ok) return false;
-  if (r.value) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('sleep_cfg', window._hrCfg); }
+  if (r.value && !hrSetPending('sleep_cfg')) { window._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('sleep_cfg', window._hrCfg); }
   return true;
 }
 async function _hrPullTreats() {
@@ -6734,7 +6432,7 @@ async function _hrPullTreats() {
   if (!r || !r.ok) return false;
   /*  ⛔ מפתח שטרם נכתב אינו מוחק את מה שעל הדיסק — ⚠️ `[]` שנכתב מעליו
    *  היה מוחק טיפולים שנרשמו אופליין וטרם עלו. */
-  if (Array.isArray(r.value)) { window._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
+  if (Array.isArray(r.value) && !hrSetPending('sleep_treats')) { window._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
   else if (!Array.isArray(window._hrTreats)) window._hrTreats = hrCachedArr('_hrTreats', 'hr_sleep_treats') || [];
   return true;
 }
@@ -6770,8 +6468,7 @@ function _hrCleanCfg(cfg) {
   if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
     var def = hrDefaultCfg();
     if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { hrCfgLocalSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
-    try { hrCfgSet('sleep_cfg', cfg).then(function(r){ if(!(r&&r.error)) hrTouchLastChanged(); }); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+    try { hrCfgSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
   }
   return cfg;
 }
@@ -6784,9 +6481,7 @@ function hrCachedCfg() {
 }
 async function hrSaveCfg(cfg) {
   window._hrCfg=cfg;
-  hrCfgLocalSet('sleep_cfg',cfg);
-  // ⛔ הגדרות ללא קידום חותמת אינן מגיעות למכשירים האחרים.
-  try { var r=await hrCfgSet('sleep_cfg',cfg); if(!(r&&r.error)) await hrTouchLastChanged(); } catch (e) { hrWriteFail('hrSaveCfg', e); }
+  return hrCfgSet('sleep_cfg',cfg);
 }
 async function hrLoadData() {
   if (window._hrData) return window._hrData;
@@ -6819,8 +6514,8 @@ async function hrSaveData(data) {
     /* ⛔ שכבת השורות היא הכתיבה היחידה ⛔ ואין לה עותק שני — ⚠️ כתיבה
        נוספת של ערך שלם היא מקור אמת שני, ⚠️ ומיזוג בין השניים הוא הכרעה בלי
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
+    /* ⛔ כתיבה שנכשלה נשארת ⏳ — ⭐ ומחזור הדחיפה מנסה שוב. */
     var _rSl=await pushTable('hr_sleep_sessions',data);
-    if(!(_rSl&&_rSl.ok)&&hrCount(data)) { _hrQueueAdd('hr_sleep_sessions',data); hrUpdateQueueBadge(); }
     if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
     hrSyncLog('push','hr_sleep_sessions',hrCount(data),{local_count:_hrLocalN,remote_count:hrCount(_hrRemote),result_count:hrCount(data)});
     await hrTouchLastChanged();
@@ -6829,7 +6524,8 @@ async function hrSaveData(data) {
 async function hrLoadTreats() {
   // ⛔ התוצאה נשמרת בזיכרון — ⚠️ הציור הראשון של מסך ההשגחה קורא ממנה
   //    בלי להמתין לרשת.
-  try { var v=await hrCfgGet('sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
+  // ⛔ ורשימה ⏳ נקראת מהמכשיר — ⚠️ הענן טרם קיבל אותה.
+  if (!hrSetPending('sleep_treats')) try { var v=await hrCfgGet('sleep_treats'); if(Array.isArray(v)){window._hrTreats=v;return v;} } catch(e){}
   try { var lc=lsGet('hr_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){window._hrTreats=p;return p;}} } catch(e){}
   return [];
 }
@@ -6849,8 +6545,7 @@ async function hrSaveTreats(data) {
       data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
       lsSetArray('hr_sleep_treats', data, _hrRecTs);
     }
-    var r=await hrCfgSet('sleep_treats',data);
-    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _hrMarkPushed('hr_sleep_treats'); await hrTouchLastChanged(); }
+    if (!ctxStale(_ep)) await hrCfgSet('sleep_treats',data);
   } catch (e) { hrWriteFail('hrSaveTreats', e); }
   window._hrTreats=data;
   return data;
@@ -7856,8 +7551,6 @@ async function hrAddTreat(sid) {
   };
   var treats=await hrLoadTreats();
   treats.push(rec);
-  // ⚠️ סימון ⏳ נרשם לפני הדחיפה; `hrSaveTreats` מאשרת רק אם הכתיבה לענן הצליחה.
-  pendMark(PK_SL_TREAT+rec.id);
   await hrSaveTreats(treats);
   if(noteEl) noteEl.value='';
   hrRenderSupervision();
@@ -7879,7 +7572,6 @@ async function hrDeleteTreatConfirmed(id) {
     t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
   });
   if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); hrRenderSupervision(); return; }
-  pendMark(PK_SL_TREAT+id);   // מחיקה היא כתיבה — ממתינה לאישור כמו כל שינוי
   await hrSaveTreats(treats);
   hrRenderSupervision();
   toast(MSG_DELETED_MARK, null, 'good');
