@@ -138,9 +138,10 @@ import { MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
          uniqHas, uniqList, withTimeout } from './core/util.js';
 import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKeys, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
-         pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
-         plBoot, plNum, plTouch, pushDirty, pushTable, rtyBoot, runSave,
-         sbWatch, schedulePush, tombAt, tombBoot, tombPruneMerged } from './core/sync.js';
+         pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark,
+         pendMarkMany, pendTag, plBoot, plNum, plTouch, pushDirty, pushTable,
+         rtyBoot, runSave, sbWatch, schedulePush, tombAt, tombBoot,
+         tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
@@ -829,6 +830,14 @@ var MSG_REPORT_DONE = '📋 דו"ח כבר מולא';
 var MSG_REPORT_OPEN_ELSEWHERE = '⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
 var MSG_DEL_ROW_TITLE = '🗑️ מחיקת רשומה';
 var MSG_DEL_ROW_BODY = 'הרשומה תימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.';
+var MSG_SWITCH_TITLE = '👤 כניסה משתמש';
+var MSG_SWITCH_NEED_PASS = 'נא הכנס סיסמא';
+var MSG_SWITCH_WRONG_PASS = 'סיסמא שגויה';
+var MSG_SWITCHED_AS = '✅ נכנסת כ-';
+var MSG_SOON_TITLE = '🏗️ המודול בבנייה';
+var MSG_ADD_STUDENT_TITLE = 'הוסף תלמיד';
+var MSG_EDIT_STUDENT_TITLE = 'עריכת תלמיד';
+var MSG_NEED_STUDENT_NAME = 'נא להזין שם';
 /* ══ סוף הודעות פר-אפליקציה ═════════════════════════════════════════════ */
 // ---- מגבלת זמן לשאילתות אימות ----
 // supabase-js לא מטיל timeout משלו. ברשת "חצי מחוברת" (פורטל שבוי, אנטנה חלשה)
@@ -1390,7 +1399,7 @@ async function toggleUserMenu() {
   m.classList.remove('hidden');
   var othersEl = document.getElementById('user-menu-others');
   if (!othersEl) return;
-  othersEl.innerHTML = '<div class="user-menu-empty">'+H(1496,1493,1506,1503,1489,1493,1514,46,46,46)+'</div>';
+  othersEl.innerHTML = '<div class="user-menu-empty">טועןבות...</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
   try { res = await withTimeout(SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
@@ -1400,7 +1409,7 @@ async function toggleUserMenu() {
   var currentId = AUTH.user ? String(AUTH.user.client_id) : '';
   var others = data.filter(function(u){return String(u.client_id)!==currentId;});
   if (!others.length) { othersEl.innerHTML=''; return; }
-  var label = H(1492,1495,1500,1507,32,1502,1513,1514,1502,1513);
+  var label = 'החלף משתמש';
   othersEl.innerHTML = '<div class="user-menu-lbl">'+label+'</div>' +
     others.map(function(u){
       return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="user-switch"><span class=\"user-switch-ico\">👤</span><span>'+esc(u.full_name)+'</span></button>';
@@ -1417,14 +1426,14 @@ function switchUserEl(el) {
 };
 function switchUser(id, name) {
   closeUserMenu();
-  var subTitle = H(1492,1499,1504,1505,32,1505,1497,1505,1502,1488);
-  var cancelTxt = H(1489,1497,1496,1493,1500);
-  var enterTxt = H(1499,1504,1497,1505,1492);
+  var subTitle = 'הכנס סיסמא';
+  var cancelTxt = 'ביטול';
+  var enterTxt = 'כניסה';
   window._hrSwitchId = id;
-  openModal(String.fromCharCode(128100) + ' ' + H(1499,1504,1497,1505,1492,32,1502,1513,1514,1502,1513),
+  openModal(MSG_SWITCH_TITLE,
     '<div class="switch-name" id="switch-name"></div>'+
     '<div class="switch-sub">'+subTitle+'</div>'+
-    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="'+H(1505,1497,1505,1502,1488,32,40,54,32,1505,1508,1512,1493,1514,41)+'" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
+    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="סיסמא (6 ספרות)" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
     '<div id="switch-err" class="switch-err"></div>',
     '<button data-act="modal-close" class="md-btn-ghost-lg">'+cancelTxt+'</button>'+
     '<button data-act="switch-confirm" data-ksave class="md-btn-primary-lg">'+enterTxt+'</button>');
@@ -1435,7 +1444,7 @@ function switchUser(id, name) {
 async function confirmSwitch() {
   var pass=document.getElementById('switch-pass').value.trim();
   var errEl=document.getElementById('switch-err');
-  if(!pass){errEl.textContent=H(1504,1488,32,1492,1499,1504,1505,32,1505,1497,1505,1502,1488);return;}
+  if(!pass){errEl.textContent=MSG_SWITCH_NEED_PASS;return;}
   var res=null, netFail=false;
   try {
     // ⭐ לפי מזהה בלבד; ההשוואה היא מול הטביעה, כמו בכניסה.
@@ -1461,16 +1470,16 @@ async function confirmSwitch() {
     var verdict=await authVerify(cu,pass);
     if(verdict==='no-fp'){authLog(false,'switch_no_fp_offline',cu.username);errEl.textContent=MSG_OFF_NO_FP;return;}
     if(verdict==='no-crypto'){authLog(false,'switch_no_crypto_offline',cu.username);errEl.textContent=MSG_OFF_NO_CRYPTO;return;}
-    if(verdict!=='ok'){authLog(false,'switch_wrong_credentials_offline',cu.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(verdict!=='ok'){authLog(false,'switch_wrong_credentials_offline',cu.username);errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
     u=cu;
     AUTH.offlineLogin=true;
   } else {
-    if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(window._hrSwitchId));errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(window._hrSwitchId));errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
     // ⭐ ההכרעה מול הטביעה, בדיוק כמו בענף האופליין שמעל.
     var vOn=await authVerify(res.data,pass);
     if(vOn==='no-fp'){authLog(false,'switch_no_fp_online',res.data.username);errEl.textContent=MSG_NO_FP_ONLINE;return;}
     if(vOn==='no-crypto'){authLog(false,'switch_no_crypto_online',res.data.username);errEl.textContent=MSG_NO_CRYPTO;return;}
-    if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=H(1505,1497,1505,1502,1488,32,1513,1490,1493,1497,1492);return;}
+    if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
     u=res.data;
     AUTH.offlineLogin=false;
     // ⚠️ `u` נשמר במפורש — ⭐ הרענון המלא רץ מ-`authLog`, אחרי ‎AUTH.user=u‎.
@@ -1489,7 +1498,7 @@ async function confirmSwitch() {
   if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
   lkReset();
   showPage('home');
-  toast(H(9989,32,1504,1499,1504,1505,1514,32,1499,45)+u.full_name, null, 'good');
+  toast(MSG_SWITCHED_AS+u.full_name, null, 'good');
 }
 // סגור בלחיצה מחוץ
 
@@ -1543,9 +1552,9 @@ function showSettingsModule(mod) {
 // ברירות מחדל לסיבות היעדרות
 function getDefaultReasons() {
   return {
-    approved: ['\u05d7\u05d5\u05e4\u05e9\u05d4', '\u05d0\u05d9\u05e8\u05d5\u05e2 \u05de\u05e9\u05e4\u05d7\u05ea\u05d9', '\u05e8\u05e4\u05d5\u05d0\u05d9', '\u05d0\u05d7\u05e8'],
-    suspended: ['\u05de\u05e9\u05de\u05e2\u05ea', '\u05d0\u05d7\u05e8'],
-    left: ['\u05dc\u05d0 \u05d7\u05d6\u05e8 \u05de\u05d7\u05d5\u05e4\u05e9\u05d4', '\u05e2\u05d6\u05d1 \u05dc\u05e6\u05de\u05d9\u05ea\u05d5\u05ea', '\u05d0\u05d7\u05e8']
+    approved: ['חופשה', 'אירוע משפחתי', 'רפואי', 'אחר'],
+    suspended: ['משמעת', 'אחר'],
+    left: ['לא חזר מחופשה', 'עזב לצמיתות', 'אחר']
   };
 }
 
@@ -1625,11 +1634,10 @@ function modalOpen() {
  *  על הרקע, ו-`Escape`: ⚠️ שלוש דרכים אינן שלושה מסלולים. */
 
 function showConstruction() {
-  openModal('\uD83C\uDFD7\uFE0F ' + H(1492,1502,1493,1491,1493,1500,32,1489,1489,1504,1497,1497,1492),
+  openModal(MSG_SOON_TITLE,
     '<p class="soon-note">' +
-      H(1502,1511,1493,1501,32,1494,1492,32,1504,1502,1510,1488,32,1489,1489,1504,1497,1497,1492,32,1493,1497,1508,1514,1495,32,1489,1511,1512,1493,1489) +
-      '.<br>' + H(1514,1493,1491,1492,32,1506,1500,32,1492,1505,1489,1500,1504,1493,1514) + '!</p>',
-    '<button data-act="modal-close" class="soon-ok">' + H(1492,1489,1504,1514,1497) + '</button>');
+      'מקום זה נמצא בבנייה ויפתח בקרוב.<br>תודה על הסבלנות!</p>',
+    '<button data-act="modal-close" class="soon-ok">הבנתי</button>');
 }
 
 function showDenied() {
@@ -3994,50 +4002,9 @@ ensureFirstAdmin();
    ══════════════════════════════════════════════════════════════════════════ */
 var currentFilter='all';
 var editingStudentId=null;
-var H=String.fromCharCode; // קיצור ליצירת תווים עבריים
 
-function getDefaultStudents(){return [
-  {id:1,name:H(1488,1493,1495,1504,1492,32,1497,1493,1505,1507),cls:'a'},{id:2,name:H(1488,1493,1495,1504,1492,32,1491,1493,1491),cls:'g'},
-  {id:3,name:H(1488,1494,1493,1500,1488,1497,32,1488,1489,1512,1492,1501),cls:'a'},{id:4,name:H(1488,1494,1493,1500,1488,1497,32,1491,1493,1491),cls:'a'},
-  {id:5,name:H(1488,1494,1493,1500,1488,1497,32,1497,1506,1511,1489),cls:'g'},{id:6,name:H(1488,1492,1512,1493,1504,1493,1489,32,1513,1504,1497,1488,1493,1512),cls:'g'},
-  {id:7,name:H(1488,1496,1497,1488,1505,32,1513,1500,1502,1492),cls:'a'},{id:8,name:H(1488,1500,1495,1512,1512,32,1513,1502,1493,1488,1500),cls:'b'},
-  {id:9,name:H(1488,1489,1493,1496,1489,1493,1500,32,1488,1489,1512,1492,1501),cls:'b'},{id:10,name:H(1488,1491,1512,1497,32,1497,1493,1505,1507),cls:'b'},
-  {id:11,name:H(1489,1493,1499,1512,1497,1505,32,1513,1500,1502,1492),cls:'g'},{id:12,name:H(1489,1493,1495,1504,1497,1511,32,1508,1497,1500,1497,1508),cls:'b'},
-  {id:13,name:H(1489,1497,1496,1493,1503,32,1502,1504,1495,1501),cls:'a'},{id:14,name:H(1489,1503,32,1491,1493,1491,32,1513,1502,1493,1488,1500),cls:'b'},
-  {id:15,name:H(1489,1504,1497,1502,1497,1504,1497,32,1489,1512,1493,1498),cls:'b'},{id:16,name:H(1489,1512,1493,1498,32,1513,1502,1506,1493,1503),cls:'a'},
-  {id:17,name:H(1489,1512,1493,1498,32,1488,1512,1497,1492),cls:'g'},{id:18,name:H(1490,1489,1488,1497,32,1497,1510,1495,1511),cls:'a'},
-  {id:19,name:H(1490,1489,1512,1497,1488,1500,32,1502,1504,1495,1501),cls:'g'},{id:20,name:H(1490,1493,1500,1491,1489,1512,1490,32,1502,1504,1495,1501),cls:'b'},
-  {id:21,name:H(1491,1492,1503,32,1502,1513,1492),cls:'a'},{id:22,name:H(1491,1492,1503,32,1488,1489,1512,1492,1501),cls:'g'},
-  {id:23,name:H(1491,1493,1489,1512,1497,1497,1510,1512,32,1488,1493,1512,1497),cls:'b'},{id:24,name:H(1491,1493,1511,1496,1493,1512,1493,1489,1497,1509,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},
-  {id:25,name:H(1491,1497,1503,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'a'},{id:26,name:H(1492,1500,1493,1497,32,1504,1495,1502,1503),cls:'b'},
-  {id:27,name:H(1492,1512,1502,1514,1497,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},{id:28,name:H(1492,1512,1510,1493,1490,32,1513,1502,1493,1488,1500),cls:'g'},
-  {id:29,name:H(1493,1497,1497,1504,1513,1496,1497,1497,1503,32,1513,1504,1497,1488,1493,1512),cls:'b'},{id:30,name:H(1493,1497,1505,1502,1503,32,1488,1492,1512,1493,1503),cls:'a'},
-  {id:31,name:H(1493,1497,1505,1502,1503,32,1502,1504,1495,1501),cls:'g'},{id:32,name:H(1494,1493,1505,1502,1503,32,1500,1493,1497,32,1497,1510,1495,1511),cls:'a'},
-  {id:33,name:H(1494,1493,1505,1502,1503,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'g'},{id:34,name:H(1494,1497,1500,1489,1512,32,1497,1506,1511,1489),cls:'b'},
-  {id:35,name:H(1495,1491,1491,32,1504,1495,1502,1503),cls:'a'},{id:36,name:H(1495,1491,1491,32,1513,1500,1502,1492),cls:'g'},
-  {id:37,name:H(1495,1505,1497,1503,32,1488,1512,1497,1492),cls:'b'},{id:38,name:H(1496,1500,32,1488,1500,1497,1492,1493),cls:'a'},
-  {id:39,name:H(1496,1500,32,1513,1502,1493,1488,1500),cls:'g'},{id:40,name:H(1496,1504,1504,1489,1488,1493,1501,32,1513,1502,1493,1488,1500),cls:'b'},
-  {id:41,name:H(1497,1493,1505,1507,32,1495,1497,1497,1501),cls:'a'},{id:42,name:H(1497,1493,1505,1507,32,1502,1504,1495,1501),cls:'g'},
-  {id:43,name:H(1497,1508,1512,1495,32,1513,1500,1502,1492),cls:'b'},{id:44,name:H(1499,1492,1503,32,1488,1512,1497,1492,32,1500,1497,1497,1489),cls:'g'},
-  {id:45,name:H(1499,1492,1503,32,1489,1504,1497,1502,1497,1503),cls:'a'},{id:46,name:H(1499,1492,1503,32,1489,1504,1497,1502,1497,1503,32,1489,1512,1493,1498),cls:'b'},
-  {id:47,name:H(1499,1492,1503,32,1497,1493,1505,1507,32,1513,1502,1493,1488,1500),cls:'a'},{id:48,name:H(1499,1492,1503,32,1497,1493,1505,1507,32,1513,1502,1493,1488,1500,32,1510,1489,1497),cls:'b'},
-  {id:49,name:H(1499,1492,1503,32,1502,1504,1495,1501),cls:'a'},{id:50,name:H(1500,1489,1511,1493,1489,1497,1509,32,1504,1495,1502,1503),cls:'a'},
-  {id:51,name:H(1500,1493,1497,32,1488,1512,1497,1492),cls:'b'},{id:52,name:H(1500,1493,1497,32,1504,1495,1502,1503),cls:'g'},
-  {id:53,name:H(1500,1493,1497,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'b'},{id:54,name:H(1500,1493,1497,1503,32,1497,1492,1493,1491,1492),cls:'a'},
-  {id:55,name:H(1502,1493,1494,1505,32,1513,1500,1502,1492),cls:'a'},{id:56,name:H(1502,1493,1494,1505,32,1488,1489,1512,1492,1501),cls:'g'},
-  {id:57,name:H(1502,1493,1513,1511,1493,1489,1497,1509,32,1502,1504,1495,1501),cls:'b'},{id:58,name:H(1502,1493,1513,1511,1493,1489,1497,1509,32,1513,1504,1497,1488,1493,1512),cls:'g'},
-  {id:59,name:H(1502,1495,1508,1493,1494,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},{id:60,name:H(1502,1495,1508,1493,1494,32,1504,1495,1502,1503),cls:'b'},
-  {id:61,name:H(1502,1494,1512,1495,1497,32,1497,1493,1504,1514,1503,32,1497,1488,1497,1512),cls:'a'},{id:62,name:H(1502,1494,1512,1495,1497,32,1488,1497,1514,1503,32,1488,1492,1512,1493,1503),cls:'a'},
-  {id:63,name:H(1502,1494,1512,1495,1497,32,1513,1500,1502,1492),cls:'g'},{id:64,name:H(1504,1495,1502,1497,1488,1505,32,1497,1493,1505,1507),cls:'g'},
-  {id:65,name:H(1504,1506,1502,1514,32,1497,1493,1505,1507,32,1497,1510,1495,1511),cls:'b'},{id:66,name:H(1505,1489,1490,32,1502,1504,1495,1501),cls:'g'},
-  {id:67,name:H(1505,1490,1500,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'b'},{id:68,name:H(1505,1500,1502,1492,32,1497,1493,1505,1507,32,1497,1510,1495,1511),cls:'b'},
-  {id:69,name:H(1506,1493,1494,1497,1488,1500,32,1488,1512,1497,1492),cls:'g'},{id:70,name:H(1508,1489,1494,1504,1512,32,1513,1502,1493,1488,1500),cls:'b'},
-  {id:71,name:H(1508,1512,1497,1491,1502,1503,32,1513,1502,1493,1488,1500),cls:'g'},{id:72,name:H(1510,1491,1493,1511,32,1497,1493,1505,1507),cls:'g'},
-  {id:73,name:H(1511,1493,1492,1503,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'g'},{id:74,name:H(1513,1500,1493,32,1512,1494),cls:'b'},
-  {id:75,name:H(1513,1500,1493,32,1512,1494,32,1489),cls:'g'}
-];}
 // מפת השיעורות: 'a'=א, 'b'=ב, 'g'=ג
-var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488,39),b:H(1513,1497,1506,1493,1512,32,1489,39),g:H(1513,1497,1506,1493,1512,32,1490,39)};
+var CLS_NAME={a:"שיעור א'",b:"שיעור ב'",g:"שיעור ג'"};
 
 // ⛔ נקודת המיון היחידה של התלמידים — ⚠️ ואין מיון מקומי בשום מסך: המצבת,
 //    דפי הסדרים, זמן השינה, ההשגחה, הארכיונים ורשימת הלא-פעילים — ⭐ מי
@@ -4057,7 +4024,9 @@ function hrSortStudents(list) {
     return HE.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
-function getStudents(){try{var s=hrMirrorRecs('hr_students_rows');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+// ⛔ מראה ריקה היא רשימה ריקה — ⚠️ התלמידים באים מהמסד בלבד: ⭐ רשימה
+//    שנשתלת בקוד נכנסת למיזוג בלי חותמת ובמזהה שאינו של המכשיר.
+function getStudents(){try{var s=hrMirrorRecs('hr_students_rows');if(!Array.isArray(s))return [];return s.filter(function(x){return !(x&&x.deleted);});}catch(e){console.warn('[students] hr_students_rows פגום — נטענה רשימה ריקה:',e.message);return [];}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך אתרי הקריאה אינם רואים tombstones, ו-tombstones
 // שורדים כל מחזור קריאה-שמירה.
@@ -4076,7 +4045,7 @@ function saveStudents(s){
 // ⛔ הגטרים מוגנים כמו getStudents — ערך פגום אחד (חיתוך באמצע כתיבה /
 // פינוי מכסה) זורק מתוך hrPushToCloud ומפיל את כל הדחיפה, וכל המפתחות
 // מפסיקים להגיע לענן בשקט.
-function getReasons(){var def=[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[settings] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
+function getReasons(){var def=['השעיהה (שמה"ס)','מצב חירום','חופשה','מחלה','שמחה משפחתית','נסיעה לרב','בית חולים','אחר'];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[settings] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
 function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[settings] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
@@ -4531,7 +4500,7 @@ function studentFormFoot(){
 function openAddStudent(){
   if(checkLoginNeeded())return;
   editingStudentId=null;
-  openModal(H(1492,1493,1505,1507,32,1514,1500,1502,1497,1491), studentFormHtml(), studentFormFoot());
+  openModal(MSG_ADD_STUDENT_TITLE, studentFormHtml(), studentFormFoot());
   document.getElementById('st-class').value='a';
 }
 
@@ -4540,7 +4509,7 @@ function editStudent(sid){
   var s=getStudents().find(function(x){return idEq(x.id, sid);});
   if(!s)return;
   editingStudentId=sid;
-  openModal(H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491), studentFormHtml(sid), studentFormFoot());
+  openModal(MSG_EDIT_STUDENT_TITLE, studentFormHtml(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
   document.getElementById('st-cycle').value=s.cycle||'';
@@ -4550,7 +4519,7 @@ function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
   var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
-  if(!name){toast(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501), null, 'bad');return;}
+  if(!name){toast(MSG_NEED_STUDENT_NAME, null, 'bad');return;}
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
@@ -4714,15 +4683,15 @@ function downloadImportTemplate() {
   // CSV + BOM, עמודות בסדר הפוך (שיעור | שם פרטי | שם משפחה) כדי שנראה נכון ב-LTR
   var BOM = '\uFEFF';
   var rows = [
-    [H(1513,1497,1506,1493,1512), H(1513,1501,32,1508,1512,1496,1497), H(1513,1501,32,1502,1513,1508,1495,1492)],
-    [H(1513,1497,1506,1493,1512,32,1488,39), H(1497,1493,1505,1507), H(1499,1492,1503)]
+    ['שיעור', 'שם פרטי', 'שם משפחה'],
+    ["שיעור א'", 'יוסף', 'כהן']
   ];
   var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
   var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url;
-  a.download = H(1514,1489,1504,1497,1514,95,1514,1500,1502,1497,1491,1497,1501,46,99,115,118); // תבנית_תלמידים.csv
+  a.download = 'תבנית_תלמידים.csv';
   document.body.appendChild(a); a.click();
   setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 };
@@ -5140,10 +5109,10 @@ async function hrRefreshApprovalMarks(sid) {
 
     /*  ⛔ הקריאה בנקודת הדיסק האחת ⛔ ואינה כותבת בעצמה — ⚠️ השמירה היא
      *  `saveFn`, ⭐ ומפתח שטוח שנקרא וננכתב כאן היה מקור אמת שני. */
-    function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
+    function refreshSet(lsKey, pk, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
       var data = _hrDiskArr(lsKey);
       if (!Array.isArray(data)) return;
-      var changed = false;
+      var changed = [];
       data.forEach(function(rec){
         if (!rec || rec.deleted || !rec.open || rec.date_iso !== dateIso) return;
         var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].s || '') : '';
@@ -5156,7 +5125,7 @@ async function hrRefreshApprovalMarks(sid) {
         if (!rec.marks) rec.marks = {};
         rec.marks[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
         rec.updatedAt = Date.now();
-        changed = true;
+        changed.push(pk + rec.id);
         // אם הסדר הזה פתוח כרגע על המסך במכשיר הזה — עדכן גם את ה-buffer והתצוגה
         if (curId === rec.id && marksBuf) {
           if (next) marksBuf[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
@@ -5164,17 +5133,20 @@ async function hrRefreshApprovalMarks(sid) {
           if (typeof renderFn === 'function') { try { renderFn(); } catch(eR) {} }
         }
       });
-      if (changed) {
+      if (changed.length) {
+        /*  ⛔ הסימון לפני `saveFn` — ⚠️ הדחיפה לוכדת את `t0` בכניסה, ⭐ ורק
+         *  סימון שקדם לו מאושר בהצלחתה. */
+        pendMarkMany(changed);
         try { saveFn(data); } catch (eS) { hrWriteFail('refreshSet', eS); }
       }
     }
 
     var atCfg = (window._atCfg && Array.isArray(window._atCfg.sessions)) ? window._atCfg.sessions : [];
-    refreshSet('hr_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
+    refreshSet('hr_sessions', PK_AT_SESS, atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
 
     var hrCfg = (window._hrCfg && Array.isArray(window._hrCfg.sessions)) ? window._hrCfg.sessions : [];
     var hrIso = (typeof hrGetLogicalDate === 'function') ? hrGetLogicalDate() : todayIso;
-    refreshSet('hr_sleep_sessions', hrCfg, hrIso, window._hrCurrentSessionId, window._hrMarks, hrRenderStudents, function(d){ window._hrData = d; hrSaveData(d); }, true);
+    refreshSet('hr_sleep_sessions', PK_SL_SESS, hrCfg, hrIso, window._hrCurrentSessionId, window._hrMarks, hrRenderStudents, function(d){ window._hrData = d; hrSaveData(d); }, true);
   } catch(e) { console.warn('[approval-refresh]', e); }
 }
 
