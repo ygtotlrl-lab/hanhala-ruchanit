@@ -138,9 +138,10 @@ import { MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
          uniqHas, uniqList, withTimeout } from './core/util.js';
 import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKeys, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
-         pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark, pendTag,
-         plBoot, plNum, plTouch, pushDirty, pushTable, rtyBoot, runSave,
-         sbWatch, schedulePush, tombAt, tombBoot, tombPruneMerged } from './core/sync.js';
+         pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark,
+         pendMarkMany, pendTag, plBoot, plNum, plTouch, pushDirty, pushTable,
+         rtyBoot, runSave, sbWatch, schedulePush, tombAt, tombBoot,
+         tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
          lsRemove, lsSet, lsSetArray } from './core/storage.js';
 import { MIRROR, mirrorBoot, mirrorKey, mirrorLoadOne, mirrorSave,
@@ -5108,10 +5109,10 @@ async function hrRefreshApprovalMarks(sid) {
 
     /*  ⛔ הקריאה בנקודת הדיסק האחת ⛔ ואינה כותבת בעצמה — ⚠️ השמירה היא
      *  `saveFn`, ⭐ ומפתח שטוח שנקרא וננכתב כאן היה מקור אמת שני. */
-    function refreshSet(lsKey, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
+    function refreshSet(lsKey, pk, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
       var data = _hrDiskArr(lsKey);
       if (!Array.isArray(data)) return;
-      var changed = false;
+      var changed = [];
       data.forEach(function(rec){
         if (!rec || rec.deleted || !rec.open || rec.date_iso !== dateIso) return;
         var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].s || '') : '';
@@ -5124,7 +5125,7 @@ async function hrRefreshApprovalMarks(sid) {
         if (!rec.marks) rec.marks = {};
         rec.marks[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
         rec.updatedAt = Date.now();
-        changed = true;
+        changed.push(pk + rec.id);
         // אם הסדר הזה פתוח כרגע על המסך במכשיר הזה — עדכן גם את ה-buffer והתצוגה
         if (curId === rec.id && marksBuf) {
           if (next) marksBuf[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
@@ -5132,17 +5133,20 @@ async function hrRefreshApprovalMarks(sid) {
           if (typeof renderFn === 'function') { try { renderFn(); } catch(eR) {} }
         }
       });
-      if (changed) {
+      if (changed.length) {
+        /*  ⛔ הסימון לפני `saveFn` — ⚠️ הדחיפה לוכדת את `t0` בכניסה, ⭐ ורק
+         *  סימון שקדם לו מאושר בהצלחתה. */
+        pendMarkMany(changed);
         try { saveFn(data); } catch (eS) { hrWriteFail('refreshSet', eS); }
       }
     }
 
     var atCfg = (window._atCfg && Array.isArray(window._atCfg.sessions)) ? window._atCfg.sessions : [];
-    refreshSet('hr_sessions', atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
+    refreshSet('hr_sessions', PK_AT_SESS, atCfg, todayIso, window._atCurrentSessionId, window._atMarks, atRenderStudents, function(d){ window._atData = d; atSaveData(d); }, false);
 
     var hrCfg = (window._hrCfg && Array.isArray(window._hrCfg.sessions)) ? window._hrCfg.sessions : [];
     var hrIso = (typeof hrGetLogicalDate === 'function') ? hrGetLogicalDate() : todayIso;
-    refreshSet('hr_sleep_sessions', hrCfg, hrIso, window._hrCurrentSessionId, window._hrMarks, hrRenderStudents, function(d){ window._hrData = d; hrSaveData(d); }, true);
+    refreshSet('hr_sleep_sessions', PK_SL_SESS, hrCfg, hrIso, window._hrCurrentSessionId, window._hrMarks, hrRenderStudents, function(d){ window._hrData = d; hrSaveData(d); }, true);
   } catch(e) { console.warn('[approval-refresh]', e); }
 }
 
