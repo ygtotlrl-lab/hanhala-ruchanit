@@ -9,17 +9,15 @@ import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
 import { closeModal, pullRender, toast } from '../core/ui.js';
-import { hebDate, hebIntl, hebIsLeap, hebMonthNames,
-         hebYearBase } from '../core/hebrew.js';
-import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, KV_TABLE, MSG_PERMS_CHANGED_POST,
-         MSG_PERMS_CHANGED_PRE } from './config.js';
-import { AUTH, S } from './state.js';
-import { refreshDashStats } from './screens/home.js';
-import { getStudents, renderStudents } from './screens/students.js';
-import { atFillSessionBtns, atRenderTodaySessions } from './screens/attend.reg.js';
-import { _hrCleanCfg, hrFillSessionBtns,
-         hrRenderTodaySessions } from './screens/sleep.reg.js';
-import { SB, showPage } from './main.js';
+import { hebDate } from '../core/hebrew.js';
+import { HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
+         KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
+         PK_STUDENT } from './constants.js';
+import { AUTH, S, shell } from './state.js';
+
+try { S._heColl = new Intl.Collator('he'); } catch (e) { S._heColl = null; }
+
+var HE = S._heColl || { compare: function (a, b) { return String(a).localeCompare(String(b), 'he'); } };
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
 // ה-API הוא addVirtualFileSystem/addFonts — השמה ל-pdfMake.vfs נכשלת בשקט מ-0.3 ומחזירה גופן בלי עברית.
@@ -80,57 +78,12 @@ function hrApplyPerms(p) {
         if (AUTH.MODULES[i].id === cur) { lbl = AUTH.MODULES[i].label; break; }
       }
       closeModal();
-      showPage('home');
+      shell.showPage('home');
       try { toast(MSG_PERMS_CHANGED_PRE + lbl + MSG_PERMS_CHANGED_POST); } catch (e3) {}
     }
   }
   return changed;
 }
-
-// ── בורר התאריך העברי ──
-function _hcMN(hy){return hebMonthNames(hy);}
-
-function hrHebYearInfo(hy){
-  hy=+hy;
-  if(S._hrYearCache[hy]!==undefined) return S._hrYearCache[hy];
-  var info=null;
-  try{
-    var leap=hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
-    // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
-    for(k=0;k<45;k++){
-      d=dayNoon(hy-3761,8,1+k);
-      r=hebIntl(d);
-      if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
-    }
-    if(start){
-      var ml=[],cur=start,total=0,ok=true;
-      for(var m=0;m<nM;m++){
-        var p=new Date(cur.getTime()+29*86400000);
-        var pr=hebIntl(dayNoon(p));
-        if(!pr){ok=false;break;}
-        var len=(pr.day===1)?29:30;
-        ml.push(len);total+=len;
-        var nx=new Date(cur.getTime()+len*86400000);
-        cur=dayNoon(nx);
-      }
-      if(ok&&ml.length===nM&&total>=353&&total<=385)
-        info={hy:hy,jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
-    }
-  }catch(e){info=null;}
-  S._hrYearCache[hy]=info;
-  return info;
-}
-
-// הטבלה נקראת דרך hebYearBase ולא ישירות — _hcST הוא מצב פנימי של המודול, וקריאה ישירה בו נשברת בלי לזרוק.
-function _hcBase(hy){return hrHebYearInfo(hy)||hebYearBase(hy);}
-
-// עוגן בצהריים ולא בחצות — הוספת כפולות של 24 שעות מחצות נופלת ליום הקודם במעבר לשעון חורף.
-function _hcG(hy,mi,day){
-  var b=_hcBase(hy);if(!b)return new Date();
-  var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
-  var anchor=dayNoon(b.jd);
-  var d=new Date(anchor.getTime()+c*86400000);
-  return dayNoon(d);}
 
 // ── עֵד הדחיפה פר-מפתח ──
 // נכתב רק אחרי דחיפה שחזרה ok — אין לגזור אותו ממשיכה.
@@ -147,7 +100,7 @@ function _hrMarkParent(r) { return r ? r.session_client_id : null; }
 // נכשל סגור: עמוד שנכשל מחזיר null — «אין ראיה» אינו «הענן ריק».
 function _hrVerifyRows(mkQuery) {
   return function () {
-    if (!SB) return Promise.resolve({ ok: false, rows: [] });
+    if (!S.SB) return Promise.resolve({ ok: false, rows: [] });
     return _rowsPaged(mkQuery, 'client_id', null)
       .then(function (rs) { return Array.isArray(rs) ? { ok: true, rows: rs } : { ok: false, rows: [] }; },
             function () { return { ok: false, rows: [] }; });
@@ -403,18 +356,6 @@ function _hrStDiskSave(rows) {
 }
 
 // ── חיבור האפליקציה למודול הממתינים ──
-// הדחיפה היא דחיפת-מצב של המפתח כולו — לכן האישור הוא pendConfirmPush(prefix, t0):
-// דחיפה מוצלחת מאשרת כל סימון שנרשם לפני שהצילום נלקח.
-var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:', PK_STUDENT = 'student:',
-    PK_SET = 'setting:';
-
-var PEND_KV_PREFIX = {
-  'hr_sessions': PK_AT_SESS, 'hr_sleep_sessions': PK_SL_SESS,
-  'hr_students_rows': PK_STUDENT
-};
-
-// הגדרות שהעותק המקומי שלהן שטוח ואינו שורה במראה — הפינוי מפנה אותן פר-רשומה, ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי.
-var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
 function _hrMarkSynced() { S._hrLastSyncAt = Date.now(); }
 
@@ -457,7 +398,7 @@ function hrSetDirtyRows() {
 }
 
 function hrSetSend(rows) {
-  return withTimeout(SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
+  return withTimeout(S.SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
 }
 
 // המקור שמחזור הדחיפה קורא כשאין לו קלט מהכותב.
@@ -497,7 +438,7 @@ async function hrRowsRemoteLoad(kind) {
   kind = kind || 'attend';
   if (_hrRowsRemote[kind]) return _hrRowsRemote[kind];
   try {
-    var res = await withTimeout(SB.from(HR_ROWS_KINDS[kind].parent).select('client_id,updated_at'));
+    var res = await withTimeout(S.SB.from(HR_ROWS_KINDS[kind].parent).select('client_id,updated_at'));
     if (!res || res.error || !Array.isArray(res.data)) return null;
     var map = {};
     res.data.forEach(function (r) { if (r) map[String(r.client_id)] = Number(r.updated_at) || 0; });
@@ -581,7 +522,7 @@ async function hrRowsUpsert(table, rows) {
   if (!rows || !rows.length) return true;
   for (var i = 0; i < rows.length; i += HR_ROWS_CHUNK) {
     var res = await withTimeout(
-      SB.from(table).upsert(rows.slice(i, i + HR_ROWS_CHUNK), { onConflict: 'client_id' }));
+      S.SB.from(table).upsert(rows.slice(i, i + HR_ROWS_CHUNK), { onConflict: 'client_id' }));
     if (!res || res.error) return false;
   }
   return true;
@@ -631,23 +572,6 @@ async function hrSendRecs(key, recs) {
   return {};
 }
 
-// חודש עברי הוא טווח גרגוריאני רציף — gte/lte על date_iso מכסים אותו בדיוק. המנוע הוא _hcG ולא חשבון ידני.
-function hrHebMonthWin(hy, mi) {
-  var b = _hcBase(hy);
-  if (!b || !b.ml || !b.ml.length) return null;
-  var i = Math.max(0, Math.min(mi, b.ml.length - 1));
-  return { col: 'date_iso', from: dayIso(_hcG(hy, i, 1)),
-           to: dayIso(_hcG(hy, i, b.ml[i])) };
-}
-
-function hrHebYearWin(hy) {
-  var b = _hcBase(hy);
-  if (!b || !b.ml || !b.ml.length) return null;
-  var last = b.ml.length - 1;
-  return { col: 'date_iso', from: dayIso(_hcG(hy, 0, 1)),
-           to: dayIso(_hcG(hy, last, b.ml[last])) };
-}
-
 // התאריך פרמטר — בדיקת הכפילות בפתיחת סדר צריכה את היום שנבחר בבורר, שאינו בהכרח היום.
 function hrDayWin(iso) {
   var t = iso ? String(iso) : dayIso(new Date());
@@ -661,13 +585,13 @@ function _hrRowSet(rec, k, v) { if (v !== null && v !== undefined) rec[k] = v; }
 async function hrRowsGetSessions(kind, win) {
   kind = kind || 'attend';
   var cfg = HR_ROWS_KINDS[kind];
-  if (!cfg || !SB) return { ok: false, data: null };
+  if (!cfg || !S.SB) return { ok: false, data: null };
   try {
     var scols = 'client_id,session,date_iso,date_heb,filled_by,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at';
     var mcols = 'session_client_id,student_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
     var both = await Promise.all([
-      _rowsPaged(function () { return SB.from(cfg.parent).select(scols); }, 'client_id', win),
-      _rowsPaged(function () { return SB.from(cfg.child).select(mcols); }, 'client_id', win)
+      _rowsPaged(function () { return S.SB.from(cfg.parent).select(scols); }, 'client_id', win),
+      _rowsPaged(function () { return S.SB.from(cfg.child).select(mcols); }, 'client_id', win)
     ]);
     var rs = both[0], rm = both[1];
     if (!rs || !rm) return { ok: false, data: null };
@@ -677,11 +601,11 @@ async function hrRowsGetSessions(kind, win) {
 }
 
 async function hrRowsGetStudents() {
-  if (!SB) return { ok: false, data: null };
+  if (!S.SB) return { ok: false, data: null };
   try {
     // המצבה נמשכת מלאה בלי חלון — אין בטבלה עמודת תאריך.
     var rs = await _rowsPaged(function () {
-      return SB.from('hr_students_rows').select('client_id,updated_at,deleted,data');
+      return S.SB.from('hr_students_rows').select('client_id,updated_at,deleted,data');
     }, 'client_id', null);
     if (!rs) return { ok: false, data: null };
     var out = [];
@@ -717,7 +641,7 @@ async function hrCloudGet(kvKey, win) {
 // timeout חובה — ברשת חצי מחוברת fetch אינו מצליח ואינו נכשל. maybeSingle ולא single — מפתח שטרם נכתב אינו שגיאה.
 // res מבחין בין «אין ערך» ל«הענן לא ענה» — שניהם null, ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל.
 function hrCfgGet(key, res) {
-  return withTimeout(SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
+  return withTimeout(S.SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
     var pr = r && r.data ? kvParse(key, r.data.value) : { ok: true, value: null, bad: false };
     return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? MSG_KV_BAD : null } : pr.value;
   }, function(e){
@@ -893,16 +817,6 @@ async function hrPushToCloud() {
   eraNotePush(r);
 }
 
-// עובר ב-pullRender — כמה משתמשים עובדים יחד, ומשיכה עלולה להגיע באמצע סימון.
-function hrPullDraw() {
-  try {
-    if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
-    if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
-  } catch (eRf) { console.error('[pull] רענון בוררי הסדר נכשל', eRf); }
-  if (typeof renderStudents === 'function') renderStudents();
-  if (typeof refreshDashStats === 'function') refreshDashStats();
-}
-
 async function hrPullFromCloud() {
   // המשתמש יכול להתחלף בין המשיכה לכתיבה — מה שנמזג עבור הקודם היה יורד לדיסק של החדש.
   var _ep = ctxEpoch();
@@ -954,20 +868,123 @@ async function hrPullFromCloud() {
         if (hrApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
       }
     } catch(ePm) { console.warn('[perms] משיכה נכשלה:', ePm && ePm.message); }
-    pullRender(hrPullDraw);
+    pullRender(shell.hrPullDraw);
     usersRefresh();
     hrSyncLog('pull', null, null);
   } catch(e) { console.error('[sync] pull error:', e); }
 }
 
-export { HR_MIRROR_STREAMS, HR_SET_FLAT, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
-         PK_SL_SESS, PK_STUDENT, _hcBase, _hcG, _hcMN, _hrAtDiskSave, _hrMarkParent,
-         _hrMarkPushed, _hrMarkSynced, _hrPushedFor, _hrRecId, _hrRecTs,
-         _hrSessionsMerge, _hrSlDiskSave, _hrStDiskSave, _hrStudentsRaw,
-         _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, canAccess, hrAbsValueKey,
-         hrApplyPerms, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet,
-         hrCount, hrDayWin, hrHebMonthWin, hrHebYearWin, hrHwInWindow, hrLocalRecs,
-         hrMarks, hrMirrorRecs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
-         hrPushDirty, hrPushToCloud, hrSendRecs, hrSetDirtyRows, hrSetPending,
-         hrSetSend, hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged,
-         hrWho, hrWriteFail };
+// הסוג עובר במחלקה שמציבה משתנה --ty אחד; סוג לא מוכר נופל לברירת המחדל של abs-tone ואינו יוצר גוון רביעי.
+function tyCls(t) {
+  return (t === 'approved' || t === 'suspended' || t === 'left') ? 'abs-tone-' + t : '';
+}
+
+// הגוון באסימון --at-<קוד>, והמחלקה מציבה אותו במשתנה --at; קוד לא מוכר נשאר בברירת המחדל.
+function atvCls(code) {
+  var v = ['p', 'l', 'e', 'x', 'ap', 'ak', 'a'].indexOf(code) < 0 ? '' : 'at-code-' + code;
+  return 'at-code' + (v ? ' ' + v : '');
+}
+
+// נקרא מהתצוגה המחושבת — אלמנט שהוסתר במחלקה מחזיר style.display ריק ונקרא כפתוח.
+// פרטית כאן: משרתת את הלוח הקופץ, שמוסתר במחלקה.
+function uiShown(el) {
+  if (!el) return false;
+  return getComputedStyle(el).display !== 'none';
+}
+
+function modalOpen() {
+  var m = document.getElementById('modal');
+  return !!(m && m.classList.contains('open'));
+}
+
+// מראה ריקה היא רשימה ריקה — רשימה שנשתלת בקוד נכנסת למיזוג בלי חותמת ובמזהה שאינו של המכשיר.
+function getStudents(){try{var s=hrMirrorRecs('hr_students_rows');if(!Array.isArray(s))return [];return s.filter(function(x){return !(x&&x.deleted);});}catch(e){console.warn('[students] hr_students_rows פגום — נטענה רשימה ריקה:',e.message);return [];}}
+
+// מקבלת את הרשימה הנראית ומחברת בחזרה את המחוקים מהאחסון הגולמי — כך המצבות שורדות כל מחזור קריאה-שמירה.
+function saveStudents(s){
+  try {
+    var raw=_hrStudentsRaw();
+    var have={}; s.forEach(function(x){ if(x&&x.id!=null) have[String(x.id)]=1; });
+    var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
+    if (tombs.length) s=s.concat(tombs);
+  } catch(e){}
+  // הערך המוחזר נבדק במסלול הייבוא — באחסון מלא lsSet מחזירה false, והודעת הצלחה עליה היא כישלון שקט.
+  return _hrStDiskSave(s);
+}
+
+// מחזירה עותק ואינה ממיינת במקום — הקוראים מחזיקים את הרשימה גם לחיפוש ולספירה.
+function hrSortStudents(list) {
+  if (!Array.isArray(list)) return [];
+  var ord = { a: 0, b: 1, g: 2 };
+  return list.slice().sort(function (x, y) {
+    // שיעור שאינו מהשלושה יורד לסוף — תלמיד שסיווגו ריק היה נופל בין א׳ לב׳.
+    var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
+    var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
+    if (ox !== oy) return ox - oy;
+    return HE.compare((x && x.name) || '', (y && y.name) || '');
+  });
+}
+
+function getActiveAbsences(s, refDate) {
+  var now = refDate || new Date();
+  if (!Array.isArray(s.absences)) return [];
+  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
+}
+
+function sortUsersByOrder(data) {
+  var order = getUserOrder();
+  if (!order.length) return data;
+  return data.slice().sort(function(a,b) {
+    var ia = order.indexOf(String(a.id));
+    var ib = order.indexOf(String(b.id));
+    if (ia===-1) ia = 9999;
+    if (ib===-1) ib = 9999;
+    return ia - ib;
+  });
+}
+
+function getUserOrder() {
+  try { return JSON.parse(lsGet(HR_ORDER_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function getAbsenceReasons() {
+  try { return hrCfgLocalGet('absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+}
+
+function getDefaultReasons() {
+  return {
+    approved: ['חופשה', 'אירוע משפחתי', 'רפואי', 'אחר'],
+    suspended: ['משמעת', 'אחר'],
+    left: ['לא חזר מחופשה', 'עזב לצמיתות', 'אחר']
+  };
+}
+
+function _hrCleanCfg(cfg) {
+  // cfg בלי sessions מקבל את ברירת המחדל, והיא נכתבת גם למסד
+  if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
+    var def = hrDefaultCfg();
+    if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
+    try { hrCfgSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
+  }
+  return cfg;
+}
+
+function hrDefaultCfg() {
+  return {
+    sessions:[
+      {id:'n1',name:'דו"ח יומי'}
+    ],
+    treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
+  };
+}
+
+export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
+         _hrMarkSynced, _hrPushedFor, _hrRecId, _hrRecTs, _hrSessionsMerge, _hrSlDiskSave,
+         _hrStudentsRaw, _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, atvCls, canAccess,
+         getAbsenceReasons, getActiveAbsences, getStudents, hrAbsValueKey, hrApplyPerms,
+         hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
+         hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs,
+         hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushDirty, hrPushToCloud,
+         hrSendRecs, hrSetDirtyRows, hrSetPending, hrSetSend, hrSortStudents,
+         hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged, hrWho,
+         hrWriteFail, modalOpen, saveStudents, sortUsersByOrder, tyCls, uiShown };

@@ -13,16 +13,13 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED,
          MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK,
          MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
-         MSG_YEAR_ROLL_TITLE } from '../config.js';
-import { AUTH, S } from '../state.js';
-import { PK_STUDENT, _hrStDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw, hrAbsValueKey,
-         hrCloudGet, hrMirrorRecs, hrPdfFont, hrWho } from '../domain.js';
-import { getAbsenceReasons } from './settings.js';
-import { hrRefreshApprovalMarks } from './attend.reg.js';
-import { atRenderSupervision } from './attend.sup.js';
-import { hrRenderSupervision } from './sleep.sup.js';
-import { HE, _hcBuild, _hcFmt, _hcGet, _hcH, modalOpen, tyCls,
-         uiShown } from '../main.js';
+         MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
+         getStudents, hrAbsValueKey, hrCloudGet, hrPdfFont, hrSortStudents, hrWho,
+         modalOpen, saveStudents, tyCls, uiShown } from '../domain.js';
+import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
+import { hrRefreshApprovalMarks } from '../domain.sessions.js';
 
 function screenStudentsHTML() {
   return `
@@ -178,34 +175,6 @@ function selectSearchStudent(sid) {
 }
 
 var CLS_NAME={a:"שיעור א'",b:"שיעור ב'",g:"שיעור ג'"};
-
-// מחזירה עותק ואינה ממיינת במקום — הקוראים מחזיקים את הרשימה גם לחיפוש ולספירה.
-function hrSortStudents(list) {
-  if (!Array.isArray(list)) return [];
-  var ord = { a: 0, b: 1, g: 2 };
-  return list.slice().sort(function (x, y) {
-    // שיעור שאינו מהשלושה יורד לסוף — תלמיד שסיווגו ריק היה נופל בין א׳ לב׳.
-    var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
-    var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
-    if (ox !== oy) return ox - oy;
-    return HE.compare((x && x.name) || '', (y && y.name) || '');
-  });
-}
-
-// מראה ריקה היא רשימה ריקה — רשימה שנשתלת בקוד נכנסת למיזוג בלי חותמת ובמזהה שאינו של המכשיר.
-function getStudents(){try{var s=hrMirrorRecs('hr_students_rows');if(!Array.isArray(s))return [];return s.filter(function(x){return !(x&&x.deleted);});}catch(e){console.warn('[students] hr_students_rows פגום — נטענה רשימה ריקה:',e.message);return [];}}
-
-// מקבלת את הרשימה הנראית ומחברת בחזרה את המחוקים מהאחסון הגולמי — כך המצבות שורדות כל מחזור קריאה-שמירה.
-function saveStudents(s){
-  try {
-    var raw=_hrStudentsRaw();
-    var have={}; s.forEach(function(x){ if(x&&x.id!=null) have[String(x.id)]=1; });
-    var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
-    if (tombs.length) s=s.concat(tombs);
-  } catch(e){}
-  // הערך המוחזר נבדק במסלול הייבוא — באחסון מלא lsSet מחזירה false, והודעת הצלחה עליה היא כישלון שקט.
-  return _hrStDiskSave(s);
-}
 
 // ערך פגום אחד היה זורק מתוך hrPushToCloud ומפיל את כל הדחיפה — לכן הגטרים מוגנים.
 function checkLoginNeeded(){
@@ -440,11 +409,6 @@ function doYearTransition(){
 }
 
 // ── היעדרויות ואישורים ──
-function getActiveAbsences(s, refDate) {
-  var now = refDate || new Date();
-  if (!Array.isArray(s.absences)) return [];
-  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
-}
 
 // כולל היעדרויות עתידיות, לתצוגה בדיאלוג
 function getAllRelevantAbsences(s) {
@@ -520,9 +484,9 @@ function openCurrentStatusModal() {
 function hrRefreshSupervisionViews() {
   try {
     var av = document.getElementById('at-view-sup');
-    if (uiShown(av) && typeof atRenderSupervision === 'function') atRenderSupervision();
+    if (uiShown(av) && typeof shell.atRenderSupervision === 'function') shell.atRenderSupervision();
     var sv = document.getElementById('sl-view-sup');
-    if (uiShown(sv) && typeof hrRenderSupervision === 'function') hrRenderSupervision();
+    if (uiShown(sv) && typeof shell.hrRenderSupervision === 'function') shell.hrRenderSupervision();
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
 
@@ -862,8 +826,7 @@ function printStudents() {
 }
 
 export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         getActiveAbsences, getStudents, hrSortStudents, importStudentsFromFile,
-         onSearchInput, openAttendanceEdit, openManageListDlg, openStatusForm,
-         openStatusHistory, openStatusPickerModal, printStudents, renderStudents,
-         saveStudent, saveStudentStatus, saveStudents, screenStudentsHTML,
+         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
+         openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
+         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
          selectSearchStudent, setStudentActive, setStudentInactive };

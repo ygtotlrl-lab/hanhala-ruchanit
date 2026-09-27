@@ -12,11 +12,10 @@ import { HEB_DOW, hebrewDate } from '../../core/hebrew.js';
 import { HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
          MSG_OFF_FIRST_LOGIN, MSG_SERVER_DOWN_LOCAL, MSG_SWITCHED_AS,
          MSG_SWITCH_NEED_PASS, MSG_SWITCH_TITLE,
-         MSG_SWITCH_WRONG_PASS } from '../config.js';
-import { AUTH, S } from '../state.js';
-import { hrApplyPerms, hrCfgGet, hrSetPending } from '../domain.js';
-import { sortUsersByOrder } from './settings.js';
-import { SB, showPage, showPageInternal, uiShown } from '../main.js';
+         MSG_SWITCH_WRONG_PASS } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { hrApplyPerms, hrCfgGet, hrSetPending, sortUsersByOrder,
+         uiShown } from '../domain.js';
 
 // ── המסכים ──
 // mountView() מציירת אותם לפני כל קוד שמחפש אלמנט בתוכם — אין להזיז את הקריאה אליה מטה.
@@ -74,7 +73,7 @@ async function _doLoginInner() {
   try {
     // השורה נשלפת לפי שם המשתמש בלבד וההכרעה מול הטביעה — סינון לפי סיסמה בשאילתה
     // הופך ערך שבענן למפתח שכל מחזיק מפתח ה-anon יכול לקרוא.
-    res = await withTimeout(SB.from(authUsersTable())
+    res = await withTimeout(S.SB.from(authUsersTable())
       .select(AUTH_USER_COLS.join(','))
       .eq('username', username)
       .eq('active', true)
@@ -180,7 +179,7 @@ async function _doLoginInner() {
   try { lkReset(); } catch(e) { console.warn('[login] lkReset:', e); }
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('⏳ [4/4] טוען נתונים...');
-  showPage('home');
+  shell.showPage('home');
 }
 
 function doLogout() {
@@ -194,7 +193,7 @@ function doLogout() {
   document.getElementById('auth-user').value = '';
   document.getElementById('auth-pass').value = '';
   document.getElementById('auth-err').textContent = '';
-  showPageInternal('home');
+  shell.showPageInternal('home');
 }
 
 async function loadPerms() {
@@ -234,7 +233,7 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div class="user-menu-empty">טוען...</div>';
   // בלי timeout התפריט נשאר על «טוען...» לנצח ברשת חצי מחוברת.
   var res = null;
-  try { res = await withTimeout(SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  try { res = await withTimeout(S.SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = sortUsersByOrder(data);
@@ -280,7 +279,7 @@ async function confirmSwitch() {
   if(!pass){errEl.textContent=MSG_SWITCH_NEED_PASS;return;}
   var res=null, netFail=false;
   try {
-    res=await withTimeout(SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single());
+    res=await withTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; }
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -323,7 +322,7 @@ async function confirmSwitch() {
   var mr=document.getElementById('user-menu-role');
   if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
   lkReset();
-  showPage('home');
+  shell.showPage('home');
   toast(MSG_SWITCHED_AS+u.full_name, null, 'good');
 }
 

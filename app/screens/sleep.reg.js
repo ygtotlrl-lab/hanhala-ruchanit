@@ -1,22 +1,19 @@
 // app/screens/sleep.reg.js — שינה — המודול ורישום הסימונים
-import { dayNoon, dayToday, readNum } from '../../core/util.js';
-import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMark, pendTag, pushTable,
-         schedulePush } from '../../core/sync.js';
-import { lsGet, lsSetArray } from '../../core/storage.js';
+import { dayNoon, readNum } from '../../core/util.js';
+import { idEq, pendMark, schedulePush } from '../../core/sync.js';
 import { esc, openModal, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
-         MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE,
-         MSG_SLEEP_OPEN, MSG_STATUS_REVERTED } from '../config.js';
-import { PK_SL_SESS, _hrRecTs, _hrSessionsMerge, _hrSlDiskSave, hrCfgGet,
-         hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
-         hrMarks, hrMirrorRecs, hrSetPending, hrSyncLog, hrTouchLastChanged, hrWho,
-         hrWriteFail } from '../domain.js';
-import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr } from './attend.reg.js';
-import { hrRenderArchive } from './sleep.arc.js';
-import { hrRenderSupervision } from './sleep.sup.js';
-import { getActiveAbsences, getStudents, hrSortStudents, renderStudents, saveStudents } from './students.js';
-import { HE, _hcBuild, _hcFmt, _hcH, atvCls, modalOpen, tyCls } from '../main.js';
+         MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
+         MSG_STATUS_REVERTED, PK_SL_SESS } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { _hrSlDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrDefaultCfg,
+         hrMarks, hrSortStudents, hrWho, modalOpen, saveStudents,
+         tyCls } from '../domain.js';
+import { _hcBuild, _hcFmt, _hcH } from '../domain.hebdate.js';
+import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
+         hrGetLogicalDate, hrSaveData } from '../domain.sessions.js';
+import { _hrPullCfg, _hrPullSessions, hrCachedCfg, hrRenderTodaySessions,
+         hrSortedSessions } from './sleep.js';
 
 function screenSleepHTML() {
   return `
@@ -74,153 +71,6 @@ function screenSleepHTML() {
 }
 
 // ── מודול זמן השינה ──
-var HR_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-
-function hrDow(isoDate){return HR_DOW[dayNoon(isoDate).getDay()];}
-
-function hrSummaryHtml(cnts){
-  var parts=[];
-  var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
-  add(cnts.p||0,  'נוכחים',   'p');
-  add(cnts.e||0,  'חיסורים',  'e');
-  add(cnts.x||0,  'אירועים',  'x');
-  add(cnts.l||0,  'איחורים',  'l');
-  add(cnts.ap||0, 'אישורים',  'ap');
-  add(cnts.ak||0, 'בבית',     'ak');
-  add(cnts.a||0,  'מנוחה',    'a');
-  return parts.join('<span class="user-handle"> | </span>');
-}
-
-// תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
-function hrGetLogicalDate() {
-  if(new Date().getHours()<12) return dayToday(-1);
-  return dayToday();
-}
-
-async function _hrPullSessions(win) {
-  var v = null; try { v = await hrCloudGet('hr_sleep_sessions', win); } catch (e) {}
-  if (!Array.isArray(v)) return false;
-  var loc = hrMirrorRecs('hr_sleep_sessions');
-  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sleep_sessions', !!win) : v;
-  S._hrData = out; _hrSlDiskSave(out);
-  return true;
-}
-
-async function _hrPullCfg() {
-  var r = null; try { r = await hrCfgGet('sleep_cfg', true); } catch (e) {}
-  if (!r || !r.ok) return false;
-  if (r.value && !hrSetPending('sleep_cfg')) { S._hrCfg = _hrCleanCfg(r.value); hrCfgLocalSet('sleep_cfg', S._hrCfg); }
-  return true;
-}
-
-async function _hrPullTreats() {
-  var r = null; try { r = await hrCfgGet('sleep_treats', true); } catch (e) {}
-  if (!r || !r.ok) return false;
-  // מפתח שטרם נכתב אינו דורס את הדיסק — [] מעליו היה מוחק טיפולים שנרשמו אופליין וטרם עלו
-  if (Array.isArray(r.value) && !hrSetPending('sleep_treats')) { S._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
-  else if (!Array.isArray(S._hrTreats)) S._hrTreats = hrCachedArr('_hrTreats', 'hr_sleep_treats') || [];
-  return true;
-}
-
-function _hrSupMonth() {
-  if (S._hrSupHY === null) {
-    var ch = _hcH(new Date());
-    S._hrSupHY = ch.hy; S._hrSupMI = ch.mi;
-  }
-  return S._hrSupHY;
-}
-
-function hrDefaultCfg() {
-  return {
-    sessions:[
-      {id:'n1',name:'דו"ח יומי'}
-    ],
-    treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
-  };
-}
-
-function _hrCleanCfg(cfg) {
-  // cfg בלי sessions מקבל את ברירת המחדל, והיא נכתבת גם למסד
-  if (!cfg || !Array.isArray(cfg.sessions) || cfg.sessions.length === 0) {
-    var def = hrDefaultCfg();
-    if (cfg) { cfg.sessions = def.sessions; } else { cfg = def; }
-    try { hrCfgSet('sleep_cfg', cfg); } catch (e) { hrWriteFail('_hrCleanCfg', e); }
-  }
-  return cfg;
-}
-
-// סינכרונית — הציור הראשון אינו ממתין לרשת, וההגדרות קובעות אילו כפתורי סדר להציג
-function hrCachedCfg() {
-  if (S._hrCfg) return S._hrCfg;
-  try { var p=hrCfgLocalGet('sleep_cfg'); if(p){ S._hrCfg=_hrCleanCfg(p); return S._hrCfg; } } catch(e){}
-  return null;
-}
-
-async function hrSaveCfg(cfg) {
-  S._hrCfg=cfg;
-  return hrCfgSet('sleep_cfg',cfg);
-}
-
-async function hrLoadData() {
-  if (S._hrData) return S._hrData;
-  try { var v=await hrCloudGet('hr_sleep_sessions'); if(Array.isArray(v)){S._hrData=v;return v;} } catch(e){}
-  var _hrDisk=hrMirrorRecs('hr_sleep_sessions');
-  if(Array.isArray(_hrDisk)){S._hrData=_hrDisk;return S._hrData;}
-  S._hrData=[]; return S._hrData;
-}
-
-// אין ניקוי רשומות לפי שם הסדר — סדר לגיטימי באותו שם נמחק,
-// ו-hrSaveData ממזג עם הענן, כך שהמנוקות חוזרות מיד; מחיקה היא tombstone מפורש בלבד.
-async function hrSaveData(data) {
-  // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
-  var _ep = ctxEpoch();
-  var _t0=Date.now(); // לפני הכתיבה — עריכה שנעשית באמצע אינה נזקפת לדחיפה הזו
-  S._hrData=data;
-  _hrSlDiskSave(data);
-  try {
-    // מיזוג עם הענן לפני הכתיבה — אחרת נדרסות רשומות של מכשיר אחר
-    var _hrLocalN=hrCount(data);
-    var _hrRemote=null; try { _hrRemote=await hrCloudGet('hr_sleep_sessions'); } catch(eR){}
-    if (Array.isArray(_hrRemote)) {
-      data=_hrSessionsMerge(_hrRemote, data, 'hr_sleep_sessions');
-      S._hrData=data;
-      _hrSlDiskSave(data);
-    }
-    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב
-    var _rSl=await pushTable('hr_sleep_sessions',data);
-    if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
-    hrSyncLog('push','hr_sleep_sessions',hrCount(data),{local_count:_hrLocalN,remote_count:hrCount(_hrRemote),result_count:hrCount(data)});
-    await hrTouchLastChanged();
-  } catch (e) { hrWriteFail('hrSaveData', e); }
-}
-
-async function hrLoadTreats() {
-  // התוצאה נשמרת בזיכרון — הציור הראשון של ההשגחה קורא ממנה בלי להמתין.
-  // רשימה שממתינה לסנכרון נקראת מהמכשיר — הענן טרם קיבל אותה.
-  if (!hrSetPending('sleep_treats')) try { var v=await hrCfgGet('sleep_treats'); if(Array.isArray(v)){S._hrTreats=v;return v;} } catch(e){}
-  try { var lc=lsGet('hr_sleep_treats'); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){S._hrTreats=p;return p;}} } catch(e){}
-  return [];
-}
-
-function hrLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
-
-async function hrSaveTreats(data) {
-  // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
-  var _ep = ctxEpoch();
-  var _t0=Date.now();
-  lsSetArray('hr_sleep_treats', data, _hrRecTs);
-  try {
-    // מיזוג ברמת רשומה ולא דריסה — דריסה מוחקת טיפול שנרשם במכשיר אחר
-    var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('sleep_treats'); } catch(eR){}
-    if (Array.isArray(_tRemoteS)) {
-      data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
-      lsSetArray('hr_sleep_treats', data, _hrRecTs);
-    }
-    if (!ctxStale(_ep)) await hrCfgSet('sleep_treats',data);
-  } catch (e) { hrWriteFail('hrSaveTreats', e); }
-  S._hrTreats=data;
-  return data;
-}
 
 // הציור הראשון סינכרוני מהמטמון — ציור שממתין לרשת משאיר שני חיוויים על המסך
 function _hrPaintReg() {
@@ -280,13 +130,6 @@ async function loadSleep() {
   // אין התראת כניסה במודול השינה
 }
 
-function hrSortedSessions(cfg) {
-  if(!cfg) cfg=S._hrCfg||hrDefaultCfg();
-  return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.startTime||'', b.startTime||'');
-  });
-}
-
 function hrFillSessionBtns() {
   var el=document.getElementById('sl-sess-btns');
   if(!el) return;
@@ -310,8 +153,8 @@ function hrShowTab(tab) {
     if(b) b.className=(t===tab)?'at-tab-btn-on':'at-tab-btn';
   });
   if(tab==='reg' && S._hrCurrentSessionId) hrRenderStudents();
-  if(tab==='arc') hrRenderArchive();
-  if(tab==='sup') hrRenderSupervision();
+  if(tab==='arc') shell.hrRenderArchive();
+  if(tab==='sup') shell.hrRenderSupervision();
 }
 
 function hrAutoMark(student, sessDateIso, sessStartTime) {
@@ -346,43 +189,6 @@ function hrAutoMark(student, sessDateIso, sessStartTime) {
 }
 
 // ── שינה — רישום הסימונים ומסך הסדר ──
-function hrRenderTodaySessions() {
-  var el=document.getElementById('sl-today-sessions');
-  if(!el) return;
-  var data=S._hrData||[];
-  var selIso=(document.getElementById('sl_date_iso')||{}).value;
-  var logIso=hrGetLogicalDate();
-  var filterIso=selIso||logIso;
-  var isToday=filterIso===dayToday();
-  var isLogical=filterIso===logIso;
-  var cfg=S._hrCfg||hrDefaultCfg();
-  var sessOrder={};
-  hrSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.date_iso===filterIso;})
-    .slice().sort(function(a,b){
-      var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
-      var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
-      return ia-ib;
-    });
-  if(!daySess.length){el.innerHTML='';return;}
-  var dowLabel=isToday?'היום':(isLogical&&!isToday?'אמש':'יום '+hrDow(filterIso));
-  var html='<div class="day-sess-block">'+
-    '<div class="day-sess-title">📋 דוחות שמולאו '+dowLabel+':</div>'+
-    '<div class="reason-list">';
-  daySess.forEach(function(rec){
-    var cnts={};
-    Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
-    var summaryHtml=hrSummaryHtml(cnts);
-    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
-      pendTag(PK_SL_SESS+rec.id)+
-      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
-      '<span class="day-sess-edit">✏️ ערוך</span>'+
-    '</div>';
-  });
-  html+='</div></div>';
-  el.innerHTML=html;
-}
 
 // הרשומה נקראת מהמטמון בלי המתנה — הכפתור שנלחץ צויר מאותו עותק, ולכן היא בו בוודאות
 async function hrEditSession(recId) {
@@ -590,7 +396,7 @@ function hrCancelStudentStatusFromReg(sid) {
   delete S._hrPending[sid];
   hrMarkDirty();
   hrRenderStudents();
-  renderStudents();
+  shell.renderStudents();
   toast(MSG_STATUS_REVERTED+s.name, null, 'good');
 }
 
@@ -763,10 +569,6 @@ async function hrCloseSession() {
   toast(msg, null, 'good');
 }
 
-export { _hrCleanCfg, _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth,
-         hrCachedCfg, hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession,
-         hrConfirmLate, hrDefaultCfg, hrDow, hrEditSession, hrFillSessionBtns,
-         hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats, hrOpenSession,
-         hrRenderStudents, hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats,
-         hrSetLateMin, hrSetMark, hrSetNote, hrShowTab, hrSortedSessions,
-         hrSummaryHtml, loadSleep, screenSleepHTML };
+export { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate,
+         hrEditSession, hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin,
+         hrSetMark, hrSetNote, hrShowTab, loadSleep, screenSleepHTML };

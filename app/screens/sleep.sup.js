@@ -2,18 +2,17 @@
 import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
-         MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../config.js';
-import { _hcBase, _hcMN, hrHebMonthWin, hrMarks, hrSupervisionAccess, hrWho } from '../domain.js';
-import { hrCachedArr } from './attend.reg.js';
-import { hrRenderArchive } from './sleep.arc.js';
-import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg,
-         hrDefaultCfg, hrDow, hrLiveTreats, hrLoadData, hrLoadTreats,
-         hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats } from './sleep.reg.js';
-import { getStudents, hrSortStudents } from './students.js';
-import { HE, _hcFmt, _hcH, _hcYL, atvCls } from '../main.js';
+         MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { HE, atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
+         hrSupervisionAccess, hrWho } from '../domain.js';
+import { _hcBase, _hcFmt, _hcH, _hcMN, _hcYL, hrHebMonthWin } from '../domain.hebdate.js';
+import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
+import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
+         hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg,
+         hrSaveTreats } from './sleep.js';
 
 // ── שינה — השגחה וטיפולים ──
 function hrSupNav(dir) {
@@ -272,7 +271,7 @@ async function hrEditMark(recId, sid, newCode) {
   var _p=hrSaveData(data);
   closeModal();
   hrRenderTodaySessions();
-  hrRenderArchive();
+  shell.hrRenderArchive();
   hrRenderSupervision();
   toast(MSG_MARK_UPDATED, null, 'good');
   await _p;
@@ -328,4 +327,5 @@ async function hrSaveSettingsCfg() {
 }
 
 export { hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSupervision,
-         hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg, hrSupNav, renderSleepSettings };
+         hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg, hrSupNav,
+         renderSleepSettings };
