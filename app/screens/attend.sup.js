@@ -2,17 +2,17 @@
 import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
-import { MSG_ABSENCE_ALERT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK,
-         MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED,
-         MSG_MONTH_DETAIL, MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../config.js';
-import { _hcBase, _hcG, _hcMN, hrHebMonthWin, hrMarks, hrSupervisionAccess, hrWho } from '../domain.js';
-import { atRenderArchive } from './attend.arc.js';
+import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
+         MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
+         MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { HE, atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess,
+         hrWho } from '../domain.js';
+import { _hcBase, _hcFmt, _hcH, _hcMN, _hcYL, hrHebMonthWin } from '../domain.hebdate.js';
+import { atLoadData, atSaveData, hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
-         atDefaultCfg, atDow, atLiveTreats, atLoadData, atLoadTreats,
-         atRenderTodaySessions, atSaveCfg, atSaveData, atSaveTreats, hrCachedArr } from './attend.reg.js';
-import { getStudents, hrSortStudents } from './students.js';
-import { HE, _hcFmt, _hcH, _hcYL, atvCls } from '../main.js';
+         atDefaultCfg, atDow, atLiveTreats, atLoadTreats, atRenderTodaySessions,
+         atSaveCfg, atSaveTreats } from './attend.js';
 
 // ── נוכחות — השגחה, טיפולים והתראה ──
 function atSupNav(dir) {
@@ -274,55 +274,10 @@ async function atEditMark(recId, sid, newCode) {
   var _p=atSaveData(data);
   closeModal();
   atRenderTodaySessions();
-  atRenderArchive();
+  shell.atRenderArchive();
   atRenderSupervision();
   toast(MSG_MARK_UPDATED, null, 'good');
   await _p;
-}
-
-// ── התראת כניסה ──
-function atCheckAlert() {
-  var data=(S._atData||[]).filter(function(r){ return !(r && r.deleted); });
-  var students=getStudents();
-  if(!data.length) return;
-
-  var todH=_hcH(new Date());
-  var curHY=todH.hy, curMI=todH.mi;
-  // תחילת החודש בחצות מקומית ולא בצהריים — כדי לא לפסול רשומות מה-1 בחודש:
-  // new Date('2026-04-28') הוא חצות UTC, 03:00 בישראל, מוקדם מ-12:00 מקומי.
-  var _mG=_hcG(curHY,curMI,1);
-  var monthBeg=new Date(_mG.getFullYear(),_mG.getMonth(),_mG.getDate(),0,0,0);
-  console.log('[attend] atCheckAlert — חודש עברי:', _hcMN(curHY)[curMI], curHY,
-    '| תחילת חודש גרגוריאנית:', monthBeg.toISOString(),
-    '| רשומות סה"כ:', data.length);
-
-  var alerts=[];
-  var stats={};
-  students.forEach(function(s){stats[s.id]={name:s.name,absent:0,lateMin:0};});
-  data.forEach(function(rec){
-    if(new Date(rec.date_iso)<monthBeg) return;
-    Object.entries(hrMarks(rec)).forEach(function(e){
-      var sid=e[0],m=e[1];
-      if(!stats[sid]) return;
-      if(m.s==='e'||m.s==='x') stats[sid].absent++;
-      if(m.s==='l') stats[sid].lateMin+=m.min||0;
-    });
-  });
-  Object.values(stats).forEach(function(s){
-    if(s.absent>=20||s.lateMin>=300) alerts.push(s);
-  });
-  if(!alerts.length) return;
-
-  var listHtml=alerts.slice(0,10).map(function(s){
-    return '<div class="alert-row">'+esc(s.name)+
-      (s.absent>=20?'<span class="alert-abs"> — '+s.absent+' חיסורים</span>':'')+
-      (s.lateMin>=300?'<span class="alert-late"> — '+s.lateMin+' דק׳ איחור</span>':'')+
-      '</div>';
-  }).join('');
-  openModal(MSG_ABSENCE_ALERT,
-    '<p class="alert-lead">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div class="alert-list">'+listHtml+'</div>',
-    '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
 }
 
 // ── הגדרות מודול ──
@@ -414,6 +369,6 @@ async function atSaveSettingsCfg() {
   toast(MSG_SETTINGS_SAVED, null, 'good');
 }
 
-export { atAddSession, atAddTreat, atAddTreatRow, atCheckAlert, atDeleteTreat,
-         atEditMark, atRenderSupervision, atSaveSettingsCfg, atSupDetail,
-         atSupEditMarkDlg, atSupNav, renderAttendSettings };
+export { atAddSession, atAddTreat, atAddTreatRow, atDeleteTreat, atEditMark,
+         atRenderSupervision, atSaveSettingsCfg, atSupDetail, atSupEditMarkDlg, atSupNav,
+         renderAttendSettings };

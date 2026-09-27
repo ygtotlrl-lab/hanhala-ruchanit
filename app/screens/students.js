@@ -3,24 +3,23 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush } from '../../core/sync.js';
 import { isAdmin } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
-import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
-         MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING,
-         MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE,
-         MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_PDF_BUILDING,
-         MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE, MSG_PICK_REASON,
-         MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED,
+import { hebDate, hebGematria, hebMonthNames,
+         hebYearLabelFull } from '../../core/hebrew.js';
+import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE,
+         MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE,
+         MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
+         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE,
+         MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED,
          MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK,
          MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
-         MSG_YEAR_ROLL_TITLE } from '../config.js';
-import { PK_STUDENT, _hrStDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw, hrAbsValueKey,
-         hrCloudGet, hrMirrorRecs, hrPdfFont, hrWho } from '../domain.js';
-import { hrRefreshApprovalMarks } from './attend.reg.js';
-import { atRenderSupervision } from './attend.sup.js';
-import { getAbsenceReasons } from './settings.js';
-import { hrRenderSupervision } from './sleep.sup.js';
-import { HE, _hcBuild, _hcFmt, _hcGet, _hcH, modalOpen, tyCls, uiShown } from '../main.js';
+         MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
+         getStudents, hrAbsValueKey, hrCloudGet, hrPdfFont, hrSortStudents, hrWho,
+         modalOpen, saveStudents, tyCls, uiShown } from '../domain.js';
+import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
+import { hrRefreshApprovalMarks } from '../domain.sessions.js';
 
 function screenStudentsHTML() {
   return `
@@ -177,34 +176,6 @@ function selectSearchStudent(sid) {
 
 var CLS_NAME={a:"שיעור א'",b:"שיעור ב'",g:"שיעור ג'"};
 
-// מחזירה עותק ואינה ממיינת במקום — הקוראים מחזיקים את הרשימה גם לחיפוש ולספירה.
-function hrSortStudents(list) {
-  if (!Array.isArray(list)) return [];
-  var ord = { a: 0, b: 1, g: 2 };
-  return list.slice().sort(function (x, y) {
-    // שיעור שאינו מהשלושה יורד לסוף — תלמיד שסיווגו ריק היה נופל בין א׳ לב׳.
-    var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
-    var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
-    if (ox !== oy) return ox - oy;
-    return HE.compare((x && x.name) || '', (y && y.name) || '');
-  });
-}
-
-// מראה ריקה היא רשימה ריקה — רשימה שנשתלת בקוד נכנסת למיזוג בלי חותמת ובמזהה שאינו של המכשיר.
-function getStudents(){try{var s=hrMirrorRecs('hr_students_rows');if(!Array.isArray(s))return [];return s.filter(function(x){return !(x&&x.deleted);});}catch(e){console.warn('[students] hr_students_rows פגום — נטענה רשימה ריקה:',e.message);return [];}}
-
-// מקבלת את הרשימה הנראית ומחברת בחזרה את המחוקים מהאחסון הגולמי — כך המצבות שורדות כל מחזור קריאה-שמירה.
-function saveStudents(s){
-  try {
-    var raw=_hrStudentsRaw();
-    var have={}; s.forEach(function(x){ if(x&&x.id!=null) have[String(x.id)]=1; });
-    var tombs=raw.filter(function(x){ return x&&x.deleted&&x.id!=null&&!have[String(x.id)]; });
-    if (tombs.length) s=s.concat(tombs);
-  } catch(e){}
-  // הערך המוחזר נבדק במסלול הייבוא — באחסון מלא lsSet מחזירה false, והודעת הצלחה עליה היא כישלון שקט.
-  return _hrStDiskSave(s);
-}
-
 // ערך פגום אחד היה זורק מתוך hrPushToCloud ומפיל את כל הדחיפה — לכן הגטרים מוגנים.
 function checkLoginNeeded(){
   return !AUTH.user;
@@ -315,9 +286,9 @@ function renderStudents(){
 // נגזר משנת הלימודים ולא מרשימת שנים מוקלדת — רשימה כזו נגמרת בשנתה האחרונה.
 // שנת הלימודים מתגלגלת באלול ולא בתשרי — הבוגרים עוזבים בסוף אלול.
 function hrSchoolYear(now) {
-  var h = window.hebDate(now || new Date());
+  var h = hebDate(now || new Date());
   if (!h.ok) return 0;
-  return (h.monthIndex === window.hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
+  return (h.monthIndex === hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
 }
 
 // המחזור הוא שנת הסיום ולא הכניסה — ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה, וא׳ את שלאחריה.
@@ -327,7 +298,7 @@ function hrCycleFor(cls, now) {
   if (!y || add[cls] == null) return '';
   var hy = y + add[cls];
   // שנה עגולה במאות נותנת שני אפסים ואין לה צורה מקוצרת — התווית המלאה ולא מחרוזת ריקה שנקראת «אין מחזור».
-  return window.hebGematria(hy % 100, '״') || window.hebYearLabelFull(hy);
+  return hebGematria(hy % 100, '״') || hebYearLabelFull(hy);
 }
 
 function setStudentInactive(sid){
@@ -438,11 +409,6 @@ function doYearTransition(){
 }
 
 // ── היעדרויות ואישורים ──
-function getActiveAbsences(s, refDate) {
-  var now = refDate || new Date();
-  if (!Array.isArray(s.absences)) return [];
-  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
-}
 
 // כולל היעדרויות עתידיות, לתצוגה בדיאלוג
 function getAllRelevantAbsences(s) {
@@ -518,9 +484,9 @@ function openCurrentStatusModal() {
 function hrRefreshSupervisionViews() {
   try {
     var av = document.getElementById('at-view-sup');
-    if (uiShown(av) && typeof atRenderSupervision === 'function') atRenderSupervision();
+    if (uiShown(av) && typeof shell.atRenderSupervision === 'function') shell.atRenderSupervision();
     var sv = document.getElementById('sl-view-sup');
-    if (uiShown(sv) && typeof hrRenderSupervision === 'function') hrRenderSupervision();
+    if (uiShown(sv) && typeof shell.hrRenderSupervision === 'function') shell.hrRenderSupervision();
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
 
@@ -595,7 +561,7 @@ async function openStatusHistory(sid) {
     if (!v) return '—';
     var d = new Date(v);
     if (isNaN(d.getTime())) return '—';
-    var h = window.hebDate(d);
+    var h = hebDate(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
@@ -860,8 +826,7 @@ function printStudents() {
 }
 
 export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         getActiveAbsences, getStudents, hrSortStudents, importStudentsFromFile,
-         onSearchInput, openAttendanceEdit, openManageListDlg, openStatusForm,
-         openStatusHistory, openStatusPickerModal, printStudents, renderStudents,
-         saveStudent, saveStudentStatus, saveStudents, screenStudentsHTML,
+         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
+         openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
+         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
          selectSearchStudent, setStudentActive, setStudentInactive };

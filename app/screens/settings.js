@@ -2,20 +2,18 @@
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
          MSG_SERVER_ERR, uniqHas, withTimeout } from '../../core/util.js';
-import { lsGet, lsSet } from '../../core/storage.js';
+import { lsSet } from '../../core/storage.js';
 import { ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, usersRefresh,
          usersSaveOne, writeUser } from '../../core/auth.js';
-import { closeModal, openModal, toast, uiNoDialog } from '../../core/ui.js';
-import { AUTH } from '../state.js';
+import { closeModal, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
 import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_NO_USER_SESSION, MSG_PASS_MISMATCH_X, MSG_PASS_NEEDS_NET,
-         MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PERMS_SAVED,
-         MSG_REASONS_SAVED, MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED,
-         MSG_USER_SAVED_NO_FP, MSG_USER_SWITCHED_MID } from '../config.js';
-import { hrApplyPerms, hrCfgLocalGet, hrCfgSet, hrTouchLastChanged } from '../domain.js';
-import { renderAttendSettings } from './attend.sup.js';
-import { renderSleepSettings } from './sleep.sup.js';
-import { SB, renderUsersList } from '../main.js';
+         MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PERMS_SAVED, MSG_REASONS_SAVED,
+         MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED, MSG_USER_SAVED_NO_FP,
+         MSG_USER_SWITCHED_MID } from '../constants.js';
+import { AUTH, S, shell } from '../state.js';
+import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged,
+         sortUsersByOrder } from '../domain.js';
 
 function screenSettingsHTML() {
   return `
@@ -200,20 +198,8 @@ function showSettingsModule(mod) {
   if (target) target.classList.remove('hidden');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
-  if (mod === 'attend') renderAttendSettings();
-  if (mod === 'sleep') renderSleepSettings();
-}
-
-function getDefaultReasons() {
-  return {
-    approved: ['חופשה', 'אירוע משפחתי', 'רפואי', 'אחר'],
-    suspended: ['משמעת', 'אחר'],
-    left: ['לא חזר מחופשה', 'עזב לצמיתות', 'אחר']
-  };
-}
-
-function getAbsenceReasons() {
-  try { return hrCfgLocalGet('absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  if (mod === 'attend') shell.renderAttendSettings();
+  if (mod === 'sleep') shell.renderSleepSettings();
 }
 
 async function saveAbsenceReasons() {
@@ -286,24 +272,8 @@ function renderSettings() {
   if (sp) sp.classList.toggle('hidden', !admin);
 }
 
-function getUserOrder() {
-  try { return JSON.parse(lsGet(HR_ORDER_KEY) || '[]'); } catch(e) { return []; }
-}
-
 function saveUserOrder(ids) {
   lsSet(HR_ORDER_KEY, JSON.stringify(ids));
-}
-
-function sortUsersByOrder(data) {
-  var order = getUserOrder();
-  if (!order.length) return data;
-  return data.slice().sort(function(a,b) {
-    var ia = order.indexOf(String(a.id));
-    var ib = order.indexOf(String(b.id));
-    if (ia===-1) ia = 9999;
-    if (ib===-1) ib = 9999;
-    return ia - ib;
-  });
 }
 
 // ── ניהול משתמשים, הרשאות ושינוי סיסמה ──
@@ -480,7 +450,7 @@ async function changeMyPassword() {
   if (newPass !== newPass2) { toast(MSG_PASS_MISMATCH_X, null, 'bad'); return; }
   // לא var {data} — הוא בולע את השגיאה, וכשל רשת היה מוצג כ«הסיסמה הנוכחית שגויה».
   var chk;
-  try { chk = await withTimeout(SB.from(authUsersTable()).select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
+  try { chk = await withTimeout(S.SB.from(authUsersTable()).select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
   catch (e) { toast(MSG_PASS_NEEDS_NET, null, 'bad'); return; }
   if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
@@ -511,7 +481,43 @@ async function changeMyPassword() {
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');
 }
 
-export { addAbsenceReason, changeMyPassword, getAbsenceReasons, myPasswordModal,
-         openAddUser, openEditUser, renderSettings, saveAbsenceReasons, savePerms,
-         saveUser, saveUserOrder, screenSettingsHTML, showSettingsHome,
-         showSettingsModule, sortUsersByOrder, toggleUserActive };
+async function renderUsersList() {
+  var el = document.getElementById('users-list');
+  if (!el) return;
+  el.innerHTML = '<div class="ld">טוען...</div>';
+  // לא var {data} = await — פירוק בולע את res.error, וכשל רשת היה מוצג כ«אין משתמשים».
+  var res;
+  try { res = await withTimeout(S.SB.from('hr_users').select('*').order('full_name')); }
+  catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
+  if (!res || res.error || !Array.isArray(res.data)) {
+    var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
+    el.innerHTML = '<div class="load-err ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
+      '<div class="load-err-detail">' + esc(em) + '</div>' +
+      '<button data-act="users-render" class="retry-btn">נסה שוב</button></div>';
+    return;
+  }
+  var data = res.data;
+  if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
+  data = sortUsersByOrder(data);
+  el.innerHTML = data.map(function(u) {
+    var roleClass = 'role-'+u.role;
+    var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
+    var activeCls = u.active ? '' : ' is-inactive';
+    return '<div class="ur'+activeCls+'" data-row-id="'+esc(u.client_id)+'">' +
+      '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
+      '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
+      '<div class="ua">' +
+        '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
+        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'">✏️</button>' +
+        '<button data-act="user-up" data-id="'+esc(u.client_id)+'" title="הזז למעלה" class="user-move">⬆️</button>' +
+        '<button data-act="user-down" data-id="'+esc(u.client_id)+'" title="הזז למטה" class="user-move">⬇️</button>' +
+        '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+export { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
+         renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
+         saveUserOrder, screenSettingsHTML, showSettingsHome, showSettingsModule,
+         toggleUserActive };

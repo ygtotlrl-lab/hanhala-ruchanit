@@ -1,8 +1,9 @@
 // app/state.js — המצב המשותף בין המודולים
-import { sessGet, sessSet } from '../core/auth.js';
 
 // מצב שמודולים שונים כותבים — אובייקט אחד, כי קישור מיובא אינו ניתן להשמה.
-export const S = {
+const S = {
+  // הלקוח נבנה ב-main בעלייה — כל מודול מגיע אליו מכאן.
+  SB: null,
   // ההקשר נלכד לפני ההמתנה — mark רץ אחרי await, וקריאת הגלובלי הייתה זוקפת את ההצלחה למשתמש אחר.
   _hrPushEp: 0,
   // ── חלון החודש העברי ──
@@ -21,39 +22,43 @@ export const S = {
   // ── מצבת התלמידים ──
   currentFilter: 'all',
   editingStudentId: null,
-  _atData: undefined,
-  _hrData: undefined,
-  _hrMarks: undefined,
-  _hrCfg: undefined,
-  _atMarks: undefined,
-  _atCfg: undefined,
-  _hrCurrentSessionId: undefined,
-  _atCurrentSessionId: undefined,
+  _atData: null,
+  _hrData: null,
+  _hrMarks: {},
+  _hrCfg: null,
+  // sid → {s, min}
+  _atMarks: {},
+  _atCfg: null,
+  _hrCurrentSessionId: null,
+  _atCurrentSessionId: null,
   _hrPendingRec: undefined,
   _atPendingRec: undefined,
-  _hrPending: undefined,
-  _hrCleared: undefined,
-  _atPending: undefined,
-  _atCleared: undefined,
-  _hrTreats: undefined,
-  _hrSupHY: undefined,
-  _atTreats: undefined,
-  _atSupHY: undefined,
-  _hrSupMI: undefined,
-  _atSupMI: undefined,
+  _hrPending: {},
+  _hrCleared: {},
+  // sid → סומן לאחרונה, טרם ירד
+  _atPending: {},
+  // sid → נוקה ידנית, אין לסמן אוטומטית שוב
+  _atCleared: {},
+  _hrTreats: null,
+  _hrSupHY: null,
+  _atTreats: null,
+  _atSupHY: null,
+  _hrSupMI: null,
+  _atSupMI: null,
   _hrSwitchId: undefined,
-  _hcVw: undefined,
+  _hcVw: {},
   _statusSid: undefined,
-  _hrYearCache: undefined,
-  _hrView: undefined,
+  // נתוני שנה מלוח הדפדפן: {hy, lb, jd (א׳ תשרי), ml[], leap}
+  _hrYearCache: {},
+  _hrView: 'reg',
   _hrSupRecords: undefined,
-  _hrSaveTimer: undefined,
-  _atView: undefined,
+  _hrSaveTimer: null,
+  _atView: 'reg',
   _atSupRecords: undefined,
-  _atSaveTimer: undefined,
-  _alefFontB64: undefined,
+  _atSaveTimer: null,
+  _alefFontB64: null,
   _statusStudentName: undefined,
-  _hrPdfFontDone: undefined,
+  _hrPdfFontDone: false,
   _currentStatusType: undefined
 };
 
@@ -61,9 +66,7 @@ export const S = {
 // נקודת האכיפה לניווט אחת — showPage בודק canAccess; אין להסתיר כפתורים לפי הרשאה:
 // כפתור שנעלם משאיר את איש הצוות בלי לדעת שהמסך קיים ושאפשר לבקש גישה.
 var AUTH = {
-  // AUTH.user הוא חלון אל מודול הסשן, שבזיכרון בלבד — שדה רגיל כאן הוא מסלול שדרכו הסשן נכתב לדיסק.
-  get user() { return sessGet(); }, // {id, username, full_name, role}
-  set user(v) { sessSet(v); },
+  // AUTH.user מותקן בעלייה — חלון אל מודול הסשן, והקובץ הזה אינו מייבא מהליבה.
   offlineLogin: false, // true — אומת מול העותק המקומי, ומאומת מחדש כשהרשת חוזרת
   perms: null, // {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
@@ -89,4 +92,11 @@ var AUTH = {
   }
 };
 
-export { AUTH };
+// ── מה שמסך צריך מ-main ──
+// main רושם כאן בעלייה — מודול שמייבא מ-main סוגר מעגל, והרישום הוא הכיוון האחד.
+const shell = { showPage: null, showPageInternal: null, renderStudents: null, atRenderArchive: null,
+                atRenderSupervision: null, hrRenderArchive: null, hrRenderSupervision: null,
+                renderAttendSettings: null, renderSleepSettings: null, atRenderStudents: null,
+                hrRenderStudents: null, hrPullDraw: null };
+
+export { AUTH, S, shell };

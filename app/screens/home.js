@@ -5,9 +5,9 @@ import { hwBoot, lsBoot } from '../../core/storage.js';
 import { mirrorBoot } from '../../core/mirror.js';
 import { bkBoot } from '../../core/backup.js';
 import { lkBoot } from '../../core/auth.js';
-import { hrMarks, hrPullFromCloud } from '../domain.js';
-import { atLoadData } from './attend.reg.js';
-import { getActiveAbsences, getStudents, renderStudents } from './students.js';
+import { shell } from '../state.js';
+import { getActiveAbsences, getStudents, hrMarks, hrPullFromCloud } from '../domain.js';
+import { atLoadData } from '../domain.sessions.js';
 
 function screenHomeHTML() {
   return `
@@ -102,7 +102,7 @@ async function loadDash(){
   try { plBoot(); } catch (e) { console.warn('[pl] plBoot', e); }
   try { hwBoot(); } catch (e) { console.warn('[hw] hwBoot', e); }
   await hrPullFromCloud();
-  renderStudents();
+  shell.renderStudents();
   // plTick רץ כל 3 שניות על שורת החותמת בלבד, ומושך רק בשינוי אמיתי.
 }
 
