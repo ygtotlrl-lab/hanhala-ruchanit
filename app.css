@@ -1,40 +1,21 @@
-/* ═══ גיליון הסגנון — בלוק גיליון סגנון ═════════════════════════════════════
-   ⛔ CSS של האפליקציה יושב בקובץ ⛔ ולא ב-`index.html` — ⚠️ בלוק שאינו
-   נושא את סוגו נקרא כסוג אחר: ⭐ מחרוזת CSS בתוך JS נראית כ-CSS של
-   האפליקציה, ⛔ ואינה.
-   ════════════════════════════════════════════════════════════ */
+/* app.css — עיצוב האפליקציה */
 
-/* ══ אסימוני העיצוב ════════════════════════════════════════════════════ */
+/* ── אסימוני העיצוב ── */
 :root{
-  /*  ⛔ מרחק הטוסט מתחתית המסך — ⚠️ הערך היחיד שנבדל בשכבת הטוסט:
-   *  סרגל ניווט תחתון, ⛔ ורק מתחת לנקודת השבירה שבה הוא יורד —
-   *  ⚠️ והנקודה נגזרת מהסולם ⛔ ואינה כתובה כאן. */
+  /* מרחק הטוסט מתחתית המסך — הערך היחיד שנבדל בשכבת הטוסט; מתחת לנקודת השבירה של הסרגל התחתון הוא עולה */
   --toast-bottom:26px;
-  /*  ⛔ רוחב עמודת התוכן — ⚠️ המיכל וכל פס קבוע קוראים אותו: ⭐ ערך
-   *  שכל צרכניו קוראים ממקום אחד משתנה פעם אחת, ⛔ ופס שרוחבו מוקלד
-   *  נפרד מהעמודה ביום שהיא משתנה. */
   --col:1100px;
-  /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד,
-   *  ⭐ והגוון הוא של האפליקציה: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
-  /*  ⛔ צבע הזהות של האפליקציה — ⚠️ אסימון אחד בשם אחד,
-   *  ⭐ והגוון הוא של האפליקציה: ⛔ רכיב שמייצג אותה נגזר ממנו
-   *  ⛔ ולא מדיו הטקסט — ⚠️ באנר בדיו הטקסט נראה זהה בכל גוון.
-   *  ⛔ **והדיו שעליו צמד הפוך** — ⚠️ ומתחלף איתו יחד. */
+  /* צבע הזהות של האפליקציה — רכיב שמייצג אותה נגזר ממנו ולא מדיו הטקסט, והדיו שעליו צמד הפוך שמתחלף איתו */
   --brand:var(--brand-fill); --on-brand:#ffffff;
 
 --on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
-/*  ⛔ גווני הסימון — ⚠️ שבעה קודים, ⭐ וכל אחד אסימון אחד: ⛔ ולא ליטרל
- *  בקוד — ⚠️ מפה בקוד היא עותק שני של אותו גוון.
- *  ⚠️ **והדיו עליהם `--on-brand`** — ⛔ אחד לכל השבעה. */
+/* גווני הסימון — אסימון לכל קוד ולא מפה בקוד, שהייתה עותק שני של הגוון; הדיו על כולם הוא --on-brand */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
-/*  ⛔ מעל סרגל הניווט התחתון — ⚠️ טוסט שיושב מתחתיו אינו נראה. */
+/* מעל סרגל הניווט התחתון — טוסט שיושב מתחתיו אינו נראה */
 :root{--toast-bottom:80px}
 
-/* ══ הערכה הכהה ════════════════════════════════════════════════════════ */
-/*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
- *  ⭐ והגוון הוא של האפליקציה: ⛔ מסך שאינו קריא מתוקן בגוון
- *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
+/* ── הערכה הכהה ── */
 @media (prefers-color-scheme:dark){
     :root{
       --on-brand:#ffffff;
@@ -58,11 +39,9 @@
     }
 }
 
-/* ══ בסיס ══════════════════════════════════════════════════════════════ */
+/* ── בסיס ── */
 *{box-sizing:border-box;margin:0;padding:0}
-/*  ⛔ המשוב בלחיצה נקבע ⛔ ולא נירש — ⚠️ ברירת המחדל של הדפדפן היא ריבוע
- *  כחול שאינו מערכת הצבעים שלנו, ⭐ והיא מופיעה במגע בלבד: ⛔ ומי שבודק
- *  בעכבר אינו רואה אותה. */
+/* ברירת המחדל של הדפדפן היא ריבוע כחול שמופיע במגע בלבד — ומי שבודק בעכבר אינו רואה אותו. */
 body{-webkit-tap-highlight-color:transparent}
 body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 @media (hover:hover){
@@ -80,9 +59,8 @@ th{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-2)}
 td{padding:var(--sp-4) var(--sp-5)}
 body{padding-bottom:var(--sp-7)}
 
-/* ══ קליפה ═════════════════════════════════════════════════════════════ */
-/*  ⛔ שורש הקליפה אינו תיבה — ⚠️ הוא קיים כדי לשאת את המצב החשוף, ⭐ והכותרת
- *  הדביקה והסרגל ממשיכים להתנהג כילדי `body`. */
+/* ── קליפה ──
+   שורש הקליפה (shell) אינו תיבה — הוא נושא את מצב החשיפה, והכותרת הדביקה והסרגל ממשיכים להתנהג כילדי body */
 #shell{display:contents}
 header{background:linear-gradient(135deg,var(--deep-2),var(--brand-fill),var(--deep-1));padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;box-shadow:0 3px 16px var(--sh-2);position:sticky;top:0;z-index:var(--z-2)}
 .hl{display:flex;align-items:center;gap:var(--sp-6)}
@@ -99,13 +77,11 @@ nav{display:flex;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
 main{padding:0;max-width:100%;width:100%;overflow-x:hidden}
 .pg{display:none;overflow-x:hidden}
 .pg.on{display:block}
-/* כותרת עליונה */
 header{height:60px;padding:0 var(--sp-5)}
 .logo{width:46px;height:46px}
 .hdiv{display:none}
 .htxt{font-size:var(--fs-2)}
 .htxt strong{font-size:var(--fs-3)}
-/* nav - גלילה אופקית */
 nav{gap:var(--sp-1);overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
 .nb{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-2);gap:var(--sp-2);min-height:44px;flex-shrink:0;white-space:nowrap}
@@ -142,9 +118,7 @@ header{height:56px}
 .bn.on{color:var(--on-dark)}
 .bn.on .bn-ic{transform:scale(1.15)}
 .bn:active{background:var(--fill-dark)}
-/* הסתר nav עליון במובייל */
 nav{display:none}
-/* הסתר מפריד אבל הצג טקסט במובייל */
 .hdiv{display:none}
 .htxt{display:flex;font-size:var(--fs-1)}
 .htxt strong{font-size:var(--fs-2)}
@@ -157,7 +131,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .hdr-name{font-size:var(--fs-4)}
 .htxt.hdr-titles{display:flex;align-items:flex-start;flex-direction:column;gap:var(--sp-1);line-height:var(--lh-2)}
 
-/* ══ רכיבים ════════════════════════════════════════════════════════════ */
+/* ── רכיבים ── */
 @media (hover:hover){
   .back:hover{border-color:var(--brand-ink);color:var(--brand-ink);background:var(--card-2)}
 }
@@ -187,11 +161,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .btn:active{transform:translateY(1px)}
 .btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--brand-ink);border-color:var(--brand-ink)}
-/* ⭐ כפתור קטן — ⚠️ מחלקה שמוחלת בלי כלל משלה נמדדת בגודל המלא. */
 .btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
 .sw{position:relative;width:100%}
-/*  ⛔ רוחב שורת החיפוש נמדד בזמן ריצה — ⚠️ ונכתב ב-`setProperty`, ⭐ והכלל
- *  הזה הוא שקורא אותו: ⛔ בלי מדידה נשאר רוחב ההורה. */
+/* הרוחב נמדד בזמן ריצה ונכתב ב-setProperty, והכלל הזה קורא אותו; בלי מדידה נשאר רוחב ההורה */
 #sw-inner{--sw-w:100%;width:var(--sw-w)}
 #search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);z-index:var(--z-3);max-height:240px;overflow-y:auto;display:none;animation:ddFade var(--dur-1) ease}
 #search-dropdown.open{display:block}
@@ -228,9 +200,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .cs p{color:var(--text-2);font-size:var(--fs-4)}
 .empty{color:var(--text-3);text-align:center;padding:var(--sp-7) var(--sp-5);font-size:var(--fs-3)}
 .ld{text-align:center;padding:var(--sp-7);color:var(--text-3)}
-/* קונטיינר - padding קטן, כמו מחלקת ה-`app` */
 .inner{padding:var(--sp-6)}
-/* דפים פנימיים */
 .ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-6)}
 .btn{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-3);min-height:44px}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
@@ -296,8 +266,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .chip-row{display:flex;flex-wrap:wrap;gap:var(--sp-4)}
 .row-del-btn{border:none;background:none;color:var(--bad);cursor:pointer;font-size:var(--fs-4)}
 .edit-row{display:flex;gap:var(--sp-3);align-items:center}
-/*  ⛔ לוח התאריך העברי ממוקם מול הטריגר — ⚠️ הערכים נמדדים בפתיחה ונכתבים
- *  ב-`setProperty`, ⭐ והכלל הזה הוא היחיד שקורא אותם. */
+/* מיקום הלוח נמדד בפתיחה ונכתב ב-setProperty, והכלל הזה הוא היחיד שקורא אותו */
 .hc-pop{--pop-top:auto;--pop-right:auto;top:var(--pop-top);right:var(--pop-right);left:auto}
 #sfmT_btn.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
 .md-note-center{font-size:var(--fs-3);color:var(--text-2);text-align:center}
@@ -342,8 +311,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .badge-warn{font-size:var(--fs-2);background:var(--warn-soft);color:var(--warn);margin-right:var(--sp-2);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-2)}
 .scroll-pane{max-height:60vh;overflow-y:auto}
 
-/* ══ מסכים ═════════════════════════════════════════════════════════════ */
-/* ── כניסה ── */
+/* ── מסכים ──
+   ── כניסה ── */
 @media (hover:hover){
   .auth-btn:hover{background:var(--deep-1)}
 }
@@ -399,18 +368,15 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .mod-info{flex:1}
 .mod-name{font-size:var(--fs-4);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
 .mod-desc{font-size:var(--fs-2);color:var(--text-3);line-height:var(--lh-3)}
-/* ⛔ מובייל-תחילה: שתי הרשתות מצטמצמות בברירת המחדל ⛔ ואינן מורחבות
-   בשאילתה — ⚠️ ההרחבה היא מה שנכתב כשאילתה. */
+/* מובייל-תחילה: ברירת המחדל היא הרשת הצרה, ורק ההרחבה נכתבת בשאילתה */
 .mods{grid-template-columns:repeat(2,1fr)}
 .stats{grid-template-columns:repeat(2,1fr)}
 .mods-wrap{padding:var(--sp-6)}
 .hero{padding:var(--sp-6) var(--sp-6) var(--sp-7)}
 .hero-title{font-size:var(--fs-5)}
-/* סטטיסטיקות */
 .stats{grid-template-columns:repeat(2,1fr)}
 .stat{padding:var(--sp-5) var(--sp-4)}
 .stat .n{font-size:var(--fs-6)}
-/* מודולים - עמודה אחת, רוחב מלא */
 .mods{grid-template-columns:1fr;gap:var(--sp-5)}
 .mod{padding:var(--sp-6) var(--sp-6);gap:var(--sp-5);width:100%}
 .mod-ic{width:48px;height:48px;font-size:var(--fs-5);border-radius:var(--r-4)}
@@ -472,12 +438,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .st-row-main{display:flex;flex:1;flex-direction:column;gap:var(--sp-2);min-width:0}
 .st-row-name{font-size:var(--fs-4);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .st-form-input{border:1px solid var(--border);direction:rtl;margin:var(--sp-3) 0 var(--sp-5);padding:var(--sp-4);border-radius:var(--r-2);width:100%}
-/* ── סדרים ── */
-/*  ⛔ `:hover` חל רק במכשיר שיש לו ריחוף — ⚠️ במגע הוא נשאר על הרכיב
- *  אחרי הלחיצה, ⭐ והלחצן נראה לחוץ עד שנוגעים במקום אחר: ⛔ המשוב במגע
- *  הוא `:active` בלבד, ⚠️ ולכן הוא נשאר מחוץ לבלוק.
- *  ⚠️ **וכל כלל ריחוף יושב ליד רכיבו ולא בסוף הגיליון** — ⛔ כלל ריחוף שיורד אל אחרי
- *  `.active` או `:active` באותה סגוליות גובר עליהם. */
+/* ── סדרים ──
+   hover רק במכשיר עם ריחוף — במגע הוא נשאר על הרכיב אחרי הלחיצה
+   כלל ריחוף יושב ליד רכיבו — בסוף הגיליון הוא גובר על .active ו-:active באותה סגוליות */
 @media (hover:hover){
   .sess-pick-btn:hover{background:var(--info-soft)}
 }
@@ -670,9 +633,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .cfg-card{border:1.5px solid var(--border);background:var(--card);padding:var(--sp-6);border-radius:var(--radius)}
 .cfg-row-input{font-size:var(--fs-3);border:1.5px solid var(--border);font-family:Heebo;padding:var(--sp-3) var(--sp-4);border-radius:var(--r-3);width:90px}
 
-/* ══ נקודות שבירה ══════════════════════════════════════════════════════ */
-/* ⛔ שלוש ההרחבות — ⚠️ הן מבטלות את ברירת המחדל הצרה, ⛔ ואינן מוסיפות
-   לה: ⭐ כל ערך כאן הוא מה שחל מעל נקודת השבירה שלו. */
+/* ── נקודות שבירה ──
+   כל ערך כאן מחליף את ברירת המחדל הצרה מעל נקודת השבירה שלו, ואינו מוסיף עליה */
 @media (min-width:640px){
   .nb{padding:var(--sp-4) var(--sp-5)}
 }
@@ -776,4 +738,3 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   .stats{grid-template-columns:repeat(4,1fr)}
 }
 
-/* ═══ סוף גיליון הסגנון — בלוק גיליון סגנון ══════════════════════════════ */
