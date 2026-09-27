@@ -104,17 +104,28 @@ revoke all on function public.bk_prune_layer(text,integer) from public, anon, au
 grant execute on function public.bk_prune_layer(text,integer) to service_role;
 
 -- ⛔ רשימת-ההיתר היא בדיוק מפתחות הגיבוי שהקוד כותב — מפתח שאינו בה אינו מתפנה.
+-- ⚠️ מקור-טבלה נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד;
+--    ומקור kv נכתב בלי שכבה.
 CREATE OR REPLACE FUNCTION public.bk_retention_keys()
  RETURNS text[]
  LANGUAGE sql
  IMMUTABLE
 AS $function$
   select array[
-    'hr_sessions_rows', 'hr_marks_rows', 'hr_students_rows',
-    'hr_sleep_sessions_rows', 'hr_sleep_marks_rows', 'hr_settings',
-    'sl_students', 'sl_transactions', 'sl_settings', 'sl_lists',
-    'rishon_ya_entries_rows', 'rishon_ya_cats', 'rishon_ya_subs', 'rishon_ya_subs_meta',
-    'ramataviv_ya_entries_rows', 'ramataviv_ya_cats', 'ramataviv_ya_subs', 'ramataviv_ya_subs_meta'
+    'ANCHOR:hr_sessions_rows', 'DIFF:hr_sessions_rows',
+    'ANCHOR:hr_marks_rows', 'DIFF:hr_marks_rows',
+    'ANCHOR:hr_students_rows', 'DIFF:hr_students_rows',
+    'ANCHOR:hr_sleep_sessions_rows', 'DIFF:hr_sleep_sessions_rows',
+    'ANCHOR:hr_sleep_marks_rows', 'DIFF:hr_sleep_marks_rows',
+    'ANCHOR:hr_settings', 'DIFF:hr_settings',
+    'ANCHOR:sl_students', 'DIFF:sl_students',
+    'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
+    'ANCHOR:sl_settings', 'DIFF:sl_settings',
+    'ANCHOR:sl_lists', 'DIFF:sl_lists',
+    'ANCHOR:rishon_ya_entries_rows', 'DIFF:rishon_ya_entries_rows',
+    'rishon_ya_cats', 'rishon_ya_subs', 'rishon_ya_subs_meta',
+    'ANCHOR:ramataviv_ya_entries_rows', 'DIFF:ramataviv_ya_entries_rows',
+    'ramataviv_ya_cats', 'ramataviv_ya_subs', 'ramataviv_ya_subs_meta'
   ]::text[];
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
