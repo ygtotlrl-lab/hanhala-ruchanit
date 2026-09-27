@@ -139,7 +139,7 @@ import { MSG_DELETE, MSG_FILL_LOGIN, MSG_KV_BAD,
 import { _eraPush, _rowsPaged, ctxEpoch, ctxStale, ctxSwitch, eraKeys, eraKick,
          eraNotePush, idEq, mergeCore, newClientId, pendAlertDismiss,
          pendAll, pendBoot, pendConfirmPush, pendCount, pendHas, pendMark,
-         pendMarkMany, pendTag, plBoot, plNum, plTouch, pushDirty, pushTable,
+         pendMarkMany, pendTag, plBoot, plStampRead, plTouch, pushDirty, pushTable,
          rtyBoot, runSave, sbWatch, schedulePush, tombAt, tombBoot,
          tombPruneMerged } from './core/sync.js';
 import { hwBoot, hwNoteCloud, lsBoot, lsClearHorizons, lsGet, lsLog,
@@ -2615,9 +2615,9 @@ function hrSupervisionAccess() {
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
-/* ⚠️ בהנהלה החותמת היא שורת `last_changed` שבטבלת ההגדרות — ⛔ המפתח היחיד
-   שאינו עובר בשכבת הדחיפה — והיא נכתבת ממשפך אחד, `plTouch`: ⭐ שכבת
-   הדחיפה קוראת לו, ⚠️ וכתיבת משתמש דרך `hrTouchLastChanged()`.
+/* ⚠️ בהנהלה החותמת יושבת בטבלת ההגדרות — ⛔ המפתח היחיד שאינו עובר
+   בשכבת הדחיפה — והיא נכתבת ממשפך אחד, `plTouch`: ⭐ שכבת הדחיפה קוראת
+   לו, ⚠️ וכתיבת משתמש דרך `hrTouchLastChanged()`.
    ⚠️ `ok()` הוא `_hrMarkSynced()` — חותמת **תצוגה** בלבד. ⛔ אין להזין
    ממנה את עֵד הפינוי — הוא `_hrPushedAt` פר-מפתח. */
 var PL_CFG = {
@@ -2626,15 +2626,9 @@ var PL_CFG = {
   seen:   function () { return _hrLastTs; },
   note:   function (ts) { _hrLastTs = ts; },
   ok:     function () { _hrMarkSynced(); },
-  stamp:  function (ts) { return hrStampWrite(ts); },
   pull:   function () { return hrPullFromCloud(); },
-  remote: function () {
-    return withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle())
-      .then(function (r) {
-        if (!r || r.error) return { ok: false, ts: null };
-        return { ok: true, ts: r.data ? plNum(kvParse('last_changed', r.data.value).value) : null };
-      }, function () { return { ok: false, ts: null }; });
-  },
+  client: function () { return SB; },
+  table:  function () { return KV_TABLE; },
 };
 /* ── PUSH_CFG — הדבר היחיד שנבדל בין האפליקציות ────────────────────────── */
 /* ⛔ `hr_users` **אינה כאן ואינה נדחפת לעולם** — ⚠️ המראה מחזיקה טביעות ולא
@@ -3033,7 +3027,7 @@ var _hrLastTs = 0;
 var _hrLastSyncAt = 0;
 function _hrMarkSynced() { _hrLastSyncAt = Date.now(); }
 // "סנכרן עכשיו" מאזור המצב: משיכה מלאה + ריקון התור, בלי תלות בחותמת
-// `hr_last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
+// `last_changed` — המשתמש ביקש במפורש, ולא "אולי יש חדש".
 async function hrSyncNow() {
   await hrPullFromCloud();
   await hrPushToCloud();
@@ -3077,11 +3071,6 @@ function hrSetDirtyRows() {
 }
 function hrSetSend(rows) {
   return withTimeout(SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
-}
-/*  ⛔ אות הפולינג — ⚠️ הכתיבה היחידה לטבלת ההגדרות שאינה בשכבת הדחיפה:
- *  ⭐ היא החותמת של הדחיפה עצמה. */
-function hrStampWrite(ts) {
-  return SB.from(KV_TABLE).upsert({key: 'last_changed', value: JSON.stringify(ts), updated_at: Date.now()}, {onConflict: 'key'});
 }
 /*  ⭐ העותק המקומי של טבלה נדחפת — ⚠️ המקור שמחזור הדחיפה קורא כשאין
  *  לו קלט מהכותב. */
@@ -3877,25 +3866,24 @@ async function hrPullFromCloud() {
 //    מ-`loadDash()`: ⚠️ פולינג שרץ לפני הכניסה נוגע ברשת בשביל משיכה
 //    ש-`hrApplyPerms` ממילא זורקת.
 
-// טעינה ראשונית מהענן בעלייה — עם יצירה אוטומטית של טבלת kv אם חסרה
+// טעינה ראשונית מהענן בעלייה
 setTimeout(async function() {
   /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
    *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
    *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
   var _ep = ctxEpoch();
   try {
-    // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
-    var r = await withTimeout(SB.from(KV_TABLE).select('value').eq('key', 'last_changed').maybeSingle());
-    if (r.error) {
+    // ⭐ דרך `plStampRead` — הקורא האחד: ⛔ קורא שני לאותה שורה נסחף מהראשון.
+    var r = await plStampRead();
+    if (!r.ok) {
       // ⛔ אין כאן «יצירה אוטומטית» של הטבלה — ⚠️ טבלה חסרה היא תקלת
       // תשתית שמדווחת בקונסול, ⭐ ולא משהו שהלקוח מתקן.
-      console.log('[sync] init error:', r.error.message);
+      console.warn('[sync] קריאת החותמת בעלייה נכשלה');
       return;
     }
-    if (r.data) {
-      var remoteTs = parseInt(kvParse('last_changed', r.data.value).value) || 0;
+    if (r.ts !== null) {
       if (ctxStale(_ep)) return;
-      _hrLastTs = remoteTs;
+      _hrLastTs = r.ts;
       await hrPullFromCloud();
     }
   } catch(e) { console.log('[sync] init:', e.message||e); }
