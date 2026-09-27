@@ -461,6 +461,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .st-attend{align-items:center;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;display:inline-flex;font-size:var(--fs-5);font-weight:300;height:32px;justify-content:center;line-height:var(--lh-1);border-radius:var(--r-7);width:32px}
 .st-class-sel{border:1px solid var(--border);margin:var(--sp-3) 0 var(--sp-5);padding:var(--sp-4);border-radius:var(--r-2);width:100%}
 .st-edit{align-items:center;border:none;background:var(--bg);color:var(--brand-ink);cursor:pointer;display:inline-flex;font-size:var(--fs-4);height:28px;justify-content:center;border-radius:var(--r-3);width:28px}
+.st-err{font-size:var(--fs-3);color:var(--bad);min-height:18px;text-align:right}
 .st-history-btn{border:1.5px solid var(--brand-fill);background:var(--card);color:var(--brand-ink);cursor:pointer;font-family:Heebo;font-size:var(--fs-4);font-weight:600;margin-bottom:var(--sp-2);padding:var(--sp-5);border-radius:var(--r-4);width:100%}
 .st-row-act{flex-shrink:0}
 .st-row-off{align-items:center;display:flex;gap:var(--sp-5);border-bottom:1px solid var(--border);opacity:var(--op-6);padding:var(--sp-4) var(--sp-5)}

@@ -1399,7 +1399,7 @@ async function toggleUserMenu() {
   m.classList.remove('hidden');
   var othersEl = document.getElementById('user-menu-others');
   if (!othersEl) return;
-  othersEl.innerHTML = '<div class="user-menu-empty">טועןבות...</div>';
+  othersEl.innerHTML = '<div class="user-menu-empty">טוען...</div>';
   // בלי timeout התפריט נשאר על "טוען..." לנצח ברשת חצי-מחוברת
   var res = null;
   try { res = await withTimeout(SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
@@ -4400,6 +4400,9 @@ function studentFormHtml(sid){
     '</select>'+
     '<label for="st-cycle">מחזור</label>'+
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" class="st-form-input">'+
+    /*  ⭐ משטח השגיאה המוטבע של הטופס — `st-err`: ⚠️ שגיאת משתמש שהוא מתקן
+     *  בהקלדה, ⛔ וטוסט שנעלם היה משאיר טופס פתוח בלי הסבר. */
+    '<div id="st-err" class="st-err"></div>'+
     /*  ⚠️ אין היסטוריה לתלמיד שטרם נשמר ⛔ ולכן הכפתור אינו מוצג בהוספה —
      *  ⭐ כפתור שנפתח על רשומה שאינה בענן מציג «אין ראיה» בכל פעם. */
     (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">📜 היסטוריית סטטוסים</button>' : '');
@@ -4496,7 +4499,13 @@ function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
   var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
-  if(!name){toast(MSG_NEED_STUDENT_NAME, null, 'bad');return;}
+  var errEl=document.getElementById('st-err');
+  if(errEl) errEl.textContent='';
+  if(!name){
+    if(errEl) errEl.textContent=MSG_NEED_STUDENT_NAME;
+    else console.error('[students] משטח השגיאה st-err חסר בטופס');
+    return;
+  }
   var students=getStudents();
   var newId=null;
   if(editingStudentId){
