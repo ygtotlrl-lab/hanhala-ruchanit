@@ -1,38 +1,43 @@
 // app/main.js — העלייה, הניווט, מפת הפעולות ובורר התאריך העברי
 import { dayIso, dayNoon, withTimeout } from '../core/util.js';
-import { ctxEpoch, ctxStale, pendAlertDismiss, plStampRead, runSave, sbWatch } from '../core/sync.js';
+import { ctxEpoch, ctxStale, pendAlertDismiss, plStampRead, runSave,
+         sbWatch } from '../core/sync.js';
 import { lkReset } from '../core/auth.js';
 import { actRun, closeAsk, closeModal, esc, ksKey, modalBackdrop, modalEsc, openModal,
          swApply, swHideUpdate, toast } from '../core/ui.js';
-import '../core/hebrew.js';
-import { AUTH, S } from './state.js';
+import { hebDate, hebDayLabel, hebYearLabelFull } from '../core/hebrew.js';
 import { HR_ROWS_READ_KEYS, MSG_ACCESS_LIMITED, MSG_NO_LINK, MSG_PICK_STUDENT,
          MSG_SOON_TITLE, MSG_TABLES_MISSING } from './config.js';
+import { AUTH, S } from './state.js';
 import { _hcBase, _hcG, _hcMN, canAccess, hrPullFromCloud } from './domain.js';
-import { atDeleteSession, atExportConfirm, atShowExportDialog } from './screens/attend.arc.js';
+import { loadDash, screenHomeHTML } from './screens/home.js';
+import { closeUserMenu, confirmSwitch, doLogin, doLogout, screenLoginHTML, switchUserEl,
+         toggleUserMenu } from './screens/login.js';
+import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
+         renderSettings, saveAbsenceReasons, savePerms, saveUser, saveUserOrder,
+         screenSettingsHTML, showSettingsHome, showSettingsModule, sortUsersByOrder,
+         toggleUserActive } from './screens/settings.js';
+import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
+         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
+         openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
+         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
+         selectSearchStudent, setStudentActive,
+         setStudentInactive } from './screens/students.js';
+import { atDeleteSession, atExportConfirm,
+         atShowExportDialog } from './screens/attend.arc.js';
 import { atCancelStudentStatusFromReg, atClearMark, atCloseSession, atConfirmLate,
          atEditSession, atOpenSession, atRenderTodaySessions, atSetLateMin, atSetMark,
          atShowTab, loadAttend, screenAttendHTML } from './screens/attend.reg.js';
 import { atAddSession, atAddTreat, atAddTreatRow, atDeleteTreat, atEditMark,
-         atSaveSettingsCfg, atSupDetail, atSupEditMarkDlg, atSupNav } from './screens/attend.sup.js';
-import { loadDash, screenHomeHTML } from './screens/home.js';
-import { closeUserMenu, confirmSwitch, doLogin, doLogout, screenLoginHTML,
-         switchUserEl, toggleUserMenu } from './screens/login.js';
-import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser,
-         openEditUser, renderSettings, saveAbsenceReasons, savePerms, saveUser,
-         saveUserOrder, screenSettingsHTML, showSettingsHome, showSettingsModule,
-         sortUsersByOrder, toggleUserActive } from './screens/settings.js';
-import { hrDeleteSession, hrExportConfirm, hrShowExportDialog } from './screens/sleep.arc.js';
+         atSaveSettingsCfg, atSupDetail, atSupEditMarkDlg,
+         atSupNav } from './screens/attend.sup.js';
+import { hrDeleteSession, hrExportConfirm,
+         hrShowExportDialog } from './screens/sleep.arc.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate,
          hrEditSession, hrOpenSession, hrSetLateMin, hrSetMark, hrSetNote, hrShowTab,
          loadSleep, screenSleepHTML } from './screens/sleep.reg.js';
 import { hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrSaveSettingsCfg,
          hrSupDetail, hrSupEditMarkDlg, hrSupNav } from './screens/sleep.sup.js';
-import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
-         openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
-         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         selectSearchStudent, setStudentActive, setStudentInactive } from './screens/students.js';
 
 document.title = self.APP.name;
 
@@ -139,16 +144,16 @@ S._hrYearCache={};
 ;
 
 function _hcH(d){
-  var h=window.hebDate(d);
+  var h=hebDate(d);
   return {hy:h.year,mi:h.monthIndex,day:h.day};}
 
 ;
 
-function _hcYL(hy){return window.hebYearLabelFull(hy)||String(hy);}
+function _hcYL(hy){return hebYearLabelFull(hy)||String(hy);}
 
 ;
 
-function _hcFmt(hy,mi,day){return window.hebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);}
+function _hcFmt(hy,mi,day){return hebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);}
 
 ;
 
@@ -190,7 +195,7 @@ function _hcDraw(pfx){
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
     var st=isSel?'hc-day-sel':isToday?'hc-day-today':'hc-day';
     h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
-      'class="hc-day-btn '+st+'">'+window.hebDayLabel(d)+'</button>';
+      'class="hc-day-btn '+st+'">'+hebDayLabel(d)+'</button>';
   }
   h+='</div></div>';pop.innerHTML=h;}
 
@@ -838,7 +843,7 @@ S._hrSupMI = null;
 
 ;
 
-bootOk();
+window.bootOk();
 
 export { DOM_ACTIONS, HE, SB, _hcBuild, _hcFmt, _hcGet, _hcH, _hcYL, atvCls, modalOpen,
          renderUsersList, saveRefresh, showPage, showPageInternal, tyCls, uiShown };

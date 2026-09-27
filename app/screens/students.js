@@ -3,24 +3,26 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush } from '../../core/sync.js';
 import { isAdmin } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
-import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
-         MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING,
-         MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE,
-         MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_PDF_BUILDING,
-         MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE, MSG_PICK_REASON,
-         MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED,
+import { hebDate, hebGematria, hebMonthNames,
+         hebYearLabelFull } from '../../core/hebrew.js';
+import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE,
+         MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE,
+         MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
+         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE,
+         MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED,
          MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK,
          MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
          MSG_YEAR_ROLL_TITLE } from '../config.js';
+import { AUTH, S } from '../state.js';
 import { PK_STUDENT, _hrStDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw, hrAbsValueKey,
          hrCloudGet, hrMirrorRecs, hrPdfFont, hrWho } from '../domain.js';
+import { getAbsenceReasons } from './settings.js';
 import { hrRefreshApprovalMarks } from './attend.reg.js';
 import { atRenderSupervision } from './attend.sup.js';
-import { getAbsenceReasons } from './settings.js';
 import { hrRenderSupervision } from './sleep.sup.js';
-import { HE, _hcBuild, _hcFmt, _hcGet, _hcH, modalOpen, tyCls, uiShown } from '../main.js';
+import { HE, _hcBuild, _hcFmt, _hcGet, _hcH, modalOpen, tyCls,
+         uiShown } from '../main.js';
 
 function screenStudentsHTML() {
   return `
@@ -315,9 +317,9 @@ function renderStudents(){
 // נגזר משנת הלימודים ולא מרשימת שנים מוקלדת — רשימה כזו נגמרת בשנתה האחרונה.
 // שנת הלימודים מתגלגלת באלול ולא בתשרי — הבוגרים עוזבים בסוף אלול.
 function hrSchoolYear(now) {
-  var h = window.hebDate(now || new Date());
+  var h = hebDate(now || new Date());
   if (!h.ok) return 0;
-  return (h.monthIndex === window.hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
+  return (h.monthIndex === hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
 }
 
 // המחזור הוא שנת הסיום ולא הכניסה — ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה, וא׳ את שלאחריה.
@@ -327,7 +329,7 @@ function hrCycleFor(cls, now) {
   if (!y || add[cls] == null) return '';
   var hy = y + add[cls];
   // שנה עגולה במאות נותנת שני אפסים ואין לה צורה מקוצרת — התווית המלאה ולא מחרוזת ריקה שנקראת «אין מחזור».
-  return window.hebGematria(hy % 100, '״') || window.hebYearLabelFull(hy);
+  return hebGematria(hy % 100, '״') || hebYearLabelFull(hy);
 }
 
 function setStudentInactive(sid){
@@ -595,7 +597,7 @@ async function openStatusHistory(sid) {
     if (!v) return '—';
     var d = new Date(v);
     if (isNaN(d.getTime())) return '—';
-    var h = window.hebDate(d);
+    var h = hebDate(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;

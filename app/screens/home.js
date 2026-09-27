@@ -6,8 +6,8 @@ import { mirrorBoot } from '../../core/mirror.js';
 import { bkBoot } from '../../core/backup.js';
 import { lkBoot } from '../../core/auth.js';
 import { hrMarks, hrPullFromCloud } from '../domain.js';
-import { atLoadData } from './attend.reg.js';
 import { getActiveAbsences, getStudents, renderStudents } from './students.js';
+import { atLoadData } from './attend.reg.js';
 
 function screenHomeHTML() {
   return `

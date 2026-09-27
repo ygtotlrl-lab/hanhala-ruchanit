@@ -1,16 +1,19 @@
 // app/screens/login.js — הכניסה, תפריט המשתמש והחלפת משתמש
-import { MSG_FILL_LOGIN, MSG_LOGIN_ERR, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO,
-         MSG_OFF_NO_FP, MSG_OFF_UNKNOWN, MSG_SERVER_ERR, dayToday, isNetErr, withTimeout } from '../../core/util.js';
+import { MSG_FILL_LOGIN, MSG_LOGIN_ERR, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP,
+         MSG_OFF_UNKNOWN, MSG_SERVER_ERR, dayToday, isNetErr,
+         withTimeout } from '../../core/util.js';
 import { ctxSwitch } from '../../core/sync.js';
 import { lsGet } from '../../core/storage.js';
 import { mirrorLoadOne } from '../../core/mirror.js';
-import { AUTH_USER_COLS, authLog, authUsersTable, authVerify, lkReset, lkStop,
-         usersGet, usersSaveOne } from '../../core/auth.js';
+import { AUTH_USER_COLS, authLog, authUsersTable, authVerify, lkReset, lkStop, usersGet,
+         usersSaveOne } from '../../core/auth.js';
 import { closeModal, esc, openModal, shellBare, toast } from '../../core/ui.js';
-import { AUTH, S } from '../state.js';
+import { HEB_DOW, hebrewDate } from '../../core/hebrew.js';
 import { HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
          MSG_OFF_FIRST_LOGIN, MSG_SERVER_DOWN_LOCAL, MSG_SWITCHED_AS,
-         MSG_SWITCH_NEED_PASS, MSG_SWITCH_TITLE, MSG_SWITCH_WRONG_PASS } from '../config.js';
+         MSG_SWITCH_NEED_PASS, MSG_SWITCH_TITLE,
+         MSG_SWITCH_WRONG_PASS } from '../config.js';
+import { AUTH, S } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending } from '../domain.js';
 import { sortUsersByOrder } from './settings.js';
 import { SB, showPage, showPageInternal, uiShown } from '../main.js';
@@ -333,7 +336,7 @@ function initDateFields(){
   // שם היום מורכב כאן ולא במנוע — המנוע מחזיר תאריך עברי, ושם היום הוא לוח לועזי.
   var hdEl=document.getElementById('hdate');
   var _now=new Date();
-  if(hdEl) hdEl.textContent='יום '+window.HEB_DOW[_now.getDay()]+', '+hebrewDate(_now);
+  if(hdEl) hdEl.textContent='יום '+HEB_DOW[_now.getDay()]+', '+hebrewDate(_now);
 }
 
 export { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,

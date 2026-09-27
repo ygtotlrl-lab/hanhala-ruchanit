@@ -1,20 +1,24 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList, withTimeout } from '../core/util.js';
-import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, pendAll,
-         pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush, tombAt,
-         tombPruneMerged } from '../core/sync.js';
+import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
+         withTimeout } from '../core/util.js';
+import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore,
+         pendAll, pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush,
+         tombAt, tombPruneMerged } from '../core/sync.js';
 import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
 import { closeModal, pullRender, toast } from '../core/ui.js';
+import { hebDate, hebIntl, hebIsLeap, hebMonthNames,
+         hebYearBase } from '../core/hebrew.js';
+import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, KV_TABLE, MSG_PERMS_CHANGED_POST,
+         MSG_PERMS_CHANGED_PRE } from './config.js';
 import { AUTH, S } from './state.js';
-import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, KV_TABLE,
-         MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE } from './config.js';
-import { atFillSessionBtns, atRenderTodaySessions } from './screens/attend.reg.js';
 import { refreshDashStats } from './screens/home.js';
-import { _hrCleanCfg, hrFillSessionBtns, hrRenderTodaySessions } from './screens/sleep.reg.js';
 import { getStudents, renderStudents } from './screens/students.js';
+import { atFillSessionBtns, atRenderTodaySessions } from './screens/attend.reg.js';
+import { _hrCleanCfg, hrFillSessionBtns,
+         hrRenderTodaySessions } from './screens/sleep.reg.js';
 import { SB, showPage } from './main.js';
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
@@ -84,25 +88,25 @@ function hrApplyPerms(p) {
 }
 
 // ── בורר התאריך העברי ──
-function _hcMN(hy){return window.hebMonthNames(hy);}
+function _hcMN(hy){return hebMonthNames(hy);}
 
 function hrHebYearInfo(hy){
   hy=+hy;
   if(S._hrYearCache[hy]!==undefined) return S._hrYearCache[hy];
   var info=null;
   try{
-    var leap=window.hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
+    var leap=hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
     // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
     for(k=0;k<45;k++){
       d=dayNoon(hy-3761,8,1+k);
-      r=window.hebIntl(d);
+      r=hebIntl(d);
       if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
     }
     if(start){
       var ml=[],cur=start,total=0,ok=true;
       for(var m=0;m<nM;m++){
         var p=new Date(cur.getTime()+29*86400000);
-        var pr=window.hebIntl(dayNoon(p));
+        var pr=hebIntl(dayNoon(p));
         if(!pr){ok=false;break;}
         var len=(pr.day===1)?29:30;
         ml.push(len);total+=len;
@@ -118,7 +122,7 @@ function hrHebYearInfo(hy){
 }
 
 // הטבלה נקראת דרך hebYearBase ולא ישירות — _hcST הוא מצב פנימי של המודול, וקריאה ישירה בו נשברת בלי לזרוק.
-function _hcBase(hy){return hrHebYearInfo(hy)||window.hebYearBase(hy);}
+function _hcBase(hy){return hrHebYearInfo(hy)||hebYearBase(hy);}
 
 // עוגן בצהריים ולא בחצות — הוספת כפולות של 24 שעות מחצות נופלת ליום הקודם במעבר לשעון חורף.
 function _hcG(hy,mi,day){
@@ -189,10 +193,10 @@ function hrHwWindowKeys() {
   var stamp = dayToday();
   if (S._hrHwWinKeys && S._hrHwWinDay === stamp) return S._hrHwWinKeys;
   var cur = null, prev = null;
-  try { cur = window.hebDate(now); } catch (e) { cur = null; }
+  try { cur = hebDate(now); } catch (e) { cur = null; }
   if (!cur || !cur.ok || !(cur.day > 0)) return null;
   try {
-    prev = window.hebDate(dayNoon(now.getFullYear(), now.getMonth(), now.getDate() - cur.day));
+    prev = hebDate(dayNoon(now.getFullYear(), now.getMonth(), now.getDate() - cur.day));
   } catch (e2) { prev = null; }
   if (!prev || !prev.ok) return null;
   var keys = {};
@@ -210,7 +214,7 @@ function hrHwInWindow(rec) {
   var keys = hrHwWindowKeys();
   if (!keys) return true;
   var h = null;
-  try { h = window.hebDate(new Date(t)); } catch (e) { h = null; }
+  try { h = hebDate(new Date(t)); } catch (e) { h = null; }
   if (!h || !h.ok) return true;
   return !!keys[h.year + ':' + h.monthIndex];
 }

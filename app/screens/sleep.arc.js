@@ -2,14 +2,15 @@
 import { MSG_DELETE, dayToday } from '../../core/util.js';
 import { idEq } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
+import { hebDayLabel } from '../../core/hebrew.js';
 import { MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_EXPORT_FAIL, MSG_EXPORT_OK,
          MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA,
          MSG_ROW_DELETED } from '../config.js';
 import { _hcMN, hrHebYearWin, hrMarks, hrPdfFont, hrWho } from '../domain.js';
-import { hrCachedArr } from './attend.reg.js';
-import { _hrPullSessions, hrLoadData, hrRenderTodaySessions, hrSaveData,
-         hrSortedSessions, hrSummaryHtml } from './sleep.reg.js';
 import { getStudents, hrSortStudents } from './students.js';
+import { hrCachedArr } from './attend.reg.js';
+import { _hrPullSessions, hrLoadData, hrRenderTodaySessions, hrSaveData, hrSortedSessions,
+         hrSummaryHtml } from './sleep.reg.js';
 import { HE, _hcBuild, _hcFmt, _hcH, _hcYL, atvCls } from '../main.js';
 
 // ── שינה — ארכיון הסדרים ──
@@ -86,7 +87,7 @@ function _hrPaintArchive(el, records, warn) {
           return ia-ib;
         });
         var hd0=entries[0].hd;
-        var dayLabel=window.hebDayLabel(hd0.day)+' '+mName;
+        var dayLabel=hebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
         html+='<div class="arc-day">';
         html+='<div data-act="toggle-panel" data-panel="'+esc(dId)+'" '+
