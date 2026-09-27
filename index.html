@@ -3580,36 +3580,19 @@ var USER_CFG = {
 // ⚠️ `remoteDupe: 'last'` ולא `'ts'` — כאן כפילות בתוך המערך המרוחק מוכרעת
 //    לפי **הסדר** (האחרון גובר) ולא לפי החותמת. ⛔ אין ליישר
 //    את זה «לשם אחידות» — כל שינוי בה משנה איזו רשומה שורדת.
-// ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — בענף האובייקטים
-//    הליבה מקבלת מערכי-זוגות ולא את `remote` המקורי, ובלעדיו רשומה
-//    מקומית בלי חותמת הייתה נופלת דווקא כשאין בכלל צד מרוחק.
+// ⚠️ `remote == null` מתקפל לתוך `keepUnversionedLocal` — צד מרוחק שלא
+//    נקרא הוא «אין ראיה» ⛔ ולא «הענן ריק»: ⭐ בלעדיו רשומה מקומית בלי
+//    חותמת הייתה נופלת דווקא כשהמשיכה נכשלה.
 /*  ⛔ `mergePair` הוא פרמטר סופי ואופציונלי — ⚠️ הוא נדרש לרשומה שנושאת
  *  **מערך פריטים** בשדה, ⭐ ושאר הקוראים אינם מוסרים אותו ואינם משתנים. */
+/*  ⛔ אין להעביר כאן מפה — ⚠️ המנוע קורא ערך שאינו מערך כמערך ריק. */
 function hrMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending, mergePair) {
   if (remote == null && local == null) return local;
   var keepLocal = !!keepUnversionedLocal || remote == null;
-  if (Array.isArray(remote) || Array.isArray(local)) {
-    return tombPruneMerged(mergeCore(local, remote, {
-      getKey: getKey, ts: hrRecTs, isPending: isPending, onDrop: onDrop, mergePair: mergePair,
-      keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
-    }));
-  }
-  // ענף האובייקטים — מפות `kv`. המפתח הוא מפתח המפה
-  // עצמה, ולכן הזוגות נעטפים ונפרסים חזרה; סדר המפתחות (מרוחק ואז
-  // מקומי-בלבד) נשמר בזכות סדר ההכנסה של אובייקט JS.
-  var Lo = (local && typeof local === 'object') ? local : {};
-  var Ro = (remote && typeof remote === 'object') ? remote : {};
-  var pairs = function (o) { return Object.keys(o).map(function (k) { return { __k: k, __v: o[k] }; }); };
-  var merged = mergeCore(pairs(Lo), pairs(Ro), {
-    getKey: function (x) { return x.__k; },
-    ts: function (x) { return hrRecTs(x.__v); },
-    isPending: isPending, keepUnversionedLocal: keepLocal,
-    onDrop: onDrop ? function (x, k) { return onDrop(x.__v, k); } : null,
-    dedupe: true, remoteDupe: 'last'
-  });
-  var out = {};
-  merged.forEach(function (x) { out[x.__k] = x.__v; });
-  return out;
+  return tombPruneMerged(mergeCore(local, remote, {
+    getKey: getKey, ts: hrRecTs, isPending: isPending, onDrop: onDrop, mergePair: mergePair,
+    keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
+  }));
 }
 
 // פרדיקט ה-⏳ לפי מפתח ה-kv — נגזר מ-`PEND_KV_PREFIX`. ⭐ והטיפולים הם
