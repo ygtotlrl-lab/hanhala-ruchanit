@@ -1,6 +1,6 @@
--- ═══ 000_schema.sql — הנהלה רוחנית: הסכימה החיה ════════════════════════
+-- migrations/000_schema.sql — הנהלה רוחנית: הסכימה החיה
 
--- ─── משותף לפרויקט ─────────────────────────────────────────────────────
+-- ── משותף לפרויקט ──
 
 create extension if not exists pg_cron;
 
@@ -26,9 +26,8 @@ create table if not exists public.sh_sync_log (
 
 create index if not exists sh_backup_key_created_idx ON public.sh_backup USING btree (key, created_at DESC);
 
--- ⛔ revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת
---    עם DELETE ו-TRUNCATE ל-anon: המחיקה היא deleted=true, ולא DELETE.
--- ⚠️ יומן תוספת-בלבד — אין לו UPDATE: גיבוי ולוג נכתבים פעם אחת.
+-- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon
+-- יומן תוספת-בלבד — ולכן אין לו UPDATE
 revoke all on table public.sh_backup from anon, authenticated;
 grant select, insert on table public.sh_backup to anon, authenticated;
 grant all on table public.sh_backup to service_role;
@@ -68,9 +67,8 @@ $function$;
 revoke all on function public.bk_fn_def(text) from public, anon, authenticated, service_role;
 grant execute on function public.bk_fn_def(text) to anon, authenticated, service_role;
 
--- ⛔ רשימת-ההיתר היא בדיוק מפתחות הגיבוי שהקוד כותב — מפתח שאינו בה אינו מתפנה.
--- ⚠️ מקור-טבלה נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד;
---    ומקור kv נכתב בלי שכבה.
+-- מפתח שאינו ברשימה אינו מתפנה לעולם
+-- מקור-טבלה נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד; מקור kv נכתב בלי שכבה
 CREATE OR REPLACE FUNCTION public.bk_retention_keys()
  RETURNS text[]
  LANGUAGE sql
@@ -122,8 +120,7 @@ begin
      and created_at < now() - make_interval(days => p_days);
   get diagnostics v_age = row_count;
 
-  -- ⛔ התקרה נגזרת מתחילית המפתח — עוגן שבועי נשמר ארבע פעמים, ודיפרנציאלי יומי
-  --    שלושים: תקרה אחת לכל המפתחות קוצצת את הדיפרנציאלים למתחת לחלון שהם מכסים.
+  -- התקרה נגזרת מתחילית המפתח — תקרה אחת לכל המפתחות הייתה קוצצת את הדיפרנציאלים מתחת לחלון שהם מכסים
   with ranked as (
     select id, key,
            row_number() over (partition by key
@@ -152,12 +149,12 @@ $function$;
 revoke all on function public.bk_retention_sweep(integer,integer) from public, anon, authenticated, service_role;
 grant execute on function public.bk_retention_sweep(integer,integer) to service_role;
 
--- ⚠️ משימה לפי שמה — cron.schedule בשם קיים מעדכן אותה, ואינו מוסיף שנייה.
+-- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
 select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30, 7);');
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
 select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 
--- ─── הנהלה רוחנית ──────────────────────────────────────────────────────
+-- ── הנהלה רוחנית ──
 
 create table if not exists public.hr_marks (
   client_id text not null,
@@ -276,8 +273,7 @@ create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep
 create index if not exists hr_sleep_sessions_updated_idx ON public.hr_sleep_sessions USING btree (updated_at DESC);
 create index if not exists hr_students_rows_updated_idx ON public.hr_students_rows USING btree (updated_at DESC);
 
--- ⛔ revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת
---    עם DELETE ו-TRUNCATE ל-anon: המחיקה היא deleted=true, ולא DELETE.
+-- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon.
 revoke all on table public.hr_marks from anon, authenticated;
 grant select, insert, update on table public.hr_marks to anon, authenticated;
 grant all on table public.hr_marks to service_role;
