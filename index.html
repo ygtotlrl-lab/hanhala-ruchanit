@@ -3542,7 +3542,7 @@ function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_na
 // מיזוג גנרי ברמת רשומה — עובד על מערכים (getKey) ועל אובייקטים (מפתח = שם המאפיין).
 // keepUnversionedLocal: האם רשומה מקומית-בלבד ללא updatedAt שורדת
 // כשהענן קיים. false = מניעת "תחיית מתים" של רשומה שאין לה חותמת ואינה בענן;
-// true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend, approvals).
+// true = בטוח לקטגוריות שמעולם לא מחקו פיזית (attend).
 // ⛔ **רשומה מקומית מסומנת ⏳ מנצחת ללא תלות בחותמת — אין להסיר את
 //    `isPending` מכאן.** החותמת בענן נכתבת ע"י המכשיר שדחף, ולכן ברגע שמכשיר
 //    א' דוחף, הערך בענן נושא חותמת **מאוחרת יותר** מעריכה חדשה יותר שיושבת
@@ -3594,7 +3594,7 @@ function hrMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isP
       keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
     }));
   }
-  // ענף האובייקטים — `hr_approvals` ומפות `kv` אחרות. המפתח הוא מפתח המפה
+  // ענף האובייקטים — מפות `kv`. המפתח הוא מפתח המפה
   // עצמה, ולכן הזוגות נעטפים ונפרסים חזרה; סדר המפתחות (מרוחק ואז
   // מקומי-בלבד) נשמר בזכות סדר ההכנסה של אובייקט JS.
   var Lo = (local && typeof local === 'object') ? local : {};
@@ -3796,16 +3796,6 @@ async function hrPullFromCloud() {
                                    hrPendingFor('hr_students_rows'));
       _hrStudentsSaveRaw(mergedS);
     }
-    // approvals: מיזוג לפי sid עם updatedAt
-    var ap = await hrCfgGet('approvals');
-    if (ctxStale(_ep)) return;
-    if (ap && typeof ap === 'object' && !hrSetPending('approvals')) {
-      hrCfgLocalSet('approvals', hrMergeRecords(getApprovals(), ap, null, true));
-    }
-    // ⛔ הגדרה שנושאת ⏳ אינה נדרסת — ⚠️ הערך המקומי טרם עלה.
-    var rs = await hrCfgGet('reasons');
-    if (ctxStale(_ep)) return;
-    if (rs && Array.isArray(rs) && !hrSetPending('reasons')) hrCfgLocalSet('reasons', rs);
     // טען נתוני סדרים (מודול נוכחות)
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
     // resurrection; רשומות מקומיות ללא updatedAt לא מוחזרות (anti-resurrection).
@@ -3826,6 +3816,7 @@ async function hrPullFromCloud() {
       _hrSlDiskSave(_hrMerge);
       window._hrData = _hrMerge;
     }
+    // ⛔ הגדרה שנושאת ⏳ אינה נדרסת — ⚠️ הערך המקומי טרם עלה.
     var abR = await hrCfgGet('absence_reasons');
     if (ctxStale(_ep)) return;
     if (abR && typeof abR === 'object' && !Array.isArray(abR) && !hrSetPending('absence_reasons')) {
@@ -4033,8 +4024,6 @@ function saveStudents(s){
 // ⛔ הגטרים מוגנים כמו getStudents — ערך פגום אחד (חיתוך באמצע כתיבה /
 // פינוי מכסה) זורק מתוך hrPushToCloud ומפיל את כל הדחיפה, וכל המפתחות
 // מפסיקים להגיע לענן בשקט.
-function getReasons(){var def=['השעיהה (שמה"ס)','מצב חירום','חופשה','מחלה','שמחה משפחתית','נסיעה לרב','בית חולים','אחר'];try{var v=hrCfgLocalGet('reasons');return Array.isArray(v)?v:def;}catch(e){console.warn('[settings] hr_reasons פגום — נטענו ברירות מחדל:',e.message);return def;}}
-function getApprovals(){try{var v=hrCfgLocalGet('approvals');return (v&&typeof v==='object'&&!Array.isArray(v))?v:{};}catch(e){console.warn('[settings] hr_approvals פגום — נטען ריק:',e.message);return {};}}
 function checkLoginNeeded(){
   return !AUTH.user;
 }
