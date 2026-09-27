@@ -62,46 +62,11 @@ AS $function$
     join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public'
      and p.proname = p_name
-     and p_name in ('bk_retention_keys', 'bk_retention_sweep', 'bk_prune_layer')
+     and p_name in ('bk_retention_keys', 'bk_retention_sweep')
    limit 1;
 $function$;
 revoke all on function public.bk_fn_def(text) from public, anon, authenticated, service_role;
 grant execute on function public.bk_fn_def(text) to anon, authenticated, service_role;
-
-CREATE OR REPLACE FUNCTION public.bk_prune_layer(p_prefix text, p_keep integer)
- RETURNS integer
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-declare
-  v_deleted integer := 0;
-begin
-  if p_prefix is null or p_prefix not in ('ANCHOR:', 'DIFF:') then
-    raise exception 'bk_prune_layer: תבנית שאינה מוכרת — %', p_prefix;
-  end if;
-  if p_keep is null or p_keep < 2 then
-    raise exception 'bk_prune_layer: תקרה קטנה משניים — מסרב לרוץ';
-  end if;
-  with ranked as (
-    select id, row_number() over (partition by key order by created_at desc) rn
-      from public.sh_backup
-     where key like p_prefix || '%'
-  )
-  delete from public.sh_backup b
-   using ranked r
-   where b.id = r.id and r.rn > p_keep;
-  get diagnostics v_deleted = row_count;
-  if v_deleted > 0 then
-    insert into public.sh_sync_log (device_id, user_name, action, key, record_count, details)
-    values ('pg_cron', null, 'retention', null, v_deleted,
-            jsonb_build_object('layer', p_prefix, 'keep', p_keep));
-  end if;
-  return v_deleted;
-end;
-$function$;
-revoke all on function public.bk_prune_layer(text,integer) from public, anon, authenticated, service_role;
-grant execute on function public.bk_prune_layer(text,integer) to service_role;
 
 -- ⛔ רשימת-ההיתר היא בדיוק מפתחות הגיבוי שהקוד כותב — מפתח שאינו בה אינו מתפנה.
 -- ⚠️ מקור-טבלה נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד;
@@ -157,8 +122,10 @@ begin
      and created_at < now() - make_interval(days => p_days);
   get diagnostics v_age = row_count;
 
+  -- ⛔ התקרה נגזרת מתחילית המפתח — עוגן שבועי נשמר ארבע פעמים, ודיפרנציאלי יומי
+  --    שלושים: תקרה אחת לכל המפתחות קוצצת את הדיפרנציאלים למתחת לחלון שהם מכסים.
   with ranked as (
-    select id,
+    select id, key,
            row_number() over (partition by key
                               order by created_at desc, id desc) as rn
       from public.sh_backup
@@ -167,7 +134,9 @@ begin
   delete from public.sh_backup b
    using ranked r
    where b.id = r.id
-     and r.rn > p_keep;
+     and r.rn > case when r.key like 'ANCHOR:%' then 4
+                     when r.key like 'DIFF:%'   then 30
+                     else p_keep end;
   get diagnostics v_cap = row_count;
 
   if (v_age + v_cap) > 0 then
@@ -184,7 +153,6 @@ revoke all on function public.bk_retention_sweep(integer,integer) from public, a
 grant execute on function public.bk_retention_sweep(integer,integer) to service_role;
 
 -- ⚠️ משימה לפי שמה — cron.schedule בשם קיים מעדכן אותה, ואינו מוסיף שנייה.
-select cron.schedule('bk_prune_layers', '10 3 * * *', 'select public.bk_prune_layer(''ANCHOR:'', 4), public.bk_prune_layer(''DIFF:'', 30);');
 select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30, 7);');
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
 select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
