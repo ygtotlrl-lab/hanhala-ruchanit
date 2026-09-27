@@ -182,7 +182,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
 .veil{align-items:center;backdrop-filter:blur(2px);direction:rtl}
 .sheet{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--brand-ink);max-height:85vh;overflow-y:auto}
-.sheet-bd:empty{display:none}
 #ask .sheet{max-width:340px}
 #ask-body{font-size:var(--fs-4);color:var(--text-2)}
 #ask .sheet-ft button{flex:1;display:inline-flex;align-items:center;justify-content:center;background:var(--card);color:var(--brand-ink);border:2px solid var(--brand-ink);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3)}

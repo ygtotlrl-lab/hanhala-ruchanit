@@ -1,6 +1,6 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
 import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList, withTimeout } from '../core/util.js';
-import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, pendAll,
+import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, pendAll,
          pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush, tombAt,
          tombPruneMerged } from '../core/sync.js';
 import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
