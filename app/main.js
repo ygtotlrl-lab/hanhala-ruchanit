@@ -4,6 +4,7 @@ import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
 import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
          plStampRead, runSave, sbWatch } from '../core/sync.js';
 import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
+import { logAwait } from '../core/backup.js';
 import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, isAdmin, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
@@ -76,7 +77,6 @@ appConfigure({
 
 var MIRROR_CFG = {
   prefix: self.APP.prefix + 'mirror_',
-  app:    self.APP.prefix,
   tables: function () { return HR_MIRROR_TABLES; },
   noPush: [{ t: 'hr_marks',       via: 'hrSendRecs', adds: 'parent' },
            { t: 'hr_sleep_marks', via: 'hrSendRecs', adds: 'parent' },
@@ -178,7 +178,7 @@ var BK_CFG = {
 };
 
 var PEND_CFG = {
-  app: 'hanhala-ruchanit', key: 'hr_pending',
+  key: 'hr_pending',
   marks: function () {
     return [PK_SET].concat(Object.keys(PEND_KV_PREFIX).map(function (k) { return PEND_KV_PREFIX[k]; }));
   },
@@ -283,7 +283,8 @@ var ERA_CFG = {
   },
   // מחזור הדחיפה כאן פר-קטגוריה — התוצאה נאספת בסופו ונמסרת ב-eraNotePush.
   push:   function () { return hrPushToCloud().then(function () { return _eraPush; }); },
-  refresh: function () { return hrSyncNow(); }
+  refresh: function () { return hrSyncNow(); },
+  log:    function (action, entries) { return logAwait(action, entries); }
 };
 
 var DEV_CFG = { key: 'hr_device_id' };

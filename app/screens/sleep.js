@@ -32,7 +32,7 @@ async function _hrPullSessions(win) {
   var v = null; try { v = await hrCloudGet('hr_sleep_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
   var loc = hrMirrorRecs('hr_sleep_sessions');
-  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sleep_sessions', !!win) : v;
+  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sleep_sessions') : v;
   S._hrData = out; _hrSlDiskSave(out);
   return true;
 }

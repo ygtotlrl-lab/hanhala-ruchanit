@@ -35,7 +35,7 @@ async function _atPullSessions(win) {
   var v = null; try { v = await hrCloudGet('hr_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
   var loc = _hrDiskArr('hr_sessions');
-  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sessions', !!win) : v;
+  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sessions') : v;
   S._atData = out; _hrAtDiskSave(out);
   return true;
 }

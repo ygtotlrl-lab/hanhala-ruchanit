@@ -132,14 +132,14 @@ function saveStudentStatus(type) {
 comboDef('student', {
   hl: true, max: 8, focusOpen: false,
   items: function () {
-    return getStudents().map(function (s) { return { id: s.id, label: s.name, sub: CLS_NAME[s.cls] || s.cls || '' }; });
+    return getStudents().map(function (s) { return { value: s.id, label: s.name, sub: CLS_NAME[s.cls] || s.cls || '' }; });
   },
   query: function () { renderStudents(); },
   pick: function (it) {
     if (!it) return;
     renderStudents();
     setTimeout(function () {
-      var row = document.getElementById('st-row-' + it.id);
+      var row = document.getElementById('st-row-' + it.value);
       if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 80);
   }

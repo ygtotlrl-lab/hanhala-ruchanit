@@ -3,14 +3,11 @@ import { appConfigure } from '../core/util.js';
 
 // ── מסירת התצורה ──
 // כאן הנתונים שהליבה קוראת, והחיווט — ב-main.js; הקובץ הזה נטען ראשון, לפני כל קריאה לליבה.
-// DATA_ERA עולה בשינוי צורת שורה, וגם בשינוי שם טבלה — המראה ממופתחת בשם.
-// והוא מקודם אחרי ההגירה המקומית ולא לפניה — סדר הפוך זורק תור שטרם הוגר.
+// העידן עולה בשינוי צורת רשומה או מפתחה, ושינוי שם טבלה הוא שינוי כזה — המראה ממופתחת בשם.
+// עותק בעידן ישן אינו נדחף — הממתין בו נרשם ביומן, והוא נזרק ונמשך מלא.
 var DATA_ERA = 3;
 
-// dur באלפיות שנייה. הערך זהה במקרה ל-LS_SUCCESS_MUTE_MS אך הוא מושג אחר — אין לאחד ביניהם.
-var TOAST_DEFAULT_MS = 2800;
-
-appConfigure({ DATA_ERA: DATA_ERA, TOAST_DEFAULT_MS: TOAST_DEFAULT_MS });
+appConfigure({ DATA_ERA: DATA_ERA });
 
 // מחזיר true אם המטריצה השתנתה.
 var HR_PERMS_KEY = 'hr_perms_cache';
@@ -238,7 +235,7 @@ var PUSH_TABLES = ['hr_sessions', 'hr_sleep_sessions', 'hr_students_rows', KV_TA
 // deleted של הסדר יורד לכל סימוניו — אותו דוח, שאינו מצטרף לאב, היה קורא סימון של סדר מחוק כחי.
 
 // השינה היא תצורה של אותו מסלול ולא העתקה שלו.
-// note בשינה בלבד — אין להוסיף אותו לנוכחות לשם אחידות: ל-hr_marks אין עמודה כזו, וה-upsert נדחה כולו.
+// note בשינה בלבד — ל-hr_marks אין עמודה כזו, ושורה שנושאת אותו נדחית ב-upsert כולו.
 var HR_ROWS_KINDS = {
   attend: { parent: 'hr_sessions',       child: 'hr_marks',       pk: PK_AT_SESS, note: false },
   sleep:  { parent: 'hr_sleep_sessions', child: 'hr_sleep_marks', pk: PK_SL_SESS, note: true  }

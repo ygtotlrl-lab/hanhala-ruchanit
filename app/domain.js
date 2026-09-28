@@ -3,7 +3,7 @@ import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore,
          pendAll, pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush,
-         tombAt, tombPruneMerged } from '../core/sync.js';
+         tombAt } from '../core/sync.js';
 import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
@@ -417,16 +417,13 @@ async function hrTouchLastChanged() {
   return await plTouch();
 }
 
-// keepLocal נדלק כשהצד המרוחק הוא חלון — רשומה מחוץ לחלון לא נשאלה, והיעדרותה אינה עדות.
-// בלי הדגל משיכת חודש אחד הייתה גורפת מהדיסק את כל השאר.
-function _hrSessionsMerge(cloudArr, localArr, logKey, keepLocal) {
-  // רשומה מקומית-בלבד בלי updatedAt אינה חוזרת — מניעת תחייה.
+// רשומה מקומית-בלבד נשארת — הצד המרוחק יכול להיות חלון, ורשומה מחוץ לו לא נשאלה.
+function _hrSessionsMerge(cloudArr, localArr, logKey) {
   if (!Array.isArray(cloudArr)) return Array.isArray(localArr) ? localArr : [];
   if (!Array.isArray(localArr)) return cloudArr;
   // מפתח שאין לו שכבת שורות (הטיפולים) ממוזג ברמת הרשומה.
   var pair = HR_MIRROR_STREAMS[logKey] ? hrSessionPairFor(logKey) : null;
-  return hrMergeRecords(localArr, cloudArr, function(r){ return r && r.id; }, !!keepLocal, null,
-                        hrPendingFor(logKey || 'sessions'), pair);
+  return mergeCore(localArr, cloudArr, { isPending: hrPendingFor(logKey || 'sessions'), mergePair: pair });
 }
 
 // null פירושו «טרם נמשכה» — ובספק דוחפים: שורה שלא נדחפה חסרה בשקט, ודחיפה מיותרת עולה רק בתעבורה.
@@ -683,18 +680,6 @@ function hrMarks(rec) {
 // לתיעוד בלבד — אינו משפיע על מיזוג, סינון או חישוב.
 function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
-// remoteDupe: 'last' ולא 'ts' — כפילות במערך המרוחק מוכרעת לפי הסדר; אין ליישר לשם אחידות, זה משנה איזו רשומה שורדת.
-// remote == null מתקפל ל-keepUnversionedLocal — צד שלא נקרא הוא «אין ראיה» ולא «הענן ריק».
-// mergePair אופציונלי, לרשומה שנושאת מערך פריטים; אין להעביר מפה — המנוע קורא ערך שאינו מערך כמערך ריק.
-function hrMergeRecords(local, remote, getKey, keepUnversionedLocal, onDrop, isPending, mergePair) {
-  if (remote == null && local == null) return local;
-  var keepLocal = !!keepUnversionedLocal || remote == null;
-  return tombPruneMerged(mergeCore(local, remote, {
-    getKey: getKey, ts: hrRecTs, isPending: isPending, onDrop: onDrop, mergePair: mergePair,
-    keepUnversionedLocal: keepLocal, dedupe: true, remoteDupe: 'last'
-  }));
-}
-
 // הטיפולים הם הגדרה אחת — כל רשומה בהם ממתינה כל עוד ההגדרה ממתינה; מפתח בלי סימון מחזיר null.
 // הקידומת נגזרת מ-PEND_KV_PREFIX — מיפוי שני היה כותב סימון תחת מפתח אחד וקורא תחת אחר.
 function hrPendingFor(kvKey) {
@@ -806,8 +791,8 @@ async function hrPushToCloud() {
     if (!localSt.length) localSt = getStudents();
     var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
     if (ctxStale(_ep)) return;
-    _hrStudentsSaveRaw(hrMergeRecords(localSt, remoteSt, function(r){ return r.id; }, false, null,
-                                      hrPendingFor('hr_students_rows'), hrStudentPair));
+    _hrStudentsSaveRaw(mergeCore(localSt, remoteSt, { isPending: hrPendingFor('hr_students_rows'),
+                                                      mergePair: hrStudentPair }));
   } catch (e) { hrWriteFail('hrPushToCloud', e); }
   var r = await pushDirty(null);
   if (ctxStale(_ep)) return;
@@ -824,8 +809,7 @@ async function hrPullFromCloud() {
     var s = await hrCloudGet('hr_students_rows');
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
-      var mergedS = hrMergeRecords(_hrStudentsRaw(), s, function(r){ return r.id; }, false, null,
-                                   hrPendingFor('hr_students_rows'));
+      var mergedS = mergeCore(_hrStudentsRaw(), s, { isPending: hrPendingFor('hr_students_rows') });
       _hrStudentsSaveRaw(mergedS);
     }
     var atSess = await hrCloudGet('hr_sessions');
