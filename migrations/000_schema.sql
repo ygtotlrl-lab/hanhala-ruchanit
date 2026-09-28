@@ -86,9 +86,9 @@ AS $function$
     'ANCHOR:sl_settings', 'DIFF:sl_settings',
     'ANCHOR:sl_lists', 'DIFF:sl_lists',
     'ANCHOR:rishon_ya_entries_rows', 'DIFF:rishon_ya_entries_rows',
-    'rishon_ya_cats',
+    'rishon_ya_cats', 'rishon_ya_subs', 'rishon_ya_subs_meta',
     'ANCHOR:ramataviv_ya_entries_rows', 'DIFF:ramataviv_ya_entries_rows',
-    'ramataviv_ya_cats'
+    'ramataviv_ya_cats', 'ramataviv_ya_subs', 'ramataviv_ya_subs_meta'
   ]::text[];
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
