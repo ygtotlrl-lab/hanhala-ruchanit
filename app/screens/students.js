@@ -1,7 +1,7 @@
 // app/screens/students.js — מצבת התלמידים והסטטוסים
 import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
-import { isAdmin } from '../../core/auth.js';
+import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { hebDate, hebGematria, hebMonthNames,
          hebYearLabelFull } from '../../core/hebrew.js';
@@ -16,7 +16,7 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
-         getStudents, hrAbsValueKey, hrCloudGet, hrPdfFont, hrSortStudents, hrWho,
+         getStudents, hrAbsValueKey, hrCloudGet, hrPdfFont, hrSortStudents,
          modalOpen, saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
 import { hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -113,7 +113,7 @@ function saveStudentStatus(type) {
   if (!Array.isArray(s.absences)) s.absences = [];
   // חותמת לפריט — בלעדיה מיזוג פר-פריט אינו מכריע, ומיזוג ברמת הרשומה מחליף את המערך כולו.
   var nw = {id: newClientId(), type: type, reason: reason, from: from, to: to || null,
-            created_by: hrWho(), updated_at: Date.now()};
+            created_by_client_id: sessUserId(), updated_at: Date.now()};
   // ההשוואה על הערך ולא על id — המזהה נגזר מהשעון, ושתי לחיצות היו שני מזהים לאותה היעדרות.
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, hrAbsValueKey)) {
     toast(MSG_ABSENCE_DUP, null, 'bad'); return;
@@ -469,7 +469,7 @@ function cancelSingleAbsence(absenceId) {
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone ולא הסרה — היעדרות שהוסרה פיזית חוזרת מהענן במיזוג
-    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) tombKill(a); });
+    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { tombKill(a); a.deleted_by_client_id = sessUserId(); } });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
@@ -561,8 +561,8 @@ async function openStatusHistory(sid) {
         'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
       '</div>' +
       '<div class="hist-meta">' +
-        'נרשם ע״י: ' + esc(a.created_by || '—') +
-        (cancelled ? ' · בוטל ע״י: ' + esc(a.deleted_by || '—') : '') +
+        'נרשם ע״י: ' + esc(usersNameOf(a.created_by_client_id) || '—') +
+        (cancelled ? ' · בוטל ע״י: ' + esc(usersNameOf(a.deleted_by_client_id) || '—') : '') +
       '</div>' +
     '</div>';
   }).join('');
@@ -610,7 +610,7 @@ function saveStudent(){
   } else {
     // uuid ולא maxId+1 — שני מכשירים שמוסיפים במקביל מקצים אותו מספר, והמיזוג מאחד שני תלמידים
     newId = newClientId();
-    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,updated_at:Date.now(),created_by:hrWho()});
+    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,updated_at:Date.now(),created_by_client_id:sessUserId()});
     students=hrSortStudents(students);
     // אין מספור מחדש — המזהה הוא מפתח המיזוג בין מכשירים
   }
@@ -678,7 +678,7 @@ function importStudentsFromFile(input) {
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         // uuid ולא maxId++ — ייבוא מקביל בשני מכשירים היה מקצה אותם מזהים לתלמידים שונים
         var nid = newClientId();
-        existing.push({client_id:nid, name:name, cls:cls, updated_at:Date.now(), created_by:hrWho()});
+        existing.push({client_id:nid, name:name, cls:cls, updated_at:Date.now(), created_by_client_id:sessUserId()});
         addedIds.push(nid);
         added++;
       }

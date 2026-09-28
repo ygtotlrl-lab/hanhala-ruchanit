@@ -179,10 +179,9 @@ function hrRecsFromRows(kind, sRows, mRows, staleIsDeleted) {
     var rec = { client_id: String(r.client_id), marks: {} };
     _hrRowSet(rec, 'session', (r.session == null) ? '' : String(r.session));
     _hrRowSet(rec, 'session_date', (r.session_date == null) ? '' : String(r.session_date));
-    _hrRowSet(rec, 'filled_by_client_id', (r.filled_by_client_id == null) ? null : String(r.filled_by_client_id));
+    _hrRowSet(rec, 'created_by_client_id', (r.created_by_client_id == null) ? null : String(r.created_by_client_id));
     _hrRowSet(rec, 'filled_by_name', r.filled_by_name);
     _hrRowSet(rec, 'created_at', r.created_at);
-    _hrRowSet(rec, 'created_by', r.created_by);
     _hrRowSet(rec, 'deleted_at', r.deleted_at);
     _hrRowSet(rec, 'deleted_by', r.deleted_by);
     if (typeof r.open === 'boolean') rec.open = r.open;
@@ -434,11 +433,10 @@ function hrSessionRow(rec) {
     client_id: String(rec.client_id),
     session: String(rec.session || ''),
     session_date: rec.session_date ? String(rec.session_date) : null,
-    filled_by_client_id: (rec.filled_by_client_id == null || rec.filled_by_client_id === '') ? null : String(rec.filled_by_client_id),
+    created_by_client_id: (rec.created_by_client_id == null || rec.created_by_client_id === '') ? null : String(rec.created_by_client_id),
     filled_by_name: rec.filled_by_name == null ? null : String(rec.filled_by_name),
     // timestamptz — מחרוזת ריקה היא שגיאת המרה בשרת, והשורה כולה נדחית.
     created_at: rec.created_at ? String(rec.created_at) : null,
-    created_by: rec.created_by == null ? null : String(rec.created_by),
     deleted_by: rec.deleted_by == null ? null : String(rec.deleted_by),
     open: (typeof rec.open === 'boolean') ? rec.open : null,
     deleted: !!rec.deleted,
@@ -584,7 +582,7 @@ async function hrRowsGetSessions(kind, win) {
   var cfg = HR_ROWS_KINDS[kind];
   if (!cfg || !S.SB) return { ok: false, data: null };
   try {
-    var scols = 'client_id,session,session_date,filled_by_client_id,filled_by_name,created_at,created_by,deleted_at,deleted_by,open,deleted,updated_at';
+    var scols = 'client_id,session,session_date,created_by_client_id,filled_by_name,created_at,deleted_at,deleted_by,open,deleted,updated_at';
     var mcols = 'session_client_id,student_client_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
     var both = await Promise.all([
       _rowsPaged(function () { return S.SB.from(cfg.parent).select(scols); }, 'client_id', win),
@@ -671,9 +669,6 @@ function hrMarks(rec) {
   });
   return got || {};
 }
-
-// לתיעוד בלבד — אינו משפיע על מיזוג, סינון או חישוב.
-function hrWho() { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; }
 
 // הטיפולים הם הגדרה אחת — כל רשומה בהם ממתינה כל עוד ההגדרה ממתינה; מפתח בלי סימון מחזיר null.
 // הקידומת נגזרת מ-PEND_KV_PREFIX — מיפוי שני היה כותב סימון תחת מפתח אחד וקורא תחת אחר.
@@ -964,5 +959,5 @@ export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMa
          hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs,
          hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushDirty, hrPushToCloud,
          hrSendRecs, hrSetDirtyRows, hrSetPending, hrSetSend, hrSortStudents,
-         hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged, hrWho,
+         hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged,
          hrWriteFail, modalOpen, saveStudents, sortUsersByOrder, tyCls, uiShown };

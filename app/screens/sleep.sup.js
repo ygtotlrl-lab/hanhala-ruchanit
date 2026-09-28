@@ -1,11 +1,12 @@
 // app/screens/sleep.sup.js — שינה — השגחה, טיפולים והגדרות המודול
 import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, tombKill } from '../../core/sync.js';
+import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
-import { AUTH, S, shell } from '../state.js';
+import { S, shell } from '../state.js';
 import { HE, atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
          hrSupervisionAccess } from '../domain.js';
 import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
@@ -144,7 +145,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
           '<span class="treat-type">'+esc(t.type)+'</span>'+
           (t.note?'<span class="rec-muted">— '+esc(t.note)+'</span>':'')+
           '<span class="gap"></span>'+
-          '<span class="unit-hint">'+esc(t.by_name)+'</span>'+
+          '<span class="unit-hint">'+esc(usersNameOf(t.created_by_client_id))+'</span>'+
           '<button data-act="sl-del-treat" data-id="'+esc(t.id)+'" class="treat-del-btn">✕</button>'+
         '</div>';
       }).join('');
@@ -166,8 +167,7 @@ async function hrAddTreat(sid) {
     treat_date:dayToday(),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
-    by:AUTH.user?AUTH.user.client_id:'',
-    by_name:AUTH.user?AUTH.user.full_name:'',
+    created_by_client_id:sessUserId(),
     created_at:now.toISOString(),
     updated_at:now.getTime() // חותמת המכשיר — מפתח ההכרעה במיזוג
   };

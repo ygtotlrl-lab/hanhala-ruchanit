@@ -1,13 +1,14 @@
 // app/screens/sleep.reg.js — שינה — המודול ורישום הסימונים
 import { dayNoon, readNum } from '../../core/util.js';
 import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
+import { sessUserId } from '../../core/auth.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
          MSG_STATUS_REVERTED, PK_SL_SESS } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrSlDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrDefaultCfg,
-         hrMarks, hrSortStudents, hrWho, modalOpen, saveStudents,
+         hrMarks, hrSortStudents, modalOpen, saveStudents,
          tyCls } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
@@ -281,12 +282,11 @@ async function hrOpenSession(sessId, sessName) {
     client_id:newClientId(),
     session:sessName,
     session_date:dateIso,
-    filled_by_client_id:AUTH.user?AUTH.user.client_id:'',
+    created_by_client_id:sessUserId(),
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
     updated_at:Date.now(),
-    created_by:hrWho(),
     open:true
   };
 
@@ -385,7 +385,7 @@ function hrCancelStudentStatusFromReg(sid) {
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) tombKill(a); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) { tombKill(a); a.deleted_by_client_id=sessUserId(); } });
   s.present=true;
   s.updated_at=Date.now();
   saveStudents(students);
