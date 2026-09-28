@@ -1,13 +1,12 @@
 // app/screens/attend.sup.js — סדרים — השגחה, טיפולים והגדרות המודול
 import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
-import { idEq, newClientId } from '../../core/sync.js';
+import { idEq, newClientId, tombKill } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { HE, atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess,
-         hrWho } from '../domain.js';
+import { HE, atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess } from '../domain.js';
 import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
 import { atLoadData, atSaveData, hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
@@ -192,10 +191,10 @@ async function atDeleteTreatConfirmed(id) {
   closeModal();
   var treats=await atLoadTreats();
   // tombstone ולא filter — רשומה שנעלמת בלי סימון חוזרת מהענן במיזוג הבא
-  var ts=Date.now(), by=hrWho(), found=false;
+  var ts=Date.now(), found=false;
   treats.forEach(function(t){
     if(!t||String(t.id)!==String(id)||t.deleted) return;
-    t.deleted=true; t.updated_at=ts; t.deleted_by=by; found=true;
+    tombKill(t, ts); found=true;
   });
   if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); atRenderSupervision(); return; }
   await atSaveTreats(treats);

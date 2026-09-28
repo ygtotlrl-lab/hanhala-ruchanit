@@ -1,6 +1,6 @@
 // app/screens/sleep.reg.js — שינה — המודול ורישום הסימונים
 import { dayNoon, readNum } from '../../core/util.js';
-import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
@@ -385,7 +385,7 @@ function hrCancelStudentStatusFromReg(sid) {
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) tombKill(a); });
   s.present=true;
   s.updated_at=Date.now();
   saveStudents(students);

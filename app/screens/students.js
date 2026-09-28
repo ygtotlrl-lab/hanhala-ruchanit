@@ -1,6 +1,6 @@
 // app/screens/students.js — מצבת התלמידים והסטטוסים
 import { dayToday, uniqHas } from '../../core/util.js';
-import { idEq, newClientId, pendMark, pendTag, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { hebDate, hebGematria, hebMonthNames,
@@ -469,7 +469,7 @@ function cancelSingleAbsence(absenceId) {
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone ולא הסרה — היעדרות שהוסרה פיזית חוזרת מהענן במיזוג
-    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { a.deleted = true; a.updated_at = Date.now(); a.deleted_by = hrWho(); } });
+    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) tombKill(a); });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
@@ -629,10 +629,10 @@ function hrTombstoneStudents(ids){
   if(!all.length) all=getStudents(); // ריצה על ברירות מחדל שטרם נשמרו
   var want={};
   (ids||[]).forEach(function(id){ if(id!=null) want[String(id)]=1; });
-  var ts=Date.now(), by=hrWho(), n=0;
+  var ts=Date.now(), n=0;
   all.forEach(function(rec){
     if(!rec||rec.client_id==null||!want[String(rec.client_id)]||rec.deleted) return;
-    rec.deleted=true; rec.updated_at=ts; rec.deleted_by=by; n++;
+    tombKill(rec, ts); n++;
   });
   _hrStudentsSaveRaw(all);
   (ids||[]).forEach(function(id){ if(id!=null) pendMark(PK_STUDENT+id); });

@@ -3,7 +3,7 @@ import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore,
          pendAll, pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush,
-         tombAt } from '../core/sync.js';
+         tombInherit, tombKill } from '../core/sync.js';
 import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
@@ -183,6 +183,7 @@ function hrRecsFromRows(kind, sRows, mRows, staleIsDeleted) {
     _hrRowSet(rec, 'filled_by_name', r.filled_by_name);
     _hrRowSet(rec, 'created_at', r.created_at);
     _hrRowSet(rec, 'created_by', r.created_by);
+    _hrRowSet(rec, 'deleted_at', r.deleted_at);
     _hrRowSet(rec, 'deleted_by', r.deleted_by);
     if (typeof r.open === 'boolean') rec.open = r.open;
     if (r.deleted) rec.deleted = true;
@@ -247,7 +248,7 @@ function _hrSplitRecs(t, recs, tomb) {
     seen[s.client_id] = 1;
     hrMarkRows(rec, st.kind).forEach(function (row) {
       var old = prev[row.client_id];
-      if (old && !old.deleted && _hrMarkSame(old, row)) row.updated_at = old.updated_at;
+      if (old && !old.deleted && !row.deleted && _hrMarkSame(old, row)) row.updated_at = old.updated_at;
       live[row.client_id] = 1;
       mRows.push(row);
     });
@@ -266,9 +267,7 @@ function _hrSplitRecs(t, recs, tomb) {
     }
     var d = {};
     Object.keys(old).forEach(function (kk) { d[kk] = old[kk]; });
-    d.deleted = true;
-    d.updated_at = now;
-    mRows.push(d);
+    mRows.push(tombKill(d, now));
   });
   return { sRows: sRows, mRows: mRows };
 }
@@ -443,7 +442,7 @@ function hrSessionRow(rec) {
     deleted_by: rec.deleted_by == null ? null : String(rec.deleted_by),
     open: (typeof rec.open === 'boolean') ? rec.open : null,
     deleted: !!rec.deleted,
-    deleted_at: rec.deleted ? tombAt(hrRecTs(rec)) : null,
+    deleted_at: rec.deleted_at == null ? null : rec.deleted_at,
     updated_at: Math.round(hrRecTs(rec))
   };
 }
@@ -469,10 +468,12 @@ function hrMarkRows(rec, kind) {
       session_date: d,
       status: (m.status == null) ? null : String(m.status),
       minutes: Math.round(Number(m.minutes) || 0),
-      deleted: del,
-      deleted_at: del ? tombAt(ts) : null,
+      deleted: false,
+      deleted_at: null,
+      deleted_by: null,
       updated_at: ts
     };
+    if (del) tombInherit(rec, row);
     // note במסלול השינה בלבד — שדה עודף ב-upsert מפיל את הבקשה כולה.
     // נשלח גם כשהוא ריק — null מפורש מוחק הערה בענן, והשמטת המפתח משאירה את הישנה.
     if (wantNote) row.note = (m.note == null || m.note === '') ? null : String(m.note);
@@ -482,7 +483,6 @@ function hrMarkRows(rec, kind) {
 }
 
 // data ולא עמודות — רשומת התלמיד בעלת צורה משתנה, ופיצוצה לעמודות היה מקור אמת שני לצורתה.
-// deleted_at נגזר מהחותמת ואינו שדה ברשומה.
 var HR_STUDENT_COLS = ['client_id', 'updated_at', 'deleted', 'deleted_at', 'deleted_by'];
 function hrStudentRow(rec) {
   if (!rec || rec.client_id == null) return null;
@@ -492,7 +492,7 @@ function hrStudentRow(rec) {
     client_id: String(rec.client_id),
     updated_at: Math.round(hrRecTs(rec)),
     deleted: !!rec.deleted,
-    deleted_at: rec.deleted ? tombAt(hrRecTs(rec)) : null,
+    deleted_at: rec.deleted_at == null ? null : rec.deleted_at,
     deleted_by: rec.deleted_by == null ? null : String(rec.deleted_by),
     data: data
   };
@@ -506,6 +506,7 @@ function hrStudentRec(r) {
   rec.client_id = String(r.client_id);
   rec.updated_at = Number(r.updated_at) || 0;
   if (r.deleted) rec.deleted = true;
+  if (r.deleted_at != null) rec.deleted_at = r.deleted_at;
   if (r.deleted_by != null) rec.deleted_by = r.deleted_by;
   return rec;
 }
@@ -583,7 +584,7 @@ async function hrRowsGetSessions(kind, win) {
   var cfg = HR_ROWS_KINDS[kind];
   if (!cfg || !S.SB) return { ok: false, data: null };
   try {
-    var scols = 'client_id,session,session_date,filled_by_client_id,filled_by_name,created_at,created_by,deleted_by,open,deleted,updated_at';
+    var scols = 'client_id,session,session_date,filled_by_client_id,filled_by_name,created_at,created_by,deleted_at,deleted_by,open,deleted,updated_at';
     var mcols = 'session_client_id,student_client_id,status,minutes,deleted,updated_at' + (cfg.note ? ',note' : '');
     var both = await Promise.all([
       _rowsPaged(function () { return S.SB.from(cfg.parent).select(scols); }, 'client_id', win),
@@ -601,7 +602,7 @@ async function hrRowsGetStudents() {
   try {
     // המצבה נמשכת מלאה בלי חלון — אין בטבלה עמודת תאריך.
     var rs = await _rowsPaged(function () {
-      return S.SB.from('hr_students_rows').select('client_id,updated_at,deleted,deleted_by,data');
+      return S.SB.from('hr_students_rows').select('client_id,updated_at,deleted,deleted_at,deleted_by,data');
     }, 'client_id', null);
     if (!rs) return { ok: false, data: null };
     return { ok: true, data: rs.map(hrStudentRec).filter(function (r) { return !!r; }) };
@@ -719,8 +720,7 @@ function hrMergeAbsences(loc, rem, base) {
     if (!w || String(w.id) === String(a.id)) return a;
     var d = {};
     Object.keys(a).forEach(function (kk) { d[kk] = a[kk]; });
-    d.deleted = true; d.updated_at = hrRecTs(w);
-    return d;
+    return tombKill(d, hrRecTs(w));
   });
 }
 

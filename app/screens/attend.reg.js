@@ -1,6 +1,6 @@
 // app/screens/attend.reg.js — סדרים — מודול הנוכחות ורישום הסימונים
 import { dayNoon, dayToday, readNum } from '../../core/util.js';
-import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_SESSION_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,
@@ -377,7 +377,7 @@ function atCancelStudentStatusFromReg(sid) {
   var s=students.find(function(x){return String(x.client_id)===String(sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) tombKill(a); });
   s.present=true;
   s.updated_at=Date.now();
   saveStudents(students);

@@ -1,13 +1,12 @@
 // app/screens/sleep.arc.js — שינה — הארכיון והייצוא
 import { MSG_DELETE, dayToday } from '../../core/util.js';
-import { idEq } from '../../core/sync.js';
+import { idEq, tombKill } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { hebDayLabel } from '../../core/hebrew.js';
 import { MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_EXPORT_FAIL, MSG_EXPORT_OK,
          MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA,
          MSG_ROW_DELETED } from '../constants.js';
-import { HE, atvCls, getStudents, hrMarks, hrPdfFont, hrSortStudents,
-         hrWho } from '../domain.js';
+import { HE, atvCls, getStudents, hrMarks, hrPdfFont, hrSortStudents } from '../domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from '../domain.hebdate.js';
 import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
@@ -145,7 +144,7 @@ function hrDeleteSession(id) {
 async function hrDeleteSessionConfirmed(id) {
   var data=await hrLoadData();
   var _dRec=data.find(function(r){return idEq(r.client_id,id);});
-  if(_dRec){_dRec.deleted=true;_dRec.updated_at=Date.now();_dRec.deleted_by=hrWho();}
+  if(_dRec) tombKill(_dRec);
   await hrSaveData(data);
   hrRenderArchive();
   hrRenderTodaySessions();
