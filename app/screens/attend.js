@@ -36,7 +36,7 @@ async function _atPullSessions(win) {
   if (!Array.isArray(v)) return false;
   var loc = _hrDiskArr('hr_sessions');
   var out = loc ? _hrSessionsMerge(v, loc, 'hr_sessions') : v;
-  S._atData = out; _hrAtDiskSave(out);
+  S._atData = out; _hrAtDiskSave(out, true);
   return true;
 }
 

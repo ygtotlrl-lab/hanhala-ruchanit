@@ -33,7 +33,7 @@ async function _hrPullSessions(win) {
   if (!Array.isArray(v)) return false;
   var loc = hrMirrorRecs('hr_sleep_sessions');
   var out = loc ? _hrSessionsMerge(v, loc, 'hr_sleep_sessions') : v;
-  S._hrData = out; _hrSlDiskSave(out);
+  S._hrData = out; _hrSlDiskSave(out, true);
   return true;
 }
 

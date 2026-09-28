@@ -19,8 +19,8 @@ import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_RE
 import { AUTH, S, shell } from './state.js';
 import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
          _hrVerify, _hrVerifyRows, canAccess, hrCloudGet, hrHwInWindow, hrLocalRecs,
-         hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushDirty, hrPushToCloud,
-         hrSendRecs, hrSetDirtyRows, hrSetSend, hrSyncNow, hrWriteFail,
+         hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
+         hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
 import { _hcBase, _hcFmt, _hcG, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { atRenderTodaySessions } from './screens/attend.js';
@@ -219,15 +219,15 @@ var PUSH_CFG = {
   chunk:  500,
   delay:  400,
   // ctx הוא המערך שהכותב כבר מחזיק, ובלעדיו העותק שבמראה — מחזור בלי קלט הוא «אין ראיה», וההגדרות היו נשארות ממתינות.
-  dirty:  function (t, ctx) {
+  rows:   function (t, ctx) {
     S._hrPushEp = ctxEpoch();
-    if (t === KV_TABLE) return hrSetDirtyRows();
-    return hrPushDirty(t, Array.isArray(ctx) ? ctx : hrLocalRecs(t));
+    if (t === KV_TABLE) return hrSetRows();
+    return Array.isArray(ctx) ? ctx : hrLocalRecs(t);
   },
   key:    function (t, row) {
     if (t === KV_TABLE) return row ? PK_SET + row.key : null;
-    var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
-    return (c && row && row.client_id != null) ? (c.pk + row.client_id) : null;
+    var pk = PEND_KV_PREFIX[t];
+    return (pk && row && row.client_id != null) ? (pk + row.client_id) : null;
   },
   send:   function (t, rows) { return t === KV_TABLE ? hrSetSend(rows) : hrSendRecs(t, rows); },
   // הסימונים נדחפים בתוך הסדר ו-hrSendRecs נכשלת אם אחד מהם נכשל — לכן עֵד האב הוא גם עֵד הבן.

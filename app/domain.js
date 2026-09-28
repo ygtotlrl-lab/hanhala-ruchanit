@@ -2,7 +2,7 @@
 import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { TOMBSTONE_TTL_MS, _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore,
-         pendAll, pendConfirmPush, pendHas, pendMark, plTouch, pushDirty, schedulePush,
+         pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
 import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
@@ -272,15 +272,34 @@ function _hrSplitRecs(t, recs, tomb) {
 }
 
 // רק הכתיבה הזו מסמנת מחיקות — סימון שנעלם מהקלט נמחק, ופינוי אינו מחיקה.
-function hrMirrorPutRecs(t, recs) {
+// כתיבת משתמש מסמנת ⏳ כל רשומה שהשתנתה מול המראה, או שסימון שלה השתנה; כתיבה שמקורה במיזוג — fromMerge — אינה מסמנת.
+function hrMirrorPutRecs(t, recs, fromMerge) {
   var st = HR_MIRROR_STREAMS[t];
   if (!st) return false;
   var r = _hrSplitRecs(t, recs, true);
+  if (!fromMerge) _hrMarkChanged(t, r);
   MIRROR[t] = r.sRows;
   if (!st.child) return mirrorSave(t);
   MIRROR[st.child] = r.mRows;
   var a = mirrorSave(t), b = mirrorSave(st.child);
   return a && b;
+}
+
+function _hrRowMap(rows) {
+  var m = {};
+  (Array.isArray(rows) ? rows : []).forEach(function (r) { if (r && r.client_id != null) m[String(r.client_id)] = JSON.stringify(r); });
+  return m;
+}
+function _hrMarkChanged(t, r) {
+  var pk = PEND_KV_PREFIX[t], st = HR_MIRROR_STREAMS[t];
+  if (!pk) return;
+  var ps = _hrRowMap(MIRROR[t]), keys = {};
+  r.sRows.forEach(function (s) { if (ps[String(s.client_id)] !== JSON.stringify(s)) keys[pk + s.client_id] = 1; });
+  if (st.child && r.mRows) {
+    var pm = _hrRowMap(MIRROR[st.child]);
+    r.mRows.forEach(function (m) { if (pm[String(m.client_id)] !== JSON.stringify(m)) keys[pk + m.session_client_id] = 1; });
+  }
+  pendMarkMany(Object.keys(keys));
 }
 
 // אינה מסמנת מחיקה — סדר שפונה מהדיסק אינו סדר שנמחק.
@@ -325,17 +344,17 @@ function hrMarkTombs(t, sid) {
 }
 
 // משפך כתיבה אחד לדיסק — אתר כתיבה נפרד יכול לעקוף את שער החלון החם ולהחזיר לדיסק את מה שהפינוי הוציא.
-function _hrAtDiskSave(rows) {
-  return hrMirrorPutRecs('hr_sessions', rows);
+function _hrAtDiskSave(rows, fromMerge) {
+  return hrMirrorPutRecs('hr_sessions', rows, fromMerge);
 }
 
-function _hrSlDiskSave(rows) {
-  return hrMirrorPutRecs('hr_sleep_sessions', rows);
+function _hrSlDiskSave(rows, fromMerge) {
+  return hrMirrorPutRecs('hr_sleep_sessions', rows, fromMerge);
 }
 
 // הרשומה נכתבת כשורה עם data, והקריאה מרכיבה אותה בחזרה.
-function _hrStDiskSave(rows) {
-  return hrMirrorPutRecs('hr_students_rows', rows);
+function _hrStDiskSave(rows, fromMerge) {
+  return hrMirrorPutRecs('hr_students_rows', rows, fromMerge);
 }
 
 // ── חיבור האפליקציה למודול הממתינים ──
@@ -370,14 +389,12 @@ async function hrCfgSet(key, value) {
   return {};
 }
 
-function hrSetDirtyRows() {
-  var out = [];
-  Object.keys(pendAll()).forEach(function (pk) {
-    if (pk.indexOf(PK_SET) !== 0) return;
-    var k = pk.slice(PK_SET.length);
-    out.push({ key: k, value: JSON.stringify(hrSetLocal(k)), updated_at: Date.now() });
+// כל מפתח שנכתב מקומית — שורות ההגדרות והטיפולים השטוחים; הסינון לממתין בשכבת הדחיפה.
+function hrSetRows() {
+  var keys = uniqList(_hrCfgRows().map(function (r) { return String(r.key); }).concat(Object.keys(HR_SET_FLAT)));
+  return keys.map(function (k) {
+    return { key: k, value: JSON.stringify(hrSetLocal(k)), updated_at: Date.now() };
   });
-  return out;
 }
 
 function hrSetSend(rows) {
@@ -407,24 +424,6 @@ function _hrSessionsMerge(cloudArr, localArr, logKey) {
   // מפתח שאין לו שכבת שורות (הטיפולים) ממוזג ברמת הרשומה.
   var pair = HR_MIRROR_STREAMS[logKey] ? hrSessionPairFor(logKey) : null;
   return mergeCore(localArr, cloudArr, { isPending: hrPendingFor(logKey || 'sessions'), mergePair: pair });
-}
-
-// null פירושו «טרם נמשכה» — ובספק דוחפים: שורה שלא נדחפה חסרה בשקט, ודחיפה מיותרת עולה רק בתעבורה.
-// מפה נפרדת לכל מסלול — מזהי סדר של נוכחות ושל שינה חיים במרחבים נפרדים.
-var _hrRowsRemote = { attend: null, sleep: null };
-
-// אינה קריאת נתונים — אינה מזינה מסך ולא מיזוג, רק קובעת מה כבר בענן.
-async function hrRowsRemoteLoad(kind) {
-  kind = kind || 'attend';
-  if (_hrRowsRemote[kind]) return _hrRowsRemote[kind];
-  try {
-    var res = await withTimeout(S.SB.from(HR_ROWS_KINDS[kind].parent).select('client_id,updated_at'));
-    if (!res || res.error || !Array.isArray(res.data)) return null;
-    var map = {};
-    res.data.forEach(function (r) { if (r) map[String(r.client_id)] = Number(r.updated_at) || 0; });
-    _hrRowsRemote[kind] = map;
-    return map;
-  } catch (e) { return null; }
 }
 
 function hrSessionRow(rec) {
@@ -523,26 +522,6 @@ async function hrRowsUpsert(table, rows) {
   return true;
 }
 
-// רשומה ממתינה נחשבת תמיד «לדחיפה» — אחרת היא נשארת מסומנת לנצח. המצבה נדחפת בשלמותה, בלי מפת חותמות.
-// null הוא «אין ראיה» ולא «אין מה לדחוף» — ואז אין לסמן את עֵד הפינוי.
-async function hrPushDirty(key, arr) {
-  if (!Array.isArray(arr)) return null;
-  var kind = HR_ROWS_READ_KEYS[key];
-  if (!kind) return null;
-  if (kind === 'students') return arr;
-  var cfg = HR_ROWS_KINDS[kind];
-  if (!cfg) return null;
-  var map = await hrRowsRemoteLoad(kind);
-  var dirty = [];
-  arr.forEach(function (rec) {
-    if (!rec || rec.client_id == null) return;
-    var ts = Math.round(hrRecTs(rec));
-    var known = map ? map[String(rec.client_id)] : undefined;
-    if (map === null || known === undefined || ts > known || pendHas(cfg.pk + rec.client_id)) dirty.push(rec);
-  });
-  return dirty;
-}
-
 // האב נכתב לפני הבן. אין מפתח זר פיזי — רשומות מגיעות ממכשירים אופליין בסדר לא ידוע, ו-FK היה דוחה סימון שהקדים את אביו.
 async function hrSendRecs(key, recs) {
   var kind = HR_ROWS_READ_KEYS[key];
@@ -562,8 +541,6 @@ async function hrSendRecs(key, recs) {
   if (!sRows.length) return {};
   if (!(await hrRowsUpsert(cfg.parent, sRows))) return { error: { message: cfg.parent } };
   if (!(await hrRowsUpsert(cfg.child, mRows)))  return { error: { message: cfg.child } };
-  if (!_hrRowsRemote[kind]) _hrRowsRemote[kind] = {};
-  sRows.forEach(function (r) { _hrRowsRemote[kind][r.client_id] = r.updated_at; });
   return {};
 }
 
@@ -768,7 +745,7 @@ function hrStudentPair(loc, rem, k, pend) {
 
 function _hrStudentsRaw() { return hrMirrorRecs('hr_students_rows') || []; }
 
-function _hrStudentsSaveRaw(s) { _hrStDiskSave(s); }
+function _hrStudentsSaveRaw(s, fromMerge) { _hrStDiskSave(s, fromMerge); }
 
 // המצבה ממוזגת מול הענן לפני שהיא נדחפת; כל השאר נדחף מהעותק המקומי בשכבת הדחיפה.
 async function hrPushToCloud() {
@@ -781,7 +758,7 @@ async function hrPushToCloud() {
     var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
     if (ctxStale(_ep)) return;
     _hrStudentsSaveRaw(mergeCore(localSt, remoteSt, { isPending: hrPendingFor('hr_students_rows'),
-                                                      mergePair: hrStudentPair }));
+                                                      mergePair: hrStudentPair }), true);
   } catch (e) { hrWriteFail('hrPushToCloud', e); }
   var r = await pushDirty(null);
   if (ctxStale(_ep)) return;
@@ -799,14 +776,14 @@ async function hrPullFromCloud() {
     if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
       var mergedS = mergeCore(_hrStudentsRaw(), s, { isPending: hrPendingFor('hr_students_rows') });
-      _hrStudentsSaveRaw(mergedS);
+      _hrStudentsSaveRaw(mergedS, true);
     }
     var atSess = await hrCloudGet('hr_sessions');
     if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
       var _atLocal = hrMirrorRecs('hr_sessions') || [];
       var _atMerge = _hrSessionsMerge(atSess, _atLocal, 'hr_sessions');
-      _hrAtDiskSave(_atMerge);
+      _hrAtDiskSave(_atMerge, true);
       S._atData = _atMerge;
     }
     var hrSess = await hrCloudGet('hr_sleep_sessions');
@@ -814,7 +791,7 @@ async function hrPullFromCloud() {
     if (hrSess && Array.isArray(hrSess)) {
       var _hrLocal2 = hrMirrorRecs('hr_sleep_sessions') || [];
       var _hrMerge = _hrSessionsMerge(hrSess, _hrLocal2, 'hr_sleep_sessions');
-      _hrSlDiskSave(_hrMerge);
+      _hrSlDiskSave(_hrMerge, true);
       S._hrData = _hrMerge;
     }
     // הגדרה שממתינה לסנכרון אינה נדרסת — הערך המקומי טרם עלה.
@@ -957,7 +934,7 @@ export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMa
          getAbsenceReasons, getActiveAbsences, getStudents, hrAbsValueKey, hrApplyPerms,
          hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
          hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs,
-         hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushDirty, hrPushToCloud,
-         hrSendRecs, hrSetDirtyRows, hrSetPending, hrSetSend, hrSortStudents,
+         hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushToCloud,
+         hrSendRecs, hrSetPending, hrSetRows, hrSetSend, hrSortStudents,
          hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged,
          hrWriteFail, modalOpen, saveStudents, sortUsersByOrder, tyCls, uiShown };

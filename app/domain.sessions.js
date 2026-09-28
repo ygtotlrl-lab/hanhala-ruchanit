@@ -117,7 +117,7 @@ async function atSaveData(data) {
     if (Array.isArray(_atRemote)) {
       data=_hrSessionsMerge(_atRemote, data, 'hr_sessions');
       S._atData=data;
-      _hrAtDiskSave(data);
+      _hrAtDiskSave(data, true);
     }
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב
     var _rAt=await pushTable('hr_sessions',data);
@@ -151,7 +151,7 @@ async function hrSaveData(data) {
     if (Array.isArray(_hrRemote)) {
       data=_hrSessionsMerge(_hrRemote, data, 'hr_sleep_sessions');
       S._hrData=data;
-      _hrSlDiskSave(data);
+      _hrSlDiskSave(data, true);
     }
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב
     var _rSl=await pushTable('hr_sleep_sessions',data);
