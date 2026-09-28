@@ -1,13 +1,14 @@
 // app/screens/attend.reg.js — סדרים — מודול הנוכחות ורישום הסימונים
 import { dayNoon, dayToday, readNum } from '../../core/util.js';
-import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
+import { sessUserId } from '../../core/auth.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_SESSION_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,
          MSG_SESSION_OPEN_TODAY, MSG_STATUS_REVERTED, PK_AT_SESS } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrAtDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks,
-         hrSortStudents, hrWho, modalOpen, saveStudents, tyCls } from '../domain.js';
+         hrSortStudents, modalOpen, saveStudents, tyCls } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, atSaveData,
          hrCachedArr } from '../domain.sessions.js';
@@ -273,12 +274,11 @@ async function atOpenSession(sessId, sessName) {
     client_id:newClientId(),
     session:sessName,
     session_date:dateIso,
-    filled_by_client_id:AUTH.user?AUTH.user.client_id:'',
+    created_by_client_id:sessUserId(),
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
     updated_at:Date.now(),
-    created_by:hrWho(),
     open:true
   };
 
@@ -362,7 +362,7 @@ function atShowOverrideDialog(sid, student) {
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
-  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
     reasonHtml+
@@ -377,7 +377,7 @@ function atCancelStudentStatusFromReg(sid) {
   var s=students.find(function(x){return String(x.client_id)===String(sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) { tombKill(a); a.deleted_by_client_id=sessUserId(); } });
   s.present=true;
   s.updated_at=Date.now();
   saveStudents(students);

@@ -12,15 +12,15 @@ import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
          comboPick, esc, ksKey, modalBackdrop, modalEsc, openModal, swApply, swHideUpdate,
          toast } from '../core/ui.js';
 import { hebDayLabel } from '../core/hebrew.js';
-import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
          _hrVerify, _hrVerifyRows, canAccess, hrCloudGet, hrHwInWindow, hrLocalRecs,
-         hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushDirty, hrPushToCloud,
-         hrSendRecs, hrSetDirtyRows, hrSetSend, hrSyncNow, hrWriteFail,
+         hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
+         hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
 import { _hcBase, _hcFmt, _hcG, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { atRenderTodaySessions } from './screens/attend.js';
@@ -78,9 +78,7 @@ appConfigure({
 var MIRROR_CFG = {
   prefix: self.APP.prefix + 'mirror_',
   tables: function () { return HR_MIRROR_TABLES; },
-  noPush: [{ t: 'hr_marks',       via: 'hrSendRecs', adds: 'parent' },
-           { t: 'hr_sleep_marks', via: 'hrSendRecs', adds: 'parent' },
-           { t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
+  noPush: [{ t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
   ts:     function (r) { return hrRecTs(r); },
   clean:  function (t, rows) { return t === authUsersTable() ? usersSanitize(rows) : rows; },
@@ -214,30 +212,34 @@ var PL_CFG = {
   table:  function () { return KV_TABLE; },
 };
 
+// טבלאות הבן — שורת סימון נדחפת כפי שהיא במראה, בחותמת משלה.
+var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1 };
+
 var PUSH_CFG = {
   tables: PUSH_TABLES,
   chunk:  500,
   delay:  400,
   // ctx הוא המערך שהכותב כבר מחזיק, ובלעדיו העותק שבמראה — מחזור בלי קלט הוא «אין ראיה», וההגדרות היו נשארות ממתינות.
-  dirty:  function (t, ctx) {
+  rows:   function (t, ctx) {
     S._hrPushEp = ctxEpoch();
-    if (t === KV_TABLE) return hrSetDirtyRows();
-    return hrPushDirty(t, Array.isArray(ctx) ? ctx : hrLocalRecs(t));
+    if (t === KV_TABLE) return hrSetRows();
+    if (HR_MARK_TABLES[t]) return MIRROR[t] || [];
+    return Array.isArray(ctx) ? ctx : hrLocalRecs(t);
   },
   key:    function (t, row) {
     if (t === KV_TABLE) return row ? PK_SET + row.key : null;
-    var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
-    return (c && row && row.client_id != null) ? (c.pk + row.client_id) : null;
+    var pk = PEND_KV_PREFIX[t];
+    return (pk && row && row.client_id != null) ? (pk + row.client_id) : null;
   },
-  send:   function (t, rows) { return t === KV_TABLE ? hrSetSend(rows) : hrSendRecs(t, rows); },
-  // הסימונים נדחפים בתוך הסדר ו-hrSendRecs נכשלת אם אחד מהם נכשל — לכן עֵד האב הוא גם עֵד הבן.
+  send:   function (t, rows) {
+    if (t === KV_TABLE) return hrSetSend(rows);
+    return HR_MARK_TABLES[t] ? hrSendMarks(t, rows) : hrSendRecs(t, rows);
+  },
   mark:   function (t) {
     if (ctxStale(S._hrPushEp)) return;
     // הטיפולים יושבים בטבלת ההגדרות — ועֵד הפינוי שלהם הוא עֵדה.
     if (t === KV_TABLE) { Object.keys(HR_SET_FLAT).forEach(function (k) { _hrMarkPushed(HR_SET_FLAT[k]); }); return; }
     _hrMarkPushed(t);
-    var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
-    if (c && c.child) _hrMarkPushed(c.child);
   },
   run:    function () { hrPushToCloud(); },
 };

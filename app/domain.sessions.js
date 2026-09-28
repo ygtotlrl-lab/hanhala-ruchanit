@@ -4,11 +4,11 @@ import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany,
          pushTable } from '../core/sync.js';
 import { lsGet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
-import { PK_AT_SESS, PK_SL_SESS } from './constants.js';
+import { PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
-import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSessionsMerge, _hrSlDiskSave,
-         getActiveAbsences, getStudents, hrCloudGet, hrCount, hrMarks, hrMirrorRecs,
-         hrSyncLog, hrTouchLastChanged, hrWriteFail } from './domain.js';
+import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSlDiskSave, getActiveAbsences, getStudents,
+         hrCount, hrLocalOfAt, hrMarks, hrMirrorRecs, hrSessionsPull, hrSyncLog,
+         hrTouchLastChanged, hrWriteFail } from './domain.js';
 
 // קריאה סינכרונית, מהזיכרון או מהדיסק — הציור הראשון אינו ממתין לרשת
 function hrCachedArr(memKey, lsKey) {
@@ -74,18 +74,19 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
     if(t==='suspended'||t==='left') return 'ak';
     if(t==='approved'){
       if(!sessDateIso) return 'ap';
-      var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
-      var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
+      var fromL=hrLocalOfAt(aa[i].from_at), toL=hrLocalOfAt(aa[i].to_at);
+      var fromDate=fromL?fromL.split('T')[0]:'';
+      var toDate=toL?toL.split('T')[0]:'';
       if(fromDate&&sessDateIso<fromDate) continue;
       if(toDate&&sessDateIso>toDate) continue;
       // ביום הגבול נבדקת גם השעה — אחרת מסומנים סדרים שלפני תחילת האישור או אחרי סיומו
       if(sessStartTime){
         if(fromDate&&sessDateIso===fromDate){
-          var fromTime=aa[i].from&&aa[i].from.indexOf('T')>=0?aa[i].from.split('T')[1].substr(0,5):'00:00';
+          var fromTime=fromL?fromL.split('T')[1]:'00:00';
           if(sessStartTime<fromTime) continue;
         }
         if(toDate&&sessDateIso===toDate){
-          var toTime=aa[i].to&&aa[i].to.indexOf('T')>=0?aa[i].to.split('T')[1].substr(0,5):'23:59';
+          var toTime=toL?toL.split('T')[1]:'23:59';
           if(sessStartTime>toTime) continue;
         }
       }
@@ -97,7 +98,7 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
 
 async function atLoadData() {
   if (S._atData) return S._atData;
-  try { var v=await hrCloudGet('hr_sessions'); if(Array.isArray(v)){S._atData=v;return v;} } catch(e){}
+  var v=await hrSessionsPull('hr_sessions'); if(Array.isArray(v)){S._atData=v;return v;}
   var _atDisk=hrMirrorRecs('hr_sessions');
   if(Array.isArray(_atDisk)){S._atData=_atDisk;return S._atData;}
   S._atData=[]; return S._atData;
@@ -111,26 +112,25 @@ async function atSaveData(data) {
   S._atData=data;
   _hrAtDiskSave(data);
   try {
-    // מיזוג עם הענן לפני הכתיבה — אחרת נדרסות רשומות של מכשיר אחר
+    // מיזוג עם הענן לפני הדחיפה — אחרת נדרסות רשומות של מכשיר אחר
     var _atLocalN=hrCount(data);
-    var _atRemote=null; try { _atRemote=await hrCloudGet('hr_sessions'); } catch(eR){}
-    if (Array.isArray(_atRemote)) {
-      data=_hrSessionsMerge(_atRemote, data, 'hr_sessions');
-      S._atData=data;
-      _hrAtDiskSave(data);
-    }
-    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב
-    var _rAt=await pushTable('hr_sessions',data);
+    var _atMerged=await hrSessionsPull('hr_sessions');
+    if (ctxStale(_ep)) return;
+    if (Array.isArray(_atMerged)) { data=_atMerged; S._atData=data; }
+    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
+    var _rAt=await pushTable('hr_sessions');
+    var _rAm=await pushTable('hr_marks');
     // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את _hrPushedAt
     if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
-    hrSyncLog('push','hr_sessions',hrCount(data),{local_count:_atLocalN,remote_count:hrCount(_atRemote),result_count:hrCount(data)});
+    if(_rAm&&_rAm.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_MARK,_t0);
+    hrSyncLog('push','hr_sessions',hrCount(data),{local_count:_atLocalN,result_count:hrCount(data)});
     await hrTouchLastChanged();
   } catch (e) { hrWriteFail('atSaveData', e); }
 }
 
 async function hrLoadData() {
   if (S._hrData) return S._hrData;
-  try { var v=await hrCloudGet('hr_sleep_sessions'); if(Array.isArray(v)){S._hrData=v;return v;} } catch(e){}
+  var v=await hrSessionsPull('hr_sleep_sessions'); if(Array.isArray(v)){S._hrData=v;return v;}
   var _hrDisk=hrMirrorRecs('hr_sleep_sessions');
   if(Array.isArray(_hrDisk)){S._hrData=_hrDisk;return S._hrData;}
   S._hrData=[]; return S._hrData;
@@ -145,18 +145,17 @@ async function hrSaveData(data) {
   S._hrData=data;
   _hrSlDiskSave(data);
   try {
-    // מיזוג עם הענן לפני הכתיבה — אחרת נדרסות רשומות של מכשיר אחר
+    // מיזוג עם הענן לפני הדחיפה — אחרת נדרסות רשומות של מכשיר אחר
     var _hrLocalN=hrCount(data);
-    var _hrRemote=null; try { _hrRemote=await hrCloudGet('hr_sleep_sessions'); } catch(eR){}
-    if (Array.isArray(_hrRemote)) {
-      data=_hrSessionsMerge(_hrRemote, data, 'hr_sleep_sessions');
-      S._hrData=data;
-      _hrSlDiskSave(data);
-    }
-    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב
-    var _rSl=await pushTable('hr_sleep_sessions',data);
+    var _hrMerged=await hrSessionsPull('hr_sleep_sessions');
+    if (ctxStale(_ep)) return;
+    if (Array.isArray(_hrMerged)) { data=_hrMerged; S._hrData=data; }
+    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
+    var _rSl=await pushTable('hr_sleep_sessions');
+    var _rSm=await pushTable('hr_sleep_marks');
     if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
-    hrSyncLog('push','hr_sleep_sessions',hrCount(data),{local_count:_hrLocalN,remote_count:hrCount(_hrRemote),result_count:hrCount(data)});
+    if(_rSm&&_rSm.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_MARK,_t0);
+    hrSyncLog('push','hr_sleep_sessions',hrCount(data),{local_count:_hrLocalN,result_count:hrCount(data)});
     await hrTouchLastChanged();
   } catch (e) { hrWriteFail('hrSaveData', e); }
 }

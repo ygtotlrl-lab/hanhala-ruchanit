@@ -5,9 +5,9 @@ import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc } from '../../core/ui.js';
 import { PK_SL_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, _hrCleanCfg, hrRecTs, _hrSessionsMerge, _hrSlDiskSave, atvCls, hrCfgGet,
-         hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrDefaultCfg, hrMarks,
-         hrMirrorRecs, hrSetPending, hrWriteFail } from '../domain.js';
+import { HE, _hrCleanCfg, atvCls, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
+         hrDefaultCfg, hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
+         hrWriteFail } from '../domain.js';
 import { _hcH } from '../domain.hebdate.js';
 import { hrCachedArr, hrGetLogicalDate } from '../domain.sessions.js';
 
@@ -29,11 +29,9 @@ function hrSummaryHtml(cnts){
 }
 
 async function _hrPullSessions(win) {
-  var v = null; try { v = await hrCloudGet('hr_sleep_sessions', win); } catch (e) {}
-  if (!Array.isArray(v)) return false;
-  var loc = hrMirrorRecs('hr_sleep_sessions');
-  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sleep_sessions') : v;
-  S._hrData = out; _hrSlDiskSave(out);
+  var out = await hrSessionsPull('hr_sleep_sessions', win);
+  if (!Array.isArray(out)) return false;
+  S._hrData = out;
   return true;
 }
 
@@ -92,7 +90,7 @@ async function hrSaveTreats(data) {
     // מיזוג ברמת רשומה ולא דריסה — דריסה מוחקת טיפול שנרשם במכשיר אחר
     var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
-      data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
+      data=hrTreatsMerge(_tRemoteS, data, 'hr_sleep_treats');
       lsSetArray('hr_sleep_treats', data, hrRecTs);
     }
     if (!ctxStale(_ep)) await hrCfgSet('sleep_treats',data);

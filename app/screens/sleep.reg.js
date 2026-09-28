@@ -1,14 +1,14 @@
 // app/screens/sleep.reg.js — שינה — המודול ורישום הסימונים
 import { dayNoon, readNum } from '../../core/util.js';
-import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
+import { sessUserId } from '../../core/auth.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
          MSG_STATUS_REVERTED, PK_SL_SESS } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrSlDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrDefaultCfg,
-         hrMarks, hrSortStudents, hrWho, modalOpen, saveStudents,
-         tyCls } from '../domain.js';
+         hrLocalOfAt, hrMarks, hrSortStudents, modalOpen, saveStudents, tyCls } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
          hrGetLogicalDate, hrSaveData } from '../domain.sessions.js';
@@ -168,17 +168,18 @@ function hrAutoMark(student, sessDateIso, sessStartTime) {
     if(t==='suspended'||t==='left') return 'ak';
     if(t==='approved'){
       if(!sessDateIso) return 'ap';
-      var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
-      var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
+      var fromL=hrLocalOfAt(aa[i].from_at), toL=hrLocalOfAt(aa[i].to_at);
+      var fromDate=fromL?fromL.split('T')[0]:'';
+      var toDate=toL?toL.split('T')[0]:'';
       if(fromDate&&sessDateIso<fromDate) continue;
       if(toDate&&sessDateIso>toDate) continue;
       if(sessStartTime){
         if(fromDate&&sessDateIso===fromDate){
-          var fromTime=aa[i].from&&aa[i].from.indexOf('T')>=0?aa[i].from.split('T')[1].substr(0,5):'00:00';
+          var fromTime=fromL?fromL.split('T')[1]:'00:00';
           if(sessStartTime<fromTime) continue;
         }
         if(toDate&&sessDateIso===toDate){
-          var toTime=aa[i].to&&aa[i].to.indexOf('T')>=0?aa[i].to.split('T')[1].substr(0,5):'23:59';
+          var toTime=toL?toL.split('T')[1]:'23:59';
           if(sessStartTime>toTime) continue;
         }
       }
@@ -281,12 +282,11 @@ async function hrOpenSession(sessId, sessName) {
     client_id:newClientId(),
     session:sessName,
     session_date:dateIso,
-    filled_by_client_id:AUTH.user?AUTH.user.client_id:'',
+    created_by_client_id:sessUserId(),
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
     updated_at:Date.now(),
-    created_by:hrWho(),
     open:true
   };
 
@@ -370,7 +370,7 @@ function hrShowOverrideDialog(sid, student) {
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
-  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
     reasonHtml+datesHtml+
@@ -385,7 +385,7 @@ function hrCancelStudentStatusFromReg(sid) {
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ if(!a.deleted) { tombKill(a); a.deleted_by_client_id=sessUserId(); } });
   s.present=true;
   s.updated_at=Date.now();
   saveStudents(students);

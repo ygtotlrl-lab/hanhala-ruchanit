@@ -75,7 +75,7 @@ function _hcYL(hy){return hebYearLabelFull(hy)||String(hy);}
 function _hcFmt(hy,mi,day){return hebDayLabel(day)+' ב'+(_hcMN(hy)[mi]||'')+' '+_hcYL(hy);}
 
 // שדה ריק מחזיר null ולא new Date() — אחרת «בלי תאריך סיום» הופך ל«מסתיים עכשיו» והסטטוס פג מיד.
-// כל צרכני a.to מפרשים null כ«ללא תאריך סיום».
+// כל צרכני a.to_at מפרשים null כ«ללא תאריך סיום».
 function _hcGet(pfx){
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
   if(!iso) return null;

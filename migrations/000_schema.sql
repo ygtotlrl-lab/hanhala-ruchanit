@@ -86,9 +86,9 @@ AS $function$
     'ANCHOR:sl_settings', 'DIFF:sl_settings',
     'ANCHOR:sl_lists', 'DIFF:sl_lists',
     'ANCHOR:rishon_ya_entries_rows', 'DIFF:rishon_ya_entries_rows',
-    'rishon_ya_cats', 'rishon_ya_subs', 'rishon_ya_subs_meta',
+    'rishon_ya_cats',
     'ANCHOR:ramataviv_ya_entries_rows', 'DIFF:ramataviv_ya_entries_rows',
-    'ramataviv_ya_cats', 'ramataviv_ya_subs', 'ramataviv_ya_subs_meta'
+    'ramataviv_ya_cats'
   ]::text[];
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
@@ -219,10 +219,9 @@ create table if not exists public.hr_sessions (
   client_id text not null,
   session text not null,
   session_date date not null,
-  filled_by_client_id text,
+  created_by_client_id text,
   filled_by_name text,
   created_at timestamp with time zone,
-  created_by text,
   deleted_by text,
   open boolean,
   deleted boolean not null default false,
@@ -262,10 +261,9 @@ create table if not exists public.hr_sleep_sessions (
   client_id text not null,
   session text not null,
   session_date date not null,
-  filled_by_client_id text,
+  created_by_client_id text,
   filled_by_name text,
   created_at timestamp with time zone,
-  created_by text,
   deleted_by text,
   open boolean,
   deleted boolean not null default false,
