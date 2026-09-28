@@ -687,11 +687,6 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('keydown', function (e) {
   if (ksKey(e)) return;
   modalEsc(e);
-  // Enter בשדה הדקות מאשר את האיחור — השדה אינו בהיקף ksave ואין לו כפתור שמירה.
-  if (e.key !== 'Enter' || !e.target || !e.target.dataset || !e.target.dataset.kent) return;
-  e.preventDefault();
-  if (e.target.dataset.kent === 'at-late') atConfirmLate(e.target.dataset.id);
-  else if (e.target.dataset.kent === 'sl-late') hrConfirmLate(e.target.dataset.id);
 });
 
 document.addEventListener('input', function (e) {
