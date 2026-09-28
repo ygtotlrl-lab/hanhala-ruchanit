@@ -557,7 +557,7 @@ var DOM_ACTIONS = {
   'deact-st-confirm': function () {
                    var v = document.getElementById('deact-st-sel').value;
                    if (!v) { toast(MSG_PICK_STUDENT, null, 'bad'); return; }
-                   setStudentInactive(parseInt(v));
+                   setStudentInactive(v);
                    closeModal();
                  },
   'year-transition-confirm': function () { doYearTransition(); closeModal(); },
