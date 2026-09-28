@@ -16,7 +16,7 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
-         getStudents, hrAbsValueKey, hrCloudGet, hrPdfFont, hrSortStudents,
+         getStudents, hrCloudGet, hrPdfFont, hrSortStudents,
          modalOpen, saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
 import { hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -111,13 +111,14 @@ function saveStudentStatus(type) {
   if (!s) return;
 
   if (!Array.isArray(s.absences)) s.absences = [];
-  // חותמת לפריט — בלעדיה מיזוג פר-פריט אינו מכריע, ומיזוג ברמת הרשומה מחליף את המערך כולו.
-  var nw = {id: newClientId(), type: type, reason: reason, from: from, to: to || null,
+  // המזהה נגזר מהסוג ומרגע ההתחלה — שני מכשירים שרושמים אותה היעדרות מגיעים לאותו פריט, והמיזוג במפתח id.
+  var nw = {id: type + ':' + from, type: type, reason: reason, from: from, to: to || null,
             created_by_client_id: sessUserId(), updated_at: Date.now()};
-  // ההשוואה על הערך ולא על id — המזהה נגזר מהשעון, ושתי לחיצות היו שני מזהים לאותה היעדרות.
-  if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, hrAbsValueKey)) {
+  if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, function (a) { return a.id; })) {
     toast(MSG_ABSENCE_DUP, null, 'bad'); return;
   }
+  // פריט שבוטל באותו מזהה מוחלף — שני פריטים באותו מפתח הם כפילות בתוך צד אחד.
+  s.absences = s.absences.filter(function (a) { return !(a && idEq(a.id, nw.id)); });
   s.absences.push(nw);
   s.present = false;
   s.updated_at = Date.now();

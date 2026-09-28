@@ -5,11 +5,11 @@ import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
 import { MSG_ABSENCE_ALERT, PK_AT_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, _hrAtDiskSave, hrRecTs, _hrSessionsMerge, atvCls, getStudents, hrCfgGet,
-         hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrMarks, hrSetPending,
+import { HE, atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
+         hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
-import { _hrDiskArr, hrCachedArr } from '../domain.sessions.js';
+import { hrCachedArr } from '../domain.sessions.js';
 
 var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
@@ -32,11 +32,9 @@ function atSummaryHtml(cnts){
 // השמירה לדיסק ממזגת ואינה דורסת — רשומה שנרשמה אופליין וטרם עלתה הייתה נמחקת.
 // מסלול בלי חלון מוסר null במפורש — השמטת החלון מושכת את הטבלה כולה.
 async function _atPullSessions(win) {
-  var v = null; try { v = await hrCloudGet('hr_sessions', win); } catch (e) {}
-  if (!Array.isArray(v)) return false;
-  var loc = _hrDiskArr('hr_sessions');
-  var out = loc ? _hrSessionsMerge(v, loc, 'hr_sessions') : v;
-  S._atData = out; _hrAtDiskSave(out, true);
+  var out = await hrSessionsPull('hr_sessions', win);
+  if (!Array.isArray(out)) return false;
+  S._atData = out;
   return true;
 }
 
@@ -110,7 +108,7 @@ async function atSaveTreats(data) {
     // מיזוג ברמת רשומה לפני הכתיבה — כתיבת המערך כולו מוחקת טיפול שמדריך אחר רשם במקביל
     var _tRemote=null; try { _tRemote=await hrCfgGet('attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
-      data=_hrSessionsMerge(_tRemote, data, 'hr_attend_treats');
+      data=hrTreatsMerge(_tRemote, data, 'hr_attend_treats');
       lsSetArray('hr_attend_treats', data, hrRecTs);
     }
     if (!ctxStale(_ep)) await hrCfgSet('attend_treats',data);
