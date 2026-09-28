@@ -291,6 +291,7 @@ function setStudentActive(sid){
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=true;
+  s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   renderStudents();
