@@ -1,6 +1,6 @@
 // app/screens/sleep.sup.js — שינה — השגחה, טיפולים והגדרות המודול
 import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
-import { idEq } from '../../core/sync.js';
+import { idEq, newClientId } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
@@ -8,7 +8,7 @@ import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
 import { AUTH, S, shell } from '../state.js';
 import { HE, atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
          hrSupervisionAccess, hrWho } from '../domain.js';
-import { _hcBase, _hcFmt, _hcH, _hcMN, _hcYL, hrHebMonthWin } from '../domain.hebdate.js';
+import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
 import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
          hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg,
@@ -68,27 +68,26 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   }
 
   var stats={};
-  students.forEach(function(s){stats[s.id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
+  students.forEach(function(s){stats[s.client_id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
   data.forEach(function(rec){
-    var dh=rec.date_heb;
-    if(!dh||!dh.hy){var p=(rec.date_iso||'').split('-');if(p.length===3)dh=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
+    var dh=rec.session_date?hrSessHeb(rec):null;
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
     Object.entries(hrMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
-      if(m.s==='e'||m.s==='x'){
+      if(m.status==='e'||m.status==='x'){
         stats[sid].absent++;
-        stats[sid].records.push({recId:rec.id,session:rec.session,date_iso:rec.date_iso,date_heb:dh,mark:m.s,min:m.min||0,note:m.note||''});
+        stats[sid].records.push({client_id:rec.client_id,session:rec.session,session_date:rec.session_date,mark:m.status,minutes:m.minutes||0,note:m.note||''});
       }
-      if(m.s==='l'){
-        stats[sid].lateMin+=m.min||0;
-        stats[sid].records.push({recId:rec.id,session:rec.session,date_iso:rec.date_iso,date_heb:dh,mark:m.s,min:m.min||0,note:m.note||''});
+      if(m.status==='l'){
+        stats[sid].lateMin+=m.minutes||0;
+        stats[sid].records.push({client_id:rec.client_id,session:rec.session,session_date:rec.session_date,mark:m.status,minutes:m.minutes||0,note:m.note||''});
       }
     });
   });
 
   // הרשימה נבנית מסדר התלמידים ולא מ-Object.entries — מפתח שנראה כמספר שלם ממוין מספרית לפני השאר
-  var rows=students.map(function(s){return [String(s.id), stats[s.id]];})
+  var rows=students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
     .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
@@ -102,13 +101,12 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   var html=navHtml+'<div class="status-choice-list">';
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
-    var stuTreats=treats.filter(function(t){return String(t.sid)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.date_iso||'',a.date_iso||'');})[0]:null;
+    var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.treat_date||'',a.treat_date||'');})[0]:null;
     var lastHtml='';
     if(lastTreat){
-      var ltHd=lastTreat.date_heb;
-      var ltIso=lastTreat.date_iso||'';
-      var ltDateStr=ltHd?_hcFmt(ltHd.hy,ltHd.mi,ltHd.day):ltIso;
+      var ltIso=lastTreat.treat_date||'';
+      var ltDateStr=ltIso?hrDayHebFmt(ltIso):'';
       lastHtml='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     var alert20=st.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
@@ -140,8 +138,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     if(stuTreats.length){
       html+='<div class="panel-head-sm">📋 היסטוריית טיפולים</div>';
       html+=stuTreats.slice().reverse().map(function(t){
-        var hd=t.date_heb;
-        var dl=hd?_hcFmt(hd.hy,hd.mi,hd.day):t.date_iso;
+        var dl=t.treat_date?hrDayHebFmt(t.treat_date):'';
         return '<div class="treat-row">'+
           '<span class="rec-muted">'+esc(dl)+'</span>'+
           '<span class="treat-type">'+esc(t.type)+'</span>'+
@@ -164,16 +161,15 @@ async function hrAddTreat(sid) {
   if(!typeEl) return;
   var now=new Date();
   var rec={
-    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
-    sid:sid,
-    date_iso:dayToday(),
-    date_heb:_hcH(now),
+    id:newClientId(),
+    student_client_id:sid,
+    treat_date:dayToday(),
     type:typeEl.value,
     note:noteEl?noteEl.value:'',
     by:AUTH.user?AUTH.user.client_id:'',
     by_name:AUTH.user?AUTH.user.full_name:'',
     created_at:now.toISOString(),
-    updatedAt:now.getTime() // חותמת המכשיר — מפתח ההכרעה במיזוג
+    updated_at:now.getTime() // חותמת המכשיר — מפתח ההכרעה במיזוג
   };
   var treats=await hrLoadTreats();
   treats.push(rec);
@@ -195,7 +191,7 @@ async function hrDeleteTreatConfirmed(id) {
   var ts=Date.now(), by=hrWho(), found=false;
   treats.forEach(function(t){
     if(!t||String(t.id)!==String(id)||t.deleted) return;
-    t.deleted=true; t.updatedAt=ts; t.deletedBy=by; found=true;
+    t.deleted=true; t.updated_at=ts; t.deleted_by=by; found=true;
   });
   if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); hrRenderSupervision(); return; }
   await hrSaveTreats(treats);
@@ -208,18 +204,17 @@ var HR_LBL_DET={p:'נוכח',l:'איחור',e:'חיסור',x:'אירוע',ap:'א
 
 function hrSupDetail(sid) {
   var students=getStudents();
-  var st=students.find(function(s){return String(s.id)===String(sid);});
+  var st=students.find(function(s){return String(s.client_id)===String(sid);});
   var name=st?st.name:'תלמיד';
   var records=(S._hrSupRecords&&S._hrSupRecords[sid])||[];
 
   var rowsHtml='';
   if(!records.length){rowsHtml='<div class="loading-note">אין אירועים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso)||HE.compare(a.session,b.session);}).forEach(function(r){
-      var hd=r.date_heb;
-      var hbr=hd?_hcFmt(hd.hy,hd.mi,hd.day):r.date_iso;
-      var dowStr='יום '+hrDow(r.date_iso);
-      var lbl=r.mark==='l'?('איחור — '+(r.min||0)+' ד׳'):(HR_LBL_DET[r.mark]||r.mark);
+    records.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date)||HE.compare(a.session,b.session);}).forEach(function(r){
+      var hbr=hrDayHebFmt(r.session_date);
+      var dowStr='יום '+hrDow(r.session_date);
+      var lbl=r.mark==='l'?('איחור — '+(r.minutes||0)+' ד׳'):(HR_LBL_DET[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
       var mkc=atvCls(r.mark);
       rowsHtml+='<div class="mark-hist-row">';
@@ -259,13 +254,13 @@ function hrSupEditMarkDlg(recId, sid, curMark) {
 
 async function hrEditMark(recId, sid, newCode) {
   var data=await hrLoadData();
-  var rec=data.find(function(r){return idEq(r.id,recId);});
+  var rec=data.find(function(r){return idEq(r.client_id,recId);});
   if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
-  rec.marks[sid].s=newCode;
-  if(newCode!=='l') rec.marks[sid].min=0;
-  rec.updatedAt=Date.now();
+  rec.marks[sid].status=newCode;
+  if(newCode!=='l') rec.marks[sid].minutes=0;
+  rec.updated_at=Date.now();
   // הטוסט אחרי הכתיבה לדיסק, שסינכרונית בראש hrCfgSet; ההמתנה שאחריה היא הרשת בלבד.
   // ההבטחה מוחזרת כדי שנקודת הניתוב תשחרר את הכפתור לפיה.
   var _p=hrSaveData(data);

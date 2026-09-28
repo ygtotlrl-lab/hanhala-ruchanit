@@ -154,13 +154,58 @@ select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retent
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
 select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 
+-- גריעת המצבות — הגריעה היחידה במסד, בסף של TOMBSTONE_TTL_MS; רשימת הטבלאות נקראת מהמסד בכל ריצה ואינה מוקלדת
+CREATE OR REPLACE FUNCTION public.tomb_retention_sweep(p_days integer)
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_tbl text;
+  v_n   integer;
+  v_all integer := 0;
+  v_per jsonb := '{}'::jsonb;
+begin
+  if p_days is null or p_days < 90 then
+    raise exception 'tomb_retention_sweep: סף קצר מ-90 ימים — מסרב לרוץ';
+  end if;
+  for v_tbl in
+    select c.table_name
+      from information_schema.columns c
+      join information_schema.tables t
+        on t.table_schema = c.table_schema and t.table_name = c.table_name and t.table_type = 'BASE TABLE'
+     where c.table_schema = 'public' and c.column_name in ('deleted', 'deleted_at')
+     group by c.table_name
+    having count(*) = 2
+     order by c.table_name
+  loop
+    execute format('delete from public.%I where deleted and deleted_at < now() - make_interval(days => $1)', v_tbl)
+      using p_days;
+    get diagnostics v_n = row_count;
+    if v_n > 0 then v_per := v_per || jsonb_build_object(v_tbl, v_n); end if;
+    v_all := v_all + v_n;
+  end loop;
+
+  if v_all > 0 then
+    insert into public.sh_sync_log (device_id, user_name, action, key, record_count, details)
+    values ('pg_cron', null, 'tomb_retention', null, v_all, jsonb_build_object('days', p_days, 'tables', v_per));
+  end if;
+
+  return v_all;
+end;
+$function$;
+revoke all on function public.tomb_retention_sweep(integer) from public, anon, authenticated, service_role;
+grant execute on function public.tomb_retention_sweep(integer) to service_role;
+select cron.schedule('tomb_retention_daily', '30 3 * * *', 'select public.tomb_retention_sweep(90);');
+
 -- ── הנהלה רוחנית ──
 
 create table if not exists public.hr_marks (
   client_id text not null,
   session_client_id text not null,
-  student_id text not null,
-  date_iso text not null,
+  student_client_id text not null,
+  session_date date not null,
   status text,
   minutes smallint,
   deleted boolean not null default false,
@@ -173,9 +218,8 @@ create table if not exists public.hr_marks (
 create table if not exists public.hr_sessions (
   client_id text not null,
   session text not null,
-  date_iso text not null,
-  date_heb jsonb,
-  filled_by smallint,
+  session_date date not null,
+  filled_by_client_id text,
   filled_by_name text,
   created_at text,
   created_by text,
@@ -202,8 +246,8 @@ create table if not exists public.hr_settings (
 create table if not exists public.hr_sleep_marks (
   client_id text not null,
   session_client_id text not null,
-  student_id text not null,
-  date_iso text not null,
+  student_client_id text not null,
+  session_date date not null,
   status text,
   minutes smallint,
   note text,
@@ -217,9 +261,8 @@ create table if not exists public.hr_sleep_marks (
 create table if not exists public.hr_sleep_sessions (
   client_id text not null,
   session text not null,
-  date_iso text not null,
-  date_heb jsonb,
-  filled_by smallint,
+  session_date date not null,
+  filled_by_client_id text,
   filled_by_name text,
   created_at text,
   created_by text,
@@ -233,7 +276,6 @@ create table if not exists public.hr_sleep_sessions (
 
 create table if not exists public.hr_students_rows (
   client_id text not null,
-  student_id text,
   updated_at bigint not null,
   deleted boolean not null default false,
   data jsonb not null,
@@ -257,19 +299,19 @@ create table if not exists public.hr_users (
   constraint hr_users_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'junior'::text])))
 );
 
-create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (date_iso DESC);
+create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (session_date DESC);
 create index if not exists hr_marks_session_idx ON public.hr_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_id);
-create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_id, date_iso DESC);
-create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (date_iso DESC);
-create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, date_iso DESC);
+create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (session_date DESC);
+create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sessions_updated_idx ON public.hr_sessions USING btree (updated_at DESC);
-create index if not exists hr_sleep_marks_date_idx ON public.hr_sleep_marks USING btree (date_iso DESC);
+create index if not exists hr_sleep_marks_date_idx ON public.hr_sleep_marks USING btree (session_date DESC);
 create index if not exists hr_sleep_marks_session_idx ON public.hr_sleep_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_id);
-create index if not exists hr_sleep_marks_student_date_idx ON public.hr_sleep_marks USING btree (student_id, date_iso DESC);
-create index if not exists hr_sleep_sessions_date_idx ON public.hr_sleep_sessions USING btree (date_iso DESC);
-create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep_sessions USING btree (session, date_iso DESC);
+create UNIQUE index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_sleep_marks_student_date_idx ON public.hr_sleep_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_sleep_sessions_date_idx ON public.hr_sleep_sessions USING btree (session_date DESC);
+create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sleep_sessions_updated_idx ON public.hr_sleep_sessions USING btree (updated_at DESC);
 create index if not exists hr_students_rows_updated_idx ON public.hr_students_rows USING btree (updated_at DESC);
 

@@ -107,20 +107,20 @@ function saveStudentStatus(type) {
   var sid = S._statusSid;
 
   var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, sid);});
+  var s = students.find(function(x){return idEq(x.client_id, sid);});
   if (!s) return;
 
   if (!Array.isArray(s.absences)) s.absences = [];
   // חותמת לפריט — בלעדיה מיזוג פר-פריט אינו מכריע, ומיזוג ברמת הרשומה מחליף את המערך כולו.
-  var nw = {id: Date.now(), type: type, reason: reason, from: from, to: to || null,
-            createdBy: hrWho(), updatedAt: Date.now()};
+  var nw = {id: newClientId(), type: type, reason: reason, from: from, to: to || null,
+            created_by: hrWho(), updated_at: Date.now()};
   // ההשוואה על הערך ולא על id — המזהה נגזר מהשעון, ושתי לחיצות היו שני מזהים לאותה היעדרות.
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, hrAbsValueKey)) {
     toast(MSG_ABSENCE_DUP, null, 'bad'); return;
   }
   s.absences.push(nw);
   s.present = false;
-  s.updatedAt = Date.now();
+  s.updated_at = Date.now();
 
   saveStudents(students);
   hrRefreshApprovalMarks(sid);
@@ -132,14 +132,14 @@ function saveStudentStatus(type) {
 comboDef('student', {
   hl: true, max: 8, focusOpen: false,
   items: function () {
-    return getStudents().map(function (s) { return { id: s.id, label: s.name, sub: CLS_NAME[s.cls] || s.cls || '' }; });
+    return getStudents().map(function (s) { return { value: s.client_id, label: s.name, sub: CLS_NAME[s.cls] || s.cls || '' }; });
   },
   query: function () { renderStudents(); },
   pick: function (it) {
     if (!it) return;
     renderStudents();
     setTimeout(function () {
-      var row = document.getElementById('st-row-' + it.id);
+      var row = document.getElementById('st-row-' + it.value);
       if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 80);
   }
@@ -201,11 +201,11 @@ function renderStudents(){
       var badgeHtml=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
       return '<div class="'+bg+' st-row-off">'+
         '<div class="st-row-main">'+
-          '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>'+
+          '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>'+
           '<div class="badge-row">'+badgeHtml+'</div>'+
         '</div>'+
         '<div class="st-row-act">'+
-          '<button data-act="st-activate" data-id="'+esc(s.id)+'" class="st-activate">↩ החזר לפעיל</button>'+
+          '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">↩ החזר לפעיל</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -235,12 +235,12 @@ function renderStudents(){
     var presIcon=isPresent
       ?'<span class="pill-present">&#x2713; נוכח</span>'
       :'<span class="pill-absent">&#x2715; אינו נוכח</span>';
-    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.id)+'" class="st-attend" title="עריכת סטטוס">+</button>';
-    html+='<div id="st-row-'+s.id+'" class="'+bg+' st-row">';
+    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס">+</button>';
+    html+='<div id="st-row-'+s.client_id+'" class="'+bg+' st-row">';
     html+='<div class="st-row-main">';
-    html+='<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.id)+'</span>';
+    html+='<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>';
     html+='<div class="badge-row">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.id)+'" class="st-edit" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד">&#x2630;</button>';
     html+='<span class="cls-badge">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
@@ -274,12 +274,12 @@ function hrCycleFor(cls, now) {
 
 function setStudentInactive(sid){
   var students=getStudents();
-  var s=students.find(function(x){return idEq(x.id, sid);});
+  var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=false;
   // המחזור נרשם רק כשאין לו ערך — תלמיד שהושבת שוב היה מקבל את שנת הלחיצה ולא את מחזור הסיום שנרשם לו.
   if(!s.cycle) s.cycle=hrCycleFor(s.cls);
-  s.updatedAt=Date.now();
+  s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   renderStudents();
@@ -288,7 +288,7 @@ function setStudentInactive(sid){
 
 function setStudentActive(sid){
   var students=getStudents();
-  var s=students.find(function(x){return idEq(x.id, sid);});
+  var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=true;
   saveStudents(students);
@@ -329,7 +329,7 @@ function openManageListDlg(){
 function openDeactivateStudentDlg(){
   var students=hrSortStudents(getStudents().filter(function(s){return s.active!==false;}));
   var optsHtml=students.map(function(s){
-    return '<option value="'+esc(s.id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
+    return '<option value="'+esc(s.client_id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
   openModal(MSG_MARK_INACTIVE_TITLE,
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="deact-sel">'+
@@ -366,11 +366,11 @@ function doYearTransition(){
     if(s.cls==='g'){
       s.active=false;
       if(!s.cycle) s.cycle=_cycG;
-      s.updatedAt=Date.now(); changed++;
+      s.updated_at=Date.now(); changed++;
     } else if(s.cls==='b'){
-      s.cls='g'; s.updatedAt=Date.now(); changed++;
+      s.cls='g'; s.updated_at=Date.now(); changed++;
     } else if(s.cls==='a'){
-      s.cls='b'; s.updatedAt=Date.now(); changed++;
+      s.cls='b'; s.updated_at=Date.now(); changed++;
     }
   });
   saveStudents(students);
@@ -390,7 +390,7 @@ function getAllRelevantAbsences(s) {
 
 function openAttendanceEdit(sid) {
   var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, sid);});
+  var s = students.find(function(x){return idEq(x.client_id, sid);});
   if (!s) return;
   S._statusSid = sid;
   S._statusStudentName = s.name;
@@ -415,7 +415,7 @@ function openStatusPickerModal() {
 
 function openCurrentStatusModal() {
   var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, S._statusSid);});
+  var s = students.find(function(x){return idEq(x.client_id, S._statusSid);});
   if (!s) return;
   var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב'};
   var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
@@ -464,18 +464,18 @@ function hrRefreshSupervisionViews() {
 function cancelSingleAbsence(absenceId) {
   var sid = S._statusSid;
   var students = getStudents();
-  var s = students.find(function(x){return idEq(x.id, sid);});
+  var s = students.find(function(x){return idEq(x.client_id, sid);});
   if (!s) return;
   if (Array.isArray(s.absences)) {
     // tombstone ולא הסרה — היעדרות שהוסרה פיזית חוזרת מהענן במיזוג
-    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { a.deleted = true; a.updatedAt = Date.now(); a.deletedBy = hrWho(); } });
+    s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { a.deleted = true; a.updated_at = Date.now(); a.deleted_by = hrWho(); } });
   }
   var stillActive = getActiveAbsences(s);
   if (stillActive.length === 0) s.present = true;
-  s.updatedAt = Date.now();
+  s.updated_at = Date.now();
   saveStudents(students);
   schedulePush();
-  hrRefreshApprovalMarks(s.id);
+  hrRefreshApprovalMarks(s.client_id);
   renderStudents();
   hrRefreshSupervisionViews();
   if (stillActive.length > 0) {
@@ -524,7 +524,7 @@ async function openStatusHistory(sid) {
       '<span class="list-subtitle">נסו שוב כשיש חיבור.</span></div>';
     return;
   }
-  var s = rows.find(function (x) { return idEq(x.id, sid); });
+  var s = rows.find(function (x) { return idEq(x.client_id, sid); });
   var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
   var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
   var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
@@ -560,8 +560,8 @@ async function openStatusHistory(sid) {
         'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
       '</div>' +
       '<div class="hist-meta">' +
-        'נרשם ע״י: ' + esc(a.createdBy || '—') +
-        (cancelled ? ' · בוטל ע״י: ' + esc(a.deletedBy || '—') : '') +
+        'נרשם ע״י: ' + esc(a.created_by || '—') +
+        (cancelled ? ' · בוטל ע״י: ' + esc(a.deleted_by || '—') : '') +
       '</div>' +
     '</div>';
   }).join('');
@@ -581,7 +581,7 @@ function openAddStudent(){
 
 function editStudent(sid){
   if(checkLoginNeeded())return;
-  var s=getStudents().find(function(x){return idEq(x.id, sid);});
+  var s=getStudents().find(function(x){return idEq(x.client_id, sid);});
   if(!s)return;
   S.editingStudentId=sid;
   openModal(MSG_EDIT_STUDENT_TITLE, studentFormHtml(sid), studentFormFoot());
@@ -604,12 +604,12 @@ function saveStudent(){
   var students=getStudents();
   var newId=null;
   if(S.editingStudentId){
-    var idx=students.findIndex(function(s){return idEq(s.id, S.editingStudentId);});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].updatedAt=Date.now();}
+    var idx=students.findIndex(function(s){return idEq(s.client_id, S.editingStudentId);});
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].updated_at=Date.now();}
   } else {
     // uuid ולא maxId+1 — שני מכשירים שמוסיפים במקביל מקצים אותו מספר, והמיזוג מאחד שני תלמידים
     newId = newClientId();
-    students.push({id:newId,name:name,cls:cls,cycle:cycle,updatedAt:Date.now(),createdBy:hrWho()});
+    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,updated_at:Date.now(),created_by:hrWho()});
     students=hrSortStudents(students);
     // אין מספור מחדש — המזהה הוא מפתח המיזוג בין מכשירים
   }
@@ -630,8 +630,8 @@ function hrTombstoneStudents(ids){
   (ids||[]).forEach(function(id){ if(id!=null) want[String(id)]=1; });
   var ts=Date.now(), by=hrWho(), n=0;
   all.forEach(function(rec){
-    if(!rec||rec.id==null||!want[String(rec.id)]||rec.deleted) return;
-    rec.deleted=true; rec.updatedAt=ts; rec.deletedBy=by; n++;
+    if(!rec||rec.client_id==null||!want[String(rec.client_id)]||rec.deleted) return;
+    rec.deleted=true; rec.updated_at=ts; rec.deleted_by=by; n++;
   });
   _hrStudentsSaveRaw(all);
   (ids||[]).forEach(function(id){ if(id!=null) pendMark(PK_STUDENT+id); });
@@ -677,7 +677,7 @@ function importStudentsFromFile(input) {
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         // uuid ולא maxId++ — ייבוא מקביל בשני מכשירים היה מקצה אותם מזהים לתלמידים שונים
         var nid = newClientId();
-        existing.push({id:nid, name:name, cls:cls, updatedAt:Date.now(), createdBy:hrWho()});
+        existing.push({client_id:nid, name:name, cls:cls, updated_at:Date.now(), created_by:hrWho()});
         addedIds.push(nid);
         added++;
       }
@@ -729,7 +729,7 @@ function openDeleteAllModal() {
 
 function confirmDeleteAll() {
   // לא saveStudents([]) — הסרה בלי tombstone מוחזרת מהענן במיזוג הבא
-  var n = hrTombstoneStudents(getStudents().map(function(s){ return s.id; }));
+  var n = hrTombstoneStudents(getStudents().map(function(s){ return s.client_id; }));
   schedulePush();
   renderStudents();
   if (n) toast('🗑️ ' + n + MSG_STUDENTS_WIPED, null, 'good');

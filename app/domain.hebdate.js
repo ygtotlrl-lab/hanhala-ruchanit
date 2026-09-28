@@ -49,12 +49,12 @@ function _hcG(hy,mi,day){
   var d=new Date(anchor.getTime()+c*86400000);
   return dayNoon(d);}
 
-// חודש עברי הוא טווח גרגוריאני רציף — gte/lte על date_iso מכסים אותו בדיוק. המנוע הוא _hcG ולא חשבון ידני.
+// חודש עברי הוא טווח גרגוריאני רציף — gte/lte על session_date מכסים אותו בדיוק. המנוע הוא _hcG ולא חשבון ידני.
 function hrHebMonthWin(hy, mi) {
   var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var i = Math.max(0, Math.min(mi, b.ml.length - 1));
-  return { col: 'date_iso', from: dayIso(_hcG(hy, i, 1)),
+  return { col: 'session_date', from: dayIso(_hcG(hy, i, 1)),
            to: dayIso(_hcG(hy, i, b.ml[i])) };
 }
 
@@ -62,7 +62,7 @@ function hrHebYearWin(hy) {
   var b = _hcBase(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var last = b.ml.length - 1;
-  return { col: 'date_iso', from: dayIso(_hcG(hy, 0, 1)),
+  return { col: 'session_date', from: dayIso(_hcG(hy, 0, 1)),
            to: dayIso(_hcG(hy, last, b.ml[last])) };
 }
 
@@ -101,5 +101,11 @@ function _hcBuild(pfx,initH,tv){
     (tv!==undefined?'<div class="hc-time-row"><span class="hc-time-lbl">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="hc-time-inp"></div>':'')+
   '</div>';}
 
-export { _hcBase, _hcBuild, _hcFmt, _hcG, _hcGet, _hcH, _hcMN, _hcYL, hrHebMonthWin,
-         hrHebYearWin };
+// התאריך העברי של יום נגזר ממנו בתצוגה ואינו נשמר — עוגן צהריים לפני החשבון.
+function hrDayHeb(iso){return _hcH(dayNoon(String(iso)));}
+function hrDayHebFmt(iso){if(!iso)return '';var h=hrDayHeb(iso);return _hcFmt(h.hy,h.mi,h.day);}
+function hrSessHeb(rec){return hrDayHeb(rec.session_date);}
+function hrSessHebFmt(rec){return hrDayHebFmt(rec&&rec.session_date);}
+
+export { _hcBase, _hcBuild, _hcFmt, _hcG, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt,
+         hrHebMonthWin, hrHebYearWin, hrSessHeb, hrSessHebFmt };
