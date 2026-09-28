@@ -16,8 +16,8 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
-         getStudents, hrCloudGet, hrPdfFont, hrSortStudents,
-         modalOpen, saveStudents, tyCls, uiShown } from '../domain.js';
+         getStudents, hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStudents, modalOpen,
+         saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
 import { hrRefreshApprovalMarks } from '../domain.sessions.js';
 
@@ -112,7 +112,8 @@ function saveStudentStatus(type) {
 
   if (!Array.isArray(s.absences)) s.absences = [];
   // המזהה נגזר מהסוג ומרגע ההתחלה — שני מכשירים שרושמים אותה היעדרות מגיעים לאותו פריט, והמיזוג במפתח id.
-  var nw = {id: type + ':' + from, type: type, reason: reason, from: from, to: to || null,
+  var fromAt = hrAtOfLocal(from);
+  var nw = {id: type + ':' + fromAt, type: type, reason: reason, from_at: fromAt, to_at: hrAtOfLocal(to),
             created_by_client_id: sessUserId(), updated_at: Date.now()};
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, function (a) { return a.id; })) {
     toast(MSG_ABSENCE_DUP, null, 'bad'); return;
@@ -387,7 +388,7 @@ function doYearTransition(){
 function getAllRelevantAbsences(s) {
   var now = new Date();
   if (!Array.isArray(s.absences)) return [];
-  return s.absences.filter(function(a){ return !a.deleted && (!a.to || new Date(a.to) >= now); });
+  return s.absences.filter(function(a){ return !a.deleted && (!a.to_at || new Date(a.to_at) >= now); });
 }
 
 function openAttendanceEdit(sid) {
@@ -433,7 +434,7 @@ function openCurrentStatusModal() {
   var activeAbsences = getAllRelevantAbsences(s);
   var _now = new Date();
   var absencesHtml = activeAbsences.map(function(a) {
-    var isFuture = a.from && new Date(a.from) > _now;
+    var isFuture = a.from_at && new Date(a.from_at) > _now;
     var badgeHtml = isFuture
       ? '<span class="abs-future">⏳ עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
@@ -447,7 +448,7 @@ function openCurrentStatusModal() {
         '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
-      '<div class="abs-dates">מ: ' + fmtDt(a.from) + '<br>עד: ' + (a.to ? fmtDt(a.to) : 'ללא תאריך סיום') + '</div>' +
+      '<div class="abs-dates">מ: ' + fmtDt(a.from_at) + '<br>עד: ' + (a.to_at ? fmtDt(a.to_at) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
   openModal(s.name, absencesHtml +
@@ -539,7 +540,7 @@ async function openStatusHistory(sid) {
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
   };
-  var ts = function (a) { var d = new Date(a && a.from); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+  var ts = function (a) { var d = new Date(a && a.from_at); return isNaN(d.getTime()) ? 0 : d.getTime(); };
   list.sort(function (a, b) { return ts(b) - ts(a); });
   if (!list.length) {
     box.innerHTML = '<div class="cloud-loading-note">' +
@@ -558,8 +559,8 @@ async function openStatusHistory(sid) {
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
       '<div class="abs-dates">' +
-        'מ: ' + esc(fmt(a.from)) + '<br>' +
-        'עד: ' + (a.to ? esc(fmt(a.to)) : 'ללא תאריך סיום') +
+        'מ: ' + esc(fmt(a.from_at)) + '<br>' +
+        'עד: ' + (a.to_at ? esc(fmt(a.to_at)) : 'ללא תאריך סיום') +
       '</div>' +
       '<div class="hist-meta">' +
         'נרשם ע״י: ' + esc(usersNameOf(a.created_by_client_id) || '—') +

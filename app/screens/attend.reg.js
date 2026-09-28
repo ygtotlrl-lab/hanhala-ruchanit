@@ -362,7 +362,7 @@ function atShowOverrideDialog(sid, student) {
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
   var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
-  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from)+'<br>עד: '+(a.to?fmtDt(a.to):'ללא תאריך סיום')+'</div>';
+  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
     reasonHtml+

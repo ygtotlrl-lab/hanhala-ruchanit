@@ -801,10 +801,26 @@ function hrSortStudents(list) {
   });
 }
 
+// ── רגע ההיעדרות ──
+// נשמר כמחרוזת ISO ב-UTC, בשם <תפקיד>_at; הקלט וההשוואה ליום הסדר — בשעה המקומית, 'YYYY-MM-DDTHH:MM'.
+function hrAtOfLocal(local) {
+  if (!local) return null;
+  var d = new Date(local);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+function hrLocalOfAt(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return dayIso(d) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
   if (!Array.isArray(s.absences)) return [];
-  return s.absences.filter(function(a){ return !a.deleted && (!a.from || new Date(a.from) <= now) && (!a.to || new Date(a.to) >= now); });
+  return s.absences.filter(function(a){ return !a.deleted && (!a.from_at || new Date(a.from_at) <= now) && (!a.to_at || new Date(a.to_at) >= now); });
 }
 
 function sortUsersByOrder(data) {
@@ -857,7 +873,7 @@ function hrDefaultCfg() {
 export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
          _hrItemId, _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave,
          _hrStudentsRaw, _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, atvCls, canAccess,
-         getAbsenceReasons, getActiveAbsences, getStudents, hrApplyPerms,
+         getAbsenceReasons, getActiveAbsences, getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt,
          hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
          hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs,
          hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushToCloud,

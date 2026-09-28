@@ -6,9 +6,9 @@ import { lsGet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
 import { PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
-import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSlDiskSave,
-         getActiveAbsences, getStudents, hrCount, hrMarks, hrMirrorRecs, hrSessionsPull,
-         hrSyncLog, hrTouchLastChanged, hrWriteFail } from './domain.js';
+import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSlDiskSave, getActiveAbsences, getStudents,
+         hrCount, hrLocalOfAt, hrMarks, hrMirrorRecs, hrSessionsPull, hrSyncLog,
+         hrTouchLastChanged, hrWriteFail } from './domain.js';
 
 // קריאה סינכרונית, מהזיכרון או מהדיסק — הציור הראשון אינו ממתין לרשת
 function hrCachedArr(memKey, lsKey) {
@@ -74,18 +74,19 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
     if(t==='suspended'||t==='left') return 'ak';
     if(t==='approved'){
       if(!sessDateIso) return 'ap';
-      var fromDate=aa[i].from?(aa[i].from.split('T')[0]):'';
-      var toDate=aa[i].to?(aa[i].to.split('T')[0]):'';
+      var fromL=hrLocalOfAt(aa[i].from_at), toL=hrLocalOfAt(aa[i].to_at);
+      var fromDate=fromL?fromL.split('T')[0]:'';
+      var toDate=toL?toL.split('T')[0]:'';
       if(fromDate&&sessDateIso<fromDate) continue;
       if(toDate&&sessDateIso>toDate) continue;
       // ביום הגבול נבדקת גם השעה — אחרת מסומנים סדרים שלפני תחילת האישור או אחרי סיומו
       if(sessStartTime){
         if(fromDate&&sessDateIso===fromDate){
-          var fromTime=aa[i].from&&aa[i].from.indexOf('T')>=0?aa[i].from.split('T')[1].substr(0,5):'00:00';
+          var fromTime=fromL?fromL.split('T')[1]:'00:00';
           if(sessStartTime<fromTime) continue;
         }
         if(toDate&&sessDateIso===toDate){
-          var toTime=aa[i].to&&aa[i].to.indexOf('T')>=0?aa[i].to.split('T')[1].substr(0,5):'23:59';
+          var toTime=toL?toL.split('T')[1]:'23:59';
           if(sessStartTime>toTime) continue;
         }
       }
