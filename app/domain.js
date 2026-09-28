@@ -437,7 +437,8 @@ function hrSessionRow(rec) {
     session_date: rec.session_date ? String(rec.session_date) : null,
     filled_by_client_id: (rec.filled_by_client_id == null || rec.filled_by_client_id === '') ? null : String(rec.filled_by_client_id),
     filled_by_name: rec.filled_by_name == null ? null : String(rec.filled_by_name),
-    created_at: rec.created_at == null ? null : String(rec.created_at),
+    // timestamptz — מחרוזת ריקה היא שגיאת המרה בשרת, והשורה כולה נדחית.
+    created_at: rec.created_at ? String(rec.created_at) : null,
     created_by: rec.created_by == null ? null : String(rec.created_by),
     deleted_by: rec.deleted_by == null ? null : String(rec.deleted_by),
     open: (typeof rec.open === 'boolean') ? rec.open : null,
