@@ -313,7 +313,7 @@ function screenReportsHTML() {
   return `
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle ksave"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>📊 הצג</button></div>
+    <div class="ptitle" data-ks><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>📊 הצג</button></div>
     <div id="rc"></div>
   </div>
 </div>
@@ -497,11 +497,10 @@ function _hcToggle(){
   }}
 
 document.addEventListener('mousedown',function(e){
-  document.querySelectorAll('.hc-pop').forEach(function(p){
-    if(!uiShown(p))return;
-    var pfx=p.id.replace('_pop','');
-    var tr=document.getElementById(pfx+'_trg');
-    if(!p.contains(e.target)&&(!tr||!tr.contains(e.target)))p.classList.add('hidden');
+  var hit=e.target&&e.target.closest?e.target.closest('[data-pop],[data-pop-trg]'):null;
+  var own=hit?(hit.getAttribute('data-pop')||hit.getAttribute('data-pop-trg')):'';
+  document.querySelectorAll('[data-pop]').forEach(function(p){
+    if(uiShown(p)&&p.getAttribute('data-pop')!==own)p.classList.add('hidden');
   });});
 
 function showConstruction() {
@@ -669,11 +668,11 @@ var DOM_ACTIONS = {
 // ורק על BUTTON: disabled על div אינו חוסם דבר.
 // סדר המסלולים: סגירת התפריטים הצפים, סגירת הרקע (שאינו נושא data-act), ואז הניתוב.
 document.addEventListener('click', function (ev) {
-  var wrap = document.getElementById('user-avatar-wrap');
-  if (wrap && !wrap.contains(ev.target)) closeUserMenu();
-  var sw = document.getElementById('sw-inner');
+  var inMenu = ev.target && ev.target.closest ? ev.target.closest('[data-menu]') : null;
+  var menu = inMenu ? inMenu.getAttribute('data-menu') : '';
+  if (menu !== 'user') closeUserMenu();
   var dd = document.getElementById('search-dropdown');
-  if (dd && sw && !sw.contains(ev.target)) dd.classList.remove('open');
+  if (dd && menu !== 'search') dd.classList.remove('open');
   if (modalBackdrop(ev)) return;
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
   if (!el) return;

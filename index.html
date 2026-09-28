@@ -48,7 +48,7 @@
     <button class="nb" data-pg="settings" title="הגדרות" data-act="page" data-page="settings">⚙️</button>
     <button class="nb" data-act="logout" title="התנתק">🚪</button>
   </nav>
-  <div id="user-avatar-wrap" class="hidden avatar-wrap">
+  <div id="user-avatar-wrap" class="hidden avatar-wrap" data-menu="user">
     <button data-act="user-menu-toggle" class="avatar-btn">
       <span class="avatar-ico">👤</span>
       <span id="hdr-username"></span>
@@ -89,8 +89,8 @@
 </div>
 
 
-<div id="modal" class="veil">
-  <div class="sheet ksave" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+<div id="modal" class="veil" data-veil="modal">
+  <div class="sheet" data-ks role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="sheet-hd">
       <h3 id="modal-title"></h3>
       <button class="x" data-act="modal-close" aria-label="סגירה">✕</button>
@@ -99,7 +99,7 @@
     <div class="sheet-ft" id="modal-foot"></div>
   </div>
 </div>
-<div id="ask" class="veil">
+<div id="ask" class="veil" data-veil="ask">
   <div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="ask-title">
     <div class="sheet-hd"><h3 id="ask-title"></h3></div>
     <div class="sheet-bd" id="ask-body"></div>
