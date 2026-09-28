@@ -463,12 +463,12 @@ function atRenderStudents() {
     }
     var isPendingLate=isLate&&!!S._atPending[String(s.id)];
     var lateFieldHtml=isLate?
-      '<div class="late-field">'+
+      '<div class="late-field'+(isPendingLate?' ksave':'')+'">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
-        'data-inp="at-late" data-kent="at-late" data-id="'+esc(s.id)+'" '+
+        'data-inp="at-late" data-id="'+esc(s.id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="at-confirm-late" data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="at-confirm-late" data-ksave data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+

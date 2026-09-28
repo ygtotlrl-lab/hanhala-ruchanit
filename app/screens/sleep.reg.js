@@ -469,12 +469,12 @@ function hrRenderStudents() {
     }
     var isPendingLate=isLate&&!!S._hrPending[String(s.id)];
     var lateFieldHtml=isLate?
-      '<div class="late-field">'+
+      '<div class="late-field'+(isPendingLate?' ksave':'')+'">'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
-        'data-inp="sl-late" data-kent="sl-late" data-id="'+esc(s.id)+'" '+
+        'data-inp="sl-late" data-id="'+esc(s.id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="sl-confirm-late" data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="sl-confirm-late" data-ksave data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
     var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
