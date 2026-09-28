@@ -38,14 +38,14 @@ function _hrPullStaleMark(el, bad) {
 }
 
 // שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הפולינג יכול להביא סדר מתחרה אחרי הפתיחה.
-// אין אינדקס ייחודי על (session, date_iso) — הוא נכשל על זוגות שכבר במסד; הבדיקה משרתת גם את השינה.
+// אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד; הבדיקה משרתת גם את השינה.
 function atFindLiveSession(data, sessName, dateIso, exceptId) {
   if (!Array.isArray(data)) return null;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
     if (!r || r.deleted) continue;
-    if (r.session !== sessName || r.date_iso !== dateIso) continue;
-    if (exceptId != null && idEq(r.id, exceptId)) continue;
+    if (r.session !== sessName || r.session_date !== dateIso) continue;
+    if (exceptId != null && idEq(r.client_id, exceptId)) continue;
     return r;
   }
   return null;
@@ -55,9 +55,9 @@ function hrAdoptSession(rec) {
   var ex = hrMarks(rec);
   Object.keys(ex).forEach(function (k) {
     var cur = S._hrMarks[k];
-    if (!cur || !cur.s) S._hrMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0, note: (ex[k] && ex[k].note) || '' };
+    if (!cur || !cur.status) S._hrMarks[k] = { status: (ex[k] && ex[k].status) || '', minutes: (ex[k] && ex[k].minutes) || 0, note: (ex[k] && ex[k].note) || '' };
   });
-  S._hrCurrentSessionId = rec.id;
+  S._hrCurrentSessionId = rec.client_id;
 }
 
 // sessDateIso אופציונלי — בלעדיו אישורים תמיד פעילים
@@ -165,7 +165,7 @@ async function hrSaveData(data) {
 // מעדכן רק סימון ריק או ap — סימון ידני אינו נדרס.
 async function hrRefreshApprovalMarks(sid) {
   try {
-    var student = getStudents().find(function(x){ return idEq(x.id, sid); });
+    var student = getStudents().find(function(x){ return idEq(x.client_id, sid); });
     if (!student) return;
     var sidKey = String(sid);
     var todayIso = dayToday();
@@ -176,21 +176,21 @@ async function hrRefreshApprovalMarks(sid) {
       if (!Array.isArray(data)) return;
       var changed = [];
       data.forEach(function(rec){
-        if (!rec || rec.deleted || !rec.open || rec.date_iso !== dateIso) return;
-        var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].s || '') : '';
+        if (!rec || rec.deleted || !rec.open || rec.session_date !== dateIso) return;
+        var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].status || '') : '';
         if (cur !== '' && cur !== 'ap') return;
         var sessTime = '';
-        for (var i = 0; i < cfgSessions.length; i++) { if (cfgSessions[i].name === rec.session) { sessTime = cfgSessions[i].startTime || ''; break; } }
-        var am = atAutoMark(student, rec.date_iso, sessTime);
+        for (var i = 0; i < cfgSessions.length; i++) { if (cfgSessions[i].name === rec.session) { sessTime = cfgSessions[i].start_time || ''; break; } }
+        var am = atAutoMark(student, rec.session_date, sessTime);
         var next = (am === 'ap') ? 'ap' : '';
         if (next === cur) return;
         if (!rec.marks) rec.marks = {};
-        rec.marks[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
-        rec.updatedAt = Date.now();
-        changed.push(pk + rec.id);
+        rec.marks[sidKey] = withNote ? { status: next, minutes: 0, note: '' } : { status: next, minutes: 0 };
+        rec.updated_at = Date.now();
+        changed.push(pk + rec.client_id);
         // סדר שפתוח כרגע במכשיר הזה — מעדכנים גם את ה-buffer ואת התצוגה
-        if (curId === rec.id && marksBuf) {
-          if (next) marksBuf[sidKey] = withNote ? { s: next, min: 0, note: '' } : { s: next, min: 0 };
+        if (curId === rec.client_id && marksBuf) {
+          if (next) marksBuf[sidKey] = withNote ? { status: next, minutes: 0, note: '' } : { status: next, minutes: 0 };
           else delete marksBuf[sidKey];
           if (typeof renderFn === 'function') { try { renderFn(); } catch(eR) {} }
         }

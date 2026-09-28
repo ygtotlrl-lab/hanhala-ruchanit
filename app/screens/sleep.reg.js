@@ -1,6 +1,6 @@
 // app/screens/sleep.reg.js — שינה — המודול ורישום הסימונים
 import { dayNoon, readNum } from '../../core/util.js';
-import { idEq, pendMark, schedulePush } from '../../core/sync.js';
+import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
@@ -9,7 +9,7 @@ import { AUTH, S, shell } from '../state.js';
 import { _hrSlDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrDefaultCfg,
          hrMarks, hrSortStudents, hrWho, modalOpen, saveStudents,
          tyCls } from '../domain.js';
-import { _hcBuild, _hcFmt, _hcH } from '../domain.hebdate.js';
+import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
          hrGetLogicalDate, hrSaveData } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, hrCachedCfg, hrRenderTodaySessions,
@@ -118,13 +118,13 @@ async function loadSleep() {
   _hrPullStaleMark(el, !(_okSl[0]&&_okSl[1]));
 
   var _logIsoR=hrGetLogicalDate();
-  var _openRecSl=(S._hrData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
+  var _openRecSl=(S._hrData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.session_date===_logIsoR;});
   try {
     if(_openRecSl && !modalOpen()) {
       openModal(MSG_SLEEP_OPEN,
         '<p class="md-note-center">'+esc(_openRecSl.session)+' נפתחה ולא נסגר.<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
-        '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.id)+'" class="md-btn-primary">▶ המשך</button>');
+        '<button data-act="sl-resume-go" data-id="'+esc(_openRecSl.client_id)+'" class="md-btn-primary">▶ המשך</button>');
     }
   } catch(eRes){}
   // אין התראת כניסה במודול השינה
@@ -193,42 +193,42 @@ function hrAutoMark(student, sessDateIso, sessStartTime) {
 // הרשומה נקראת מהמטמון בלי המתנה — הכפתור שנלחץ צויר מאותו עותק, ולכן היא בו בוודאות
 async function hrEditSession(recId) {
   var data=hrCachedArr('_hrData','hr_sleep_sessions')||[];
-  var rec=data.find(function(r){return idEq(r.id,recId);});
+  var rec=data.find(function(r){return idEq(r.client_id,recId);});
   if(!rec) return;
   S._hrMarks={};S._hrPending={};S._hrCleared={};
   Object.entries(hrMarks(rec)).forEach(function(e){
     var sid=e[0],m=e[1];
-    if(m.s){S._hrMarks[sid]={s:m.s,min:m.min||0,note:m.note||''};S._hrCleared[sid]=true;}
+    if(m.status){S._hrMarks[sid]={status:m.status,minutes:m.minutes||0,note:m.note||''};S._hrCleared[sid]=true;}
   });
   try {
     var _nowT2=new Date();
     var _hhmm2=('0'+_nowT2.getHours()).slice(-2)+':'+('0'+_nowT2.getMinutes()).slice(-2);
     // שעת הסדר מההגדרות קודמת; השעה הנוכחית היא נפילה-חזרה בלבד
     var _cfgS2=(S._hrCfg&&Array.isArray(S._hrCfg.sessions))?S._hrCfg.sessions:[];
-    for(var _ci2=0;_ci2<_cfgS2.length;_ci2++){ if(_cfgS2[_ci2].name===rec.session&&_cfgS2[_ci2].startTime){_hhmm2=_cfgS2[_ci2].startTime;break;} }
+    for(var _ci2=0;_ci2<_cfgS2.length;_ci2++){ if(_cfgS2[_ci2].name===rec.session&&_cfgS2[_ci2].start_time){_hhmm2=_cfgS2[_ci2].start_time;break;} }
     var _apChanged2=false;
     getStudents().forEach(function(st){
       if(st.active===false) return;
-      var k=String(st.id);
-      if(S._hrMarks[k]&&S._hrMarks[k].s) return;
-      var am=atAutoMark(st, rec.date_iso, _hhmm2);
+      var k=String(st.client_id);
+      if(S._hrMarks[k]&&S._hrMarks[k].status) return;
+      var am=atAutoMark(st, rec.session_date, _hhmm2);
       if(am){
-        S._hrMarks[k]={s:am,min:0,note:''};
+        S._hrMarks[k]={status:am,minutes:0,note:''};
         S._hrCleared[k]=true;
         if(!rec.marks) rec.marks={};
-        rec.marks[k]={s:am,min:0,note:''};
+        rec.marks[k]={status:am,minutes:0,note:''};
         _apChanged2=true;
       }
     });
     if(_apChanged2){
-      rec.updatedAt=Date.now();
+      rec.updated_at=Date.now();
       _hrSlDiskSave(data);
       S._hrData=data;
       hrSaveData(data);
     }
   } catch(eAp2){ console.warn('[approval-refresh] sl-edit', eAp2); }
   var dw=document.getElementById('sl-date-wrap');
-  if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('sl_date',rec.date_heb);
+  if(dw&&rec.session_date) dw.innerHTML=_hcBuild('sl_date',_hcH(dayNoon(rec.session_date)));
   var fl=document.getElementById('sl-filler');
   if(fl) fl.value=rec.filled_by_name||'';
   S._hrPendingRec=null;
@@ -236,7 +236,7 @@ async function hrEditSession(recId) {
   var hdr=document.getElementById('sl-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+esc(rec.session)+'</span>'+
-    '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+    '<span class="rec-date">'+hrSessHebFmt(rec)+'</span>';
   document.getElementById('sl-reg-picker').classList.add('hidden');
   document.getElementById('sl-reg-list').classList.remove('hidden');
   hrRenderStudents();
@@ -256,45 +256,44 @@ async function hrOpenSession(sessId, sessName) {
     openModal(MSG_REPORT_DONE,
       '<p class="md-note-center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-      '<button data-act="sl-resume-go" data-id="'+esc(existing.id)+'" class="md-btn-primary">ערוך</button>');
+      '<button data-act="sl-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>');
     return;
   }
 
   var _oCfg=S._hrCfg||hrDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
-  var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
+  var _oSessTime=_oSessObj&&_oSessObj.start_time?_oSessObj.start_time:'';
   var students=hrSortStudents(getStudents());
   S._hrMarks={};S._hrPending={};S._hrCleared={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var am=hrAutoMark(s,dateIso,_oSessTime);
-    if(am) S._hrMarks[s.id]={s:am,min:0,note:''};
+    if(am) S._hrMarks[s.client_id]={status:am,minutes:0,note:''};
   });
 
   var filler=document.getElementById('sl-filler');
-  var dateHeb=_hcH(new Date(dateIso));
+  var dateHeb=_hcH(dayNoon(dateIso));
   var initMarks={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
-    var m=S._hrMarks[s.id];
-    initMarks[String(s.id)]={s:m?m.s:'',min:0,note:''};
+    var m=S._hrMarks[s.client_id];
+    initMarks[String(s.client_id)]={status:m?m.status:'',minutes:0,note:''};
   });
   var rec={
-    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    client_id:newClientId(),
     session:sessName,
-    date_iso:dateIso,
-    date_heb:dateHeb,
-    filled_by:AUTH.user?AUTH.user.client_id:'',
+    session_date:dateIso,
+    filled_by_client_id:AUTH.user?AUTH.user.client_id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
-    updatedAt:Date.now(),
-    createdBy:hrWho(),
+    updated_at:Date.now(),
+    created_by:hrWho(),
     open:true
   };
 
   // הרשומה נשמרת רק בסימון הראשון בפועל (hrMarkDirty) — מונע רישומי רפאים.
   // אין קריאת טעינה שנייה — _hrData כבר הוצב מהמשיכה הטרייה.
   S._hrPendingRec=rec;
-  S._hrCurrentSessionId=rec.id;
+  S._hrCurrentSessionId=rec.client_id;
 
   _hrMountOpenSession(sessName, dateHeb);
 }
@@ -314,19 +313,19 @@ function _hrMountOpenSession(sessName, dateHeb) {
 
 function hrSaveLocalNow() {
   if(!S._hrCurrentSessionId||!S._hrData) return null;
-  var rec=S._hrData.find(function(r){return idEq(r.id,S._hrCurrentSessionId);});
+  var rec=S._hrData.find(function(r){return idEq(r.client_id,S._hrCurrentSessionId);});
   if(!rec) return null;
   var marks={};
   getStudents().forEach(function(s){
     if(s.active===false) return;
-    var m=S._hrMarks[s.id];
-    marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0,note:m.note||''}:{s:'',min:0,note:''};
+    var m=S._hrMarks[s.client_id];
+    marks[s.client_id]=m?{status:m.status,minutes:m.status==='l'?(m.minutes||0):0,note:m.note||''}:{status:'',minutes:0,note:''};
   });
   rec.marks=marks;
-  rec.updatedAt=Date.now();
+  rec.updated_at=Date.now();
   // מסלול קריטי — כשל כאן עוצר את השרשרת, אחרת המשתמש ממשיך כאילו נשמר
   if(!_hrSlDiskSave(S._hrData)) return null;
-  pendMark(PK_SL_SESS + rec.id);
+  pendMark(PK_SL_SESS + rec.client_id);
   return rec;
 }
 
@@ -337,15 +336,15 @@ async function hrAutoSaveNow() {
 
 function hrMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
-  if(S._hrPendingRec && idEq(S._hrCurrentSessionId,S._hrPendingRec.id)){
+  if(S._hrPendingRec && idEq(S._hrCurrentSessionId,S._hrPendingRec.client_id)){
     if(!S._hrData) S._hrData=[];
     // הבדיקה חוזרת בנקודת היצירה בפועל — הפולינג יכול להביא סדר מתחרה מאז הפתיחה
     var _hrDup=atFindLiveSession(S._hrData,S._hrPendingRec.session,
-                                 S._hrPendingRec.date_iso,S._hrPendingRec.id);
+                                 S._hrPendingRec.session_date,S._hrPendingRec.client_id);
     if(_hrDup){
       hrAdoptSession(_hrDup);
       toast(MSG_REPORT_OPEN_ELSEWHERE, null, 'bad');
-    } else if(!S._hrData.some(function(r){return r&&idEq(r.id,S._hrPendingRec.id);})) {
+    } else if(!S._hrData.some(function(r){return r&&idEq(r.client_id,S._hrPendingRec.client_id);})) {
       S._hrData.push(S._hrPendingRec);
     }
     S._hrPendingRec=null;
@@ -383,12 +382,12 @@ function hrShowOverrideDialog(sid, student) {
 // הקורא הוא sl-status-cancel — בלי הפונקציה הכפתור זורק, והמודאל נסגר כאילו הצליח
 function hrCancelStudentStatusFromReg(sid) {
   var students=getStudents();
-  var s=students.find(function(x){return idEq(x.id, sid);});
+  var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
   s.present=true;
-  s.updatedAt=Date.now();
+  s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   delete S._hrMarks[sid];
@@ -403,7 +402,7 @@ function hrCancelStudentStatusFromReg(sid) {
 function hrApplyMark(sid, code) {
   var s=String(sid);
   var existNote=(S._hrMarks[s]||{}).note||'';
-  S._hrMarks[s]={s:code,min:code==='l'?null:0,note:existNote};
+  S._hrMarks[s]={status:code,minutes:code==='l'?null:0,note:existNote};
   S._hrCleared[s]=true;
   S._hrPending[s]=true;
   hrRenderStudents();
@@ -438,15 +437,15 @@ function hrRenderStudents() {
   var active=students.filter(function(s){return s.active!==false;});
   var unmarked=[], marked=[];
   active.forEach(function(s){
-    var cur=S._hrMarks[s.id];
-    var isPending=!!S._hrPending[s.id];
-    if(cur&&cur.s&&!isPending) marked.push(s);
+    var cur=S._hrMarks[s.client_id];
+    var isPending=!!S._hrPending[s.client_id];
+    if(cur&&cur.status&&!isPending) marked.push(s);
     else unmarked.push(s);
   });
 
   var bs='mark-btn';
   function mkBtn(sid,code,label){
-    var cur=(S._hrMarks[sid]||{}).s;
+    var cur=(S._hrMarks[sid]||{}).status;
     var isOn=(cur===code);
     var cls=bs+' '+atvCls(code)+(isOn?' mark-on':' mark-off');
     return '<button data-act="sl-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" class="'+cls+'">'+label+'</button>';
@@ -457,29 +456,29 @@ function hrRenderStudents() {
   }
 
   function renderRow(s, isMark) {
-    var marks=S._hrMarks[s.id]||{};
-    var isLate=marks.s==='l';
-    var hasMark=!!(marks.s);
+    var marks=S._hrMarks[s.client_id]||{};
+    var isLate=marks.status==='l';
+    var hasMark=!!(marks.status);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
     var autoHintHtml='';
     var am=hrAutoMark(s);
-    if(am&&isMark&&!S._hrCleared[s.id]){
+    if(am&&isMark&&!S._hrCleared[s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
       if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
     }
-    var isPendingLate=isLate&&!!S._hrPending[String(s.id)];
+    var isPendingLate=isLate&&!!S._hrPending[String(s.client_id)];
     var lateFieldHtml=isLate?
       '<div class="late-field"'+(isPendingLate?' data-ks':'')+'>'+
-        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
-        'data-inp="sl-late" data-id="'+esc(s.id)+'" '+
+        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.minutes!=null?marks.minutes:'')+'" id="sl-min-'+s.client_id+'" placeholder="דק׳" '+
+        'data-inp="sl-late" data-id="'+esc(s.client_id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="sl-confirm-late" data-ksave data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="sl-confirm-late" data-ksave data-id="'+esc(s.client_id)+'" class="late-ok-btn">✓ אשר</button>':'')+
       '</div>':'';
     var noteVal=esc(marks.note||'');
     var noteField='<input aria-label="הערה" type="text" placeholder="הערה" value="'+noteVal+'" '+
-      'id="sl-note-'+s.id+'" '+
-      'data-inp="sl-note" data-id="'+esc(s.id)+'" '+
+      'id="sl-note-'+s.client_id+'" '+
+      'data-inp="sl-note" data-id="'+esc(s.client_id)+'" '+
       ' class="late-min-inp">';
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
@@ -488,14 +487,14 @@ function hrRenderStudents() {
       lateFieldHtml+
       noteField+
       '<div class="at-row-marks">'+
-        (hasMark?mkClearBtn(s.id):'')+
-        mkBtn(s.id,'p','✓')+
-        mkBtn(s.id,'l','איחור')+
-        mkBtn(s.id,'e','-')+
-        mkBtn(s.id,'x','x')+
-        mkBtn(s.id,'ap','א')+
-        mkBtn(s.id,'ak','ב')+
-        mkBtn(s.id,'a','ג')+
+        (hasMark?mkClearBtn(s.client_id):'')+
+        mkBtn(s.client_id,'p','✓')+
+        mkBtn(s.client_id,'l','איחור')+
+        mkBtn(s.client_id,'e','-')+
+        mkBtn(s.client_id,'x','x')+
+        mkBtn(s.client_id,'ap','א')+
+        mkBtn(s.client_id,'ak','ב')+
+        mkBtn(s.client_id,'a','ג')+
       '</div>'+
     '</div>';
   }
@@ -511,16 +510,16 @@ function hrRenderStudents() {
 }
 
 function hrSetMark(sid, code) {
-  var student=getStudents().find(function(s){return String(s.id)===String(sid);});
+  var student=getStudents().find(function(s){return String(s.client_id)===String(sid);});
   var curRec=S._hrData&&S._hrCurrentSessionId?
-    S._hrData.find(function(r){return idEq(r.id,S._hrCurrentSessionId);}):null;
-  var sessDateIso=curRec?curRec.date_iso:null;
+    S._hrData.find(function(r){return idEq(r.client_id,S._hrCurrentSessionId);}):null;
+  var sessDateIso=curRec?curRec.session_date:null;
   var _cfg=S._hrCfg||hrDefaultCfg();
   var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
-  var sessTime=sessObj&&sessObj.startTime?sessObj.startTime:'';
+  var sessTime=sessObj&&sessObj.start_time?sessObj.start_time:'';
   var autoM=student?hrAutoMark(student,sessDateIso,sessTime):null;
   var cur=S._hrMarks[sid];
-  if(autoM&&cur&&cur.s===autoM&&!S._hrCleared[sid]){
+  if(autoM&&cur&&cur.status===autoM&&!S._hrCleared[sid]){
     hrShowOverrideDialog(sid,student);
     return;
   }
@@ -530,7 +529,7 @@ function hrSetMark(sid, code) {
 function hrClearMark(sid) {
   var existNote=(S._hrMarks[sid]||{}).note||'';
   delete S._hrMarks[sid];
-  if(existNote) S._hrMarks[sid]={s:'',min:0,note:existNote};
+  if(existNote) S._hrMarks[sid]={status:'',minutes:0,note:existNote};
   delete S._hrPending[sid];
   S._hrCleared[sid]=true;
   hrRenderStudents();
@@ -540,14 +539,14 @@ function hrClearMark(sid) {
 function hrSetLateMin(sid, val) {
   var n=parseInt(val)||0;
   if(n<0)n=0;if(n>30)n=30;
-  if(!S._hrMarks[sid])S._hrMarks[sid]={s:'l',min:n,note:''};
-  else S._hrMarks[sid].min=n;
+  if(!S._hrMarks[sid])S._hrMarks[sid]={status:'l',minutes:n,note:''};
+  else S._hrMarks[sid].minutes=n;
   hrMarkDirty();
 }
 
 function hrSetNote(sid, val) {
   var s=String(sid);
-  if(!S._hrMarks[s]) S._hrMarks[s]={s:'',min:0,note:''};
+  if(!S._hrMarks[s]) S._hrMarks[s]={status:'',minutes:0,note:''};
   S._hrMarks[s].note=val;
   hrMarkDirty();
 }
@@ -555,11 +554,11 @@ function hrSetNote(sid, val) {
 async function hrCloseSession() {
   clearTimeout(S._hrSaveTimer);
   // שמירה וסגירה רק מסמנות את הסדר כסגור (open=false)
-  var _cRec=S._hrData&&S._hrData.find(function(r){return idEq(r.id,S._hrCurrentSessionId);});
+  var _cRec=S._hrData&&S._hrData.find(function(r){return idEq(r.client_id,S._hrCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await hrAutoSaveNow();
-  var rec=S._hrData&&S._hrData.find(function(r){return idEq(r.id,S._hrCurrentSessionId);});
-  var msg=rec?('✅ '+rec.session+' — '+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הבדיקה נשמרה';
+  var rec=S._hrData&&S._hrData.find(function(r){return idEq(r.client_id,S._hrCurrentSessionId);});
+  var msg=rec?('✅ '+rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):'✅ הבדיקה נשמרה';
   S._hrCurrentSessionId=null;
   S._hrMarks={};
   S._hrPendingRec=null;

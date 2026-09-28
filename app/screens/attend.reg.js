@@ -1,6 +1,6 @@
 // app/screens/attend.reg.js — סדרים — מודול הנוכחות ורישום הסימונים
-import { dayToday, readNum } from '../../core/util.js';
-import { idEq, pendMark, schedulePush } from '../../core/sync.js';
+import { dayNoon, dayToday, readNum } from '../../core/util.js';
+import { idEq, newClientId, pendMark, schedulePush } from '../../core/sync.js';
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_SESSION_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,
@@ -8,7 +8,7 @@ import { MSG_BUSY_CHECK, MSG_CLOSE_SESSION_FIRST, MSG_LATE_OVER_30, MSG_NEED_MIN
 import { AUTH, S, shell } from '../state.js';
 import { _hrAtDiskSave, atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks,
          hrSortStudents, hrWho, modalOpen, saveStudents, tyCls } from '../domain.js';
-import { _hcBuild, _hcFmt, _hcH } from '../domain.hebdate.js';
+import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, atSaveData,
          hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, atCachedCfg, atCheckAlert, atDefaultCfg,
@@ -122,14 +122,14 @@ async function loadAttend() {
   _hrPullStaleMark(el, !(_okAt[0]&&_okAt[1]));
 
   var _todayIsoR=dayToday();
-  var _openRec=(S._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
+  var _openRec=(S._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.session_date===_todayIsoR;});
   try {
     // ההצעה אינה דורסת מודאל פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
     if(_openRec && !modalOpen()) {
       openModal(MSG_SESSION_OPEN_TODAY,
         '<p class="md-note-center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
-        '<button data-act="at-resume-go" data-id="'+esc(_openRec.id)+'" class="md-btn-primary">▶ המשך</button>');
+        '<button data-act="at-resume-go" data-id="'+esc(_openRec.client_id)+'" class="md-btn-primary">▶ המשך</button>');
     }
   } catch(eRes){}
   atCheckAlert();
@@ -167,12 +167,12 @@ function atShowTab(tab) {
 // הרשומה נקראת מהמטמון בלי המתנה — הכפתור שנלחץ צויר מאותו עותק, ולכן היא בו בוודאות
 async function atEditSession(recId) {
   var data=hrCachedArr('_atData','hr_sessions')||[];
-  var rec=data.find(function(r){return idEq(r.id,recId);});
+  var rec=data.find(function(r){return idEq(r.client_id,recId);});
   if(!rec) return;
   S._atMarks={};S._atPending={};S._atCleared={};
   Object.entries(hrMarks(rec)).forEach(function(e){
     var sid=e[0],m=e[1];
-    if(m.s){S._atMarks[sid]={s:m.s,min:m.min||0};S._atCleared[sid]=true;}
+    if(m.status){S._atMarks[sid]={status:m.status,minutes:m.minutes||0};S._atCleared[sid]=true;}
   });
   // רענון אישורים לתלמידים בלי סימון — אישור שהוזן אחרי פתיחת הסדר
   try {
@@ -180,30 +180,30 @@ async function atEditSession(recId) {
     var _hhmm=('0'+_nowT.getHours()).slice(-2)+':'+('0'+_nowT.getMinutes()).slice(-2);
     // שעת הסדר מההגדרות קודמת; השעה הנוכחית היא נפילה-חזרה בלבד
     var _cfgS=(S._atCfg&&Array.isArray(S._atCfg.sessions))?S._atCfg.sessions:[];
-    for(var _ci=0;_ci<_cfgS.length;_ci++){ if(_cfgS[_ci].name===rec.session&&_cfgS[_ci].startTime){_hhmm=_cfgS[_ci].startTime;break;} }
+    for(var _ci=0;_ci<_cfgS.length;_ci++){ if(_cfgS[_ci].name===rec.session&&_cfgS[_ci].start_time){_hhmm=_cfgS[_ci].start_time;break;} }
     var _apChanged=false;
     getStudents().forEach(function(st){
       if(st.active===false) return;
-      var k=String(st.id);
-      if(S._atMarks[k]&&S._atMarks[k].s) return;
-      var am=atAutoMark(st, rec.date_iso, _hhmm);
+      var k=String(st.client_id);
+      if(S._atMarks[k]&&S._atMarks[k].status) return;
+      var am=atAutoMark(st, rec.session_date, _hhmm);
       if(am){
-        S._atMarks[k]={s:am,min:0};
+        S._atMarks[k]={status:am,minutes:0};
         S._atCleared[k]=true;
         if(!rec.marks) rec.marks={};
-        rec.marks[k]={s:am,min:0};
+        rec.marks[k]={status:am,minutes:0};
         _apChanged=true;
       }
     });
     if(_apChanged){
-      rec.updatedAt=Date.now();
+      rec.updated_at=Date.now();
       _hrAtDiskSave(data);
       S._atData=data;
       atSaveData(data); // בלי await בכוונה — הדחיפה רצה ברקע
     }
   } catch(eAp){ console.warn('[approval-refresh] edit', eAp); }
   var dw=document.getElementById('at-date-wrap');
-  if(dw&&rec.date_heb) dw.innerHTML=_hcBuild('at_date',rec.date_heb);
+  if(dw&&rec.session_date) dw.innerHTML=_hcBuild('at_date',_hcH(dayNoon(rec.session_date)));
   var fl=document.getElementById('at-filler');
   if(fl) fl.value=rec.filled_by_name||'';
   S._atPendingRec=null;
@@ -211,7 +211,7 @@ async function atEditSession(recId) {
   var hdr=document.getElementById('at-reg-header');
   if(hdr) hdr.innerHTML=
     '<span class="rec-title">'+esc(rec.session)+'</span>'+
-    '<span class="rec-date">'+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+'</span>';
+    '<span class="rec-date">'+hrSessHebFmt(rec)+'</span>';
   document.getElementById('at-reg-picker').classList.add('hidden');
   document.getElementById('at-reg-list').classList.remove('hidden');
   atRenderStudents();
@@ -225,9 +225,9 @@ function atAdoptSession(rec) {
   var ex = hrMarks(rec);
   Object.keys(ex).forEach(function (k) {
     var cur = S._atMarks[k];
-    if (!cur || !cur.s) S._atMarks[k] = { s: (ex[k] && ex[k].s) || '', min: (ex[k] && ex[k].min) || 0 };
+    if (!cur || !cur.status) S._atMarks[k] = { status: (ex[k] && ex[k].status) || '', minutes: (ex[k] && ex[k].minutes) || 0 };
   });
-  S._atCurrentSessionId = rec.id;
+  S._atCurrentSessionId = rec.client_id;
 }
 
 async function atOpenSession(sessId, sessName) {
@@ -245,48 +245,47 @@ async function atOpenSession(sessId, sessName) {
     openModal(MSG_SESSION_DONE,
       '<p class="md-note-center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-      '<button data-act="at-resume-go" data-id="'+esc(existing.id)+'" class="md-btn-primary">ערוך</button>');
+      '<button data-act="at-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>');
     return;
   }
 
   var _oCfg=S._atCfg||atDefaultCfg();
   var _oSessObj=_oCfg.sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
-  var _oSessTime=_oSessObj&&_oSessObj.startTime?_oSessObj.startTime:'';
+  var _oSessTime=_oSessObj&&_oSessObj.start_time?_oSessObj.start_time:'';
   var students=hrSortStudents(getStudents());
   S._atMarks={};
   S._atPending={};
   S._atCleared={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
     var am=atAutoMark(s,dateIso,_oSessTime);
-    if(am) S._atMarks[s.id]={s:am,min:0};
+    if(am) S._atMarks[s.client_id]={status:am,minutes:0};
   });
 
   var filler=document.getElementById('at-filler');
-  var dateHeb=_hcH(new Date(dateIso));
+  var dateHeb=_hcH(dayNoon(dateIso));
   // הסימונים האוטומטיים נכתבים ל-rec.marks — אחרת הם אובדים ביציאה בלי שמירה
   var initMarks={};
   students.filter(function(s){return s.active!==false;}).forEach(function(s){
-    var m=S._atMarks[s.id];
-    initMarks[String(s.id)]={s:m?m.s:'',min:0};
+    var m=S._atMarks[s.client_id];
+    initMarks[String(s.client_id)]={status:m?m.status:'',minutes:0};
   });
   var rec={
-    id:Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    client_id:newClientId(),
     session:sessName,
-    date_iso:dateIso,
-    date_heb:dateHeb,
-    filled_by:AUTH.user?AUTH.user.client_id:'',
+    session_date:dateIso,
+    filled_by_client_id:AUTH.user?AUTH.user.client_id:'',
     filled_by_name:filler?filler.value:(AUTH.user?AUTH.user.full_name:''),
     marks:initMarks,
     created_at:new Date().toISOString(),
-    updatedAt:Date.now(),
-    createdBy:hrWho(),
+    updated_at:Date.now(),
+    created_by:hrWho(),
     open:true
   };
 
   // הרשומה נשמרת רק בסימון הראשון בפועל (atMarkDirty) — מונע רישומי רפאים.
   // אין קריאת טעינה שנייה — _atData כבר הוצב מהמשיכה, וקריאה חוזרת מחזירה אותו מערך.
   S._atPendingRec=rec;
-  S._atCurrentSessionId=rec.id;
+  S._atCurrentSessionId=rec.client_id;
 
   _atMountOpenSession(sessName, dateHeb);
 }
@@ -306,19 +305,19 @@ function _atMountOpenSession(sessName, dateHeb) {
 
 function atSaveLocalNow() {
   if(!S._atCurrentSessionId||!S._atData) return null;
-  var rec=S._atData.find(function(r){return idEq(r.id,S._atCurrentSessionId);});
+  var rec=S._atData.find(function(r){return idEq(r.client_id,S._atCurrentSessionId);});
   if(!rec) return null;
   var marks={};
   getStudents().forEach(function(s){
     if(s.active===false) return;
-    var m=S._atMarks[s.id];
-    marks[s.id]=m?{s:m.s,min:m.s==='l'?(m.min||0):0}:{s:'',min:0};
+    var m=S._atMarks[s.client_id];
+    marks[s.client_id]=m?{status:m.status,minutes:m.status==='l'?(m.minutes||0):0}:{status:'',minutes:0};
   });
   rec.marks=marks;
-  rec.updatedAt=Date.now();
+  rec.updated_at=Date.now();
   // מסלול קריטי — כשל כאן עוצר את השרשרת, אחרת המשתמש ממשיך כאילו נשמר
   if(!_hrAtDiskSave(S._atData)) return null;
-  pendMark(PK_AT_SESS + rec.id);
+  pendMark(PK_AT_SESS + rec.client_id);
   return rec;
 }
 
@@ -329,15 +328,15 @@ async function atAutoSaveNow() {
 
 function atMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
-  if(S._atPendingRec && idEq(S._atCurrentSessionId,S._atPendingRec.id)){
+  if(S._atPendingRec && idEq(S._atCurrentSessionId,S._atPendingRec.client_id)){
     if(!S._atData) S._atData=[];
     // הבדיקה חוזרת כאן — זו נקודת היצירה, והפולינג יכול היה להביא סדר מתחרה מאז הפתיחה
     var _atDup=atFindLiveSession(S._atData,S._atPendingRec.session,
-                                 S._atPendingRec.date_iso,S._atPendingRec.id);
+                                 S._atPendingRec.session_date,S._atPendingRec.client_id);
     if(_atDup){
       atAdoptSession(_atDup);
       toast(MSG_SESSION_OPEN_ELSEWHERE, null, 'bad');
-    } else if(!S._atData.some(function(r){return r&&idEq(r.id,S._atPendingRec.id);})) {
+    } else if(!S._atData.some(function(r){return r&&idEq(r.client_id,S._atPendingRec.client_id);})) {
       S._atData.push(S._atPendingRec);
     }
     S._atPendingRec=null;
@@ -375,12 +374,12 @@ function atShowOverrideDialog(sid, student) {
 
 function atCancelStudentStatusFromReg(sid) {
   var students=getStudents();
-  var s=students.find(function(x){return String(x.id)===String(sid);});
+  var s=students.find(function(x){return String(x.client_id)===String(sid);});
   if(!s) return;
   // tombstone לכל היעדרות ולא ריקון — ריקון מוחזר מהענן במיזוג
-  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updatedAt=Date.now(); a.deletedBy=hrWho(); });
+  if(Array.isArray(s.absences)) s.absences.forEach(function(a){ a.deleted=true; a.updated_at=Date.now(); a.deleted_by=hrWho(); });
   s.present=true;
-  s.updatedAt=Date.now();
+  s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   delete S._atMarks[sid];
@@ -395,7 +394,7 @@ function atCancelStudentStatusFromReg(sid) {
 function atApplyMark(sid, code) {
   var s=String(sid);
   // איחור: min=null — השדה ריק עד שהמשתמש מזין ערך
-  S._atMarks[s]={s:code,min:code==='l'?null:0};
+  S._atMarks[s]={status:code,minutes:code==='l'?null:0};
   S._atCleared[s]=true; // מונע חזרת הסימון האוטומטי
   S._atPending[s]=true; // נשאר בראש הרשימה בינתיים
   atRenderStudents();
@@ -432,15 +431,15 @@ function atRenderStudents() {
 
   var unmarked=[], marked=[];
   active.forEach(function(s){
-    var cur=S._atMarks[s.id];
-    var isPending=!!S._atPending[s.id];
-    if(cur&&cur.s&&!isPending) marked.push(s);
+    var cur=S._atMarks[s.client_id];
+    var isPending=!!S._atPending[s.client_id];
+    if(cur&&cur.status&&!isPending) marked.push(s);
     else unmarked.push(s);
   });
 
   var bs='mark-btn';
   function mkBtn(sid,code,label){
-    var cur=(S._atMarks[sid]||{}).s;
+    var cur=(S._atMarks[sid]||{}).status;
     var isOn=(cur===code);
     var cls=bs+' '+atvCls(code)+(isOn?' mark-on':' mark-off');
     return '<button data-act="at-set-mark" data-id="'+esc(sid)+'" data-code="'+esc(code)+'" class="'+cls+'">'+label+'</button>';
@@ -451,24 +450,24 @@ function atRenderStudents() {
   }
 
   function renderRow(s, isMark) {
-    var marks=S._atMarks[s.id]||{};
-    var isLate=marks.s==='l';
-    var hasMark=!!(marks.s);
+    var marks=S._atMarks[s.client_id]||{};
+    var isLate=marks.status==='l';
+    var hasMark=!!(marks.status);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
     var autoHintHtml='';
     var am=atAutoMark(s);
-    if(am&&isMark&&!S._atCleared[s.id]){
+    if(am&&isMark&&!S._atCleared[s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
       if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
     }
-    var isPendingLate=isLate&&!!S._atPending[String(s.id)];
+    var isPendingLate=isLate&&!!S._atPending[String(s.client_id)];
     var lateFieldHtml=isLate?
       '<div class="late-field"'+(isPendingLate?' data-ks':'')+'>'+
-        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="at-min-'+s.id+'" placeholder="דק׳" '+
-        'data-inp="at-late" data-id="'+esc(s.id)+'" '+
+        '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.minutes!=null?marks.minutes:'')+'" id="at-min-'+s.client_id+'" placeholder="דק׳" '+
+        'data-inp="at-late" data-id="'+esc(s.client_id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="at-confirm-late" data-ksave data-id="'+esc(s.id)+'" class="late-ok-btn">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="at-confirm-late" data-ksave data-id="'+esc(s.client_id)+'" class="late-ok-btn">✓ אשר</button>':'')+
       '</div>':'';
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
@@ -476,14 +475,14 @@ function atRenderStudents() {
       '<div class="at-row-name">'+esc(s.name)+autoHintHtml+'</div>'+
       lateFieldHtml+
       '<div class="at-row-marks">'+
-        (hasMark?mkClearBtn(s.id):'')+
-        mkBtn(s.id,'p','✓')+
-        mkBtn(s.id,'l','איחור')+
-        mkBtn(s.id,'e','-')+
-        mkBtn(s.id,'x','x')+
-        mkBtn(s.id,'ap','א')+
-        mkBtn(s.id,'ak','ב')+
-        mkBtn(s.id,'a','ג')+
+        (hasMark?mkClearBtn(s.client_id):'')+
+        mkBtn(s.client_id,'p','✓')+
+        mkBtn(s.client_id,'l','איחור')+
+        mkBtn(s.client_id,'e','-')+
+        mkBtn(s.client_id,'x','x')+
+        mkBtn(s.client_id,'ap','א')+
+        mkBtn(s.client_id,'ak','ב')+
+        mkBtn(s.client_id,'a','ג')+
       '</div>'+
     '</div>';
   }
@@ -499,17 +498,17 @@ function atRenderStudents() {
 }
 
 function atSetMark(sid, code) {
-  var student=getStudents().find(function(s){return String(s.id)===String(sid);});
+  var student=getStudents().find(function(s){return String(s.client_id)===String(sid);});
   // אותו חישוב כמו בפתיחת הסדר — לפי תאריך ושעת הסדר ולא לפי השעון
   var curRec=S._atData&&S._atCurrentSessionId?
-    S._atData.find(function(r){return idEq(r.id,S._atCurrentSessionId);}):null;
-  var sessDateIso=curRec?curRec.date_iso:null;
+    S._atData.find(function(r){return idEq(r.client_id,S._atCurrentSessionId);}):null;
+  var sessDateIso=curRec?curRec.session_date:null;
   var _cfg=S._atCfg||atDefaultCfg();
   var sessObj=curRec?(_cfg.sessions||[]).find(function(s){return s.name===curRec.session;}):null;
-  var sessTime=sessObj&&sessObj.startTime?sessObj.startTime:'';
+  var sessTime=sessObj&&sessObj.start_time?sessObj.start_time:'';
   var autoM=student?atAutoMark(student,sessDateIso,sessTime):null;
   var cur=S._atMarks[sid];
-  if(autoM&&cur&&cur.s===autoM&&!S._atCleared[sid]){
+  if(autoM&&cur&&cur.status===autoM&&!S._atCleared[sid]){
     atShowOverrideDialog(sid,student);
     return;
   }
@@ -527,19 +526,19 @@ function atClearMark(sid) {
 function atSetLateMin(sid, val) {
   var n=parseInt(val)||0;
   if(n<0)n=0;if(n>30)n=30;
-  if(!S._atMarks[sid])S._atMarks[sid]={s:'l',min:n};
-  else S._atMarks[sid].min=n;
+  if(!S._atMarks[sid])S._atMarks[sid]={status:'l',minutes:n};
+  else S._atMarks[sid].minutes=n;
   atMarkDirty();
 }
 
 async function atCloseSession() {
   clearTimeout(S._atSaveTimer);
   // שמירה וסגירה רק מסמנות open=false — הרשומה כבר נשמרה לאורך הרישום
-  var _cRec=S._atData&&S._atData.find(function(r){return idEq(r.id,S._atCurrentSessionId);});
+  var _cRec=S._atData&&S._atData.find(function(r){return idEq(r.client_id,S._atCurrentSessionId);});
   if(_cRec){_cRec.open=false;}
   await atAutoSaveNow();
-  var rec=S._atData&&S._atData.find(function(r){return idEq(r.id,S._atCurrentSessionId);});
-  var msg=rec?('✅ '+rec.session+' — '+_hcFmt(rec.date_heb.hy,rec.date_heb.mi,rec.date_heb.day)+' נשמר'):'✅ הסדר נשמר';
+  var rec=S._atData&&S._atData.find(function(r){return idEq(r.client_id,S._atCurrentSessionId);});
+  var msg=rec?('✅ '+rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):'✅ הסדר נשמר';
   S._atCurrentSessionId=null;
   S._atMarks={};
   S._atPendingRec=null;

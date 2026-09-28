@@ -8,7 +8,8 @@ import { MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_EXPORT_FAIL, MSG_EXPOR
          MSG_ROW_DELETED } from '../constants.js';
 import { HE, atvCls, getStudents, hrMarks, hrPdfFont, hrSortStudents,
          hrWho } from '../domain.js';
-import { _hcBuild, _hcFmt, _hcH, _hcMN, _hcYL, hrHebYearWin } from '../domain.hebdate.js';
+import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
+         hrSessHebFmt } from '../domain.hebdate.js';
 import { atLoadData, atSaveData, hrCachedArr } from '../domain.sessions.js';
 import { _atPullSessions, atRenderTodaySessions, atSortedSessions,
          atSummaryHtml } from './attend.js';
@@ -31,7 +32,7 @@ function _atPaintArchive(el, records, warn) {
     el.innerHTML=warnHtml+'<div class="empty-note">אין רשומות</div>';return;
   }
   var students=getStudents();
-  function nameById(id){var s=students.find(function(x){return String(x.id)===String(id);});return s?s.name:'?';}
+  function nameById(id){var s=students.find(function(x){return String(x.client_id)===String(id);});return s?s.name:'?';}
   var ARC_LBL={p:'נוכח',l:'איחור',e:'חיסור',x:'היעדרות',ap:'אישור',ak:'בבית',a:'מנוחה'};
 
   var todG=new Date();
@@ -41,9 +42,8 @@ function _atPaintArchive(el, records, warn) {
 
   var byYear={};
   records.forEach(function(rec){
-    var hd=rec.date_heb;
-    if(!hd||!hd.hy){var p=rec.date_iso.split('-');hd=_hcH(new Date(+p[0],+p[1]-1,+p[2]));}
-    var hy=hd.hy,mi=hd.mi,iso=rec.date_iso;
+    var hd=hrSessHeb(rec);
+    var hy=hd.hy,mi=hd.mi,iso=rec.session_date;
     if(!byYear[hy]) byYear[hy]={};
     if(!byYear[hy][mi]) byYear[hy][mi]={};
     if(!byYear[hy][mi][iso]) byYear[hy][mi][iso]=[];
@@ -101,26 +101,26 @@ function _atPaintArchive(el, records, warn) {
         entries.forEach(function(entry){
           var rec=entry.rec;
           var cnts={};
-          Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+          Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
           var summaryHtml=atSummaryHtml(cnts);
           var sId=uid();
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
           html+='<div class="arc-sess-summary">'+summaryHtml+'</div>';
-          html+='<button data-act="at-del-session" data-id="'+esc(rec.id)+'" class="arc-sess-del">✕</button>';
+          html+='<button data-act="at-del-session" data-id="'+esc(rec.client_id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var _mk2=hrMarks(rec);
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
-            var _st2=students.find(function(x){return String(x.id)===String(sid2);});
+            var _st2=students.find(function(x){return String(x.client_id)===String(sid2);});
             // תלמיד שנמחק אחרי הסדר נשאר בשורה — הסדר שנרשם הוא עובדה, והיעדרו נקרא כמי שלא סומן
             return _st2||{id:sid2,name:nameById(sid2),cls:''};
           })).map(function(_s2){
-            var sid2=String(_s2.id),m2=_mk2[sid2]||{};
+            var sid2=String(_s2.client_id),m2=_mk2[sid2]||{};
             var sn=_s2.name;
-            var lbl=m2.s==='l'?('איחור — '+(m2.min||0)+' ד׳'):(ARC_LBL[m2.s]||'לא סומן');
-            var mkc=atvCls(m2.s);
+            var lbl=m2.status==='l'?('איחור — '+(m2.minutes||0)+' ד׳'):(ARC_LBL[m2.status]||'לא סומן');
+            var mkc=atvCls(m2.status);
             return '<div class="arc-mark-row">'+
               '<span>'+esc(sn)+'</span><span class="'+mkc+' arc-mark">'+esc(lbl)+'</span></div>';
           });
@@ -143,8 +143,8 @@ function atDeleteSession(id) {
 
 async function atDeleteSessionConfirmed(id) {
   var data=await atLoadData();
-  var _dRec=data.find(function(r){return idEq(r.id,id);});
-  if(_dRec){_dRec.deleted=true;_dRec.updatedAt=Date.now();_dRec.deletedBy=hrWho();}
+  var _dRec=data.find(function(r){return idEq(r.client_id,id);});
+  if(_dRec){_dRec.deleted=true;_dRec.updated_at=Date.now();_dRec.deleted_by=hrWho();}
   await atSaveData(data);
   atRenderArchive();
   atRenderTodaySessions();
@@ -176,10 +176,10 @@ async function atExportExcel(fromIso,toIso) {
     var students=getStudents();
     if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
-    if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
-    if(toIso)   data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
+    if(toIso)   data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date);});
     // SpreadsheetML (Excel 2003 XML) עם ss:RightToLeft=1
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
@@ -188,13 +188,12 @@ async function atExportExcel(fromIso,toIso) {
     var HDR=['תאריך','סדר','שם תלמיד','סטאטוס','דקות איחור','ממלא'];
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
-      var hd=rec.date_heb;
-      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
+      var dLabel=hrSessHebFmt(rec);
       Object.entries(hrMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
-        var sn=(students.find(function(x){return String(x.id)===String(sid);})||{}).name||sid;
-        var lbl=m.s==='p'?'נוכח':m.s==='l'?'איחור':m.s==='e'?'חיסור':m.s==='x'?'היעדרות':m.s==='ap'?'אישור':m.s==='ak'?'בבית':m.s==='a'?'מנוחה':'';
-        var mins=m.s==='l'?(m.min||0):'';
+        var sn=(students.find(function(x){return String(x.client_id)===String(sid);})||{}).name||sid;
+        var lbl=m.status==='p'?'נוכח':m.status==='l'?'איחור':m.status==='e'?'חיסור':m.status==='x'?'היעדרות':m.status==='ap'?'אישור':m.status==='ak'?'בבית':m.status==='a'?'מנוחה':'';
+        var mins=m.status==='l'?(m.minutes||0):'';
         xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(lbl)+(mins!==''?numCell(mins):cell(''))+cell(rec.filled_by_name||'')+'</Row>';
       });
     });
@@ -228,10 +227,10 @@ async function atExportPdf(fromIso,toIso) {
     var students=getStudents();
     if(!data||!data.length){toast(MSG_NO_EXPORT_DATA);return;}
     data=data.filter(function(r){return !(r&&r.deleted);});
-    if(fromIso) data=data.filter(function(r){return r.date_iso>=fromIso;});
-    if(toIso) data=data.filter(function(r){return r.date_iso<=toIso;});
+    if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
+    if(toIso) data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE.compare(a.date_iso,b.date_iso);});
+    var sorted=data.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date);});
     var NB=' ';
     var fontName=hrPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
@@ -242,11 +241,10 @@ async function atExportPdf(fromIso,toIso) {
     ];
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
-      var hd=rec.date_heb;
-      var dLabel=hd?_hcFmt(hd.hy,hd.mi,hd.day):rec.date_iso;
-      var p=Object.values(hrMarks(rec)).filter(function(m){return m.s==='p';}).length;
-      var ab=Object.values(hrMarks(rec)).filter(function(m){return m.s==='e'||m.s==='x';}).length;
-      var l=Object.values(hrMarks(rec)).filter(function(m){return m.s==='l';}).length;
+      var dLabel=hrSessHebFmt(rec);
+      var p=Object.values(hrMarks(rec)).filter(function(m){return m.status==='p';}).length;
+      var ab=Object.values(hrMarks(rec)).filter(function(m){return m.status==='e'||m.status==='x';}).length;
+      var l=Object.values(hrMarks(rec)).filter(function(m){return m.status==='l';}).length;
       body.push([cell(i+1),cell(dLabel),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
     var contentArr=[

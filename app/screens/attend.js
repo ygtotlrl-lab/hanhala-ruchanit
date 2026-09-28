@@ -5,7 +5,7 @@ import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
 import { MSG_ABSENCE_ALERT, PK_AT_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, _hrAtDiskSave, _hrRecTs, _hrSessionsMerge, atvCls, getStudents, hrCfgGet,
+import { HE, _hrAtDiskSave, hrRecTs, _hrSessionsMerge, atvCls, getStudents, hrCfgGet,
          hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrMarks, hrSetPending,
          hrWriteFail } from '../domain.js';
 import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
@@ -51,7 +51,7 @@ async function _atPullTreats() {
   var r = null; try { r = await hrCfgGet('attend_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   // מפתח שטרם נכתב אינו דורס את הדיסק — [] מעליו היה מוחק טיפולים שנרשמו אופליין וטרם עלו
-  if (Array.isArray(r.value) && !hrSetPending('attend_treats')) { S._atTreats = r.value; lsSetArray('hr_attend_treats', r.value, _hrRecTs); }
+  if (Array.isArray(r.value) && !hrSetPending('attend_treats')) { S._atTreats = r.value; lsSetArray('hr_attend_treats', r.value, hrRecTs); }
   else if (!Array.isArray(S._atTreats)) S._atTreats = hrCachedArr('_atTreats', 'hr_attend_treats') || [];
   return true;
 }
@@ -105,13 +105,13 @@ async function atSaveTreats(data) {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
   var _ep = ctxEpoch();
   var _t0=Date.now();
-  lsSetArray('hr_attend_treats', data, _hrRecTs);
+  lsSetArray('hr_attend_treats', data, hrRecTs);
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — כתיבת המערך כולו מוחקת טיפול שמדריך אחר רשם במקביל
     var _tRemote=null; try { _tRemote=await hrCfgGet('attend_treats'); } catch(eR){}
     if (Array.isArray(_tRemote)) {
       data=_hrSessionsMerge(_tRemote, data, 'hr_attend_treats');
-      lsSetArray('hr_attend_treats', data, _hrRecTs);
+      lsSetArray('hr_attend_treats', data, hrRecTs);
     }
     if (!ctxStale(_ep)) await hrCfgSet('attend_treats',data);
   } catch (e) { hrWriteFail('atSaveTreats', e); }
@@ -122,7 +122,7 @@ async function atSaveTreats(data) {
 function atSortedSessions(cfg) {
   if(!cfg) cfg=S._atCfg||atDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.startTime||'', b.startTime||'');
+    return HE.compare(a.start_time||'', b.start_time||'');
   });
 }
 
@@ -137,7 +137,7 @@ function atRenderTodaySessions() {
   var cfg=S._atCfg||atDefaultCfg();
   var sessOrder={};
   atSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.date_iso===filterIso;})
+  var daySess=data.filter(function(r){return !r.deleted&&r.session_date===filterIso;})
     .slice().sort(function(a,b){
       var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
       var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
@@ -150,11 +150,11 @@ function atRenderTodaySessions() {
     '<div class="reason-list">';
   daySess.forEach(function(rec){
     var cnts={};
-    Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     var summaryHtml=atSummaryHtml(cnts);
-    html+='<div data-act="at-edit-session" data-id="'+esc(rec.id)+'" class="day-sess-row">'+
+    html+='<div data-act="at-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
-      pendTag(PK_AT_SESS+rec.id)+
+      pendTag(PK_AT_SESS+rec.client_id)+
       '<div class="day-sess-summary">'+summaryHtml+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
@@ -180,14 +180,14 @@ function atCheckAlert() {
 
   var alerts=[];
   var stats={};
-  students.forEach(function(s){stats[s.id]={name:s.name,absent:0,lateMin:0};});
+  students.forEach(function(s){stats[s.client_id]={name:s.name,absent:0,lateMin:0};});
   data.forEach(function(rec){
-    if(new Date(rec.date_iso)<monthBeg) return;
+    if(new Date(rec.session_date)<monthBeg) return;
     Object.entries(hrMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;
-      if(m.s==='e'||m.s==='x') stats[sid].absent++;
-      if(m.s==='l') stats[sid].lateMin+=m.min||0;
+      if(m.status==='e'||m.status==='x') stats[sid].absent++;
+      if(m.status==='l') stats[sid].lateMin+=m.minutes||0;
     });
   });
   Object.values(stats).forEach(function(s){

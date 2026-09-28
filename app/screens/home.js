@@ -55,15 +55,15 @@ async function refreshDashStats() {
   // סדר שנמחק נשאר במערך כסימון — ולכן מסוננים המחוקים.
   var atData = ((typeof atLoadData === 'function') ? await atLoadData() : [])
     .filter(function(r){ return !(r && r.deleted); });
-  var todaySess = atData.filter(function(r){ return r.date_iso === todayIso; });
+  var todaySess = atData.filter(function(r){ return r.session_date === todayIso; });
   var sessCount = todaySess.length;
 
   // חיסורים — e ו-x; נוכחות — p ו-l; כל סדר נספר בנפרד
   var absCount = 0, presMarks = 0;
   todaySess.forEach(function(rec){
     Object.values(hrMarks(rec)).forEach(function(m){
-      if(m.s === 'e' || m.s === 'x') absCount++;
-      if(m.s === 'p' || m.s === 'l') presMarks++;
+      if(m.status === 'e' || m.status === 'x') absCount++;
+      if(m.status === 'p' || m.status === 'l') presMarks++;
     });
   });
 

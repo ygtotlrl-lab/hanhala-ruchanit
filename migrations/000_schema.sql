@@ -159,8 +159,8 @@ select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.j
 create table if not exists public.hr_marks (
   client_id text not null,
   session_client_id text not null,
-  student_id text not null,
-  date_iso text not null,
+  student_client_id text not null,
+  session_date date not null,
   status text,
   minutes smallint,
   deleted boolean not null default false,
@@ -173,9 +173,8 @@ create table if not exists public.hr_marks (
 create table if not exists public.hr_sessions (
   client_id text not null,
   session text not null,
-  date_iso text not null,
-  date_heb jsonb,
-  filled_by smallint,
+  session_date date not null,
+  filled_by_client_id text,
   filled_by_name text,
   created_at text,
   created_by text,
@@ -202,8 +201,8 @@ create table if not exists public.hr_settings (
 create table if not exists public.hr_sleep_marks (
   client_id text not null,
   session_client_id text not null,
-  student_id text not null,
-  date_iso text not null,
+  student_client_id text not null,
+  session_date date not null,
   status text,
   minutes smallint,
   note text,
@@ -217,9 +216,8 @@ create table if not exists public.hr_sleep_marks (
 create table if not exists public.hr_sleep_sessions (
   client_id text not null,
   session text not null,
-  date_iso text not null,
-  date_heb jsonb,
-  filled_by smallint,
+  session_date date not null,
+  filled_by_client_id text,
   filled_by_name text,
   created_at text,
   created_by text,
@@ -233,7 +231,6 @@ create table if not exists public.hr_sleep_sessions (
 
 create table if not exists public.hr_students_rows (
   client_id text not null,
-  student_id text,
   updated_at bigint not null,
   deleted boolean not null default false,
   data jsonb not null,
@@ -257,19 +254,19 @@ create table if not exists public.hr_users (
   constraint hr_users_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'junior'::text])))
 );
 
-create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (date_iso DESC);
+create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (session_date DESC);
 create index if not exists hr_marks_session_idx ON public.hr_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_id);
-create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_id, date_iso DESC);
-create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (date_iso DESC);
-create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, date_iso DESC);
+create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (session_date DESC);
+create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sessions_updated_idx ON public.hr_sessions USING btree (updated_at DESC);
-create index if not exists hr_sleep_marks_date_idx ON public.hr_sleep_marks USING btree (date_iso DESC);
+create index if not exists hr_sleep_marks_date_idx ON public.hr_sleep_marks USING btree (session_date DESC);
 create index if not exists hr_sleep_marks_session_idx ON public.hr_sleep_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_id);
-create index if not exists hr_sleep_marks_student_date_idx ON public.hr_sleep_marks USING btree (student_id, date_iso DESC);
-create index if not exists hr_sleep_sessions_date_idx ON public.hr_sleep_sessions USING btree (date_iso DESC);
-create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep_sessions USING btree (session, date_iso DESC);
+create UNIQUE index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_sleep_marks_student_date_idx ON public.hr_sleep_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_sleep_sessions_date_idx ON public.hr_sleep_sessions USING btree (session_date DESC);
+create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sleep_sessions_updated_idx ON public.hr_sleep_sessions USING btree (updated_at DESC);
 create index if not exists hr_students_rows_updated_idx ON public.hr_students_rows USING btree (updated_at DESC);
 

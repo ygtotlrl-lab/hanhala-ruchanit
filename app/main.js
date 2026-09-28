@@ -17,11 +17,11 @@ import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_RE
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrPushedFor, _hrRecId, _hrRecTs,
+import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
          _hrVerify, _hrVerifyRows, canAccess, hrCloudGet, hrHwInWindow, hrLocalRecs,
          hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushDirty, hrPushToCloud,
          hrSendRecs, hrSetDirtyRows, hrSetSend, hrSyncNow, hrWriteFail,
-         uiShown } from './domain.js';
+         hrRecTs, uiShown } from './domain.js';
 import { _hcBase, _hcFmt, _hcG, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { atRenderTodaySessions } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
@@ -82,7 +82,7 @@ var MIRROR_CFG = {
            { t: 'hr_sleep_marks', via: 'hrSendRecs', adds: 'parent' },
            { t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
-  ts:     function (r) { return _hrRecTs(r); },
+  ts:     function (r) { return hrRecTs(r); },
   clean:  function (t, rows) { return t === authUsersTable() ? usersSanitize(rows) : rows; },
   fail:   function (where, e) { hrWriteFail(where, e); },
 };
@@ -113,20 +113,20 @@ var LS_CFG = {
   // לכל מפתח עֵד דחיפה משלו — החותמת הגלובלית מתקדמת גם במשיכה.
   // הסימונים יורדים עם הסדר שלהם (parent) — סדר בלי סימוניו מוצג ריק, ודחיפתו נקראת בענן כמחיקתם.
   oldRecords: [
-    { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: _hrRecTs,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
-    { key: mirrorKey('hr_marks'), label: 'סימוני נוכחות', ts: _hrRecTs,
+    { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: hrRecTs,
+      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
+    { key: mirrorKey('hr_marks'), label: 'סימוני נוכחות', ts: hrRecTs,
       parent: mirrorKey('hr_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_marks').select('client_id,updated_at'); }) },
-    { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: _hrRecTs,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
-    { key: mirrorKey('hr_sleep_marks'), label: 'סימוני שינה', ts: _hrRecTs,
+      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_marks').select('client_id,updated_at'); }) },
+    { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: hrRecTs,
+      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
+    { key: mirrorKey('hr_sleep_marks'), label: 'סימוני שינה', ts: hrRecTs,
       parent: mirrorKey('hr_sleep_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_sleep_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_sleep_marks').select('client_id,updated_at'); }) },
-    { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: _hrRecTs,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_attend_treats'),   verify: _hrVerify('hr_attend_treats') },
-    { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: _hrRecTs,
-      idOf: _hrRecId, syncedThrough: _hrPushedFor('hr_sleep_treats'),    verify: _hrVerify('hr_sleep_treats') }
+      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_sleep_marks').select('client_id,updated_at'); }) },
+    { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: hrRecTs,
+      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_attend_treats'),   verify: _hrVerify('hr_attend_treats') },
+    { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: hrRecTs,
+      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_sleep_treats'),    verify: _hrVerify('hr_sleep_treats') }
   ],
   // טבלה שגדלה ואינה בפינוי ממלאת אחסון של origin משותף — לכן כאן רק טבלה קבועה בגודלה, עם נימוקה.
   fixedSize: [
@@ -227,7 +227,7 @@ var PUSH_CFG = {
   key:    function (t, row) {
     if (t === KV_TABLE) return row ? PK_SET + row.key : null;
     var c = HR_ROWS_KINDS[HR_ROWS_READ_KEYS[t]];
-    return (c && row && row.id != null) ? (c.pk + row.id) : null;
+    return (c && row && row.client_id != null) ? (c.pk + row.client_id) : null;
   },
   send:   function (t, rows) { return t === KV_TABLE ? hrSetSend(rows) : hrSendRecs(t, rows); },
   // הסימונים נדחפים בתוך הסדר ו-hrSendRecs נכשלת אם אחד מהם נכשל — לכן עֵד האב הוא גם עֵד הבן.
@@ -253,10 +253,10 @@ var HW_CFG = {
     key: mirrorKey('hr_sessions'),
     label: 'סדרי נוכחות מחוץ לחלון',
     inWindow: function (r) { return hrHwInWindow(r); },
-    idOf: _hrRecId,
-    ts: _hrRecTs,
+    idOf: _hrRowId,
+    ts: hrRecTs,
     isPending: function (r) {
-      try { return !!(r && r.id != null && pendHas(PK_AT_SESS + r.id)); }
+      try { return !!(r && r.client_id != null && pendHas(PK_AT_SESS + r.client_id)); }
       catch (e) { return true; }
     },
     fetch: function () {

@@ -5,7 +5,7 @@ import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc } from '../../core/ui.js';
 import { PK_SL_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, _hrCleanCfg, _hrRecTs, _hrSessionsMerge, _hrSlDiskSave, atvCls, hrCfgGet,
+import { HE, _hrCleanCfg, hrRecTs, _hrSessionsMerge, _hrSlDiskSave, atvCls, hrCfgGet,
          hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrDefaultCfg, hrMarks,
          hrMirrorRecs, hrSetPending, hrWriteFail } from '../domain.js';
 import { _hcH } from '../domain.hebdate.js';
@@ -48,7 +48,7 @@ async function _hrPullTreats() {
   var r = null; try { r = await hrCfgGet('sleep_treats', true); } catch (e) {}
   if (!r || !r.ok) return false;
   // מפתח שטרם נכתב אינו דורס את הדיסק — [] מעליו היה מוחק טיפולים שנרשמו אופליין וטרם עלו
-  if (Array.isArray(r.value) && !hrSetPending('sleep_treats')) { S._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, _hrRecTs); }
+  if (Array.isArray(r.value) && !hrSetPending('sleep_treats')) { S._hrTreats = r.value; lsSetArray('hr_sleep_treats', r.value, hrRecTs); }
   else if (!Array.isArray(S._hrTreats)) S._hrTreats = hrCachedArr('_hrTreats', 'hr_sleep_treats') || [];
   return true;
 }
@@ -87,13 +87,13 @@ async function hrSaveTreats(data) {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
   var _ep = ctxEpoch();
   var _t0=Date.now();
-  lsSetArray('hr_sleep_treats', data, _hrRecTs);
+  lsSetArray('hr_sleep_treats', data, hrRecTs);
   try {
     // מיזוג ברמת רשומה ולא דריסה — דריסה מוחקת טיפול שנרשם במכשיר אחר
     var _tRemoteS=null; try { _tRemoteS=await hrCfgGet('sleep_treats'); } catch(eR){}
     if (Array.isArray(_tRemoteS)) {
       data=_hrSessionsMerge(_tRemoteS, data, 'hr_sleep_treats');
-      lsSetArray('hr_sleep_treats', data, _hrRecTs);
+      lsSetArray('hr_sleep_treats', data, hrRecTs);
     }
     if (!ctxStale(_ep)) await hrCfgSet('sleep_treats',data);
   } catch (e) { hrWriteFail('hrSaveTreats', e); }
@@ -104,7 +104,7 @@ async function hrSaveTreats(data) {
 function hrSortedSessions(cfg) {
   if(!cfg) cfg=S._hrCfg||hrDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.startTime||'', b.startTime||'');
+    return HE.compare(a.start_time||'', b.start_time||'');
   });
 }
 
@@ -120,7 +120,7 @@ function hrRenderTodaySessions() {
   var cfg=S._hrCfg||hrDefaultCfg();
   var sessOrder={};
   hrSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.date_iso===filterIso;})
+  var daySess=data.filter(function(r){return !r.deleted&&r.session_date===filterIso;})
     .slice().sort(function(a,b){
       var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
       var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
@@ -133,11 +133,11 @@ function hrRenderTodaySessions() {
     '<div class="reason-list">';
   daySess.forEach(function(rec){
     var cnts={};
-    Object.values(hrMarks(rec)).forEach(function(m){if(m.s)cnts[m.s]=(cnts[m.s]||0)+1;});
+    Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     var summaryHtml=hrSummaryHtml(cnts);
-    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.id)+'" class="day-sess-row">'+
+    html+='<div data-act="sl-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
-      pendTag(PK_SL_SESS+rec.id)+
+      pendTag(PK_SL_SESS+rec.client_id)+
       '<div class="day-sess-summary">'+summaryHtml+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
