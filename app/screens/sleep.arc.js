@@ -115,7 +115,7 @@ function _hrPaintArchive(el, records, warn) {
           var rows=hrSortStudents(Object.keys(_mk2).map(function(sid2){
             var _st2=students.find(function(x){return String(x.client_id)===String(sid2);});
             // תלמיד שנמחק אחרי הסדר נשאר בשורה — הסדר שנרשם הוא עובדה, והיעדרו נקרא כמי שלא סומן
-            return _st2||{id:sid2,name:nameById(sid2),cls:''};
+            return _st2||{client_id:sid2,name:nameById(sid2),cls:''};
           })).map(function(_s2){
             var sid2=String(_s2.client_id),m2=_mk2[sid2]||{};
             var sn=_s2.name;
