@@ -2,7 +2,7 @@
 import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush } from '../../core/sync.js';
 import { isAdmin } from '../../core/auth.js';
-import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
+import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { hebDate, hebGematria, hebMonthNames,
          hebYearLabelFull } from '../../core/hebrew.js';
 import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE,
@@ -37,7 +37,7 @@ function screenStudentsHTML() {
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div class="st-add-row">
-<div class="sw" id="sw-inner" data-menu="search"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." data-inp="search-st" autocomplete="off"><div id="search-dropdown"></div></div>
+<div class="sw" id="sw-inner">${comboHTML('student', { id: 'st-search', qid: 'search-st', label: 'חיפוש תלמיד', placeholder: 'חיפוש תלמיד...' })}</div>
 </div>
 
 <!-- Summary Bar -->
@@ -128,51 +128,22 @@ function saveStudentStatus(type) {
 }
 
 // ── חיפוש תלמידים ──
-function onSearchInput() {
-  renderStudents();
-  updateSearchDropdown();
-}
-
-function updateSearchDropdown() {
-  var searchEl = document.getElementById('search-st');
-  var dd = document.getElementById('search-dropdown');
-  if (!dd || !searchEl) return;
-  var q = searchEl.value.trim();
-  if (!q) { dd.classList.remove('open'); return; }
-  var ql = q.toLowerCase();
-  var allStudents = getStudents();
-  var matches = allStudents.filter(function(s) {
-    return s.name.toLowerCase().indexOf(ql) >= 0;
-  }).slice(0, 8);
-  if (!matches.length) { dd.classList.remove('open'); return; }
-  // בורחים ל-HTML לפני בניית הביטוי — אחרת ההדגשה אינה מוצאת שם שעבר בריחה.
-  var escaped = esc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  var re = new RegExp('(' + escaped + ')', 'gi');
-  dd.innerHTML = matches.map(function(s) {
-    var clsLabel = CLS_NAME[s.cls] || s.cls || '';
-    var nameHl = esc(s.name).replace(re, '<mark>$1</mark>');
-    return '<div class="sd-item" tabindex="0" data-act="st-pick" data-id="' + esc(s.id) + '">' +
-      '<span class="sd-name">' + nameHl + '</span>' +
-      '<span class="sd-cls">' + esc(clsLabel) + '</span>' +
-      '</div>';
-  }).join('');
-  dd.classList.add('open');
-}
-
-function selectSearchStudent(sid) {
-  var searchEl = document.getElementById('search-st');
-  var dd = document.getElementById('search-dropdown');
-  var allStudents = getStudents();
-  var s = allStudents.find(function(x) { return idEq(x.id, sid); });
-  if (!s) return;
-  if (searchEl) searchEl.value = s.name;
-  if (dd) dd.classList.remove('open');
-  renderStudents();
-  setTimeout(function() {
-    var row = document.getElementById('st-row-' + sid);
-    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 80);
-}
+// החיפוש מסנן גם את הטבלה, והבחירה מנווטת לשורת התלמיד.
+comboDef('student', {
+  hl: true, max: 8, focusOpen: false,
+  items: function () {
+    return getStudents().map(function (s) { return { id: s.id, label: s.name, sub: CLS_NAME[s.cls] || s.cls || '' }; });
+  },
+  query: function () { renderStudents(); },
+  pick: function (it) {
+    if (!it) return;
+    renderStudents();
+    setTimeout(function () {
+      var row = document.getElementById('st-row-' + it.id);
+      if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+  }
+});
 
 var CLS_NAME={a:"שיעור א'",b:"שיעור ב'",g:"שיעור ג'"};
 
@@ -826,7 +797,7 @@ function printStudents() {
 }
 
 export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
+         importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         selectSearchStudent, setStudentActive, setStudentInactive };
+         setStudentActive, setStudentInactive };

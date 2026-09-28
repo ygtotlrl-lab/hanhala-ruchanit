@@ -7,8 +7,9 @@ import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, isAdmin, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
-import { actRun, closeAsk, closeModal, esc, ksKey, modalBackdrop, modalEsc, openModal,
-         swApply, swHideUpdate, toast } from '../core/ui.js';
+import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
+         comboPick, esc, ksKey, modalBackdrop, modalEsc, openModal, swApply, swHideUpdate,
+         toast } from '../core/ui.js';
 import { hebDayLabel } from '../core/hebrew.js';
 import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
@@ -31,11 +32,10 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          toggleUserActive } from './screens/settings.js';
 import { hrRenderTodaySessions } from './screens/sleep.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         importStudentsFromFile, onSearchInput, openAttendanceEdit, openManageListDlg,
+         importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         selectSearchStudent, setStudentActive,
-         setStudentInactive } from './screens/students.js';
+         setStudentActive, setStudentInactive } from './screens/students.js';
 import { atDeleteSession, atExportConfirm, atRenderArchive,
          atShowExportDialog } from './screens/attend.arc.js';
 import { atCancelStudentStatusFromReg, atClearMark, atCloseSession, atConfirmLate,
@@ -533,7 +533,7 @@ var DOM_ACTIONS = {
   'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
   'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
-  'st-pick':     function (el) { selectSearchStudent(el.getAttribute('data-id')); },
+  'combo-pick':  function (el) { return comboPick(el); },
   'st-activate': function (el) { setStudentActive(el.getAttribute('data-id')); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
@@ -671,8 +671,7 @@ document.addEventListener('click', function (ev) {
   var inMenu = ev.target && ev.target.closest ? ev.target.closest('[data-menu]') : null;
   var menu = inMenu ? inMenu.getAttribute('data-menu') : '';
   if (menu !== 'user') closeUserMenu();
-  var dd = document.getElementById('search-dropdown');
-  if (dd && menu !== 'search') dd.classList.remove('open');
+  comboOutside(ev);
   if (modalBackdrop(ev)) return;
   var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
   if (!el) return;
@@ -684,15 +683,15 @@ document.addEventListener('click', function (ev) {
 
 // שמירה בשדה עריכה קודמת לסגירת המודאל — אחרת Escape בשדה שבתוך מודאל היה סוגר אותו במקום לבטל את השדה.
 document.addEventListener('keydown', function (e) {
-  if (ksKey(e)) return;
+  if (comboKey(e) || ksKey(e)) return;
   modalEsc(e);
 });
 
 document.addEventListener('input', function (e) {
+  if (comboInput(e)) return;
   var el = e.target; if (!el || !el.dataset) return;
   var k = el.dataset.inp;
-  if (k === 'search-st') onSearchInput();
-  else if (k === 'at-late') atSetLateMin(el.dataset.id, el.value);
+  if (k === 'at-late') atSetLateMin(el.dataset.id, el.value);
   else if (k === 'sl-late') hrSetLateMin(el.dataset.id, el.value);
   else if (k === 'sl-note') hrSetNote(el.dataset.id, el.value);
 });

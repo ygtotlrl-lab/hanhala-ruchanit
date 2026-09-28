@@ -142,7 +142,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   .btn.out:hover{background:var(--card-2)}
 }
 @media (hover:hover){
-  .sd-item:hover{background:var(--card-2);outline:none}
+  .combo-opt:hover{background:var(--card-2)}
 }
 @media (hover:hover){
   #ask .sheet-ft button:hover{background:var(--card-2)}
@@ -165,17 +165,18 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .sw{position:relative;width:100%}
 /* הרוחב נמדד בזמן ריצה ונכתב ב-setProperty, והכלל הזה קורא אותו; בלי מדידה נשאר רוחב ההורה */
 #sw-inner{--sw-w:100%;width:var(--sw-w)}
-#search-dropdown{position:absolute;top:calc(100% + 6px);right:0;left:0;background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);z-index:var(--z-3);max-height:240px;overflow-y:auto;display:none;animation:ddFade var(--dur-1) ease}
-#search-dropdown.open{display:block}
+/* ── רשימה נפתחת עם חיפוש ── */
+.combo-list{top:calc(100% + 6px);background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);max-height:240px;animation:ddFade var(--dur-1) ease}
 @keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-.sd-item{padding:var(--sp-4) var(--sp-6);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background var(--dur-1)}
-.sd-item:last-child{border-bottom:none}
-.sd-item:first-child{border-radius:var(--r-5) var(--r-5) 0 0}
-.sd-item:last-child:first-child{border-radius:var(--r-5)}
-.sd-item:focus-visible{background:var(--card-2);outline:none}
-.sd-name{font-weight:600;font-size:var(--fs-3);color:var(--text)}
-.sd-name mark{background:var(--warn-soft);border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
-.sd-cls{background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
+.combo-opt{padding:var(--sp-4) var(--sp-6);gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background var(--dur-1)}
+.combo-opt:last-child{border-bottom:none}
+.combo-opt.is-on{background:var(--card-2)}
+.combo-opt:active{background:var(--card-2)}
+.combo-opt:focus-visible{background:var(--card-2);outline:none}
+.combo-empty{padding:var(--sp-4) var(--sp-6);font-size:var(--fs-3);color:var(--text-3)}
+.combo-lbl{font-weight:600;font-size:var(--fs-3);color:var(--text)}
+.combo-lbl mark{background:var(--warn-soft);border-radius:var(--r-1);padding:0 var(--sp-1);color:inherit;font-weight:700}
+.combo-sub{background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);font-size:var(--fs-2);white-space:nowrap;flex-shrink:0}
 .sw input{width:100%;padding:var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-7);background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-6);color:var(--text);font-family:Heebo;font-size:var(--fs-3);transition:border-color var(--dur-3),box-shadow var(--dur-3)}
 .sw input::placeholder{color:var(--text-3)}
 .sw input:focus{outline:none;border-color:var(--brand-ink);box-shadow:0 0 0 3px var(--shadow-brand-soft)}
