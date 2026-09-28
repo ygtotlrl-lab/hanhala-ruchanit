@@ -22,7 +22,7 @@ import { hrApplyPerms, hrCfgGet, hrSetPending, sortUsersByOrder,
 function screenLoginHTML() {
   return `
 <div id="auth-screen">
-  <div class="auth-box ksave">
+  <div class="auth-box" data-ks>
     <div class="auth-logo"><img src="icons/icon-512.092edf48.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>

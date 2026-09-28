@@ -58,7 +58,7 @@ function screenSettingsHTML() {
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
-      <div class="ss ksave">
+      <div class="ss" data-ks>
         <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
         <div class="reason-cols">
           <div>
@@ -86,7 +86,7 @@ function screenSettingsHTML() {
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>✅ הגדרות סדרים</span></div>
-      <div class="ss ksave">
+      <div class="ss" data-ks>
         <div class="set-stack">
           <!-- סדרים -->
           <div class="cfg-card">
@@ -108,7 +108,7 @@ function screenSettingsHTML() {
     </div>
     <div id="settings-sleep" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>🌙 הגדרות שינה</span></div>
-      <div class="ss ksave">
+      <div class="ss" data-ks>
         <div class="set-box">
           <div class="panel-head">🩺 סוגי טיפולים</div>
           <div id="sl-cfg-treats" class="sess-list"></div>
@@ -151,7 +151,7 @@ function screenSettingsHTML() {
         <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" data-act="user-add-open">➕ הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss ksave" id="ss-perms">
+      <div class="ss" data-ks id="ss-perms">
         <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
         <div class="table-scroll">
           <table class="pt">

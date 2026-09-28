@@ -469,7 +469,7 @@ function hrRenderStudents() {
     }
     var isPendingLate=isLate&&!!S._hrPending[String(s.id)];
     var lateFieldHtml=isLate?
-      '<div class="late-field'+(isPendingLate?' ksave':'')+'">'+
+      '<div class="late-field"'+(isPendingLate?' data-ks':'')+'>'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.min!=null?marks.min:'')+'" id="sl-min-'+s.id+'" placeholder="דק׳" '+
         'data-inp="sl-late" data-id="'+esc(s.id)+'" '+
         ' class="late-input">'+

@@ -130,7 +130,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     html+='<div class="sup-card-body hidden">';
     html+='<div class="treat-add">';
     html+='<div class="panel-head-sm">➕ הוסף טיפול</div>';
-    html+='<div class="chip-row ksave">';
+    html+='<div class="chip-row" data-ks>';
     var hrCfg=S._hrCfg||hrDefaultCfg();
     html+='<select aria-label="סוג הטיפול" id="sl-treat-type-'+sid+'" class="treat-select">'+
       hrCfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';

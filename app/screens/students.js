@@ -37,7 +37,7 @@ function screenStudentsHTML() {
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div class="st-add-row">
-<div class="sw" id="sw-inner"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." data-inp="search-st" autocomplete="off"><div id="search-dropdown"></div></div>
+<div class="sw" id="sw-inner" data-menu="search"><input aria-label="חיפוש תלמיד" type="text" id="search-st" placeholder="חיפוש תלמיד..." data-inp="search-st" autocomplete="off"><div id="search-dropdown"></div></div>
 </div>
 
 <!-- Summary Bar -->

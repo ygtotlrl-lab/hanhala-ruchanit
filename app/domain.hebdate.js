@@ -92,12 +92,12 @@ function _hcBuild(pfx,initH,tv){
   if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=dayIso(g);}
   var trg='hc-trigger';
   return '<div class="hc-wrap">'+
-    '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" class="'+trg+'">'+
+    '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" data-pop-trg="'+esc(pfx)+'" class="'+trg+'">'+
       '<span id="'+pfx+'_lbl">'+label+'</span>'+
       '<span class="hc-trigger-ico">📅</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
-    '<div id="'+pfx+'_pop" class="hidden hc-pop-box hc-pop"></div>'+
+    '<div id="'+pfx+'_pop" data-pop="'+esc(pfx)+'" class="hidden hc-pop-box hc-pop"></div>'+
     (tv!==undefined?'<div class="hc-time-row"><span class="hc-time-lbl">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="hc-time-inp"></div>':'')+
   '</div>';}
 
