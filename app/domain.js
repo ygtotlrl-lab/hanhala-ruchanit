@@ -1,15 +1,14 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { HE_COLLATOR, MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
+import { HE_COLLATOR, MSG_KV_BAD, dayIso, dayNoon, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
-import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray } from '../core/storage.js';
+import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray, lsWindowFrom } from '../core/storage.js';
 import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
 import { closeModal, pullRender, toast } from '../core/ui.js';
-import { hebDate } from '../core/hebrew.js';
 import { HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
@@ -126,35 +125,36 @@ function hrSupervisionAccess() {
   return isAdminOf(u) || (!!u && String(u.role) === 'manager');
 }
 
-function hrHwWindowKeys() {
-  var now = new Date();
-  var stamp = dayToday();
-  if (S._hrHwWinKeys && S._hrHwWinDay === stamp) return S._hrHwWinKeys;
-  var cur = null, prev = null;
-  try { cur = hebDate(now); } catch (e) { cur = null; }
-  if (!cur || !cur.ok || !(cur.day > 0)) return null;
-  try {
-    prev = hebDate(dayNoon(now.getFullYear(), now.getMonth(), now.getDate() - cur.day));
-  } catch (e2) { prev = null; }
-  if (!prev || !prev.ok) return null;
-  var keys = {};
-  keys[cur.year + ':' + cur.monthIndex] = true;
-  keys[prev.year + ':' + prev.monthIndex] = true;
-  S._hrHwWinKeys = keys; S._hrHwWinDay = stamp;
-  return keys;
-}
-
+// החלון החם הוא חלון הפינוי של האפליקציה — מהליבה, ולא מספר ימים משלו; הסדר ובניו נמדדים באותו session_date,
+// ולכן סימון יורד מהדיסק יחד עם אביו. תאריך שאינו נקרא — הרשומה נשארת: פינוי בלי גיל הוא היעדר ראיה כראיה.
 function hrHwInWindow(rec) {
   var iso = rec && rec.session_date;
   if (!iso) return true;
   var t = dayNoon(String(iso)).getTime();
   if (!isFinite(t)) return true;
-  var keys = hrHwWindowKeys();
-  if (!keys) return true;
-  var h = null;
-  try { h = hebDate(new Date(t)); } catch (e) { h = null; }
-  if (!h || !h.ok) return true;
-  return !!keys[h.year + ':' + h.monthIndex];
+  return t >= lsWindowFrom();
+}
+
+// שאלה אחת לענן לכל סוג — הסדרים והסימונים שלהם באים באותה קריאה, והחלון החם שואל על שניהם ברצף;
+// שתי שאלות היו מושכות את הסימונים פעמיים.
+var HR_HW_ASK_MS = 10000;
+var _hrHwAsk = {};
+function hrHwFetch(t) {
+  var kind = null, child = false;
+  Object.keys(HR_MIRROR_STREAMS).forEach(function (p) {
+    var st = HR_MIRROR_STREAMS[p];
+    if (!st.child) return;
+    if (p === t) kind = st.kind;
+    else if (st.child === t) { kind = st.kind; child = true; }
+  });
+  if (!kind) return Promise.resolve({ ok: false, rows: [] });
+  var memo = _hrHwAsk[kind], now = Date.now();
+  if (!memo || now - memo.at > HR_HW_ASK_MS) memo = _hrHwAsk[kind] = { at: now, p: hrRowsGetSessions(kind, null) };
+  return memo.p.then(function (r) {
+    if (!r || !r.ok) return { ok: false, rows: [] };
+    // הסדר — כרשומה מורכבת, כפי שהארכיון מציג; הסימון — כשורה, כפי שהמראה מחזיקה.
+    return { ok: true, rows: child ? r.mRows : r.data };
+  }, function () { return { ok: false, rows: [] }; });
 }
 
 // ── פירוק המראה לשורות והרכבתה ──
@@ -549,11 +549,19 @@ async function hrSessionsPull(t, win) {
   var pend = function (tt) { return function (k) { return pendHas(PEND_KV_PREFIX[tt] + k); }; };
   MIRROR[t] = mergeCore(MIRROR[t] || [], r.sRows, { isPending: pend(t) });
   MIRROR[st.child] = mergeCore(MIRROR[st.child] || [], r.mRows, { isPending: pend(st.child) });
+  // הראיה העננית לפני הכתיבה — שער הדיסק מפנה רק מה שהענן כבר הראה, וכתיבה שקודמת לה מעלה לדיסק את הכול.
+  if (!win) hrHwNote(t, r);
   mirrorSave(t); mirrorSave(st.child);
-  if (!win && r.data.length) {
-    try { hwNoteCloud(mirrorKey(t), r.data); } catch (e1) { }
-  }
   return hrMirrorRecs(t);
+}
+
+// הראיה העננית לאב ולבנו — לסימון שער דיסק משלו, והראיה עליו היא שורות הסימון שבאו באותה קריאה.
+function hrHwNote(t, r) {
+  var st = HR_MIRROR_STREAMS[t];
+  try {
+    if (r && Array.isArray(r.data) && r.data.length) hwNoteCloud(mirrorKey(t), r.data);
+    if (st && st.child && r && Array.isArray(r.mRows) && r.mRows.length) hwNoteCloud(mirrorKey(st.child), r.mRows);
+  } catch (e) { hrWriteFail('hrHwNote', e); }
 }
 
 // התאריך פרמטר — בדיקת הכפילות בפתיחת סדר צריכה את היום שנבחר בבורר, שאינו בהכרח היום.
@@ -610,9 +618,7 @@ async function hrCloudGet(kvKey, win) {
   try { r = await hrRowsGet(kvKey, win); } catch (e) { r = null; }
   if (!r || !r.ok || !Array.isArray(r.data)) return null;
   // הראיה העננית נרשמת כאן ולא באתרי הקריאה, ורק במשיכה מלאה — משיכת חלון אינה אומרת דבר על מה שמחוצה לו.
-  if (!win && r.data.length) {
-    try { hwNoteCloud(mirrorKey(kvKey), r.data); } catch (e1) { }
-  }
+  if (!win) hrHwNote(kvKey, r);
   return r.data;
 }
 
@@ -726,7 +732,6 @@ async function hrPullFromCloud() {
     if (abR && typeof abR === 'object' && !Array.isArray(abR) && !hrSetPending('absence_reasons')) {
       hrCfgLocalSet('absence_reasons', abR);
     }
-    // hr_cls_years אינו נמשך — השורה מחוקה רכות בענן, ומשיכתה הייתה מחזירה אותה למסך כחיה.
     try {
       var _atCfgV = await hrCfgGet('attend_cfg');
       if (ctxStale(_ep)) return;
@@ -881,7 +886,7 @@ export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPu
          _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
          _hrVerify, _hrVerifyRows, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
-         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwInWindow,
+         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwFetch, hrHwInWindow,
          hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
          hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
          hrSortRecs, hrSortStatuses, hrSortStudents, hrSortUsers, hrSupervisionAccess, hrSyncLog,

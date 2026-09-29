@@ -5,7 +5,7 @@ import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pen
          plStampRead, runSave, sbWatch } from '../core/sync.js';
 import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
 import { logAwait } from '../core/backup.js';
-import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
+import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
 import { authUsersTable, isAdmin, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
 import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
@@ -14,11 +14,11 @@ import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
 import { hebDayLabel } from '../core/hebrew.js';
 import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
-         MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
+         MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
-         _hrVerify, _hrVerifyRows, canAccess, hrCloudGet, hrHwInWindow, hrLocalRecs,
+         _hrVerify, _hrVerifyRows, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
          hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
@@ -244,34 +244,37 @@ var PUSH_CFG = {
   run:    function () { hrPushToCloud(); },
 };
 
-// רק hr_sessions בחלון — היחיד עם שדה תאריך פר-רשומה; המצבה אינה סדרה בזמן.
+// כל טבלה עם session_date בחלון — הסדרים, השינה וסימוני שניהם; המצבה אינה סדרה בזמן.
+// הסימון נמדד בתאריך של אביו ויורד איתו, ושער הדיסק שלו פועל גם בכל כתיבה — טבלת בן בלי שער חוזרת לדיסק במלואה בכל משיכה.
+function _hrHwSpec(t, label, recs) {
+  return {
+    key: mirrorKey(t),
+    label: label,
+    inWindow: function (r) { return hrHwInWindow(r); },
+    idOf: _hrRowId,
+    ts: hrRecTs,
+    isPending: function (r) {
+      try { return !!(r && r.client_id != null && pendHas(PEND_KV_PREFIX[t] + r.client_id)); }
+      catch (e) { return true; }
+    },
+    fetch: function () { return hrHwFetch(t); },
+    // האב — כרשומות מורכבות, ושמירתו כותבת גם את סימוניו; הבן — כשורות המראה, והזיכרון אינו נגע.
+    rows: recs ? function () { return recs() || hrMirrorRecs(t); } : function () { return MIRROR[t] || []; },
+    apply: recs ? function (kept) { return hrMirrorWriteRecs(t, kept); } : function (kept) { return mirrorWrite(t, kept); }
+  };
+}
 var HW_CFG = {
   enabled: true,
   admin: function () {
     try { return isAdmin(); }
     catch (e) { return false; }
   },
-  specs: [{
-    key: mirrorKey('hr_sessions'),
-    label: 'סדרי נוכחות מחוץ לחלון',
-    inWindow: function (r) { return hrHwInWindow(r); },
-    idOf: _hrRowId,
-    ts: hrRecTs,
-    isPending: function (r) {
-      try { return !!(r && r.client_id != null && pendHas(PK_AT_SESS + r.client_id)); }
-      catch (e) { return true; }
-    },
-    fetch: function () {
-      return hrCloudGet('hr_sessions').then(function (rows) {
-        return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
-      }).catch(function () { return { ok: false, rows: [] }; });
-    },
-    rows: function () {
-      if (Array.isArray(S._atData)) return S._atData;
-      return hrMirrorRecs('hr_sessions');
-    },
-    apply: function (kept) { return hrMirrorWriteRecs('hr_sessions', kept); }
-  }]
+  specs: [
+    _hrHwSpec('hr_sessions', 'סדרי נוכחות מחוץ לחלון', function () { return Array.isArray(S._atData) ? S._atData : null; }),
+    _hrHwSpec('hr_marks', 'סימוני נוכחות מחוץ לחלון', null),
+    _hrHwSpec('hr_sleep_sessions', 'רשומות שינה מחוץ לחלון', function () { return Array.isArray(S._hrData) ? S._hrData : null; }),
+    _hrHwSpec('hr_sleep_marks', 'סימוני שינה מחוץ לחלון', null)
+  ]
 };
 
 var ERA_CFG = {
