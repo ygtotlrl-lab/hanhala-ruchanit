@@ -15,8 +15,8 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
          MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
-         getStudents, hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStudents, modalOpen,
+import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
+         hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
 import { hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -67,7 +67,7 @@ function openStatusForm(type) {
   var defaultTime = String(now.getHours()).padStart(2,'0')+':'+String(mins).padStart(2,'0');
   var todayHeb = _hcH(now);
 
-  var reasonOptionsHtml = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
+  var reasonOptionsHTML = reasons.map(function(r){ return '<option value="'+esc(r)+'">'+esc(r)+'</option>'; }).join('');
   var lbl = 'sf-lbl';
   var inp = 'sf-inp';
 
@@ -76,7 +76,7 @@ function openStatusForm(type) {
     '<div class="abs-tone '+tyCls(type)+' sf-dates">' +
       '<div>' +
         '<label class="'+lbl+'">סיבה</label>' +
-        '<select aria-label="סיבת ההיעדרות" id="sfm-reason" class="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptionsHtml+'<option value="אחר">אחר</option></select>' +
+        '<select aria-label="סיבת ההיעדרות" id="sfm-reason" class="'+inp+'"><option value="" disabled selected>בחר סיבה...</option>'+reasonOptionsHTML+'<option value="אחר">אחר</option></select>' +
       '</div>' +
       '<div>' +
         '<label class="'+lbl+'">תאריך התחלה</label>' +
@@ -200,11 +200,11 @@ function renderStudents(){
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'zebra-a':'zebra-b';
       var yr=s.cycle||'';
-      var badgeHtml=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
+      var badgeHTML=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
       return '<div class="'+bg+' st-row-off">'+
         '<div class="st-row-main">'+
           '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>'+
-          '<div class="badge-row">'+badgeHtml+'</div>'+
+          '<div class="badge-row">'+badgeHTML+'</div>'+
         '</div>'+
         '<div class="st-row-act">'+
           '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">↩ החזר לפעיל</button>'+
@@ -319,24 +319,24 @@ function openManageListDlg(){
     {icon:'🗑️',label:'מחק הכל',k:'delall',cls:'menu-danger'},
     {icon:'🔄',label:'מעבר שנתי',k:'year',cls:'menu-warn'}
   ];
-  var rowsHtml=ITEMS.map(function(item){
+  var rowsHTML=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
       'class="admin-item '+(item.cls||'menu-plain')+'">'+
       '<span class="admin-ico">'+item.icon+'</span>'+item.label+
     '</button>';
   }).join('');
-  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHtml+'</div>','');
+  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','');
 }
 
 // ── סימון תלמיד כלא פעיל ──
 function openDeactivateStudentDlg(){
   var students=hrSortStudents(getStudents().filter(function(s){return s.active!==false;}));
-  var optsHtml=students.map(function(s){
+  var optsHTML=students.map(function(s){
     return '<option value="'+esc(s.client_id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
   openModal(MSG_MARK_INACTIVE_TITLE,
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="deact-sel">'+
-      '<option value="">-- בחר תלמיד --</option>'+optsHtml+
+      '<option value="">-- בחר תלמיד --</option>'+optsHTML+
     '</select>'+
     '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
@@ -433,9 +433,9 @@ function openCurrentStatusModal() {
   };
   var activeAbsences = getAllRelevantAbsences(s);
   var _now = new Date();
-  var absencesHtml = activeAbsences.map(function(a) {
+  var absencesHTML = activeAbsences.map(function(a) {
     var isFuture = a.from_at && new Date(a.from_at) > _now;
-    var badgeHtml = isFuture
+    var badgeHTML = isFuture
       ? '<span class="abs-future">⏳ עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
@@ -443,7 +443,7 @@ function openCurrentStatusModal() {
         '<div class="status-head-row">' +
           '<span class="abs-ico">' + (TI[a.type]||'📋') + '</span>' +
           '<span class="abs-type-label">' + esc(TL[a.type]||a.type) + '</span>' +
-          badgeHtml +
+          badgeHTML +
         '</div>' +
         '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
@@ -451,7 +451,7 @@ function openCurrentStatusModal() {
       '<div class="abs-dates">מ: ' + fmtDt(a.from_at) + '<br>עד: ' + (a.to_at ? fmtDt(a.to_at) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
-  openModal(s.name, absencesHtml +
+  openModal(s.name, absencesHTML +
     '<button data-act="status-picker-open" class="abs-add">➕ הוסף סיבה נוספת</button>', '');
 }
 
@@ -490,7 +490,7 @@ function cancelSingleAbsence(absenceId) {
 }
 
 // שני מסלולי הפתיחה בונים מכאן — טופס שנבנה פעמיים נבדל בשדה, ושדה שנשמט נקרא «ריק» ולא «לא נשאל»
-function studentFormHtml(sid){
+function studentFormHTML(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" class="st-form-input">'+
     '<label for="st-class">שיעור</label>'+
@@ -501,7 +501,7 @@ function studentFormHtml(sid){
     '</select>'+
     '<label for="st-cycle">מחזור</label>'+
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" class="st-form-input">'+
-    // משטח שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
+    // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
     (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">📜 היסטוריית סטטוסים</button>' : '');
@@ -518,7 +518,7 @@ async function openStatusHistory(sid) {
   if (!Array.isArray(rows)) failed = true;
   var box = document.getElementById('modal-body');
   var ttl = document.getElementById('modal-title');
-  // נבדק גם שהכותרת עדיין שלנו — מודאל אחר שנפתח בזמן ההמתנה משתמש באותו מיכל
+  // נבדק גם שהכותרת עדיין שלנו — חלון דו-שיח אחר שנפתח בזמן ההמתנה משתמש באותו מיכל
   if (!box || !ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
   // כשל קריאה מוצג כ«אין ראיה» — רשימה ריקה נקראת «מעולם לא היה סטטוס»
   if (failed) {
@@ -540,8 +540,7 @@ async function openStatusHistory(sid) {
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
   };
-  var ts = function (a) { var d = new Date(a && a.from_at); return isNaN(d.getTime()) ? 0 : d.getTime(); };
-  list.sort(function (a, b) { return ts(b) - ts(a); });
+  list = hrSortStatuses(list);
   if (!list.length) {
     box.innerHTML = '<div class="cloud-loading-note">' +
       'לא נרשם אף סטטוס לתלמיד הזה.</div>';
@@ -578,7 +577,7 @@ function studentFormFoot(){
 function openAddStudent(){
   if(checkLoginNeeded())return;
   S.editingStudentId=null;
-  openModal(MSG_ADD_STUDENT_TITLE, studentFormHtml(), studentFormFoot());
+  openModal(MSG_ADD_STUDENT_TITLE, studentFormHTML(), studentFormFoot());
   document.getElementById('st-class').value='a';
 }
 
@@ -587,7 +586,7 @@ function editStudent(sid){
   var s=getStudents().find(function(x){return idEq(x.client_id, sid);});
   if(!s)return;
   S.editingStudentId=sid;
-  openModal(MSG_EDIT_STUDENT_TITLE, studentFormHtml(sid), studentFormFoot());
+  openModal(MSG_EDIT_STUDENT_TITLE, studentFormHTML(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
   document.getElementById('st-cycle').value=s.cycle||'';
@@ -601,7 +600,7 @@ function saveStudent(){
   if(errEl) errEl.textContent='';
   if(!name){
     if(errEl) errEl.textContent=MSG_NEED_STUDENT_NAME;
-    else console.error('[students] משטח השגיאה st-err חסר בטופס');
+    else console.error('[students] אזור השגיאה st-err חסר בטופס');
     return;
   }
   var students=getStudents();
@@ -700,20 +699,20 @@ function importStudentsFromFile(input) {
       var icon = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
       var title = wrote ? (added + ' תלמידים נוספו בהצלחה')
                         : 'הייבוא נכשל — אין מקום באחסון המכשיר';
-      var bodyHtml = '';
+      var bodyHTML = '';
       if (!wrote) {
-        bodyHtml += '<div class="import-err"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
+        bodyHTML += '<div class="import-err"><strong>' + added + ' תלמידים לא נשמרו.</strong> ' +
                 'הכתיבה המקומית נכשלה, ולכן שום דבר לא נוסף. פנה מקום ונסה שוב.</div>';
       }
-      if (wrote && skipped > 0) bodyHtml += '<div>' + skipped + ' שורות ריקות דולגו</div>';
+      if (wrote && skipped > 0) bodyHTML += '<div>' + skipped + ' שורות ריקות דולגו</div>';
       if (wrote && failed.length > 0) {
-        bodyHtml += '<div class="import-fail"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
-        bodyHtml += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
+        bodyHTML += '<div class="import-fail"><strong>' + failed.length + ' שורות נכשלו</strong> (שיעור לא מוכר):</div>';
+        bodyHTML += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       // הסיכום הוא הדיווח היחיד כאן — כשל כתיבה מקומית משנה את האייקון, הכותרת והגוף
       openModal(icon + ' ' + title,
         '<div class="import-done">' +
-        (bodyHtml || '<div>הכל תקין!</div>') + '</div>',
+        (bodyHTML || '<div>הכל תקין!</div>') + '</div>',
         '<button class="modal-ok btn" data-act="modal-close">סגור</button>');
     } catch(err) {
       toast(MSG_FILE_READ_FAIL + (err.message||err), null, 'bad');

@@ -13,7 +13,7 @@ import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_USER_SWITCHED_MID } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged,
-         sortUsersByOrder } from '../domain.js';
+         hrSortUsers } from '../domain.js';
 
 function screenSettingsHTML() {
   return `
@@ -295,7 +295,7 @@ function openEditUser(u) {
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
 }
 
-function userFormHtml() {
+function userFormHTML() {
   return '<input type="hidden" id="um-id">'+
     '<label for="um-name">שם מלא *</label>'+
     '<input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">'+
@@ -315,7 +315,7 @@ function userFormHtml() {
 }
 
 function openUserModal(title) {
-  openModal('👤 ' + title, userFormHtml(),
+  openModal('👤 ' + title, userFormHTML(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
     '<button class="btn" data-act="user-save" data-ksave>💾 שמור</button>');
 }
@@ -345,7 +345,7 @@ async function saveUser() {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   closeModal();
   // שתי קריאות ולא אחת — סיווג ההודעה שונה בין שני המסלולים.
@@ -365,7 +365,7 @@ async function toggleUserActive(id, current) {
     toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
   }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין.
   usersRefresh();
@@ -384,16 +384,16 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id]||{})[role] || 'none';
-      var selHtml = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
+      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
-        selHtml += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
+        selHTML += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
-      selHtml += '</select>';
+      selHTML += '</select>';
       // מנהל תמיד בעריכה בהגדרות
       if (m.id === 'settings' && role === ROLE_ADMIN) {
         row += '<td><span class="um-edit">✏️ עריכה</span></td>';
       } else {
-        row += '<td>'+selHtml+'</td>';
+        row += '<td>'+selHTML+'</td>';
       }
     });
     return row + '</tr>';
@@ -467,7 +467,7 @@ async function changeMyPassword() {
   try { upd = await writeUser(_u.client_id, updObj); }
   catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (upd && upd.error) { toast(MSG_PASS_UPDATE_FAIL + (upd.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // בלי זה הטביעה במטמון נשארת של הסיסמה הישנה, והכניסה האופליין מקבלת את הישנה ודוחה את החדשה.
   try {
@@ -475,7 +475,7 @@ async function changeMyPassword() {
                    role: _u.role, active: true,
                    pass_salt: made.pass_salt, pass_fp: made.pass_fp });
   } catch (e3) {}
-  // אין ניקוי שדות — closeModal מרוקן את גוף המודאל.
+  // אין ניקוי שדות — closeModal מרוקן את גוף חלון הדו-שיח.
   closeModal();
   if (made.pass_fp) toast(MSG_PASS_UPDATED_X, null, 'good');
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');
@@ -498,7 +498,7 @@ async function renderUsersList() {
   }
   var data = res.data;
   if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
-  data = sortUsersByOrder(data);
+  data = hrSortUsers(data);
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;

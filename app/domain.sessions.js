@@ -1,5 +1,5 @@
 // app/domain.sessions.js — סדרים ושינה: הנתונים ששני המסכים קוראים וכותבים
-import { dayToday } from '../core/util.js';
+import { HE_COLLATOR, dayToday } from '../core/util.js';
 import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany,
          pushTable } from '../core/sync.js';
 import { lsGet } from '../core/storage.js';
@@ -9,6 +9,50 @@ import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSlDiskSave, getActiveAbsences, getStudents,
          hrCount, hrLocalOfAt, hrMarks, hrMirrorRecs, hrSessionsPull, hrSyncLog,
          hrTouchLastChanged, hrWriteFail } from './domain.js';
+
+// ── המיון ──
+// הגדרות הסדרים — לפי שעת ההתחלה.
+function hrSortSessionDefs(list) {
+  return list.slice().sort(function (a, b) {
+    return HE_COLLATOR.compare(a.start_time || '', b.start_time || '');
+  });
+}
+
+// רשומות של יום אחד — בסדר הגדרות הסדרים; סדר שאינו בהגדרות יורד לסוף. get מחלץ את הרשומה מהפריט.
+function hrSortDayRecs(list, defs, get) {
+  var pick = get || function (x) { return x; }, pos = {};
+  (defs || []).forEach(function (s, i) { pos[s.name] = i; });
+  var at = function (x) { var n = pos[pick(x).session]; return n != null ? n : 999; };
+  return list.slice().sort(function (a, b) { return at(a) - at(b); });
+}
+
+// שנים וחודשים עבריים בארכיון — האחרון ראשון.
+function hrSortHebYears(list) { return list.slice().sort(function (a, b) { return b - a; }); }
+function hrSortHebMonths(list) { return list.slice().sort(function (a, b) { return b - a; }); }
+
+// ימי הארכיון, ב-ISO — האחרון ראשון.
+function hrSortDays(list) { return list.slice().sort(function (a, b) { return HE_COLLATOR.compare(b, a); }); }
+
+// שורות ההשגחה — החיסורים הרבים ראשונים, ובשוויון — דקות האיחור.
+function hrSortAbsenceRows(rows) {
+  return rows.slice().sort(function (a, b) {
+    return (b[1].absent - a[1].absent) || b[1].lateMin - a[1].lateMin;
+  });
+}
+
+// טיפולים — האחרון ראשון.
+function hrSortTreats(list) {
+  return list.slice().sort(function (a, b) {
+    return HE_COLLATOR.compare(b.treat_date || '', a.treat_date || '');
+  });
+}
+
+// פירוט ההשגחה — לפי התאריך, ובתוכו לפי שם הסדר.
+function hrSortSupRecords(list) {
+  return list.slice().sort(function (a, b) {
+    return HE_COLLATOR.compare(a.session_date, b.session_date) || HE_COLLATOR.compare(a.session, b.session);
+  });
+}
 
 // קריאה סינכרונית, מהזיכרון או מהדיסק — הציור הראשון אינו ממתין לרשת
 function hrCachedArr(memKey, lsKey) {
@@ -37,7 +81,7 @@ function _hrPullStaleMark(el, bad) {
   el.classList.toggle('on', !!bad);
 }
 
-// שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הפולינג יכול להביא סדר מתחרה אחרי הפתיחה.
+// שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הבדיקה המחזורית יכולה להביא סדר מתחרה אחרי הפתיחה.
 // אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד; הבדיקה משרתת גם את השינה.
 function atFindLiveSession(data, sessName, dateIso, exceptId) {
   if (!Array.isArray(data)) return null;
@@ -218,4 +262,6 @@ function hrGetLogicalDate() {
 
 export { _hrDiskArr, _hrPullStaleMark, atAutoMark, atFindLiveSession, atLoadData,
          atSaveData, hrAdoptSession, hrCachedArr, hrGetLogicalDate, hrLoadData,
-         hrRefreshApprovalMarks, hrSaveData };
+         hrRefreshApprovalMarks, hrSaveData, hrSortAbsenceRows, hrSortDayRecs, hrSortDays,
+         hrSortHebMonths, hrSortHebYears, hrSortSessionDefs, hrSortSupRecords,
+         hrSortTreats };

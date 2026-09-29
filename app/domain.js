@@ -1,5 +1,5 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
+import { HE_COLLATOR, MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
@@ -14,10 +14,6 @@ import { HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FL
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-
-try { S._heColl = new Intl.Collator('he'); } catch (e) { S._heColl = null; }
-
-var HE = S._heColl || { compare: function (a, b) { return String(a).localeCompare(String(b), 'he'); } };
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
 // ה-API הוא addVirtualFileSystem/addFonts — השמה ל-pdfMake.vfs נכשלת בשקט מ-0.3 ומחזירה גופן בלי עברית.
@@ -124,7 +120,7 @@ function _hrVerify(kvKey) {
 }
 
 
-// מסכי ההשגחה פתוחים למנהל וגם לדרגת הביניים שמטריצת ההרשאות מחזיקה — לכן ההשוואה כאן ולא בבלוק המשותף.
+// מסכי ההשגחה פתוחים למנהל וגם לתפקיד הביניים שמטריצת ההרשאות מחזיקה — לכן ההשוואה כאן ולא בבלוק המשותף.
 function hrSupervisionAccess() {
   var u = sessGet();
   return isAdminOf(u) || (!!u && String(u.role) === 'manager');
@@ -201,12 +197,16 @@ function hrRecsFromRows(kind, sRows, mRows) {
     rec.marks[String(m.student_client_id)] = mk;
   });
   // מיון מפורש — בלי ORDER BY סדר השורות מהמסד נקבע לפי תוכנית הריצה.
-  out.sort(function (a, b) {
+  return hrSortRecs(out);
+}
+
+// רשומות סדר ושינה — לפי התאריך, ובתוכו לפי המזהה; הטעינה וכל מסלולי הייצוא ממיינים כאן.
+function hrSortRecs(list) {
+  return list.slice().sort(function (a, b) {
     var da = String(a.session_date || ''), db = String(b.session_date || '');
     if (da !== db) return da < db ? -1 : 1;
     return String(a.client_id) < String(b.client_id) ? -1 : 1;
   });
-  return out;
 }
 
 // הרשומות מורכבות מהשורות בכל קריאה — אין עותק שני שלהן על הדיסק.
@@ -797,7 +797,7 @@ function hrSortStudents(list) {
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;
-    return HE.compare((x && x.name) || '', (y && y.name) || '');
+    return HE_COLLATOR.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
 
@@ -823,7 +823,14 @@ function getActiveAbsences(s, refDate) {
   return s.absences.filter(function(a){ return !a.deleted && (!a.from_at || new Date(a.from_at) <= now) && (!a.to_at || new Date(a.to_at) >= now); });
 }
 
-function sortUsersByOrder(data) {
+// הסטטוסים של תלמיד — האחרון ראשון.
+function hrSortStatuses(list) {
+  var ts = function (a) { var d = new Date(a && a.from_at); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+  return list.slice().sort(function (a, b) { return ts(b) - ts(a); });
+}
+
+// המשתמשים — בסדר שנגרר בהגדרות; מי שאינו בו יורד לסוף.
+function hrSortUsers(data) {
   var order = getUserOrder();
   if (!order.length) return data;
   return data.slice().sort(function(a,b) {
@@ -870,13 +877,13 @@ function hrDefaultCfg() {
   };
 }
 
-export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
-         _hrItemId, _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave,
-         _hrStudentsRaw, _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, atvCls, canAccess,
-         getAbsenceReasons, getActiveAbsences, getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt,
-         hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
-         hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs,
-         hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushToCloud,
-         hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend, hrSortStudents,
-         hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged, hrTreatsMerge,
-         hrWriteFail, modalOpen, saveStudents, sortUsersByOrder, tyCls, uiShown };
+export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed, _hrItemId,
+         _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
+         _hrVerify, _hrVerifyRows, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+         getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
+         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwInWindow,
+         hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
+         hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
+         hrSortRecs, hrSortStatuses, hrSortStudents, hrSortUsers, hrSupervisionAccess, hrSyncLog,
+         hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,
+         uiShown };

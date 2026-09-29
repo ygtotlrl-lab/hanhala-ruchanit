@@ -13,7 +13,7 @@ import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
          hrGetLogicalDate, hrSaveData } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, hrCachedCfg, hrRenderTodaySessions,
-         hrSortedSessions } from './sleep.js';
+         hrSessionDefs } from './sleep.js';
 
 function screenSleepHTML() {
   return `
@@ -135,7 +135,7 @@ function hrFillSessionBtns() {
   if(!el) return;
   var cfg=S._hrCfg||hrDefaultCfg();
   el.innerHTML='';
-  hrSortedSessions(cfg).forEach(function(s){
+  hrSessionDefs(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.className='sess-pick-btn';
@@ -338,7 +338,7 @@ function hrMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
   if(S._hrPendingRec && idEq(S._hrCurrentSessionId,S._hrPendingRec.client_id)){
     if(!S._hrData) S._hrData=[];
-    // הבדיקה חוזרת בנקודת היצירה בפועל — הפולינג יכול להביא סדר מתחרה מאז הפתיחה
+    // הבדיקה חוזרת בנקודת היצירה בפועל — הבדיקה המחזורית יכולה להביא סדר מתחרה מאז הפתיחה
     var _hrDup=atFindLiveSession(S._hrData,S._hrPendingRec.session,
                                  S._hrPendingRec.session_date,S._hrPendingRec.client_id);
     if(_hrDup){
@@ -369,17 +369,17 @@ function hrShowOverrideDialog(sid, student) {
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
-  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
-  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
+  var reasonHTML=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
+  var datesHTML='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
-    reasonHtml+datesHtml+
+    reasonHTML+datesHTML+
     '<div class="md-question">האם לבטל את הסטטוס לגמרי?<br><span class="md-question-warn">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
     '<button data-act="modal-close" class="md-btn-close">סגור</button>'+
     '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>');
 }
 
-// הקורא הוא sl-status-cancel — בלי הפונקציה הכפתור זורק, והמודאל נסגר כאילו הצליח
+// הקורא הוא sl-status-cancel — בלי הפונקציה הכפתור זורק, וחלון הדו-שיח נסגר כאילו הצליח
 function hrCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
@@ -460,14 +460,14 @@ function hrRenderStudents() {
     var isLate=marks.status==='l';
     var hasMark=!!(marks.status);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
-    var autoHintHtml='';
+    var autoHintHTML='';
     var am=hrAutoMark(s);
     if(am&&isMark&&!S._hrCleared[s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
-      if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
+      if(aLbl) autoHintHTML='<span class="mark-hint">('+aLbl+')</span>';
     }
     var isPendingLate=isLate&&!!S._hrPending[String(s.client_id)];
-    var lateFieldHtml=isLate?
+    var lateFieldHTML=isLate?
       '<div class="late-field"'+(isPendingLate?' data-ks':'')+'>'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.minutes!=null?marks.minutes:'')+'" id="sl-min-'+s.client_id+'" placeholder="דק׳" '+
         'data-inp="sl-late" data-id="'+esc(s.client_id)+'" '+
@@ -483,8 +483,8 @@ function hrRenderStudents() {
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
       '<div class="at-row-class">'+esc(cls)+'</div>'+
-      '<div class="at-row-name">'+esc(s.name)+autoHintHtml+'</div>'+
-      lateFieldHtml+
+      '<div class="at-row-name">'+esc(s.name)+autoHintHTML+'</div>'+
+      lateFieldHTML+
       noteField+
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.client_id):'')+

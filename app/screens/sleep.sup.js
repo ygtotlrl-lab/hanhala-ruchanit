@@ -7,10 +7,11 @@ import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
 import { S, shell } from '../state.js';
-import { HE, atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
+import { atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
          hrSupervisionAccess } from '../domain.js';
 import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
-import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
+import { hrCachedArr, hrLoadData, hrSaveData, hrSortAbsenceRows, hrSortSupRecords,
+         hrSortTreats } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
          hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg,
          hrSaveTreats } from './sleep.js';
@@ -57,15 +58,15 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!_hcBase(hy+1);
 
   var navStyle='sup-nav';
-  var navHtml='<div class="sup-nav-bar">'+
+  var navHTML='<div class="sup-nav-bar">'+
     '<button data-act="sl-sup-nav" data-dir="-1" class="'+navStyle+(hasPrev?'':' sup-nav-off')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span class="sup-nav-label">'+mLabel+'</span>'+
     '<button data-act="sl-sup-nav" data-dir="1" class="'+navStyle+(hasNext?'':' sup-nav-off')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div class="warn-note">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHTML='<div class="warn-note">'+esc(warn)+'</div>'+navHTML;
 
   if(!data||!data.length){
-    el.innerHTML=navHtml+'<div class="empty-note">אין נתונים עדיין</div>';return;
+    el.innerHTML=navHTML+'<div class="empty-note">אין נתונים עדיין</div>';return;
   }
 
   var stats={};
@@ -88,27 +89,26 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   });
 
   // הרשימה נבנית מסדר התלמידים ולא מ-Object.entries — מפתח שנראה כמספר שלם ממוין מספרית לפני השאר
-  var rows=students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
-    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
-    .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
+  var rows=hrSortAbsenceRows(students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);}));
 
   if(!rows.length){
-    el.innerHTML=navHtml+'<div class="empty-note">אין אירועים ב'+mLabel+'</div>';return;
+    el.innerHTML=navHTML+'<div class="empty-note">אין אירועים ב'+mLabel+'</div>';return;
   }
 
   S._hrSupRecords={};
   rows.forEach(function(e){S._hrSupRecords[e[0]]=e[1].records||[];});
 
-  var html=navHtml+'<div class="status-choice-list">';
+  var html=navHTML+'<div class="status-choice-list">';
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.treat_date||'',a.treat_date||'');})[0]:null;
-    var lastHtml='';
+    var lastTreat=stuTreats.length?hrSortTreats(stuTreats)[0]:null;
+    var lastHTML='';
     if(lastTreat){
       var ltIso=lastTreat.treat_date||'';
       var ltDateStr=ltIso?hrDayHebFmt(ltIso):'';
-      lastHtml='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
+      lastHTML='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     var alert20=st.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
@@ -117,7 +117,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
     html+='<div id="'+cardId+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="sl-sup-chev">';
     html+='<div class="sup-card-class">'+esc(clsLabel)+'</div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHtml?'<div class="rec-last">'+lastHtml+'</div>':'')+'</div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<span class="rec-abs">אירועים: <b>'+st.absent+'</b></span>';
     html+='<span class="rec-late">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -208,28 +208,28 @@ function hrSupDetail(sid) {
   var name=st?st.name:'תלמיד';
   var records=(S._hrSupRecords&&S._hrSupRecords[sid])||[];
 
-  var rowsHtml='';
-  if(!records.length){rowsHtml='<div class="loading-note">אין אירועים בחודש זה</div>';}
+  var rowsHTML='';
+  if(!records.length){rowsHTML='<div class="loading-note">אין אירועים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date)||HE.compare(a.session,b.session);}).forEach(function(r){
+    hrSortSupRecords(records).forEach(function(r){
       var hbr=hrDayHebFmt(r.session_date);
       var dowStr='יום '+hrDow(r.session_date);
       var lbl=r.mark==='l'?('איחור — '+(r.minutes||0)+' ד׳'):(HR_LBL_DET[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
       var mkc=atvCls(r.mark);
-      rowsHtml+='<div class="mark-hist-row">';
-      rowsHtml+='<span class="mark-hist-dow">'+dowStr+'</span>';
-      rowsHtml+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
-      rowsHtml+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
-      rowsHtml+='<span class="'+mkc+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span>';
-      rowsHtml+='<button data-act="sl-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
+      rowsHTML+='<div class="mark-hist-row">';
+      rowsHTML+='<span class="mark-hist-dow">'+dowStr+'</span>';
+      rowsHTML+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
+      rowsHTML+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
+      rowsHTML+='<span class="'+mkc+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span>';
+      rowsHTML+='<button data-act="sl-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         ' class="mark-edit-btn">✏️ ערוך</button>';
-      rowsHtml+='</div>';
+      rowsHTML+='</div>';
     });
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    '<div class="scroll-pane">'+rowsHtml+'</div>','');
+    '<div class="scroll-pane">'+rowsHTML+'</div>','');
 }
 
 function hrSupEditMarkDlg(recId, sid, curMark) {
@@ -242,13 +242,13 @@ function hrSupEditMarkDlg(recId, sid, curMark) {
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
   ];
-  var btnsHtml=CODES.map(function(cd){
+  var btnsHTML=CODES.map(function(cd){
     var active=cd.c===curMark?'mark-on':'mark-off';
     return '<button data-act="sl-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' mark-pick">'+cd.lbl+'</button>';
   }).join('');
   openModal(MSG_EDIT_MARK,
-    '<div class="chip-row">'+btnsHtml+'</div>',
+    '<div class="chip-row">'+btnsHTML+'</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>');
 }
 

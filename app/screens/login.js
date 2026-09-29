@@ -14,7 +14,7 @@ import { HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
          MSG_SWITCH_NEED_PASS, MSG_SWITCH_TITLE,
          MSG_SWITCH_WRONG_PASS } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { hrApplyPerms, hrCfgGet, hrSetPending, sortUsersByOrder,
+import { hrApplyPerms, hrCfgGet, hrSetPending, hrSortUsers,
          uiShown } from '../domain.js';
 
 // ── המסכים ──
@@ -120,7 +120,7 @@ async function _doLoginInner() {
     // Array.isArray ולא length — ערך JSON שאינו מערך עובר את length, ו-find זורק בשקט והספינר נתקע.
     if (!Array.isArray(cache) || !cache.length) {
       authLog(false, 'no_cache_offline', username);
-      // שגיאת שרת בטוסט, והיעדר מטמון על משטח המשתמש — שני סיווגים, שתי קריאות.
+      // שגיאת שרת בטוסט, והיעדר מטמון בערוץ המשתמש — שני סיווגים, שתי קריאות.
       if (serverErr) toast(MSG_LOGIN_ERR + (serverErr.message || serverErr.code || MSG_SERVER_ERR), null, 'bad');
       else showErr(MSG_OFF_FIRST_LOGIN);
       return;
@@ -236,7 +236,7 @@ async function toggleUserMenu() {
   try { res = await withTimeout(S.SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
-  data = sortUsersByOrder(data);
+  data = hrSortUsers(data);
   var currentId = AUTH.user ? String(AUTH.user.client_id) : '';
   var others = data.filter(function(u){return String(u.client_id)!==currentId;});
   if (!others.length) { othersEl.innerHTML=''; return; }

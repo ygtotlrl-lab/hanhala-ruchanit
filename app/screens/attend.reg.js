@@ -13,7 +13,7 @@ import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, atSaveData,
          hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, atCachedCfg, atCheckAlert, atDefaultCfg,
-         atRenderTodaySessions, atSortedSessions } from './attend.js';
+         atRenderTodaySessions, atSessionDefs } from './attend.js';
 
 function screenAttendHTML() {
   return `
@@ -125,7 +125,7 @@ async function loadAttend() {
   var _todayIsoR=dayToday();
   var _openRec=(S._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.session_date===_todayIsoR;});
   try {
-    // ההצעה אינה דורסת מודאל פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
+    // ההצעה אינה דורסת חלון דו-שיח פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
     if(_openRec && !modalOpen()) {
       openModal(MSG_SESSION_OPEN_TODAY,
         '<p class="md-note-center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
@@ -141,7 +141,7 @@ function atFillSessionBtns() {
   if(!el) return;
   var cfg=S._atCfg||atDefaultCfg();
   el.innerHTML='';
-  atSortedSessions(cfg).forEach(function(s){
+  atSessionDefs(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.className='sess-pick-btn';
@@ -330,7 +330,7 @@ function atMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
   if(S._atPendingRec && idEq(S._atCurrentSessionId,S._atPendingRec.client_id)){
     if(!S._atData) S._atData=[];
-    // הבדיקה חוזרת כאן — זו נקודת היצירה, והפולינג יכול היה להביא סדר מתחרה מאז הפתיחה
+    // הבדיקה חוזרת כאן — זו נקודת היצירה, והבדיקה המחזורית יכלה להביא סדר מתחרה מאז הפתיחה
     var _atDup=atFindLiveSession(S._atData,S._atPendingRec.session,
                                  S._atPendingRec.session_date,S._atPendingRec.client_id);
     if(_atDup){
@@ -361,12 +361,12 @@ function atShowOverrideDialog(sid, student) {
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';
-  var reasonHtml=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
-  var datesHtml='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
+  var reasonHTML=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
+  var datesHTML='<div class="abs-dates-blk">מ: '+fmtDt(a.from_at)+'<br>עד: '+(a.to_at?fmtDt(a.to_at):'ללא תאריך סיום')+'</div>';
   openModal(typeIcon+' '+typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
-    reasonHtml+
-    datesHtml+
+    reasonHTML+
+    datesHTML+
     '<div class="md-question">האם לבטל את הסטטוס לגמרי?<br><span class="md-question-warn">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
     '<button data-act="modal-close" class="md-btn-close">סגור</button>'+
     '<button data-act="at-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>');
@@ -454,14 +454,14 @@ function atRenderStudents() {
     var isLate=marks.status==='l';
     var hasMark=!!(marks.status);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
-    var autoHintHtml='';
+    var autoHintHTML='';
     var am=atAutoMark(s);
     if(am&&isMark&&!S._atCleared[s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
-      if(aLbl) autoHintHtml='<span class="mark-hint">('+aLbl+')</span>';
+      if(aLbl) autoHintHTML='<span class="mark-hint">('+aLbl+')</span>';
     }
     var isPendingLate=isLate&&!!S._atPending[String(s.client_id)];
-    var lateFieldHtml=isLate?
+    var lateFieldHTML=isLate?
       '<div class="late-field"'+(isPendingLate?' data-ks':'')+'>'+
         '<input aria-label="דק׳" type="text" inputmode="numeric" maxlength="2" value="'+(marks.minutes!=null?marks.minutes:'')+'" id="at-min-'+s.client_id+'" placeholder="דק׳" '+
         'data-inp="at-late" data-id="'+esc(s.client_id)+'" '+
@@ -472,8 +472,8 @@ function atRenderStudents() {
     var rowBg=isMark?'mark-row-on':'mark-row';
     return '<div class="'+rowBg+' mark-line">'+
       '<div class="at-row-class">'+esc(cls)+'</div>'+
-      '<div class="at-row-name">'+esc(s.name)+autoHintHtml+'</div>'+
-      lateFieldHtml+
+      '<div class="at-row-name">'+esc(s.name)+autoHintHTML+'</div>'+
+      lateFieldHTML+
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.client_id):'')+
         mkBtn(s.client_id,'p','✓')+

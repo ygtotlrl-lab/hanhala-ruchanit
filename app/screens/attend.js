@@ -5,17 +5,17 @@ import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
 import { MSG_ABSENCE_ALERT, PK_AT_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
+import { atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
-import { hrCachedArr } from '../domain.sessions.js';
+import { hrCachedArr, hrSortDayRecs, hrSortSessionDefs } from '../domain.sessions.js';
 
 var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
 function atDow(isoDate){return AT_DOW[dayNoon(isoDate).getDay()];}
 
-function atSummaryHtml(cnts){
+function atSummaryHTML(cnts){
   var parts=[];
   var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
   add(cnts.p||0,  'נוכחים',   'p');
@@ -117,11 +117,9 @@ async function atSaveTreats(data) {
   return data;
 }
 
-function atSortedSessions(cfg) {
+function atSessionDefs(cfg) {
   if(!cfg) cfg=S._atCfg||atDefaultCfg();
-  return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.start_time||'', b.start_time||'');
-  });
+  return hrSortSessionDefs(cfg.sessions||[]);
 }
 
 function atRenderTodaySessions() {
@@ -133,14 +131,8 @@ function atRenderTodaySessions() {
   var filterIso=selIso||todayIso;
   var isToday=filterIso===todayIso;
   var cfg=S._atCfg||atDefaultCfg();
-  var sessOrder={};
-  atSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.session_date===filterIso;})
-    .slice().sort(function(a,b){
-      var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
-      var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
-      return ia-ib;
-    });
+  var daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
+    atSessionDefs(cfg));
   if(!daySess.length){el.innerHTML='';return;}
   var dowLabel=isToday?'היום':'יום '+atDow(filterIso);
   var html='<div class="day-sess-block">'+
@@ -149,11 +141,11 @@ function atRenderTodaySessions() {
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-    var summaryHtml=atSummaryHtml(cnts);
+    var summaryHTML=atSummaryHTML(cnts);
     html+='<div data-act="at-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.client_id)+
-      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
+      '<div class="day-sess-summary">'+summaryHTML+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
   });
@@ -193,7 +185,7 @@ function atCheckAlert() {
   });
   if(!alerts.length) return;
 
-  var listHtml=alerts.slice(0,10).map(function(s){
+  var listHTML=alerts.slice(0,10).map(function(s){
     return '<div class="alert-row">'+esc(s.name)+
       (s.absent>=20?'<span class="alert-abs"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span class="alert-late"> — '+s.lateMin+' דק׳ איחור</span>':'')+
@@ -201,11 +193,11 @@ function atCheckAlert() {
   }).join('');
   openModal(MSG_ABSENCE_ALERT,
     '<p class="alert-lead">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div class="alert-list">'+listHtml+'</div>',
+    '<div class="alert-list">'+listHTML+'</div>',
     '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
 }
 
 export { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
          atCheckAlert, atDefaultCfg, atDow, atLiveTreats, atLoadTreats,
-         atRenderTodaySessions, atSaveCfg, atSaveTreats, atSortedSessions,
-         atSummaryHtml };
+         atRenderTodaySessions, atSaveCfg, atSaveTreats, atSessionDefs,
+         atSummaryHTML };

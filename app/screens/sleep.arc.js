@@ -6,12 +6,13 @@ import { hebDayLabel } from '../../core/hebrew.js';
 import { MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_EXPORT_FAIL, MSG_EXPORT_OK,
          MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA,
          MSG_ROW_DELETED } from '../constants.js';
-import { HE, atvCls, getStudents, hrMarks, hrPdfFont, hrSortStudents } from '../domain.js';
+import { atvCls, getStudents, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from '../domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from '../domain.hebdate.js';
-import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
-import { _hrPullSessions, hrRenderTodaySessions, hrSortedSessions,
-         hrSummaryHtml } from './sleep.js';
+import { hrCachedArr, hrLoadData, hrSaveData, hrSortDayRecs, hrSortDays, hrSortHebMonths,
+         hrSortHebYears } from '../domain.sessions.js';
+import { _hrPullSessions, hrRenderTodaySessions, hrSessionDefs,
+         hrSummaryHTML } from './sleep.js';
 
 // ── שינה — ארכיון הסדרים ──
 // קורא שמסר רשומות מקבל אותן כפי שהן — הוא כבר סינן, ורענון היה דורס.
@@ -25,10 +26,10 @@ async function hrRenderArchive(records) {
 }
 
 function _hrPaintArchive(el, records, warn) {
-  var warnHtml=warn?'<div class="warn-note">'+esc(warn)+'</div>':'';
+  var warnHTML=warn?'<div class="warn-note">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
-    el.innerHTML=warnHtml+'<div class="empty-note">אין רשומות</div>';return;
+    el.innerHTML=warnHTML+'<div class="empty-note">אין רשומות</div>';return;
   }
   var students=getStudents();
   function nameById(id){var s=students.find(function(x){return String(x.client_id)===String(id);});return s?s.name:'?';}
@@ -49,7 +50,7 @@ function _hrPaintArchive(el, records, warn) {
     byYear[hy][mi][iso].push({rec:rec,hd:hd});
   });
 
-  var years=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
+  var years=hrSortHebYears(Object.keys(byYear).map(Number));
   var idCtr=0; function uid(){return 'sl-arc-col-'+(idCtr++);}
 
   var html='<div>';
@@ -63,7 +64,7 @@ function _hrPaintArchive(el, records, warn) {
     '</div>';
     html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' arc-year-body">';
 
-    var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
+    var months=hrSortHebMonths(Object.keys(byYear[hy]).map(Number));
     months.forEach(function(mi){
       var mId=uid();
       var isMonthCur=isYearCur&&mi===curMI;
@@ -75,16 +76,11 @@ function _hrPaintArchive(el, records, warn) {
       '</div>';
       html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' arc-month-body">';
 
-      var _arcSessOrder={};
-      hrSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE.compare(b,a);});
+      var _arcDefs=hrSessionDefs();
+      var days=hrSortDays(Object.keys(byYear[hy][mi]));
       days.forEach(function(iso){
         var dId=uid();
-        var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
-          var ia=_arcSessOrder[a.rec.session]!=null?_arcSessOrder[a.rec.session]:999;
-          var ib=_arcSessOrder[b.rec.session]!=null?_arcSessOrder[b.rec.session]:999;
-          return ia-ib;
-        });
+        var entries=hrSortDayRecs(byYear[hy][mi][iso], _arcDefs, function(e){return e.rec;});
         var hd0=entries[0].hd;
         var dayLabel=hebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
@@ -101,12 +97,12 @@ function _hrPaintArchive(el, records, warn) {
           var rec=entry.rec;
           var cnts={};
           Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-          var summaryHtml=hrSummaryHtml(cnts);
+          var summaryHTML=hrSummaryHTML(cnts);
           var sId=uid();
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
-          html+='<div class="arc-sess-summary">'+summaryHtml+'</div>';
+          html+='<div class="arc-sess-summary">'+summaryHTML+'</div>';
           html+='<button data-act="sl-del-session" data-id="'+esc(rec.client_id)+'" class="arc-sess-del">✕</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
@@ -133,7 +129,7 @@ function _hrPaintArchive(el, records, warn) {
     html+='</div></div>';
   });
   html+='</div>';
-  el.innerHTML=warnHtml+html;
+  el.innerHTML=warnHTML+html;
 }
 
 function hrDeleteSession(id) {
@@ -179,7 +175,7 @@ async function hrExportExcel(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date);});
+    var sorted=hrSortRecs(data);
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
@@ -229,7 +225,7 @@ async function hrExportPdf(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date);});
+    var sorted=hrSortRecs(data);
     var NB=' ';
     var fontName=hrPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
