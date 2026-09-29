@@ -1,5 +1,5 @@
 // app/domain.hebdate.js — התאריך העברי: חלונות החודש והשנה, התוויות ובורר התאריך
-import { dayIso, dayNoon } from '../core/util.js';
+import { dayAdd, dayIso, dayNoon } from '../core/util.js';
 import { esc } from '../core/ui.js';
 import { hebDate, hebDayLabel, hebIntl, hebIsLeap, hebMonthNames, hebYearBase,
          hebYearLabelFull } from '../core/hebrew.js';
@@ -22,13 +22,11 @@ function hrHebYearInfo(hy){
     if(start){
       var ml=[],cur=start,total=0,ok=true;
       for(var m=0;m<nM;m++){
-        var p=new Date(cur.getTime()+29*86400000);
-        var pr=hebIntl(dayNoon(p));
+        var pr=hebIntl(dayNoon(dayAdd(dayIso(cur),29)));
         if(!pr){ok=false;break;}
         var len=(pr.day===1)?29:30;
         ml.push(len);total+=len;
-        var nx=new Date(cur.getTime()+len*86400000);
-        cur=dayNoon(nx);
+        cur=dayNoon(dayAdd(dayIso(cur),len));
       }
       if(ok&&ml.length===nM&&total>=353&&total<=385)
         info={hy:hy,jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
@@ -41,13 +39,11 @@ function hrHebYearInfo(hy){
 // הטבלה נקראת דרך hebYearBase ולא ישירות — _hcST הוא מצב פנימי של המודול, וקריאה ישירה בו נשברת בלי לזרוק.
 function _hcBase(hy){return hrHebYearInfo(hy)||hebYearBase(hy);}
 
-// עוגן בצהריים ולא בחצות — הוספת כפולות של 24 שעות מחצות נופלת ליום הקודם במעבר לשעון חורף.
+// חשבון לוח ולא מילישניות — הוספת כפולות של 24 שעות נופלת ליום הקודם במעבר לשעון חורף.
 function _hcG(hy,mi,day){
   var b=_hcBase(hy);if(!b)return new Date();
   var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
-  var anchor=dayNoon(b.jd);
-  var d=new Date(anchor.getTime()+c*86400000);
-  return dayNoon(d);}
+  return dayNoon(dayAdd(dayIso(b.jd),c));}
 
 // חודש עברי הוא טווח גרגוריאני רציף — gte/lte על session_date מכסים אותו בדיוק. המנוע הוא _hcG ולא חשבון ידני.
 function hrHebMonthWin(hy, mi) {

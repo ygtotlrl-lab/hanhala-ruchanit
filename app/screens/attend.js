@@ -1,5 +1,5 @@
 // app/screens/attend.js — מסך הסדרים: מה ששלושת חלקיו קוראים
-import { dayNoon, dayToday } from '../../core/util.js';
+import { dayIso, dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
@@ -160,19 +160,17 @@ function atCheckAlert() {
 
   var todH=_hcH(new Date());
   var curHY=todH.hy, curMI=todH.mi;
-  // תחילת החודש בחצות מקומית ולא בצהריים — כדי לא לפסול רשומות מה-1 בחודש:
-  // new Date('2026-04-28') הוא חצות UTC, 03:00 בישראל, מוקדם מ-12:00 מקומי.
-  var _mG=_hcG(curHY,curMI,1);
-  var monthBeg=new Date(_mG.getFullYear(),_mG.getMonth(),_mG.getDate(),0,0,0);
+  // תחילת החודש כמחרוזת ISO — השוואת ימים על המחרוזת, בלי Date ובלי שעה.
+  var monthBeg=dayIso(_hcG(curHY,curMI,1));
   console.log('[attend] atCheckAlert — חודש עברי:', _hcMN(curHY)[curMI], curHY,
-    '| תחילת חודש גרגוריאנית:', monthBeg.toISOString(),
+    '| תחילת חודש גרגוריאנית:', monthBeg,
     '| רשומות סה"כ:', data.length);
 
   var alerts=[];
   var stats={};
   students.forEach(function(s){stats[s.client_id]={name:s.name,absent:0,lateMin:0};});
   data.forEach(function(rec){
-    if(new Date(rec.session_date)<monthBeg) return;
+    if(String(rec.session_date||'')<monthBeg) return;
     Object.entries(hrMarks(rec)).forEach(function(e){
       var sid=e[0],m=e[1];
       if(!stats[sid]) return;

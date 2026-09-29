@@ -404,7 +404,7 @@ function _hcDraw(pfx){
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
   var mlen=b.ml[v.mi],fdow=_hcG(v.hy,v.mi,1).getDay();
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
-  var selH=selIso?_hcH(new Date(selIso)):null;
+  var selH=selIso?_hcH(dayNoon(selIso)):null;
   var todH=_hcH(new Date());
   var bs='hc-nav';
   var maxMi=(b.ml.length-1);
@@ -437,7 +437,7 @@ function _hcOpen(pfx){
   if(uiShown(pop)){pop.classList.add('hidden');return;}
   document.querySelectorAll('.hc-pop').forEach(function(p){p.classList.add('hidden');});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
-  var vh=iso?_hcH(new Date(iso)):_hcH(new Date());
+  var vh=iso?_hcH(dayNoon(iso)):_hcH(new Date());
   S._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // position fixed מחושב מהטריגר — חסין ל-overflow:hidden בהורים; הערכים נכתבים למשתני CSS שהכלל .hc-pop קורא.
   var trg=document.getElementById(pfx+'_trg');
