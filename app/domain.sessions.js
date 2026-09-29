@@ -164,7 +164,7 @@ async function atSaveData(data) {
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
     var _rAt=await pushTable('hr_sessions');
     var _rAm=await pushTable('hr_marks');
-    // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את _hrPushedAt
+    // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את עֵד הפינוי שבליבה
     if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
     if(_rAm&&_rAm.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_MARK,_t0);
     hrSyncLog('push','hr_sessions',hrCount(data),{local_count:_atLocalN,result_count:hrCount(data)});

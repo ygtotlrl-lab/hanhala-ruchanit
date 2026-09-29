@@ -2,8 +2,8 @@
 import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
          withTimeout } from '../core/util.js';
 import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
-         plStampRead, runSave, sbWatch } from '../core/sync.js';
-import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
+         plStampRead, pushedFor, rowsVerify, runSave, sbWatch } from '../core/sync.js';
+import { lsClearHorizons, lsRemove } from '../core/storage.js';
 import { logAwait } from '../core/backup.js';
 import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
@@ -17,8 +17,8 @@ import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
-         _hrVerify, _hrVerifyRows, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
+import { _hrMarkParent, _hrMarkSynced, _hrItemId, _hrRowId,
+         _hrVerify, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
          hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
@@ -108,45 +108,35 @@ var LS_CFG = {
   // שאר המפתחות קיימים בענן, אך מחיקתם מרוקנת את המסך אופליין — לכן הם מפונים ברמת רשומה.
   wholeKeys: [],
 
-  // לכל מפתח עֵד דחיפה משלו — החותמת הגלובלית מתקדמת גם במשיכה.
+  // לכל מפתח עֵד דחיפה משלו, מהליבה — לפי הטבלה שהוא נדחף איתה; פריטי ההגדרות — לפי KV_TABLE.
   // הסימונים יורדים עם הסדר שלהם (parent) — סדר בלי סימוניו מוצג ריק, ודחיפתו נקראת בענן כמחיקתם.
   oldRecords: [
     { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
     { key: mirrorKey('hr_marks'), label: 'סימוני נוכחות', ts: hrRecTs,
       parent: mirrorKey('hr_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_marks').select('client_id,updated_at'); }) },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_marks') },
     { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
     { key: mirrorKey('hr_sleep_marks'), label: 'סימוני שינה', ts: hrRecTs,
       parent: mirrorKey('hr_sleep_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_sleep_marks').select('client_id,updated_at'); }) },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_sleep_marks') },
     { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_attend_treats'),   verify: _hrVerify('hr_attend_treats') },
+      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),   verify: _hrVerify('hr_attend_treats') },
     { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_sleep_treats'),    verify: _hrVerify('hr_sleep_treats') }
+      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),    verify: _hrVerify('hr_sleep_treats') }
   ],
+  // ריק ומוצהר — הסדרים, השינה והטיפולים בפינוי, ואין טבלה שנדרשת במלואה לחישוב.
+  fullHistory: [],
   // טבלה שגדלה ואינה בפינוי ממלאת אחסון של origin משותף — לכן כאן רק טבלה קבועה בגודלה, עם נימוקה.
   fixedSize: [
     { t: 'hr_students_rows', why: 'מצבת התלמידים — שורה לתלמיד, ⛔ ואינה גדלה עם הזמן' },
     { t: KV_TABLE,           why: 'הגדרות — שורה למפתח, ⛔ ומספר המפתחות קבוע בקוד' },
     { t: 'hr_users',         why: 'משתמשים — שורה למשתמש, ⚠️ והיא מסלול הכניסה האופליין' }
-  ],
-
-  // כל עוד תור יומן הכניסות אינו ריק — אין פינוי בשתי הרשימות.
-  pending: function () {
-    try {
-      var l = JSON.parse(lsGet('hr_login_log_queue') || '[]');
-      return Array.isArray(l) && l.length > 0;
-    } catch (e) { return true; } // תור שאינו ניתן לקריאה נחשב לא ריק — בספק לא מפנים
-  },
-
-  // 0 בכוונה: _hrLastTs מתקדם גם במשיכה ואינו עֵד דחיפה — פינוי לפיו מוחק רשומה שלא עלתה.
-  // העֵד הוא _hrPushedAt פר-מפתח; אין להחזיר לכאן את _hrLastTs.
-  syncedThrough: function () { return 0; }
+  ]
 };
 
-// logQueueKey נשאר hr_login_log_queue — LS_CFG.pending() בודק אותו, ושינוי שמו מנתק בשקט את ההגנה על הפינוי.
+// logQueueKey נשאר hr_login_log_queue — מכשיר שתורו ממתין תחת השם הזה היה מאבד אותו במחיקת המפתחות שאינם במרשם.
 // hr_users אינה מגובה — sh_backup קריאה ל-anon, וגיבויה היה מעתיק את טביעות הסיסמה.
 var BK_CFG = {
   client: function () { return S.SB; },
@@ -221,7 +211,6 @@ var PUSH_CFG = {
   delay:  400,
   // ctx הוא המערך שהכותב כבר מחזיק, ובלעדיו העותק שבמראה — מחזור בלי קלט הוא «אין ראיה», וההגדרות היו נשארות ממתינות.
   rows:   function (t, ctx) {
-    S._hrPushEp = ctxEpoch();
     if (t === KV_TABLE) return hrSetRows();
     if (HR_MARK_TABLES[t]) return MIRROR[t] || [];
     return Array.isArray(ctx) ? ctx : hrLocalRecs(t);
@@ -234,12 +223,6 @@ var PUSH_CFG = {
   send:   function (t, rows) {
     if (t === KV_TABLE) return hrSetSend(rows);
     return HR_MARK_TABLES[t] ? hrSendMarks(t, rows) : hrSendRecs(t, rows);
-  },
-  mark:   function (t) {
-    if (ctxStale(S._hrPushEp)) return;
-    // הטיפולים יושבים בטבלת ההגדרות — ועֵד הפינוי שלהם הוא עֵדה.
-    if (t === KV_TABLE) { Object.keys(HR_SET_FLAT).forEach(function (k) { _hrMarkPushed(HR_SET_FLAT[k]); }); return; }
-    _hrMarkPushed(t);
   },
   run:    function () { hrPushToCloud(); },
 };

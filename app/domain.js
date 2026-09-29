@@ -80,27 +80,7 @@ function hrApplyPerms(p) {
   return changed;
 }
 
-// ── עֵד הדחיפה פר-מפתח ──
-// נכתב רק אחרי דחיפה שחזרה ok — אין לגזור אותו ממשיכה.
-var _hrPushedAt = {};
-
-function _hrMarkPushed(kvKey) { _hrPushedAt[kvKey] = Date.now(); }
-
-function _hrPushedThrough(kvKey) { return _hrPushedAt[kvKey] || 0; }
-
-function _hrPushedFor(kvKey) { return function () { return _hrPushedThrough(kvKey); }; }
-
 function _hrMarkParent(r) { return r ? r.session_client_id : null; }
-
-// נכשל סגור: עמוד שנכשל מחזיר null — «אין ראיה» אינו «הענן ריק».
-function _hrVerifyRows(mkQuery) {
-  return function () {
-    if (!S.SB) return Promise.resolve({ ok: false, rows: [] });
-    return _rowsPaged(mkQuery, 'client_id', null)
-      .then(function (rs) { return Array.isArray(rs) ? { ok: true, rows: rs } : { ok: false, rows: [] }; },
-            function () { return { ok: false, rows: [] }; });
-  };
-}
 
 function _hrRowId(r) { return r ? r.client_id : null; }
 
@@ -882,9 +862,9 @@ function hrDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed, _hrItemId,
-         _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
-         _hrVerify, _hrVerifyRows, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrItemId,
+         _hrMarkSynced, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
+         _hrVerify, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwFetch, hrHwInWindow,
          hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,

@@ -30,6 +30,6 @@
 - כל נתיב שסופר או מציג מסנן `!r.deleted`, ו-`hrMarks(rec)` בכל אתר קריאה.
 - אין ניקוי רשומות-בדיקה לפי שם הסדר.
 - `hrWriteFail(where, e)` רושמת כשל כתיבה ואינה משנה את הזרימה; פרטית כאן.
-- `LS_CFG.wholeKeys` ריק — `hr_mirror_users` ו-`hr_perms_cache` הם מסלול הכניסה האופליין. עֵד הפינוי `_hrPushedAt` פר-מפתח, לא `_hrLastTs`.
-- `pending()`: `hr_login_log_queue` לא ריק ⇒ שלב ב מדולג; `JSON.parse` שנכשל מחזיר `true`. שם המפתח נשאר.
+- `LS_CFG.wholeKeys` ריק — `hr_mirror_users` ו-`hr_perms_cache` הם מסלול הכניסה האופליין. עֵד הפינוי נרשם בליבה ב-`pushTable`, פר-טבלה (`pushedFor`), לא `_hrLastTs`.
+- «יש ממתין» לפינוי — מהליבה (סימוני ⏳), ולא מתור יומן הכניסות; שם המפתח `hr_login_log_queue` נשאר.
 - כל שם במודול השינה נושא `hr` (לא `sl`), והטבלאות `hr_sleep_*`.
