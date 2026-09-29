@@ -295,7 +295,7 @@ function openEditUser(u) {
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
 }
 
-function userFormHtml() {
+function userFormHTML() {
   return '<input type="hidden" id="um-id">'+
     '<label for="um-name">שם מלא *</label>'+
     '<input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">'+
@@ -315,7 +315,7 @@ function userFormHtml() {
 }
 
 function openUserModal(title) {
-  openModal('👤 ' + title, userFormHtml(),
+  openModal('👤 ' + title, userFormHTML(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
     '<button class="btn" data-act="user-save" data-ksave>💾 שמור</button>');
 }
@@ -384,16 +384,16 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id]||{})[role] || 'none';
-      var selHtml = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
+      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
-        selHtml += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
+        selHTML += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
-      selHtml += '</select>';
+      selHTML += '</select>';
       // מנהל תמיד בעריכה בהגדרות
       if (m.id === 'settings' && role === ROLE_ADMIN) {
         row += '<td><span class="um-edit">✏️ עריכה</span></td>';
       } else {
-        row += '<td>'+selHtml+'</td>';
+        row += '<td>'+selHTML+'</td>';
       }
     });
     return row + '</tr>';

@@ -16,9 +16,6 @@ const S = {
   // מועד הסנכרון האחרון לשורת המצב — נכתב על כל שיחה מוצלחת עם הענן, גם בקריאה בלבד.
   // אינו עֵד דחיפה ואינו משמש לפינוי — לזה _hrPushedAt פר-מפתח.
   _hrLastSyncAt: 0,
-  // localeCompare בונה משווה חדש בכל קריאה, ובתוך sort זה O(n log n) פעמים — לכן משווה אחד ברמת המודול.
-  // בלי Intl.Collator — נפילה-חזרה ל-localeCompare עם אותו he, שהיא אותה השוואה.
-  _heColl: null,
   // ── מצבת התלמידים ──
   currentFilter: 'all',
   editingStudentId: null,

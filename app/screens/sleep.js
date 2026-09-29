@@ -1,11 +1,11 @@
 // app/screens/sleep.js — מסך השינה: מה ששלושת חלקיו קוראים
-import { dayNoon, dayToday } from '../../core/util.js';
+import { HE_COLLATOR, dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc } from '../../core/ui.js';
 import { PK_SL_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, _hrCleanCfg, atvCls, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
+import { _hrCleanCfg, atvCls, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrDefaultCfg, hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcH } from '../domain.hebdate.js';
@@ -15,7 +15,7 @@ var HR_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שיש
 
 function hrDow(isoDate){return HR_DOW[dayNoon(isoDate).getDay()];}
 
-function hrSummaryHtml(cnts){
+function hrSummaryHTML(cnts){
   var parts=[];
   var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
   add(cnts.p||0,  'נוכחים',   'p');
@@ -102,7 +102,7 @@ async function hrSaveTreats(data) {
 function hrSortedSessions(cfg) {
   if(!cfg) cfg=S._hrCfg||hrDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.start_time||'', b.start_time||'');
+    return HE_COLLATOR.compare(a.start_time||'', b.start_time||'');
   });
 }
 
@@ -132,11 +132,11 @@ function hrRenderTodaySessions() {
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-    var summaryHtml=hrSummaryHtml(cnts);
+    var summaryHTML=hrSummaryHTML(cnts);
     html+='<div data-act="sl-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(PK_SL_SESS+rec.client_id)+
-      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
+      '<div class="day-sess-summary">'+summaryHTML+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
   });
@@ -146,4 +146,4 @@ function hrRenderTodaySessions() {
 
 export { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
          hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg, hrSaveTreats,
-         hrSortedSessions, hrSummaryHtml };
+         hrSortedSessions, hrSummaryHTML };

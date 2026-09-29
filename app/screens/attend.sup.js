@@ -1,5 +1,5 @@
 // app/screens/attend.sup.js — סדרים — השגחה, טיפולים והגדרות המודול
-import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
+import { HE_COLLATOR, MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, tombKill } from '../../core/sync.js';
 import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
@@ -7,7 +7,7 @@ import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
 import { S, shell } from '../state.js';
-import { HE, atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess } from '../domain.js';
+import { atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess } from '../domain.js';
 import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
 import { atLoadData, atSaveData, hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
@@ -58,15 +58,15 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
   var hasNext=mi<curMax||!!_hcBase(hy+1);
 
   var navStyle='sup-nav';
-  var navHtml='<div class="sup-nav-bar">'+
+  var navHTML='<div class="sup-nav-bar">'+
     '<button data-act="at-sup-nav" data-dir="-1" class="'+navStyle+(hasPrev?'':' sup-nav-off')+'"'+(hasPrev?'':' disabled')+'>›</button>'+
     '<span class="sup-nav-label">'+mLabel+'</span>'+
     '<button data-act="at-sup-nav" data-dir="1" class="'+navStyle+(hasNext?'':' sup-nav-off')+'"'+(hasNext?'':' disabled')+'>‹</button>'+
   '</div>';
-  if(warn) navHtml='<div class="warn-note">'+esc(warn)+'</div>'+navHtml;
+  if(warn) navHTML='<div class="warn-note">'+esc(warn)+'</div>'+navHTML;
 
   if(!data||!data.length){
-    el.innerHTML=navHtml+'<div class="empty-note">אין נתונים עדיין</div>';return;
+    el.innerHTML=navHTML+'<div class="empty-note">אין נתונים עדיין</div>';return;
   }
 
   var stats={};
@@ -95,22 +95,22 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
 
   if(!rows.length){
-    el.innerHTML=navHtml+'<div class="empty-note">אין חיסורים ב'+mLabel+'</div>';return;
+    el.innerHTML=navHTML+'<div class="empty-note">אין חיסורים ב'+mLabel+'</div>';return;
   }
 
   S._atSupRecords={};
   rows.forEach(function(e){S._atSupRecords[e[0]]=e[1].records||[];});
 
-  var html=navHtml+'<div class="status-choice-list">';
+  var html=navHTML+'<div class="status-choice-list">';
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE.compare(b.treat_date||'',a.treat_date||'');})[0]:null;
-    var lastHtml='';
+    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE_COLLATOR.compare(b.treat_date||'',a.treat_date||'');})[0]:null;
+    var lastHTML='';
     if(lastTreat){
       var ltIso=lastTreat.treat_date||'';
       var ltDateStr=ltIso?hrDayHebFmt(ltIso):'';
-      lastHtml='<span class="badge-ok">📝 יום '+atDow(ltIso)+' '+esc(ltDateStr)+'</span>';
+      lastHTML='<span class="badge-ok">📝 יום '+atDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     var alert20=st.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=st.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
@@ -119,7 +119,7 @@ function _atSupPaint(el, rawData, rawTreats, warn) {
     html+='<div id="'+cardId+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="sup-chev">';
     html+='<div class="sup-card-class">'+esc(clsLabel)+'</div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHtml?'<div class="rec-last">'+lastHtml+'</div>':'')+'</div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(st.name)+alert20+alert300+'</div>'+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<span class="rec-abs">חיסורים: <b>'+st.absent+'</b></span>';
     html+='<span class="rec-late">איחורים: <b>'+st.lateMin+'</b>ד׳</span>';
@@ -211,27 +211,27 @@ function atSupDetail(sid) {
   var name=st?st.name:'תלמיד';
   var records=(S._atSupRecords&&S._atSupRecords[sid])||[];
 
-  var rowsHtml='';
-  if(!records.length){rowsHtml='<div class="loading-note">אין חיסורים בחודש זה</div>';}
+  var rowsHTML='';
+  if(!records.length){rowsHTML='<div class="loading-note">אין חיסורים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return HE.compare(a.session_date,b.session_date)||HE.compare(a.session,b.session);}).forEach(function(r){
+    records.slice().sort(function(a,b){return HE_COLLATOR.compare(a.session_date,b.session_date)||HE_COLLATOR.compare(a.session,b.session);}).forEach(function(r){
       var hbr=hrDayHebFmt(r.session_date);
       var dowStr='יום '+atDow(r.session_date);
       var lbl=r.mark==='l'?('איחור — '+(r.minutes||0)+' ד׳'):(ARC_LBL_DET[r.mark]||r.mark);
       var mkc=atvCls(r.mark);
-      rowsHtml+='<div class="mark-hist-row">';
-      rowsHtml+='<span class="mark-hist-dow">'+(dowStr)+'</span>';
-      rowsHtml+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
-      rowsHtml+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
-      rowsHtml+='<span class="'+mkc+' hist-mark">'+esc(lbl)+'</span>';
-      rowsHtml+='<button data-act="at-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
+      rowsHTML+='<div class="mark-hist-row">';
+      rowsHTML+='<span class="mark-hist-dow">'+(dowStr)+'</span>';
+      rowsHTML+='<span class="mark-hist-date">'+esc(hbr)+'</span>';
+      rowsHTML+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
+      rowsHTML+='<span class="'+mkc+' hist-mark">'+esc(lbl)+'</span>';
+      rowsHTML+='<button data-act="at-mark-edit" data-rec="'+esc(r.recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
         ' class="mark-edit-btn">✏️ ערוך</button>';
-      rowsHtml+='</div>';
+      rowsHTML+='</div>';
     });
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    '<div class="scroll-pane">'+rowsHtml+'</div>','');
+    '<div class="scroll-pane">'+rowsHTML+'</div>','');
 }
 
 function atSupEditMarkDlg(recId, sid, curMark) {
@@ -244,13 +244,13 @@ function atSupEditMarkDlg(recId, sid, curMark) {
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
   ];
-  var btnsHtml=CODES.map(function(cd){
+  var btnsHTML=CODES.map(function(cd){
     var active=cd.c===curMark?'mark-on':'mark-off';
     return '<button data-act="at-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
       'class="'+atvCls(cd.c)+' '+active+' mark-pick">'+cd.lbl+'</button>';
   }).join('');
   openModal(MSG_EDIT_MARK,
-    '<div class="chip-row">'+btnsHtml+'</div>',
+    '<div class="chip-row">'+btnsHTML+'</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>');
 }
 

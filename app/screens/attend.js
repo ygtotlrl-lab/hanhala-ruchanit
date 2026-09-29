@@ -1,11 +1,11 @@
 // app/screens/attend.js — מסך הסדרים: מה ששלושת חלקיו קוראים
-import { dayNoon, dayToday } from '../../core/util.js';
+import { HE_COLLATOR, dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
 import { MSG_ABSENCE_ALERT, PK_AT_SESS } from '../constants.js';
 import { S } from '../state.js';
-import { HE, atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
+import { atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
@@ -15,7 +15,7 @@ var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שיש
 
 function atDow(isoDate){return AT_DOW[dayNoon(isoDate).getDay()];}
 
-function atSummaryHtml(cnts){
+function atSummaryHTML(cnts){
   var parts=[];
   var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
   add(cnts.p||0,  'נוכחים',   'p');
@@ -120,7 +120,7 @@ async function atSaveTreats(data) {
 function atSortedSessions(cfg) {
   if(!cfg) cfg=S._atCfg||atDefaultCfg();
   return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE.compare(a.start_time||'', b.start_time||'');
+    return HE_COLLATOR.compare(a.start_time||'', b.start_time||'');
   });
 }
 
@@ -149,11 +149,11 @@ function atRenderTodaySessions() {
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-    var summaryHtml=atSummaryHtml(cnts);
+    var summaryHTML=atSummaryHTML(cnts);
     html+='<div data-act="at-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(PK_AT_SESS+rec.client_id)+
-      '<div class="day-sess-summary">'+summaryHtml+'</div>'+
+      '<div class="day-sess-summary">'+summaryHTML+'</div>'+
       '<span class="day-sess-edit">✏️ ערוך</span>'+
     '</div>';
   });
@@ -193,7 +193,7 @@ function atCheckAlert() {
   });
   if(!alerts.length) return;
 
-  var listHtml=alerts.slice(0,10).map(function(s){
+  var listHTML=alerts.slice(0,10).map(function(s){
     return '<div class="alert-row">'+esc(s.name)+
       (s.absent>=20?'<span class="alert-abs"> — '+s.absent+' חיסורים</span>':'')+
       (s.lateMin>=300?'<span class="alert-late"> — '+s.lateMin+' דק׳ איחור</span>':'')+
@@ -201,11 +201,11 @@ function atCheckAlert() {
   }).join('');
   openModal(MSG_ABSENCE_ALERT,
     '<p class="alert-lead">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div class="alert-list">'+listHtml+'</div>',
+    '<div class="alert-list">'+listHTML+'</div>',
     '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
 }
 
 export { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
          atCheckAlert, atDefaultCfg, atDow, atLiveTreats, atLoadTreats,
          atRenderTodaySessions, atSaveCfg, atSaveTreats, atSortedSessions,
-         atSummaryHtml };
+         atSummaryHTML };

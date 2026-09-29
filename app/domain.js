@@ -1,5 +1,5 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
+import { HE_COLLATOR, MSG_KV_BAD, dayIso, dayNoon, dayToday, kvParse, uniqList,
          withTimeout } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
@@ -14,10 +14,6 @@ import { HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FL
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-
-try { S._heColl = new Intl.Collator('he'); } catch (e) { S._heColl = null; }
-
-var HE = S._heColl || { compare: function (a, b) { return String(a).localeCompare(String(b), 'he'); } };
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
 // ה-API הוא addVirtualFileSystem/addFonts — השמה ל-pdfMake.vfs נכשלת בשקט מ-0.3 ומחזירה גופן בלי עברית.
@@ -797,7 +793,7 @@ function hrSortStudents(list) {
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;
-    return HE.compare((x && x.name) || '', (y && y.name) || '');
+    return HE_COLLATOR.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
 
@@ -870,7 +866,7 @@ function hrDefaultCfg() {
   };
 }
 
-export { HE, HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
+export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
          _hrItemId, _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave,
          _hrStudentsRaw, _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, atvCls, canAccess,
          getAbsenceReasons, getActiveAbsences, getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt,
