@@ -732,7 +732,6 @@ async function hrPullFromCloud() {
     if (abR && typeof abR === 'object' && !Array.isArray(abR) && !hrSetPending('absence_reasons')) {
       hrCfgLocalSet('absence_reasons', abR);
     }
-    // hr_cls_years אינו נמשך — השורה מחוקה רכות בענן, ומשיכתה הייתה מחזירה אותה למסך כחיה.
     try {
       var _atCfgV = await hrCfgGet('attend_cfg');
       if (ctxStale(_ep)) return;
