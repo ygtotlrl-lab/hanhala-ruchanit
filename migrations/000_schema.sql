@@ -68,35 +68,35 @@ revoke all on function public.bk_fn_def(text) from public, anon, authenticated, 
 grant execute on function public.bk_fn_def(text) to anon, authenticated, service_role;
 
 -- מפתח שאינו ברשימה אינו מתפנה לעולם · והרשימה אחת לשני הפרויקטים — הבלוק זהה בית-לבית, ומפתח של הפרויקט השני אינו קיים כאן
--- כל מקור נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד
+-- כל מקור נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח
 CREATE OR REPLACE FUNCTION public.bk_retention_keys()
  RETURNS text[]
  LANGUAGE sql
  IMMUTABLE
 AS $function$
   select array[
-    'ANCHOR:hr_sessions_rows', 'DIFF:hr_sessions_rows',
-    'ANCHOR:hr_marks_rows', 'DIFF:hr_marks_rows',
+    'ANCHOR:hr_sessions', 'DIFF:hr_sessions',
+    'ANCHOR:hr_marks', 'DIFF:hr_marks',
     'ANCHOR:hr_students_rows', 'DIFF:hr_students_rows',
-    'ANCHOR:hr_sleep_sessions_rows', 'DIFF:hr_sleep_sessions_rows',
-    'ANCHOR:hr_sleep_marks_rows', 'DIFF:hr_sleep_marks_rows',
+    'ANCHOR:hr_sleep_sessions', 'DIFF:hr_sleep_sessions',
+    'ANCHOR:hr_sleep_marks', 'DIFF:hr_sleep_marks',
     'ANCHOR:hr_settings', 'DIFF:hr_settings',
     'ANCHOR:sl_students', 'DIFF:sl_students',
     'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
     'ANCHOR:sl_settings', 'DIFF:sl_settings',
     'ANCHOR:sl_lists', 'DIFF:sl_lists',
-    'ANCHOR:rishon_ya_entries_rows', 'DIFF:rishon_ya_entries_rows',
-    'ANCHOR:rishon_ya_settings', 'DIFF:rishon_ya_settings',
-    'ANCHOR:ramataviv_ya_entries_rows', 'DIFF:ramataviv_ya_entries_rows',
-    'ANCHOR:ramataviv_ya_settings', 'DIFF:ramataviv_ya_settings',
+    'ANCHOR:rishon_ya_entries', 'DIFF:rishon_ya_entries',
+    'ANCHOR:rishon_ya_settings_rishon', 'DIFF:rishon_ya_settings_rishon',
+    'ANCHOR:ramataviv_ya_entries', 'DIFF:ramataviv_ya_entries',
+    'ANCHOR:ramataviv_ya_settings_ramataviv', 'DIFF:ramataviv_ya_settings_ramataviv',
     'ANCHOR:g_donors', 'DIFF:g_donors',
     'ANCHOR:g_pledges', 'DIFF:g_pledges',
     'ANCHOR:g_txns', 'DIFF:g_txns',
     'ANCHOR:g_tasks', 'DIFF:g_tasks',
     'ANCHOR:g_targets', 'DIFF:g_targets',
-    'ANCHOR:g_settings',
+    'ANCHOR:g_settings', 'DIFF:g_settings',
     'ANCHOR:g_users', 'DIFF:g_users',
-    'ANCHOR:k_settings',
+    'ANCHOR:k_settings', 'DIFF:k_settings',
     'ANCHOR:k_pledges', 'DIFF:k_pledges',
     'ANCHOR:k_standing_orders', 'DIFF:k_standing_orders',
     'ANCHOR:k_so_instances', 'DIFF:k_so_instances',
