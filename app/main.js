@@ -160,17 +160,17 @@ var BK_CFG = {
   sources: function () {
     // מפתח הגיבוי הוא שם הטבלה ו-_rows, פרט ל-hr_students_rows ששמו כבר נושא אותה.
     var out = [
-      { kind: 'table', name: 'hr_sessions',       key: 'hr_sessions_rows',  order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'hr_marks',          key: 'hr_marks_rows',     order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'hr_students_rows',  key: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' }
+      { name: 'hr_sessions',       key: 'hr_sessions_rows',  order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_marks',          key: 'hr_marks_rows',     order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_students_rows',  key: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' }
     ];
     // מחרוזות המפתח הן רשימת-ההיתר של הפינוי במסד — מפתח שאינו שם אינו מתפנה לעולם.
     out.push(
-      { kind: 'table', name: 'hr_sleep_sessions', key: 'hr_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
-      { kind: 'table', name: 'hr_sleep_marks',    key: 'hr_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
+      { name: 'hr_sleep_sessions', key: 'hr_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_sleep_marks',    key: 'hr_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
     );
-    // אין מקור kind:'kv' — הטבלה אינה קיימת במסד, ומקור שנכשל מונע את דגל הגיבוי היומי וכל עלייה מגבה שוב.
-    out.push({ kind: 'table', name: KV_TABLE, key: KV_TABLE, order: 'key', ts: 'updated_at' });
+    // טבלת ההגדרות — מקור טבלה ככל השאר, בשכבות.
+    out.push({ name: KV_TABLE, key: KV_TABLE, order: 'key', ts: 'updated_at' });
     return out;
   }
 };
