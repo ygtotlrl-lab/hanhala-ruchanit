@@ -2,28 +2,27 @@
 import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
          withTimeout } from '../core/util.js';
 import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
-         plStampRead, runSave, sbWatch } from '../core/sync.js';
-import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
-import { logAwait } from '../core/backup.js';
+         plStampRead, pushedFor, rowsVerify, runSave, sbWatch } from '../core/sync.js';
+
+import { coreBoot, logAwait } from '../core/backup.js';
 import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
-import { authUsersTable, isAdmin, lkReset, sessActive, sessGet, sessSet,
+import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
-import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
-         comboPick, esc, ksKey, modalBackdrop, modalEsc, openModal, swApply, swHideUpdate,
-         toast } from '../core/ui.js';
-import { hebDayLabel } from '../core/hebrew.js';
+import { actWire, closeAsk, closeModal, comboInput, comboPick, esc, openModal, swApply,
+         swHideUpdate, toast } from '../core/ui.js';
+import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
 import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-import { _hrMarkParent, _hrMarkPushed, _hrMarkSynced, _hrItemId, _hrPushedFor, _hrRowId,
-         _hrVerify, _hrVerifyRows, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
+import { _hrMarkParent, _hrMarkSynced, _hrItemId, _hrRowId,
+         _hrVerify, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
          hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
-import { _hcBase, _hcFmt, _hcG, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
-import { atRenderTodaySessions } from './screens/attend.js';
+import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
+import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
 import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
          switchUserEl, toggleUserMenu } from './screens/login.js';
@@ -31,30 +30,20 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
          saveUserOrder, screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
-import { hrRenderTodaySessions } from './screens/sleep.js';
+import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
          setStudentActive, setStudentInactive } from './screens/students.js';
-import { atDeleteSession, atExportConfirm, atRenderArchive,
-         atShowExportDialog } from './screens/attend.arc.js';
-import { atCancelStudentStatusFromReg, atClearMark, atCloseSession, atConfirmLate,
-         atEditSession, atFillSessionBtns, atOpenSession, atRenderStudents, atSetLateMin,
-         atSetMark, atShowTab, loadAttend,
-         screenAttendHTML } from './screens/attend.reg.js';
-import { atAddSession, atAddTreat, atAddTreatRow, atDeleteTreat, atEditMark,
-         atRenderSupervision, atSaveSettingsCfg, atSupDetail, atSupEditMarkDlg, atSupNav,
-         renderAttendSettings } from './screens/attend.sup.js';
-import { hrDeleteSession, hrExportConfirm, hrRenderArchive,
-         hrShowExportDialog } from './screens/sleep.arc.js';
-import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate,
-         hrEditSession, hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin,
-         hrSetMark, hrSetNote, hrShowTab, loadSleep,
-         screenSleepHTML } from './screens/sleep.reg.js';
-import { hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSupervision,
-         hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg, hrSupNav,
-         renderSleepSettings } from './screens/sleep.sup.js';
+import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
+import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
+         hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
+         hrShowTab } from './domain.reg.js';
+import { hrDeleteSession, hrExportConfirm, hrShowExportDialog } from './domain.arc.js';
+import { hrAddSessionRow, hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSettings,
+         hrRenderSupervision, hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg,
+         hrSupNav } from './domain.sup.js';
 
 // ── החיווט ──
 // החיווט נמסר בשומרי קריאה — ה-CFG מוגדרים בהמשך, והשומר קורא אותם בזמן הקריאה ולא בזמן המסירה.
@@ -108,45 +97,35 @@ var LS_CFG = {
   // שאר המפתחות קיימים בענן, אך מחיקתם מרוקנת את המסך אופליין — לכן הם מפונים ברמת רשומה.
   wholeKeys: [],
 
-  // לכל מפתח עֵד דחיפה משלו — החותמת הגלובלית מתקדמת גם במשיכה.
+  // לכל מפתח עֵד דחיפה משלו, מהליבה — לפי הטבלה שהוא נדחף איתה; פריטי ההגדרות — לפי KV_TABLE.
   // הסימונים יורדים עם הסדר שלהם (parent) — סדר בלי סימוניו מוצג ריק, ודחיפתו נקראת בענן כמחיקתם.
   oldRecords: [
     { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
     { key: mirrorKey('hr_marks'), label: 'סימוני נוכחות', ts: hrRecTs,
       parent: mirrorKey('hr_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_marks').select('client_id,updated_at'); }) },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_marks') },
     { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
     { key: mirrorKey('hr_sleep_marks'), label: 'סימוני שינה', ts: hrRecTs,
       parent: mirrorKey('hr_sleep_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: _hrPushedFor('hr_sleep_marks'), verify: _hrVerifyRows(function () { return S.SB.from('hr_sleep_marks').select('client_id,updated_at'); }) },
+      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_sleep_marks') },
     { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_attend_treats'),   verify: _hrVerify('hr_attend_treats') },
+      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),   verify: _hrVerify('hr_attend_treats') },
     { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: _hrPushedFor('hr_sleep_treats'),    verify: _hrVerify('hr_sleep_treats') }
+      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),    verify: _hrVerify('hr_sleep_treats') }
   ],
+  // ריק ומוצהר — הסדרים, השינה והטיפולים בפינוי, ואין טבלה שנדרשת במלואה לחישוב.
+  fullHistory: [],
   // טבלה שגדלה ואינה בפינוי ממלאת אחסון של origin משותף — לכן כאן רק טבלה קבועה בגודלה, עם נימוקה.
   fixedSize: [
     { t: 'hr_students_rows', why: 'מצבת התלמידים — שורה לתלמיד, ⛔ ואינה גדלה עם הזמן' },
     { t: KV_TABLE,           why: 'הגדרות — שורה למפתח, ⛔ ומספר המפתחות קבוע בקוד' },
     { t: 'hr_users',         why: 'משתמשים — שורה למשתמש, ⚠️ והיא מסלול הכניסה האופליין' }
-  ],
-
-  // כל עוד תור יומן הכניסות אינו ריק — אין פינוי בשתי הרשימות.
-  pending: function () {
-    try {
-      var l = JSON.parse(lsGet('hr_login_log_queue') || '[]');
-      return Array.isArray(l) && l.length > 0;
-    } catch (e) { return true; } // תור שאינו ניתן לקריאה נחשב לא ריק — בספק לא מפנים
-  },
-
-  // 0 בכוונה: _hrLastTs מתקדם גם במשיכה ואינו עֵד דחיפה — פינוי לפיו מוחק רשומה שלא עלתה.
-  // העֵד הוא _hrPushedAt פר-מפתח; אין להחזיר לכאן את _hrLastTs.
-  syncedThrough: function () { return 0; }
+  ]
 };
 
-// logQueueKey נשאר hr_login_log_queue — LS_CFG.pending() בודק אותו, ושינוי שמו מנתק בשקט את ההגנה על הפינוי.
+// logQueueKey נשאר hr_login_log_queue — מכשיר שתורו ממתין תחת השם הזה היה מאבד אותו במחיקת המפתחות שאינם במרשם.
 // hr_users אינה מגובה — sh_backup קריאה ל-anon, וגיבויה היה מעתיק את טביעות הסיסמה.
 var BK_CFG = {
   client: function () { return S.SB; },
@@ -158,20 +137,15 @@ var BK_CFG = {
   // ריק כי hr_users מוחרגת כולה מהגיבוי; מנגנון הסינון נשאר דרוך לסוד עתידי.
   secrets: [],
   sources: function () {
-    // מפתח הגיבוי הוא שם הטבלה ו-_rows, פרט ל-hr_students_rows ששמו כבר נושא אותה.
-    var out = [
-      { name: 'hr_sessions',       key: 'hr_sessions_rows',  order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_marks',          key: 'hr_marks_rows',     order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_students_rows',  key: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' }
+    // מפתח הגיבוי הוא שם הטבלה — והוא ברשימת-ההיתר של הפינוי במסד; מפתח שאינו שם אינו מתפנה לעולם.
+    return [
+      { name: 'hr_sessions',       order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_marks',          order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_sleep_sessions', order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_sleep_marks',    order: 'client_id', ts: 'updated_at' },
+      { name: KV_TABLE,            order: 'key',       ts: 'updated_at' }
     ];
-    // מחרוזות המפתח הן רשימת-ההיתר של הפינוי במסד — מפתח שאינו שם אינו מתפנה לעולם.
-    out.push(
-      { name: 'hr_sleep_sessions', key: 'hr_sleep_sessions_rows', order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_sleep_marks',    key: 'hr_sleep_marks_rows',    order: 'client_id', ts: 'updated_at' }
-    );
-    // טבלת ההגדרות — מקור טבלה ככל השאר, בשכבות.
-    out.push({ name: KV_TABLE, key: KV_TABLE, order: 'key', ts: 'updated_at' });
-    return out;
   }
 };
 
@@ -180,11 +154,10 @@ var PEND_CFG = {
   marks: function () {
     return [PK_SET].concat(Object.keys(PEND_KV_PREFIX).map(function (k) { return PEND_KV_PREFIX[k]; }));
   },
-  // שלושת המסכים שמציירים pendTag אידמפוטנטיים וכותבים לאלמנטים קבועים גם כשהמסך מוסתר — כשל באחד אינו מפיל את השאר.
+  // המסכים שמציירים pendTag אידמפוטנטיים וכותבים לאלמנטים קבועים גם כשהמסך מוסתר — כשל באחד אינו מפיל את השאר.
   redraw: function () {
     try { renderStudents(); } catch (e) { }
-    try { atRenderTodaySessions(); } catch (e) { }
-    try { hrRenderTodaySessions(); } catch (e) { }
+    Object.keys(HR_STREAMS).forEach(function (k) { try { hrRenderTodaySessions(HR_STREAMS[k]); } catch (e) { } });
   }
 };
 
@@ -221,7 +194,6 @@ var PUSH_CFG = {
   delay:  400,
   // ctx הוא המערך שהכותב כבר מחזיק, ובלעדיו העותק שבמראה — מחזור בלי קלט הוא «אין ראיה», וההגדרות היו נשארות ממתינות.
   rows:   function (t, ctx) {
-    S._hrPushEp = ctxEpoch();
     if (t === KV_TABLE) return hrSetRows();
     if (HR_MARK_TABLES[t]) return MIRROR[t] || [];
     return Array.isArray(ctx) ? ctx : hrLocalRecs(t);
@@ -234,12 +206,6 @@ var PUSH_CFG = {
   send:   function (t, rows) {
     if (t === KV_TABLE) return hrSetSend(rows);
     return HR_MARK_TABLES[t] ? hrSendMarks(t, rows) : hrSendRecs(t, rows);
-  },
-  mark:   function (t) {
-    if (ctxStale(S._hrPushEp)) return;
-    // הטיפולים יושבים בטבלת ההגדרות — ועֵד הפינוי שלהם הוא עֵדה.
-    if (t === KV_TABLE) { Object.keys(HR_SET_FLAT).forEach(function (k) { _hrMarkPushed(HR_SET_FLAT[k]); }); return; }
-    _hrMarkPushed(t);
   },
   run:    function () { hrPushToCloud(); },
 };
@@ -264,11 +230,6 @@ function _hrHwSpec(t, label, recs) {
   };
 }
 var HW_CFG = {
-  enabled: true,
-  admin: function () {
-    try { return isAdmin(); }
-    catch (e) { return false; }
-  },
   specs: [
     _hrHwSpec('hr_sessions', 'סדרי נוכחות מחוץ לחלון', function () { return Array.isArray(S._atData) ? S._atData : null; }),
     _hrHwSpec('hr_marks', 'סימוני נוכחות מחוץ לחלון', null),
@@ -281,11 +242,6 @@ var ERA_CFG = {
   prefix: self.APP.prefix,
   client: function () { return S.SB; },
   table:  function () { return KV_TABLE; },
-  // גם אופק הפינוי נמחק — אופק ששרד מסנן את מה שהמשיכה מחזירה, והמכשיר היה נשאר ריק.
-  wipe:   function () {
-    mirrorTables().forEach(function (t) { MIRROR[t] = MIRROR_CFG.empty(); lsRemove(mirrorKey(t)); });
-    lsClearHorizons();
-  },
   // מחזור הדחיפה כאן פר-קטגוריה — התוצאה נאספת בסופו ונמסרת ב-eraNotePush.
   push:   function () { return hrPushToCloud().then(function () { return _eraPush; }); },
   refresh: function () { return hrSyncNow(); },
@@ -364,13 +320,8 @@ S.SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key))
 shell.showPage = showPage;
 shell.showPageInternal = showPageInternal;
 shell.renderStudents = renderStudents;
-shell.atRenderArchive = atRenderArchive;
-shell.atRenderSupervision = atRenderSupervision;
-shell.hrRenderArchive = hrRenderArchive;
 shell.hrRenderSupervision = hrRenderSupervision;
-shell.renderAttendSettings = renderAttendSettings;
-shell.renderSleepSettings = renderSleepSettings;
-shell.atRenderStudents = atRenderStudents;
+shell.hrRenderSettings = hrRenderSettings;
 shell.hrRenderStudents = hrRenderStudents;
 shell.hrPullDraw = hrPullDraw;
 
@@ -421,21 +372,21 @@ function saveRefresh() {
 
 function _hcNav(pfx,dir){
   var v=S._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
-  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
+  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=hebYearInfo(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!hebYearInfo(hy))return;mi=0;}
   S._hcVw[pfx]={hy:hy,mi:mi};_hcDraw(pfx);}
 
 function _hcDraw(pfx){
-  var v=S._hcVw[pfx],b=_hcBase(v.hy);if(!b)return;
+  var v=S._hcVw[pfx],b=hebYearInfo(v.hy);if(!b)return;
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
-  var mlen=b.ml[v.mi],fdow=_hcG(v.hy,v.mi,1).getDay();
+  var mlen=b.ml[v.mi],fdow=hebToGreg(v.hy,v.mi,1).getDay();
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
-  var selH=selIso?_hcH(new Date(selIso)):null;
+  var selH=selIso?_hcH(dayNoon(selIso)):null;
   var todH=_hcH(new Date());
   var bs='hc-nav';
   var maxMi=(b.ml.length-1);
-  var hasPrev=v.mi>0||!!_hcBase(v.hy-1),hasNext=v.mi<maxMi||!!_hcBase(v.hy+1);
+  var hasPrev=v.mi>0||!!hebYearInfo(v.hy-1),hasNext=v.mi<maxMi||!!hebYearInfo(v.hy+1);
   // בגריד RTL התא הימני הוא יום ראשון, ולכן מספר התאים הריקים הוא fdow.
   var rtlOffset=fdow;
   var h='<div class="hc-cal">';
@@ -464,7 +415,7 @@ function _hcOpen(pfx){
   if(uiShown(pop)){pop.classList.add('hidden');return;}
   document.querySelectorAll('.hc-pop').forEach(function(p){p.classList.add('hidden');});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
-  var vh=iso?_hcH(new Date(iso)):_hcH(new Date());
+  var vh=iso?_hcH(dayNoon(iso)):_hcH(new Date());
   S._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // position fixed מחושב מהטריגר — חסין ל-overflow:hidden בהורים; הערכים נכתבים למשתני CSS שהכלל .hc-pop קורא.
   var trg=document.getElementById(pfx+'_trg');
@@ -476,17 +427,24 @@ function _hcOpen(pfx){
   pop.classList.remove('hidden');}
 
 function _hcPick(pfx,hy,mi,day){
-  var g=_hcG(hy,mi,day);
+  var g=hebToGreg(hy,mi,day);if(!g)return;
   var iso=dayIso(g);
   var el=document.getElementById(pfx+'_iso');if(el)el.value=iso;
   var lb=document.getElementById(pfx+'_lbl');
   if(lb){
     var lbTxt=_hcFmt(hy,mi,day);
-    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
+    if(pfx==='sfmF'||pfx==='sfmT'||_hcStream(pfx)){lbTxt='יום '+HEB_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
   var pop=document.getElementById(pfx+'_pop');if(pop)pop.classList.add('hidden');
-  if(pfx==='at_date'&&typeof atRenderTodaySessions==='function') atRenderTodaySessions();}
+  var st=_hcStream(pfx);
+  if(st) hrRenderTodaySessions(st);}
+
+// בורר התאריך של מסך רישום — <p>_date של הזרם; רשימת היום שלו נצבעת מחדש בבחירה.
+function _hcStream(pfx){
+  var ks=Object.keys(HR_STREAMS);
+  for(var i=0;i<ks.length;i++){ if(pfx===HR_STREAMS[ks[i]].p+'_date') return HR_STREAMS[ks[i]]; }
+  return null;}
 
 function _hcToggle(){
   var btn=document.getElementById('sfmT_btn'),wr=document.getElementById('sfmT_wrap');
@@ -529,8 +487,6 @@ var DOM_ACTIONS = {
   'sw-apply':            function (el) { swApply(el); },
   'sw-dismiss':          function () { swHideUpdate(); },
   'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
-  'at-open-session':     function (el) { return atOpenSession(el.dataset.sid, el.dataset.sname); },
-  'sl-open-session':     function (el) { return hrOpenSession(el.dataset.sid, el.dataset.sname); },
   // התראות התשתית נבנות ב-JS — לכן הן מנותבות במפה ולא במאזין ישיר על הכפתור.
   'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.remove(); },
   'pend-alert-ok':       function () { pendAlertDismiss(); },
@@ -566,22 +522,6 @@ var DOM_ACTIONS = {
                    closeModal();
                  },
   'year-transition-confirm': function () { doYearTransition(); closeModal(); },
-  'at-resume-go':     function (el) { var p = atEditSession(el.getAttribute('data-id'));
-                                    closeModal(); return p; },
-  'at-status-cancel': function (el) { atCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'at-export-go':     function (el) { return atExportConfirm(el.getAttribute('data-type')); },
-  'at-mark-edit':     function (el) { atSupEditMarkDlg(el.getAttribute('data-rec'),
-                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'at-mark-set':      function (el) { return atEditMark(el.getAttribute('data-rec'),
-                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-resume-go':     function (el) { var p = hrEditSession(el.getAttribute('data-id'));
-                                    closeModal(); return p; },
-  'sl-status-cancel': function (el) { hrCancelStudentStatusFromReg(el.getAttribute('data-id')); closeModal(); },
-  'sl-export-go':     function (el) { hrExportConfirm(el.getAttribute('data-type')); },
-  'sl-mark-edit':     function (el) { hrSupEditMarkDlg(el.getAttribute('data-rec'),
-                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
-  'sl-mark-set':      function (el) { return hrEditMark(el.getAttribute('data-rec'),
-                                        el.getAttribute('data-sid'), el.getAttribute('data-code')); },
   'hc-nav':           function (el) { _hcNav(el.getAttribute('data-pfx'),
                                         Number(el.getAttribute('data-dir'))); },
   'hc-pick':          function (el) { _hcPick(el.getAttribute('data-pfx'),
@@ -602,35 +542,11 @@ var DOM_ACTIONS = {
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
                         if (chev) chev.classList.toggle('open', !open);
                       },
-  'at-edit-session':  function (el) { return atEditSession(el.getAttribute('data-id')); },
-  'at-del-session':   function (el) { atDeleteSession(el.getAttribute('data-id')); },
-  'at-sup-detail':    function (el) { atSupDetail(el.getAttribute('data-id')); },
-  'at-set-mark':      function (el) { atSetMark(el.getAttribute('data-id'),
-                                        el.getAttribute('data-code')); },
-  'at-clear-mark':    function (el) { atClearMark(el.getAttribute('data-id')); },
-  'at-confirm-late':  function (el) { atConfirmLate(el.getAttribute('data-id')); },
-  'at-add-treat':     function (el) { return atAddTreat(el.getAttribute('data-id')); },
-  'at-del-treat':     function (el) { atDeleteTreat(el.getAttribute('data-id')); },
-  'sl-edit-session':  function (el) { return hrEditSession(el.getAttribute('data-id')); },
-  'sl-del-session':   function (el) { hrDeleteSession(el.getAttribute('data-id')); },
-  'sl-sup-detail':    function (el) { hrSupDetail(el.getAttribute('data-id')); },
-  'sl-set-mark':      function (el) { hrSetMark(el.getAttribute('data-id'),
-                                        el.getAttribute('data-code')); },
-  'sl-clear-mark':    function (el) { hrClearMark(el.getAttribute('data-id')); },
-  'sl-confirm-late':  function (el) { hrConfirmLate(el.getAttribute('data-id')); },
-  'sl-add-treat':     function (el) { return hrAddTreat(el.getAttribute('data-id')); },
-  'sl-del-treat':     function (el) { hrDeleteTreat(el.getAttribute('data-id')); },
   'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
   'settings-home':   function () { showSettingsHome(); },
   'settings-module': function (el) { showSettingsModule(el.getAttribute('data-mod')); },
   'filter-class':    function (el) { filterClass(el.getAttribute('data-cls')); },
-  'sl-tab':          function (el) { hrShowTab(el.getAttribute('data-tab')); },
-  'at-tab':          function (el) { atShowTab(el.getAttribute('data-tab')); },
-  'sl-export':       function (el) { hrShowExportDialog(el.getAttribute('data-fmt')); },
-  'at-export':       function (el) { atShowExportDialog(el.getAttribute('data-fmt')); },
   // כיוון הדפדוף נכנס לחישוב אינדקס — ולכן מומר למספר כאן.
-  'sl-sup-nav':      function (el) { hrSupNav(Number(el.getAttribute('data-dir'))); },
-  'at-sup-nav':      function (el) { atSupNav(Number(el.getAttribute('data-dir'))); },
   'absence-reason-add':  function (el) { addAbsenceReason(el.getAttribute('data-kind')); },
   'status-form':         function (el) { openStatusForm(el.getAttribute('data-kind')); },
   'user-edit':           function (el) { openEditUser({
@@ -649,13 +565,6 @@ var DOM_ACTIONS = {
   'students-print':       function () { printStudents(); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
-  'sl-settings-save':     function () { return hrSaveSettingsCfg(); },
-  'at-settings-save':     function () { return atSaveSettingsCfg(); },
-  'sl-session-close':     function () { return hrCloseSession(); },
-  'at-session-close':     function () { return atCloseSession(); },
-  'at-session-add':       function () { atAddSession(); },
-  'sl-treat-row-add':     function () { hrAddTreatRow(); },
-  'at-treat-row-add':     function () { atAddTreatRow(); },
   'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
@@ -670,36 +579,50 @@ var DOM_ACTIONS = {
   'perms-save':       function () { return savePerms(); },
 };
 
-// החיווי בנקודת הניתוב, ורק כשהמטפל החזיר הבטחה — חיווי המתנה על פעולה מיידית הוא רעש.
-// ורק על BUTTON: disabled על div אינו חוסם דבר.
-// סדר המסלולים: סגירת התפריטים הצפים, סגירת הרקע (שאינו נושא data-act), ואז הניתוב.
-document.addEventListener('click', function (ev) {
-  var inMenu = ev.target && ev.target.closest ? ev.target.closest('[data-menu]') : null;
-  var menu = inMenu ? inMenu.getAttribute('data-menu') : '';
-  if (menu !== 'user') closeUserMenu();
-  comboOutside(ev);
-  if (modalBackdrop(ev)) return;
-  var el = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
-  if (!el) return;
-  var fn = DOM_ACTIONS[el.getAttribute('data-act')];
-  if (!fn) return;
-  ev.preventDefault();
-  actRun(el, fn);
-});
+// פעולות הסדרים והשינה — מפה אחת לשני הזרמים, ושם הפעולה בתחילית הזרם.
+function hrStreamActions(st) {
+  var a = {}, p = st.p + '-';
+  var id = function (el) { return el.getAttribute('data-id'); };
+  a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname); };
+  a[p + 'resume-go']     = function (el) { var r = hrEditSession(st, id(el)); closeModal(); return r; };
+  a[p + 'edit-session']  = function (el) { return hrEditSession(st, id(el)); };
+  a[p + 'status-cancel'] = function (el) { hrCancelStudentStatusFromReg(st, id(el)); closeModal(); };
+  a[p + 'set-mark']      = function (el) { hrSetMark(st, id(el), el.getAttribute('data-code')); };
+  a[p + 'clear-mark']    = function (el) { hrClearMark(st, id(el)); };
+  a[p + 'confirm-late']  = function (el) { hrConfirmLate(st, id(el)); };
+  a[p + 'session-close'] = function () { return hrCloseSession(st); };
+  a[p + 'tab']           = function (el) { hrShowTab(st, el.getAttribute('data-tab')); };
+  a[p + 'export']        = function (el) { hrShowExportDialog(st, el.getAttribute('data-fmt')); };
+  a[p + 'export-go']     = function (el) { return hrExportConfirm(st, el.getAttribute('data-type')); };
+  a[p + 'del-session']   = function (el) { hrDeleteSession(st, id(el)); };
+  // כיוון הדפדוף נכנס לחישוב אינדקס — ולכן מומר למספר כאן.
+  a[p + 'sup-nav']       = function (el) { hrSupNav(st, Number(el.getAttribute('data-dir'))); };
+  a[p + 'sup-detail']    = function (el) { hrSupDetail(st, id(el)); };
+  a[p + 'mark-edit']     = function (el) { hrSupEditMarkDlg(st, el.getAttribute('data-rec'),
+                                             el.getAttribute('data-sid'), el.getAttribute('data-code')); };
+  a[p + 'mark-set']      = function (el) { return hrEditMark(st, el.getAttribute('data-rec'),
+                                             el.getAttribute('data-sid'), el.getAttribute('data-code')); };
+  a[p + 'add-treat']     = function (el) { return hrAddTreat(st, id(el)); };
+  a[p + 'del-treat']     = function (el) { hrDeleteTreat(st, id(el)); };
+  a[p + 'settings-save'] = function () { return hrSaveSettingsCfg(st); };
+  a[p + 'treat-row-add'] = function () { hrAddTreatRow(st); };
+  a[p + 'session-add']   = function () { hrAddSessionRow(st); };
+  return a;
+}
+Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStreamActions(HR_STREAMS[k])); });
 
-// שמירה בשדה עריכה קודמת לסגירת חלון הדו-שיח — אחרת Escape בשדה שבתוך חלון דו-שיח היה סוגר אותו במקום לבטל את השדה.
-document.addEventListener('keydown', function (e) {
-  if (comboKey(e) || ksKey(e)) return;
-  modalEsc(e);
-});
+actWire(DOM_ACTIONS);
+
 
 document.addEventListener('input', function (e) {
   if (comboInput(e)) return;
   var el = e.target; if (!el || !el.dataset) return;
   var k = el.dataset.inp;
-  if (k === 'at-late') atSetLateMin(el.dataset.id, el.value);
-  else if (k === 'sl-late') hrSetLateMin(el.dataset.id, el.value);
-  else if (k === 'sl-note') hrSetNote(el.dataset.id, el.value);
+  Object.keys(HR_STREAMS).forEach(function (kind) {
+    var st = HR_STREAMS[kind];
+    if (k === st.p + '-late') hrSetLateMin(st, el.dataset.id, el.value);
+    else if (k === st.p + '-note') hrSetNote(st, el.dataset.id, el.value);
+  });
 });
 
 document.addEventListener('change', function (e) {
@@ -728,7 +651,7 @@ function loadR(){
   if (el) el.innerHTML = '<div class="empty">הדוח בבנייה — טרם אופיין</div>';
 }
 
-// אין להחזיר כאן setInterval — הבדיקה המחזורית מופעלת רק ב-plBoot() מ-loadDash(): בדיקה מחזורית לפני הכניסה מושכת נתון ש-hrApplyPerms זורקת.
+// אין להחזיר כאן setInterval — הבדיקה המחזורית היא plBoot() שבעליית הליבה, והיא ממתינה לסשן: בדיקה מחזורית לפני הכניסה מושכת נתון ש-hrApplyPerms זורקת.
 
 setTimeout(async function() {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
@@ -777,6 +700,10 @@ async function ensureFirstAdmin() {
   } catch(e) { console.error('[users] setup error:', e); }
 }
 
+// הליבה עולה עם הדף ולא אחרי הכניסה, כמו בכל האפליקציות — הבדיקה המחזורית ממתינה לסשן (PL_CFG.active),
+// ומשיכה לפני הכניסה אינה מגיעה ל-hrApplyPerms.
+coreBoot();
+
 ensureFirstAdmin();
 
 window.bootOk();
@@ -784,8 +711,10 @@ window.bootOk();
 // עובר ב-pullRender — כמה משתמשים עובדים יחד, ומשיכה עלולה להגיע באמצע סימון.
 function hrPullDraw() {
   try {
-    if (typeof atFillSessionBtns === 'function' && document.getElementById('at-view-reg')) { atFillSessionBtns(); if (typeof atRenderTodaySessions === 'function') atRenderTodaySessions(); }
-    if (typeof hrFillSessionBtns === 'function' && document.getElementById('sl-view-reg')) { hrFillSessionBtns(); if (typeof hrRenderTodaySessions === 'function') hrRenderTodaySessions(); }
+    Object.keys(HR_STREAMS).forEach(function (k) {
+      var st = HR_STREAMS[k];
+      if (document.getElementById(st.p + '-view-reg')) { hrFillSessionBtns(st); hrRenderTodaySessions(st); }
+    });
   } catch (eRf) { console.error('[pull] רענון בוררי הסדר נכשל', eRf); }
   if (typeof renderStudents === 'function') renderStudents();
   if (typeof refreshDashStats === 'function') refreshDashStats();

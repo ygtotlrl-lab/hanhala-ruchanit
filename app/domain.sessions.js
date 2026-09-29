@@ -1,14 +1,21 @@
-// app/domain.sessions.js — סדרים ושינה: הנתונים ששני המסכים קוראים וכותבים
-import { HE_COLLATOR, dayToday } from '../core/util.js';
-import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany,
+// app/domain.sessions.js — סדרים ושינה: שני הזרמים, והנתונים ששני המסכים קוראים וכותבים
+import { HE_COLLATOR, dayNoon, dayToday } from '../core/util.js';
+import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany, pendTag,
          pushTable } from '../core/sync.js';
-import { lsGet } from '../core/storage.js';
+import { lsGet, lsSetArray } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
-import { PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
+import { esc } from '../core/ui.js';
+import { HEB_DOW } from '../core/hebrew.js';
+import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE,
+         MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE,
+         MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
+         PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
-import { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrSlDiskSave, getActiveAbsences, getStudents,
-         hrCount, hrLocalOfAt, hrMarks, hrMirrorRecs, hrSessionsPull, hrSyncLog,
-         hrTouchLastChanged, hrWriteFail } from './domain.js';
+import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
+         hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
+         hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrSessionsPull, hrSetPending, hrSyncLog,
+         hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
+import { _hcH } from './domain.hebdate.js';
 
 // ── המיון ──
 // הגדרות הסדרים — לפי שעת ההתחלה.
@@ -81,9 +88,60 @@ function _hrPullStaleMark(el, bad) {
   el.classList.toggle('on', !!bad);
 }
 
+// ── שני הזרמים — הסדרים והשינה ──
+// שני המסכים הם קוד אחד, וכל מה שנבדל ביניהם — נתון כאן, בזרם: p — תחילית מזהי ה-DOM ושמות הפעולות,
+// v — תחילית מצב הריצה ב-S (_atData · _hrData וכו'), ו-day — היום שהרישום נפתח בו; והקוד שמקבל זרם אינו שואל איזה הוא.
+var HR_STREAMS = {
+  attend: {
+    kind: 'attend', p: 'at', v: '_at', table: 'hr_sessions', child: 'hr_marks',
+    pkSess: PK_AT_SESS, pkMark: PK_AT_MARK,
+    cfgKey: 'attend_cfg', treatsKey: 'attend_treats', treatsLs: 'hr_attend_treats',
+    defaults: atDefaultCfg, clean: function (c) { return c; }, day: dayToday,
+    // הסדרים נערכים בהגדרות, ושם גם התראת החיסורים; שורת השינה נושאת הערה
+    sessEdit: true, alert: true, note: false,
+    title: '✅ שמירת הסדרים', one: 'סדר', many: 'סדרים', xOne: 'היעדרות', xMany: 'היעדרויות', absMany: 'חיסורים',
+    openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ הסדר נשמר',
+    msg: { closeFirst: MSG_CLOSE_SESSION_FIRST, done: MSG_SESSION_DONE, elsewhere: MSG_SESSION_OPEN_ELSEWHERE,
+           openToday: MSG_SESSION_OPEN_TODAY, delTitle: MSG_DEL_SESSION_TITLE, delBody: MSG_DEL_SESSION_BODY },
+    sheet: 'סדרים', file: 'sdariim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון שמירת סדרים']
+  },
+  sleep: {
+    kind: 'sleep', p: 'sl', v: '_hr', table: 'hr_sleep_sessions', child: 'hr_sleep_marks',
+    pkSess: PK_SL_SESS, pkMark: PK_SL_MARK,
+    cfgKey: 'sleep_cfg', treatsKey: 'sleep_treats', treatsLs: 'hr_sleep_treats',
+    defaults: hrDefaultCfg, clean: _hrCleanCfg, day: hrGetLogicalDate,
+    sessEdit: false, alert: false, note: true,
+    title: '🌙 זמן שינה', one: 'דו"ח', many: 'דוחות', xOne: 'אירוע', xMany: 'אירועים', absMany: 'אירועים',
+    openText: ' נפתחה ולא נסגר.', savedMsg: '✅ הבדיקה נשמרה',
+    msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
+           openToday: MSG_SLEEP_OPEN, delTitle: MSG_DEL_ROW_TITLE, delBody: MSG_DEL_ROW_BODY },
+    sheet: 'שינה', file: 'shinah', pdfHead: ['ארכיון זמן שינה']
+  }
+};
+
+// תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
+function hrGetLogicalDate() {
+  if(new Date().getHours()<12) return dayToday(-1);
+  return dayToday();
+}
+
+function hrDow(isoDate){return HEB_DOW[dayNoon(isoDate).getDay()];}
+
+// תוויות הסימון — אחת לשני הזרמים, ו-x בשם הזרם.
+function hrMarkLabels(st) {
+  return {p:'נוכח',l:'איחור',e:'חיסור',x:st.xOne,ap:'אישור',ak:'בבית',a:'מנוחה'};
+}
+
+// סימון ריק או ממולא — והשינה נושאת גם הערה.
+function hrMarkOf(st, status, minutes, note) {
+  var m={status:status||'',minutes:minutes||0};
+  if(st.note) m.note=note||'';
+  return m;
+}
+
 // שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הבדיקה המחזורית יכולה להביא סדר מתחרה אחרי הפתיחה.
-// אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד; הבדיקה משרתת גם את השינה.
-function atFindLiveSession(data, sessName, dateIso, exceptId) {
+// אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד.
+function hrFindLiveSession(data, sessName, dateIso, exceptId) {
   if (!Array.isArray(data)) return null;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
@@ -95,17 +153,19 @@ function atFindLiveSession(data, sessName, dateIso, exceptId) {
   return null;
 }
 
-function hrAdoptSession(rec) {
-  var ex = hrMarks(rec);
+// אימוץ סדר קיים: הסימונים הקיימים נטענים תחילה, וסימון מקומי גובר עליהם —
+// השמירה בונה את marks מחדש מהסימונים שבזיכרון, ואימוץ בלי טעינה היה מוחק את סימוני המכשיר האחר.
+function hrAdoptSession(st, rec) {
+  var ex = hrMarks(rec), marks = S[st.v+'Marks'];
   Object.keys(ex).forEach(function (k) {
-    var cur = S._hrMarks[k];
-    if (!cur || !cur.status) S._hrMarks[k] = { status: (ex[k] && ex[k].status) || '', minutes: (ex[k] && ex[k].minutes) || 0, note: (ex[k] && ex[k].note) || '' };
+    var cur = marks[k];
+    if (!cur || !cur.status) marks[k] = hrMarkOf(st, ex[k] && ex[k].status, ex[k] && ex[k].minutes, ex[k] && ex[k].note);
   });
-  S._hrCurrentSessionId = rec.client_id;
+  S[st.v+'CurrentSessionId'] = rec.client_id;
 }
 
 // sessDateIso אופציונלי — בלעדיו אישורים תמיד פעילים
-function atAutoMark(student, sessDateIso, sessStartTime) {
+function hrAutoMark(student, sessDateIso, sessStartTime) {
   // תאריך עזר מזמן הסדר — ברישום רטרואקטיבי הסטטוס נבדק לפי הסדר ולא לפי השעון
   var sessRef = null;
   if (sessDateIso) {
@@ -140,68 +200,38 @@ function atAutoMark(student, sessDateIso, sessStartTime) {
   return null;
 }
 
-async function atLoadData() {
-  if (S._atData) return S._atData;
-  var v=await hrSessionsPull('hr_sessions'); if(Array.isArray(v)){S._atData=v;return v;}
-  var _atDisk=hrMirrorRecs('hr_sessions');
-  if(Array.isArray(_atDisk)){S._atData=_atDisk;return S._atData;}
-  S._atData=[]; return S._atData;
+async function hrLoadData(st) {
+  if (S[st.v+'Data']) return S[st.v+'Data'];
+  var v=await hrSessionsPull(st.table); if(Array.isArray(v)){S[st.v+'Data']=v;return v;}
+  var disk=hrMirrorRecs(st.table);
+  if(Array.isArray(disk)){S[st.v+'Data']=disk;return disk;}
+  S[st.v+'Data']=[]; return S[st.v+'Data'];
 }
 
-async function atSaveData(data) {
+// אין ניקוי רשומות לפי שם הסדר — סדר לגיטימי באותו שם נמחק,
+// והשמירה ממזגת עם הענן, כך שהמנוקות חוזרות מיד; מחיקה היא tombstone מפורש בלבד.
+async function hrSaveData(st, data) {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
   var _ep = ctxEpoch();
   // t0 נלקח לפני קריאת המצב — אישור של רשומה שסומנה אחריו היה מוריד סימון מרשומה שלא עלתה
   var _t0=Date.now();
-  S._atData=data;
-  _hrAtDiskSave(data);
+  S[st.v+'Data']=data;
+  hrMirrorPutRecs(st.table, data);
   try {
     // מיזוג עם הענן לפני הדחיפה — אחרת נדרסות רשומות של מכשיר אחר
-    var _atLocalN=hrCount(data);
-    var _atMerged=await hrSessionsPull('hr_sessions');
+    var localN=hrCount(data);
+    var merged=await hrSessionsPull(st.table);
     if (ctxStale(_ep)) return;
-    if (Array.isArray(_atMerged)) { data=_atMerged; S._atData=data; }
+    if (Array.isArray(merged)) { data=merged; S[st.v+'Data']=data; }
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
-    var _rAt=await pushTable('hr_sessions');
-    var _rAm=await pushTable('hr_marks');
-    // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את _hrPushedAt
-    if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
-    if(_rAm&&_rAm.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_MARK,_t0);
-    hrSyncLog('push','hr_sessions',hrCount(data),{local_count:_atLocalN,result_count:hrCount(data)});
+    var rS=await pushTable(st.table);
+    var rM=await pushTable(st.child);
+    // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את עֵד הפינוי שבליבה
+    if(rS&&rS.ok&&!ctxStale(_ep)) pendConfirmPush(st.pkSess,_t0);
+    if(rM&&rM.ok&&!ctxStale(_ep)) pendConfirmPush(st.pkMark,_t0);
+    hrSyncLog('push',st.table,hrCount(data),{local_count:localN,result_count:hrCount(data)});
     await hrTouchLastChanged();
-  } catch (e) { hrWriteFail('atSaveData', e); }
-}
-
-async function hrLoadData() {
-  if (S._hrData) return S._hrData;
-  var v=await hrSessionsPull('hr_sleep_sessions'); if(Array.isArray(v)){S._hrData=v;return v;}
-  var _hrDisk=hrMirrorRecs('hr_sleep_sessions');
-  if(Array.isArray(_hrDisk)){S._hrData=_hrDisk;return S._hrData;}
-  S._hrData=[]; return S._hrData;
-}
-
-// אין ניקוי רשומות לפי שם הסדר — סדר לגיטימי באותו שם נמחק,
-// ו-hrSaveData ממזג עם הענן, כך שהמנוקות חוזרות מיד; מחיקה היא tombstone מפורש בלבד.
-async function hrSaveData(data) {
-  // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
-  var _ep = ctxEpoch();
-  var _t0=Date.now(); // לפני הכתיבה — עריכה שנעשית באמצע אינה נזקפת לדחיפה הזו
-  S._hrData=data;
-  _hrSlDiskSave(data);
-  try {
-    // מיזוג עם הענן לפני הדחיפה — אחרת נדרסות רשומות של מכשיר אחר
-    var _hrLocalN=hrCount(data);
-    var _hrMerged=await hrSessionsPull('hr_sleep_sessions');
-    if (ctxStale(_ep)) return;
-    if (Array.isArray(_hrMerged)) { data=_hrMerged; S._hrData=data; }
-    // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
-    var _rSl=await pushTable('hr_sleep_sessions');
-    var _rSm=await pushTable('hr_sleep_marks');
-    if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
-    if(_rSm&&_rSm.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_MARK,_t0);
-    hrSyncLog('push','hr_sleep_sessions',hrCount(data),{local_count:_hrLocalN,result_count:hrCount(data)});
-    await hrTouchLastChanged();
-  } catch (e) { hrWriteFail('hrSaveData', e); }
+  } catch (e) { hrWriteFail('hrSaveData:'+st.kind, e); }
 }
 
 // נקרא אחרי הוספה, עריכה או מחיקה של אישור או היעדרות.
@@ -211,11 +241,12 @@ async function hrRefreshApprovalMarks(sid) {
     var student = getStudents().find(function(x){ return idEq(x.client_id, sid); });
     if (!student) return;
     var sidKey = String(sid);
-    var todayIso = dayToday();
-
-    // קריאה בנקודת הדיסק האחת ובלי כתיבה — השמירה היא saveFn, ומפתח שטוח כאן היה מקור אמת שני
-    function refreshSet(lsKey, pk, cfgSessions, dateIso, curId, marksBuf, renderFn, saveFn, withNote) {
-      var data = _hrDiskArr(lsKey);
+    // קריאה בנקודת הדיסק האחת ובלי כתיבה — השמירה היא hrSaveData, ומפתח שטוח כאן היה מקור אמת שני
+    Object.keys(HR_STREAMS).forEach(function (kind) {
+      var st = HR_STREAMS[kind], dateIso = st.day();
+      var cfgS = (S[st.v+'Cfg'] && Array.isArray(S[st.v+'Cfg'].sessions)) ? S[st.v+'Cfg'].sessions : [];
+      var curId = S[st.v+'CurrentSessionId'], buf = S[st.v+'Marks'];
+      var data = _hrDiskArr(st.table);
       if (!Array.isArray(data)) return;
       var changed = [];
       data.forEach(function(rec){
@@ -223,45 +254,160 @@ async function hrRefreshApprovalMarks(sid) {
         var cur = (rec.marks && rec.marks[sidKey]) ? (rec.marks[sidKey].status || '') : '';
         if (cur !== '' && cur !== 'ap') return;
         var sessTime = '';
-        for (var i = 0; i < cfgSessions.length; i++) { if (cfgSessions[i].name === rec.session) { sessTime = cfgSessions[i].start_time || ''; break; } }
-        var am = atAutoMark(student, rec.session_date, sessTime);
+        for (var i = 0; i < cfgS.length; i++) { if (cfgS[i].name === rec.session) { sessTime = cfgS[i].start_time || ''; break; } }
+        var am = hrAutoMark(student, rec.session_date, sessTime);
         var next = (am === 'ap') ? 'ap' : '';
         if (next === cur) return;
         if (!rec.marks) rec.marks = {};
-        rec.marks[sidKey] = withNote ? { status: next, minutes: 0, note: '' } : { status: next, minutes: 0 };
+        rec.marks[sidKey] = hrMarkOf(st, next, 0, '');
         rec.updated_at = Date.now();
-        changed.push(pk + rec.client_id);
-        // סדר שפתוח כרגע במכשיר הזה — מעדכנים גם את ה-buffer ואת התצוגה
-        if (curId === rec.client_id && marksBuf) {
-          if (next) marksBuf[sidKey] = withNote ? { status: next, minutes: 0, note: '' } : { status: next, minutes: 0 };
-          else delete marksBuf[sidKey];
-          if (typeof renderFn === 'function') { try { renderFn(); } catch(eR) {} }
+        changed.push(st.pkSess + rec.client_id);
+        // סדר שפתוח כרגע במכשיר הזה — מעדכנים גם את הסימונים שבזיכרון ואת התצוגה
+        if (curId === rec.client_id && buf) {
+          if (next) buf[sidKey] = hrMarkOf(st, next, 0, '');
+          else delete buf[sidKey];
+          try { shell.hrRenderStudents(st); } catch(eR) {}
         }
       });
       if (changed.length) {
-        // הסימון לפני saveFn — הדחיפה לוכדת t0 בכניסה, ורק סימון שקדם לו מאושר בהצלחתה
+        // הסימון לפני השמירה — הדחיפה לוכדת t0 בכניסה, ורק סימון שקדם לו מאושר בהצלחתה
         pendMarkMany(changed);
-        try { saveFn(data); } catch (eS) { hrWriteFail('refreshSet', eS); }
+        try { hrSaveData(st, data); } catch (eS) { hrWriteFail('hrRefreshApprovalMarks', eS); }
       }
-    }
-
-    var atCfg = (S._atCfg && Array.isArray(S._atCfg.sessions)) ? S._atCfg.sessions : [];
-    refreshSet('hr_sessions', PK_AT_SESS, atCfg, todayIso, S._atCurrentSessionId, S._atMarks, shell.atRenderStudents, function(d){ S._atData = d; atSaveData(d); }, false);
-
-    var hrCfg = (S._hrCfg && Array.isArray(S._hrCfg.sessions)) ? S._hrCfg.sessions : [];
-    var hrIso = (typeof hrGetLogicalDate === 'function') ? hrGetLogicalDate() : todayIso;
-    refreshSet('hr_sleep_sessions', PK_SL_SESS, hrCfg, hrIso, S._hrCurrentSessionId, S._hrMarks, shell.hrRenderStudents, function(d){ S._hrData = d; hrSaveData(d); }, true);
+    });
   } catch(e) { console.warn('[approval-refresh]', e); }
 }
 
-// תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
-function hrGetLogicalDate() {
-  if(new Date().getHours()<12) return dayToday(-1);
-  return dayToday();
+// ── מה ששלושת חלקי המסך קוראים ──
+function hrSummaryHTML(st, cnts){
+  var parts=[];
+  var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
+  add(cnts.p||0,  'נוכחים',   'p');
+  add(cnts.e||0,  'חיסורים',  'e');
+  add(cnts.x||0,  st.xMany,   'x');
+  add(cnts.l||0,  'איחורים',  'l');
+  add(cnts.ap||0, 'אישורים',  'ap');
+  add(cnts.ak||0, 'בבית',     'ak');
+  add(cnts.a||0,  'מנוחה',    'a');
+  return parts.join('<span class="user-handle"> | </span>');
 }
 
-export { _hrDiskArr, _hrPullStaleMark, atAutoMark, atFindLiveSession, atLoadData,
-         atSaveData, hrAdoptSession, hrCachedArr, hrGetLogicalDate, hrLoadData,
-         hrRefreshApprovalMarks, hrSaveData, hrSortAbsenceRows, hrSortDayRecs, hrSortDays,
-         hrSortHebMonths, hrSortHebYears, hrSortSessionDefs, hrSortSupRecords,
-         hrSortTreats };
+// מחזירה האם הענן ענה ולא את הנתון — hrLoadData נופלת לדיסק ומחזירה מערך גם בכשל.
+// השמירה לדיסק ממזגת ואינה דורסת — רשומה שנרשמה אופליין וטרם עלתה הייתה נמחקת.
+// מסלול בלי חלון מוסר null במפורש — השמטת החלון מושכת את הטבלה כולה.
+async function hrPullSessions(st, win) {
+  var out = await hrSessionsPull(st.table, win);
+  if (!Array.isArray(out)) return false;
+  S[st.v+'Data'] = out;
+  return true;
+}
+
+async function hrPullCfg(st) {
+  var r = null; try { r = await hrCfgGet(st.cfgKey, true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  if (r.value && !hrSetPending(st.cfgKey)) { S[st.v+'Cfg'] = st.clean(r.value); hrCfgLocalSet(st.cfgKey, S[st.v+'Cfg']); }
+  return true;
+}
+
+async function hrPullTreats(st) {
+  var r = null; try { r = await hrCfgGet(st.treatsKey, true); } catch (e) {}
+  if (!r || !r.ok) return false;
+  // מפתח שטרם נכתב אינו דורס את הדיסק — [] מעליו היה מוחק טיפולים שנרשמו אופליין וטרם עלו
+  if (Array.isArray(r.value) && !hrSetPending(st.treatsKey)) { S[st.v+'Treats'] = r.value; lsSetArray(st.treatsLs, r.value, hrRecTs); }
+  else if (!Array.isArray(S[st.v+'Treats'])) S[st.v+'Treats'] = hrCachedArr(st.v+'Treats', st.treatsLs) || [];
+  return true;
+}
+
+// אתחול החודש הנצפה בנקודה אחת — המשיכה שקודמת לציור צריכה לדעת איזה חודש להביא
+function hrSupMonth(st) {
+  if (S[st.v+'SupHY'] === null) {
+    var ch = _hcH(new Date());
+    S[st.v+'SupHY'] = ch.hy; S[st.v+'SupMI'] = ch.mi;
+  }
+  return S[st.v+'SupHY'];
+}
+
+// ההגדרות בזיכרון, ובהיעדרן — ברירת המחדל של הזרם; ברירת המחדל אינה נכתבת.
+function hrCfgOf(st) { return S[st.v+'Cfg'] || st.defaults(); }
+
+// סינכרונית — הציור הראשון אינו ממתין לרשת, וההגדרות קובעות אילו כפתורי סדר להציג
+// העותק נקרא ואינו נכתב כברירת מחדל — ברירת מחדל שנכתבת הייתה מסמנת «נטען», והמשיכה לא הייתה מחליפה אותה
+function hrCachedCfg(st) {
+  if (S[st.v+'Cfg']) return S[st.v+'Cfg'];
+  try { var p=hrCfgLocalGet(st.cfgKey); if(p){ S[st.v+'Cfg']=st.clean(p); return S[st.v+'Cfg']; } } catch(e){}
+  return null;
+}
+
+async function hrSaveCfg(st, cfg) {
+  S[st.v+'Cfg']=cfg;
+  return hrCfgSet(st.cfgKey,cfg);
+}
+
+async function hrLoadTreats(st) {
+  // התוצאה נשמרת בזיכרון — הציור הראשון של ההשגחה קורא ממנה בלי להמתין לרשת.
+  // רשימה שממתינה לסנכרון נקראת מהמכשיר — הענן טרם קיבל אותה.
+  if (!hrSetPending(st.treatsKey)) try { var v=await hrCfgGet(st.treatsKey); if(Array.isArray(v)){S[st.v+'Treats']=v;return v;} } catch(e){}
+  try { var lc=lsGet(st.treatsLs); if(lc){var p=JSON.parse(lc); if(Array.isArray(p)){S[st.v+'Treats']=p;return p;}} } catch(e){}
+  return [];
+}
+
+function hrLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
+
+async function hrSaveTreats(st, data) {
+  // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
+  var _ep = ctxEpoch();
+  lsSetArray(st.treatsLs, data, hrRecTs);
+  try {
+    // מיזוג ברמת רשומה לפני הכתיבה — כתיבת המערך כולו מוחקת טיפול שמדריך אחר רשם במקביל
+    var remote=null; try { remote=await hrCfgGet(st.treatsKey); } catch(eR){}
+    if (Array.isArray(remote)) {
+      data=hrTreatsMerge(remote, data, st.treatsLs);
+      lsSetArray(st.treatsLs, data, hrRecTs);
+    }
+    if (!ctxStale(_ep)) await hrCfgSet(st.treatsKey,data);
+  } catch (e) { hrWriteFail('hrSaveTreats:'+st.kind, e); }
+  S[st.v+'Treats']=data;
+  return data;
+}
+
+function hrSessionDefs(st, cfg) {
+  return hrSortSessionDefs((cfg||hrCfgOf(st)).sessions||[]);
+}
+
+// ברשימת היום: היום — «היום», והיום הלוגי שאינו היום (השינה לפני הצהריים) — «אמש».
+function hrRenderTodaySessions(st) {
+  var el=document.getElementById(st.p+'-today-sessions');
+  if(!el) return;
+  var data=S[st.v+'Data']||[];
+  var selIso=(document.getElementById(st.p+'_date_iso')||{}).value;
+  var logIso=st.day();
+  var filterIso=selIso||logIso;
+  var isToday=filterIso===dayToday();
+  var isLogical=filterIso===logIso;
+  var daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
+    hrSessionDefs(st));
+  if(!daySess.length){el.innerHTML='';return;}
+  var dowLabel=isToday?'היום':(isLogical?'אמש':'יום '+hrDow(filterIso));
+  var html='<div class="day-sess-block">'+
+    '<div class="day-sess-title">📋 '+st.many+' שמולאו '+dowLabel+':</div>'+
+    '<div class="reason-list">';
+  daySess.forEach(function(rec){
+    var cnts={};
+    Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
+    html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
+      '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
+      pendTag(st.pkSess+rec.client_id)+
+      '<div class="day-sess-summary">'+hrSummaryHTML(st, cnts)+'</div>'+
+      '<span class="day-sess-edit">✏️ ערוך</span>'+
+    '</div>';
+  });
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+export { HR_STREAMS, _hrDiskArr, _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
+         hrCfgOf, hrDow, hrFindLiveSession, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
+         hrMarkLabels, hrMarkOf, hrPullCfg, hrPullSessions, hrPullTreats, hrRefreshApprovalMarks,
+         hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats, hrSessionDefs, hrSortAbsenceRows,
+         hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears, hrSortSessionDefs,
+         hrSortSupRecords, hrSortTreats, hrSummaryHTML, hrSupMonth };

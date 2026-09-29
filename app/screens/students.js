@@ -3,23 +3,21 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
-import { hebDate, hebGematria, hebMonthNames,
-         hebYearLabelFull } from '../../core/hebrew.js';
-import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE,
-         MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE,
-         MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
-         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE,
-         MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED,
-         MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED,
-         MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK,
-         MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
-         MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
+import { hebDate, hebGematria, hebMonthNames, hebYearLabelFull } from '../../core/hebrew.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
+         MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
+         MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
+         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE, MSG_PICK_REASON,
+         MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
+         MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
+         MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
+         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
          hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
-import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
-import { hrRefreshApprovalMarks } from '../domain.sessions.js';
+import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
+import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
 
 function screenStudentsHTML() {
   return `
@@ -57,8 +55,6 @@ function screenStudentsHTML() {
 // ── סטטוס תלמיד והחלפת משתמש ──
 
 function openStatusForm(type) {
-  var typeLabels = {approved: 'אישור', suspended: 'השעיה', left: 'לא שב'};
-  var typeIcons = {approved: '✅', suspended: '⚠️', left: '🚪'};
 
   var reasons = (getAbsenceReasons() || {})[type] || [];
 
@@ -72,7 +68,7 @@ function openStatusForm(type) {
   var inp = 'sf-inp';
 
   S._currentStatusType = type;
-  openModal(typeIcons[type]+' '+typeLabels[type]+' — '+S._statusStudentName,
+  openModal(ABS_TYPE_ICON[type]+' '+ABS_TYPE_LBL[type]+' — '+S._statusStudentName,
     '<div class="abs-tone '+tyCls(type)+' sf-dates">' +
       '<div>' +
         '<label class="'+lbl+'">סיבה</label>' +
@@ -420,17 +416,6 @@ function openCurrentStatusModal() {
   var students = getStudents();
   var s = students.find(function(x){return idEq(x.client_id, S._statusSid);});
   if (!s) return;
-  var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב'};
-  var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
-  var _dow = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-  var fmtDt = function(v){
-    if(!v) return '—';
-    var d = new Date(v);
-    var hd = _hcH(d);
-    var hh = d.getHours(), mm = d.getMinutes();
-    var timeStr = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
-  };
   var activeAbsences = getAllRelevantAbsences(s);
   var _now = new Date();
   var absencesHTML = activeAbsences.map(function(a) {
@@ -441,14 +426,14 @@ function openCurrentStatusModal() {
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
       '<div class="abs-card-head">' +
         '<div class="status-head-row">' +
-          '<span class="abs-ico">' + (TI[a.type]||'📋') + '</span>' +
-          '<span class="abs-type-label">' + esc(TL[a.type]||a.type) + '</span>' +
+          '<span class="abs-ico">' + (ABS_TYPE_ICON[a.type]||'📋') + '</span>' +
+          '<span class="abs-type-label">' + esc(ABS_TYPE_LBL[a.type]||a.type) + '</span>' +
           badgeHTML +
         '</div>' +
         '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
-      '<div class="abs-dates">מ: ' + fmtDt(a.from_at) + '<br>עד: ' + (a.to_at ? fmtDt(a.to_at) : 'ללא תאריך סיום') + '</div>' +
+      '<div class="abs-dates">מ: ' + hrFmtAt(a.from_at) + '<br>עד: ' + (a.to_at ? hrFmtAt(a.to_at) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
   openModal(s.name, absencesHTML +
@@ -457,10 +442,10 @@ function openCurrentStatusModal() {
 
 function hrRefreshSupervisionViews() {
   try {
-    var av = document.getElementById('at-view-sup');
-    if (uiShown(av) && typeof shell.atRenderSupervision === 'function') shell.atRenderSupervision();
-    var sv = document.getElementById('sl-view-sup');
-    if (uiShown(sv) && typeof shell.hrRenderSupervision === 'function') shell.hrRenderSupervision();
+    Object.keys(HR_STREAMS).forEach(function (k) {
+      var st = HR_STREAMS[k];
+      if (uiShown(document.getElementById(st.p + '-view-sup'))) shell.hrRenderSupervision(st);
+    });
   } catch(e) { console.warn('[sup-refresh]', e); }
 }
 
@@ -529,8 +514,6 @@ async function openStatusHistory(sid) {
   }
   var s = rows.find(function (x) { return idEq(x.client_id, sid); });
   var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
-  var TL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
-  var TI = { approved: '✅', suspended: '⚠️', left: '🚪' };
   var fmt = function (v) {
     if (!v) return '—';
     var d = new Date(v);
@@ -551,9 +534,9 @@ async function openStatusHistory(sid) {
     return '<div class="abs-tone ' + (cancelled ? 'abs-tone-off abs-cancelled' : tyCls(a.type)) +
         ' hist-card">' +
       '<div class="hist-card-head">' +
-        '<span class="abs-ico">' + (TI[a.type] || '📋') + '</span>' +
+        '<span class="abs-ico">' + (ABS_TYPE_ICON[a.type] || '📋') + '</span>' +
         '<span class="abs-type-label">' +
-          esc(TL[a.type] || a.type || '—') + '</span>' +
+          esc(ABS_TYPE_LBL[a.type] || a.type || '—') + '</span>' +
         (cancelled ? '<span class="hist-cancelled">בוטל</span>' : '') +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +

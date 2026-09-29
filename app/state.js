@@ -4,12 +4,10 @@
 const S = {
   // הלקוח נבנה ב-main בעלייה — כל מודול מגיע אליו מכאן.
   SB: null,
-  // ההקשר נלכד לפני ההמתנה — mark רץ אחרי await, וקריאת הגלובלי הייתה זוקפת את ההצלחה למשתמש אחר.
-  _hrPushEp: 0,
   // ── סנכרון ענן ──
   _hrLastTs: 0,
   // מועד הסנכרון האחרון לשורת המצב — נכתב על כל שיחה מוצלחת עם הענן, גם בקריאה בלבד.
-  // אינו עֵד דחיפה ואינו משמש לפינוי — לזה _hrPushedAt פר-מפתח.
+  // אינו עֵד דחיפה ואינו משמש לפינוי — העֵד נרשם בליבה, בדחיפה עצמה.
   _hrLastSyncAt: 0,
   // ── מצבת התלמידים ──
   currentFilter: 'all',
@@ -40,8 +38,6 @@ const S = {
   _hrSwitchId: undefined,
   _hcVw: {},
   _statusSid: undefined,
-  // נתוני שנה מלוח הדפדפן: {hy, lb, jd (א׳ תשרי), ml[], leap}
-  _hrYearCache: {},
   _hrView: 'reg',
   _hrSupRecords: undefined,
   _hrSaveTimer: null,
@@ -86,9 +82,7 @@ var AUTH = {
 
 // ── מה שמסך צריך מ-main ──
 // main רושם כאן בעלייה — מודול שמייבא מ-main סוגר מעגל, והרישום הוא הכיוון האחד.
-const shell = { showPage: null, showPageInternal: null, renderStudents: null, atRenderArchive: null,
-                atRenderSupervision: null, hrRenderArchive: null, hrRenderSupervision: null,
-                renderAttendSettings: null, renderSleepSettings: null, atRenderStudents: null,
-                hrRenderStudents: null, hrPullDraw: null };
+const shell = { showPage: null, showPageInternal: null, renderStudents: null, hrRenderSupervision: null,
+                hrRenderSettings: null, hrRenderStudents: null, hrPullDraw: null };
 
 export { AUTH, S, shell };

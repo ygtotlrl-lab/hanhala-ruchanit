@@ -3,7 +3,7 @@
 הטבלה ב-`TABLE.md` — מקור האמת היחיד ליכולת; סשן קורא ממנה את הפרקים שהסבב נוגע בהם.
 
 ## מפת המסכים
-- מסך ⟵ מודול: כניסה, תפריט המשתמש והחלפת משתמש ⟵ `app/screens/login.js` · `home` (ראשי) ⟵ `app/screens/home.js` · `students` (מצבה, שיעורים א/ב/ג, סטטוסים) ⟵ `app/screens/students.js` · `attend` (סדרים) ⟵ `app/screens/attend.js` — מה ששלושת החלקים קוראים — ו-`.reg.js` · `.arc.js` · `.sup.js` (רישום · ארכיון וייצוא · השגחה והגדרות המודול) · `sleep` ⟵ `app/screens/sleep.js` ו-`.reg.js` · `.arc.js` · `.sup.js` · `settings` (משתמשים והרשאות) ⟵ `app/screens/settings.js`. הנתונים והמחרוזות — `app/constants.js`; מצב הריצה ו-`shell` — `app/state.js`; המראה, הסנכרון, המיזוג וההרשאות — `app/domain.js`; התאריך העברי — `app/domain.hebdate.js`; הנתונים שהסדרים והשינה חולקים — `app/domain.sessions.js`; החיווט, הניווט, מפת הפעולות ופעולות בורר התאריך — `app/main.js`.
+- מסך ⟵ מודול: כניסה, תפריט המשתמש והחלפת משתמש ⟵ `app/screens/login.js` · `home` (ראשי) ⟵ `app/screens/home.js` · `students` (מצבה, שיעורים א/ב/ג, סטטוסים) ⟵ `app/screens/students.js` · `attend` (סדרים) ⟵ `app/screens/attend.js` · `sleep` ⟵ `app/screens/sleep.js` — שני זרמים של מסך אחד: הרישום · הארכיון והייצוא · ההשגחה והגדרות המודול ⟵ `app/domain.reg.js` · `app/domain.arc.js` · `app/domain.sup.js`, וכל מה שנבדל ביניהם — `HR_STREAMS` · `settings` (משתמשים והרשאות) ⟵ `app/screens/settings.js`. הנתונים והמחרוזות — `app/constants.js`; מצב הריצה ו-`shell` — `app/state.js`; המראה, הסנכרון, המיזוג וההרשאות — `app/domain.js`; התאריך העברי — `app/domain.hebdate.js`; שני הזרמים (`HR_STREAMS`) והנתונים שהסדרים והשינה חולקים — `app/domain.sessions.js`; החיווט, הניווט, מפת הפעולות ופעולות בורר התאריך — `app/main.js`.
 - PDF נוכחות (`pdfmake`).
 - בבנייה, חסומים בדיאלוג (`UNDER_CONSTRUCTION`): דוחות חודשיים · מבחנים · תיקים אישיים. הכפתורים נשארים גלויים; נקודת האכיפה היחידה לניווט היא `canAccess(pg)` שב-`showPage`.
 
@@ -30,6 +30,6 @@
 - כל נתיב שסופר או מציג מסנן `!r.deleted`, ו-`hrMarks(rec)` בכל אתר קריאה.
 - אין ניקוי רשומות-בדיקה לפי שם הסדר.
 - `hrWriteFail(where, e)` רושמת כשל כתיבה ואינה משנה את הזרימה; פרטית כאן.
-- `LS_CFG.wholeKeys` ריק — `hr_mirror_users` ו-`hr_perms_cache` הם מסלול הכניסה האופליין. עֵד הפינוי `_hrPushedAt` פר-מפתח, לא `_hrLastTs`.
-- `pending()`: `hr_login_log_queue` לא ריק ⇒ שלב ב מדולג; `JSON.parse` שנכשל מחזיר `true`. שם המפתח נשאר.
+- `LS_CFG.wholeKeys` ריק — `hr_mirror_users` ו-`hr_perms_cache` הם מסלול הכניסה האופליין. עֵד הפינוי נרשם בליבה ב-`pushTable`, פר-טבלה (`pushedFor`), לא `_hrLastTs`.
+- «יש ממתין» לפינוי — מהליבה (סימוני ⏳), ולא מתור יומן הכניסות; שם המפתח `hr_login_log_queue` נשאר.
 - כל שם במודול השינה נושא `hr` (לא `sl`), והטבלאות `hr_sleep_*`.

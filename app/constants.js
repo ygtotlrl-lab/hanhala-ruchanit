@@ -132,7 +132,6 @@ var MSG_SESSION_OPEN_TODAY = '⏳ סדר פתוח מהיום';
 
 var MSG_CLOSE_SESSION_FIRST = '⚠️ סגור את הסדר הנוכחי תחילה';
 
-var MSG_PICK_DATE_FIRST = '⚠️ יש לבחור תאריך תחילה';
 
 var MSG_SESSION_DONE = '📋 סדר כבר מולא';
 
@@ -262,7 +261,11 @@ var PEND_KV_PREFIX = {
 // הגדרות שהעותק המקומי שלהן שטוח ואינו שורה במראה — הפינוי מפנה אותן פר-רשומה, ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי.
 var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
-export { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+// סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
+var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
+var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
+
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
          MSG_BUSY_CHECK, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_CLOSE_REPORT_FIRST,
@@ -277,7 +280,7 @@ export { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_RE
          MSG_OFFLINE_LOGIN_LATER, MSG_OFF_FIRST_LOGIN, MSG_PASS_MISMATCH_X,
          MSG_PASS_NEEDS_NET, MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PDF_BUILDING,
          MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE,
-         MSG_PERMS_SAVED, MSG_PICK_DATE_FIRST, MSG_PICK_END_DATE, MSG_PICK_REASON,
+         MSG_PERMS_SAVED, MSG_PICK_END_DATE, MSG_PICK_REASON,
          MSG_PICK_START_DATE, MSG_PICK_STUDENT, MSG_REASONS_SAVED, MSG_REPORT_DONE,
          MSG_REPORT_OPEN_ELSEWHERE, MSG_ROW_DELETED, MSG_ROW_MISSING,
          MSG_SERVER_DOWN_LOCAL, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,

@@ -1,13 +1,8 @@
 // app/screens/home.js — מסך הראשי
 import { dayToday } from '../../core/util.js';
-import { eraKick, pendBoot, plBoot, rtyBoot, tombBoot } from '../../core/sync.js';
-import { hwBoot, lsBoot } from '../../core/storage.js';
-import { mirrorBoot } from '../../core/mirror.js';
-import { bkBoot } from '../../core/backup.js';
-import { lkBoot } from '../../core/auth.js';
 import { shell } from '../state.js';
 import { getActiveAbsences, getStudents, hrMarks, hrPullFromCloud } from '../domain.js';
-import { atLoadData } from '../domain.sessions.js';
+import { HR_STREAMS, hrLoadData } from '../domain.sessions.js';
 
 function screenHomeHTML() {
   return `
@@ -53,7 +48,7 @@ async function refreshDashStats() {
   }).length;
 
   // סדר שנמחק נשאר במערך כסימון — ולכן מסוננים המחוקים.
-  var atData = ((typeof atLoadData === 'function') ? await atLoadData() : [])
+  var atData = (await hrLoadData(HR_STREAMS.attend))
     .filter(function(r){ return !(r && r.deleted); });
   var todaySess = atData.filter(function(r){ return r.session_date === todayIso; });
   var sessCount = todaySess.length;
@@ -86,21 +81,8 @@ async function refreshDashStats() {
   if(rateEl) rateEl.textContent = rateStr;
 }
 
+// הליבה עלתה עם הדף (coreBoot ב-app/main.js) — כאן רק המשיכה והציור של המסך.
 async function loadDash(){
-  // שכבת המראה נטענת לפני כל קורא — קורא שרץ לפניה מקבל undefined ונופל לברירת המחדל.
-  try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
-  // המדידה והפינוי לפני המשיכה — כדי שכתיבות המשיכה ייפלו לאחסון שיש בו מקום.
-  try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
-  // נטענים לפני המשיכה — רשומה שלא אושרה בסשן הקודם מוצגת כממתינה מהשנייה הראשונה.
-  try { pendBoot(); } catch (e) { console.warn('[pend] pendBoot', e); }
-  try { tombBoot(); } catch (e) { console.warn('[tomb] tombBoot', e); }
-  try { eraKick(); } catch (e) { console.warn('[era] eraKick', e); }
-  // אין להעביר את bkBoot למסלול הדחיפה — שם הוא רץ רק כשמישהו כותב, והגיבוי נעצר ביום בלי כתיבה.
-  try { bkBoot(); } catch (e) { console.warn('[bk] bkBoot', e); }
-  try { rtyBoot(); } catch (e) { console.warn('[rty] rtyBoot', e); }
-  try { lkBoot(); } catch (e) { console.warn('[lk] lkBoot', e); }
-  try { plBoot(); } catch (e) { console.warn('[pl] plBoot', e); }
-  try { hwBoot(); } catch (e) { console.warn('[hw] hwBoot', e); }
   await hrPullFromCloud();
   shell.renderStudents();
   // plTick רץ כל 3 שניות על שורת החותמת בלבד, ומושך רק בשינוי אמיתי.
