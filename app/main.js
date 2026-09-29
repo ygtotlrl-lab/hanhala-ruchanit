@@ -4,7 +4,8 @@ import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
 import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
          plStampRead, pushedFor, rowsVerify, runSave, sbWatch } from '../core/sync.js';
 
-import { coreBoot, logAwait } from '../core/backup.js';
+import { logAwait } from '../core/backup.js';
+import { bootRun } from '../core/boot-run.js';
 import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
@@ -702,7 +703,7 @@ async function ensureFirstAdmin() {
 
 // הליבה עולה עם הדף ולא אחרי הכניסה, כמו בכל האפליקציות — הבדיקה המחזורית ממתינה לסשן (PL_CFG.active),
 // ומשיכה לפני הכניסה אינה מגיעה ל-hrApplyPerms.
-coreBoot();
+bootRun();
 
 ensureFirstAdmin();
 
