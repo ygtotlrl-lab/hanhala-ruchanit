@@ -14,6 +14,20 @@ import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
 import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged,
          hrSortUsers } from '../domain.js';
+import { HR_STREAMS } from '../domain.sessions.js';
+
+// מודול בבנייה — אותו לוח לכל מודול שטרם נבנה, והשם והכותרת בפרמטר.
+function _soonPaneHTML(mod, title) {
+  return `    <div id="settings-${mod}" class="hidden">
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>${title}</span></div>
+      <div class="soon-pane ss">
+        <div class="soon-icon">🏗️</div>
+        <div class="soon-title">המודול בבנייה</div>
+        <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
+      </div>
+    </div>
+`;
+}
 
 function screenSettingsHTML() {
   return `
@@ -119,31 +133,7 @@ function screenSettingsHTML() {
         </div>
       </div>
     </div>
-    <div id="settings-exams" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📝 הגדרות מבחנים</span></div>
-      <div class="soon-pane ss">
-        <div class="soon-icon">🏗️</div>
-        <div class="soon-title">המודול בבנייה</div>
-        <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
-      </div>
-    </div>
-    <div id="settings-files" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📁 הגדרות תיקים</span></div>
-      <div class="soon-pane ss">
-        <div class="soon-icon">🏗️</div>
-        <div class="soon-title">המודול בבנייה</div>
-        <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
-      </div>
-    </div>
-    <div id="settings-reports" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>📊 הגדרות דוחות</span></div>
-      <div class="soon-pane ss">
-        <div class="soon-icon">🏗️</div>
-        <div class="soon-title">המודול בבנייה</div>
-        <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
-      </div>
-    </div>
-
+${_soonPaneHTML('exams', '📝 הגדרות מבחנים')}${_soonPaneHTML('files', '📁 הגדרות תיקים')}${_soonPaneHTML('reports', '📊 הגדרות דוחות')}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
@@ -198,8 +188,7 @@ function showSettingsModule(mod) {
   if (target) target.classList.remove('hidden');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
-  if (mod === 'attend') shell.renderAttendSettings();
-  if (mod === 'sleep') shell.renderSleepSettings();
+  if (HR_STREAMS[mod]) shell.hrRenderSettings(HR_STREAMS[mod]);
 }
 
 async function saveAbsenceReasons() {

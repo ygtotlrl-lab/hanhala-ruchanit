@@ -58,11 +58,20 @@ function _hcBuild(pfx,initH,tv){
     (tv!==undefined?'<div class="hc-time-row"><span class="hc-time-lbl">שעה:</span><input type="time" aria-label="שעה" id="'+pfx+'_t" value="'+(tv||'')+'" class="hc-time-inp"></div>':'')+
   '</div>';}
 
+// רגע (מחרוזת זמן) בתצוגה — יום בשבוע, התאריך העברי והשעה המקומית; ריק או פגום — «—».
+function hrFmtAt(v){
+  if(!v) return '—';
+  var d=new Date(v);
+  if(isNaN(d.getTime())) return '—';
+  var hd=_hcH(d), hh=d.getHours(), mm=d.getMinutes();
+  return 'יום '+HEB_DOW[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+}
+
 // התאריך העברי של יום נגזר ממנו בתצוגה ואינו נשמר — עוגן צהריים לפני החשבון.
 function hrDayHeb(iso){return _hcH(dayNoon(String(iso)));}
 function hrDayHebFmt(iso){if(!iso)return '';var h=hrDayHeb(iso);return _hcFmt(h.hy,h.mi,h.day);}
 function hrSessHeb(rec){return hrDayHeb(rec.session_date);}
 function hrSessHebFmt(rec){return hrDayHebFmt(rec&&rec.session_date);}
 
-export { _hcBuild, _hcFmt, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt,
+export { _hcBuild, _hcFmt, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt, hrFmtAt,
          hrHebMonthWin, hrHebYearWin, hrSessHeb, hrSessHebFmt };

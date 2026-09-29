@@ -319,14 +319,6 @@ function hrCfgLocalSet(key, value) {
 }
 
 // משפך כתיבה אחד לדיסק — אתר כתיבה נפרד יכול לעקוף את שער החלון החם ולהחזיר לדיסק את מה שהפינוי הוציא.
-function _hrAtDiskSave(rows, fromMerge) {
-  return hrMirrorPutRecs('hr_sessions', rows, fromMerge);
-}
-
-function _hrSlDiskSave(rows, fromMerge) {
-  return hrMirrorPutRecs('hr_sleep_sessions', rows, fromMerge);
-}
-
 // הרשומה נכתבת כשורה עם data, והקריאה מרכיבה אותה בחזרה.
 function _hrStDiskSave(rows, fromMerge) {
   return hrMirrorPutRecs('hr_students_rows', rows, fromMerge);
@@ -614,7 +606,7 @@ function hrCfgGet(key, res) {
   });
 }
 
-// אין לעטוף כאן את bkMaybeDaily — גיבוי שנתלה במסלול הדחיפה אינו רץ כשאין כתיבה; נקודת ההפעלה היא bkBoot() מ-loadDash().
+// אין לעטוף כאן את bkMaybeDaily — גיבוי שנתלה במסלול הדחיפה אינו רץ כשאין כתיבה; נקודת ההפעלה היא bkBoot() שבעליית הליבה.
 function hrSyncLog(action, key, recordCount, details) {
   logAction(action, key, recordCount, details);
 }
@@ -862,12 +854,26 @@ function hrDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrItemId,
-         _hrMarkSynced, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
-         _hrVerify, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+function atDefaultCfg() {
+  return {
+    sessions:[
+      {id:'sh',name:'שחרית'},
+      {id:'s1',name:'סדר א׳'},
+      {id:'s2',name:'סדר ב׳'},
+      {id:'s3',name:'סדר ג׳'},
+      {id:'ev',name:'ערבית'},
+      {id:'nl',name:'סדר לילה'}
+    ],
+    treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
+  };
+}
+
+export { HR_MIRROR_STREAMS, _hrCleanCfg, _hrMarkParent, _hrItemId,
+         _hrMarkSynced, _hrRowId, _hrStudentsRaw, _hrStudentsSaveRaw,
+         _hrVerify, atDefaultCfg, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwFetch, hrHwInWindow,
-         hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
+         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
          hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
          hrSortRecs, hrSortStatuses, hrSortStudents, hrSortUsers, hrSupervisionAccess, hrSyncLog,
          hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,
