@@ -13,7 +13,7 @@ import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, atSaveData,
          hrCachedArr } from '../domain.sessions.js';
 import { _atPullCfg, _atPullSessions, atCachedCfg, atCheckAlert, atDefaultCfg,
-         atRenderTodaySessions, atSortedSessions } from './attend.js';
+         atRenderTodaySessions, atSessionDefs } from './attend.js';
 
 function screenAttendHTML() {
   return `
@@ -141,7 +141,7 @@ function atFillSessionBtns() {
   if(!el) return;
   var cfg=S._atCfg||atDefaultCfg();
   el.innerHTML='';
-  atSortedSessions(cfg).forEach(function(s){
+  atSessionDefs(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.className='sess-pick-btn';

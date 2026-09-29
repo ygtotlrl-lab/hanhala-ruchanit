@@ -1,5 +1,5 @@
 // app/screens/sleep.js — מסך השינה: מה ששלושת חלקיו קוראים
-import { HE_COLLATOR, dayNoon, dayToday } from '../../core/util.js';
+import { dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc } from '../../core/ui.js';
@@ -9,7 +9,8 @@ import { _hrCleanCfg, atvCls, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrDefaultCfg, hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcH } from '../domain.hebdate.js';
-import { hrCachedArr, hrGetLogicalDate } from '../domain.sessions.js';
+import { hrCachedArr, hrGetLogicalDate, hrSortDayRecs,
+         hrSortSessionDefs } from '../domain.sessions.js';
 
 var HR_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
@@ -99,11 +100,9 @@ async function hrSaveTreats(data) {
   return data;
 }
 
-function hrSortedSessions(cfg) {
+function hrSessionDefs(cfg) {
   if(!cfg) cfg=S._hrCfg||hrDefaultCfg();
-  return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE_COLLATOR.compare(a.start_time||'', b.start_time||'');
-  });
+  return hrSortSessionDefs(cfg.sessions||[]);
 }
 
 function hrRenderTodaySessions() {
@@ -116,14 +115,8 @@ function hrRenderTodaySessions() {
   var isToday=filterIso===dayToday();
   var isLogical=filterIso===logIso;
   var cfg=S._hrCfg||hrDefaultCfg();
-  var sessOrder={};
-  hrSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.session_date===filterIso;})
-    .slice().sort(function(a,b){
-      var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
-      var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
-      return ia-ib;
-    });
+  var daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
+    hrSessionDefs(cfg));
   if(!daySess.length){el.innerHTML='';return;}
   var dowLabel=isToday?'היום':(isLogical&&!isToday?'אמש':'יום '+hrDow(filterIso));
   var html='<div class="day-sess-block">'+
@@ -146,4 +139,4 @@ function hrRenderTodaySessions() {
 
 export { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
          hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg, hrSaveTreats,
-         hrSortedSessions, hrSummaryHTML };
+         hrSessionDefs, hrSummaryHTML };

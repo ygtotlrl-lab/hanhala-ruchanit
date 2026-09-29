@@ -13,7 +13,7 @@ import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_USER_SWITCHED_MID } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged,
-         sortUsersByOrder } from '../domain.js';
+         hrSortUsers } from '../domain.js';
 
 function screenSettingsHTML() {
   return `
@@ -498,7 +498,7 @@ async function renderUsersList() {
   }
   var data = res.data;
   if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
-  data = sortUsersByOrder(data);
+  data = hrSortUsers(data);
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;

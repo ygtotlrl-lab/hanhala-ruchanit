@@ -15,8 +15,8 @@ import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDE
          MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE,
          MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences,
-         getStudents, hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStudents, modalOpen,
+import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
+         hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH } from '../domain.hebdate.js';
 import { hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -540,8 +540,7 @@ async function openStatusHistory(sid) {
     var t = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
     return (h.ok ? (h.dayLabel + ' ' + h.monthName + ' ' + h.yearLabelFull) : '—') + ' · ' + t;
   };
-  var ts = function (a) { var d = new Date(a && a.from_at); return isNaN(d.getTime()) ? 0 : d.getTime(); };
-  list.sort(function (a, b) { return ts(b) - ts(a); });
+  list = hrSortStatuses(list);
   if (!list.length) {
     box.innerHTML = '<div class="cloud-loading-note">' +
       'לא נרשם אף סטטוס לתלמיד הזה.</div>';

@@ -1,16 +1,17 @@
 // app/screens/sleep.arc.js — שינה — הארכיון והייצוא
-import { HE_COLLATOR, MSG_DELETE, dayToday } from '../../core/util.js';
+import { MSG_DELETE, dayToday } from '../../core/util.js';
 import { idEq, tombKill } from '../../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { hebDayLabel } from '../../core/hebrew.js';
 import { MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_EXPORT_FAIL, MSG_EXPORT_OK,
          MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA,
          MSG_ROW_DELETED } from '../constants.js';
-import { atvCls, getStudents, hrMarks, hrPdfFont, hrSortStudents } from '../domain.js';
+import { atvCls, getStudents, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from '../domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from '../domain.hebdate.js';
-import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
-import { _hrPullSessions, hrRenderTodaySessions, hrSortedSessions,
+import { hrCachedArr, hrLoadData, hrSaveData, hrSortDayRecs, hrSortDays, hrSortHebMonths,
+         hrSortHebYears } from '../domain.sessions.js';
+import { _hrPullSessions, hrRenderTodaySessions, hrSessionDefs,
          hrSummaryHTML } from './sleep.js';
 
 // ── שינה — ארכיון הסדרים ──
@@ -49,7 +50,7 @@ function _hrPaintArchive(el, records, warn) {
     byYear[hy][mi][iso].push({rec:rec,hd:hd});
   });
 
-  var years=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
+  var years=hrSortHebYears(Object.keys(byYear).map(Number));
   var idCtr=0; function uid(){return 'sl-arc-col-'+(idCtr++);}
 
   var html='<div>';
@@ -63,7 +64,7 @@ function _hrPaintArchive(el, records, warn) {
     '</div>';
     html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' arc-year-body">';
 
-    var months=Object.keys(byYear[hy]).map(Number).sort(function(a,b){return b-a;});
+    var months=hrSortHebMonths(Object.keys(byYear[hy]).map(Number));
     months.forEach(function(mi){
       var mId=uid();
       var isMonthCur=isYearCur&&mi===curMI;
@@ -75,16 +76,11 @@ function _hrPaintArchive(el, records, warn) {
       '</div>';
       html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' arc-month-body">';
 
-      var _arcSessOrder={};
-      hrSortedSessions().forEach(function(s,i){_arcSessOrder[s.name]=i;});
-      var days=Object.keys(byYear[hy][mi]).sort(function(a,b){return HE_COLLATOR.compare(b,a);});
+      var _arcDefs=hrSessionDefs();
+      var days=hrSortDays(Object.keys(byYear[hy][mi]));
       days.forEach(function(iso){
         var dId=uid();
-        var entries=byYear[hy][mi][iso].slice().sort(function(a,b){
-          var ia=_arcSessOrder[a.rec.session]!=null?_arcSessOrder[a.rec.session]:999;
-          var ib=_arcSessOrder[b.rec.session]!=null?_arcSessOrder[b.rec.session]:999;
-          return ia-ib;
-        });
+        var entries=hrSortDayRecs(byYear[hy][mi][iso], _arcDefs, function(e){return e.rec;});
         var hd0=entries[0].hd;
         var dayLabel=hebDayLabel(hd0.day)+' '+mName;
         var isToday=iso===todayIso;
@@ -179,7 +175,7 @@ async function hrExportExcel(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE_COLLATOR.compare(a.session_date,b.session_date);});
+    var sorted=hrSortRecs(data);
     function xmlEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
@@ -229,7 +225,7 @@ async function hrExportPdf(fromIso,toIso) {
     if(fromIso) data=data.filter(function(r){return r.session_date>=fromIso;});
     if(toIso)   data=data.filter(function(r){return r.session_date<=toIso;});
     if(!data.length){toast(MSG_NO_DATA_IN_RANGE);return;}
-    var sorted=data.slice().sort(function(a,b){return HE_COLLATOR.compare(a.session_date,b.session_date);});
+    var sorted=hrSortRecs(data);
     var NB=' ';
     var fontName=hrPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}

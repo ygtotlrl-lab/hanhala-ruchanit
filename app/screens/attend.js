@@ -1,5 +1,5 @@
 // app/screens/attend.js — מסך הסדרים: מה ששלושת חלקיו קוראים
-import { HE_COLLATOR, dayNoon, dayToday } from '../../core/util.js';
+import { dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
@@ -9,7 +9,7 @@ import { atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
 import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
-import { hrCachedArr } from '../domain.sessions.js';
+import { hrCachedArr, hrSortDayRecs, hrSortSessionDefs } from '../domain.sessions.js';
 
 var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
 
@@ -117,11 +117,9 @@ async function atSaveTreats(data) {
   return data;
 }
 
-function atSortedSessions(cfg) {
+function atSessionDefs(cfg) {
   if(!cfg) cfg=S._atCfg||atDefaultCfg();
-  return (cfg.sessions||[]).slice().sort(function(a,b){
-    return HE_COLLATOR.compare(a.start_time||'', b.start_time||'');
-  });
+  return hrSortSessionDefs(cfg.sessions||[]);
 }
 
 function atRenderTodaySessions() {
@@ -133,14 +131,8 @@ function atRenderTodaySessions() {
   var filterIso=selIso||todayIso;
   var isToday=filterIso===todayIso;
   var cfg=S._atCfg||atDefaultCfg();
-  var sessOrder={};
-  atSortedSessions(cfg).forEach(function(s,i){sessOrder[s.name]=i;});
-  var daySess=data.filter(function(r){return !r.deleted&&r.session_date===filterIso;})
-    .slice().sort(function(a,b){
-      var ia=sessOrder[a.session]!=null?sessOrder[a.session]:999;
-      var ib=sessOrder[b.session]!=null?sessOrder[b.session]:999;
-      return ia-ib;
-    });
+  var daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
+    atSessionDefs(cfg));
   if(!daySess.length){el.innerHTML='';return;}
   var dowLabel=isToday?'היום':'יום '+atDow(filterIso);
   var html='<div class="day-sess-block">'+
@@ -207,5 +199,5 @@ function atCheckAlert() {
 
 export { _atPullCfg, _atPullSessions, _atPullTreats, _atSupMonth, atCachedCfg,
          atCheckAlert, atDefaultCfg, atDow, atLiveTreats, atLoadTreats,
-         atRenderTodaySessions, atSaveCfg, atSaveTreats, atSortedSessions,
+         atRenderTodaySessions, atSaveCfg, atSaveTreats, atSessionDefs,
          atSummaryHTML };

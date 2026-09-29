@@ -13,7 +13,7 @@ import { _hcBuild, _hcFmt, _hcH, hrSessHebFmt } from '../domain.hebdate.js';
 import { _hrPullStaleMark, atAutoMark, atFindLiveSession, hrAdoptSession, hrCachedArr,
          hrGetLogicalDate, hrSaveData } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, hrCachedCfg, hrRenderTodaySessions,
-         hrSortedSessions } from './sleep.js';
+         hrSessionDefs } from './sleep.js';
 
 function screenSleepHTML() {
   return `
@@ -135,7 +135,7 @@ function hrFillSessionBtns() {
   if(!el) return;
   var cfg=S._hrCfg||hrDefaultCfg();
   el.innerHTML='';
-  hrSortedSessions(cfg).forEach(function(s){
+  hrSessionDefs(cfg).forEach(function(s){
     var btn=document.createElement('button');
     btn.textContent=s.name;
     btn.className='sess-pick-btn';

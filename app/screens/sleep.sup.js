@@ -1,5 +1,5 @@
 // app/screens/sleep.sup.js — שינה — השגחה, טיפולים והגדרות המודול
-import { HE_COLLATOR, MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
+import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, tombKill } from '../../core/sync.js';
 import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
@@ -10,7 +10,8 @@ import { S, shell } from '../state.js';
 import { atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
          hrSupervisionAccess } from '../domain.js';
 import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
-import { hrCachedArr, hrLoadData, hrSaveData } from '../domain.sessions.js';
+import { hrCachedArr, hrLoadData, hrSaveData, hrSortAbsenceRows, hrSortSupRecords,
+         hrSortTreats } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
          hrLiveTreats, hrLoadTreats, hrRenderTodaySessions, hrSaveCfg,
          hrSaveTreats } from './sleep.js';
@@ -88,9 +89,8 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   });
 
   // הרשימה נבנית מסדר התלמידים ולא מ-Object.entries — מפתח שנראה כמספר שלם ממוין מספרית לפני השאר
-  var rows=students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
-    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);})
-    .sort(function(a,b){return (b[1].absent-a[1].absent)||b[1].lateMin-a[1].lateMin;});
+  var rows=hrSortAbsenceRows(students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);}));
 
   if(!rows.length){
     el.innerHTML=navHTML+'<div class="empty-note">אין אירועים ב'+mLabel+'</div>';return;
@@ -103,7 +103,7 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   rows.forEach(function(e){
     var sid=e[0],st=e[1];
     var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
-    var lastTreat=stuTreats.length?stuTreats.slice().sort(function(a,b){return HE_COLLATOR.compare(b.treat_date||'',a.treat_date||'');})[0]:null;
+    var lastTreat=stuTreats.length?hrSortTreats(stuTreats)[0]:null;
     var lastHTML='';
     if(lastTreat){
       var ltIso=lastTreat.treat_date||'';
@@ -211,7 +211,7 @@ function hrSupDetail(sid) {
   var rowsHTML='';
   if(!records.length){rowsHTML='<div class="loading-note">אין אירועים בחודש זה</div>';}
   else{
-    records.slice().sort(function(a,b){return HE_COLLATOR.compare(a.session_date,b.session_date)||HE_COLLATOR.compare(a.session,b.session);}).forEach(function(r){
+    hrSortSupRecords(records).forEach(function(r){
       var hbr=hrDayHebFmt(r.session_date);
       var dowStr='יום '+hrDow(r.session_date);
       var lbl=r.mark==='l'?('איחור — '+(r.minutes||0)+' ד׳'):(HR_LBL_DET[r.mark]||r.mark);

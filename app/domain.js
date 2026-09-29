@@ -197,12 +197,16 @@ function hrRecsFromRows(kind, sRows, mRows) {
     rec.marks[String(m.student_client_id)] = mk;
   });
   // מיון מפורש — בלי ORDER BY סדר השורות מהמסד נקבע לפי תוכנית הריצה.
-  out.sort(function (a, b) {
+  return hrSortRecs(out);
+}
+
+// רשומות סדר ושינה — לפי התאריך, ובתוכו לפי המזהה; הטעינה וכל מסלולי הייצוא ממיינים כאן.
+function hrSortRecs(list) {
+  return list.slice().sort(function (a, b) {
     var da = String(a.session_date || ''), db = String(b.session_date || '');
     if (da !== db) return da < db ? -1 : 1;
     return String(a.client_id) < String(b.client_id) ? -1 : 1;
   });
-  return out;
 }
 
 // הרשומות מורכבות מהשורות בכל קריאה — אין עותק שני שלהן על הדיסק.
@@ -819,7 +823,14 @@ function getActiveAbsences(s, refDate) {
   return s.absences.filter(function(a){ return !a.deleted && (!a.from_at || new Date(a.from_at) <= now) && (!a.to_at || new Date(a.to_at) >= now); });
 }
 
-function sortUsersByOrder(data) {
+// הסטטוסים של תלמיד — האחרון ראשון.
+function hrSortStatuses(list) {
+  var ts = function (a) { var d = new Date(a && a.from_at); return isNaN(d.getTime()) ? 0 : d.getTime(); };
+  return list.slice().sort(function (a, b) { return ts(b) - ts(a); });
+}
+
+// המשתמשים — בסדר שנגרר בהגדרות; מי שאינו בו יורד לסוף.
+function hrSortUsers(data) {
   var order = getUserOrder();
   if (!order.length) return data;
   return data.slice().sort(function(a,b) {
@@ -866,13 +877,13 @@ function hrDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed,
-         _hrItemId, _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave,
-         _hrStudentsRaw, _hrStudentsSaveRaw, _hrVerify, _hrVerifyRows, atvCls, canAccess,
-         getAbsenceReasons, getActiveAbsences, getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt,
-         hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin,
-         hrDefaultCfg, hrHwInWindow, hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs,
-         hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud, hrPushToCloud,
-         hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend, hrSortStudents,
-         hrSupervisionAccess, hrSyncLog, hrSyncNow, hrTouchLastChanged, hrTreatsMerge,
-         hrWriteFail, modalOpen, saveStudents, sortUsersByOrder, tyCls, uiShown };
+export { HR_MIRROR_STREAMS, _hrAtDiskSave, _hrCleanCfg, _hrMarkParent, _hrMarkPushed, _hrItemId,
+         _hrMarkSynced, _hrPushedFor, _hrRowId, _hrSlDiskSave, _hrStudentsRaw, _hrStudentsSaveRaw,
+         _hrVerify, _hrVerifyRows, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+         getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
+         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwInWindow,
+         hrLocalRecs, hrMarks, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
+         hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
+         hrSortRecs, hrSortStatuses, hrSortStudents, hrSortUsers, hrSupervisionAccess, hrSyncLog,
+         hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,
+         uiShown };
