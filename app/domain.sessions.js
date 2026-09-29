@@ -1,5 +1,5 @@
 // app/domain.sessions.js — סדרים ושינה: שני הזרמים, והנתונים ששני המסכים קוראים וכותבים
-import { HE_COLLATOR, dayNoon, dayToday } from '../core/util.js';
+import { dayNoon, dayToday, sortCompare } from '../core/util.js';
 import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany, pendTag,
          pushTable } from '../core/sync.js';
 import { lsGet, lsSetArray } from '../core/storage.js';
@@ -21,7 +21,7 @@ import { _hcH } from './domain.hebdate.js';
 // הגדרות הסדרים — לפי שעת ההתחלה.
 function hrSortSessionDefs(list) {
   return list.slice().sort(function (a, b) {
-    return HE_COLLATOR.compare(a.start_time || '', b.start_time || '');
+    return sortCompare(a.start_time || '', b.start_time || '');
   });
 }
 
@@ -38,7 +38,7 @@ function hrSortHebYears(list) { return list.slice().sort(function (a, b) { retur
 function hrSortHebMonths(list) { return list.slice().sort(function (a, b) { return b - a; }); }
 
 // ימי הארכיון, ב-ISO — האחרון ראשון.
-function hrSortDays(list) { return list.slice().sort(function (a, b) { return HE_COLLATOR.compare(b, a); }); }
+function hrSortDays(list) { return list.slice().sort(function (a, b) { return sortCompare(b, a); }); }
 
 // שורות ההשגחה — החיסורים הרבים ראשונים, ובשוויון — דקות האיחור.
 function hrSortAbsenceRows(rows) {
@@ -50,14 +50,14 @@ function hrSortAbsenceRows(rows) {
 // טיפולים — האחרון ראשון.
 function hrSortTreats(list) {
   return list.slice().sort(function (a, b) {
-    return HE_COLLATOR.compare(b.treat_date || '', a.treat_date || '');
+    return sortCompare(b.treat_date || '', a.treat_date || '');
   });
 }
 
 // פירוט ההשגחה — לפי התאריך, ובתוכו לפי שם הסדר.
 function hrSortSupRecords(list) {
   return list.slice().sort(function (a, b) {
-    return HE_COLLATOR.compare(a.session_date, b.session_date) || HE_COLLATOR.compare(a.session, b.session);
+    return sortCompare(a.session_date, b.session_date) || sortCompare(a.session, b.session);
   });
 }
 
