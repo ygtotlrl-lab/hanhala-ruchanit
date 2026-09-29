@@ -6,7 +6,7 @@ import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pen
 import { lsClearHorizons, lsGet, lsRemove } from '../core/storage.js';
 import { logAwait } from '../core/backup.js';
 import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
-import { authUsersTable, isAdmin, lkReset, sessActive, sessGet, sessSet,
+import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
 import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
          comboPick, esc, ksKey, modalBackdrop, modalEsc, openModal, swApply, swHideUpdate,
@@ -264,11 +264,6 @@ function _hrHwSpec(t, label, recs) {
   };
 }
 var HW_CFG = {
-  enabled: true,
-  admin: function () {
-    try { return isAdmin(); }
-    catch (e) { return false; }
-  },
   specs: [
     _hrHwSpec('hr_sessions', 'סדרי נוכחות מחוץ לחלון', function () { return Array.isArray(S._atData) ? S._atData : null; }),
     _hrHwSpec('hr_marks', 'סימוני נוכחות מחוץ לחלון', null),
