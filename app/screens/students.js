@@ -501,7 +501,7 @@ function studentFormHtml(sid){
     '</select>'+
     '<label for="st-cycle">מחזור</label>'+
     '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" class="st-form-input">'+
-    // משטח שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
+    // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
     (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">📜 היסטוריית סטטוסים</button>' : '');
@@ -518,7 +518,7 @@ async function openStatusHistory(sid) {
   if (!Array.isArray(rows)) failed = true;
   var box = document.getElementById('modal-body');
   var ttl = document.getElementById('modal-title');
-  // נבדק גם שהכותרת עדיין שלנו — מודאל אחר שנפתח בזמן ההמתנה משתמש באותו מיכל
+  // נבדק גם שהכותרת עדיין שלנו — חלון דו-שיח אחר שנפתח בזמן ההמתנה משתמש באותו מיכל
   if (!box || !ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
   // כשל קריאה מוצג כ«אין ראיה» — רשימה ריקה נקראת «מעולם לא היה סטטוס»
   if (failed) {
@@ -601,7 +601,7 @@ function saveStudent(){
   if(errEl) errEl.textContent='';
   if(!name){
     if(errEl) errEl.textContent=MSG_NEED_STUDENT_NAME;
-    else console.error('[students] משטח השגיאה st-err חסר בטופס');
+    else console.error('[students] אזור השגיאה st-err חסר בטופס');
     return;
   }
   var students=getStudents();

@@ -338,7 +338,7 @@ function hrMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
   if(S._hrPendingRec && idEq(S._hrCurrentSessionId,S._hrPendingRec.client_id)){
     if(!S._hrData) S._hrData=[];
-    // הבדיקה חוזרת בנקודת היצירה בפועל — הפולינג יכול להביא סדר מתחרה מאז הפתיחה
+    // הבדיקה חוזרת בנקודת היצירה בפועל — הבדיקה המחזורית יכולה להביא סדר מתחרה מאז הפתיחה
     var _hrDup=atFindLiveSession(S._hrData,S._hrPendingRec.session,
                                  S._hrPendingRec.session_date,S._hrPendingRec.client_id);
     if(_hrDup){
@@ -379,7 +379,7 @@ function hrShowOverrideDialog(sid, student) {
     '<button data-act="sl-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>');
 }
 
-// הקורא הוא sl-status-cancel — בלי הפונקציה הכפתור זורק, והמודאל נסגר כאילו הצליח
+// הקורא הוא sl-status-cancel — בלי הפונקציה הכפתור זורק, וחלון הדו-שיח נסגר כאילו הצליח
 function hrCancelStudentStatusFromReg(sid) {
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});

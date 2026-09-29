@@ -684,7 +684,7 @@ document.addEventListener('click', function (ev) {
   actRun(el, fn);
 });
 
-// שמירה בשדה עריכה קודמת לסגירת המודאל — אחרת Escape בשדה שבתוך מודאל היה סוגר אותו במקום לבטל את השדה.
+// שמירה בשדה עריכה קודמת לסגירת חלון הדו-שיח — אחרת Escape בשדה שבתוך חלון דו-שיח היה סוגר אותו במקום לבטל את השדה.
 document.addEventListener('keydown', function (e) {
   if (comboKey(e) || ksKey(e)) return;
   modalEsc(e);
@@ -725,7 +725,7 @@ function loadR(){
   if (el) el.innerHTML = '<div class="empty">הדוח בבנייה — טרם אופיין</div>';
 }
 
-// אין להחזיר כאן setInterval — הפולינג מופעל רק ב-plBoot() מ-loadDash(): פולינג לפני הכניסה מושך נתון ש-hrApplyPerms זורקת.
+// אין להחזיר כאן setInterval — הבדיקה המחזורית מופעלת רק ב-plBoot() מ-loadDash(): בדיקה מחזורית לפני הכניסה מושכת נתון ש-hrApplyPerms זורקת.
 
 setTimeout(async function() {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.

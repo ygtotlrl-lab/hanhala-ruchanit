@@ -125,7 +125,7 @@ async function loadAttend() {
   var _todayIsoR=dayToday();
   var _openRec=(S._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.session_date===_todayIsoR;});
   try {
-    // ההצעה אינה דורסת מודאל פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
+    // ההצעה אינה דורסת חלון דו-שיח פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
     if(_openRec && !modalOpen()) {
       openModal(MSG_SESSION_OPEN_TODAY,
         '<p class="md-note-center">'+esc(_openRec.session)+' נפתח היום ולא נסגר.<br>להמשיך את הרישום?</p>',
@@ -330,7 +330,7 @@ function atMarkDirty() {
   // סימון ראשון בפועל — רק כאן נוצרת רשומת הסדר, כדי שלא יישארו רישומי רפאים
   if(S._atPendingRec && idEq(S._atCurrentSessionId,S._atPendingRec.client_id)){
     if(!S._atData) S._atData=[];
-    // הבדיקה חוזרת כאן — זו נקודת היצירה, והפולינג יכול היה להביא סדר מתחרה מאז הפתיחה
+    // הבדיקה חוזרת כאן — זו נקודת היצירה, והבדיקה המחזורית יכלה להביא סדר מתחרה מאז הפתיחה
     var _atDup=atFindLiveSession(S._atData,S._atPendingRec.session,
                                  S._atPendingRec.session_date,S._atPendingRec.client_id);
     if(_atDup){

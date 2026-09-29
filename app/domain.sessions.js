@@ -37,7 +37,7 @@ function _hrPullStaleMark(el, bad) {
   el.classList.toggle('on', !!bad);
 }
 
-// שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הפולינג יכול להביא סדר מתחרה אחרי הפתיחה.
+// שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הבדיקה המחזורית יכולה להביא סדר מתחרה אחרי הפתיחה.
 // אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד; הבדיקה משרתת גם את השינה.
 function atFindLiveSession(data, sessName, dateIso, exceptId) {
   if (!Array.isArray(data)) return null;

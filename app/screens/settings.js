@@ -345,7 +345,7 @@ async function saveUser() {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   closeModal();
   // שתי קריאות ולא אחת — סיווג ההודעה שונה בין שני המסלולים.
@@ -365,7 +365,7 @@ async function toggleUserActive(id, current) {
     toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
   }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין.
   usersRefresh();
@@ -467,7 +467,7 @@ async function changeMyPassword() {
   try { upd = await writeUser(_u.client_id, updObj); }
   catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
   if (upd && upd.error) { toast(MSG_PASS_UPDATE_FAIL + (upd.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
-  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הפולינג השינוי אינו נראה במכשירים אחרים.
+  // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // בלי זה הטביעה במטמון נשארת של הסיסמה הישנה, והכניסה האופליין מקבלת את הישנה ודוחה את החדשה.
   try {
@@ -475,7 +475,7 @@ async function changeMyPassword() {
                    role: _u.role, active: true,
                    pass_salt: made.pass_salt, pass_fp: made.pass_fp });
   } catch (e3) {}
-  // אין ניקוי שדות — closeModal מרוקן את גוף המודאל.
+  // אין ניקוי שדות — closeModal מרוקן את גוף חלון הדו-שיח.
   closeModal();
   if (made.pass_fp) toast(MSG_PASS_UPDATED_X, null, 'good');
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');

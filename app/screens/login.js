@@ -120,7 +120,7 @@ async function _doLoginInner() {
     // Array.isArray ולא length — ערך JSON שאינו מערך עובר את length, ו-find זורק בשקט והספינר נתקע.
     if (!Array.isArray(cache) || !cache.length) {
       authLog(false, 'no_cache_offline', username);
-      // שגיאת שרת בטוסט, והיעדר מטמון על משטח המשתמש — שני סיווגים, שתי קריאות.
+      // שגיאת שרת בטוסט, והיעדר מטמון בערוץ המשתמש — שני סיווגים, שתי קריאות.
       if (serverErr) toast(MSG_LOGIN_ERR + (serverErr.message || serverErr.code || MSG_SERVER_ERR), null, 'bad');
       else showErr(MSG_OFF_FIRST_LOGIN);
       return;
