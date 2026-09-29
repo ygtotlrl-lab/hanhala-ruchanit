@@ -67,7 +67,7 @@ $function$;
 revoke all on function public.bk_fn_def(text) from public, anon, authenticated, service_role;
 grant execute on function public.bk_fn_def(text) to anon, authenticated, service_role;
 
--- מפתח שאינו ברשימה אינו מתפנה לעולם
+-- מפתח שאינו ברשימה אינו מתפנה לעולם · והרשימה אחת לשני הפרויקטים — הבלוק זהה בית-לבית, ומפתח של הפרויקט השני אינו קיים כאן
 -- כל מקור נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח, ומקור בלי עמודת חותמת בעוגן בלבד
 CREATE OR REPLACE FUNCTION public.bk_retention_keys()
  RETURNS text[]
@@ -88,7 +88,20 @@ AS $function$
     'ANCHOR:rishon_ya_entries_rows', 'DIFF:rishon_ya_entries_rows',
     'ANCHOR:rishon_ya_settings', 'DIFF:rishon_ya_settings',
     'ANCHOR:ramataviv_ya_entries_rows', 'DIFF:ramataviv_ya_entries_rows',
-    'ANCHOR:ramataviv_ya_settings', 'DIFF:ramataviv_ya_settings'
+    'ANCHOR:ramataviv_ya_settings', 'DIFF:ramataviv_ya_settings',
+    'ANCHOR:g_donors', 'DIFF:g_donors',
+    'ANCHOR:g_pledges', 'DIFF:g_pledges',
+    'ANCHOR:g_txns', 'DIFF:g_txns',
+    'ANCHOR:g_tasks', 'DIFF:g_tasks',
+    'ANCHOR:g_targets', 'DIFF:g_targets',
+    'ANCHOR:g_settings',
+    'ANCHOR:g_users', 'DIFF:g_users',
+    'ANCHOR:k_settings',
+    'ANCHOR:k_pledges', 'DIFF:k_pledges',
+    'ANCHOR:k_standing_orders', 'DIFF:k_standing_orders',
+    'ANCHOR:k_so_instances', 'DIFF:k_so_instances',
+    'ANCHOR:k_entries', 'DIFF:k_entries',
+    'ANCHOR:k_lookups', 'DIFF:k_lookups'
   ]::text[];
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
