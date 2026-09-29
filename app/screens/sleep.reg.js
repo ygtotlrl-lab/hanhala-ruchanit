@@ -3,6 +3,7 @@ import { dayNoon, readNum } from '../../core/util.js';
 import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../../core/sync.js';
 import { sessUserId } from '../../core/auth.js';
 import { esc, openModal, toast } from '../../core/ui.js';
+import { HEB_DOW } from '../../core/hebrew.js';
 import { MSG_BUSY_CHECK, MSG_CLOSE_REPORT_FIRST, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
          MSG_PICK_DATE_FIRST, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SLEEP_OPEN,
          MSG_STATUS_REVERTED, PK_SL_SESS } from '../constants.js';
@@ -80,9 +81,8 @@ function _hrPaintReg() {
     var logDate=dayNoon(logIso);
     var todH=_hcH(logDate);
     dw.innerHTML=_hcBuild('sl_date',todH);
-    var _HR_DOW_I=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
     var lbEl=document.getElementById('sl_date_lbl');
-    if(lbEl) lbEl.textContent='יום '+_HR_DOW_I[logDate.getDay()]+' '+_hcFmt(todH.hy,todH.mi,todH.day);
+    if(lbEl) lbEl.textContent='יום '+HEB_DOW[logDate.getDay()]+' '+_hcFmt(todH.hy,todH.mi,todH.day);
   }
 
   var adw=document.getElementById('sl-arc-date-wrap');
@@ -360,12 +360,11 @@ function hrShowOverrideDialog(sid, student) {
   if(!a) return;
   var TL={approved:'אישור',suspended:'השעיה',left:'לא שב'};
   var TI={approved:'✅',suspended:'⚠️',left:'🚪'};
-  var _dow=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   var fmtDt=function(v){
     if(!v)return '—';
     var d=new Date(v),hd=_hcH(d);
     var hh=d.getHours(),mm=d.getMinutes();
-    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
+    return 'יום '+HEB_DOW[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+(hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
   };
   var typeLbl=TL[a.type]||a.type;
   var typeIcon=TI[a.type]||'📋';

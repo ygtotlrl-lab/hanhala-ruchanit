@@ -3,17 +3,16 @@ import { dayIso, dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc, openModal } from '../../core/ui.js';
+import { HEB_DOW, hebToGreg } from '../../core/hebrew.js';
 import { MSG_ABSENCE_ALERT, PK_AT_SESS } from '../constants.js';
 import { S } from '../state.js';
 import { atvCls, getStudents, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
          hrMarks, hrRecTs, hrSessionsPull, hrSetPending, hrTreatsMerge,
          hrWriteFail } from '../domain.js';
-import { _hcG, _hcH, _hcMN } from '../domain.hebdate.js';
+import { _hcH, _hcMN } from '../domain.hebdate.js';
 import { hrCachedArr, hrSortDayRecs, hrSortSessionDefs } from '../domain.sessions.js';
 
-var AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-
-function atDow(isoDate){return AT_DOW[dayNoon(isoDate).getDay()];}
+function atDow(isoDate){return HEB_DOW[dayNoon(isoDate).getDay()];}
 
 function atSummaryHTML(cnts){
   var parts=[];
@@ -161,7 +160,9 @@ function atCheckAlert() {
   var todH=_hcH(new Date());
   var curHY=todH.hy, curMI=todH.mi;
   // תחילת החודש כמחרוזת ISO — השוואת ימים על המחרוזת, בלי Date ובלי שעה.
-  var monthBeg=dayIso(_hcG(curHY,curMI,1));
+  var _mG=hebToGreg(curHY,curMI,1);
+  if(!_mG) return;
+  var monthBeg=dayIso(_mG);
   console.log('[attend] atCheckAlert — חודש עברי:', _hcMN(curHY)[curMI], curHY,
     '| תחילת חודש גרגוריאנית:', monthBeg,
     '| רשומות סה"כ:', data.length);

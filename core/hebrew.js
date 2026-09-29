@@ -1,16 +1,16 @@
 // core/hebrew.js — מנוע התאריך העברי
 
-import { dayNoon } from './util.js';
+import { dayAdd, dayDiff, dayIso, dayNoon } from './util.js';
 
 // ── מנוע התאריך העברי ──
 // הטבלה האריתמטית אינה נמחקת — היא רשת הביטחון כש-Intl חסר או שוגה, ואומתה מול הלוח הקבוע עד תת"י.
 var DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
-var MONTHS_HEB     =["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
-var MONTHS_HEB_LEAP=["תשרי","חשון","כסלו","טבת","שבט","אדר א׳","אדר ב׳","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
+var HEB_MONTHS     =["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
+var HEB_MONTHS_LEAP=["תשרי","חשון","כסלו","טבת","שבט","אדר א׳","אדר ב׳","ניסן","אייר","סיון","תמוז","מנחם אב","אלול"];
 var HEB_DOW=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 
 function hebIsLeap(hy){return ((7*(+hy)+1)%19)<7;}
-function hebMonthNames(hy){return hebIsLeap(hy)?MONTHS_HEB_LEAP:MONTHS_HEB;}
+function hebMonthNames(hy){return hebIsLeap(hy)?HEB_MONTHS_LEAP:HEB_MONTHS;}
 
 // sep — התו שלפני האות האחרונה
 function hebGematria(n,sep){
@@ -108,42 +108,79 @@ function _hebNone(src){
 // נפילה-חזרה בלבד כש-Intl חסר או מחזיר תוצאה לא צפויה — אין למחוק: זו רשת הביטחון.
 // אומתה מול הלוח הקבוע, כולל סגירת כל שנה בא׳ תשרי של הבאה ואורך חוקי; הטווח עד תת"י (2049).
 var _hcST=[
-  {hy:5785,lb:'תשפ"ה',jd:new Date(2024,9, 3),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5786,lb:'תשפ"ו',jd:new Date(2025,8,23),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5787,lb:'תשפ"ז',jd:new Date(2026,8,12),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5788,lb:'תשפ"ח',jd:new Date(2027,9, 2),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5789,lb:'תשפ"ט',jd:new Date(2028,8,21),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5790,lb:'תש"צ',jd:new Date(2029,8,10),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5791,lb:'תשצ"א',jd:new Date(2030,8,28),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5792,lb:'תשצ"ב',jd:new Date(2031,8,18),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5793,lb:'תשצ"ג',jd:new Date(2032,8, 6),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5794,lb:'תשצ"ד',jd:new Date(2033,8,24),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5795,lb:'תשצ"ה',jd:new Date(2034,8,14),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5796,lb:'תשצ"ו',jd:new Date(2035,9, 4),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5797,lb:'תשצ"ז',jd:new Date(2036,8,22),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5798,lb:'תשצ"ח',jd:new Date(2037,8,10),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5799,lb:'תשצ"ט',jd:new Date(2038,8,30),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5800,lb:'ת"ת',jd:new Date(2039,8,19),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5801,lb:'תת"א',jd:new Date(2040,8, 8),ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5802,lb:'תת"ב',jd:new Date(2041,8,26),ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5803,lb:'תת"ג',jd:new Date(2042,8,15),ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5804,lb:'תת"ד',jd:new Date(2043,9, 5),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5805,lb:'תת"ה',jd:new Date(2044,8,22),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5806,lb:'תת"ו',jd:new Date(2045,8,12),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5807,lb:'תת"ז',jd:new Date(2046,9, 1),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5808,lb:'תת"ח',jd:new Date(2047,8,21),ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
-  {hy:5809,lb:'תת"ט',jd:new Date(2048,8, 8),ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
-  {hy:5810,lb:'תת"י',jd:new Date(2049,8,27),ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false}];
+  {hy:5785,lb:'תשפ"ה',jd:'2024-10-03',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5786,lb:'תשפ"ו',jd:'2025-09-23',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5787,lb:'תשפ"ז',jd:'2026-09-12',ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5788,lb:'תשפ"ח',jd:'2027-10-02',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5789,lb:'תשפ"ט',jd:'2028-09-21',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5790,lb:'תש"צ',jd:'2029-09-10',ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5791,lb:'תשצ"א',jd:'2030-09-28',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5792,lb:'תשצ"ב',jd:'2031-09-18',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5793,lb:'תשצ"ג',jd:'2032-09-06',ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5794,lb:'תשצ"ד',jd:'2033-09-24',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5795,lb:'תשצ"ה',jd:'2034-09-14',ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5796,lb:'תשצ"ו',jd:'2035-10-04',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5797,lb:'תשצ"ז',jd:'2036-09-22',ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5798,lb:'תשצ"ח',jd:'2037-09-10',ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5799,lb:'תשצ"ט',jd:'2038-09-30',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5800,lb:'ת"ת',jd:'2039-09-19',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5801,lb:'תת"א',jd:'2040-09-08',ml:[30,29,29,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5802,lb:'תת"ב',jd:'2041-09-26',ml:[30,29,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5803,lb:'תת"ג',jd:'2042-09-15',ml:[30,30,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5804,lb:'תת"ד',jd:'2043-10-05',ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5805,lb:'תת"ה',jd:'2044-09-22',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5806,lb:'תת"ו',jd:'2045-09-12',ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5807,lb:'תת"ז',jd:'2046-10-01',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5808,lb:'תת"ח',jd:'2047-09-21',ml:[30,29,29,29,30,29,30,29,30,29,30,29]   ,leap:false},
+  {hy:5809,lb:'תת"ט',jd:'2048-09-08',ml:[30,29,30,29,30,30,29,30,29,30,29,30,29],leap:true },
+  {hy:5810,lb:'תת"י',jd:'2049-09-27',ml:[30,30,30,29,30,29,30,29,30,29,30,29]   ,leap:false}];
+// א׳ תשרי בצורת ISO, והמרחק ממנו בחשבון לוח — יום אינו תמיד 24 שעות.
 function _hcHTable(d){
-  var td=new Date(d.getFullYear(),d.getMonth(),d.getDate()),b=_hcST[0];
-  for(var i=_hcST.length-1;i>=0;i--){if(td>=_hcST[i].jd){b=_hcST[i];break;}}
-  var df=Math.round((td-b.jd)/86400000),c=0;
+  var iso=dayIso(d),b=_hcST[0];
+  for(var i=_hcST.length-1;i>=0;i--){if(iso>=_hcST[i].jd){b=_hcST[i];break;}}
+  var df=dayDiff(b.jd,iso),c=0;
   for(var mi=0;mi<b.ml.length;mi++){if(df<c+b.ml[mi])return{hy:b.hy,mi:mi,day:df-c+1};c+=b.ml[mi];}
   return{hy:b.hy,mi:0,day:1};}
+
+// ── עברי ⟵ לועזי ──
+// נתוני השנה — א׳ תשרי (ISO) ואורכי החודשים: מ-Intl, ובנפילה-חזרה מהטבלה; null — שנה שאין עליה ראיה.
 // קוראים חיצוניים עוברים כאן ולא ב-_hcST ישירות — הוא מצב פנימי, ותלות בו נשברת ביום שהמבנה משתנה.
-function hebYearBase(hy){
-  for(var i=0;i<_hcST.length;i++){if(_hcST[i].hy===+hy)return _hcST[i];}
-  return null;}
+var _hebYears={};
+function _hebYearIntl(hy){
+  try{
+    var leap=hebIsLeap(hy),nM=leap?13:12,sep=(hy-3761)+'-09-01',start='',k,r;
+    // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
+    for(k=0;k<45;k++){
+      r=hebIntl(dayNoon(dayAdd(sep,k)));
+      if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=dayAdd(sep,k);break;}
+    }
+    if(!start) return null;
+    var ml=[],cur=start,total=0;
+    for(var m=0;m<nM;m++){
+      var pr=hebIntl(dayNoon(dayAdd(cur,29)));
+      if(!pr) return null;
+      var len=(pr.day===1)?29:30;
+      ml.push(len);total+=len;cur=dayAdd(cur,len);
+    }
+    return (total>=353&&total<=385)?{hy:hy,jd:start,ml:ml,leap:leap}:null;
+  }catch(e){return null;}
+}
+function hebYearInfo(hy){
+  hy=+hy;
+  if(_hebYears[hy]!==undefined) return _hebYears[hy];
+  var info=_hebYearIntl(hy);
+  for(var i=0;!info&&i<_hcST.length;i++){
+    if(_hcST[i].hy===hy) info={hy:hy,jd:_hcST[i].jd,ml:_hcST[i].ml.slice(),leap:_hcST[i].leap};
+  }
+  _hebYears[hy]=info||null;
+  return _hebYears[hy];
+}
+// היום הלועזי של תאריך עברי, בעוגן הצהריים — mi מתשרי, כמו monthIndex של hebDate; null — אין ראיה, ולא «היום».
+function hebToGreg(hy,mi,day){
+  var b=hebYearInfo(hy);
+  if(!b||!(mi>=0&&mi<b.ml.length)) return null;
+  var c=(+day||1)-1;for(var m=0;m<mi;m++)c+=b.ml[m];
+  return dayNoon(dayAdd(b.jd,c));}
 // ── הפונקציה המרכזית ──
 // מטמון הגזירה ממופתח ביום המקומי (הגזירה מעוגנת בצהריים), מתרוקן בתקרה, והתשובה מוחזרת כעותק רדוד —
 // קורא שכותב לשדה היה מרעיל את המטמון לכל השאר.
@@ -182,5 +219,5 @@ function hebrewDate(jsDate){
 }
 
 // ייצוא בשם ולא default — שם שנעלם נשבר בטעינה, ו-default היה נבלע בשקט.
-export { HEB_DOW, hebDate, hebDayLabel, hebGematria, hebIntl, hebIsLeap, hebMonthNames,
-         hebYearBase, hebYearLabelFull, hebrewDate };
+export { HEB_DOW, HEB_MONTHS, HEB_MONTHS_LEAP, hebDate, hebDayLabel, hebGematria, hebIsLeap,
+         hebMonthNames, hebToGreg, hebYearInfo, hebYearLabelFull, hebrewDate };

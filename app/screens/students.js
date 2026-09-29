@@ -3,7 +3,7 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
-import { hebDate, hebGematria, hebMonthNames,
+import { HEB_DOW, hebDate, hebGematria, hebMonthNames,
          hebYearLabelFull } from '../../core/hebrew.js';
 import { MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE,
          MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE,
@@ -422,14 +422,13 @@ function openCurrentStatusModal() {
   if (!s) return;
   var TL = {approved:'אישור', suspended:'השעיה', left:'לא שב'};
   var TI = {approved:'✅', suspended:'⚠️', left:'🚪'};
-  var _dow = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   var fmtDt = function(v){
     if(!v) return '—';
     var d = new Date(v);
     var hd = _hcH(d);
     var hh = d.getHours(), mm = d.getMinutes();
     var timeStr = (hh<10?'0':'')+hh+':'+(mm<10?'0':'')+mm;
-    return 'יום '+_dow[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
+    return 'יום '+HEB_DOW[d.getDay()]+' '+_hcFmt(hd.hy,hd.mi,hd.day)+' '+timeStr;
   };
   var activeAbsences = getAllRelevantAbsences(s);
   var _now = new Date();

@@ -3,6 +3,7 @@ import { dayNoon, dayToday } from '../../core/util.js';
 import { ctxEpoch, ctxStale, pendTag } from '../../core/sync.js';
 import { lsGet, lsSetArray } from '../../core/storage.js';
 import { esc } from '../../core/ui.js';
+import { HEB_DOW } from '../../core/hebrew.js';
 import { PK_SL_SESS } from '../constants.js';
 import { S } from '../state.js';
 import { _hrCleanCfg, atvCls, hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet,
@@ -12,9 +13,7 @@ import { _hcH } from '../domain.hebdate.js';
 import { hrCachedArr, hrGetLogicalDate, hrSortDayRecs,
          hrSortSessionDefs } from '../domain.sessions.js';
 
-var HR_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
-
-function hrDow(isoDate){return HR_DOW[dayNoon(isoDate).getDay()];}
+function hrDow(isoDate){return HEB_DOW[dayNoon(isoDate).getDay()];}
 
 function hrSummaryHTML(cnts){
   var parts=[];

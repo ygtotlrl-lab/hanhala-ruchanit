@@ -38,8 +38,6 @@ const S = {
   _hrSwitchId: undefined,
   _hcVw: {},
   _statusSid: undefined,
-  // נתוני שנה מלוח הדפדפן: {hy, lb, jd (א׳ תשרי), ml[], leap}
-  _hrYearCache: {},
   _hrView: 'reg',
   _hrSupRecords: undefined,
   _hrSaveTimer: null,

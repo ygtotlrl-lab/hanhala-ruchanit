@@ -11,7 +11,7 @@ import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
 import { actRun, closeAsk, closeModal, comboInput, comboKey, comboOutside,
          comboPick, esc, ksKey, modalBackdrop, modalEsc, openModal, swApply, swHideUpdate,
          toast } from '../core/ui.js';
-import { hebDayLabel } from '../core/hebrew.js';
+import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
 import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
@@ -22,7 +22,7 @@ import { _hrMarkParent, _hrMarkSynced, _hrItemId, _hrRowId,
          hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          hrRecTs, uiShown } from './domain.js';
-import { _hcBase, _hcFmt, _hcG, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
+import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { atRenderTodaySessions } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
 import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
@@ -394,21 +394,21 @@ function saveRefresh() {
 
 function _hcNav(pfx,dir){
   var v=S._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
-  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
+  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=hebYearInfo(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!hebYearInfo(hy))return;mi=0;}
   S._hcVw[pfx]={hy:hy,mi:mi};_hcDraw(pfx);}
 
 function _hcDraw(pfx){
-  var v=S._hcVw[pfx],b=_hcBase(v.hy);if(!b)return;
+  var v=S._hcVw[pfx],b=hebYearInfo(v.hy);if(!b)return;
   var pop=document.getElementById(pfx+'_pop');if(!pop)return;
-  var mlen=b.ml[v.mi],fdow=_hcG(v.hy,v.mi,1).getDay();
+  var mlen=b.ml[v.mi],fdow=hebToGreg(v.hy,v.mi,1).getDay();
   var selIso=(document.getElementById(pfx+'_iso')||{}).value;
   var selH=selIso?_hcH(dayNoon(selIso)):null;
   var todH=_hcH(new Date());
   var bs='hc-nav';
   var maxMi=(b.ml.length-1);
-  var hasPrev=v.mi>0||!!_hcBase(v.hy-1),hasNext=v.mi<maxMi||!!_hcBase(v.hy+1);
+  var hasPrev=v.mi>0||!!hebYearInfo(v.hy-1),hasNext=v.mi<maxMi||!!hebYearInfo(v.hy+1);
   // בגריד RTL התא הימני הוא יום ראשון, ולכן מספר התאים הריקים הוא fdow.
   var rtlOffset=fdow;
   var h='<div class="hc-cal">';
@@ -449,13 +449,13 @@ function _hcOpen(pfx){
   pop.classList.remove('hidden');}
 
 function _hcPick(pfx,hy,mi,day){
-  var g=_hcG(hy,mi,day);
+  var g=hebToGreg(hy,mi,day);if(!g)return;
   var iso=dayIso(g);
   var el=document.getElementById(pfx+'_iso');if(el)el.value=iso;
   var lb=document.getElementById(pfx+'_lbl');
   if(lb){
     var lbTxt=_hcFmt(hy,mi,day);
-    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){var _AT_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];lbTxt='יום '+_AT_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
+    if(pfx==='at_date'||pfx==='sfmF'||pfx==='sfmT'){lbTxt='יום '+HEB_DOW[dayNoon(iso).getDay()]+' '+lbTxt;}
     lb.textContent=lbTxt;
   }
   var pop=document.getElementById(pfx+'_pop');if(pop)pop.classList.add('hidden');

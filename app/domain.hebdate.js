@@ -1,65 +1,26 @@
 // app/domain.hebdate.js — התאריך העברי: חלונות החודש והשנה, התוויות ובורר התאריך
-import { dayAdd, dayIso, dayNoon } from '../core/util.js';
+import { dayIso, dayNoon } from '../core/util.js';
 import { esc } from '../core/ui.js';
-import { hebDate, hebDayLabel, hebIntl, hebIsLeap, hebMonthNames, hebYearBase,
+import { HEB_DOW, hebDate, hebDayLabel, hebMonthNames, hebToGreg, hebYearInfo,
          hebYearLabelFull } from '../core/hebrew.js';
-import { S } from './state.js';
 
 function _hcMN(hy){return hebMonthNames(hy);}
 
-function hrHebYearInfo(hy){
-  hy=+hy;
-  if(S._hrYearCache[hy]!==undefined) return S._hrYearCache[hy];
-  var info=null;
-  try{
-    var leap=hebIsLeap(hy),nM=leap?13:12,start=null,k,d,r;
-    // א׳ תשרי חל תמיד בין 5.9 ל-5.10 בשנה הגרגוריאנית hy-3761
-    for(k=0;k<45;k++){
-      d=dayNoon(hy-3761,8,1+k);
-      r=hebIntl(d);
-      if(r&&r.hy===hy&&r.mi===0&&r.day===1){start=d;break;}
-    }
-    if(start){
-      var ml=[],cur=start,total=0,ok=true;
-      for(var m=0;m<nM;m++){
-        var pr=hebIntl(dayNoon(dayAdd(dayIso(cur),29)));
-        if(!pr){ok=false;break;}
-        var len=(pr.day===1)?29:30;
-        ml.push(len);total+=len;
-        cur=dayNoon(dayAdd(dayIso(cur),len));
-      }
-      if(ok&&ml.length===nM&&total>=353&&total<=385)
-        info={hy:hy,jd:new Date(start.getFullYear(),start.getMonth(),start.getDate()),ml:ml,leap:leap};
-    }
-  }catch(e){info=null;}
-  S._hrYearCache[hy]=info;
-  return info;
-}
-
-// הטבלה נקראת דרך hebYearBase ולא ישירות — _hcST הוא מצב פנימי של המודול, וקריאה ישירה בו נשברת בלי לזרוק.
-function _hcBase(hy){return hrHebYearInfo(hy)||hebYearBase(hy);}
-
-// חשבון לוח ולא מילישניות — הוספת כפולות של 24 שעות נופלת ליום הקודם במעבר לשעון חורף.
-function _hcG(hy,mi,day){
-  var b=_hcBase(hy);if(!b)return new Date();
-  var c=0;for(var m=0;m<mi;m++)c+=b.ml[m];c+=day-1;
-  return dayNoon(dayAdd(dayIso(b.jd),c));}
-
-// חודש עברי הוא טווח גרגוריאני רציף — gte/lte על session_date מכסים אותו בדיוק. המנוע הוא _hcG ולא חשבון ידני.
+// חודש עברי הוא טווח גרגוריאני רציף — gte/lte על session_date מכסים אותו בדיוק. המנוע הוא hebToGreg ולא חשבון ידני.
 function hrHebMonthWin(hy, mi) {
-  var b = _hcBase(hy);
+  var b = hebYearInfo(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var i = Math.max(0, Math.min(mi, b.ml.length - 1));
-  return { col: 'session_date', from: dayIso(_hcG(hy, i, 1)),
-           to: dayIso(_hcG(hy, i, b.ml[i])) };
+  return { col: 'session_date', from: dayIso(hebToGreg(hy, i, 1)),
+           to: dayIso(hebToGreg(hy, i, b.ml[i])) };
 }
 
 function hrHebYearWin(hy) {
-  var b = _hcBase(hy);
+  var b = hebYearInfo(hy);
   if (!b || !b.ml || !b.ml.length) return null;
   var last = b.ml.length - 1;
-  return { col: 'session_date', from: dayIso(_hcG(hy, 0, 1)),
-           to: dayIso(_hcG(hy, last, b.ml[last])) };
+  return { col: 'session_date', from: dayIso(hebToGreg(hy, 0, 1)),
+           to: dayIso(hebToGreg(hy, last, b.ml[last])) };
 }
 
 function _hcH(d){
@@ -82,10 +43,10 @@ function _hcBuild(pfx,initH,tv){
   var label;
   if(initH){
     label=_hcFmt(initH.hy,initH.mi,initH.day);
-    if(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'){var _BD_DOW=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];var _bdG=_hcG(initH.hy,initH.mi,initH.day);label='יום '+_BD_DOW[_bdG.getDay()]+' '+label;}
+    var g=hebToGreg(initH.hy,initH.mi,initH.day);
+    if(g&&(pfx==='sfmF'||pfx==='sfmT'||pfx==='at_date'))label='יום '+HEB_DOW[g.getDay()]+' '+label;
   }else{label='בחר תאריך עברי';}
-  var iso='';
-  if(initH){var g=_hcG(initH.hy,initH.mi,initH.day);iso=dayIso(g);}
+  var iso=g?dayIso(g):'';
   var trg='hc-trigger';
   return '<div class="hc-wrap">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" data-pop-trg="'+esc(pfx)+'" class="'+trg+'">'+
@@ -103,5 +64,5 @@ function hrDayHebFmt(iso){if(!iso)return '';var h=hrDayHeb(iso);return _hcFmt(h.
 function hrSessHeb(rec){return hrDayHeb(rec.session_date);}
 function hrSessHebFmt(rec){return hrDayHebFmt(rec&&rec.session_date);}
 
-export { _hcBase, _hcBuild, _hcFmt, _hcG, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt,
+export { _hcBuild, _hcFmt, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt,
          hrHebMonthWin, hrHebYearWin, hrSessHeb, hrSessHebFmt };

@@ -3,13 +3,14 @@ import { MSG_DELETE, dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, tombKill } from '../../core/sync.js';
 import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../../core/ui.js';
+import { hebYearInfo } from '../../core/hebrew.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from '../constants.js';
 import { S, shell } from '../state.js';
 import { atvCls, getStudents, hrDefaultCfg, hrMarks, hrSortStudents,
          hrSupervisionAccess } from '../domain.js';
-import { _hcBase, _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
+import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from '../domain.hebdate.js';
 import { hrCachedArr, hrLoadData, hrSaveData, hrSortAbsenceRows, hrSortSupRecords,
          hrSortTreats } from '../domain.sessions.js';
 import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, hrDow,
@@ -20,9 +21,9 @@ import { _hrPullCfg, _hrPullSessions, _hrPullTreats, _hrSupMonth, hrCachedCfg, h
 function hrSupNav(dir) {
   var hy=S._hrSupHY, mi=S._hrSupMI;
   mi+=dir;
-  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=_hcBase(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!_hcBase(hy))return;mi=0;}
+  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
+  if(mi<0){hy--;var pb=hebYearInfo(hy);if(!pb)return;mi=pb.ml.length-1;}
+  if(mi>curMax){hy++;if(!hebYearInfo(hy))return;mi=0;}
   S._hrSupHY=hy;S._hrSupMI=mi;
   hrRenderSupervision();
 }
@@ -53,9 +54,9 @@ function _hrSupPaint(el, rawData, rawTreats, warn) {
   var mNames=_hcMN(hy);
   var mLabel=mNames[mi]+' '+_hcYL(hy);
 
-  var curMax=(_hcBase(hy)||{ml:[]}).ml.length-1;
-  var hasPrev=mi>0||!!_hcBase(hy-1);
-  var hasNext=mi<curMax||!!_hcBase(hy+1);
+  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
+  var hasPrev=mi>0||!!hebYearInfo(hy-1);
+  var hasNext=mi<curMax||!!hebYearInfo(hy+1);
 
   var navStyle='sup-nav';
   var navHTML='<div class="sup-nav-bar">'+
