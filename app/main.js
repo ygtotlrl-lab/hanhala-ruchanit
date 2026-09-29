@@ -1,10 +1,11 @@
 // app/main.js — העלייה, הניווט, מפת הפעולות ובורר התאריך העברי
 import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
-         withTimeout } from '../core/util.js';
+         netTimeout } from '../core/util.js';
 import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
          plStampRead, pushedFor, rowsVerify, runSave, sbWatch } from '../core/sync.js';
 
-import { coreBoot, logAwait } from '../core/backup.js';
+import { logAwait } from '../core/backup.js';
+import { bootRun } from '../core/boot-run.js';
 import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
@@ -258,7 +259,7 @@ var USER_CFG = {
   // ההודעה נקראת בזמן הקריאה ולא בהשמה — הקבוע מוצהר מאוחר יותר בקובץ, וקריאה בהשמה נותנת undefined.
   offMsg: function () { return MSG_OFF_USER_WRITE; },
   from: function () { return S.SB.from(authUsersTable()); },
-  run: function (q) { return withTimeout(q); },
+  run: function (q) { return netTimeout(q); },
   revalidated: function (row) {
     AUTH.user = row;
     AUTH.offlineLogin = false;
@@ -702,7 +703,7 @@ async function ensureFirstAdmin() {
 
 // הליבה עולה עם הדף ולא אחרי הכניסה, כמו בכל האפליקציות — הבדיקה המחזורית ממתינה לסשן (PL_CFG.active),
 // ומשיכה לפני הכניסה אינה מגיעה ל-hrApplyPerms.
-coreBoot();
+bootRun();
 
 ensureFirstAdmin();
 

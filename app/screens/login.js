@@ -1,7 +1,7 @@
 // app/screens/login.js — הכניסה, תפריט המשתמש והחלפת משתמש
 import { MSG_FILL_LOGIN, MSG_LOGIN_ERR, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP,
          MSG_OFF_UNKNOWN, MSG_SERVER_ERR, dayToday, isNetErr,
-         withTimeout } from '../../core/util.js';
+         netTimeout } from '../../core/util.js';
 import { ctxSwitch } from '../../core/sync.js';
 import { lsGet } from '../../core/storage.js';
 import { mirrorLoadOne } from '../../core/mirror.js';
@@ -73,7 +73,7 @@ async function _doLoginInner() {
   try {
     // השורה נשלפת לפי שם המשתמש בלבד וההכרעה מול הטביעה — סינון לפי סיסמה בשאילתה
     // הופך ערך שבענן למפתח שכל מחזיק מפתח ה-anon יכול לקרוא.
-    res = await withTimeout(S.SB.from(authUsersTable())
+    res = await netTimeout(S.SB.from(authUsersTable())
       .select(AUTH_USER_COLS.join(','))
       .eq('username', username)
       .eq('active', true)
@@ -233,7 +233,7 @@ async function toggleUserMenu() {
   othersEl.innerHTML = '<div class="user-menu-empty">טוען...</div>';
   // בלי timeout התפריט נשאר על «טוען...» לנצח ברשת חצי מחוברת.
   var res = null;
-  try { res = await withTimeout(S.SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
+  try { res = await netTimeout(S.SB.from('hr_users').select('client_id,full_name,role').eq('active',true).order('full_name')); } catch (e) {}
   var data = (res && !res.error) ? res.data : null;
   if (!Array.isArray(data)) { othersEl.innerHTML=''; return; }
   data = hrSortUsers(data);
@@ -279,7 +279,7 @@ async function confirmSwitch() {
   if(!pass){errEl.textContent=MSG_SWITCH_NEED_PASS;return;}
   var res=null, netFail=false;
   try {
-    res=await withTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single());
+    res=await netTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single());
   } catch(eSw){ netFail=true; }
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;

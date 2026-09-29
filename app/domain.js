@@ -1,6 +1,6 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { HE_COLLATOR, MSG_KV_BAD, dayIso, dayNoon, kvParse, uniqList,
-         withTimeout } from '../core/util.js';
+import { MSG_KV_BAD, dayIso, dayNoon, kvParse, uniqList,
+         netTimeout, sortCompare } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
@@ -365,7 +365,7 @@ function hrSetRows() {
 }
 
 function hrSetSend(rows) {
-  return withTimeout(S.SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
+  return netTimeout(S.SB.from(KV_TABLE).upsert(rows, { onConflict: 'key' }));
 }
 
 // המקור שמחזור הדחיפה קורא כשאין לו קלט מהכותב.
@@ -479,7 +479,7 @@ var HR_ROWS_CHUNK = 500;
 async function hrRowsUpsert(table, rows) {
   if (!rows || !rows.length) return true;
   for (var i = 0; i < rows.length; i += HR_ROWS_CHUNK) {
-    var res = await withTimeout(
+    var res = await netTimeout(
       S.SB.from(table).upsert(rows.slice(i, i + HR_ROWS_CHUNK), { onConflict: 'client_id' }));
     if (!res || res.error) return false;
   }
@@ -597,7 +597,7 @@ async function hrCloudGet(kvKey, win) {
 // timeout חובה — ברשת חצי מחוברת fetch אינו מצליח ואינו נכשל. maybeSingle ולא single — מפתח שטרם נכתב אינו שגיאה.
 // res מבחין בין «אין ערך» ל«הענן לא ענה» — שניהם null, ובלעדיו מפתח שטרם נכתב נקרא כרענון שנכשל.
 function hrCfgGet(key, res) {
-  return withTimeout(S.SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
+  return netTimeout(S.SB.from(KV_TABLE).select('value').eq('key', key).maybeSingle()).then(function(r){
     var pr = r && r.data ? kvParse(key, r.data.value) : { ok: true, value: null, bad: false };
     return res ? { ok: pr.ok && !(r && r.error), value: pr.value, error: pr.bad ? MSG_KV_BAD : null } : pr.value;
   }, function(e){
@@ -774,7 +774,7 @@ function hrSortStudents(list) {
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;
-    return HE_COLLATOR.compare((x && x.name) || '', (y && y.name) || '');
+    return sortCompare((x && x.name) || '', (y && y.name) || '');
   });
 }
 

@@ -1,9 +1,9 @@
 // app/screens/settings.js — ההגדרות, המשתמשים וההרשאות
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
-         MSG_SERVER_ERR, uniqHas, withTimeout } from '../../core/util.js';
+         MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
 import { lsSet } from '../../core/storage.js';
-import { ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, usersRefresh,
+import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, usersRefresh,
          usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
 import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
@@ -379,7 +379,7 @@ function renderPermsTable() {
       });
       selHTML += '</select>';
       // מנהל תמיד בעריכה בהגדרות
-      if (m.id === 'settings' && role === ROLE_ADMIN) {
+      if (m.id === 'settings' && role === AUTH_ROLE_ADMIN) {
         row += '<td><span class="um-edit">✏️ עריכה</span></td>';
       } else {
         row += '<td>'+selHTML+'</td>';
@@ -439,7 +439,7 @@ async function changeMyPassword() {
   if (newPass !== newPass2) { toast(MSG_PASS_MISMATCH_X, null, 'bad'); return; }
   // לא var {data} — הוא בולע את השגיאה, וכשל רשת היה מוצג כ«הסיסמה הנוכחית שגויה».
   var chk;
-  try { chk = await withTimeout(S.SB.from(authUsersTable()).select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
+  try { chk = await netTimeout(S.SB.from(authUsersTable()).select('client_id,active,pass_salt,pass_fp').eq('client_id', _u.client_id).maybeSingle()); }
   catch (e) { toast(MSG_PASS_NEEDS_NET, null, 'bad'); return; }
   if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
@@ -476,7 +476,7 @@ async function renderUsersList() {
   el.innerHTML = '<div class="ld">טוען...</div>';
   // לא var {data} = await — פירוק בולע את res.error, וכשל רשת היה מוצג כ«אין משתמשים».
   var res;
-  try { res = await withTimeout(S.SB.from('hr_users').select('*').order('full_name')); }
+  try { res = await netTimeout(S.SB.from('hr_users').select('*').order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;

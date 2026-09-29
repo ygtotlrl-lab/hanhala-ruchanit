@@ -81,7 +81,7 @@ async function refreshDashStats() {
   if(rateEl) rateEl.textContent = rateStr;
 }
 
-// הליבה עלתה עם הדף (coreBoot ב-app/main.js) — כאן רק המשיכה והציור של המסך.
+// הליבה עלתה עם הדף (bootRun ב-app/main.js) — כאן רק המשיכה והציור של המסך.
 async function loadDash(){
   await hrPullFromCloud();
   shell.renderStudents();
