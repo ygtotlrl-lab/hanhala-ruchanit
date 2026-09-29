@@ -165,7 +165,7 @@ select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retent
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
 select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 
--- גריעת המצבות — הגריעה היחידה במסד, בסף של TOMBSTONE_TTL_MS; רשימת הטבלאות נקראת מהמסד בכל ריצה ואינה מוקלדת
+-- גריעת המצבות — הגריעה היחידה במסד, בסף של TOMB_TTL_MS; רשימת הטבלאות נקראת מהמסד בכל ריצה ואינה מוקלדת
 CREATE OR REPLACE FUNCTION public.tomb_retention_sweep(p_days integer)
  RETURNS integer
  LANGUAGE plpgsql
