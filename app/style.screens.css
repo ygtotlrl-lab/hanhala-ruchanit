@@ -60,7 +60,7 @@
 /* מובייל-תחילה: ברירת המחדל היא הרשת הצרה, ורק ההרחבה נכתבת בשאילתה */
 .mods{grid-template-columns:repeat(2,1fr)}
 .stats{grid-template-columns:repeat(2,1fr)}
-.mods-wrap{padding:var(--sp-6)}
+.mods-wrap{padding:var(--sp-6);padding-bottom:calc(var(--tabbar-h) + var(--sp-6) + env(safe-area-inset-bottom,0px))}
 .hero{padding:var(--sp-6) var(--sp-6) var(--sp-7)}
 .hero-title{font-size:var(--fs-5)}
 .stats{grid-template-columns:repeat(2,1fr)}
@@ -337,9 +337,6 @@
 }
 @media (min-width:900px){
   :root{--toast-bottom:26px}
-}
-@media (min-width:900px){
-  body{padding-bottom:0}
 }
 @media (min-width:900px){
   .inner{padding:var(--sp-7) var(--sp-7)}
