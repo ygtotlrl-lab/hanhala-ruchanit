@@ -9,10 +9,10 @@ import { bootRun } from '../core/boot-run.js';
 import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
-import { actWire, closeAsk, closeModal, comboInput, comboPick, esc, openModal, swApply,
-         swHideUpdate, toast } from '../core/ui.js';
+import { actWire, closeAsk, closeModal, comboInput, comboPick, dragCancel, dragDown, dragMove,
+         dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
-import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
+import { HR_MIRROR_TABLES, HR_PERMS_KEY,
          HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
@@ -28,7 +28,7 @@ import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLogin
          switchUserEl, toggleUserMenu } from './screens/login.js';
 import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
-         saveUserOrder, screenSettingsHTML, showSettingsHome, showSettingsModule,
+         screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
@@ -81,7 +81,7 @@ var LS_CFG = {
   // מפתח שאינו במרשם נמחק בעלייה.
   keys: function () {
     return [LS_CFG.logKey, LS_CFG.dismissKey, DEV_CFG.key, PEND_CFG.key,
-            BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY, HR_ORDER_KEY]
+            BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY]
       .concat(eraKeys(), mirrorTables().map(mirrorKey),
               Object.keys(HR_SET_FLAT).map(function (k) { return HR_SET_FLAT[k]; }));
   }
@@ -427,8 +427,6 @@ var DOM_ACTIONS = {
   'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.remove(); },
   'pend-alert-ok':       function () { pendAlertDismiss(); },
   'lk-stay':             function () { lkReset(); },
-  'user-up':     function (el) { moveUser(el.getAttribute('data-id'), -1); },
-  'user-down':   function (el) { moveUser(el.getAttribute('data-id'), 1); },
   'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
   'combo-pick':  function (el) { return comboPick(el); },
@@ -549,6 +547,12 @@ Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStre
 
 actWire(DOM_ACTIONS);
 
+// הגרירה לסידור במנגנון שבליבה; המחיל לכל סוג — ליד renderUsersList.
+document.addEventListener('pointerdown', dragDown);
+document.addEventListener('pointermove', dragMove);
+document.addEventListener('pointerup', dragUp);
+document.addEventListener('pointercancel', dragCancel);
+
 
 document.addEventListener('input', function (e) {
   if (comboInput(e)) return;
@@ -565,19 +569,6 @@ document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
 });
-
-function moveUser(id, dir) {
-  var el = document.getElementById('users-list');
-  var rows = Array.from(el.querySelectorAll('.ur'));
-  var ids = rows.map(function(r){ return r.getAttribute('data-row-id'); });
-  var idx = ids.indexOf(String(id));
-  if (idx < 0) return;
-  var swapIdx = idx + dir;
-  if (swapIdx < 0 || swapIdx >= ids.length) return;
-  var tmp = ids[idx]; ids[idx] = ids[swapIdx]; ids[swapIdx] = tmp;
-  saveUserOrder(ids);
-  renderUsersList();
-}
 
 // ── דוחות חודשיים ──
 // המסך חסום ב-UNDER_CONSTRUCTION ו-loadR אינה מוצגת; עד לאפיון — לא לחבר כאן לוגיקת דוח.

@@ -209,8 +209,6 @@ var MSG_EDIT_STUDENT_TITLE = 'עריכת תלמיד';
 
 var MSG_NEED_STUDENT_NAME = 'נא להזין שם';
 
-var HR_ORDER_KEY = 'hr_user_order';
-
 // ── מדיניות האחסון המקומי ──
 var KV_TABLE = 'hr_settings';
 
@@ -263,7 +261,7 @@ var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_t
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
          MSG_BUSY_CHECK, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_CLOSE_REPORT_FIRST,

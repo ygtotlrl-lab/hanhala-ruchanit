@@ -303,6 +303,7 @@ create table if not exists public.hr_users (
   updated_at bigint not null,
   pass_salt text,
   pass_fp text,
+  sort integer,
   constraint hr_users_pkey PRIMARY KEY (client_id),
   constraint hr_users_username_key UNIQUE (username),
   constraint hr_users_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'junior'::text])))
