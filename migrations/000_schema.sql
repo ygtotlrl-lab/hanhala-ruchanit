@@ -95,7 +95,7 @@ AS $function$
     'ANCHOR:g_tasks', 'DIFF:g_tasks',
     'ANCHOR:g_targets', 'DIFF:g_targets',
     'ANCHOR:g_settings', 'DIFF:g_settings',
-    'ANCHOR:g_users', 'DIFF:g_users',
+    'ANCHOR:g_lookups', 'DIFF:g_lookups',
     'ANCHOR:k_settings', 'DIFF:k_settings',
     'ANCHOR:k_pledges', 'DIFF:k_pledges',
     'ANCHOR:k_standing_orders', 'DIFF:k_standing_orders',
