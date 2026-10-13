@@ -265,8 +265,8 @@ function hrCycleFor(cls) {
   return (y && add[cls] != null) ? y + add[cls] : 0;
 }
 
-// ערך שמור גובר — עקיפה ידנית, ומחזור שנרשם ביציאה.
-function hrCycleOf(s) { var v = parseInt(s && s.cycle, 10); return isFinite(v) && v > 0 ? v : hrCycleFor(s && s.cls); }
+// המחזור שמור לכל תלמיד ואינו משתנה במעבר השנתי; hrCycleFor ממלא אותו בהוספה ובבחירת שיעור בטופס.
+function hrCycleOf(s) { var v = parseInt(s && s.cycle, 10); return isFinite(v) && v > 0 ? v : 0; }
 
 // התווית מהמנוע — שנה נושאת תווית אחת.
 function hrCycleLabel(n) { return n ? hebYearLabelFull(n) : ''; }
@@ -276,8 +276,6 @@ function setStudentInactive(sid){
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=false;
-  // המחזור נרשם רק כשאין לו ערך — תלמיד שהושבת שוב היה מקבל את שנת הלחיצה ולא את מחזור הסיום שנרשם לו.
-  if(!s.cycle) s.cycle=hrCycleFor(s.cls)||null;
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
@@ -358,7 +356,7 @@ function openYearTransitionDlg(){
     '<button data-act="year-transition-confirm" class="year-go">🔄 בצע מעבר שנתי</button>');
 }
 
-// הבוגרים מקבלים את שנת הלימודים שמסתיימת, ואז השנה מתקדמת — באותה פעולה.
+// הבוגרים יוצאים, השאר עולים שיעור, ואז השנה מתקדמת — באותה פעולה. המחזור אינו משתנה.
 function doYearTransition(){
   var y=hrSchoolYear();
   if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
@@ -368,7 +366,6 @@ function doYearTransition(){
     if(s.active===false) return;
     if(s.cls==='g'){
       s.active=false;
-      if(!s.cycle) s.cycle=y;
       s.updated_at=Date.now(); changed++;
     } else if(s.cls==='b'){
       s.cls='g'; s.updated_at=Date.now(); changed++;
@@ -479,15 +476,20 @@ function cancelSingleAbsence(absenceId) {
   }
 }
 
-// בורר המחזור — «נגזר» ראשון, ושבע שנים סביב שנת הלימודים; ערך שמור מחוץ לטווח נוסף כמות שהוא.
+// בורר המחזור — שבע שנים סביב שנת הלימודים; ערך שמור מחוץ לטווח נוסף כמות שהוא.
 function fillCycleSel(cur){
   var el=document.getElementById('st-cycle');if(!el)return;
   var y=hrSchoolYear()||cur,ys=[];
   for(var i=-4;i<=3;i++){if(y)ys.push(y+i);}
   if(cur&&ys.indexOf(cur)<0)ys.push(cur);
   ys.sort(function(a,b){return b-a;});
-  el.innerHTML='<option value="">נגזר משיעור ושנת הלימודים</option>'+ys.map(function(n){
+  el.innerHTML=(cur?'':'<option value="">-- בחר --</option>')+ys.map(function(n){
     return '<option value="'+n+'"'+(n===cur?' selected':'')+'>'+esc(hrCycleLabel(n))+'</option>';}).join('');
+}
+
+// בחירת שיעור בטופס ממלאת את המחזור מהחישוב — והבורר נשאר לעריכה ידנית.
+function stClassChanged(){
+  var c=hrCycleFor((document.getElementById('st-class')||{value:''}).value);if(c)fillCycleSel(c);
 }
 
 // שני מסלולי הפתיחה בונים מכאן — טופס שנבנה פעמיים נבדל בשדה, ושדה שנשמט נקרא «ריק» ולא «לא נשאל»
@@ -495,7 +497,7 @@ function studentFormHTML(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" class="st-form-input">'+
     '<label for="st-class">שיעור</label>'+
-    '<select id="st-class" class="st-class-sel">'+
+    '<select id="st-class" class="st-class-sel" data-chg="st-class">'+
       '<option value="a">שיעור א\'</option>'+
       '<option value="b">שיעור ב\'</option>'+
       '<option value="g">שיעור ג\'</option>'+
@@ -578,7 +580,7 @@ function openAddStudent(){
   S.editingStudentId=null;
   openModal(MSG_ADD_STUDENT_TITLE, studentFormHTML(), studentFormFoot());
   document.getElementById('st-class').value='a';
-  fillCycleSel(0);
+  fillCycleSel(hrCycleFor('a'));
 }
 
 function editStudent(sid){
@@ -589,13 +591,13 @@ function editStudent(sid){
   openModal(MSG_EDIT_STUDENT_TITLE, studentFormHTML(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
-  fillCycleSel(parseInt(s.cycle,10)||0);
+  fillCycleSel(hrCycleOf(s));
 }
 
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
-  var cycle=parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||null;
+  var cycle=parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||hrCycleFor(cls)||null;
   var errEl=document.getElementById('st-err');
   if(errEl) errEl.textContent='';
   if(!name){
@@ -679,7 +681,7 @@ function importStudentsFromFile(input) {
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         // uuid ולא maxId++ — ייבוא מקביל בשני מכשירים היה מקצה אותם מזהים לתלמידים שונים
         var nid = newClientId();
-        existing.push({client_id:nid, name:name, cls:cls, updated_at:Date.now(), created_by_client_id:sessUserId()});
+        existing.push({client_id:nid, name:name, cls:cls, cycle:hrCycleFor(cls)||null, updated_at:Date.now(), created_by_client_id:sessUserId()});
         addedIds.push(nid);
         added++;
       }
@@ -802,4 +804,4 @@ export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive };
+         setStudentActive, setStudentInactive, stClassChanged };

@@ -35,7 +35,7 @@ import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive } from './screens/students.js';
+         setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
@@ -566,6 +566,7 @@ document.addEventListener('input', function (e) {
 document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
+  if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
 });
 
 // ── דוחות חודשיים ──
