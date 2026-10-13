@@ -2,18 +2,16 @@
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
          MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
-import { lsSet } from '../../core/storage.js';
 import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, usersRefresh,
          usersSaveOne, writeUser } from '../../core/auth.js';
-import { closeModal, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
-import { HR_ORDER_KEY, MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
+import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
+import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_NO_USER_SESSION, MSG_PASS_MISMATCH_X, MSG_PASS_NEEDS_NET,
          MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PERMS_SAVED, MSG_REASONS_SAVED,
          MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED, MSG_USER_SAVED_NO_FP,
          MSG_USER_SWITCHED_MID } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged,
-         hrSortUsers } from '../domain.js';
+import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '../domain.js';
 import { HR_STREAMS } from '../domain.sessions.js';
 
 // מודול בבנייה — אותו לוח לכל מודול שטרם נבנה, והשם והכותרת בפרמטר.
@@ -261,10 +259,6 @@ function renderSettings() {
   if (sp) sp.classList.toggle('hidden', !admin);
 }
 
-function saveUserOrder(ids) {
-  lsSet(HR_ORDER_KEY, JSON.stringify(ids));
-}
-
 // ── ניהול משתמשים, הרשאות ושינוי סיסמה ──
 // בכל מסלול כתיבה הטביעה נגזרת ליד הסיסמה ובאותה פעולה — גזירה מאוחרת היא חלון
 // שבו הכניסה האופליין עובדת עם הסיסמה הקודמת.
@@ -476,7 +470,9 @@ async function renderUsersList() {
   el.innerHTML = '<div class="ld">טוען...</div>';
   // לא var {data} = await — פירוק בולע את res.error, וכשל רשת היה מוצג כ«אין משתמשים».
   var res;
-  try { res = await netTimeout(S.SB.from('hr_users').select('*').order('full_name')); }
+  // הסדר נשמר ב-hr_users.sort ומסתנכרן — סדר שנשמר במכשיר בלבד שונה בכל מכשיר.
+  try { res = await netTimeout(S.SB.from('hr_users').select('*')
+    .order('sort', { ascending: true, nullsFirst: false }).order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
@@ -487,26 +483,44 @@ async function renderUsersList() {
   }
   var data = res.data;
   if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
-  data = hrSortUsers(data);
   el.innerHTML = data.map(function(u) {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeCls = u.active ? '' : ' is-inactive';
-    return '<div class="ur'+activeCls+'" data-row-id="'+esc(u.client_id)+'">' +
+    return '<div class="ur'+activeCls+'" data-drag="user" data-id="'+esc(u.client_id)+'" data-sort="'+esc(u.sort == null ? '' : u.sort)+'">' +
+      '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
       '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
         '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
         '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'">✏️</button>' +
-        '<button data-act="user-up" data-id="'+esc(u.client_id)+'" title="הזז למעלה" class="user-move">⬆️</button>' +
-        '<button data-act="user-down" data-id="'+esc(u.client_id)+'" title="הזז למטה" class="user-move">⬇️</button>' +
         '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');
 }
 
+// השחרור כותב sort לכל שורה שהשתנתה, ב-writeUser — הסדר נגזר מה-DOM הסופי, והרשימה נמשכת מחדש מהרשת.
+// שורה שכתיבתה נכשלה — הרשימה נמשכת מחדש ומראה את הסדר שבענן.
+async function usersDragApply(list, kind) {
+  var rows = Array.prototype.filter.call(list.children, function (x) { return x.getAttribute('data-drag') === kind; });
+  var ids = dragOrder(list, kind, 'data-id'), was = {}, i, n = 0, bad = null;
+  rows.forEach(function (x) { was[x.getAttribute('data-id')] = x.getAttribute('data-sort'); });
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); renderUsersList(); return; }
+  for (i = 0; i < ids.length; i++) {
+    if (was[ids[i]] === String(i + 1)) continue;
+    var res;
+    try { res = await writeUser(ids[i], { sort: i + 1 }); } catch (e) { res = { error: e }; }
+    if (res && res.error) { bad = res.error; break; }
+    n++;
+  }
+  if (n) { await hrTouchLastChanged(); usersRefresh(); }
+  if (bad) toast(MSG_ACTION_FAILED + (bad.message || bad.code || MSG_NO_LINK), null, 'bad');
+  renderUsersList();
+}
+dragDef('user', usersDragApply);
+
 export { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
-         saveUserOrder, screenSettingsHTML, showSettingsHome, showSettingsModule,
+         screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive };

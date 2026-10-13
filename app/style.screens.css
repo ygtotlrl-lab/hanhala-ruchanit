@@ -289,6 +289,9 @@
 #pg-settings .ss-t{font-size:var(--fs-4);font-weight:700;color:var(--brand-ink);margin-bottom:var(--sp-5);padding-bottom:var(--sp-4);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .ur{display:flex;align-items:center;gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)}
 .ur:last-child{border-bottom:none}
+.ur.dragging{opacity:var(--op-3)}
+.grip{color:var(--text-3);font-size:var(--fs-4);touch-action:none;cursor:grab}
+.grip:active{cursor:grabbing;color:var(--brand-ink)}
 .ur-name{flex:1;font-weight:600;font-size:var(--fs-3)}
 .ur-role{font-size:var(--fs-2);padding:var(--sp-2) var(--sp-4);border-radius:var(--r-6);font-weight:600}
 .role-admin{background:var(--warn-soft);color:var(--warn)}
@@ -311,7 +314,6 @@
 .um-pass{font-size:var(--fs-5);letter-spacing:var(--ls-3);text-align:center}
 .um-role{border:2px solid var(--border);font-family:Heebo;font-size:var(--fs-4);padding:var(--sp-5);border-radius:var(--r-3);width:100%}
 .um-username{direction:ltr}
-.user-move{font-size:var(--fs-4)}
 .users-empty{color:var(--warn)}
 .year-danger{font-size:var(--fs-3);background:var(--bad-soft);color:var(--bad);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3)}
 .year-go{font-weight:700;flex:1;border:1.5px solid var(--warn-line);background:var(--warn-soft);color:var(--warn);cursor:pointer;font-family:Heebo;padding:var(--sp-4);border-radius:var(--r-3)}

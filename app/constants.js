@@ -209,8 +209,6 @@ var MSG_EDIT_STUDENT_TITLE = 'עריכת תלמיד';
 
 var MSG_NEED_STUDENT_NAME = 'נא להזין שם';
 
-var HR_ORDER_KEY = 'hr_user_order';
-
 // ── מדיניות האחסון המקומי ──
 var KV_TABLE = 'hr_settings';
 
@@ -219,8 +217,6 @@ var KV_TABLE = 'hr_settings';
 // empty מחזירה null ולא מערך ריק — מפתח שאינו על הדיסק נופל לברירת המחדל, ורשימה ריקה אינה.
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
                         'hr_sleep_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
-
-// ── סוג האפליקציה ורשימות הפינוי ──
 
 // המסמך הוא מודול ושם שמוגדר בו אינו גלובלי — השמות שנקראים מתגית וממפת הפעולות מוצבים על window במפורש.
 
@@ -258,14 +254,14 @@ var PEND_KV_PREFIX = {
   'hr_students_rows': PK_STUDENT
 };
 
-// הגדרות שהעותק המקומי שלהן שטוח ואינו שורה במראה — הפינוי מפנה אותן פר-רשומה, ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי.
+// הגדרות שהעותק המקומי שלהן שטוח — מפתח משלו, ולא שורה במראת ההגדרות.
 var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
          MSG_BUSY_CHECK, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_CLOSE_REPORT_FIRST,
