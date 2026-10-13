@@ -2,8 +2,8 @@
 
 /* ── אסימוני העיצוב ── */
 :root{
-  /* מרחק הטוסט מתחתית המסך — הערך היחיד שנבדל בשכבת הטוסט; מתחת לנקודת השבירה של הסרגל התחתון הוא עולה */
-  --toast-bottom:26px;
+  /* מרחק הטוסט מתחתית המסך — הערך היחיד שנבדל בשכבת הטוסט; מתחת לנקודת השבירה של הסרגל התחתון הוא מעליו */
+  --toast-bottom:calc(var(--tabbar-h) + var(--sp-6));
   --col:1100px;
   /* צבע הזהות של האפליקציה — רכיב שמייצג אותה נגזר ממנו ולא מדיו הטקסט, והדיו שעליו צמד הפוך שמתחלף איתו */
   --brand:var(--brand-fill); --on-brand:#ffffff;
@@ -12,8 +12,6 @@
 /* גווני הסימון — אסימון לכל קוד ולא מפה בקוד, שהייתה עותק שני של הגוון; הדיו על כולם הוא --on-brand */
 --at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
-/* מעל סרגל הניווט התחתון — טוסט שיושב מתחתיו אינו נראה */
-:root{--toast-bottom:80px}
 
 /* ── הערכה הכהה ── */
 @media (prefers-color-scheme:dark){
@@ -57,7 +55,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--b
 table{font-size:var(--fs-3)}
 th{padding:var(--sp-4) var(--sp-5);font-size:var(--fs-2)}
 td{padding:var(--sp-4) var(--sp-5)}
-body{padding-bottom:var(--sp-7)}
 
 /* ── קליפה ──
    שורש הקליפה (shell) אינו תיבה — הוא נושא את מצב החשיפה, והכותרת הדביקה והסרגל ממשיכים להתנהג כילדי body */
@@ -94,7 +91,7 @@ header{height:56px}
   position:fixed;
   bottom:0;left:0;right:0;
   max-width:var(--col);margin:0 auto;
-  height:64px;
+  height:calc(var(--tabbar-h) + env(safe-area-inset-bottom,0px));
   background:linear-gradient(135deg,var(--deep-2),var(--brand-fill));
   border-top:1px solid var(--fill-dark);
   z-index:var(--z-2);
@@ -166,7 +163,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 /* הרוחב נמדד בזמן ריצה ונכתב ב-setProperty, והכלל הזה קורא אותו; בלי מדידה נשאר רוחב ההורה */
 #sw-inner{--sw-w:100%;width:var(--sw-w)}
 /* ── רשימה נפתחת עם חיפוש ── */
-.combo-list{top:calc(100% + 6px);background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);max-height:240px;animation:ddFade var(--dur-1) ease}
+.combo-list{--combo-gap:6px;--combo-max:240px;background:var(--card);border:1.5px solid var(--brand-ink);border-radius:var(--r-5);box-shadow:0 8px 28px var(--shadow-brand);animation:ddFade var(--dur-1) ease}
 @keyframes ddFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .combo-opt{padding:var(--sp-4) var(--sp-6);gap:var(--sp-5);border-bottom:1px solid var(--border);transition:background var(--dur-1)}
 .combo-opt:last-child{border-bottom:none}
@@ -200,7 +197,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .cs p{color:var(--text-2);font-size:var(--fs-4)}
 .empty{color:var(--text-3);text-align:center;padding:var(--sp-7) var(--sp-5);font-size:var(--fs-3)}
 .ld{text-align:center;padding:var(--sp-7);color:var(--text-3)}
-.inner{padding:var(--sp-6)}
+/* סוף התוכן מרוחק מסרגל הניווט כראשו מהכותרת. */
+.inner{padding:var(--sp-6);padding-bottom:calc(var(--tabbar-h) + var(--sp-6) + env(safe-area-inset-bottom,0px))}
 .ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-6)}
 .btn{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-3);min-height:44px}
 @keyframes auth-spin{to{transform:rotate(360deg)}}

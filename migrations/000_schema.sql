@@ -84,7 +84,7 @@ AS $function$
     'ANCHOR:sl_students', 'DIFF:sl_students',
     'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
     'ANCHOR:sl_settings', 'DIFF:sl_settings',
-    'ANCHOR:sl_lists', 'DIFF:sl_lists',
+    'ANCHOR:sl_lookups', 'DIFF:sl_lookups',
     'ANCHOR:rishon_ya_entries', 'DIFF:rishon_ya_entries',
     'ANCHOR:rishon_ya_settings_rishon', 'DIFF:rishon_ya_settings_rishon',
     'ANCHOR:ramataviv_ya_entries', 'DIFF:ramataviv_ya_entries',

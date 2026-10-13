@@ -1,7 +1,7 @@
 // app/main.js — העלייה, הניווט, מפת הפעולות ובורר התאריך העברי
 import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
          netTimeout } from '../core/util.js';
-import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount,
+import { ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount,
          plStampRead, runSave, sbWatch } from '../core/sync.js';
 import { lsOpen } from '../core/storage.js';
 import { logAwait } from '../core/backup.js';
@@ -176,8 +176,6 @@ var ERA_CFG = {
   prefix: self.APP.prefix,
   client: function () { return S.SB; },
   table:  function () { return KV_TABLE; },
-  // מחזור הדחיפה כאן פר-קטגוריה — התוצאה נאספת בסופו ונמסרת ב-eraNotePush.
-  push:   function () { return hrPushToCloud().then(function () { return _eraPush; }); },
   refresh: function () { return hrSyncNow(); },
   log:    function (action, entries) { return logAwait(action, entries); }
 };

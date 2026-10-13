@@ -1,7 +1,7 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
 import { MSG_KV_BAD, dayIso, kvParse, uniqList,
          netTimeout, sortCompare } from '../core/util.js';
-import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
+import { _rowsPaged, ctxEpoch, ctxStale, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
 import { lsGet, lsLog, lsSet } from '../core/storage.js';
@@ -600,8 +600,6 @@ async function hrPushToCloud() {
   if (ctxStale(_ep)) return;
   if (r.ok) pendConfirmPush(PK_STUDENT, _t0);
   if (r.n) hrSyncLog('push', null, r.n);
-  // still הוא מה שלא עלה — שורה אחת בו חוסמת את זריקת העידן.
-  eraNotePush(r);
 }
 
 async function hrPullFromCloud() {
