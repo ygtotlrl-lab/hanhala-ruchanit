@@ -493,7 +493,7 @@ function studentFormHTML(sid){
 }
 
 // ── היסטוריית הסטטוסים ──
-// נקראת מהענן ולא מהדיסק — הדיסק מחזיק רק מה ששרד פינוי ומה שהמכשיר ראה,
+// נקראת מהענן ולא מהדיסק — הדיסק מחזיק רק מה שהמכשיר ראה,
 // וסטטוס שנרשם ממכשיר אחר היה נעדר בלי סימן.
 async function openStatusHistory(sid) {
   openModal(MSG_STATUS_HISTORY,
@@ -673,7 +673,7 @@ function importStudentsFromFile(input) {
         // באחסון מלא saveStudents מחזירה false — דיווח הצלחה בלי הבדיקה הוא כשל שקט.
         wrote = (saveStudents(existing) !== false);
         if (wrote) {
-          // סימון ממתין לכל שורה מיובאת — בלעדיו היא אינה נספרת ואינה נדחפת, ושער הפינוי רשאי לפנותה
+          // סימון ממתין לכל שורה מיובאת — בלעדיו היא אינה נספרת ואינה נדחפת
           addedIds.forEach(function(id){ pendMark(PK_STUDENT + id); });
           schedulePush();
           renderStudents();

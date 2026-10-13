@@ -1,12 +1,12 @@
 // app/main.js — העלייה, הניווט, מפת הפעולות ובורר התאריך העברי
 import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
          netTimeout } from '../core/util.js';
-import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount, pendHas,
-         plStampRead, pushedFor, rowsVerify, runSave, sbWatch } from '../core/sync.js';
-
+import { _eraPush, ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount,
+         plStampRead, runSave, sbWatch } from '../core/sync.js';
+import { lsOpen } from '../core/storage.js';
 import { logAwait } from '../core/backup.js';
 import { bootRun } from '../core/boot-run.js';
-import { MIRROR, mirrorKey, mirrorTables, mirrorWrite } from '../core/mirror.js';
+import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
 import { actWire, closeAsk, closeModal, comboInput, comboPick, esc, openModal, swApply,
@@ -17,11 +17,10 @@ import { HR_MIRROR_TABLES, HR_ORDER_KEY, HR_PERMS_KEY,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
-import { _hrMarkParent, _hrMarkSynced, _hrItemId, _hrRowId,
-         _hrVerify, canAccess, hrHwFetch, hrHwInWindow, hrLocalRecs,
-         hrMirrorRecs, hrMirrorWriteRecs, hrPullFromCloud, hrPushToCloud,
+import { _hrMarkSynced, canAccess, hrLocalRecs,
+         hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
-         hrRecTs, uiShown } from './domain.js';
+         uiShown } from './domain.js';
 import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
@@ -53,7 +52,6 @@ appConfigure({
   get DEV_CFG() { return DEV_CFG; },
   get DOM_ACTIONS() { return DOM_ACTIONS; },
   get ERA_CFG() { return ERA_CFG; },
-  get HW_CFG() { return HW_CFG; },
   get LK_CFG() { return LK_CFG; },
   get LS_CFG() { return LS_CFG; },
   get MIRROR_CFG() { return MIRROR_CFG; },
@@ -70,17 +68,14 @@ var MIRROR_CFG = {
   tables: function () { return HR_MIRROR_TABLES; },
   noPush: [{ t: 'hr_users',       via: 'writeUser',  adds: 'secret' }],
   empty:  function () { return null; },
-  ts:     function (r) { return hrRecTs(r); },
   clean:  function (t, rows) { return t === authUsersTable() ? usersSanitize(rows) : rows; },
   fail:   function (where, e) { hrWriteFail(where, e); },
 };
 
-// חלון אחד לאב ולבניו — בן שחלונו קצר מאביו משאיר סדר בלי סימונים.
 var LS_CFG = {
   // cachePrefix נגזר משם האפליקציה שבתצורה ולא מקידומת האחסון — שם אחסון שישתנה היה מחזיר רשימה ריקה, והבאנר היה חוזר בכל טעינה.
   cachePrefix: self.APP.id + '-',
   logKey: 'hr_ls_log',
-  hzPrefix: 'hr_ls_hz_',
   // חובה בתחילית האפליקציה — ה-origin משותף, וסימן בלי תחילית נדרס בכל דחייה.
   dismissKey: 'hr_sw_dismissed',
   // מפתח שאינו במרשם נמחק בעלייה.
@@ -89,41 +84,7 @@ var LS_CFG = {
             BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY, HR_ORDER_KEY]
       .concat(eraKeys(), mirrorTables().map(mirrorKey),
               Object.keys(HR_SET_FLAT).map(function (k) { return HR_SET_FLAT[k]; }));
-  },
-
-  // חלון הפינוי נגזר מסוג האפליקציה — אין מספר ימים באף רשומה.
-  appType: { type: 'daily', why: 'החישוב שלה הוא של היום — ⚠️ לוח הבית סופר את סדרי היום ואת השינה של הלילה, ⛔ ומה שמעבר לרבעון נקרא מהענן כשיש רשת' },
-
-  // מראת המשתמשים ו-hr_perms_cache אינם כאן — הם מסלול הכניסה האופליין, ופינוים משבית כניסה בלי רשת.
-  // שאר המפתחות קיימים בענן, אך מחיקתם מרוקנת את המסך אופליין — לכן הם מפונים ברמת רשומה.
-  wholeKeys: [],
-
-  // לכל מפתח עֵד דחיפה משלו, מהליבה — לפי הטבלה שהוא נדחף איתה; פריטי ההגדרות — לפי KV_TABLE.
-  // הסימונים יורדים עם הסדר שלהם (parent) — סדר בלי סימוניו מוצג ריק, ודחיפתו נקראת בענן כמחיקתם.
-  oldRecords: [
-    { key: mirrorKey('hr_sessions'), label: 'סדרי נוכחות',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: pushedFor('hr_sessions'), verify: _hrVerify('hr_sessions') },
-    { key: mirrorKey('hr_marks'), label: 'סימוני נוכחות', ts: hrRecTs,
-      parent: mirrorKey('hr_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: pushedFor('hr_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_marks') },
-    { key: mirrorKey('hr_sleep_sessions'),  label: 'רשומות שינה',   ts: hrRecTs,
-      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_sessions'),  verify: _hrVerify('hr_sleep_sessions') },
-    { key: mirrorKey('hr_sleep_marks'), label: 'סימוני שינה', ts: hrRecTs,
-      parent: mirrorKey('hr_sleep_sessions'), parentOf: _hrMarkParent,
-      idOf: _hrRowId, syncedThrough: pushedFor('hr_sleep_marks'), verify: rowsVerify(function () { return S.SB; }, 'hr_sleep_marks') },
-    { key: 'hr_attend_treats',   label: 'טיפולים — סדרים', ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),   verify: _hrVerify('hr_attend_treats') },
-    { key: 'hr_sleep_treats',    label: 'טיפולים — שינה',  ts: hrRecTs,
-      idOf: _hrItemId, syncedThrough: pushedFor(KV_TABLE),    verify: _hrVerify('hr_sleep_treats') }
-  ],
-  // ריק ומוצהר — הסדרים, השינה והטיפולים בפינוי, ואין טבלה שנדרשת במלואה לחישוב.
-  fullHistory: [],
-  // טבלה שגדלה ואינה בפינוי ממלאת אחסון של origin משותף — לכן כאן רק טבלה קבועה בגודלה, עם נימוקה.
-  fixedSize: [
-    { t: 'hr_students_rows', why: 'מצבת התלמידים — שורה לתלמיד, ⛔ ואינה גדלה עם הזמן' },
-    { t: KV_TABLE,           why: 'הגדרות — שורה למפתח, ⛔ ומספר המפתחות קבוע בקוד' },
-    { t: 'hr_users',         why: 'משתמשים — שורה למשתמש, ⚠️ והיא מסלול הכניסה האופליין' }
-  ]
+  }
 };
 
 // logQueueKey נשאר hr_login_log_queue — מכשיר שתורו ממתין תחת השם הזה היה מאבד אותו במחיקת המפתחות שאינם במרשם.
@@ -174,7 +135,7 @@ var LK_CFG = {
 };
 
 // החותמת בטבלת ההגדרות ונכתבת רק דרך plTouch — גם מכתיבת משתמש, ב-hrTouchLastChanged().
-// ok() היא חותמת תצוגה בלבד — אין להזין ממנה את עֵד הפינוי.
+// ok() היא חותמת תצוגה בלבד.
 var PL_CFG = {
   every:  3000,
   active: function () { return sessActive(); },
@@ -209,34 +170,6 @@ var PUSH_CFG = {
     return HR_MARK_TABLES[t] ? hrSendMarks(t, rows) : hrSendRecs(t, rows);
   },
   run:    function () { hrPushToCloud(); },
-};
-
-// כל טבלה עם session_date בחלון — הסדרים, השינה וסימוני שניהם; המצבה אינה סדרה בזמן.
-// הסימון נמדד בתאריך של אביו ויורד איתו, ושער הדיסק שלו פועל גם בכל כתיבה — טבלת בן בלי שער חוזרת לדיסק במלואה בכל משיכה.
-function _hrHwSpec(t, label, recs) {
-  return {
-    key: mirrorKey(t),
-    label: label,
-    inWindow: function (r) { return hrHwInWindow(r); },
-    idOf: _hrRowId,
-    ts: hrRecTs,
-    isPending: function (r) {
-      try { return !!(r && r.client_id != null && pendHas(PEND_KV_PREFIX[t] + r.client_id)); }
-      catch (e) { return true; }
-    },
-    fetch: function () { return hrHwFetch(t); },
-    // האב — כרשומות מורכבות, ושמירתו כותבת גם את סימוניו; הבן — כשורות המראה, והזיכרון אינו נגע.
-    rows: recs ? function () { return recs() || hrMirrorRecs(t); } : function () { return MIRROR[t] || []; },
-    apply: recs ? function (kept) { return hrMirrorWriteRecs(t, kept); } : function (kept) { return mirrorWrite(t, kept); }
-  };
-}
-var HW_CFG = {
-  specs: [
-    _hrHwSpec('hr_sessions', 'סדרי נוכחות מחוץ לחלון', function () { return Array.isArray(S._atData) ? S._atData : null; }),
-    _hrHwSpec('hr_marks', 'סימוני נוכחות מחוץ לחלון', null),
-    _hrHwSpec('hr_sleep_sessions', 'רשומות שינה מחוץ לחלון', function () { return Array.isArray(S._hrData) ? S._hrData : null; }),
-    _hrHwSpec('hr_sleep_marks', 'סימוני שינה מחוץ לחלון', null)
-  ]
 };
 
 var ERA_CFG = {
@@ -312,6 +245,8 @@ function mountView() {
 // {id, username, full_name, role}
 Object.defineProperty(AUTH, 'user', { get: sessGet, set: sessSet, enumerable: true });
 
+// האחסון נפתח לפני כל קריאה ממנו — אחרי שה-CFG הוגדרו, כי המרשם והייבוא קוראים אותם.
+await lsOpen();
 mountView();
 
 S.SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key));

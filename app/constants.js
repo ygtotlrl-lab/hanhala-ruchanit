@@ -220,8 +220,6 @@ var KV_TABLE = 'hr_settings';
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
                         'hr_sleep_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
 
-// ── סוג האפליקציה ורשימות הפינוי ──
-
 // המסמך הוא מודול ושם שמוגדר בו אינו גלובלי — השמות שנקראים מתגית וממפת הפעולות מוצבים על window במפורש.
 
 // ── PUSH_CFG ──
@@ -258,7 +256,7 @@ var PEND_KV_PREFIX = {
   'hr_students_rows': PK_STUDENT
 };
 
-// הגדרות שהעותק המקומי שלהן שטוח ואינו שורה במראה — הפינוי מפנה אותן פר-רשומה, ורשומה בתוך שורת הגדרות אינה ניתנת לפינוי.
+// הגדרות שהעותק המקומי שלהן שטוח — מפתח משלו, ולא שורה במראת ההגדרות.
 var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.

@@ -2,7 +2,7 @@
 import { dayNoon, dayToday, sortCompare } from '../core/util.js';
 import { ctxEpoch, ctxStale, idEq, pendConfirmPush, pendMarkMany, pendTag,
          pushTable } from '../core/sync.js';
-import { lsGet, lsSetArray } from '../core/storage.js';
+import { lsGet, lsSet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
 import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
@@ -13,7 +13,7 @@ import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
          hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
-         hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrSessionsPull, hrSetPending, hrSyncLog,
+         hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrSessionsPull, hrSetPending, hrSyncLog,
          hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
 import { _hcH } from './domain.hebdate.js';
 
@@ -226,7 +226,7 @@ async function hrSaveData(st, data) {
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
     var rS=await pushTable(st.table);
     var rM=await pushTable(st.child);
-    // רק כתיבה שהצליחה היא ראיה — והיא מזינה גם את הסימון הממתין וגם את עֵד הפינוי שבליבה
+    // רק כתיבה שהצליחה היא ראיה — והיא מאשרת את הסימון הממתין
     if(rS&&rS.ok&&!ctxStale(_ep)) pendConfirmPush(st.pkSess,_t0);
     if(rM&&rM.ok&&!ctxStale(_ep)) pendConfirmPush(st.pkMark,_t0);
     hrSyncLog('push',st.table,hrCount(data),{local_count:localN,result_count:hrCount(data)});
@@ -313,7 +313,7 @@ async function hrPullTreats(st) {
   var r = null; try { r = await hrCfgGet(st.treatsKey, true); } catch (e) {}
   if (!r || !r.ok) return false;
   // מפתח שטרם נכתב אינו דורס את הדיסק — [] מעליו היה מוחק טיפולים שנרשמו אופליין וטרם עלו
-  if (Array.isArray(r.value) && !hrSetPending(st.treatsKey)) { S[st.v+'Treats'] = r.value; lsSetArray(st.treatsLs, r.value, hrRecTs); }
+  if (Array.isArray(r.value) && !hrSetPending(st.treatsKey)) { S[st.v+'Treats'] = r.value; lsSet(st.treatsLs, JSON.stringify(r.value)); }
   else if (!Array.isArray(S[st.v+'Treats'])) S[st.v+'Treats'] = hrCachedArr(st.v+'Treats', st.treatsLs) || [];
   return true;
 }
@@ -356,13 +356,13 @@ function hrLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(
 async function hrSaveTreats(st, data) {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
   var _ep = ctxEpoch();
-  lsSetArray(st.treatsLs, data, hrRecTs);
+  lsSet(st.treatsLs, JSON.stringify(data));
   try {
     // מיזוג ברמת רשומה לפני הכתיבה — כתיבת המערך כולו מוחקת טיפול שמדריך אחר רשם במקביל
     var remote=null; try { remote=await hrCfgGet(st.treatsKey); } catch(eR){}
     if (Array.isArray(remote)) {
       data=hrTreatsMerge(remote, data, st.treatsLs);
-      lsSetArray(st.treatsLs, data, hrRecTs);
+      lsSet(st.treatsLs, JSON.stringify(data));
     }
     if (!ctxStale(_ep)) await hrCfgSet(st.treatsKey,data);
   } catch (e) { hrWriteFail('hrSaveTreats:'+st.kind, e); }

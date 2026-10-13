@@ -1,11 +1,11 @@
 // app/domain.js — המראה, הסנכרון, המיזוג, ההרשאות ובורר התאריך
-import { MSG_KV_BAD, dayIso, dayNoon, kvParse, uniqList,
+import { MSG_KV_BAD, dayIso, kvParse, uniqList,
          netTimeout, sortCompare } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, eraNotePush, mergeCore, mergeWinner,
          pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
-import { hwNoteCloud, lsGet, lsLog, lsSet, lsSetArray, lsWindowFrom } from '../core/storage.js';
-import { MIRROR, mirrorKey, mirrorSave, mirrorWrite } from '../core/mirror.js';
+import { lsGet, lsLog, lsSet } from '../core/storage.js';
+import { MIRROR, mirrorSave } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
 import { closeModal, pullRender, toast } from '../core/ui.js';
@@ -80,61 +80,10 @@ function hrApplyPerms(p) {
   return changed;
 }
 
-function _hrMarkParent(r) { return r ? r.session_client_id : null; }
-
-function _hrRowId(r) { return r ? r.client_id : null; }
-
-// פריט בתוך ערך הגדרות — הטיפולים — נושא מפתח משלו.
-function _hrItemId(r) { return r ? r.id : null; }
-
-// ── אימות מול הענן ──
-// מכשיר שרק קורא אינו דוחף ולכן אין לו עֵד — מאמתים פר-רשומה מול העותק הענני של המפתח.
-// נכשל סגור: מפתח חסר, כשל רשת או timeout — אין rows ואין פינוי.
-function _hrVerify(kvKey) {
-  return function () {
-    return hrCloudGet(kvKey).then(function (rows) {
-      return Array.isArray(rows) ? { ok: true, rows: rows } : { ok: false, rows: [] };
-    });
-  };
-}
-
-
 // מסכי ההשגחה פתוחים למנהל וגם לתפקיד הביניים שמטריצת ההרשאות מחזיקה — לכן ההשוואה כאן ולא בבלוק המשותף.
 function hrSupervisionAccess() {
   var u = sessGet();
   return isAdminOf(u) || (!!u && String(u.role) === 'manager');
-}
-
-// החלון החם הוא חלון הפינוי של האפליקציה — מהליבה, ולא מספר ימים משלו; הסדר ובניו נמדדים באותו session_date,
-// ולכן סימון יורד מהדיסק יחד עם אביו. תאריך שאינו נקרא — הרשומה נשארת: פינוי בלי גיל הוא היעדר ראיה כראיה.
-function hrHwInWindow(rec) {
-  var iso = rec && rec.session_date;
-  if (!iso) return true;
-  var t = dayNoon(String(iso)).getTime();
-  if (!isFinite(t)) return true;
-  return t >= lsWindowFrom();
-}
-
-// שאלה אחת לענן לכל סוג — הסדרים והסימונים שלהם באים באותה קריאה, והחלון החם שואל על שניהם ברצף;
-// שתי שאלות היו מושכות את הסימונים פעמיים.
-var HR_HW_ASK_MS = 10000;
-var _hrHwAsk = {};
-function hrHwFetch(t) {
-  var kind = null, child = false;
-  Object.keys(HR_MIRROR_STREAMS).forEach(function (p) {
-    var st = HR_MIRROR_STREAMS[p];
-    if (!st.child) return;
-    if (p === t) kind = st.kind;
-    else if (st.child === t) { kind = st.kind; child = true; }
-  });
-  if (!kind) return Promise.resolve({ ok: false, rows: [] });
-  var memo = _hrHwAsk[kind], now = Date.now();
-  if (!memo || now - memo.at > HR_HW_ASK_MS) memo = _hrHwAsk[kind] = { at: now, p: hrRowsGetSessions(kind, null) };
-  return memo.p.then(function (r) {
-    if (!r || !r.ok) return { ok: false, rows: [] };
-    // הסדר — כרשומה מורכבת, כפי שהארכיון מציג; הסימון — כשורה, כפי שהמראה מחזיקה.
-    return { ok: true, rows: child ? r.mRows : r.data };
-  }, function () { return { ok: false, rows: [] }; });
 }
 
 // ── פירוק המראה לשורות והרכבתה ──
@@ -206,7 +155,7 @@ function _hrMarkSame(a, b) {
 }
 
 // מצבה נכתבת רק לסדר שנמצא בקלט — משיכת חלון מוסרת רשומות שמחוצה לו, ואין למחוק את סימוניהן.
-function _hrSplitRecs(t, recs, tomb) {
+function _hrSplitRecs(t, recs) {
   var st = HR_MIRROR_STREAMS[t];
   var arr = Array.isArray(recs) ? recs : [];
   if (st.kind === 'students') {
@@ -235,8 +184,6 @@ function _hrSplitRecs(t, recs, tomb) {
   Object.keys(prev).forEach(function (k) {
     if (live[k]) return;
     var old = prev[k];
-    // כתיבה גולמית אינה שומרת שורה שאין לה סימון בקלט — שורת סימון של סדר שפונה היא יתומה.
-    if (!tomb) return;
     // שורה שאביה אינו בקלט אינה נמחקת — לא נשאלו עליה.
     if (!seen[String(old.session_client_id)]) { mRows.push(old); return; }
     // המצבה נשארת — הגריעה על תוצאת המיזוג בלבד.
@@ -248,12 +195,12 @@ function _hrSplitRecs(t, recs, tomb) {
   return { sRows: sRows, mRows: mRows };
 }
 
-// רק הכתיבה הזו מסמנת מחיקות — סימון שנעלם מהקלט נמחק, ופינוי אינו מחיקה.
+// הכתיבה הזו מסמנת מחיקות — סימון שנעלם מהקלט נמחק.
 // כתיבת משתמש מסמנת ⏳ כל רשומה שהשתנתה מול המראה, או שסימון שלה השתנה; כתיבה שמקורה במיזוג — fromMerge — אינה מסמנת.
 function hrMirrorPutRecs(t, recs, fromMerge) {
   var st = HR_MIRROR_STREAMS[t];
   if (!st) return false;
-  var r = _hrSplitRecs(t, recs, true);
+  var r = _hrSplitRecs(t, recs);
   if (!fromMerge) _hrMarkChanged(t, r);
   MIRROR[t] = r.sRows;
   if (!st.child) return mirrorSave(t);
@@ -289,18 +236,7 @@ function _hrMarkChanged(t, r) {
   pendMarkMany(Object.keys(keys));
 }
 
-// אינה מסמנת מחיקה — סדר שפונה מהדיסק אינו סדר שנמחק.
-function hrMirrorWriteRecs(t, recs) {
-  var st = HR_MIRROR_STREAMS[t];
-  if (!st) return false;
-  var r = _hrSplitRecs(t, recs, false);
-  if (!st.child) return mirrorWrite(t, r.sRows);
-  var a = mirrorWrite(t, r.sRows), b = mirrorWrite(st.child, r.mRows);
-  return a && b;
-}
-
 // שורות {key, value, updated_at} כצורת הטבלה בענן — מפתח שטוח לכל הגדרה אינו מוכרע במנוע השורות.
-// שתי רשימות הטיפולים נשארות שטוחות — הפינוי מפנה אותן פר-רשומה.
 function _hrCfgRows() { return Array.isArray(MIRROR[KV_TABLE]) ? MIRROR[KV_TABLE] : []; }
 
 function hrCfgLocalGet(key) {
@@ -318,7 +254,7 @@ function hrCfgLocalSet(key, value) {
   return mirrorSave(KV_TABLE);
 }
 
-// משפך כתיבה אחד לדיסק — אתר כתיבה נפרד יכול לעקוף את שער החלון החם ולהחזיר לדיסק את מה שהפינוי הוציא.
+// משפך כתיבה אחד לדיסק — אתר כתיבה נפרד היה עוקף את סימון הממתין.
 // הרשומה נכתבת כשורה עם data, והקריאה מרכיבה אותה בחזרה.
 function _hrStDiskSave(rows, fromMerge) {
   return hrMirrorPutRecs('hr_students_rows', rows, fromMerge);
@@ -349,7 +285,7 @@ function hrSetLocal(key) {
 
 async function hrCfgSet(key, value) {
   var flat = HR_SET_FLAT[key];
-  if (flat) lsSetArray(flat, value, hrRecTs);
+  if (flat) lsSet(flat, JSON.stringify(value));
   else hrCfgLocalSet(key, value);
   pendMark(PK_SET + key);
   schedulePush();
@@ -521,19 +457,8 @@ async function hrSessionsPull(t, win) {
   var pend = function (tt) { return function (k) { return pendHas(PEND_KV_PREFIX[tt] + k); }; };
   MIRROR[t] = mergeCore(MIRROR[t] || [], r.sRows, { isPending: pend(t) });
   MIRROR[st.child] = mergeCore(MIRROR[st.child] || [], r.mRows, { isPending: pend(st.child) });
-  // הראיה העננית לפני הכתיבה — שער הדיסק מפנה רק מה שהענן כבר הראה, וכתיבה שקודמת לה מעלה לדיסק את הכול.
-  if (!win) hrHwNote(t, r);
   mirrorSave(t); mirrorSave(st.child);
   return hrMirrorRecs(t);
-}
-
-// הראיה העננית לאב ולבנו — לסימון שער דיסק משלו, והראיה עליו היא שורות הסימון שבאו באותה קריאה.
-function hrHwNote(t, r) {
-  var st = HR_MIRROR_STREAMS[t];
-  try {
-    if (r && Array.isArray(r.data) && r.data.length) hwNoteCloud(mirrorKey(t), r.data);
-    if (st && st.child && r && Array.isArray(r.mRows) && r.mRows.length) hwNoteCloud(mirrorKey(st.child), r.mRows);
-  } catch (e) { hrWriteFail('hrHwNote', e); }
 }
 
 // התאריך פרמטר — בדיקת הכפילות בפתיחת סדר צריכה את היום שנבחר בבורר, שאינו בהכרח היום.
@@ -589,8 +514,6 @@ async function hrCloudGet(kvKey, win) {
   var r = null;
   try { r = await hrRowsGet(kvKey, win); } catch (e) { r = null; }
   if (!r || !r.ok || !Array.isArray(r.data)) return null;
-  // הראיה העננית נרשמת כאן ולא באתרי הקריאה, ורק במשיכה מלאה — משיכת חלון אינה אומרת דבר על מה שמחוצה לו.
-  if (!win) hrHwNote(kvKey, r);
   return r.data;
 }
 
@@ -868,12 +791,12 @@ function atDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrCleanCfg, _hrMarkParent, _hrItemId,
-         _hrMarkSynced, _hrRowId, _hrStudentsRaw, _hrStudentsSaveRaw,
-         _hrVerify, atDefaultCfg, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+export { HR_MIRROR_STREAMS, _hrCleanCfg,
+         _hrMarkSynced, _hrStudentsRaw, _hrStudentsSaveRaw,
+         atDefaultCfg, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
-         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg, hrHwFetch, hrHwInWindow,
-         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrMirrorWriteRecs, hrPdfFont, hrPullFromCloud,
+         hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg,
+         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPdfFont, hrPullFromCloud,
          hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
          hrSortRecs, hrSortStatuses, hrSortStudents, hrSortUsers, hrSupervisionAccess, hrSyncLog,
          hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,
