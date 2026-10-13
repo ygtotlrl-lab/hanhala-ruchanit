@@ -3,7 +3,7 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
-import { hebDate, hebGematria, hebMonthNames, hebYearLabelFull } from '../../core/hebrew.js';
+import { hebDate, hebYearLabelFull } from '../../core/hebrew.js';
 import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
          MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
          MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
@@ -11,10 +11,10 @@ import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MS
          MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
-         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, PK_STUDENT } from '../constants.js';
+         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
-         hrAtOfLocal, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
+         hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -195,7 +195,7 @@ function renderStudents(){
     if(!filtInactive.length){tbody.innerHTML='<div class="empty-note">אין תלמידים לא פעילים</div>';return;}
     tbody.innerHTML=filtInactive.map(function(s,i){
       var bg=i%2===0?'zebra-a':'zebra-b';
-      var yr=s.cycle||'';
+      var yr=hrCycleLabel(hrCycleOf(s));
       var badgeHTML=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
       return '<div class="'+bg+' st-row-off">'+
         '<div class="st-row-main">'+
@@ -252,23 +252,24 @@ function renderStudents(){
 }
 
 // ── מחזור התלמיד ──
-// נגזר משנת הלימודים ולא מרשימת שנים מוקלדת — רשימה כזו נגמרת בשנתה האחרונה.
-// שנת הלימודים מתגלגלת באלול ולא בתשרי — הבוגרים עוזבים בסוף אלול.
-function hrSchoolYear(now) {
-  var h = hebDate(now || new Date());
-  if (!h.ok) return 0;
-  return (h.monthIndex === hebMonthNames(h.year).length - 1) ? h.year + 1 : h.year;
+// שנת הלימודים של המצבה — school_year בהגדרות, שנה עברית כמספר. מתקדמת במעבר השנתי בלבד:
+// השעון אינו יודע אם המעבר כבר נעשה, ושנה שנגזרת ממנו מתחלפת לפני שהשיעורים עלו.
+function hrSchoolYear() {
+  var v = parseInt(hrCfgLocalGet('school_year'), 10);
+  return isFinite(v) && v > 0 ? v : 0;
 }
 
-// המחזור הוא שנת הסיום ולא הכניסה — ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה, וא׳ את שלאחריה.
-function hrCycleFor(cls, now) {
-  var y = hrSchoolYear(now);
-  var add = { g: 0, b: 1, a: 2 };
-  if (!y || add[cls] == null) return '';
-  var hy = y + add[cls];
-  // שנה עגולה במאות נותנת שני אפסים ואין לה צורה מקוצרת — התווית המלאה ולא מחרוזת ריקה שנקראת «אין מחזור».
-  return hebGematria(hy % 100, '״') || hebYearLabelFull(hy);
+// המחזור הוא שנת הסיום — ג׳ מקבל את שנת הלימודים עצמה, ב׳ את הבאה, וא׳ את שלאחריה.
+function hrCycleFor(cls) {
+  var y = hrSchoolYear(), add = { g: 0, b: 1, a: 2 };
+  return (y && add[cls] != null) ? y + add[cls] : 0;
 }
+
+// ערך שמור גובר — עקיפה ידנית, ומחזור שנרשם ביציאה.
+function hrCycleOf(s) { var v = parseInt(s && s.cycle, 10); return isFinite(v) && v > 0 ? v : hrCycleFor(s && s.cls); }
+
+// התווית מהמנוע — שנה נושאת תווית אחת.
+function hrCycleLabel(n) { return n ? hebYearLabelFull(n) : ''; }
 
 function setStudentInactive(sid){
   var students=getStudents();
@@ -276,7 +277,7 @@ function setStudentInactive(sid){
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
   s.active=false;
   // המחזור נרשם רק כשאין לו ערך — תלמיד שהושבת שוב היה מקבל את שנת הלחיצה ולא את מחזור הסיום שנרשם לו.
-  if(!s.cycle) s.cycle=hrCycleFor(s.cls);
+  if(!s.cycle) s.cycle=hrCycleFor(s.cls)||null;
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
@@ -341,30 +342,33 @@ function openDeactivateStudentDlg(){
 
 // ── מעבר שנתי ──
 function openYearTransitionDlg(){
-  var _gc=hrCycleFor('g');
-  var cycTxt=_gc?(' (מחזור '+_gc+')'):'';
+  var y=hrSchoolYear();
+  if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
   openModal(MSG_YEAR_ROLL_TITLE,
     '<div class="year-note">'+
       '<strong class="danger-strong">⚠️ פעולה בלתי הפיכה!</strong><br>'+
-      MSG_YEAR_ROLL_C+cycTxt+' → יועברו ל<strong>לא פעילים</strong><br>'+
+      MSG_YEAR_ROLL_C+' (מחזור '+esc(hrCycleLabel(y))+') → יועברו ל<strong>לא פעילים</strong><br>'+
       '• שיעור ב\' → שיעור ג\'<br>'+
       '• שיעור א\' → שיעור ב\'<br>'+
-      MSG_YEAR_ROLL_A+
+      MSG_YEAR_ROLL_A+'<br>'+
+      '• שנת הלימודים: '+esc(hrCycleLabel(y))+' → '+esc(hrCycleLabel(y+1))+
     '</div>'+
     '<div class="year-danger">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
     '<button data-act="year-transition-confirm" class="year-go">🔄 בצע מעבר שנתי</button>');
 }
 
+// הבוגרים מקבלים את שנת הלימודים שמסתיימת, ואז השנה מתקדמת — באותה פעולה.
 function doYearTransition(){
+  var y=hrSchoolYear();
+  if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
   var students=getStudents();
-  var _cycG=hrCycleFor('g');
   var changed=0;
   students.forEach(function(s){
     if(s.active===false) return;
     if(s.cls==='g'){
       s.active=false;
-      if(!s.cycle) s.cycle=_cycG;
+      if(!s.cycle) s.cycle=y;
       s.updated_at=Date.now(); changed++;
     } else if(s.cls==='b'){
       s.cls='g'; s.updated_at=Date.now(); changed++;
@@ -373,6 +377,7 @@ function doYearTransition(){
     }
   });
   saveStudents(students);
+  hrCfgSet('school_year', y+1);
   schedulePush();
   filterClass('all');
   toast(MSG_YEAR_ROLL_DONE+changed+MSG_STUDENTS_UPDATED, null, 'good');
@@ -474,6 +479,17 @@ function cancelSingleAbsence(absenceId) {
   }
 }
 
+// בורר המחזור — «נגזר» ראשון, ושבע שנים סביב שנת הלימודים; ערך שמור מחוץ לטווח נוסף כמות שהוא.
+function fillCycleSel(cur){
+  var el=document.getElementById('st-cycle');if(!el)return;
+  var y=hrSchoolYear()||cur,ys=[];
+  for(var i=-4;i<=3;i++){if(y)ys.push(y+i);}
+  if(cur&&ys.indexOf(cur)<0)ys.push(cur);
+  ys.sort(function(a,b){return b-a;});
+  el.innerHTML='<option value="">נגזר משיעור ושנת הלימודים</option>'+ys.map(function(n){
+    return '<option value="'+n+'"'+(n===cur?' selected':'')+'>'+esc(hrCycleLabel(n))+'</option>';}).join('');
+}
+
 // שני מסלולי הפתיחה בונים מכאן — טופס שנבנה פעמיים נבדל בשדה, ושדה שנשמט נקרא «ריק» ולא «לא נשאל»
 function studentFormHTML(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
@@ -485,7 +501,7 @@ function studentFormHTML(sid){
       '<option value="g">שיעור ג\'</option>'+
     '</select>'+
     '<label for="st-cycle">מחזור</label>'+
-    '<input aria-label="מחזור — לדוגמה: פ״ו" type="text" id="st-cycle" placeholder="ריק — יימלא לפי שנת הלימודים בהשבתה" maxlength="12" class="st-form-input">'+
+    '<select id="st-cycle" class="st-class-sel"></select>'+
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
@@ -562,6 +578,7 @@ function openAddStudent(){
   S.editingStudentId=null;
   openModal(MSG_ADD_STUDENT_TITLE, studentFormHTML(), studentFormFoot());
   document.getElementById('st-class').value='a';
+  fillCycleSel(0);
 }
 
 function editStudent(sid){
@@ -572,13 +589,13 @@ function editStudent(sid){
   openModal(MSG_EDIT_STUDENT_TITLE, studentFormHTML(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
-  document.getElementById('st-cycle').value=s.cycle||'';
+  fillCycleSel(parseInt(s.cycle,10)||0);
 }
 
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
-  var cycle=(document.getElementById('st-cycle')||{value:''}).value.trim();
+  var cycle=parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||null;
   var errEl=document.getElementById('st-err');
   if(errEl) errEl.textContent='';
   if(!name){

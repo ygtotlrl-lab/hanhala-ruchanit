@@ -5,7 +5,7 @@ import { appConfigure } from '../core/util.js';
 // כאן הנתונים שהליבה קוראת, והחיווט — ב-main.js; הקובץ הזה נטען ראשון, לפני כל קריאה לליבה.
 // העידן עולה בשינוי צורת רשומה או מפתחה, ושינוי שם טבלה הוא שינוי כזה — המראה ממופתחת בשם.
 // עותק בעידן ישן אינו נדחף — הממתין בו נרשם ביומן, והוא נזרק ונמשך מלא.
-var DATA_ERA = 7;
+var DATA_ERA = 8;
 
 appConfigure({ DATA_ERA: DATA_ERA });
 
@@ -98,6 +98,7 @@ var MSG_YEAR_ROLL_TITLE = '🔄 מעבר שנתי';
 
 var MSG_YEAR_ROLL_C = '• שיעור ג\'';
 
+var MSG_YEAR_UNSET = '⚠️ שנת הלימודים לא נקבעה בהגדרות — המעבר השנתי אינו זמין';
 var MSG_YEAR_ROLL_A = '• שיעור א\' יישאר ריק לתלמידים חדשים';
 
 var MSG_YEAR_ROLL_DONE = '✅ מעבר שנתי הושלם — ';
@@ -287,5 +288,5 @@ export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PERMS_KEY, HR_ROWS_KI
          MSG_TABLES_MISSING, MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED,
          MSG_USER_SAVED_NO_FP, MSG_USER_SWITCHED_MID, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
-         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
+         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
          PK_AT_MARK, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };
