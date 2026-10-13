@@ -245,7 +245,7 @@ function mountView() {
 // {id, username, full_name, role}
 Object.defineProperty(AUTH, 'user', { get: sessGet, set: sessSet, enumerable: true });
 
-// האחסון נפתח לפני כל קריאה ממנו — אחרי שה-CFG הוגדרו, כי המרשם והייבוא קוראים אותם.
+// האחסון נפתח לפני כל קריאה ממנו — אחרי שה-CFG הוגדרו, כי המרשם קורא אותם.
 await lsOpen();
 mountView();
 
