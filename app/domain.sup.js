@@ -8,7 +8,7 @@ import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
 import { S } from './state.js';
-import { atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
+import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
 import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrIsPrayer, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrPullCfg, hrPullSessions, hrPullTreats, hrRenderTodaySessions, hrSaveCfg,
@@ -286,7 +286,7 @@ async function hrEditMark(st, recId, sid, newCode) {
   rec.updated_at=Date.now();
   // הטוסט אחרי הכתיבה לדיסק, שסינכרונית בראש השמירה; ההמתנה שאחריה היא הרשת בלבד.
   // ההבטחה מוחזרת כדי שנקודת הניתוב תשחרר את הכפתור לפיה.
-  var _p=hrSaveData(st, data);
+  var _p=hrSaveData(st, data, hrDayWin(rec.session_date));
   closeModal();
   hrRenderTodaySessions(st);
   hrRenderArchive(st);

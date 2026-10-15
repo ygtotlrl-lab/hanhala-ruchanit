@@ -205,7 +205,7 @@ async function hrEditSession(st, recId) {
       rec.updated_at=Date.now();
       hrMirrorPutRecs(st.table, data);
       S[st.v+'Data']=data;
-      hrSaveData(st, data); // בלי await בכוונה — הדחיפה רצה ברקע
+      hrSaveData(st, data, hrDayWin(rec.session_date)); // בלי await בכוונה — הדחיפה רצה ברקע
     }
   } catch(eAp){ console.warn('[approval-refresh] '+st.kind+'-edit', eAp); }
   var dw=document.getElementById(st.p+'-date-wrap');
@@ -316,8 +316,9 @@ function hrSaveLocalNow(st) {
 }
 
 async function hrAutoSaveNow(st) {
-  if(hrSaveLocalNow(st)===null) return;
-  await hrSaveData(st, S[st.v+'Data']);
+  var rec=hrSaveLocalNow(st);
+  if(rec===null) return;
+  await hrSaveData(st, S[st.v+'Data'], hrDayWin(rec.session_date));
 }
 
 function hrMarkDirty(st) {
@@ -541,8 +542,9 @@ async function hrCloseSession(st) {
   // שמירה וסגירה רק מסמנות open=false — הרשומה כבר נשמרה לאורך הרישום
   var cRec=_hrCurRec(st);
   if(cRec){cRec.open=false;}
-  await hrAutoSaveNow(st);
-  var rec=_hrCurRec(st);
+  // הסגירה אינה ממתינה לרשת — הרשומה נכתבת לדיסק בקריאה עצמה, והדחיפה רצה ברקע ומסומנת ⏳ עד שתצליח
+  hrAutoSaveNow(st);
+  var rec=cRec;
   var msg=rec?('✅ '+rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):st.savedMsg;
   S[st.v+'CurrentSessionId']=null;
   S[st.v+'Marks']={};

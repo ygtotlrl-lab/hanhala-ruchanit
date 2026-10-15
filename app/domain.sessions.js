@@ -12,7 +12,7 @@ import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_
          PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
-         hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
+         hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
          hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrSessionsPull, hrSetPending, hrSyncLog,
          hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
 import { _hcH } from './domain.hebdate.js';
@@ -222,7 +222,8 @@ async function hrLoadData(st) {
 
 // אין ניקוי רשומות לפי שם הסדר — סדר לגיטימי באותו שם נמחק,
 // והשמירה ממזגת עם הענן, כך שהמנוקות חוזרות מיד; מחיקה היא tombstone מפורש בלבד.
-async function hrSaveData(st, data) {
+// win — חלון ימי הרשומות שנגעו בהן: המיזוג לפני הדחיפה מושך רק אותו; בלעדיו נמשכת כל ההיסטוריה, ושמירה של סדר אחד ממתינה לאלפי סימונים.
+async function hrSaveData(st, data, win) {
   // משתמש שהתחלף באמצע היה מקבל לחשבונו את הרישום שאחרי ה-await.
   var _ep = ctxEpoch();
   // t0 נלקח לפני קריאת המצב — אישור של רשומה שסומנה אחריו היה מוריד סימון מרשומה שלא עלתה
@@ -232,7 +233,7 @@ async function hrSaveData(st, data) {
   try {
     // מיזוג עם הענן לפני הדחיפה — אחרת נדרסות רשומות של מכשיר אחר
     var localN=hrCount(data);
-    var merged=await hrSessionsPull(st.table);
+    var merged=await hrSessionsPull(st.table, win);
     if (ctxStale(_ep)) return;
     if (Array.isArray(merged)) { data=merged; S[st.v+'Data']=data; }
     // מערך ריק אינו כישלון אלא «אין מה לדחוף»; כתיבה שנכשלה נשארת ממתינה ונוסית שוב — האב לפני הבן
@@ -284,7 +285,7 @@ async function hrRefreshApprovalMarks(sid) {
       if (changed.length) {
         // הסימון לפני השמירה — הדחיפה לוכדת t0 בכניסה, ורק סימון שקדם לו מאושר בהצלחתה
         pendMarkMany(changed);
-        try { hrSaveData(st, data); } catch (eS) { hrWriteFail('hrRefreshApprovalMarks', eS); }
+        try { hrSaveData(st, data, hrDayWin(dateIso)); } catch (eS) { hrWriteFail('hrRefreshApprovalMarks', eS); }
       }
     });
   } catch(e) { console.warn('[approval-refresh]', e); }

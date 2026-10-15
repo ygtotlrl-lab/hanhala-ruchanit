@@ -5,7 +5,7 @@ import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
 import { hebDayLabel } from '../core/hebrew.js';
 import { MSG_EXPORT_FAIL, MSG_EXPORT_OK, MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE,
          MSG_NO_EXPORT_DATA, MSG_ROW_DELETED } from './constants.js';
-import { atvCls, getStudents, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from './domain.js';
+import { atvCls, getStudents, hrDayWin, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from './domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from './domain.hebdate.js';
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
@@ -136,7 +136,7 @@ async function _hrDeleteSessionConfirmed(st, id) {
   var data=await hrLoadData(st);
   var rec=data.find(function(r){return idEq(r.client_id,id);});
   if(rec) tombKill(rec);
-  await hrSaveData(st, data);
+  await hrSaveData(st, data, rec?hrDayWin(rec.session_date):undefined);
   hrRenderArchive(st);
   hrRenderTodaySessions(st);
   toast(MSG_ROW_DELETED, null, 'good');
