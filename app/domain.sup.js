@@ -10,7 +10,7 @@ import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
 import { S } from './state.js';
 import { atvCls, getStudents, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
-import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrLiveTreats, hrLoadData, hrLoadTreats,
+import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrIsPrayer, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrPullCfg, hrPullSessions, hrPullTreats, hrRenderTodaySessions, hrSaveCfg,
          hrSaveData, hrSaveTreats, hrSortAbsenceRows, hrSortSupRecords, hrSortTreats,
          hrSupMonth } from './domain.sessions.js';
@@ -72,7 +72,8 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
   }
 
   var stats={};
-  students.forEach(function(s){stats[s.client_id]={name:s.name,cls:s.cls,absent:0,lateMin:0,records:[]};});
+  // חיסור בתפילה ובסדר נספרים בנפרד ויחד; האיחור בדקות — בסדרים בלבד, ובתפילה — קל ומשמעותי, שאינם חיסור
+  students.forEach(function(s){stats[s.client_id]={name:s.name,cls:s.cls,absent:0,absSed:0,absPr:0,lateMin:0,lk:0,lm:0,records:[]};});
   data.forEach(function(rec){
     var dh=rec.session_date?hrSessHeb(rec):null;
     if(!dh||dh.hy!==hy||dh.mi!==mi) return;
@@ -82,12 +83,18 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
       var r={client_id:rec.client_id,session:rec.session,session_date:rec.session_date,mark:m.status,minutes:m.minutes||0};
       if(st.note) r.note=m.note||'';
       // נספרים רק חיסור ו-x — לא אישור, בבית או מנוחה
+      var pr=hrIsPrayer(st, rec.session);
       if(m.status==='e' || m.status==='x'){
         stats[sid].absent++;
+        if(pr) stats[sid].absPr++; else stats[sid].absSed++;
         stats[sid].records.push(r);
       }
       if(m.status==='l'){
         stats[sid].lateMin+=m.minutes||0;
+        stats[sid].records.push(r);
+      }
+      if(m.status==='lk'||m.status==='lm'){
+        stats[sid][m.status]++;
         stats[sid].records.push(r);
       }
     });
@@ -95,20 +102,22 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
 
   // הרשימה נבנית מסדר התלמידים ולא מ-Object.entries — מפתח שנראה כמספר שלם ממוין מספרית לפני השאר
   var rows=hrSortAbsenceRows(students.map(function(s){return [String(s.client_id), stats[s.client_id]];})
-    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0);}));
+    .filter(function(e){return e[1]&&(e[1].absent>0||e[1].lateMin>0||e[1].lk>0||e[1].lm>0);}));
 
   if(!rows.length){
     el.innerHTML=navHTML+'<div class="empty-note">אין '+st.absMany+' ב'+mLabel+'</div>';return;
   }
 
   S[st.v+'SupRecords']={};
-  rows.forEach(function(e){S[st.v+'SupRecords'][e[0]]=e[1].records||[];});
+  S[st.v+'SupStats']={};
+  rows.forEach(function(e){S[st.v+'SupRecords'][e[0]]=e[1].records||[];S[st.v+'SupStats'][e[0]]=e[1];});
 
   var cfg=hrCfgOf(st);
   var html=navHTML+'<div class="status-choice-list">';
   rows.forEach(function(e){
     var sid=e[0],sr=e[1];
     var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
+    sr.treats=stuTreats.length;
     var lastTreat=stuTreats.length?hrSortTreats(stuTreats)[0]:null;
     var lastHTML='';
     if(lastTreat){
@@ -125,7 +134,8 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+alert20+alert300+'</div>'+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<span class="rec-abs">'+st.absMany+': <b>'+sr.absent+'</b></span>';
-    html+='<span class="rec-late">איחורים: <b>'+sr.lateMin+'</b>ד׳</span>';
+    // בזרם שיש בו תפילות — חיסורים וטיפולים בלבד, והשאר בפירוט
+    if(!st.prayers) html+='<span class="rec-late">איחורים: <b>'+sr.lateMin+'</b>ד׳</span>';
     html+='<span class="rec-muted">טיפולים: <b>'+stuTreats.length+'</b></span>';
     html+='<button data-act="'+p+'-sup-detail" data-id="'+esc(sid)+'" class="sup-detail-btn">🔍 פירוט</button>';
     html+='</div>';
@@ -211,6 +221,16 @@ function hrSupDetail(st, sid) {
   var name=stu?stu.name:'תלמיד';
   var records=(S[st.v+'SupRecords']&&S[st.v+'SupRecords'][sid])||[];
   var LBL=hrMarkLabels(st);
+  var sum=(S[st.v+'SupStats']&&S[st.v+'SupStats'][sid])||null;
+  var sumHTML='';
+  if(st.prayers&&sum){
+    var cell=function(lbl,n,code){return '<div class="sup-sum-cell"><span class="'+(code?atvCls(code)+' ':'')+'sup-sum-n">'+n+'</span><span class="sup-sum-l">'+lbl+'</span></div>';};
+    sumHTML='<div class="sup-sum">'+
+      cell('חיסורים',sum.absent,'e')+cell('חיסורים בסדרים',sum.absSed,'e')+cell('חיסורים בתפילות',sum.absPr,'e')+
+      cell('טיפולים',sum.treats||0,'')+cell('דקות איחור',sum.lateMin,'l')+
+      cell('איחור קל בתפילה',sum.lk,'lk')+cell('איחור משמעותי בתפילה',sum.lm,'lm')+
+    '</div>';
+  }
 
   var rowsHTML='';
   if(!records.length){rowsHTML='<div class="loading-note">אין '+st.absMany+' בחודש זה</div>';}
@@ -230,19 +250,21 @@ function hrSupDetail(st, sid) {
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    '<div class="scroll-pane">'+rowsHTML+'</div>','');
+    sumHTML+'<div class="scroll-pane">'+rowsHTML+'</div>','');
 }
 
 function hrSupEditMarkDlg(st, recId, sid, curMark) {
+  var rec=(S[st.v+'Data']||[]).find(function(r){return idEq(r.client_id,recId);});
+  var pr=!!rec&&hrIsPrayer(st, rec.session);
   var CODES=[
-    {c:'p', lbl:'✓ נוכח'},
-    {c:'l', lbl:'⏰ איחור'},
+    {c:'p', lbl:'✓ נוכח'}
+  ].concat(pr?[{c:'lk', lbl:'⏰ איחור קל'},{c:'lm', lbl:'⏰ איחור משמעותי'}]:[{c:'l', lbl:'⏰ איחור'}],[
     {c:'e', lbl:'− חיסור'},
     {c:'x', lbl:'✕ '+st.xOne},
     {c:'ap', lbl:'א אישור'},
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
-  ];
+  ]);
   var btnsHTML=CODES.map(function(cd){
     var active=cd.c===curMark?'mark-on':'mark-off';
     return '<button data-act="'+st.p+'-mark-set" data-rec="'+esc(recId)+'" data-sid="'+esc(sid)+'" data-code="'+esc(cd.c)+'" '+
@@ -291,6 +313,7 @@ function _hrPaintSettings(st) {
       return '<div data-sess-row="1" class="sess-edit-row">'+
         '<input aria-label="שם הסדר" data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" class="sess-field">'+
         '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+esc(s.start_time||'')+'" class="cfg-row-input">'+
+        '<label class="sess-prayer"><input data-sess-prayer="1" type="checkbox"'+(s.prayer?' checked':'')+'>תפילה</label>'+
         '<button data-act="row-remove" class="row-del-btn">✕</button>'+
       '</div>';
     }).join('');
@@ -313,6 +336,7 @@ function hrAddSessionRow(st) {
   div.className='edit-row sess-edit-row-gap';
   div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" class="sess-field">'+
     '<input data-sess-time="1" aria-label="שעת הסדר" type="time" class="cfg-row-input">'+
+    '<label class="sess-prayer"><input data-sess-prayer="1" type="checkbox">תפילה</label>'+
     '<button data-act="row-remove" class="row-del-btn">✕</button>';
   sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 }
@@ -342,6 +366,8 @@ async function hrSaveSettingsCfg(st) {
       var existing=oldSessions.find(function(s){return s.name===name;});
       var entry={id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name};
       if(sessStart) entry.start_time=sessStart;
+      var prInp=row.querySelector('[data-sess-prayer]');
+      if(prInp&&prInp.checked) entry.prayer=true;
       newSess.push(entry);
     });
     cfg.sessions=newSess;

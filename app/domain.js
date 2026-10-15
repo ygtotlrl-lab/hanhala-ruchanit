@@ -655,7 +655,7 @@ function tyCls(t) {
 
 // הגוון באסימון --at-<קוד>, והמחלקה מציבה אותו במשתנה --at; קוד לא מוכר נשאר בברירת המחדל.
 function atvCls(code) {
-  var v = ['p', 'l', 'e', 'x', 'ap', 'ak', 'a'].indexOf(code) < 0 ? '' : 'at-code-' + code;
+  var v = ['p', 'l', 'lk', 'lm', 'e', 'x', 'ap', 'ak', 'a'].indexOf(code) < 0 ? '' : 'at-code-' + code;
   return 'at-code' + (v ? ' ' + v : '');
 }
 
@@ -761,11 +761,11 @@ function hrDefaultCfg() {
 function atDefaultCfg() {
   return {
     sessions:[
-      {id:'sh',name:'שחרית'},
+      {id:'sh',name:'שחרית',prayer:true},
       {id:'s1',name:'סדר א׳'},
       {id:'s2',name:'סדר ב׳'},
       {id:'s3',name:'סדר ג׳'},
-      {id:'ev',name:'ערבית'},
+      {id:'ev',name:'ערבית',prayer:true},
       {id:'nl',name:'סדר לילה'}
     ],
     treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']

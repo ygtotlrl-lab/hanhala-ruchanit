@@ -2,7 +2,7 @@
 import { dayToday } from '../../core/util.js';
 import { shell } from '../state.js';
 import { getActiveAbsences, getStudents, hrMarks, hrPullFromCloud } from '../domain.js';
-import { HR_STREAMS, hrLoadData } from '../domain.sessions.js';
+import { HR_STREAMS, hrIsLate, hrLoadData } from '../domain.sessions.js';
 
 function screenHomeHTML() {
   return `
@@ -53,16 +53,16 @@ async function refreshDashStats() {
   var todaySess = atData.filter(function(r){ return r.session_date === todayIso; });
   var sessCount = todaySess.length;
 
-  // חיסורים — e ו-x; נוכחות — p ו-l; כל סדר נספר בנפרד
+  // חיסורים — e ו-x; נוכחות — p וכל איחור; כל סדר נספר בנפרד
   var absCount = 0, presMarks = 0;
   todaySess.forEach(function(rec){
     Object.values(hrMarks(rec)).forEach(function(m){
       if(m.status === 'e' || m.status === 'x') absCount++;
-      if(m.status === 'p' || m.status === 'l') presMarks++;
+      if(m.status === 'p' || hrIsLate(m.status)) presMarks++;
     });
   });
 
-  // אחוז נוכחות: מונה p+l, מכנה — תלמידים פעילים כפול מספר הסדרים
+  // אחוז נוכחות: מונה p וכל איחור, מכנה — תלמידים פעילים כפול מספר הסדרים
   var rateStr;
   if(sessCount === 0){
     rateStr = '—';

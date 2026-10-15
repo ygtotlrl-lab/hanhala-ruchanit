@@ -40,10 +40,10 @@ function hrSortHebMonths(list) { return list.slice().sort(function (a, b) { retu
 // ימי הארכיון, ב-ISO — האחרון ראשון.
 function hrSortDays(list) { return list.slice().sort(function (a, b) { return sortCompare(b, a); }); }
 
-// שורות ההשגחה — החיסורים הרבים ראשונים, ובשוויון — דקות האיחור.
+// שורות ההשגחה — החיסורים הרבים ראשונים, ובשוויון — דקות האיחור, ואז האיחורים המשמעותיים בתפילה.
 function hrSortAbsenceRows(rows) {
   return rows.slice().sort(function (a, b) {
-    return (b[1].absent - a[1].absent) || b[1].lateMin - a[1].lateMin;
+    return (b[1].absent - a[1].absent) || (b[1].lateMin - a[1].lateMin) || ((b[1].lm||0) - (a[1].lm||0));
   });
 }
 
@@ -98,7 +98,7 @@ var HR_STREAMS = {
     cfgKey: 'attend_cfg', treatsKey: 'attend_treats', treatsLs: 'hr_attend_treats',
     defaults: atDefaultCfg, clean: function (c) { return c; }, day: dayToday,
     // הסדרים נערכים בהגדרות, ושם גם התראת החיסורים; שורת השינה נושאת הערה
-    sessEdit: true, alert: true, note: false,
+    sessEdit: true, alert: true, note: false, prayers: true,
     title: '✅ שמירת הסדרים', one: 'סדר', many: 'סדרים', xOne: 'היעדרות', xMany: 'היעדרויות', absMany: 'חיסורים',
     openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ הסדר נשמר',
     msg: { closeFirst: MSG_CLOSE_SESSION_FIRST, done: MSG_SESSION_DONE, elsewhere: MSG_SESSION_OPEN_ELSEWHERE,
@@ -110,7 +110,7 @@ var HR_STREAMS = {
     pkSess: PK_SL_SESS, pkMark: PK_SL_MARK,
     cfgKey: 'sleep_cfg', treatsKey: 'sleep_treats', treatsLs: 'hr_sleep_treats',
     defaults: hrDefaultCfg, clean: _hrCleanCfg, day: hrGetLogicalDate,
-    sessEdit: false, alert: false, note: true,
+    sessEdit: false, alert: false, note: true, prayers: false,
     title: '🌙 זמן שינה', one: 'דו"ח', many: 'דוחות', xOne: 'אירוע', xMany: 'אירועים', absMany: 'אירועים',
     openText: ' נפתחה ולא נסגר.', savedMsg: '✅ הבדיקה נשמרה',
     msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
@@ -129,7 +129,19 @@ function hrDow(isoDate){return HEB_DOW[dayNoon(isoDate).getDay()];}
 
 // תוויות הסימון — אחת לשני הזרמים, ו-x בשם הזרם.
 function hrMarkLabels(st) {
-  return {p:'נוכח',l:'איחור',e:'חיסור',x:st.xOne,ap:'אישור',ak:'בבית',a:'מנוחה'};
+  return {p:'נוכח',l:'איחור',lk:'איחור קל',lm:'איחור משמעותי',e:'חיסור',x:st.xOne,ap:'אישור',ak:'בבית',a:'מנוחה'};
+}
+
+// איחור — שלושה קודים: l בדקות (בסדרים), lk ו-lm בתפילות; כל ספירה של «מאחרים» עוברת כאן.
+var HR_LATE_CODES = ['l', 'lk', 'lm'];
+function hrIsLate(code) { return HR_LATE_CODES.indexOf(code) >= 0; }
+
+// תפילה — לפי הדגל prayer של הסדר בהגדרות, בשם הסדר; סדר שאינו בהגדרות אינו תפילה.
+function hrIsPrayer(st, sessName) {
+  if (!st.prayers) return false;
+  var ss = hrCfgOf(st).sessions || [];
+  for (var i = 0; i < ss.length; i++) if (ss[i].name === sessName) return !!ss[i].prayer;
+  return false;
 }
 
 // סימון ריק או ממולא — והשינה נושאת גם הערה.
@@ -286,6 +298,8 @@ function hrSummaryHTML(st, cnts){
   add(cnts.e||0,  'חיסורים',  'e');
   add(cnts.x||0,  st.xMany,   'x');
   add(cnts.l||0,  'איחורים',  'l');
+  add(cnts.lk||0, 'איחור קל', 'lk');
+  add(cnts.lm||0, 'איחור משמעותי', 'lm');
   add(cnts.ap||0, 'אישורים',  'ap');
   add(cnts.ak||0, 'בבית',     'ak');
   add(cnts.a||0,  'מנוחה',    'a');
@@ -406,7 +420,7 @@ function hrRenderTodaySessions(st) {
 }
 
 export { HR_STREAMS, _hrDiskArr, _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
-         hrCfgOf, hrDow, hrFindLiveSession, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
+         hrCfgOf, hrDow, hrFindLiveSession, hrIsLate, hrIsPrayer, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrMarkOf, hrPullCfg, hrPullSessions, hrPullTreats, hrRefreshApprovalMarks,
          hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats, hrSessionDefs, hrSortAbsenceRows,
          hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears, hrSortSessionDefs,

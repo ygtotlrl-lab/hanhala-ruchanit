@@ -12,7 +12,7 @@ import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutR
 import { _hcBuild, _hcFmt, _hcH, _hcMN, hrFmtAt, hrSessHebFmt } from './domain.hebdate.js';
 import { _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg, hrCfgOf,
          hrFindLiveSession, hrMarkOf, hrPullCfg, hrPullSessions, hrRenderTodaySessions,
-         hrSaveData, hrSessionDefs } from './domain.sessions.js';
+         hrIsPrayer, hrSaveData, hrSessionDefs } from './domain.sessions.js';
 import { hrRenderArchive } from './domain.arc.js';
 import { hrRenderSupervision } from './domain.sup.js';
 
@@ -416,6 +416,8 @@ function hrRenderStudents(st) {
   if(!students||!students.length){el.innerHTML='<div class="empty-note">אין תלמידים</div>';return;}
 
   var buf=S[st.v+'Marks'], pending=S[st.v+'Pending'];
+  // בתפילה האיחור בשתי דרגות ובלי דקות; בסדר — איחור אחד עם דקות
+  var curRec=_hrCurRec(st), prayer=!!curRec&&hrIsPrayer(st, curRec.session);
   var active=students.filter(function(s){return s.active!==false;});
 
   var unmarked=[], marked=[];
@@ -472,7 +474,8 @@ function hrRenderStudents(st) {
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.client_id):'')+
         mkBtn(s.client_id,'p','✓')+
-        mkBtn(s.client_id,'l','איחור')+
+        (prayer?mkBtn(s.client_id,'lk','איחור קל')+mkBtn(s.client_id,'lm','איחור משמעותי')
+               :mkBtn(s.client_id,'l','איחור'))+
         mkBtn(s.client_id,'e','-')+
         mkBtn(s.client_id,'x','x')+
         mkBtn(s.client_id,'ap','א')+

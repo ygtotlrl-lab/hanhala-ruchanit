@@ -266,6 +266,8 @@
 .at-code-ap{--at:var(--at-ap)}
 .at-code-e{--at:var(--at-e)}
 .at-code-l{--at:var(--at-l)}
+.at-code-lk{--at:var(--at-lk)}
+.at-code-lm{--at:var(--at-lm)}
 .at-code-p{--at:var(--at-p)}
 .at-code-x{--at:var(--at-x)}
 .abs-tone-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
@@ -426,3 +428,8 @@
   .stats{grid-template-columns:repeat(4,1fr)}
 }
 
+.sup-sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-5)}
+.sup-sum-cell{align-items:center;display:flex;flex-direction:column;gap:var(--sp-1);border:1.5px solid var(--border);background:var(--card-2);padding:var(--sp-4) var(--sp-3);border-radius:var(--r-3);text-align:center}
+.sup-sum-n{color:var(--at,var(--text));font-size:var(--fs-6);font-weight:800;line-height:var(--lh-1)}
+.sup-sum-l{font-size:var(--fs-2);color:var(--text-2)}
+.sess-prayer{align-items:center;display:flex;font-size:var(--fs-2);gap:var(--sp-1);color:var(--text-2);white-space:nowrap}

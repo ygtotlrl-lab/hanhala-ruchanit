@@ -8,7 +8,7 @@ import { MSG_EXPORT_FAIL, MSG_EXPORT_OK, MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_
 import { atvCls, getStudents, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from './domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from './domain.hebdate.js';
-import { hrCachedArr, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
+import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
          hrSummaryHTML } from './domain.sessions.js';
 
@@ -238,7 +238,7 @@ async function _hrExportPdf(st, fromIso, toIso) {
       var ms=Object.values(hrMarks(rec));
       var p=ms.filter(function(m){return m.status==='p';}).length;
       var ab=ms.filter(function(m){return m.status==='e'||m.status==='x';}).length;
-      var l=ms.filter(function(m){return m.status==='l';}).length;
+      var l=ms.filter(function(m){return hrIsLate(m.status);}).length;
       body.push([cell(i+1),cell(hrSessHebFmt(rec)),cell(rec.session),cell(p),cell(ab),cell(l)]);
     });
     var ranged=!!(fromIso||toIso), last=st.pdfHead.length-1;

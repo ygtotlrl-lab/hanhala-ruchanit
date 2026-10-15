@@ -10,7 +10,7 @@
 
 --on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
 /* גווני הסימון — אסימון לכל קוד ולא מפה בקוד, שהייתה עותק שני של הגוון; הדיו על כולם הוא --on-brand */
---at-p:#276749;--at-l:#b7591b;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
+--at-p:#276749;--at-l:#b7591b;--at-lk:#b7791f;--at-lm:#9c4221;--at-e:#742a2a;--at-x:#742a2a;--at-ap:#2b4c9f;--at-ak:#553c9a;--at-a:#0e7490;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 
 /* ── הערכה הכהה ── */
@@ -27,7 +27,7 @@
       --on-brand-wash:rgba(255,255,255,.13);
       --text:#e8eef5; --text-2:#c2cfdc; --text-3:#93a5b8;
       --border:#24333f;
-      --at-p:#84dba6; --at-l:#f2b56e; --at-e:#ff9d9d; --at-x:#ff9d9d;
+      --at-p:#84dba6; --at-l:#f2b56e; --at-lk:#f6d58e; --at-lm:#f0a070; --at-e:#ff9d9d; --at-x:#ff9d9d;
       --at-ap:#93c3f7; --at-ak:#c4b5fd; --at-a:#7dd3fc;
       --brand-ink:#7fb2f0; --brand-fill:#1a3a6b; --brand-soft:#111d2a;
       --deep-1:#234a8a; --deep-2:#0f2347;
