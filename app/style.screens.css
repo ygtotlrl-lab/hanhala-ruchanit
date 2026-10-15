@@ -435,3 +435,6 @@
 .sup-sum-n{color:var(--at,var(--text));font-size:var(--fs-6);font-weight:800;line-height:var(--lh-1)}
 .sup-sum-l{font-size:var(--fs-2);color:var(--text-2)}
 .sess-prayer{align-items:center;display:flex;font-size:var(--fs-2);gap:var(--sp-1);color:var(--text-2);white-space:nowrap}
+.sup-sum-4 .sup-sum-cell{padding:var(--sp-3) var(--sp-2);background:transparent}
+.sup-sum-4 .sup-sum-n{font-size:var(--fs-4);font-weight:700}
+.sup-sum-4 .sup-sum-l{font-size:var(--fs-1)}
