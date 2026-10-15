@@ -2,7 +2,7 @@
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
          MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
-import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, usersRefresh,
+import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, isAdminOf, usersRefresh,
          usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
 import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
@@ -402,6 +402,7 @@ async function savePerms() {
 // ── שינוי סיסמה אישית ──
 // שלושה שדות ולא שניים — שגיאת הקלדה בסיסמה החדשה נועלת את המשתמש בחוץ בלי דרך לגלות מה הוקלד.
 function myPasswordModal() {
+  if (!isAdmin()) return;
   var fld = 'mp-fld';
   var lbl = 'mp-lbl';
   openModal(MSG_MY_PASS_TITLE,
@@ -422,6 +423,7 @@ async function changeMyPassword() {
   // היו מפנות את הכתיבה לשורה של משתמש אחר.
   var _u = AUTH.user;
   if (!_u || !_u.client_id) { toast(MSG_NO_USER_SESSION, null, 'bad'); return; }
+  if (!isAdminOf(_u)) return;
   var c1 = document.getElementById('mp-cur');
   var n1 = document.getElementById('mp-new');
   var n2 = document.getElementById('mp-new2');

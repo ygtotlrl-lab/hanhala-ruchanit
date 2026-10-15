@@ -5,7 +5,7 @@ import { MSG_FILL_LOGIN, MSG_LOGIN_ERR, MSG_NO_CRYPTO, MSG_OFF_NO_CRYPTO, MSG_OF
 import { ctxSwitch } from '../../core/sync.js';
 import { lsGet } from '../../core/storage.js';
 import { mirrorLoadOne } from '../../core/mirror.js';
-import { AUTH_USER_COLS, authLog, authUsersTable, authVerify, lkReset, lkStop, usersGet,
+import { AUTH_USER_COLS, authLog, authUsersTable, authVerify, isAdminOf, lkReset, lkStop, usersGet,
          usersSaveOne } from '../../core/auth.js';
 import { closeModal, esc, openModal, shellBare, toast } from '../../core/ui.js';
 import { HEB_DOW, hebrewDate } from '../../core/hebrew.js';
@@ -174,6 +174,7 @@ async function _doLoginInner() {
     if (mn) mn.textContent = u.full_name;
     var mr = document.getElementById('user-menu-role');
     if (mr) mr.textContent = AUTH.ROLE_LABELS[u.role] || u.role;
+    menuPassSync(u);
     var hr = document.getElementById('hdr-role'); if (hr) hr.textContent = AUTH.ROLE_LABELS[u.role] || '';
   } catch(e) { console.warn('[login] header update failed:', e); }
   try { lkReset(); } catch(e) { console.warn('[login] lkReset:', e); }
@@ -245,6 +246,12 @@ async function toggleUserMenu() {
     others.map(function(u){
       return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="user-switch"><span class=\"user-switch-ico\">👤</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
+}
+
+// שינוי הסיסמה העצמי — למנהל בלבד; סיסמה של מנהל אחר נקבעת בניהול המשתמשים.
+function menuPassSync(u) {
+  var b = document.getElementById('user-menu-pass');
+  if (b) b.classList.toggle('hidden', !isAdminOf(u));
 }
 
 function closeUserMenu() {
@@ -321,6 +328,7 @@ async function confirmSwitch() {
   if(mn) mn.textContent=u.full_name;
   var mr=document.getElementById('user-menu-role');
   if(mr) mr.textContent=AUTH.ROLE_LABELS[u.role]||u.role;
+  menuPassSync(u);
   lkReset();
   shell.showPage('home');
   toast(MSG_SWITCHED_AS+u.full_name, null, 'good');
