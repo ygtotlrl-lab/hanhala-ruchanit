@@ -225,11 +225,12 @@ function hrSupDetail(st, sid) {
   var sumHTML='';
   if(st.prayers&&sum){
     var cell=function(lbl,n,code){return '<div class="sup-sum-cell"><span class="'+(code?atvCls(code)+' ':'')+'sup-sum-n">'+n+'</span><span class="sup-sum-l">'+lbl+'</span></div>';};
-    sumHTML='<div class="sup-sum">'+
-      cell('חיסורים',sum.absent,'e')+cell('חיסורים בסדרים',sum.absSed,'e')+cell('חיסורים בתפילות',sum.absPr,'e')+
-      cell('טיפולים',sum.treats||0,'')+cell('דקות איחור',sum.lateMin,'l')+
-      cell('איחור קל בתפילה',sum.lk,'lk')+cell('איחור משמעותי בתפילה',sum.lm,'lm')+
-    '</div>';
+    // טיפולים למעלה, ומתחתם שתי קבוצות: חיסורים · איחורים
+    sumHTML='<div class="sup-sum">'+cell('טיפולים',sum.treats||0,'')+'</div>'+
+      '<div class="panel-head-sm">חיסורים</div>'+
+      '<div class="sup-sum">'+cell('סה״כ',sum.absent,'e')+cell('סדרים',sum.absSed,'e')+cell('תפילות',sum.absPr,'e')+'</div>'+
+      '<div class="panel-head-sm">איחורים</div>'+
+      '<div class="sup-sum">'+cell('סדרים (דקות)',sum.lateMin,'l')+cell('קלים בתפילה',sum.lk,'lk')+cell('משמעותיים בתפילה',sum.lm,'lm')+'</div>';
   }
 
   var rowsHTML='';
