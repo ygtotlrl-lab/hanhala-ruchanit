@@ -2,7 +2,7 @@
 import { MSG_KV_BAD, dayIso, kvParse, uniqList,
          netTimeout, sortCompare } from '../core/util.js';
 import { _rowsPaged, ctxEpoch, ctxStale, mergeCore, mergeWinner,
-         pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
+         pendAll, pendConfirmPush, pendHas, pendMark, pendMarkMany, plTouch, pushDirty, schedulePush,
          tombInherit, tombKill } from '../core/sync.js';
 import { lsGet, lsLog, lsSet } from '../core/storage.js';
 import { MIRROR, mirrorSave } from '../core/mirror.js';
@@ -500,15 +500,19 @@ async function hrRowsGetStudents() {
   } catch (e) { return { ok: false, data: null }; }
 }
 
-// שורת תלמיד אחד מהענן — היסטוריית הסטטוסים צריכה שורה אחת, ולא את המצבה כולה.
-async function hrStudentCloudGet(sid) {
-  if (!S.SB) return { ok: false, rec: null };
+// שורות תלמידים לפי מזהה — מסך של תלמיד אחד ומיזוג שלפני דחיפה צריכים את השורות שלהם, ולא את המצבה כולה.
+async function hrStudentsCloudGet(ids) {
+  if (!S.SB) return { ok: false, rows: null };
   try {
     var res = await netTimeout(S.SB.from('hr_students_rows')
-      .select('client_id,updated_at,deleted,deleted_at,deleted_by,data').eq('client_id', String(sid)).maybeSingle());
-    if (!res || res.error) return { ok: false, rec: null };
-    return { ok: true, rec: res.data ? hrStudentRec(res.data) : null };
-  } catch (e) { return { ok: false, rec: null }; }
+      .select('client_id,updated_at,deleted,deleted_at,deleted_by,data').in('client_id', ids.map(String)));
+    if (!res || res.error || !Array.isArray(res.data)) return { ok: false, rows: null };
+    return { ok: true, rows: res.data.map(hrStudentRec).filter(function (r) { return !!r; }) };
+  } catch (e) { return { ok: false, rows: null }; }
+}
+async function hrStudentCloudGet(sid) {
+  var r = await hrStudentsCloudGet([sid]);
+  return { ok: r.ok, rec: (r.rows && r.rows[0]) || null };
 }
 
 async function hrRowsGet(kvKey, win) {
@@ -602,7 +606,11 @@ async function hrPushToCloud() {
   try {
     var localSt = _hrStudentsRaw();
     if (!localSt.length) localSt = getStudents();
-    var remoteSt = null; try { remoteSt = await hrCloudGet('hr_students_rows'); } catch(e1) {}
+    // המיזוג שלפני הדחיפה מושך רק את התלמידים שממתינים לדחיפה — משיכת המצבה כולה בכל שמירה מעכבת אותה
+    var ids = Object.keys(pendAll()).filter(function (k) { return k.indexOf(PK_STUDENT) === 0; })
+                                    .map(function (k) { return k.slice(PK_STUDENT.length); });
+    var remoteSt = null;
+    if (ids.length) { try { var rr = await hrStudentsCloudGet(ids); if (rr.ok) remoteSt = rr.rows; } catch(e1) {} }
     if (ctxStale(_ep)) return;
     _hrStudentsSaveRaw(mergeCore(localSt, remoteSt, { isPending: hrPendingFor('hr_students_rows'),
                                                       mergePair: hrStudentPair }), true);
