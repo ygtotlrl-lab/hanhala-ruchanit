@@ -461,7 +461,7 @@ function hrRenderStudents(st) {
     // הרמז נגזר מתאריך הסדר ושעתו, כמו הסימון האוטומטי עצמו — ולא מהשעון: בסדר של אתמול הוא מתאר את אתמול
     var am=hrAutoMark(s, curRec?curRec.session_date:null, curRec?_hrSessTime(st, curRec.session, ''):'');
     if(am&&isMark&&!S[st.v+'Cleared'][s.client_id]){
-      var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
+      var aLbl=am==='ap'?'באישור':am==='ak'?'בבית':'';
       if(aLbl) autoHintHTML='<span class="mark-hint">('+aLbl+')</span>';
     }
     var isPendingLate=isLate&&!!pending[String(s.client_id)];

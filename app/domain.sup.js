@@ -260,7 +260,7 @@ function hrSupEditMarkDlg(st, recId, sid, curMark) {
   ].concat(pr?[{c:'lk', lbl:'⏰ איחור קל'},{c:'lm', lbl:'⏰ איחור משמעותי'}]:[{c:'l', lbl:'⏰ איחור'}],[
     {c:'e', lbl:'− חיסור'},
     {c:'x', lbl:'✕ '+st.xOne},
-    {c:'ap', lbl:'א אישור'},
+    {c:'ap', lbl:'א באישור'},
     {c:'ak', lbl:'ב בבית'},
     {c:'a', lbl:'ג מנוחה'}
   ]);

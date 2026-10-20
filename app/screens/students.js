@@ -7,14 +7,14 @@ import { hebDate, hebYearLabelFull } from '../../core/hebrew.js';
 import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
          MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
          MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
-         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_DATE, MSG_PICK_REASON,
+         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
          MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
-         hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
+         hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -79,7 +79,11 @@ function openStatusForm(type) {
         _hcBuild('sfmF', todayHeb, defaultTime) +
       '</div>' +
       '<div>' +
-        '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle">+ הוסף תאריך סיום</button>' +
+        // סיום הוא הכרעה מפורשת — תאריך, או «ללא»; השמירה חסומה עד שנבחר אחד מהם
+        '<div class="sf-end-row">' +
+          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle">+ הוסף תאריך סיום</button>' +
+          '<button id="sfmN_btn" data-act="hc-noend" type="button" class="sf-end-toggle">ללא תאריך סיום</button>' +
+        '</div>' +
         '<div id="sfmT_wrap" class="hidden">' +
           '<label class="'+lbl+'">תאריך סיום</label>' +
           _hcBuild('sfmT', null, '') +
@@ -98,6 +102,9 @@ function saveStudentStatus(type) {
   var toWrap = document.getElementById('sfmT_wrap');
   var toOpen = uiShown(toWrap);
   var to = toOpen ? _hcGet('sfmT') : null;
+  var nb = document.getElementById('sfmN_btn');
+  var noEnd = !!(nb && nb.classList.contains('on'));
+  if (!toOpen && !noEnd) { toast(MSG_PICK_END_CHOICE, null, 'bad'); return; }
   // שורת סיום פתוחה בלי תאריך — לא לשמור בשקט כאילו הכול תקין.
   if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'bad'); return; }
   var sid = S._statusSid;
@@ -511,26 +518,23 @@ function studentFormHTML(sid){
 }
 
 // ── היסטוריית הסטטוסים ──
-// נקראת מהענן ולא מהדיסק — הדיסק מחזיק רק מה שהמכשיר ראה,
-// וסטטוס שנרשם ממכשיר אחר היה נעדר בלי סימן.
+// מציג מיד מהמכשיר, ומרענן מהענן את שורת התלמיד לבדה — סטטוס שנרשם ממכשיר אחר מגיע ברענון.
 async function openStatusHistory(sid) {
-  openModal(MSG_STATUS_HISTORY,
-    '<div class="cloud-loading-note">טוען מהענן…</div>', '');
-  var rows = null, failed = false;
-  try { rows = await hrCloudGet('hr_students_rows'); } catch (e) { failed = true; }
-  if (!Array.isArray(rows)) failed = true;
-  var box = document.getElementById('modal-body');
-  var ttl = document.getElementById('modal-title');
+  openModal(MSG_STATUS_HISTORY, '', '');
+  var local = getStudents().find(function (x) { return idEq(x.client_id, sid); });
+  _histPaint(local, '');
+  var r = await hrStudentCloudGet(sid);
   // נבדק גם שהכותרת עדיין שלנו — חלון דו-שיח אחר שנפתח בזמן ההמתנה משתמש באותו מיכל
-  if (!box || !ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
-  // כשל קריאה מוצג כ«אין ראיה» — רשימה ריקה נקראת «מעולם לא היה סטטוס»
-  if (failed) {
-    box.innerHTML = '<div class="hist-err">' +
-      '⚠️ לא ניתן לקרוא מהענן כרגע — ⛔ אין ראיה שאין סטטוסים.<br>' +
-      '<span class="list-subtitle">נסו שוב כשיש חיבור.</span></div>';
-    return;
-  }
-  var s = rows.find(function (x) { return idEq(x.client_id, sid); });
+  var ttl = document.getElementById('modal-title');
+  if (!ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
+  // כשל קריאה גלוי — המוצג הוא מה שהמכשיר ראה, ואין ראיה שאין אחרים
+  if (!r.ok) { _histPaint(local, '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר'); return; }
+  _histPaint(r.rec || local, '');
+}
+
+function _histPaint(s, warn) {
+  var box = document.getElementById('modal-body');
+  if (!box) return;
   var list = (s && Array.isArray(s.absences)) ? s.absences.slice() : [];
   var fmt = function (v) {
     if (!v) return '—';
@@ -543,11 +547,11 @@ async function openStatusHistory(sid) {
   };
   list = hrSortStatuses(list);
   if (!list.length) {
-    box.innerHTML = '<div class="cloud-loading-note">' +
-      'לא נרשם אף סטטוס לתלמיד הזה.</div>';
+    box.innerHTML = (warn ? '<div class="warn-note">' + esc(warn) + '</div>' : '') +
+      '<div class="cloud-loading-note">לא נרשם אף סטטוס לתלמיד הזה.</div>';
     return;
   }
-  box.innerHTML = list.map(function (a) {
+  box.innerHTML = (warn ? '<div class="warn-note">' + esc(warn) + '</div>' : '') + list.map(function (a) {
     var cancelled = !!a.deleted;
     return '<div class="abs-tone ' + (cancelled ? 'abs-tone-off abs-cancelled' : tyCls(a.type)) +
         ' hist-card">' +

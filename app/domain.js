@@ -500,6 +500,17 @@ async function hrRowsGetStudents() {
   } catch (e) { return { ok: false, data: null }; }
 }
 
+// שורת תלמיד אחד מהענן — היסטוריית הסטטוסים צריכה שורה אחת, ולא את המצבה כולה.
+async function hrStudentCloudGet(sid) {
+  if (!S.SB) return { ok: false, rec: null };
+  try {
+    var res = await netTimeout(S.SB.from('hr_students_rows')
+      .select('client_id,updated_at,deleted,deleted_at,deleted_by,data').eq('client_id', String(sid)).maybeSingle());
+    if (!res || res.error) return { ok: false, rec: null };
+    return { ok: true, rec: res.data ? hrStudentRec(res.data) : null };
+  } catch (e) { return { ok: false, rec: null }; }
+}
+
 async function hrRowsGet(kvKey, win) {
   var k = HR_ROWS_READ_KEYS[kvKey];
   if (!k) return { ok: false, data: null };
@@ -772,7 +783,7 @@ function atDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrCleanCfg,
+export { HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          _hrMarkSynced, _hrStudentsRaw, _hrStudentsSaveRaw,
          atDefaultCfg, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,

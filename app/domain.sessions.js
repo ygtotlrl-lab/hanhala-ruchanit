@@ -129,7 +129,7 @@ function hrDow(isoDate){return HEB_DOW[dayNoon(isoDate).getDay()];}
 
 // תוויות הסימון — אחת לשני הזרמים, ו-x בשם הזרם.
 function hrMarkLabels(st) {
-  return {p:'נוכח',l:'איחור',lk:'איחור קל',lm:'איחור משמעותי',e:'חיסור',x:st.xOne,ap:'אישור',ak:'בבית',a:'מנוחה'};
+  return {p:'נוכח',l:'איחור',lk:'איחור קל',lm:'איחור משמעותי',e:'חיסור',x:st.xOne,ap:'באישור',ak:'בבית',a:'מנוחה'};
 }
 
 // איחור — שלושה קודים: l בדקות (בסדרים), lk ו-lm בתפילות; כל ספירה של «מאחרים» עוברת כאן.
@@ -301,7 +301,7 @@ function hrSummaryHTML(st, cnts){
   add(cnts.l||0,  'איחורים',  'l');
   add(cnts.lk||0, 'איחור קל', 'lk');
   add(cnts.lm||0, 'איחור משמעותי', 'lm');
-  add(cnts.ap||0, 'אישורים',  'ap');
+  add(cnts.ap||0, 'באישור',   'ap');
   add(cnts.ak||0, 'בבית',     'ak');
   add(cnts.a||0,  'מנוחה',    'a');
   return parts.join('<span class="user-handle"> | </span>');

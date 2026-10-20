@@ -388,6 +388,7 @@ function _hcToggle(){
   btn.classList.toggle('on',open);
   if(open){
     btn.textContent='✕ הסר תאריך סיום';
+    var nb=document.getElementById('sfmN_btn'); if(nb) nb.classList.remove('on');
   } else {
     btn.textContent='+ הוסף תאריך סיום';
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
@@ -497,6 +498,12 @@ var DOM_ACTIONS = {
   'students-print':       function () { printStudents(); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
+  // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני
+  'hc-noend':             function (el) {
+                            var on=!el.classList.contains('on');
+                            if(on && uiShown(document.getElementById('sfmT_wrap'))) _hcToggle();
+                            el.classList.toggle('on',on);
+                          },
   'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },

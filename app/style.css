@@ -267,6 +267,8 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 /* מיקום הלוח נמדד בפתיחה ונכתב ב-setProperty, והכלל הזה הוא היחיד שקורא אותו */
 .hc-pop{--pop-top:auto;--pop-right:auto;top:var(--pop-top);right:var(--pop-right);left:auto}
 #sfmT_btn.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.sf-end-row{display:flex;gap:var(--sp-4);flex-wrap:wrap}
+#sfmN_btn.on{background:var(--brand-fill);color:var(--on-brand);border-color:var(--brand-fill)}
 .md-note-center{font-size:var(--fs-3);color:var(--text-2);text-align:center}
 .md-btn-primary{flex:1;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;font-family:Heebo;font-weight:600;padding:var(--sp-4);border-radius:var(--r-3)}
 .filter-chip{font-size:var(--fs-2);padding:var(--sp-3) var(--sp-5)}
