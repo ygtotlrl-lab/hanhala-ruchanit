@@ -418,7 +418,10 @@ function hrRenderStudents(st) {
 
   var buf=S[st.v+'Marks'], pending=S[st.v+'Pending'];
   // בתפילה האיחור בשתי דרגות ובלי דקות; בסדר — איחור אחד עם דקות
-  var curRec=_hrCurRec(st), prayer=!!curRec&&hrIsPrayer(st, curRec.session);
+  // סדר שנפתח עכשיו עדיין ממתין ב-PendingRec עד הסימון הראשון — גם הוא קובע אם זו תפילה
+  var pend=S[st.v+'PendingRec'];
+  var curRec=_hrCurRec(st)||(pend&&idEq(pend.client_id,S[st.v+'CurrentSessionId'])?pend:null);
+  var prayer=!!curRec&&hrIsPrayer(st, curRec.session);
   var active=students.filter(function(s){return s.active!==false;});
 
   var unmarked=[], marked=[];
