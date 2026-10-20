@@ -120,15 +120,18 @@ async function hrRegLoad(st) {
   hrShowTab(st, S[st.v+'View']||'reg');
 
   var ok=await Promise.all([hrPullCfg(st), hrPullSessions(st, hrDayWin())]);
-  _hrPaintReg(st);
-  hrShowTab(st, S[st.v+'View']||'reg');
+  // הרענון שאחרי המשיכה מצייר את הנתונים בלבד — בוררי הסדר ורשימת היום; סדר שנפתח, תאריך שנבחר
+  // והלשונית שהמשתמש עבר אליה בזמן המשיכה נשארים, וכל לשונית מרעננת את עצמה בכניסה אליה.
+  hrFillSessionBtns(st);
+  hrRenderTodaySessions(st);
+  if((S[st.v+'View']||'reg')==='reg' && S[st.v+'CurrentSessionId']) hrRenderStudents(st);
   _hrPullStaleMark(el, !(ok[0]&&ok[1]));
 
   var dayIsoR=st.day();
   var openRec=(S[st.v+'Data']||[]).find(function(r){return r&&!r.deleted&&r.open&&r.session_date===dayIsoR;});
   try {
-    // ההצעה אינה דורסת חלון דו-שיח פתוח — מיכל אחד, ומי שבדיאלוג אחר לא ימצא אותו מוחלף
-    if(openRec && !modalOpen()) {
+    // ההצעה אינה דורסת חלון דו-שיח פתוח, ואינה מוצעת למי שכבר פתח סדר בזמן המשיכה
+    if(openRec && !modalOpen() && !S[st.v+'CurrentSessionId']) {
       openModal(st.msg.openToday,
         '<p class="md-note-center">'+esc(openRec.session)+st.openText+'<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
@@ -455,7 +458,8 @@ function hrRenderStudents(st) {
     var hasMark=!!(marks.status);
     var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
     var autoHintHTML='';
-    var am=hrAutoMark(s);
+    // הרמז נגזר מתאריך הסדר ושעתו, כמו הסימון האוטומטי עצמו — ולא מהשעון: בסדר של אתמול הוא מתאר את אתמול
+    var am=hrAutoMark(s, curRec?curRec.session_date:null, curRec?_hrSessTime(st, curRec.session, ''):'');
     if(am&&isMark&&!S[st.v+'Cleared'][s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'נעדר ידוע':'';
       if(aLbl) autoHintHTML='<span class="mark-hint">('+aLbl+')</span>';

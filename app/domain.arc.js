@@ -24,6 +24,12 @@ async function hrRenderArchive(st, records) {
 }
 
 function _hrPaintArchive(st, el, records, warn) {
+  // הרענון שאחרי המשיכה אינו סוגר מה שהמשתמש פתח — המזהים יציבים, ומצב כל לוח נלכד לפני הציור ומוחל אחריו
+  var shown={};
+  el.querySelectorAll('[data-panel]').forEach(function(h){
+    var b=document.getElementById(h.getAttribute('data-panel'));
+    if(b) shown[b.id]=!b.classList.contains('hidden');
+  });
   var warnHTML=warn?'<div class="warn-note">'+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
@@ -49,11 +55,11 @@ function _hrPaintArchive(st, el, records, warn) {
   });
 
   var years=hrSortHebYears(Object.keys(byYear).map(Number));
-  var idCtr=0; function uid(){return st.p+'-arc-col-'+(idCtr++);}
+  function uid(key){return st.p+'-arc-'+String(key).replace(/[^A-Za-z0-9_-]/g,'_');}
 
   var html='<div>';
   years.forEach(function(hy){
-    var yId=uid();
+    var yId=uid('y'+hy);
     var isYearCur=hy===curHY;
     html+='<div class="arc-year">';
     html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
@@ -64,7 +70,7 @@ function _hrPaintArchive(st, el, records, warn) {
 
     var months=hrSortHebMonths(Object.keys(byYear[hy]).map(Number));
     months.forEach(function(mi){
-      var mId=uid();
+      var mId=uid('m'+hy+'_'+mi);
       var isMonthCur=isYearCur&&mi===curMI;
       var mName=_hcMN(hy)[mi];
       html+='<div class="arc-month">';
@@ -77,7 +83,7 @@ function _hrPaintArchive(st, el, records, warn) {
       var defs=hrSessionDefs(st);
       var days=hrSortDays(Object.keys(byYear[hy][mi]));
       days.forEach(function(iso){
-        var dId=uid();
+        var dId=uid('d'+iso);
         var entries=hrSortDayRecs(byYear[hy][mi][iso], defs, function(e){return e.rec;});
         var hd0=entries[0].hd;
         var dayLabel=hebDayLabel(hd0.day)+' '+mName;
@@ -95,7 +101,7 @@ function _hrPaintArchive(st, el, records, warn) {
           var rec=entry.rec;
           var cnts={};
           Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-          var sId=uid();
+          var sId=uid('s'+rec.client_id);
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
@@ -125,6 +131,10 @@ function _hrPaintArchive(st, el, records, warn) {
   });
   html+='</div>';
   el.innerHTML=warnHTML+html;
+  Object.keys(shown).forEach(function(id){
+    var b=document.getElementById(id);
+    if(b) b.classList.toggle('hidden',!shown[id]);
+  });
 }
 
 function hrDeleteSession(st, id) {
