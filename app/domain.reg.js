@@ -293,9 +293,16 @@ function _hrMountOpenSession(st, sessName, dateHeb) {
   hrRenderStudents(st);
 }
 
+// הסדר השמור — לשמירה ולסגירה; סדר שעוד ממתין לסימון הראשון אינו נשמר.
 function _hrCurRec(st) {
   var data=S[st.v+'Data'], id=S[st.v+'CurrentSessionId'];
   return (data&&id)?data.find(function(r){return idEq(r.client_id,id);}):null;
+}
+
+// הסדר הפתוח — השמור, או זה שנפתח עכשיו וממתין לסימון הראשון; לכל מה שנגזר משם הסדר ומתאריכו.
+function _hrOpenRec(st) {
+  var pend=S[st.v+'PendingRec'];
+  return _hrCurRec(st)||(pend&&idEq(pend.client_id,S[st.v+'CurrentSessionId'])?pend:null);
 }
 
 function hrSaveLocalNow(st) {
@@ -418,9 +425,7 @@ function hrRenderStudents(st) {
 
   var buf=S[st.v+'Marks'], pending=S[st.v+'Pending'];
   // בתפילה האיחור בשתי דרגות ובלי דקות; בסדר — איחור אחד עם דקות
-  // סדר שנפתח עכשיו עדיין ממתין ב-PendingRec עד הסימון הראשון — גם הוא קובע אם זו תפילה
-  var pend=S[st.v+'PendingRec'];
-  var curRec=_hrCurRec(st)||(pend&&idEq(pend.client_id,S[st.v+'CurrentSessionId'])?pend:null);
+  var curRec=_hrOpenRec(st);
   var prayer=!!curRec&&hrIsPrayer(st, curRec.session);
   var active=students.filter(function(s){return s.active!==false;});
 
@@ -502,7 +507,7 @@ function hrRenderStudents(st) {
 function hrSetMark(st, sid, code) {
   var student=getStudents().find(function(s){return String(s.client_id)===String(sid);});
   // אותו חישוב כמו בפתיחת הסדר — לפי תאריך ושעת הסדר ולא לפי השעון
-  var curRec=_hrCurRec(st);
+  var curRec=_hrOpenRec(st);
   var sessDateIso=curRec?curRec.session_date:null;
   var sessTime=curRec?_hrSessTime(st, curRec.session, ''):'';
   var autoM=student?hrAutoMark(student,sessDateIso,sessTime):null;
