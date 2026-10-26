@@ -13,11 +13,12 @@ import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
 import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '../domain.js';
 import { HR_STREAMS } from '../domain.sessions.js';
+import { icon } from '../icons.js';
 
 // מודול בבנייה — אותו לוח לכל מודול שטרם נבנה, והשם והכותרת בפרמטר.
 function _soonPaneHTML(mod, title) {
   return `    <div id="settings-${mod}" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>${title}</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>${title}</span></div>
       <div class="soon-pane ss">
         <div class="soon-icon">🏗️</div>
         <div class="soon-title">המודול בבנייה</div>
@@ -34,34 +35,34 @@ function screenSettingsHTML() {
 
     <!-- דף ראשי הגדרות -->
     <div id="settings-home">
-      <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
       <div class="set-tiles">
         <button data-act="settings-module" data-mod="students" class="set-module-tile">
-          <span class="tile-ico">👥</span>
+          <span class="tile-ico">${icon('students')}</span>
           <span class="set-module-label">מצבת תלמידים</span>
         </button>
         <button data-act="settings-module" data-mod="attend" class="set-module-tile">
-          <span class="tile-ico">✅</span>
+          <span class="tile-ico">${icon('attend')}</span>
           <span class="set-module-label">סדרים</span>
         </button>
         <button data-act="settings-module" data-mod="sleep" class="set-module-tile">
-          <span class="tile-ico">🌙</span>
+          <span class="tile-ico">${icon('sleep')}</span>
           <span class="set-module-label">זמן שינה</span>
         </button>
         <button data-act="settings-module" data-mod="exams" class="set-module-tile">
-          <span class="tile-ico">📝</span>
+          <span class="tile-ico">${icon('exams')}</span>
           <span class="set-module-label">מבחנים</span>
         </button>
         <button data-act="settings-module" data-mod="files" class="set-module-tile">
-          <span class="tile-ico">📁</span>
+          <span class="tile-ico">${icon('files')}</span>
           <span class="set-module-label">תיקים אישיים</span>
         </button>
         <button data-act="settings-module" data-mod="reports" class="set-module-tile">
-          <span class="tile-ico">📊</span>
+          <span class="tile-ico">${icon('reports')}</span>
           <span class="set-module-label">דוחות</span>
         </button>
         <button data-act="settings-module" data-mod="system" class="set-module-tile">
-          <span class="tile-ico">⚙️</span>
+          <span class="tile-ico">${icon('settings')}</span>
           <span class="set-module-label">הגדרות מערכת</span>
         </button>
       </div>
@@ -69,78 +70,78 @@ function screenSettingsHTML() {
 
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>👥 הגדרות מצבת תלמידים</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מצבת תלמידים</span></div>
       <div class="ss" data-ks>
-        <div class="ss-t">📋 סיבות היעדרות לפי סוג</div>
+        <div class="ss-t">סיבות היעדרות לפי סוג</div>
         <div class="reason-cols">
           <div>
-            <div class="reason-head-ok">✅ אישור</div>
+            <div class="reason-head-ok">${icon('approved')}אישור</div>
             <div id="reasons-approved" class="reason-list"></div>
             <button data-act="absence-reason-add" data-kind="approved" class="reason-add-ok">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="reason-head-warn">⚠️ השעיה</div>
+            <div class="reason-head-warn">${icon('suspended')}השעיה</div>
             <div id="reasons-suspended" class="reason-list"></div>
             <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-warn">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="reason-head-bad">🚪 לא שב</div>
+            <div class="reason-head-bad">${icon('left')}לא שב</div>
             <div id="reasons-left" class="reason-list"></div>
             <button data-act="absence-reason-add" data-kind="left" class="reason-add-bad">+ הוסף סיבה</button>
           </div>
         </div>
         <div class="save-row-start">
-          <button class="btn" data-act="absence-reasons-save" data-ksave>💾 שמור</button>
+          <button class="btn" data-act="absence-reasons-save" data-ksave>${icon('save')}שמור</button>
         </div>
       </div>
     </div>
 
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>✅ הגדרות סדרים</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות סדרים</span></div>
       <div class="ss" data-ks>
         <div class="set-stack">
           <!-- סדרים -->
           <div class="cfg-card">
-            <div class="panel-head">📋 רשימת סדרים</div>
+            <div class="panel-head">רשימת סדרים</div>
             <div id="at-cfg-sessions" class="sess-list"></div>
             <button data-act="at-session-add" class="add-dashed-btn">+ הוסף סדר</button>
           </div>
           <!-- טיפולים -->
           <div class="cfg-card">
-            <div class="panel-head">🩺 סוגי טיפולים</div>
+            <div class="panel-head">סוגי טיפולים</div>
             <div id="at-cfg-treats" class="sess-list"></div>
             <button data-act="at-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
           </div>
         </div>
         <div class="save-row-end">
-          <button data-act="at-settings-save" class="btn" data-ksave>💾 שמור הגדרות</button>
+          <button data-act="at-settings-save" class="btn" data-ksave>${icon('save')}שמור הגדרות</button>
         </div>
       </div>
     </div>
     <div id="settings-sleep" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>🌙 הגדרות שינה</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות שינה</span></div>
       <div class="ss" data-ks>
         <div class="set-box">
-          <div class="panel-head">🩺 סוגי טיפולים</div>
+          <div class="panel-head">סוגי טיפולים</div>
           <div id="sl-cfg-treats" class="sess-list"></div>
           <button data-act="sl-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
         </div>
         <div class="save-row-end">
-          <button data-act="sl-settings-save" class="btn" data-ksave>💾 שמור הגדרות</button>
+          <button data-act="sl-settings-save" class="btn" data-ksave>${icon('save')}שמור הגדרות</button>
         </div>
       </div>
     </div>
-${_soonPaneHTML('exams', '📝 הגדרות מבחנים')}${_soonPaneHTML('files', '📁 הגדרות תיקים')}${_soonPaneHTML('reports', '📊 הגדרות דוחות')}
+${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('files', 'הגדרות תיקים')}${_soonPaneHTML('reports', 'הגדרות דוחות')}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">← חזרה</button><span>⚙️ הגדרות מערכת</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
-        <div class="ss-t">👥 ניהול משתמשים <button class="btn sm" data-act="user-add-open">➕ הוסף</button></div>
+        <div class="ss-t">ניהול משתמשים <button class="btn sm" data-act="user-add-open">${icon('plus')}הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
       <div class="ss" data-ks id="ss-perms">
-        <div class="ss-t">🔐 הרשאות לפי תפקיד</div>
+        <div class="ss-t">הרשאות לפי תפקיד</div>
         <div class="table-scroll">
           <table class="pt">
             <thead><tr>
@@ -150,7 +151,7 @@ ${_soonPaneHTML('exams', '📝 הגדרות מבחנים')}${_soonPaneHTML('file
           </table>
         </div>
         <div class="save-row-start">
-          <button class="btn" data-act="perms-save" data-ksave>💾 שמור הרשאות</button>
+          <button class="btn" data-act="perms-save" data-ksave>${icon('save')}שמור הרשאות</button>
         </div>
       </div>
       <!-- אזור מצב — שני האלמנטים האחרונים במסך, בסדר הזה -->
@@ -220,7 +221,8 @@ function renderAbsenceReasons() {
       inp.className = 'sess-field';
       inp.setAttribute('aria-label', 'סיבה');
       var btn = document.createElement('button');
-      btn.textContent = '✕';
+      btn.innerHTML = icon('close');
+      btn.setAttribute('aria-label', 'הסרה');
       btn.className = 'row-del-btn';
       btn.dataset.act = 'reason-row-del';
       row.appendChild(inp);
@@ -240,7 +242,8 @@ function addAbsenceReason(type) {
   inp.className = 'sess-field';
   inp.setAttribute('aria-label', 'סיבה חדשה');
   var btn = document.createElement('button');
-  btn.textContent = '✕';
+  btn.innerHTML = icon('close');
+  btn.setAttribute('aria-label', 'הסרה');
   btn.className = 'row-del-btn';
   btn.dataset.act = 'reason-row-del';
   div.appendChild(inp);
@@ -300,7 +303,7 @@ function userFormHTML() {
 function openUserModal(title) {
   openModal('👤 ' + title, userFormHTML(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
-    '<button class="btn" data-act="user-save" data-ksave>💾 שמור</button>');
+    '<button class="btn" data-act="user-save" data-ksave>' + icon('save') + 'שמור</button>');
 }
 
 // מגן השליחה הכפולה בנקודת הניתוב ולא כאן — שומר שני היה משחרר כפתור שהראשון עוד מחזיק.
@@ -359,9 +362,9 @@ async function toggleUserActive(id, current) {
 function renderPermsTable() {
   var p = AUTH.perms || AUTH.DEFAULT_PERMS;
   var opts = [
-    {v:'edit', l:'✏️ עריכה'},
-    {v:'view', l:'👁 צפייה'},
-    {v:'none', l:'🚫 חסום'}
+    {v:'edit', l:'עריכה'},
+    {v:'view', l:'צפייה'},
+    {v:'none', l:'חסום'}
   ];
   var html = AUTH.MODULES.map(function(m) {
     var row = '<tr><td>'+m.label+'</td>';
@@ -374,7 +377,7 @@ function renderPermsTable() {
       selHTML += '</select>';
       // מנהל תמיד בעריכה בהגדרות
       if (m.id === 'settings' && role === AUTH_ROLE_ADMIN) {
-        row += '<td><span class="um-edit">✏️ עריכה</span></td>';
+        row += '<td><span class="um-edit">עריכה</span></td>';
       } else {
         row += '<td>'+selHTML+'</td>';
       }
@@ -495,8 +498,8 @@ async function renderUsersList() {
       '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
         '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
-        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'">✏️</button>' +
-        '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'">'+(u.active?'🔴':'🟢')+'</button>' +
+        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
+        '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'" aria-label="'+(u.active?'השבת':'הפעל')+'" class="'+(u.active?'ua-off':'ua-on')+'">'+icon('power')+'</button>' +
       '</div>' +
     '</div>';
   }).join('');

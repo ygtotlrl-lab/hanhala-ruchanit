@@ -57,13 +57,13 @@ var AUTH = {
   offlineLogin: false, // true — אומת מול העותק המקומי, ומאומת מחדש כשהרשת חוזרת
   perms: null, // {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
-    {id:'students', label:'👥 מצבת תלמידים'},
-    {id:'attend',   label:'✅ שמירת סדרים'},
-    {id:'sleep',    label:'🌙 זמן שינה'},
-    {id:'exams',    label:'📝 מבחנים'},
-    {id:'files',    label:'📁 תיקים אישיים'},
-    {id:'reports',  label:'📊 גיליונות חודשיים'},
-    {id:'settings', label:'⚙️ הגדרות מערכת'}
+    {id:'students', label:'מצבת תלמידים'},
+    {id:'attend',   label:'שמירת סדרים'},
+    {id:'sleep',    label:'זמן שינה'},
+    {id:'exams',    label:'מבחנים'},
+    {id:'files',    label:'תיקים אישיים'},
+    {id:'reports',  label:'גיליונות חודשיים'},
+    {id:'settings', label:'הגדרות מערכת'}
   ],
 
   ROLE_LABELS: {admin:'מנהל', manager:'צוות בכיר', junior:'צוות'},

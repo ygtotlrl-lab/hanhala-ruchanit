@@ -3,6 +3,7 @@ import { dayIso, dayNoon } from '../core/util.js';
 import { esc } from '../core/ui.js';
 import { HEB_DOW, hebDate, hebDayLabel, hebMonthNames, hebToGreg, hebYearInfo,
          hebYearLabelFull } from '../core/hebrew.js';
+import { icon } from './icons.js';
 
 function _hcMN(hy){return hebMonthNames(hy);}
 
@@ -51,7 +52,7 @@ function _hcBuild(pfx,initH,tv){
   return '<div class="hc-wrap">'+
     '<div id="'+pfx+'_trg" data-act="hc-open" data-pfx="'+esc(pfx)+'" data-pop-trg="'+esc(pfx)+'" class="'+trg+'">'+
       '<span id="'+pfx+'_lbl">'+label+'</span>'+
-      '<span class="hc-trigger-ico">📅</span>'+
+      '<span class="hc-trigger-ico">'+icon('calendar')+'</span>'+
     '</div>'+
     '<input type="hidden" id="'+pfx+'_iso" value="'+iso+'">'+
     '<div id="'+pfx+'_pop" data-pop="'+esc(pfx)+'" class="hidden hc-pop-box hc-pop"></div>'+

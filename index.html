@@ -35,51 +35,51 @@
     </div>
   </div>
   <nav>
-    <button class="nb on" data-pg="home" data-act="page" data-page="home">🏠 ראשי</button>
-    <button class="nb" data-pg="students" data-act="page" data-page="students">👥 מצבת</button>
-    <button class="nb" data-pg="attend" data-act="page" data-page="attend">✅ סדרים</button>
-    <button class="nb" data-pg="sleep" data-act="page" data-page="sleep">🌙 שינה</button>
-    <button class="nb" data-pg="exams" data-act="page" data-page="exams">📝 מבחנים</button>
-    <button class="nb" data-pg="files" data-act="page" data-page="files">📁 תיקים</button>
-    <button class="nb" data-pg="reports" data-act="page" data-page="reports">📊 דוחות</button>
-    <button class="nb" data-pg="settings" title="הגדרות" data-act="page" data-page="settings">⚙️</button>
-    <button class="nb" data-act="logout" title="התנתק">🚪</button>
+    <button class="nb on" data-pg="home" data-act="page" data-page="home">ראשי</button>
+    <button class="nb" data-pg="students" data-act="page" data-page="students">מצבת</button>
+    <button class="nb" data-pg="attend" data-act="page" data-page="attend">סדרים</button>
+    <button class="nb" data-pg="sleep" data-act="page" data-page="sleep">שינה</button>
+    <button class="nb" data-pg="exams" data-act="page" data-page="exams">מבחנים</button>
+    <button class="nb" data-pg="files" data-act="page" data-page="files">תיקים</button>
+    <button class="nb" data-pg="reports" data-act="page" data-page="reports">דוחות</button>
+    <button class="nb" data-pg="settings" title="הגדרות" aria-label="הגדרות" data-act="page" data-page="settings"></button>
+    <button class="nb" data-act="logout" data-ic="logout" title="התנתק" aria-label="התנתק"></button>
   </nav>
   <div id="user-avatar-wrap" class="hidden avatar-wrap" data-menu="user">
     <button data-act="user-menu-toggle" class="avatar-btn">
-      <span class="avatar-ico">👤</span>
+      <span class="avatar-ico" data-ic="user"></span>
       <span id="hdr-username"></span>
     </button>
     <div id="user-menu" class="hidden user-menu" data-menu-pop>
       <div id="user-menu-name" class="user-menu-name"></div>
       <div id="user-menu-role" class="user-menu-role"></div>
       <div id="user-menu-others" class="user-menu-others"></div>
-      <button id="user-menu-pass" data-act="my-pass" class="hidden user-menu-item">שינוי הסיסמה שלי 🔑</button>
-      <button data-act="menu-logout" class="user-menu-logout">יציאה מהמערכת 🚪</button>
+      <button id="user-menu-pass" data-act="my-pass" class="hidden user-menu-item" data-ic="key">שינוי הסיסמה שלי</button>
+      <button data-act="menu-logout" class="user-menu-logout" data-ic="logout">יציאה מהמערכת</button>
     </div>
   </div>
 </header>
 <nav class="bottom-nav">
   <button class="bn on" data-pg="home" data-act="page-nav" data-page="home">
-    <span class="bn-ic">🏠</span><span>ראשי</span>
+    <span class="bn-ic"></span><span>ראשי</span>
   </button>
   <button class="bn" data-pg="students" data-act="page-nav" data-page="students">
-    <span class="bn-ic">👥</span><span>מצבת</span>
+    <span class="bn-ic"></span><span>מצבת</span>
   </button>
   <button class="bn" data-pg="attend" data-act="page-nav" data-page="attend">
-    <span class="bn-ic">✅</span><span>סדרים</span>
+    <span class="bn-ic"></span><span>סדרים</span>
   </button>
   <button class="bn" data-pg="sleep" data-act="page-nav" data-page="sleep">
-    <span class="bn-ic">🌙</span><span>שינה</span>
+    <span class="bn-ic"></span><span>שינה</span>
   </button>
   <button class="bn" data-pg="exams" data-act="page-nav" data-page="exams">
-    <span class="bn-ic">📝</span><span>מבחנים</span>
+    <span class="bn-ic"></span><span>מבחנים</span>
   </button>
   <button class="bn" data-pg="reports" data-act="page-nav" data-page="reports">
-    <span class="bn-ic">📊</span><span>דוחות</span>
+    <span class="bn-ic"></span><span>דוחות</span>
   </button>
   <button class="bn" data-pg="settings" data-act="page-nav" data-page="settings">
-    <span class="bn-ic">⚙️</span><span>הגדרות</span>
+    <span class="bn-ic"></span><span>הגדרות</span>
   </button>
 </nav>
 <main id="view"><div class="view-loading" role="status" aria-label="טוען"><span class="view-spin"></span></div></main>

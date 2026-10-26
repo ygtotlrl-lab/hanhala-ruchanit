@@ -18,12 +18,13 @@ import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsence
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
+import { icon } from '../icons.js';
 
 function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>👥 מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">🖨️ הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">⚙️ ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">${icon('print')}הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">${icon('settings')}ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Filter Tabs -->
 <div id="class-tabs-row" class="class-tabs">
@@ -81,7 +82,7 @@ function openStatusForm(type) {
       '<div>' +
         // סיום הוא הכרעה מפורשת — תאריך, או «ללא»; השמירה חסומה עד שנבחר אחד מהם
         '<div class="sf-end-row">' +
-          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle">+ הוסף תאריך סיום</button>' +
+          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle">' + icon('plus') + 'הוסף תאריך סיום</button>' +
           '<button id="sfmN_btn" data-act="hc-noend" type="button" class="sf-end-toggle">ללא תאריך סיום</button>' +
         '</div>' +
         '<div id="sfmT_wrap" class="hidden">' +
@@ -210,7 +211,7 @@ function renderStudents(){
           '<div class="badge-row">'+badgeHTML+'</div>'+
         '</div>'+
         '<div class="st-row-act">'+
-          '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">↩ החזר לפעיל</button>'+
+          '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">'+icon('undo')+'החזר לפעיל</button>'+
         '</div>'+
       '</div>';
     }).join('');
@@ -240,12 +241,12 @@ function renderStudents(){
     var presIcon=isPresent
       ?'<span class="pill-present">&#x2713; נוכח</span>'
       :'<span class="pill-absent">&#x2715; אינו נוכח</span>';
-    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס">+</button>';
+    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס" aria-label="עריכת סטטוס">'+icon('plus')+'</button>';
     html+='<div id="st-row-'+s.client_id+'" class="'+bg+' st-row">';
     html+='<div class="st-row-main">';
     html+='<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>';
     html+='<div class="badge-row">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד">&#x2630;</button>';
+    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button>';
     html+='<span class="cls-badge">'+esc(clsLabel)+'</span>';
     html+='</div>';
     html+='</div>';
@@ -314,17 +315,17 @@ var MANAGE_PICK = {
 function openManageListDlg(){
   if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'bad');return;}
   var ITEMS=[
-    {icon:'➕',label:'הוסף תלמיד',k:'add'},
-    {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
-    {icon:'📥',label:'תבנית ייבוא',k:'tmpl'},
-    {icon:'📤',label:'ייבוא תלמידים',k:'import'},
-    {icon:'🗑️',label:'מחק הכל',k:'delall',cls:'menu-danger'},
-    {icon:'🔄',label:'מעבר שנתי',k:'year',cls:'menu-warn'}
+    {icon:'plus',label:'הוסף תלמיד',k:'add'},
+    {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
+    {icon:'download',label:'תבנית ייבוא',k:'tmpl'},
+    {icon:'upload',label:'ייבוא תלמידים',k:'import'},
+    {icon:'del',label:'מחק הכל',k:'delall',cls:'menu-danger'},
+    {icon:'retry',label:'מעבר שנתי',k:'year',cls:'menu-warn'}
   ];
   var rowsHTML=ITEMS.map(function(item){
     return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
       'class="admin-item '+(item.cls||'menu-plain')+'">'+
-      '<span class="admin-ico">'+item.icon+'</span>'+item.label+
+      '<span class="admin-ico">'+icon(item.icon)+'</span>'+item.label+
     '</button>';
   }).join('');
   openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','');
@@ -342,7 +343,7 @@ function openDeactivateStudentDlg(){
     '</select>'+
     '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="deact-st-confirm" class="md-btn-primary">✅ אשר</button>');
+    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אשר</button>');
 }
 
 // ── מעבר שנתי ──
@@ -360,7 +361,7 @@ function openYearTransitionDlg(){
     '</div>'+
     '<div class="year-danger">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="year-transition-confirm" class="year-go">🔄 בצע מעבר שנתי</button>');
+    '<button data-act="year-transition-confirm" class="year-go">'+icon('retry')+'בצע מעבר שנתי</button>');
 }
 
 // הבוגרים יוצאים, השאר עולים שיעור, ואז השנה מתקדמת — באותה פעולה. המחזור אינו משתנה.
@@ -410,13 +411,13 @@ function openStatusPickerModal() {
     '<div class="status-pick-lbl">בחר סטאטוס היעדרות:</div>' +
     '<div class="status-choice-list">' +
       '<button data-act="status-form" data-kind="approved" class="status-pick-ok">' +
-        '<span class="tile-ico">✅</span><div>אישור</div>' +
+        '<span class="tile-ico">' + icon('approved') + '</span><div>אישור</div>' +
       '</button>' +
       '<button data-act="status-form" data-kind="suspended" class="status-pick-warn">' +
-        '<span class="tile-ico">⚠️</span><div>השעיה</div>' +
+        '<span class="tile-ico">' + icon('suspended') + '</span><div>השעיה</div>' +
       '</button>' +
       '<button data-act="status-form" data-kind="left" class="status-pick-bad">' +
-        '<span class="tile-ico">🚪</span><div>לא שב</div>' +
+        '<span class="tile-ico">' + icon('left') + '</span><div>לא שב</div>' +
       '</button>' +
     '</div>', '');
 }
@@ -435,7 +436,7 @@ function openCurrentStatusModal() {
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
       '<div class="abs-card-head">' +
         '<div class="status-head-row">' +
-          '<span class="abs-ico">' + (ABS_TYPE_ICON[a.type]||'📋') + '</span>' +
+          '<span class="abs-ico">' + icon(ABS_TYPE_ICON[a.type] ? a.type : 'details') + '</span>' +
           '<span class="abs-type-label">' + esc(ABS_TYPE_LBL[a.type]||a.type) + '</span>' +
           badgeHTML +
         '</div>' +
@@ -446,7 +447,7 @@ function openCurrentStatusModal() {
     '</div>';
   }).join('');
   openModal(s.name, absencesHTML +
-    '<button data-act="status-picker-open" class="abs-add">➕ הוסף סיבה נוספת</button>', '');
+    '<button data-act="status-picker-open" class="abs-add">' + icon('plus') + 'הוסף סיבה נוספת</button>', '');
 }
 
 function hrRefreshSupervisionViews() {
@@ -514,7 +515,7 @@ function studentFormHTML(sid){
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">📜 היסטוריית סטטוסים</button>' : '');
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('history')+'היסטוריית סטטוסים</button>' : '');
 }
 
 // ── היסטוריית הסטטוסים ──
@@ -556,7 +557,7 @@ function _histPaint(s, warn) {
     return '<div class="abs-tone ' + (cancelled ? 'abs-tone-off abs-cancelled' : tyCls(a.type)) +
         ' hist-card">' +
       '<div class="hist-card-head">' +
-        '<span class="abs-ico">' + (ABS_TYPE_ICON[a.type] || '📋') + '</span>' +
+        '<span class="abs-ico">' + icon(ABS_TYPE_ICON[a.type] ? a.type : 'details') + '</span>' +
         '<span class="abs-type-label">' +
           esc(ABS_TYPE_LBL[a.type] || a.type || '—') + '</span>' +
         (cancelled ? '<span class="hist-cancelled">בוטל</span>' : '') +
@@ -576,7 +577,7 @@ function _histPaint(s, warn) {
 
 function studentFormFoot(){
   return '<button class="btn out" data-act="modal-close">ביטול</button>'+
-         '<button class="btn" data-act="student-save" data-ksave>💾 שמור</button>';
+         '<button class="btn" data-act="student-save" data-ksave>'+icon('save')+'שמור</button>';
 }
 
 function openAddStudent(){
@@ -702,7 +703,7 @@ function importStudentsFromFile(input) {
           renderStudents();
         }
       }
-      var icon = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
+      var mood = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
       var title = wrote ? (added + ' תלמידים נוספו בהצלחה')
                         : 'הייבוא נכשל — אין מקום באחסון המכשיר';
       var bodyHTML = '';
@@ -716,7 +717,7 @@ function importStudentsFromFile(input) {
         bodyHTML += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       // הסיכום הוא הדיווח היחיד כאן — כשל כתיבה מקומית משנה את האייקון, הכותרת והגוף
-      openModal(icon + ' ' + title,
+      openModal(mood + ' ' + title,
         '<div class="import-done">' +
         (bodyHTML || '<div>הכל תקין!</div>') + '</div>',
         '<button class="modal-ok btn" data-act="modal-close">סגור</button>');

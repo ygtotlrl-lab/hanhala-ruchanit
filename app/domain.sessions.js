@@ -16,6 +16,7 @@ import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences
          hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrSessionsPull, hrSetPending, hrSyncLog,
          hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
 import { _hcH } from './domain.hebdate.js';
+import { icon } from './icons.js';
 
 // ── המיון ──
 // הגדרות הסדרים — לפי שעת ההתחלה.
@@ -99,7 +100,7 @@ var HR_STREAMS = {
     defaults: atDefaultCfg, clean: function (c) { return c; }, day: dayToday,
     // הסדרים נערכים בהגדרות, ושם גם התראת החיסורים; שורת השינה נושאת הערה
     sessEdit: true, alert: true, note: false, prayers: true,
-    title: '✅ שמירת הסדרים', one: 'סדר', many: 'סדרים', xOne: 'היעדרות', xMany: 'היעדרויות', absMany: 'חיסורים',
+    title: 'שמירת הסדרים', one: 'סדר', many: 'סדרים', xOne: 'היעדרות', xMany: 'היעדרויות', absMany: 'חיסורים',
     openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ הסדר נשמר',
     msg: { closeFirst: MSG_CLOSE_SESSION_FIRST, done: MSG_SESSION_DONE, elsewhere: MSG_SESSION_OPEN_ELSEWHERE,
            openToday: MSG_SESSION_OPEN_TODAY, delTitle: MSG_DEL_SESSION_TITLE, delBody: MSG_DEL_SESSION_BODY },
@@ -111,7 +112,7 @@ var HR_STREAMS = {
     cfgKey: 'sleep_cfg', treatsKey: 'sleep_treats', treatsLs: 'hr_sleep_treats',
     defaults: hrDefaultCfg, clean: _hrCleanCfg, day: hrGetLogicalDate,
     sessEdit: false, alert: false, note: true, prayers: false,
-    title: '🌙 זמן שינה', one: 'דו"ח', many: 'דוחות', xOne: 'אירוע', xMany: 'אירועים', absMany: 'אירועים',
+    title: 'זמן שינה', one: 'דו"ח', many: 'דוחות', xOne: 'אירוע', xMany: 'אירועים', absMany: 'אירועים',
     openText: ' נפתחה ולא נסגר.', savedMsg: '✅ הבדיקה נשמרה',
     msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
            openToday: MSG_SLEEP_OPEN, delTitle: MSG_DEL_ROW_TITLE, delBody: MSG_DEL_ROW_BODY },
@@ -404,7 +405,7 @@ function hrRenderTodaySessions(st) {
   if(!daySess.length){el.innerHTML='';return;}
   var dowLabel=isToday?'היום':(isLogical?'אמש':'יום '+hrDow(filterIso));
   var html='<div class="day-sess-block">'+
-    '<div class="day-sess-title">📋 '+st.many+' שמולאו '+dowLabel+':</div>'+
+    '<div class="day-sess-title">'+st.many+' שמולאו '+dowLabel+':</div>'+
     '<div class="reason-list">';
   daySess.forEach(function(rec){
     var cnts={};
@@ -413,7 +414,7 @@ function hrRenderTodaySessions(st) {
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(st.pkSess+rec.client_id)+
       '<div class="day-sess-summary">'+hrSummaryHTML(st, cnts)+'</div>'+
-      '<span class="day-sess-edit">✏️ ערוך</span>'+
+      '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
     '</div>';
   });
   html+='</div></div>';

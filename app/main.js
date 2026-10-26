@@ -17,6 +17,7 @@ import { HR_MIRROR_TABLES, HR_PERMS_KEY,
          MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
          PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
+import { icon } from './icons.js';
 import { _hrMarkSynced, canAccess, hrLocalRecs,
          hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
@@ -207,7 +208,7 @@ function screenReportsHTML() {
   return `
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle" data-ks><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📊 דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>📊 הצג</button></div>
+    <div class="ptitle" data-ks><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>${icon('reports')}הצג</button></div>
     <div id="rc"></div>
   </div>
 </div>
@@ -216,13 +217,13 @@ function screenReportsHTML() {
 
 function screenExamsHTML() {
   return `
-<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📝 מבחנים</span><span class="gap"></span></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מבחנים</span><span class="gap"></span></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
 `;
 }
 
 function screenFilesHTML() {
   return `
-<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button><span>📁 תיקים אישיים</span><span class="gap"></span></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
+<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>תיקים אישיים</span><span class="gap"></span></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
 `;
 }
 
@@ -326,9 +327,9 @@ function _hcDraw(pfx){
   var h='<div class="hc-cal">';
   // חץ ימני — החודש הקודם, שמאלי — הבא
   h+='<div class="hc-head">';
-  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" class="'+bs+(hasPrev?'':' hc-nav-off')+'"'+(hasPrev?'':' disabled')+'>›</button>';
+  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="-1" class="'+bs+(hasPrev?'':' hc-nav-off')+'"'+(hasPrev?'':' disabled')+' aria-label="החודש הקודם">'+icon('prev')+'</button>';
   h+='<span class="hc-month">'+_hcMN(v.hy)[v.mi]+'&nbsp;'+_hcYL(v.hy)+'</span>';
-  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" class="'+bs+(hasNext?'':' hc-nav-off')+'"'+(hasNext?'':' disabled')+'>‹</button>';
+  h+='<button data-act="hc-nav" data-pfx="'+esc(pfx)+'" data-dir="1" class="'+bs+(hasNext?'':' hc-nav-off')+'"'+(hasNext?'':' disabled')+' aria-label="החודש הבא">'+icon('next')+'</button>';
   h+='</div>';
   h+='<div class="hc-dow-row">';
   ['א','ב','ג','ד','ה','ו','ש'].forEach(function(x){h+='<div class="hc-dow">'+x+'</div>';});
@@ -387,10 +388,10 @@ function _hcToggle(){
   wr.classList.toggle('hidden',!open);
   btn.classList.toggle('on',open);
   if(open){
-    btn.textContent='✕ הסר תאריך סיום';
+    btn.innerHTML=icon('close')+'הסר תאריך סיום';
     var nb=document.getElementById('sfmN_btn'); if(nb) nb.classList.remove('on');
   } else {
-    btn.textContent='+ הוסף תאריך סיום';
+    btn.innerHTML=icon('plus')+'הוסף תאריך סיום';
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
   }}
@@ -551,6 +552,17 @@ function hrStreamActions(st) {
 Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStreamActions(HR_STREAMS[k])); });
 
 actWire(DOM_ACTIONS);
+
+// הסרגלים והתפריט במעטפת הסטטית — האייקון נכנס מכאן, כי index.html אינו נושא את הסט.
+document.querySelectorAll('.nb[data-page], .nb[data-ic]').forEach(function (b) {
+  b.insertAdjacentHTML('afterbegin', icon(b.getAttribute('data-ic') || b.getAttribute('data-page')));
+});
+document.querySelectorAll('.bn[data-page] .bn-ic').forEach(function (s) {
+  s.innerHTML = icon(s.parentElement.getAttribute('data-page'));
+});
+document.querySelectorAll('.avatar-ico[data-ic], .user-menu-item[data-ic], .user-menu-logout[data-ic]').forEach(function (el) {
+  el.insertAdjacentHTML('afterbegin', icon(el.getAttribute('data-ic')));
+});
 
 // הגרירה לסידור במנגנון שבליבה; המחיל לכל סוג — ליד renderUsersList.
 document.addEventListener('pointerdown', dragDown);

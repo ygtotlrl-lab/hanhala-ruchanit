@@ -16,6 +16,7 @@ import { HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
 import { AUTH, S, shell } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
+import { icon } from '../icons.js';
 
 // ── המסכים ──
 // mountView() מציירת אותם לפני כל קוד שמחפש אלמנט בתוכם — אין להזיז את הקריאה אליה מטה.
@@ -244,7 +245,7 @@ async function toggleUserMenu() {
   var label = 'החלף משתמש';
   othersEl.innerHTML = '<div class="user-menu-lbl">'+label+'</div>' +
     others.map(function(u){
-      return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="user-switch"><span class=\"user-switch-ico\">👤</span><span>'+esc(u.full_name)+'</span></button>';
+      return '<button data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+'" data-act="user-switch" class="user-switch"><span class=\"user-switch-ico\">'+icon('user')+'</span><span>'+esc(u.full_name)+'</span></button>';
     }).join('');
 }
 

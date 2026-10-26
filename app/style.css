@@ -310,3 +310,34 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .badge-bad{font-size:var(--fs-2);background:var(--bad-soft);color:var(--bad);margin-right:var(--sp-2);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-2)}
 .badge-warn{font-size:var(--fs-2);background:var(--warn-soft);color:var(--warn);margin-right:var(--sp-2);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-2)}
 .scroll-pane{max-height:60vh;overflow-y:auto}
+/* ── אייקונים ── */
+/* העובי נקבע כאן ולא ב-icon() — גוף הפונקציה אינו נערך לאפליקציה אחת. */
+.ico{width:1.15em;height:1.15em;flex:none;stroke-width:1.5;vertical-align:-.22em;margin-inline-end:.4em}
+/* כפתור שמרווח בעצמו (gap), אייקון בלי טקסט ותיבת אייקון — בלי מרווח נוסף. */
+.nb .ico,.btn .ico,.user-switch .ico,.admin-item .ico,[aria-label] > .ico,.mod-ic .ico,.tile-ico .ico,.bn-ic .ico,
+.admin-ico .ico,.abs-ico .ico,.hc-trigger-ico .ico,.user-switch-ico .ico,.avatar-ico .ico,.sup-chev-icon .ico,
+.arc-year-chev .ico,.arc-month-chev .ico,.arc-day-chev .ico{margin-inline-end:0}
+.nb .ico{width:18px;height:18px}
+.bn-ic .ico{display:block;width:22px;height:22px;margin-inline:auto}
+.mod-ic{color:var(--color,var(--brand-ink))}
+.mod-tone-brand .mod-ic{color:var(--brand-ink)}
+.mod-ic .ico{width:26px;height:26px}
+.tile-ico{display:inline-flex;color:var(--brand-ink)}
+.status-choice-list .tile-ico{color:inherit}
+.tile-ico .ico{width:30px;height:30px}
+.admin-ico{display:inline-flex;justify-content:center}
+.admin-ico .ico,.abs-ico .ico{width:20px;height:20px}
+.avatar-ico{display:inline-flex}
+.avatar-ico .ico{width:18px;height:18px}
+.user-switch-ico .ico{width:16px;height:16px}
+.hc-nav .ico,.sup-nav .ico{width:20px;height:20px;vertical-align:middle}
+.st-attend .ico{width:18px;height:18px}
+.st-edit .ico{width:17px;height:17px}
+.treat-del-btn .ico,.arc-sess-del .ico,.row-del-btn .ico,.at-clear-btn .ico{width:17px;height:17px;vertical-align:middle}
+.sup-chev-icon{display:inline-flex}
+.sup-chev-icon .ico,.arc-year-chev .ico,.arc-month-chev .ico,.arc-day-chev .ico{width:16px;height:16px;vertical-align:middle}
+.hc-trigger-ico .ico{width:17px;height:17px;vertical-align:middle}
+.ua button{display:inline-flex;align-items:center}
+.ua button .ico{width:16px;height:16px}
+.ua .ua-off{color:var(--bad)}
+.ua .ua-on{color:var(--ok)}

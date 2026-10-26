@@ -11,6 +11,7 @@ import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
          hrSummaryHTML } from './domain.sessions.js';
+import { icon } from './icons.js';
 
 // ── ארכיון הסדרים ──
 // קורא שמסר רשומות מקבל אותן כפי שהן — הוא כבר סינן, ורענון היה דורס.
@@ -64,7 +65,7 @@ function _hrPaintArchive(st, el, records, warn) {
     html+='<div class="arc-year">';
     html+='<div data-act="toggle-panel" data-panel="'+esc(yId)+'" '+
       ' class="arc-year-head">'+
-      '<span class="arc-head-lbl">📅 '+_hcYL(hy)+'</span><span class="arc-year-chev">▾</span>'+
+      '<span class="arc-head-lbl">'+_hcYL(hy)+'</span><span class="arc-year-chev">'+icon('down')+'</span>'+
     '</div>';
     html+='<div id="'+yId+'" class="'+(isYearCur?'':'hidden')+' arc-year-body">';
 
@@ -76,7 +77,7 @@ function _hrPaintArchive(st, el, records, warn) {
       html+='<div class="arc-month">';
       html+='<div data-act="toggle-panel" data-panel="'+esc(mId)+'" '+
         ' class="arc-month-head">'+
-        '<span class="arc-head-lbl">📆 '+mName+'</span><span class="arc-month-chev">▾</span>'+
+        '<span class="arc-head-lbl">'+mName+'</span><span class="arc-month-chev">'+icon('down')+'</span>'+
       '</div>';
       html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' arc-month-body">';
 
@@ -93,7 +94,7 @@ function _hrPaintArchive(st, el, records, warn) {
           'class="arc-day-head '+(isToday?'arc-day-today':'arc-day-plain')+'">'+
           '<span class="arc-head-lbl">'+dayLabel+(isToday?' — <span class="arc-today">היום</span>':'')+
           ' <span class="arc-day-count">('+entries.length+' '+st.many+')</span></span>'+
-          '<span class="arc-day-chev">▾</span>'+
+          '<span class="arc-day-chev">'+icon('down')+'</span>'+
         '</div>';
         html+='<div id="'+dId+'" class="'+(isToday?'':'hidden')+' arc-day-body">';
 
@@ -106,7 +107,7 @@ function _hrPaintArchive(st, el, records, warn) {
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
           html+='<div class="arc-sess-summary">'+hrSummaryHTML(st, cnts)+'</div>';
-          html+='<button data-act="'+st.p+'-del-session" data-id="'+esc(rec.client_id)+'" class="arc-sess-del">✕</button>';
+          html+='<button data-act="'+st.p+'-del-session" data-id="'+esc(rec.client_id)+'" aria-label="מחיקה" title="מחיקה" class="arc-sess-del">'+icon('del')+'</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
           var mk=hrMarks(rec);

@@ -15,6 +15,7 @@ import { _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
          hrIsPrayer, hrSaveData, hrSessionDefs } from './domain.sessions.js';
 import { hrRenderArchive } from './domain.arc.js';
 import { hrRenderSupervision } from './domain.sup.js';
+import { icon } from './icons.js';
 
 function hrRegHTML(st) {
   var p=st.p;
@@ -22,14 +23,14 @@ function hrRegHTML(st) {
 <div class="pg" id="pg-${st.kind}">
   <div class="inner">
     <div class="ptitle">
-      <button class="back" data-pg="home" data-act="page" data-page="home">← חזרה</button>
+      <button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button>
       <span>${st.title}</span>
     </div>
     <!-- לשוניות -->
     <div class="at-tab-bar">
-      <button id="${p}-tab-reg" data-act="${p}-tab" data-tab="reg" class="at-tab-btn-on">📝 רישום</button>
-      <button id="${p}-tab-arc" data-act="${p}-tab" data-tab="arc" class="at-tab-btn">📁 ארכיון</button>
-      <button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">📋 השגחה</button>
+      <button id="${p}-tab-reg" data-act="${p}-tab" data-tab="reg" class="at-tab-btn-on">${icon('entry')}רישום</button>
+      <button id="${p}-tab-arc" data-act="${p}-tab" data-tab="arc" class="at-tab-btn">${icon('archive')}ארכיון</button>
+      <button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">${icon('watch')}השגחה</button>
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
     <div id="${p}-pullStale" class="at-pull-warn"></div>
@@ -58,7 +59,7 @@ function hrRegHTML(st) {
       <div id="${p}-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="${p}-reg-header" class="at-reg-bar-info"></div>
-          <button data-act="${p}-session-close" class="at-close-btn">✅ שמור וסגור</button>
+          <button data-act="${p}-session-close" class="at-close-btn">${icon('check')}שמור וסגור</button>
         </div>
         <div id="${p}-students"></div>
       </div>
@@ -66,8 +67,8 @@ function hrRegHTML(st) {
     <!-- תצוגת ארכיון -->
     <div id="${p}-view-arc" class="hidden">
       <div class="export-row">
-        <button data-act="${p}-export" data-fmt="excel" class="export-xls-btn">📊 Excel</button>
-        <button data-act="${p}-export" data-fmt="pdf" class="export-pdf-btn">📄 PDF</button>
+        <button data-act="${p}-export" data-fmt="excel" class="export-xls-btn">${icon('table')}Excel</button>
+        <button data-act="${p}-export" data-fmt="pdf" class="export-pdf-btn">${icon('pdf')}PDF</button>
       </div>
       <div id="${p}-arc-list"></div>
     </div>
@@ -135,7 +136,7 @@ async function hrRegLoad(st) {
       openModal(st.msg.openToday,
         '<p class="md-note-center">'+esc(openRec.session)+st.openText+'<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
-        '<button data-act="'+st.p+'-resume-go" data-id="'+esc(openRec.client_id)+'" class="md-btn-primary">▶ המשך</button>');
+        '<button data-act="'+st.p+'-resume-go" data-id="'+esc(openRec.client_id)+'" class="md-btn-primary">'+icon('play')+'המשך</button>');
     }
   } catch(eRes){}
   if(st.alert) hrCheckAlert(st);
@@ -449,7 +450,7 @@ function hrRenderStudents(st) {
   }
   function mkClearBtn(sid){
     return '<button data-act="'+st.p+'-clear-mark" data-id="'+esc(sid)+'" title="נקה סימון" '+
-      'class="at-clear-btn clr-btn">✕</button>';
+      'aria-label="נקה סימון" class="at-clear-btn clr-btn">'+icon('close')+'</button>';
   }
 
   function renderRow(s, isMark) {
@@ -471,7 +472,7 @@ function hrRenderStudents(st) {
         'data-inp="'+st.p+'-late" data-id="'+esc(s.client_id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="'+st.p+'-confirm-late" data-ksave data-id="'+esc(s.client_id)+'" class="late-ok-btn">✓ אשר</button>':'')+
+        (isPendingLate?'<button data-act="'+st.p+'-confirm-late" data-ksave data-id="'+esc(s.client_id)+'" class="late-ok-btn">'+icon('check')+'אשר</button>':'')+
       '</div>':'';
     var noteField=st.note?
       '<input aria-label="הערה" type="text" placeholder="הערה" value="'+esc(marks.note||'')+'" '+
