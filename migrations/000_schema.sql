@@ -106,7 +106,8 @@ AS $function$
     'ANCHOR:k_standing_orders', 'DIFF:k_standing_orders',
     'ANCHOR:k_so_instances', 'DIFF:k_so_instances',
     'ANCHOR:k_entries', 'DIFF:k_entries',
-    'ANCHOR:k_lookups', 'DIFF:k_lookups'
+    'ANCHOR:k_lookups', 'DIFF:k_lookups',
+    'ANCHOR:s_settings', 'DIFF:s_settings'
   ]::text[];
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
