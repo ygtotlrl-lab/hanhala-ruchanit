@@ -100,6 +100,7 @@ AS $function$
     'ANCHOR:g_notes', 'DIFF:g_notes',
     'ANCHOR:g_loans', 'DIFF:g_loans',
     'ANCHOR:g_budget_items', 'DIFF:g_budget_items',
+    'ANCHOR:g_loan_moves', 'DIFF:g_loan_moves',
     'ANCHOR:g_events', 'DIFF:g_events',
     'ANCHOR:k_settings', 'DIFF:k_settings',
     'ANCHOR:k_pledges', 'DIFF:k_pledges',
