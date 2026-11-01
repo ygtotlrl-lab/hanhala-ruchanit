@@ -5,7 +5,7 @@ import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
 import { closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
-import { HR_EXAM_SUBJECTS, HR_FILES_BUCKET, PK_RP_VAL } from '../constants.js';
+import { HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, PK_RP_VAL } from '../constants.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrHebMonthWin } from '../domain.hebdate.js';
@@ -29,7 +29,7 @@ var RP_GENERAL = [['g1', 'יראת שמים והנהגה חסידית'], ['g2', 
 var RP_SUBJ_H = HR_EXAM_SUBJECTS.map(function (n, i) { return ['h' + i, n]; });
 var RP_INTERNAT = [['p1', 'סדר וניקיון'], ['p2', 'שמירת הרכוש']];
 var RP_ROLES = [['n1', 'ראש הישיבה'], ['n2', 'משגיח'], ['n3', 'ר"מ'], ['n4', 'משפיע'], ['n5', 'משפיע'], ['n6', 'משיב'], ['n7', 'מדריך']];
-var RP_CLS = { a: 'א', b: 'ב', g: 'ג' };
+var RP_CLS = HR_CLS_SHORT;
 
 function rpFieldLabel(f) {
   var all = RP_GENERAL.concat(RP_INTERNAT, RP_ROLES);
@@ -146,10 +146,10 @@ function screenReportsHTML() {
 <div class="pg" id="pg-reports">
   <div class="inner">
     <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>גיליונות ציונים והנהגה</span></div>
-    <div class="rp-month card-pane">
-      <button class="rp-nav" data-act="rp-nav" data-dir="-1" aria-label="החודש הקודם">${icon('prev')}</button>
-      <div class="rp-month-lbl" id="rp-month-lbl"></div>
-      <button class="rp-nav" data-act="rp-nav" data-dir="1" aria-label="החודש הבא">${icon('next')}</button>
+    <div class="sup-nav-bar">
+      <button class="sup-nav" data-act="rp-nav" data-dir="-1" aria-label="החודש הקודם">${icon('prev')}</button>
+      <span class="sup-nav-label" id="rp-month-lbl"></span>
+      <button class="sup-nav" data-act="rp-nav" data-dir="1" aria-label="החודש הבא">${icon('next')}</button>
     </div>
     <div class="class-tabs" id="rp-cls"></div>
     <div id="rp-fill"></div>
@@ -170,7 +170,7 @@ function renderReports() {
   if (lbl) lbl.textContent = rpMonthLabel(m);
   var c = S._rpCls || 'all';
   var ct = document.getElementById('rp-cls');
-  if (ct) ct.innerHTML = [['all', 'הכל'], ['a', "שיעור א'"], ['b', "שיעור ב'"], ['g', "שיעור ג'"]].map(function (x) {
+  if (ct) ct.innerHTML = [['all', 'הכל']].concat(HR_CLS_LIST.map(function (k) { return [k, HR_CLS_NAME[k]]; })).map(function (x) {
     return '<button class="filter-chip btn sm ' + (c === x[0] ? 'on' : 'out') + '" data-act="rp-cls" data-cls="' + x[0] + '">' + x[1] + '</button>';
   }).join('');
   var sts = _rpStudents(), n = sts.length;
@@ -216,7 +216,7 @@ function rpOpenFill(f) {
   if (isNote) {
     var cls = {}; sts.forEach(function (s) { cls[s.cls] = 1; });
     head = '<div class="rp-staff">' + Object.keys(RP_CLS).filter(function (k) { return cls[k]; }).map(function (k) {
-      return '<label class="rp-staff-row"><span>שם ה' + esc(rpFieldLabel(f)) + ' — שיעור ' + RP_CLS[k] + "'</span>" +
+      return '<label class="rp-staff-row"><span>שם ה' + esc(rpFieldLabel(f)) + ' — ' + esc(HR_CLS_NAME[k]) + '</span>' +
         '<input data-rp-staff="' + k + '" value="' + esc(rpGet(mk, 'cls-' + k, f)) + '" placeholder="הרב…"></label>';
     }).join('') + '</div>';
   }

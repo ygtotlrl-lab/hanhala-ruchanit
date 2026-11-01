@@ -744,9 +744,9 @@ function saveStudents(s){
 // מחזירה עותק ואינה ממיינת במקום — הקוראים מחזיקים את הרשימה גם לחיפוש ולספירה.
 function hrSortStudents(list) {
   if (!Array.isArray(list)) return [];
-  var ord = { a: 0, b: 1, g: 2 };
+  var ord = { a: 0, b: 1, g: 2, s: 3 };
   return list.slice().sort(function (x, y) {
-    // שיעור שאינו מהשלושה יורד לסוף — תלמיד שסיווגו ריק היה נופל בין א׳ לב׳.
+    // שיעור שאינו מהארבעה יורד לסוף — תלמיד שסיווגו ריק היה נופל בין א׳ לב׳.
     var ox = ord[x && x.cls] != null ? ord[x.cls] : 99;
     var oy = ord[y && y.cls] != null ? ord[y.cls] : 99;
     if (ox !== oy) return ox - oy;

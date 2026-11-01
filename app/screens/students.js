@@ -11,7 +11,7 @@ import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MS
          MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
-         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
+         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, HR_CLS_NAME } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
@@ -32,6 +32,7 @@ function screenStudentsHTML() {
 <button class="filter-chip btn sm out" id="ct-a" data-act="filter-class" data-cls="a">שיעור א'</button>
 <button class="filter-chip btn sm out" id="ct-b" data-act="filter-class" data-cls="b">שיעור ב'</button>
 <button class="filter-chip btn sm out" id="ct-g" data-act="filter-class" data-cls="g">שיעור ג'</button>
+<button class="filter-chip btn sm out" id="ct-s" data-act="filter-class" data-cls="s">התלמידים השלוחים</button>
 <button class="inactive-tab btn sm out" id="ct-inactive" data-act="filter-class" data-cls="inactive">לא פעילים</button>
 </div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
@@ -152,7 +153,7 @@ comboDef('student', {
   }
 });
 
-var CLS_NAME={a:"שיעור א'",b:"שיעור ב'",g:"שיעור ג'"};
+var CLS_NAME=HR_CLS_NAME;
 
 // ערך פגום אחד היה זורק מתוך hrPushToCloud ומפיל את כל הדחיפה — לכן הגטרים מוגנים.
 function checkLoginNeeded(){
@@ -161,7 +162,7 @@ function checkLoginNeeded(){
 
 function filterClass(cls){
   S.currentFilter=cls;
-  ['all','a','b','g','inactive'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
+  ['all','a','b','g','s','inactive'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
   var el=document.getElementById('ct-'+cls)||document.getElementById('ct-all');
   if(el){el.classList.add('on');el.classList.remove('out');}
   renderStudents();
@@ -189,6 +190,8 @@ function renderStudents(){
   if(eb)eb.textContent=CLS_NAME.b+' ('+activeSts.filter(function(s){return s.cls==='b';}).length+')';
   var eg=document.getElementById('ct-g');
   if(eg)eg.textContent=CLS_NAME.g+' ('+activeSts.filter(function(s){return s.cls==='g';}).length+')';
+  var es=document.getElementById('ct-s');
+  if(es)es.textContent=CLS_NAME.s+' ('+activeSts.filter(function(s){return s.cls==='s';}).length+')';
   var ei=document.getElementById('ct-inactive');
   if(ei)ei.textContent='לא פעילים ('+inactiveSts.length+')';
 
@@ -505,7 +508,10 @@ function fillCycleSel(cur){
 
 // בחירת שיעור בטופס ממלאת את המחזור מהחישוב — והבורר נשאר לעריכה ידנית.
 function stClassChanged(){
-  var c=hrCycleFor((document.getElementById('st-class')||{value:''}).value);if(c)fillCycleSel(c);
+  var v=(document.getElementById('st-class')||{value:''}).value;
+  var w=document.getElementById('st-cycle-wrap');
+  if(w) w.classList.toggle('hidden', v==='s');
+  var c=hrCycleFor(v);if(c)fillCycleSel(c);
 }
 
 // שני מסלולי הפתיחה בונים מכאן — טופס שנבנה פעמיים נבדל בשדה, ושדה שנשמט נקרא «ריק» ולא «לא נשאל»
@@ -517,9 +523,11 @@ function studentFormHTML(sid){
       '<option value="a">שיעור א\'</option>'+
       '<option value="b">שיעור ב\'</option>'+
       '<option value="g">שיעור ג\'</option>'+
+      '<option value="s">התלמידים השלוחים</option>'+
     '</select>'+
-    '<label for="st-cycle">מחזור</label>'+
-    '<select id="st-cycle" class="st-class-sel"></select>'+
+    // לתלמידים השלוחים אין מחזור — השדה מוסתר כשנבחרים
+    '<div id="st-cycle-wrap"><label for="st-cycle">מחזור</label>'+
+    '<select id="st-cycle" class="st-class-sel"></select></div>'+
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
@@ -607,12 +615,13 @@ function editStudent(sid){
   document.getElementById('st-name').value=s.name;
   document.getElementById('st-class').value=s.cls;
   fillCycleSel(hrCycleOf(s));
+  var cw=document.getElementById('st-cycle-wrap'); if(cw) cw.classList.toggle('hidden', s.cls==='s');
 }
 
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
-  var cycle=parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||hrCycleFor(cls)||null;
+  var cycle=cls==='s'?null:(parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||hrCycleFor(cls)||null);
   var errEl=document.getElementById('st-err');
   if(errEl) errEl.textContent='';
   if(!name){
@@ -681,7 +690,8 @@ function importStudentsFromFile(input) {
       var clsMap = {
         'א':'a',"א'":'a','a':'a','שיעור א':'a',"שיעור א'":'a',
         'ב':'b',"ב'":'b','b':'b','שיעור ב':'b',"שיעור ב'":'b',
-        'ג':'g',"ג'":'g','g':'g','שיעור ג':'g',"שיעור ג'":'g'
+        'ג':'g',"ג'":'g','g':'g','שיעור ג':'g',"שיעור ג'":'g',
+        'שלוחים':'s','השלוחים':'s','התלמידים השלוחים':'s','s':'s'
       };
       for (var i = 1; i < rows.length; i++) {
         var row = rows[i];
@@ -781,7 +791,7 @@ function printStudents() {
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=_hcH(_todG);
     var today=_hcFmt(_todH.hy,_todH.mi,_todH.day);
-    var NB = ' ';    function cls(c){return c==='a'?'שיעור'+NB+"א'":c==='b'?'שיעור'+NB+"ב'":'שיעור'+NB+"ג'";}
+    var NB = ' ';    function cls(c){return String(HR_CLS_NAME[c]||'').replace(/ /g,NB);}
     function fixName(n){return (n||'').replace(/ /g,NB);}
     var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
     var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});

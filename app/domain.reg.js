@@ -5,7 +5,7 @@ import { sessUserId } from '../core/auth.js';
 import { esc, openModal, toast } from '../core/ui.js';
 import { HEB_DOW, hebToGreg } from '../core/hebrew.js';
 import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
-         MSG_STATUS_REVERTED } from './constants.js';
+         MSG_STATUS_REVERTED, HR_CLS_SHORT } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutRecs,
          hrSortStudents, modalOpen, saveStudents, tyCls } from './domain.js';
@@ -460,7 +460,7 @@ function hrRenderStudents(st) {
     var marks=buf[s.client_id]||{};
     var isLate=marks.status==='l';
     var hasMark=!!(marks.status);
-    var cls=s.cls==='a'?'א':s.cls==='b'?'ב':s.cls==='g'?'ג':s.cls||'';
+    var cls=HR_CLS_SHORT[s.cls]||s.cls||'';
     var autoHintHTML='';
     // הרמז נגזר מתאריך הסדר ושעתו, כמו הסימון האוטומטי עצמו — ולא מהשעון: בסדר של אתמול הוא מתאר את אתמול
     var am=hrAutoMark(s, curRec?curRec.session_date:null, curRec?_hrSessTime(st, curRec.session, ''):'');

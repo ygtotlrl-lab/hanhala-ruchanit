@@ -2,7 +2,7 @@
 // המבחן הוא «סדר» של הזרם השלישי (HR_STREAMS.exams) — השמירה, הסנכרון והארכיון משותפים; כאן רק מה שנבדל.
 import { idEq, pendMark } from '../core/sync.js';
 import { esc, toast } from '../core/ui.js';
-import { HR_FILES_BUCKET, MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET,
+import { HR_CLS_SHORT, HR_FILES_BUCKET, MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET,
          MSG_UPLOAD_OK } from './constants.js';
 import { S } from './state.js';
 import { getStudents, hrMirrorPutRecs, hrSortStudents } from './domain.js';
@@ -55,7 +55,7 @@ function hrRenderExam(st, forceInfo) {
   students.forEach(function (s) { (_exGrade(buf[s.client_id]) != null ? done : todo).push(s); });
   function row(s) {
     var m = buf[s.client_id] || {}, g = _exGrade(m), sid = esc(s.client_id);
-    var cls = s.cls === 'a' ? 'א' : s.cls === 'b' ? 'ב' : s.cls === 'g' ? 'ג' : s.cls || '';
+    var cls = HR_CLS_SHORT[s.cls] || s.cls || '';
     var scan = m.scan
       ? '<button data-act="' + p + '-open-file" data-path="' + esc(m.scan) + '" class="ex-scan-open" title="צפייה בסריקה" aria-label="צפייה בסריקה">' + icon('pdf') + '</button>'
       : '';

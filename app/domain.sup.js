@@ -6,7 +6,7 @@ import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
 import { hebYearInfo } from '../core/hebrew.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
-         MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
+         MSG_ROW_MISSING, MSG_SETTINGS_SAVED, HR_CLS_NAME, HR_CLS_SHORT } from './constants.js';
 import { S } from './state.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
@@ -128,11 +128,11 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     }
     var alert20=sr.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=sr.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
-    var clsLabel=sr.cls==='a'?'א':sr.cls==='b'?'ב':sr.cls==='g'?'ג':sr.cls||'';
+    var clsLabel=HR_CLS_SHORT[sr.cls]||sr.cls||'';
     // אריח לכל תלמיד: שיעור וחץ למעלה, השם, ושני מספרים גדולים — חיסורים וטיפולים; «פירוט» לרוחב האריח
     html+='<div id="'+p+'-sup-card-'+sid+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="'+p+'-sup-chev">';
-    html+='<div class="sup-tile-top"><span class="sup-card-class">שיעור '+esc(clsLabel)+'\'</span><span class="sup-chev-icon '+p+'-sup-chev">'+icon('down')+'</span></div>';
+    html+='<div class="sup-tile-top"><span class="sup-card-class">'+esc(HR_CLS_NAME[sr.cls]||clsLabel)+'</span><span class="sup-chev-icon '+p+'-sup-chev">'+icon('down')+'</span></div>';
     html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+'</div>'+((alert20||alert300)?'<div class="rec-alerts">'+alert20+alert300+'</div>':'')+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<div class="sup-st sup-st-abs"><b>'+sr.absent+'</b><span>'+st.absMany+'</span></div>';

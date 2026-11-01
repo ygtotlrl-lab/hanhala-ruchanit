@@ -277,11 +277,16 @@ var MSG_UPLOAD_FAIL = '❌ ההעלאה נכשלה: ';
 var MSG_UPLOAD_OK = '✅ הקובץ הועלה';
 var MSG_FILE_TOO_BIG = '⚠️ הקובץ גדול מדי (עד 15MB)';
 
+// השיעורים — הקוד, השם והאות הקצרה; s — התלמידים השלוחים: בלי מחזור ובלי מעבר שנתי, רק הוספה והשבתה ידניות.
+var HR_CLS_LIST = ['a', 'b', 'g', 's'];
+var HR_CLS_NAME = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'", s: 'התלמידים השלוחים' };
+var HR_CLS_SHORT = { a: 'א', b: 'ב', g: 'ג', s: 'של' };
+
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
