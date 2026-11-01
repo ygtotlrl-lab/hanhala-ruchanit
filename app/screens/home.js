@@ -20,12 +20,12 @@ function screenHomeHTML() {
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
-      <button class="mod-m1 mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">${icon('students')}</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
-      <button class="mod-m2 mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">${icon('attend')}</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
-      <button class="mod-m3 mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
-      <button class="mod-m4 mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
-      <button class="mod-m5 mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
-      <button class="mod-m6 mod" data-pg="settings" data-act="page" data-page="settings"><div class="mod-ic">${icon('settings')}</div><div class="mod-info"><div class="mod-name">הגדרות</div><div class="mod-desc">משתמשים והרשאות, סדרים, סיבות ואנשי קשר</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">${icon('students')}</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">${icon('attend')}</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="settings" data-act="page" data-page="settings"><div class="mod-ic">${icon('settings')}</div><div class="mod-info"><div class="mod-name">הגדרות</div><div class="mod-desc">משתמשים והרשאות, סדרים, סיבות ואנשי קשר</div></div></button>
 
     </div>
   </div>

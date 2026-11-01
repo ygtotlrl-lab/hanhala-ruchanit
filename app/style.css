@@ -12,7 +12,6 @@
 /* גווני הסימון — ארבעה בלבד: נוכח ירוק · איחורים צהוב · חיסור והיעדרות אדום · באישור, בבית ומנוחה כחול; אסימון לכל קוד */
 --at-p:#2f855a;--at-l:#c08a0b;--at-lk:#c08a0b;--at-lm:#c08a0b;--at-e:#c53030;--at-x:#c53030;--at-ap:#2b6cb0;--at-ak:#2b6cb0;--at-a:#2b6cb0;
 /* מניפת המודולים — גווני קור מאותה משפחה: כחול כהה · כחול · תכלת · טורקיז · סגול-כחול · אפור-כחול */
---m1:#1e3a8a;--m2:#0f766e;--m3:#4f46e5;--m4:#0369a1;--m5:#2563eb;--m6:#475569;
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 
 /* ── הערכה הכהה ── */
@@ -31,7 +30,6 @@
       --border:#24333f;
       --at-p:#84dba6; --at-l:#f6d365; --at-lk:#f6d365; --at-lm:#f6d365; --at-e:#ff9d9d; --at-x:#ff9d9d;
       --at-ap:#93c3f7; --at-ak:#93c3f7; --at-a:#93c3f7;
-      --m1:#93b4f5; --m2:#5eead4; --m3:#a5b4fc; --m4:#7dd3fc; --m5:#93c5fd; --m6:#cbd5e1;
       --brand-ink:#7fb2f0; --brand-fill:#1a3a6b; --brand-soft:#111d2a;
       --deep-1:#234a8a; --deep-2:#0f2347;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);
@@ -333,8 +331,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .bn-ic .ico{display:block;width:22px;height:22px;margin-inline:auto}
 .mod-ic{color:var(--color,var(--brand-ink))}
 .mod-tone-brand .mod-ic{color:var(--brand-ink)}
-.mod-m1{--color:var(--m1)}.mod-m2{--color:var(--m2)}.mod-m3{--color:var(--m3)}.mod-m4{--color:var(--m4)}.mod-m5{--color:var(--m5)}.mod-m6{--color:var(--m6)}
-[class*="mod-m"]{--icbg:color-mix(in srgb,var(--color) 11%,transparent)}
 .mod-ic .ico{width:26px;height:26px}
 .tile-ico{display:inline-flex;color:var(--brand-ink)}
 .status-choice-list .tile-ico{color:inherit}
