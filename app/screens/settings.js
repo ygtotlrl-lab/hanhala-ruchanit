@@ -14,19 +14,7 @@ import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '../domain.js';
 import { HR_STREAMS } from '../domain.sessions.js';
 import { icon } from '../icons.js';
-
-// מודול בבנייה — אותו לוח לכל מודול שטרם נבנה, והשם והכותרת בפרמטר.
-function _soonPaneHTML(mod, title) {
-  return `    <div id="settings-${mod}" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>${title}</span></div>
-      <div class="soon-pane ss">
-        <div class="soon-icon">🏗️</div>
-        <div class="soon-title">המודול בבנייה</div>
-        <p class="soon-text">מקום זה נמצא בבנייה ויפתח בקרוב</p>
-      </div>
-    </div>
-`;
-}
+import { contactsPaneHTML, renderContactsSettings } from './contacts.js';
 
 function screenSettingsHTML() {
   return `
@@ -48,10 +36,6 @@ function screenSettingsHTML() {
         <button data-act="settings-module" data-mod="sleep" class="set-module-tile">
           <span class="tile-ico">${icon('sleep')}</span>
           <span class="set-module-label">זמן שינה</span>
-        </button>
-        <button data-act="settings-module" data-mod="exams" class="set-module-tile">
-          <span class="tile-ico">${icon('exams')}</span>
-          <span class="set-module-label">מבחנים</span>
         </button>
         <button data-act="settings-module" data-mod="reports" class="set-module-tile">
           <span class="tile-ico">${icon('reports')}</span>
@@ -128,7 +112,7 @@ function screenSettingsHTML() {
         </div>
       </div>
     </div>
-${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('reports', 'הגדרות דוחות')}
+${contactsPaneHTML()}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
@@ -162,7 +146,7 @@ ${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('reports',
 var PASS_SIX_RE = /^[0-9]{6}$/;
 
 function showSettingsHome() {
-  ['students','attend','sleep','exams','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });
@@ -175,7 +159,7 @@ function showSettingsHome() {
 // כאן ההרשאה נגזרת מ-hr_users.role דרך canAccess, והעמודה NOT NULL בלי DEFAULT.
 function showSettingsModule(mod) {
   document.getElementById('settings-home').classList.add('hidden');
-  ['students','attend','sleep','exams','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });
@@ -183,6 +167,7 @@ function showSettingsModule(mod) {
   if (target) target.classList.remove('hidden');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
+  if (mod === 'reports') { renderContactsSettings(); }
   if (HR_STREAMS[mod]) shell.hrRenderSettings(HR_STREAMS[mod]);
 }
 

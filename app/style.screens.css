@@ -559,3 +559,15 @@
 .file-ev-date{font-weight:700;color:var(--brand-ink);font-size:var(--fs-3)}
 .file-ev-by{flex:1;font-size:var(--fs-2);color:var(--text-3)}
 .file-ev-text{font-size:var(--fs-3);color:var(--text);white-space:pre-wrap;line-height:var(--lh-3)}
+
+/* ── אנשי קשר בהגדרות הדוחות ── */
+.ct-link{font-size:var(--fs-2);color:var(--text-2);margin-bottom:var(--sp-5);line-height:var(--lh-3)}
+.ct-url{display:block;direction:ltr;text-align:left;font-family:monospace;color:var(--brand-ink);word-break:break-all;margin-top:var(--sp-1)}
+.ct-group{display:flex;flex-direction:column;gap:var(--sp-3)}
+.ct-group-head{display:flex;align-items:center;gap:var(--sp-3)}
+.ct-group-head .sess-field{flex:1;font-weight:700}
+.ct-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;grid-template-areas:"role name del" "phone email del";gap:var(--sp-2);align-items:center;padding-bottom:var(--sp-3);border-bottom:1px dashed var(--border)}
+.ct-row [data-f="role"]{grid-area:role}.ct-row [data-f="name"]{grid-area:name}.ct-row [data-f="phone"]{grid-area:phone}.ct-row [data-f="email"]{grid-area:email}
+.ct-row input{min-width:0;font-family:Heebo;font-size:var(--fs-2);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);background:var(--card);color:var(--text)}
+.ct-row .row-del-btn{grid-area:del}
+@media (min-width:760px){ .ct-row{grid-template-columns:1fr 1.3fr 1fr 1.4fr 30px;grid-template-areas:"role name phone email del"} }

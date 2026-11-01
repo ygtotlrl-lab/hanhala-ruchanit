@@ -32,6 +32,7 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
+import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
@@ -432,6 +433,9 @@ var DOM_ACTIONS = {
   'st-file':        function (el) { openStudentFile(el.getAttribute('data-id')); },
   'file-event-save': function () { return saveFileEvent(); },
   'file-event-del': function (el) { deleteFileEvent(el.getAttribute('data-id')); },
+  'ct-group-add':   function () { addContactGroup(); },
+  'ct-row-add':     function (el) { addContactRow(el); },
+  'ct-save':        function () { return saveContacts(); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.
   'page':        function (el) { showPage(el.getAttribute('data-page')); },
   'page-nav':    function (el) {
