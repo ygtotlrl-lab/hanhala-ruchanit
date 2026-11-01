@@ -82,6 +82,7 @@ AS $function$
     'ANCHOR:hr_sleep_marks', 'DIFF:hr_sleep_marks',
     'ANCHOR:hr_exams', 'DIFF:hr_exams',
     'ANCHOR:hr_exam_marks', 'DIFF:hr_exam_marks',
+    'ANCHOR:hr_report_vals', 'DIFF:hr_report_vals',
     'ANCHOR:hr_settings', 'DIFF:hr_settings',
     'ANCHOR:sl_students', 'DIFF:sl_students',
     'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
@@ -440,3 +441,25 @@ drop policy if exists hr_files_read on storage.objects;
 create policy hr_files_read on storage.objects for select to anon, authenticated using (bucket_id = 'hr-files');
 drop policy if exists hr_files_insert on storage.objects;
 create policy hr_files_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-files');
+
+-- גיליון הציונים וההנהגה: השדות שהרב ממלא — שורה לכל חודש עברי, תלמיד ושדה. client_id = <חודש>:<תלמיד>:<שדה>.
+create table if not exists public.hr_report_vals (
+  client_id text not null,
+  month text not null,
+  student_client_id text not null,
+  field text not null,
+  value text,
+  deleted boolean not null default false,
+  updated_at bigint not null,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_report_vals_pkey primary key (client_id)
+);
+create index if not exists hr_report_vals_month_idx on public.hr_report_vals using btree (month);
+create index if not exists hr_report_vals_updated_idx on public.hr_report_vals using btree (updated_at desc);
+revoke all on table public.hr_report_vals from anon, authenticated;
+grant select, insert, update on table public.hr_report_vals to anon, authenticated;
+grant all on table public.hr_report_vals to service_role;
+alter table public.hr_report_vals enable row level security;
+drop policy if exists hr_report_vals_all on public.hr_report_vals;
+create policy hr_report_vals_all on public.hr_report_vals as permissive for all to anon, authenticated using (true) with check (true);

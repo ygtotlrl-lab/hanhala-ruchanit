@@ -285,8 +285,8 @@ var RP_PRINT_CSS =
   'body{font-family:Heebo,Arial,sans-serif;color:#333;direction:rtl;background:#888}' +
   '.pg{width:210mm;height:297mm;position:relative;background:#fff url(app/img/report-bg.png) center/100% 100% no-repeat;margin:0 auto 6mm;page-break-after:always;overflow:hidden}' +
   '@media print{body{background:none}.pg{margin:0}}' +
-  '.nm{position:absolute;top:38.6mm;right:67mm;font-size:13pt;font-weight:700;color:#333;letter-spacing:.02em}' +
-  '.mo{position:absolute;top:38.6mm;right:142.5mm;font-size:13pt;font-weight:700;color:#333}' +
+  '.nm{position:absolute;top:40mm;right:67mm;font-size:13pt;font-weight:700;color:#333;letter-spacing:.02em}' +
+  '.mo{position:absolute;top:40mm;right:142.5mm;font-size:13pt;font-weight:700;color:#333}' +
   '.body{position:absolute;top:56mm;right:25mm;left:25mm;bottom:33mm}' +
   'h3{font-size:10.5pt;font-weight:700;margin:3.2mm 0 1.2mm;color:#444}h3.c{text-align:center;margin-top:4mm}' +
   'table{width:100%;border-collapse:collapse;font-size:9pt}' +
@@ -334,7 +334,10 @@ async function rpPrint(sid) {
     // ההדפסה אחרי שהתמונות והגופנים נטענו — חלון ההדפסה עוצר את הטעינה; בדפדפן אוטומטי (בדיקות) — בלי הדפסה
     '<script>window.onload=function(){var im=[].slice.call(document.images).map(function(i){return i.complete?0:new Promise(function(r){i.onload=i.onerror=r;});});' +
     'Promise.all(im.concat([document.fonts?document.fonts.ready:0])).then(function(){if(!navigator.webdriver)setTimeout(function(){window.print();},300);});};<\/script></body></html>';
-  w.document.open(); w.document.write(html); w.document.close();
+  // מסמך משלו (blob) ולא document.write — בחלון ריק שנכתב בו התמונות אינן נטענות בכל הדפדפנים
+  var url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+  w.location.href = url;
+  setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
 }
 
 export { RP_SCALE, loadReports, renderReports, rpCompute, rpNav, rpOpenFill, rpPrint, rpSaveFill, rpSetCls,
