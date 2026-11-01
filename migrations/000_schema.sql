@@ -80,6 +80,8 @@ AS $function$
     'ANCHOR:hr_students_rows', 'DIFF:hr_students_rows',
     'ANCHOR:hr_sleep_sessions', 'DIFF:hr_sleep_sessions',
     'ANCHOR:hr_sleep_marks', 'DIFF:hr_sleep_marks',
+    'ANCHOR:hr_exams', 'DIFF:hr_exams',
+    'ANCHOR:hr_exam_marks', 'DIFF:hr_exam_marks',
     'ANCHOR:hr_settings', 'DIFF:hr_settings',
     'ANCHOR:sl_students', 'DIFF:sl_students',
     'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
@@ -248,6 +250,43 @@ create table if not exists public.hr_sessions (
   constraint hr_sessions_pkey PRIMARY KEY (client_id)
 );
 
+create table if not exists public.hr_exams (
+  client_id text not null,
+  session text not null,
+  session_date date not null,
+  created_by_client_id text,
+  filled_by_name text,
+  created_at timestamp with time zone,
+  deleted_by text,
+  open boolean,
+  deleted boolean not null default false,
+  updated_at bigint not null,
+  deleted_at timestamp with time zone,
+  material text,
+  material_file text,
+  draft_file text,
+  in_report boolean,
+  constraint hr_exams_pkey PRIMARY KEY (client_id)
+);
+
+create table if not exists public.hr_exam_marks (
+  client_id text not null,
+  session_client_id text not null,
+  student_client_id text not null,
+  session_date date not null,
+  status text,
+  minutes smallint,
+  note text,
+  grade smallint,
+  scan text,
+  deleted boolean not null default false,
+  updated_at bigint not null,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_exam_marks_pkey PRIMARY KEY (client_id),
+  constraint hr_exam_marks_grade_range CHECK ((grade IS NULL) OR ((grade >= 0) AND (grade <= 100)))
+);
+
 create table if not exists public.hr_settings (
   key text not null,
   value text,
@@ -320,6 +359,12 @@ create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (ses
 create index if not exists hr_marks_session_idx ON public.hr_marks USING btree (session_client_id);
 create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_client_id);
 create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_exams_date_idx ON public.hr_exams USING btree (session_date DESC);
+create index if not exists hr_exams_updated_idx ON public.hr_exams USING btree (updated_at DESC);
+create index if not exists hr_exam_marks_date_idx ON public.hr_exam_marks USING btree (session_date DESC);
+create index if not exists hr_exam_marks_session_idx ON public.hr_exam_marks USING btree (session_client_id);
+create UNIQUE index if not exists hr_exam_marks_session_student ON public.hr_exam_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_exam_marks_student_date_idx ON public.hr_exam_marks USING btree (student_client_id, session_date DESC);
 create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (session_date DESC);
 create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sessions_updated_idx ON public.hr_sessions USING btree (updated_at DESC);
@@ -333,6 +378,12 @@ create index if not exists hr_sleep_sessions_updated_idx ON public.hr_sleep_sess
 create index if not exists hr_students_rows_updated_idx ON public.hr_students_rows USING btree (updated_at DESC);
 
 -- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon.
+revoke all on table public.hr_exams from anon, authenticated;
+grant select, insert, update on table public.hr_exams to anon, authenticated;
+grant all on table public.hr_exams to service_role;
+revoke all on table public.hr_exam_marks from anon, authenticated;
+grant select, insert, update on table public.hr_exam_marks to anon, authenticated;
+grant all on table public.hr_exam_marks to service_role;
 revoke all on table public.hr_marks from anon, authenticated;
 grant select, insert, update on table public.hr_marks to anon, authenticated;
 grant all on table public.hr_marks to service_role;
@@ -355,6 +406,12 @@ revoke all on table public.hr_users from anon, authenticated;
 grant select, insert, update on table public.hr_users to anon, authenticated;
 grant all on table public.hr_users to service_role;
 
+alter table public.hr_exams enable row level security;
+drop policy if exists hr_exams_all on public.hr_exams;
+create policy hr_exams_all on public.hr_exams as permissive for all to anon, authenticated using (true) with check (true);
+alter table public.hr_exam_marks enable row level security;
+drop policy if exists hr_exam_marks_all on public.hr_exam_marks;
+create policy hr_exam_marks_all on public.hr_exam_marks as permissive for all to anon, authenticated using (true) with check (true);
 alter table public.hr_marks enable row level security;
 drop policy if exists hr_marks_all on public.hr_marks;
 create policy hr_marks_all on public.hr_marks as permissive for all to anon, authenticated using (true) with check (true);
@@ -376,3 +433,10 @@ create policy hr_students_rows_all on public.hr_students_rows as permissive for 
 alter table public.hr_users enable row level security;
 drop policy if exists hr_users_all on public.hr_users;
 create policy hr_users_all on public.hr_users as permissive for all to anon, authenticated using (true) with check (true);
+
+-- הסריקות (מבחנים ותיק אישי) — דלי פרטי; הקריאה בקישור חתום. אין מחיקה ואין עדכון — קובץ חדש בנתיב חדש.
+insert into storage.buckets (id, name, public) values ('hr-files', 'hr-files', false) on conflict (id) do nothing;
+drop policy if exists hr_files_read on storage.objects;
+create policy hr_files_read on storage.objects for select to anon, authenticated using (bucket_id = 'hr-files');
+drop policy if exists hr_files_insert on storage.objects;
+create policy hr_files_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-files');

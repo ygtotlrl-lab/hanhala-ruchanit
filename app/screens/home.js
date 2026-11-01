@@ -8,18 +8,6 @@ import { icon } from '../icons.js';
 function screenHomeHTML() {
   return `
 <div class="pg on" id="pg-home">
-  <div class="mods-wrap">
-    <div class="mods-lbl">מודולים</div>
-    <div class="mods">
-      <button class="mod-tone-brand mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">${icon('students')}</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
-      <button class="mod-tone-ok mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">${icon('attend')}</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
-      <button class="mod-tone-info mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
-      <button class="mod-tone-warn mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
-      <button class="mod-tone-bad mod" data-pg="files" data-act="page" data-page="files"><div class="mod-ic">${icon('files')}</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
-      <button class="mod-tone-info mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
-
-    </div>
-  </div>
   <div class="kpi-wrap">
     <div class="mods-lbl">היום</div>
     <div class="kpis">
@@ -27,6 +15,17 @@ function screenHomeHTML() {
       <div class="kpi kpi-ok"><div class="kpi-ic">${icon('check')}</div><div class="kpi-n" id="s-pre">–</div><div class="kpi-l">נוכחים בישיבה</div></div>
       <div class="kpi kpi-bad"><div class="kpi-ic">${icon('close')}</div><div class="kpi-n" id="s-abs">–</div><div class="kpi-l">חיסורים בסדרים</div></div>
       <div class="kpi kpi-info"><div class="kpi-ic">${icon('reports')}</div><div class="kpi-n" id="s-rate">–</div><div class="kpi-l">נוכחות בסדרים</div><div class="kpi-bar"><span id="s-rate-bar"></span></div></div>
+    </div>
+  </div>
+  <div class="mods-wrap">
+    <div class="mods-lbl">מודולים</div>
+    <div class="mods">
+      <button class="mod-tone-brand mod" data-pg="students" data-act="page" data-page="students"><div class="mod-ic">${icon('students')}</div><div class="mod-info"><div class="mod-name">מצבת התלמידים</div><div class="mod-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div></div></button>
+      <button class="mod-tone-ok mod" data-pg="attend" data-act="page" data-page="attend"><div class="mod-ic">${icon('attend')}</div><div class="mod-info"><div class="mod-name">שמירת הסדרים</div><div class="mod-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div></div></button>
+      <button class="mod-tone-info mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
+      <button class="mod-tone-warn mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
+      <button class="mod-tone-info mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+
     </div>
   </div>
 </div>

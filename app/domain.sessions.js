@@ -8,8 +8,8 @@ import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
 import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE,
          MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE,
-         HR_PRAYER_NAMES, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
-         PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
+         HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
+         PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
          hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
@@ -117,8 +117,36 @@ var HR_STREAMS = {
     msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
            openToday: MSG_SLEEP_OPEN, delTitle: MSG_DEL_ROW_TITLE, delBody: MSG_DEL_ROW_BODY },
     sheet: 'שינה', file: 'shinah', pdfHead: ['ארכיון זמן שינה']
+  },
+  // המבחנים — אותו מסלול: «סדר» הוא מבחן בלימוד, והסימון — ציון, הערה וסריקה (exam); בלי השגחה ובלי סימון אוטומטי.
+  exams: {
+    kind: 'exams', p: 'ex', v: '_ex', table: 'hr_exams', child: 'hr_exam_marks',
+    pkSess: PK_EX_SESS, pkMark: PK_EX_MARK,
+    cfgKey: 'exams_cfg', treatsKey: 'exams_treats', treatsLs: 'hr_exams_treats',
+    defaults: hrExamDefaultCfg, clean: function () { return hrExamDefaultCfg(); }, day: dayToday,
+    sessEdit: false, alert: false, note: true, prayers: false, exam: true, sup: false,
+    title: 'מבחנים', one: 'מבחן', many: 'מבחנים', xOne: 'לא נבחן', xMany: 'לא נבחנו', absMany: 'לא נבחנו',
+    openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ המבחן נשמר',
+    msg: { closeFirst: '⚠️ סגור את המבחן הנוכחי תחילה', done: '📋 המבחן כבר נפתח', elsewhere: '⚠️ המבחן כבר נפתח במכשיר אחר — הציונים נשמרים לרשומה הקיימת',
+           openToday: '⏳ מבחן פתוח מהיום', delTitle: '🗑️ מחיקת מבחן', delBody: 'המבחן וכל ציוניו יימחקו מהארכיון. לא ניתן לשחזר פעולה זו.' },
+    sheet: 'מבחנים', file: 'mivchanim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון מבחנים']
   }
 };
+
+// הלימודים קבועים בקוד — אין להם הגדרות במסד.
+function hrExamDefaultCfg() {
+  return { sessions: HR_EXAM_SUBJECTS.map(function (n, i) { return { id: 'ex' + i, name: n }; }), treats: [] };
+}
+
+// סיכום מבחן — כמה נבחנו והממוצע, ובאיזה מבחן נכנס לגיליון החודשי.
+function hrExamSummaryHTML(rec) {
+  var gs = [];
+  Object.values(hrMarks(rec)).forEach(function (m) { var g = Number(m.grade); if (m.grade != null && m.grade !== '' && isFinite(g)) gs.push(g); });
+  var avg = gs.length ? Math.round(gs.reduce(function (a, b) { return a + b; }, 0) / gs.length) : null;
+  return '<span class="at-code at-code-p at-count"><i class="at-dot"></i>נבחנו: ' + gs.length + '</span>' +
+    (avg != null ? '<span class="at-code at-code-ap at-count"><i class="at-dot"></i>ממוצע: ' + avg + '</span>' : '') +
+    (rec.in_report ? '<span class="ex-in-report">בגיליון</span>' : '');
+}
 
 // תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
 function hrGetLogicalDate() {
@@ -143,9 +171,11 @@ function hrIsPrayer(st, sessName) {
 }
 
 // סימון ריק או ממולא — והשינה נושאת גם הערה.
-function hrMarkOf(st, status, minutes, note) {
+// extra — הסימון הקודם, שממנו עוברים שדות המבחן (ציון וסריקה).
+function hrMarkOf(st, status, minutes, note, extra) {
   var m={status:status||'',minutes:minutes||0};
   if(st.note) m.note=note||'';
+  if(st.exam && extra){ if(extra.grade!=null&&extra.grade!=='') m.grade=extra.grade; if(extra.scan) m.scan=extra.scan; }
   return m;
 }
 
@@ -169,7 +199,7 @@ function hrAdoptSession(st, rec) {
   var ex = hrMarks(rec), marks = S[st.v+'Marks'];
   Object.keys(ex).forEach(function (k) {
     var cur = marks[k];
-    if (!cur || !cur.status) marks[k] = hrMarkOf(st, ex[k] && ex[k].status, ex[k] && ex[k].minutes, ex[k] && ex[k].note);
+    if (!cur || !cur.status) marks[k] = hrMarkOf(st, ex[k] && ex[k].status, ex[k] && ex[k].minutes, ex[k] && ex[k].note, ex[k]);
   });
   S[st.v+'CurrentSessionId'] = rec.client_id;
 }
@@ -254,6 +284,7 @@ async function hrRefreshApprovalMarks(sid) {
     var sidKey = String(sid);
     // קריאה בנקודת הדיסק האחת ובלי כתיבה — השמירה היא hrSaveData, ומפתח שטוח כאן היה מקור אמת שני
     Object.keys(HR_STREAMS).forEach(function (kind) {
+      if (HR_STREAMS[kind].exam) return;
       var st = HR_STREAMS[kind], dateIso = st.day();
       var cfgS = (S[st.v+'Cfg'] && Array.isArray(S[st.v+'Cfg'].sessions)) ? S[st.v+'Cfg'].sessions : [];
       var curId = S[st.v+'CurrentSessionId'], buf = S[st.v+'Marks'];
@@ -411,7 +442,7 @@ function hrRenderTodaySessions(st) {
     html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
       '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
       pendTag(st.pkSess+rec.client_id)+
-      '<div class="day-sess-summary">'+hrSummaryHTML(st, cnts)+'</div>'+
+      '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
       '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
     '</div>';
   });
@@ -420,7 +451,7 @@ function hrRenderTodaySessions(st) {
 }
 
 export { HR_STREAMS, _hrDiskArr, _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
-         hrCfgOf, hrDow, hrFindLiveSession, hrIsLate, hrIsPrayer, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
+         hrCfgOf, hrDow, hrExamSummaryHTML, hrFindLiveSession, hrIsLate, hrIsPrayer, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrMarkOf, hrPullCfg, hrPullSessions, hrPullTreats, hrRefreshApprovalMarks,
          hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats, hrSessionDefs, hrSortAbsenceRows,
          hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears, hrSortSessionDefs,

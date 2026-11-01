@@ -218,14 +218,14 @@ var KV_TABLE = 'hr_settings';
 // tables היא פונקציה: PUSH_TABLES מוצהר אחרי הבלוק, וקריאה כאן הייתה מקבלת undefined.
 // empty מחזירה null ולא מערך ריק — מפתח שאינו על הדיסק נופל לברירת המחדל, ורשימה ריקה אינה.
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
-                        'hr_sleep_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
+                        'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
 
 // המסמך הוא מודול ושם שמוגדר בו אינו גלובלי — השמות שנקראים מתגית וממפת הפעולות מוצבים על window במפורש.
 
 // ── PUSH_CFG ──
 // hr_users אינה נדחפת לעולם — המראה בלי סיסמאות, ודחיפתה הייתה כותבת סיסמה ריקה; מסלולה writeUser.
 // הסדר קובע: הסדרים לפני המצבה, וההגדרות — בלי אב ובלי בן — אחרונות.
-var PUSH_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks', 'hr_students_rows', KV_TABLE];
+var PUSH_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_students_rows', KV_TABLE];
 
 // ── שכבת השורות ──
 // סימון נוכחות נכתב כשורה — ערך שלם נדרס כולו בכל כתיבה. session_date משוכפל ל-hr_marks — עמודת הסינון בשרת של טבלת הבן, בשם עמודת האב, כדי שהחלון והדוח פר-תלמיד לא יצטרפו לאב.
@@ -233,26 +233,31 @@ var PUSH_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_mar
 
 // השינה היא תצורה של אותו מסלול ולא העתקה שלו.
 // note בשינה בלבד — ל-hr_marks אין עמודה כזו, ושורה שנושאת אותו נדחית ב-upsert כולו.
+// pcols / mcols — עמודות שרק לזרם הזה, באב ובבן: המבחן נושא את חומרו וקבציו, והסימון — ציון וסריקה.
 var HR_ROWS_KINDS = {
   attend: { parent: 'hr_sessions',       child: 'hr_marks',       pk: PK_AT_SESS, note: false },
-  sleep:  { parent: 'hr_sleep_sessions', child: 'hr_sleep_marks', pk: PK_SL_SESS, note: true  }
+  sleep:  { parent: 'hr_sleep_sessions', child: 'hr_sleep_marks', pk: PK_SL_SESS, note: true  },
+  exams:  { parent: 'hr_exams',          child: 'hr_exam_marks',  pk: PK_EX_SESS, note: true,
+            pcols: ['material', 'material_file', 'draft_file', 'in_report'], mcols: ['grade', 'scan'] }
 };
 
 // ── מקור הקריאה ──
 // אין לקרוא ל-hrCfgGet ישירות למפתח שיש לו טבלה — הקריאה עוברת ב-hrCloudGet בלבד.
 // הקורא דורש שחותמת שורת הסימון לא תהיה ישנה מחותמת האב — סימון שנמחק אינו מתעדכן ונשאר מאחור.
-var HR_ROWS_READ_KEYS = { hr_sessions: 'attend', hr_students_rows: 'students', hr_sleep_sessions: 'sleep' };
+var HR_ROWS_READ_KEYS = { hr_sessions: 'attend', hr_students_rows: 'students', hr_sleep_sessions: 'sleep', hr_exams: 'exams' };
 
 // ── DEV_CFG ──
 
 // הדחיפה היא דחיפת-מצב של המפתח כולו — לכן האישור הוא pendConfirmPush(prefix, t0):
 // דחיפה מוצלחת מאשרת כל סימון שנרשם לפני שהצילום נלקח.
 var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:', PK_STUDENT = 'student:',
-    PK_SET = 'setting:', PK_AT_MARK = 'at-mark:', PK_SL_MARK = 'sl-mark:';
+    PK_SET = 'setting:', PK_AT_MARK = 'at-mark:', PK_SL_MARK = 'sl-mark:',
+    PK_EX_SESS = 'ex-sess:', PK_EX_MARK = 'ex-mark:';
 
 var PEND_KV_PREFIX = {
   'hr_sessions': PK_AT_SESS, 'hr_marks': PK_AT_MARK,
   'hr_sleep_sessions': PK_SL_SESS, 'hr_sleep_marks': PK_SL_MARK,
+  'hr_exams': PK_EX_SESS, 'hr_exam_marks': PK_EX_MARK,
   'hr_students_rows': PK_STUDENT
 };
 
@@ -262,11 +267,22 @@ var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_t
 // התפילות — קבועות בקוד ואינן נערכות בהגדרות; סדר שזה שמו הוא תפילה (איחור קל / משמעותי, בלי דקות).
 var HR_PRAYER_NAMES = ['שחרית', 'מנחה', 'מעריב', 'ערבית'];
 
+// הלימודים שנבחנים בהם — קבועים בקוד, בסדר גיליון הציונים; מבחן נפתח לאחד מהם.
+var HR_EXAM_SUBJECTS = ['חסידות בוקר', 'נגלה עיונא', 'הלכה', 'נגלה גירסא', 'גאולה ומשיח', 'חסידות ערב'];
+
+// דלי הסריקות — פרטי, והקריאה בקישור חתום לשעה.
+var HR_FILES_BUCKET = 'hr-files';
+var MSG_UPLOAD_NEEDS_NET = '📴 העלאת קובץ דורשת חיבור לרשת';
+var MSG_UPLOAD_FAIL = '❌ ההעלאה נכשלה: ';
+var MSG_UPLOAD_OK = '✅ הקובץ הועלה';
+var MSG_FILE_TOO_BIG = '⚠️ הקובץ גדול מדי (עד 15MB)';
+
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PRAYER_NAMES, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
+         MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
          MSG_BUSY_CHECK, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_CLOSE_REPORT_FIRST,
@@ -293,4 +309,4 @@ export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PRAYER_NAMES, HR_PERM
          MSG_USER_SAVED_NO_FP, MSG_USER_SWITCHED_MID, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
-         PK_AT_MARK, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };
+         PK_AT_MARK, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };

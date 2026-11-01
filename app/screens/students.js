@@ -14,7 +14,7 @@ import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MS
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
-         hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
+         canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
@@ -523,7 +523,9 @@ function studentFormHTML(sid){
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('history')+'היסטוריית סטטוסים</button>' : '');
+    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('history')+'היסטוריית סטטוסים</button>' : '')+
+    // התיק האישי — למי שמורשה לראות תיקים
+    (sid && canAccess('files') ? '<button data-act="st-file" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('files')+'תיק אישי</button>' : '');
 }
 
 // ── היסטוריית הסטטוסים ──

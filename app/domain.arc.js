@@ -10,7 +10,7 @@ import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from './domain.hebdate.js';
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
-         hrSummaryHTML } from './domain.sessions.js';
+         hrExamSummaryHTML, hrSummaryHTML } from './domain.sessions.js';
 import { icon } from './icons.js';
 
 // ── ארכיון הסדרים ──
@@ -106,7 +106,7 @@ function _hrPaintArchive(st, el, records, warn) {
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
           html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
-          html+='<div class="arc-sess-summary">'+hrSummaryHTML(st, cnts)+'</div>';
+          html+='<div class="arc-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>';
           html+='<button data-act="'+st.p+'-del-session" data-id="'+esc(rec.client_id)+'" aria-label="מחיקה" title="מחיקה" class="arc-sess-del">'+icon('del')+'</button>';
           html+='</div>';
           html+='<div id="'+sId+'" class="arc-sess-body hidden">';
@@ -117,7 +117,8 @@ function _hrPaintArchive(st, el, records, warn) {
             return st2||{client_id:sid2,name:nameById(sid2),cls:''};
           })).map(function(s2){
             var m2=mk[String(s2.client_id)]||{};
-            var lbl=m2.status==='l'?('איחור — '+(m2.minutes||0)+' ד׳'):(LBL[m2.status]||'לא סומן');
+            var lbl=st.exam?(m2.grade!=null&&m2.grade!==''?('ציון '+m2.grade):'לא נבחן'):
+              m2.status==='l'?('איחור — '+(m2.minutes||0)+' ד׳'):(LBL[m2.status]||'לא סומן');
             var noteStr=m2.note?(' — '+m2.note):'';
             return '<div class="arc-mark-row">'+
               '<span>'+esc(s2.name)+'</span><span class="'+atvCls(m2.status)+' arc-mark">'+esc(lbl)+esc(noteStr)+'</span></div>';
@@ -194,13 +195,20 @@ async function _hrExportExcel(st, fromIso, toIso) {
     function cell(v){return '<Cell><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
     function numCell(v){return '<Cell><Data ss:Type="Number">'+xmlEsc(v)+'</Data></Cell>';}
     function hdrCell(v){return '<Cell ss:StyleID="hdr"><Data ss:Type="String">'+xmlEsc(v)+'</Data></Cell>';}
-    var HDR=['תאריך',st.one,'שם תלמיד','סטאטוס','דקות איחור'].concat(st.note?['הערה']:[],['ממלא']);
+    // במבחן — ציון במקום הסטטוס והדקות, וחומר המבחן לצידו
+    var HDR=st.exam?['תאריך',st.one,'חומר המבחן','שם תלמיד','ציון','הערה','ממלא']
+      :['תאריך',st.one,'שם תלמיד','סטאטוס','דקות איחור'].concat(st.note?['הערה']:[],['ממלא']);
     var xmlRows='<Row>'+HDR.map(hdrCell).join('')+'</Row>';
     sorted.forEach(function(rec){
       var dLabel=hrSessHebFmt(rec);
       Object.entries(hrMarks(rec)).forEach(function(e){
         var sid=e[0],m=e[1];
         var sn=(students.find(function(x){return String(x.client_id)===String(sid);})||{}).name||sid;
+        if(st.exam){
+          xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(rec.material||'')+cell(sn)+
+            (m.grade!=null&&m.grade!==''?numCell(m.grade):cell(''))+cell(m.note||'')+cell(rec.filled_by_name||'')+'</Row>';
+          return;
+        }
         var mins=m.status==='l'?(m.minutes||0):'';
         xmlRows+='<Row>'+cell(dLabel)+cell(rec.session)+cell(sn)+cell(LBL[m.status]||'')+(mins!==''?numCell(mins):cell(''))+
           (st.note?cell(m.note||''):'')+cell(rec.filled_by_name||'')+'</Row>';
@@ -240,13 +248,22 @@ async function _hrExportPdf(st, fromIso, toIso) {
     var fontName=hrPdfFont();
     function nb(s){return (s||'').replace(/ /g,NB);}
     function cell(s,opts){return Object.assign({text:nb(String(s==null?'':s)),alignment:'right'},opts||{});}
-    var hdrRow=[
+    var hdrRow=st.exam?[
+      cell('#',{bold:true}),cell('תאריך',{bold:true}),cell(st.one,{bold:true}),
+      cell('נבחנו',{bold:true,color:'#276749'}),cell('ממוצע',{bold:true,color:'#2b4c9f'}),cell('גיליון',{bold:true})
+    ]:[
       cell('#',{bold:true}),cell('תאריך',{bold:true}),cell(st.one,{bold:true}),
       cell('נוכחים',{bold:true,color:'#276749'}),cell(st.absMany,{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
     ];
     var body=[hdrRow];
     sorted.forEach(function(rec,i){
       var ms=Object.values(hrMarks(rec));
+      if(st.exam){
+        var gs=ms.map(function(m){return Number(m.grade);}).filter(function(g,j){return ms[j].grade!=null&&ms[j].grade!==''&&isFinite(g);});
+        var avg=gs.length?Math.round(gs.reduce(function(a,b){return a+b;},0)/gs.length):'';
+        body.push([cell(i+1),cell(hrSessHebFmt(rec)),cell(rec.session),cell(gs.length),cell(avg),cell(rec.in_report?'✓':'')]);
+        return;
+      }
       var p=ms.filter(function(m){return m.status==='p';}).length;
       var ab=ms.filter(function(m){return m.status==='e'||m.status==='x';}).length;
       var l=ms.filter(function(m){return hrIsLate(m.status);}).length;

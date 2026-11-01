@@ -92,6 +92,7 @@ function hrSupervisionAccess() {
 var HR_MIRROR_STREAMS = {
   hr_sessions:       { kind: 'attend',   child: 'hr_marks' },
   hr_sleep_sessions: { kind: 'sleep',    child: 'hr_sleep_marks' },
+  hr_exams:          { kind: 'exams',    child: 'hr_exam_marks' },
   hr_students_rows:  { kind: 'students', child: null }
 };
 
@@ -110,6 +111,7 @@ function hrRecsFromRows(kind, sRows, mRows) {
     _hrRowSet(rec, 'deleted_at', r.deleted_at);
     _hrRowSet(rec, 'deleted_by', r.deleted_by);
     if (typeof r.open === 'boolean') rec.open = r.open;
+    (cfg.pcols || []).forEach(function (c) { _hrRowSet(rec, c, r[c]); });
     if (r.deleted) rec.deleted = true;
     rec.updated_at = Number(r.updated_at) || 0;
     byId[rec.client_id] = rec;
@@ -122,6 +124,7 @@ function hrRecsFromRows(kind, sRows, mRows) {
     var mt = Number(m.updated_at) || 0;
     var mk = { status: (m.status == null) ? '' : String(m.status), minutes: Math.round(Number(m.minutes) || 0) };
     if (cfg.note && m.note != null && m.note !== '') mk.note = String(m.note);
+    (cfg.mcols || []).forEach(function (c) { if (m[c] != null && m[c] !== '') mk[c] = m[c]; });
     mk.updated_at = mt;
     rec.marks[String(m.student_client_id)] = mk;
   });
@@ -150,8 +153,11 @@ function hrMirrorRecs(t) {
 
 // ההשוואה קובעת אם החותמת נשמרת — קידום בכל שמירה היה דורס את מה שמכשיר אחר סימן.
 function _hrMarkSame(a, b) {
-  return (a.status || '') === (b.status || '') && Number(a.minutes || 0) === Number(b.minutes || 0) &&
+  var same = (a.status || '') === (b.status || '') && Number(a.minutes || 0) === Number(b.minutes || 0) &&
          (a.note || null) === (b.note || null);
+  // עמודות הבן שרק למבחנים — שורה בלי העמודה ושורה שבה היא null שוות
+  ['grade', 'scan'].forEach(function (c) { if (same && (a[c] == null ? null : a[c]) !== (b[c] == null ? null : b[c])) same = false; });
+  return same;
 }
 
 // מצבה נכתבת רק לסדר שנמצא בקלט — משיכת חלון מוסרת רשומות שמחוצה לו, ואין למחוק את סימוניהן.
@@ -167,7 +173,7 @@ function _hrSplitRecs(t, recs) {
   });
   var sRows = [], mRows = [], live = {}, seen = {}, now = Date.now();
   arr.forEach(function (rec) {
-    var s = hrSessionRow(rec);
+    var s = hrSessionRow(rec, st.kind);
     if (!s) return;
     sRows.push(s);
     seen[s.client_id] = 1;
@@ -327,9 +333,9 @@ function hrTreatsMerge(cloudArr, localArr, flatKey) {
   return mergeCore(localArr, cloudArr, { key: 'id', isPending: hrPendingFor(flatKey) });
 }
 
-function hrSessionRow(rec) {
+function hrSessionRow(rec, kind) {
   if (!rec || rec.client_id == null) return null;
-  return {
+  var out = {
     client_id: String(rec.client_id),
     session: String(rec.session || ''),
     session_date: rec.session_date ? String(rec.session_date) : null,
@@ -343,6 +349,9 @@ function hrSessionRow(rec) {
     deleted_at: rec.deleted_at == null ? null : rec.deleted_at,
     updated_at: Math.round(hrRecTs(rec))
   };
+  // עמודות האב שרק לזרם הזה — נשלחות גם ריקות, כדי שמחיקת ערך תגיע לענן
+  ((HR_ROWS_KINDS[kind] || {}).pcols || []).forEach(function (c) { out[c] = (rec[c] == null || rec[c] === '') ? null : rec[c]; });
+  return out;
 }
 
 // client_id נגזר מ-<סדר>:<תלמיד> ואינו uuid חדש — מזהה שני היה מאפשר לסימון להתקיים פעמיים.
@@ -374,6 +383,7 @@ function hrMarkRows(rec, kind) {
     // note במסלול השינה בלבד — שדה עודף ב-upsert מפיל את הבקשה כולה.
     // נשלח גם כשהוא ריק — null מפורש מוחק הערה בענן, והשמטת המפתח משאירה את הישנה.
     if (wantNote) row.note = (m.note == null || m.note === '') ? null : String(m.note);
+    ((HR_ROWS_KINDS[kind || 'attend'] || {}).mcols || []).forEach(function (c) { row[c] = (m[c] == null || m[c] === '') ? null : m[c]; });
     out.push(row);
   });
   return out;
@@ -434,7 +444,7 @@ async function hrSendRecs(key, recs) {
   }
   var cfg = HR_ROWS_KINDS[kind];
   var sRows = [];
-  recs.forEach(function (rec) { var r = hrSessionRow(rec); if (r) sRows.push(r); });
+  recs.forEach(function (rec) { var r = hrSessionRow(rec, kind); if (r) sRows.push(r); });
   if (!sRows.length) return {};
   if (!(await hrRowsUpsert(cfg.parent, sRows))) return { error: { message: cfg.parent } };
   return {};
@@ -476,8 +486,10 @@ async function hrRowsGetSessions(kind, win) {
   var cfg = HR_ROWS_KINDS[kind];
   if (!cfg || !S.SB) return { ok: false, data: null };
   try {
-    var scols = 'client_id,session,session_date,created_by_client_id,filled_by_name,created_at,deleted_at,deleted_by,open,deleted,updated_at';
-    var mcols = 'client_id,session_client_id,student_client_id,session_date,status,minutes,deleted,deleted_at,deleted_by,updated_at' + (cfg.note ? ',note' : '');
+    var scols = 'client_id,session,session_date,created_by_client_id,filled_by_name,created_at,deleted_at,deleted_by,open,deleted,updated_at' +
+                (cfg.pcols ? ',' + cfg.pcols.join(',') : '');
+    var mcols = 'client_id,session_client_id,student_client_id,session_date,status,minutes,deleted,deleted_at,deleted_by,updated_at' +
+                (cfg.note ? ',note' : '') + (cfg.mcols ? ',' + cfg.mcols.join(',') : '');
     var both = await Promise.all([
       _rowsPaged(function () { return S.SB.from(cfg.parent).select(scols); }, 'client_id', win),
       _rowsPaged(function () { return S.SB.from(cfg.child).select(mcols); }, 'client_id', win)
@@ -591,6 +603,9 @@ function hrStudentPair(loc, rem, k, pend) {
   var out = {};
   Object.keys(base).forEach(function (kk) { out[kk] = base[kk]; });
   out.absences = mergeCore(loc.absences, rem.absences, { key: 'id', isPending: function () { return pend; } });
+  // אירועי התיק האישי — באותו מיזוג פריט-פריט; רשומה שאין בה אירועים בשני הצדדים נשארת בלי השדה
+  if (loc.file_events || rem.file_events)
+    out.file_events = mergeCore(loc.file_events || [], rem.file_events || [], { key: 'id', isPending: function () { return pend; } });
   return out;
 }
 
@@ -638,6 +653,9 @@ async function hrPullFromCloud() {
     var slRecs = await hrSessionsPull('hr_sleep_sessions');
     if (ctxStale(_ep)) return;
     if (slRecs) S._hrData = slRecs;
+    var exRecs = await hrSessionsPull('hr_exams');
+    if (ctxStale(_ep)) return;
+    if (exRecs) S._exData = exRecs;
     // הגדרה שממתינה לסנכרון אינה נדרסת — הערך המקומי טרם עלה.
     var abR = await hrCfgGet('absence_reasons');
     if (ctxStale(_ep)) return;
@@ -793,7 +811,7 @@ function atDefaultCfg() {
 
 export { HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          _hrMarkSynced, _hrStudentsRaw, _hrStudentsSaveRaw,
-         atDefaultCfg, atvCls, canAccess, getAbsenceReasons, getActiveAbsences,
+         atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg,
          hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPdfFont, hrPullFromCloud,

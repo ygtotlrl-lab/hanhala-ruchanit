@@ -53,10 +53,6 @@ function screenSettingsHTML() {
           <span class="tile-ico">${icon('exams')}</span>
           <span class="set-module-label">מבחנים</span>
         </button>
-        <button data-act="settings-module" data-mod="files" class="set-module-tile">
-          <span class="tile-ico">${icon('files')}</span>
-          <span class="set-module-label">תיקים אישיים</span>
-        </button>
         <button data-act="settings-module" data-mod="reports" class="set-module-tile">
           <span class="tile-ico">${icon('reports')}</span>
           <span class="set-module-label">דוחות</span>
@@ -132,7 +128,7 @@ function screenSettingsHTML() {
         </div>
       </div>
     </div>
-${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('files', 'הגדרות תיקים')}${_soonPaneHTML('reports', 'הגדרות דוחות')}
+${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('reports', 'הגדרות דוחות')}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
@@ -166,7 +162,7 @@ ${_soonPaneHTML('exams', 'הגדרות מבחנים')}${_soonPaneHTML('files', '
 var PASS_SIX_RE = /^[0-9]{6}$/;
 
 function showSettingsHome() {
-  ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','exams','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });
@@ -179,7 +175,7 @@ function showSettingsHome() {
 // כאן ההרשאה נגזרת מ-hr_users.role דרך canAccess, והעמודה NOT NULL בלי DEFAULT.
 function showSettingsModule(mod) {
   document.getElementById('settings-home').classList.add('hidden');
-  ['students','attend','sleep','exams','files','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','exams','reports','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });

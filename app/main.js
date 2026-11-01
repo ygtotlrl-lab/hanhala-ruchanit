@@ -32,6 +32,8 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
+import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
+import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
@@ -40,7 +42,7 @@ import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
-         hrShowTab } from './domain.reg.js';
+         hrRegHTML, hrRegLoad, hrShowTab } from './domain.reg.js';
 import { hrDeleteSession, hrExportConfirm, hrShowExportDialog } from './domain.arc.js';
 import { hrAddSessionRow, hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSettings,
          hrRenderSupervision, hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg,
@@ -107,6 +109,8 @@ var BK_CFG = {
       { name: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' },
       { name: 'hr_sleep_sessions', order: 'client_id', ts: 'updated_at' },
       { name: 'hr_sleep_marks',    order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_exams',          order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_exam_marks',     order: 'client_id', ts: 'updated_at' },
       { name: KV_TABLE,            order: 'key',       ts: 'updated_at' }
     ];
   }
@@ -149,7 +153,7 @@ var PL_CFG = {
 };
 
 // טבלאות הבן — שורת סימון נדחפת כפי שהיא במראה, בחותמת משלה.
-var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1 };
+var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1, hr_exam_marks: 1 };
 
 var PUSH_CFG = {
   tables: PUSH_TABLES,
@@ -215,17 +219,8 @@ function screenReportsHTML() {
 `;
 }
 
-function screenExamsHTML() {
-  return `
-<div class="pg" id="pg-exams"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מבחנים</span><span class="gap"></span></div><div class="cs"><div class="ci">📝</div><h3>מבחנים</h3><p>מודול זה בפיתוח</p></div></div></div>
-`;
-}
-
-function screenFilesHTML() {
-  return `
-<div class="pg" id="pg-files"><div class="inner"><div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>תיקים אישיים</span><span class="gap"></span></div><div class="cs"><div class="ci">📁</div><h3>תיקים אישיים</h3><p>מודול זה בפיתוח</p></div></div></div>
-`;
-}
+// המבחנים — הזרם השלישי, באותו מסך כמו הסדרים והשינה.
+function screenExamsHTML() { return hrRegHTML(HR_STREAMS.exams); }
 
 function mountView() {
   var v = document.getElementById('view');
@@ -236,7 +231,6 @@ function mountView() {
     screenReportsHTML() +
     screenSleepHTML() +
     screenExamsHTML() +
-    screenFilesHTML() +
     screenSettingsHTML();
 }
 
@@ -280,7 +274,7 @@ function showPageInternal(pg) {
   if(nbEl) nbEl.classList.add('on');
 }
 
-var UNDER_CONSTRUCTION = ['exams','files','reports'];
+var UNDER_CONSTRUCTION = ['reports'];
 
 function showPage(pg) {
   if (pg === 'home') { showPageInternal('home'); loadDash(); return; }
@@ -296,6 +290,7 @@ function renderPage(pg) {
   if (pg === 'students' && typeof renderStudents === 'function') renderStudents();
   if (pg === 'settings') renderSettings();
   if (pg === 'attend') loadAttend();
+  if (pg === 'exams') hrRegLoad(HR_STREAMS.exams);
   if (pg === 'sleep') loadSleep();
 }
 
@@ -434,6 +429,9 @@ var DOM_ACTIONS = {
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
   'st-history':  function (el) { return openStatusHistory(el.getAttribute('data-id')); },
+  'st-file':        function (el) { openStudentFile(el.getAttribute('data-id')); },
+  'file-event-save': function () { return saveFileEvent(); },
+  'file-event-del': function (el) { deleteFileEvent(el.getAttribute('data-id')); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.
   'page':        function (el) { showPage(el.getAttribute('data-page')); },
   'page-nav':    function (el) {
@@ -547,6 +545,7 @@ function hrStreamActions(st) {
   a[p + 'settings-save'] = function () { return hrSaveSettingsCfg(st); };
   a[p + 'treat-row-add'] = function () { hrAddTreatRow(st); };
   a[p + 'session-add']   = function () { hrAddSessionRow(st); };
+  a[p + 'open-file']     = function (el) { return hrOpenFile(el.getAttribute('data-path')); };
   return a;
 }
 Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStreamActions(HR_STREAMS[k])); });
@@ -579,6 +578,8 @@ document.addEventListener('input', function (e) {
     var st = HR_STREAMS[kind];
     if (k === st.p + '-late') hrSetLateMin(st, el.dataset.id, el.value);
     else if (k === st.p + '-note') hrSetNote(st, el.dataset.id, el.value);
+    else if (k === st.p + '-grade') hrExamSetGrade(st, el.dataset.id, el.value, false);
+    else if (k === st.p + '-material') hrExamSetField(st, 'material', el.value);
   });
 });
 
@@ -586,6 +587,11 @@ document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
+  var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
+  if (c === 'file-scan-pick') fileScanPicked(el);
+  if (c === ex.p + '-grade') hrExamSetGrade(ex, el.dataset.id, el.value, true);
+  else if (c === ex.p + '-scan' || c === ex.p + '-file') hrExamUpload(ex, el);
+  else if (c === ex.p + '-in-report') hrExamSetInReport(ex, el.checked);
 });
 
 // ── דוחות חודשיים ──

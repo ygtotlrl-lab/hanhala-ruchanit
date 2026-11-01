@@ -15,6 +15,7 @@ import { _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
          hrIsPrayer, hrSaveData, hrSessionDefs } from './domain.sessions.js';
 import { hrRenderArchive } from './domain.arc.js';
 import { hrRenderSupervision } from './domain.sup.js';
+import { hrRenderExam } from './domain.exam.js';
 import { icon } from './icons.js';
 
 function hrRegHTML(st) {
@@ -30,7 +31,7 @@ function hrRegHTML(st) {
     <div class="at-tab-bar">
       <button id="${p}-tab-reg" data-act="${p}-tab" data-tab="reg" class="at-tab-btn-on">${icon('entry')}רישום</button>
       <button id="${p}-tab-arc" data-act="${p}-tab" data-tab="arc" class="at-tab-btn">${icon('archive')}ארכיון</button>
-      <button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">${icon('watch')}השגחה</button>
+      ${st.sup===false?'':`<button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">${icon('watch')}השגחה</button>`}
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
     <div id="${p}-pullStale" class="at-pull-warn"></div>
@@ -61,6 +62,7 @@ function hrRegHTML(st) {
           <div id="${p}-reg-header" class="at-reg-bar-info"></div>
           <button data-act="${p}-session-close" class="at-close-btn">${icon('check')}שמור וסגור</button>
         </div>
+        ${st.exam?`<div id="${p}-exam-info" class="ex-info"></div>`:''}
         <div id="${p}-students"></div>
       </div>
     </div>
@@ -73,9 +75,9 @@ function hrRegHTML(st) {
       <div id="${p}-arc-list"></div>
     </div>
     <!-- תצוגת השגחה -->
-    <div id="${p}-view-sup" class="hidden">
+    ${st.sup===false?'':`<div id="${p}-view-sup" class="hidden">
       <div id="${p}-sup-content"></div>
-    </div>
+    </div>`}
   </div>
 </div>
 `;
@@ -165,7 +167,7 @@ function hrShowTab(st, tab) {
   });
   if(tab==='reg' && S[st.v+'CurrentSessionId']) hrRenderStudents(st);
   if(tab==='arc') hrRenderArchive(st);
-  if(tab==='sup') hrRenderSupervision(st);
+  if(tab==='sup' && st.sup!==false) hrRenderSupervision(st);
 }
 
 // ── רישום הסימונים ומסך הסדר ──
@@ -185,10 +187,10 @@ async function hrEditSession(st, recId) {
   var marks=S[st.v+'Marks']={};S[st.v+'Pending']={};var cleared=S[st.v+'Cleared']={};
   Object.entries(hrMarks(rec)).forEach(function(e){
     var sid=e[0],m=e[1];
-    if(m.status){marks[sid]=hrMarkOf(st,m.status,m.minutes,m.note);cleared[sid]=true;}
+    if(m.status||(st.exam&&(m.note||m.scan||m.grade!=null))){marks[sid]=hrMarkOf(st,m.status,m.minutes,m.note,m);cleared[sid]=true;}
   });
-  // רענון אישורים לתלמידים בלי סימון — אישור שהוזן אחרי פתיחת הסדר
-  try {
+  // רענון אישורים לתלמידים בלי סימון — אישור שהוזן אחרי פתיחת הסדר; במבחן אין סימון אוטומטי
+  if(!st.exam) try {
     var nowT=new Date();
     var hhmm=_hrSessTime(st, rec.session, ('0'+nowT.getHours()).slice(-2)+':'+('0'+nowT.getMinutes()).slice(-2));
     var apChanged=false;
@@ -251,7 +253,7 @@ async function hrOpenSession(st, sessId, sessName) {
   var marks=S[st.v+'Marks']={};
   S[st.v+'Pending']={};
   S[st.v+'Cleared']={};
-  students.forEach(function(s){
+  if(!st.exam) students.forEach(function(s){
     var am=hrAutoMark(s,dateIso,sessTime);
     if(am) marks[s.client_id]=hrMarkOf(st,am,0,'');
   });
@@ -316,7 +318,7 @@ function hrSaveLocalNow(st) {
   getStudents().forEach(function(s){
     if(s.active===false) return;
     var m=buf[s.client_id];
-    marks[s.client_id]=m?hrMarkOf(st,m.status,m.status==='l'?(m.minutes||0):0,m.note):hrMarkOf(st,'',0,'');
+    marks[s.client_id]=m?hrMarkOf(st,m.status,m.status==='l'?(m.minutes||0):0,m.note,m):hrMarkOf(st,'',0,'');
   });
   rec.marks=marks;
   rec.updated_at=Date.now();
@@ -422,6 +424,7 @@ function hrConfirmLate(st, sid) {
 
 // ── רשימת התלמידים וכפתורי הסימון ──
 function hrRenderStudents(st) {
+  if(st.exam) return hrRenderExam(st);
   var el=document.getElementById(st.p+'-students');
   if(!el) return;
   var students=hrSortStudents(getStudents());
@@ -613,6 +616,6 @@ function hrCheckAlert(st) {
     '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
 }
 
-export { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
+export { _hrOpenRec, hrMarkDirty, hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRegHTML, hrRegLoad, hrRenderStudents, hrSetLateMin,
          hrSetMark, hrSetNote, hrShowTab };
