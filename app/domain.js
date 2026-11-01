@@ -636,6 +636,22 @@ async function hrPushToCloud() {
   if (r.n) hrSyncLog('push', null, r.n);
 }
 
+// שדות הגיליון — שורות שטוחות, ממוזגות ב-mergeCore כמו כל טבלה במראה; שורה ממתינה אינה נדרסת.
+async function hrReportValsPull() {
+  var t = 'hr_report_vals';
+  if (!S.SB) return false;
+  var rows = null;
+  try {
+    rows = await _rowsPaged(function () {
+      return S.SB.from(t).select('client_id,month,student_client_id,field,value,deleted,updated_at,deleted_at,deleted_by');
+    }, 'client_id', null);
+  } catch (e) { rows = null; }
+  if (!rows) return false;
+  MIRROR[t] = mergeCore(MIRROR[t] || [], rows, { isPending: function (k) { return pendHas(PEND_KV_PREFIX[t] + k); } });
+  mirrorSave(t);
+  return true;
+}
+
 async function hrPullFromCloud() {
   // המשתמש יכול להתחלף בין המשיכה לכתיבה — מה שנמזג עבור הקודם היה יורד לדיסק של החדש.
   var _ep = ctxEpoch();
@@ -656,6 +672,8 @@ async function hrPullFromCloud() {
     var exRecs = await hrSessionsPull('hr_exams');
     if (ctxStale(_ep)) return;
     if (exRecs) S._exData = exRecs;
+    await hrReportValsPull();
+    if (ctxStale(_ep)) return;
     // הגדרה שממתינה לסנכרון אינה נדרסת — הערך המקומי טרם עלה.
     var abR = await hrCfgGet('absence_reasons');
     if (ctxStale(_ep)) return;

@@ -571,3 +571,30 @@
 .ct-row input{min-width:0;font-family:Heebo;font-size:var(--fs-2);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);background:var(--card);color:var(--text)}
 .ct-row .row-del-btn{grid-area:del}
 @media (min-width:760px){ .ct-row{grid-template-columns:1fr 1.3fr 1fr 1.4fr 30px;grid-template-areas:"role name phone email del"} }
+
+/* ── גיליונות ציונים והנהגה ── */
+.rp-month{display:flex;align-items:center;justify-content:space-between;padding:var(--sp-4) var(--sp-5)}
+.rp-month-lbl{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink)}
+.rp-nav{width:40px;height:40px;border-radius:var(--r-7);border:1.5px solid var(--border);background:var(--card);color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.rp-sec{font-size:var(--fs-3);font-weight:700;color:var(--text-2);margin:var(--sp-6) 0 var(--sp-3)}
+.rp-fills{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--sp-3)}
+@media (max-width:520px){ .rp-fills{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.rp-fill-btn{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:52px;padding:var(--sp-3) var(--sp-5);border:1.5px solid var(--border);border-radius:var(--r-4);background:var(--card);color:var(--text);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;text-align:right}
+.rp-fill-lbl{line-height:var(--lh-2)}
+.rp-fill-n{font-size:var(--fs-1);font-weight:700;color:var(--text-3);background:var(--card-2);border-radius:var(--r-5);padding:var(--sp-1) var(--sp-3);white-space:nowrap}
+.rp-full{border-color:var(--ok-line)}.rp-full .rp-fill-n{color:var(--ok);background:var(--ok-soft)}
+.rp-list-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);margin:var(--sp-7) 0 var(--sp-4);font-size:var(--fs-3);font-weight:600;color:var(--text-2)}
+.rp-row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:var(--sp-4);padding:var(--sp-4) var(--sp-5);border-bottom:1px solid var(--border)}
+.rp-row:last-child{border-bottom:none}
+.rp-row-main{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
+.rp-row-name{font-size:var(--fs-4);font-weight:600}
+.rp-row-sub{font-size:var(--fs-1);color:var(--text-3)}
+.rp-fill-box{display:flex;flex-direction:column;gap:var(--sp-2)}
+.rp-staff{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-4);border:1.5px solid var(--border);border-radius:var(--r-4);background:var(--card-2);margin-bottom:var(--sp-4)}
+.rp-staff-row{display:flex;flex-direction:column;gap:var(--sp-1);font-size:var(--fs-2);font-weight:600;color:var(--text-2)}
+.rp-staff-row input,.rp-fill-row select,.rp-fill-row textarea{font-family:Heebo;font-size:var(--fs-3);border:1.5px solid var(--border);border-radius:var(--r-3);padding:var(--sp-2) var(--sp-3);background:var(--card);color:var(--text)}
+.rp-fill-row{display:grid;grid-template-columns:18px minmax(0,1fr) 150px;align-items:center;gap:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border)}
+.rp-fill-note{grid-template-columns:18px minmax(0,1fr)}
+.rp-fill-note textarea{grid-column:1/-1;resize:vertical}
+.rp-fill-cls{font-size:var(--fs-2);font-weight:700;color:var(--text-3);text-align:center}
+.rp-fill-name{font-size:var(--fs-3);font-weight:600}

@@ -218,14 +218,14 @@ var KV_TABLE = 'hr_settings';
 // tables היא פונקציה: PUSH_TABLES מוצהר אחרי הבלוק, וקריאה כאן הייתה מקבלת undefined.
 // empty מחזירה null ולא מערך ריק — מפתח שאינו על הדיסק נופל לברירת המחדל, ורשימה ריקה אינה.
 var HR_MIRROR_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions',
-                        'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_students_rows', KV_TABLE, 'hr_users'];
+                        'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_report_vals', 'hr_students_rows', KV_TABLE, 'hr_users'];
 
 // המסמך הוא מודול ושם שמוגדר בו אינו גלובלי — השמות שנקראים מתגית וממפת הפעולות מוצבים על window במפורש.
 
 // ── PUSH_CFG ──
 // hr_users אינה נדחפת לעולם — המראה בלי סיסמאות, ודחיפתה הייתה כותבת סיסמה ריקה; מסלולה writeUser.
 // הסדר קובע: הסדרים לפני המצבה, וההגדרות — בלי אב ובלי בן — אחרונות.
-var PUSH_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_students_rows', KV_TABLE];
+var PUSH_TABLES = ['hr_sessions', 'hr_marks', 'hr_sleep_sessions', 'hr_sleep_marks', 'hr_exams', 'hr_exam_marks', 'hr_report_vals', 'hr_students_rows', KV_TABLE];
 
 // ── שכבת השורות ──
 // סימון נוכחות נכתב כשורה — ערך שלם נדרס כולו בכל כתיבה. session_date משוכפל ל-hr_marks — עמודת הסינון בשרת של טבלת הבן, בשם עמודת האב, כדי שהחלון והדוח פר-תלמיד לא יצטרפו לאב.
@@ -252,12 +252,12 @@ var HR_ROWS_READ_KEYS = { hr_sessions: 'attend', hr_students_rows: 'students', h
 // דחיפה מוצלחת מאשרת כל סימון שנרשם לפני שהצילום נלקח.
 var PK_AT_SESS = 'at-sess:', PK_SL_SESS = 'sl-sess:', PK_STUDENT = 'student:',
     PK_SET = 'setting:', PK_AT_MARK = 'at-mark:', PK_SL_MARK = 'sl-mark:',
-    PK_EX_SESS = 'ex-sess:', PK_EX_MARK = 'ex-mark:';
+    PK_EX_SESS = 'ex-sess:', PK_EX_MARK = 'ex-mark:', PK_RP_VAL = 'rp-val:';
 
 var PEND_KV_PREFIX = {
   'hr_sessions': PK_AT_SESS, 'hr_marks': PK_AT_MARK,
   'hr_sleep_sessions': PK_SL_SESS, 'hr_sleep_marks': PK_SL_MARK,
-  'hr_exams': PK_EX_SESS, 'hr_exam_marks': PK_EX_MARK,
+  'hr_exams': PK_EX_SESS, 'hr_exam_marks': PK_EX_MARK, 'hr_report_vals': PK_RP_VAL,
   'hr_students_rows': PK_STUDENT
 };
 
@@ -309,4 +309,4 @@ export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRR
          MSG_USER_SAVED_NO_FP, MSG_USER_SWITCHED_MID, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
-         PK_AT_MARK, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };
+         PK_AT_MARK, PK_EX_MARK, PK_EX_SESS, PK_RP_VAL, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };

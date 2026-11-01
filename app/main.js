@@ -21,7 +21,7 @@ import { icon } from './icons.js';
 import { _hrMarkSynced, canAccess, hrLocalRecs,
          hrPullFromCloud, hrPushToCloud,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
-         uiShown } from './domain.js';
+         modalOpen, uiShown } from './domain.js';
 import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
@@ -32,6 +32,8 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
+import { loadReports, renderReports, rpNav, rpOpenFill, rpPrint, rpSaveFill, rpSetCls,
+         screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
@@ -112,6 +114,7 @@ var BK_CFG = {
       { name: 'hr_sleep_marks',    order: 'client_id', ts: 'updated_at' },
       { name: 'hr_exams',          order: 'client_id', ts: 'updated_at' },
       { name: 'hr_exam_marks',     order: 'client_id', ts: 'updated_at' },
+      { name: 'hr_report_vals',    order: 'client_id', ts: 'updated_at' },
       { name: KV_TABLE,            order: 'key',       ts: 'updated_at' }
     ];
   }
@@ -154,7 +157,8 @@ var PL_CFG = {
 };
 
 // טבלאות הבן — שורת סימון נדחפת כפי שהיא במראה, בחותמת משלה.
-var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1, hr_exam_marks: 1 };
+// hr_report_vals — שורה שטוחה לכל שדה בגיליון, נדחפת כפי שהיא במראה כמו שורות הבן.
+var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1, hr_exam_marks: 1, hr_report_vals: 1 };
 
 var PUSH_CFG = {
   tables: PUSH_TABLES,
@@ -208,17 +212,6 @@ var USER_CFG = {
 };
 
 document.title = self.APP.name;
-
-function screenReportsHTML() {
-  return `
-<div class="pg" id="pg-reports">
-  <div class="inner">
-    <div class="ptitle" data-ks><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>דוח חודשי</span><span class="gap"></span><input type="month" aria-label="חודש הדוח" id="rm"><button class="btn" data-act="rpt-load" data-ksave>${icon('reports')}הצג</button></div>
-    <div id="rc"></div>
-  </div>
-</div>
-`;
-}
 
 // המבחנים — הזרם השלישי, באותו מסך כמו הסדרים והשינה.
 function screenExamsHTML() { return hrRegHTML(HR_STREAMS.exams); }
@@ -275,7 +268,7 @@ function showPageInternal(pg) {
   if(nbEl) nbEl.classList.add('on');
 }
 
-var UNDER_CONSTRUCTION = ['reports'];
+var UNDER_CONSTRUCTION = [];
 
 function showPage(pg) {
   if (pg === 'home') { showPageInternal('home'); loadDash(); return; }
@@ -292,6 +285,7 @@ function renderPage(pg) {
   if (pg === 'settings') renderSettings();
   if (pg === 'attend') loadAttend();
   if (pg === 'exams') hrRegLoad(HR_STREAMS.exams);
+  if (pg === 'reports') loadReports();
   if (pg === 'sleep') loadSleep();
 }
 
@@ -436,6 +430,12 @@ var DOM_ACTIONS = {
   'ct-group-add':   function () { addContactGroup(); },
   'ct-row-add':     function (el) { addContactRow(el); },
   'ct-save':        function () { return saveContacts(); },
+  'rp-nav':         function (el) { rpNav(Number(el.getAttribute('data-dir'))); },
+  'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
+  'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
+  'rp-fill-save':   function () { rpSaveFill(); },
+  'rp-print':       function (el) { return rpPrint(el.getAttribute('data-id')); },
+  'rp-print-all':   function () { return rpPrint(null); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.
   'page':        function (el) { showPage(el.getAttribute('data-page')); },
   'page-nav':    function (el) {
@@ -490,7 +490,6 @@ var DOM_ACTIONS = {
                            full_name: el.getAttribute('data-uname'),
                            username: el.getAttribute('data-uusername'),
                            role: el.getAttribute('data-urole') }); },
-  'rpt-load':            function () { loadR(); },
   'absence-reasons-save': function () { return saveAbsenceReasons(); },
   'status-abs-cancel':    function (el) {
                             cancelSingleAbsence(el.getAttribute('data-id'));
@@ -598,13 +597,6 @@ document.addEventListener('change', function (e) {
   else if (c === ex.p + '-in-report') hrExamSetInReport(ex, el.checked);
 });
 
-// ── דוחות חודשיים ──
-// המסך חסום ב-UNDER_CONSTRUCTION ו-loadR אינה מוצגת; עד לאפיון — לא לחבר כאן לוגיקת דוח.
-// כשייכתב: מהטבלאות המובנות בלבד, דרך hrMarks(rec) ובסינון !r.deleted.
-function loadR(){
-  var el = document.getElementById('rc');
-  if (el) el.innerHTML = '<div class="empty">הדוח בבנייה — טרם אופיין</div>';
-}
 
 // אין להחזיר כאן setInterval — הבדיקה המחזורית היא plBoot() שבעליית הליבה, והיא ממתינה לסשן: בדיקה מחזורית לפני הכניסה מושכת נתון ש-hrApplyPerms זורקת.
 
@@ -673,4 +665,6 @@ function hrPullDraw() {
   } catch (eRf) { console.error('[pull] רענון בוררי הסדר נכשל', eRf); }
   if (typeof renderStudents === 'function') renderStudents();
   if (typeof refreshDashStats === 'function') refreshDashStats();
+  var rpPg = document.getElementById('pg-reports');
+  if (rpPg && rpPg.classList.contains('on') && !modalOpen()) renderReports();
 }
