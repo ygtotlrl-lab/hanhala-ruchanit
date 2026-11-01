@@ -8,7 +8,7 @@ import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
 import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE,
          MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE,
-         MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
+         HR_PRAYER_NAMES, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
          PK_AT_MARK, PK_AT_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
@@ -137,12 +137,9 @@ function hrMarkLabels(st) {
 var HR_LATE_CODES = ['l', 'lk', 'lm'];
 function hrIsLate(code) { return HR_LATE_CODES.indexOf(code) >= 0; }
 
-// תפילה — לפי הדגל prayer של הסדר בהגדרות, בשם הסדר; סדר שאינו בהגדרות אינו תפילה.
+// תפילה — לפי שם הסדר, מהרשימה הקבועה שבקוד (HR_PRAYER_NAMES).
 function hrIsPrayer(st, sessName) {
-  if (!st.prayers) return false;
-  var ss = hrCfgOf(st).sessions || [];
-  for (var i = 0; i < ss.length; i++) if (ss[i].name === sessName) return !!ss[i].prayer;
-  return false;
+  return !!st.prayers && HR_PRAYER_NAMES.indexOf(String(sessName || '').trim()) >= 0;
 }
 
 // סימון ריק או ממולא — והשינה נושאת גם הערה.
@@ -295,7 +292,8 @@ async function hrRefreshApprovalMarks(sid) {
 // ── מה ששלושת חלקי המסך קוראים ──
 function hrSummaryHTML(st, cnts){
   var parts=[];
-  var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count">'+n+' '+lbl+'</span>');};
+  // נקודה בגוון הקוד, ואחריה התווית והמספר בדיו הרגיל — «● איחורים: 20»
+  var add=function(n,lbl,code){if(n)parts.push('<span class="'+atvCls(code)+' at-count"><i class="at-dot"></i>'+lbl+': '+n+'</span>');};
   add(cnts.p||0,  'נוכחים',   'p');
   add(cnts.e||0,  'חיסורים',  'e');
   add(cnts.x||0,  st.xMany,   'x');
@@ -305,7 +303,7 @@ function hrSummaryHTML(st, cnts){
   add(cnts.ap||0, 'באישור',   'ap');
   add(cnts.ak||0, 'בבית',     'ak');
   add(cnts.a||0,  'מנוחה',    'a');
-  return parts.join('<span class="user-handle"> | </span>');
+  return parts.join('');
 }
 
 // מחזירה האם הענן ענה ולא את הנתון — hrLoadData נופלת לדיסק ומחזירה מערך גם בכשל.

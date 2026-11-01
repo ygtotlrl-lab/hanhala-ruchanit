@@ -38,7 +38,7 @@ async function hrRenderSupervision(st) {
   var cD=hrCachedArr(st.v+'Data',st.table);
   var cT=hrCachedArr(st.v+'Treats',st.treatsLs);
   if(cD&&cT) _hrSupPaint(st,el,cD,cT,'');
-  else el.innerHTML='<div class="loading-note">⏳ טוען...</div>';
+  else el.innerHTML='<div class="loading-note" role="status" aria-label="טוען"><span class="view-spin"></span></div>';
   var ok=await Promise.all([hrPullSessions(st, hrHebMonthWin(hrSupMonth(st), S[st.v+'SupMI'])), hrPullTreats(st)]);
   // כשל משיכה מסומן גלוי — המשגיח מחליט על סמך מה שהוא רואה
   _hrSupPaint(st, el, hrCachedArr(st.v+'Data',st.table)||[],
@@ -114,7 +114,7 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
   rows.forEach(function(e){S[st.v+'SupRecords'][e[0]]=e[1].records||[];S[st.v+'SupStats'][e[0]]=e[1];});
 
   var cfg=hrCfgOf(st);
-  var html=navHTML+'<div class="status-choice-list">';
+  var html=navHTML+'<div class="sup-tiles">';
   rows.forEach(function(e){
     var sid=e[0],sr=e[1];
     var stuTreats=treats.filter(function(t){return String(t.student_client_id)===String(sid);});
@@ -129,18 +129,18 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     var alert20=sr.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
     var alert300=sr.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
     var clsLabel=sr.cls==='a'?'א':sr.cls==='b'?'ב':sr.cls==='g'?'ג':sr.cls||'';
+    // אריח לכל תלמיד: שיעור וחץ למעלה, השם, ושני מספרים גדולים — חיסורים וטיפולים; «פירוט» לרוחב האריח
     html+='<div id="'+p+'-sup-card-'+sid+'" class="sup-card-pane sup-card">';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="'+p+'-sup-chev">';
-    html+='<div class="sup-card-class">'+esc(clsLabel)+'</div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+alert20+alert300+'</div>'+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
+    html+='<div class="sup-tile-top"><span class="sup-card-class">שיעור '+esc(clsLabel)+'\'</span><span class="sup-chev-icon '+p+'-sup-chev">'+icon('down')+'</span></div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+'</div>'+((alert20||alert300)?'<div class="rec-alerts">'+alert20+alert300+'</div>':'')+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
-    html+='<span class="rec-abs">'+st.absMany+': <b>'+sr.absent+'</b></span>';
+    html+='<div class="sup-st sup-st-abs"><b>'+sr.absent+'</b><span>'+st.absMany+'</span></div>';
     // בזרם שיש בו תפילות — חיסורים וטיפולים בלבד, והשאר בפירוט
-    if(!st.prayers) html+='<span class="rec-late">איחורים: <b>'+sr.lateMin+'</b>ד׳</span>';
-    html+='<span class="rec-muted">טיפולים: <b>'+stuTreats.length+'</b></span>';
-    html+='<button data-act="'+p+'-sup-detail" data-id="'+esc(sid)+'" class="sup-detail-btn">'+icon('search')+'פירוט</button>';
+    if(!st.prayers) html+='<div class="sup-st sup-st-late"><b>'+sr.lateMin+'</b><span>דקות</span></div>';
+    html+='<div class="sup-st"><b>'+stuTreats.length+'</b><span>טיפולים</span></div>';
     html+='</div>';
-    html+='<span class="sup-chev-icon '+p+'-sup-chev">'+icon('prev')+'</span>';
+    html+='<button data-act="'+p+'-sup-detail" data-id="'+esc(sid)+'" class="sup-detail-btn">'+icon('search')+'פירוט</button>';
     html+='</div>';
     html+='<div class="sup-card-body hidden">';
     html+='<div class="treat-add">';
@@ -313,7 +313,6 @@ function _hrPaintSettings(st) {
       return '<div data-sess-row="1" class="sess-edit-row">'+
         '<input aria-label="שם הסדר" data-sess-name="1" value="'+esc(s.name)+'" placeholder="שם הסדר" class="sess-field">'+
         '<input data-sess-time="1" aria-label="שעת הסדר" type="time" value="'+esc(s.start_time||'')+'" class="cfg-row-input">'+
-        '<label class="sess-prayer"><input data-sess-prayer="1" type="checkbox"'+(s.prayer?' checked':'')+'>תפילה</label>'+
         '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">'+icon('close')+'</button>'+
       '</div>';
     }).join('');
@@ -336,7 +335,6 @@ function hrAddSessionRow(st) {
   div.className='edit-row sess-edit-row-gap';
   div.innerHTML='<input aria-label="שם הסדר" data-sess-name="1" placeholder="שם הסדר" class="sess-field">'+
     '<input data-sess-time="1" aria-label="שעת הסדר" type="time" class="cfg-row-input">'+
-    '<label class="sess-prayer"><input data-sess-prayer="1" type="checkbox">תפילה</label>'+
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">'+icon('close')+'</button>';
   sc.appendChild(div);div.querySelector('[data-sess-name]').focus();
 }
@@ -366,8 +364,6 @@ async function hrSaveSettingsCfg(st) {
       var existing=oldSessions.find(function(s){return s.name===name;});
       var entry={id:existing?existing.id:('s_'+Date.now()+'_'+i),name:name};
       if(sessStart) entry.start_time=sessStart;
-      var prInp=row.querySelector('[data-sess-prayer]');
-      if(prInp&&prInp.checked) entry.prayer=true;
       newSess.push(entry);
     });
     cfg.sessions=newSess;

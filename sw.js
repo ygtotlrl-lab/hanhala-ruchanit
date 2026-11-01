@@ -1,7 +1,7 @@
 // sw.js — service worker של האפליקציה
 importScripts('./app.config.js');
 // מכאן נגזרת גרסת האפליקציה שבבאנר.
-var CACHE_NAME = self.APP.id + '-v307';
+var CACHE_NAME = self.APP.id + '-v308';
 
 var CORE = [
   './',
@@ -39,7 +39,8 @@ var CORE = [
   './app/main.js',
   './manifest.json',
   './icons/icon-192.aad94dba.png',
-  './icons/icon-512.092edf48.png'
+  './icons/icon-512.092edf48.png',
+  './app/img/logo-white.png'
 ];
 
 // האפליקציה אינה רצה בלי supabase — createClient זורק והסקריפט המוטבע כולו נעצר

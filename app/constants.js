@@ -19,8 +19,8 @@ var HR_PERMS_KEY = 'hr_perms_cache';
 // MSG_BAD_LOGIN הוא נוסח האפליקציה הזו בהחלטת מנהל, ולכן אינו במודול המשותף.
 var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 
-// actRun קורא את התווית מ-data-busy.
-var MSG_BUSY_CHECK = '⏳ בודק…';
+// actRun קורא את התווית מ-data-busy — ספינר בלבד, בלי טקסט.
+var MSG_BUSY_CHECK = '<span class="btn-spin" role="status" aria-label="בודק"></span>';
 
 // אין לאחד עם «סיסמה שגויה» — משתמש בלי טביעה צריך שמנהל יקבע לו סיסמה, ולא לנסות שוב ושוב.
 var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת במערכת — יש לקבוע לו סיסמה חדשה במסך ניהול המשתמשים';
@@ -259,11 +259,14 @@ var PEND_KV_PREFIX = {
 // הגדרות שהעותק המקומי שלהן שטוח — מפתח משלו, ולא שורה במראת ההגדרות.
 var HR_SET_FLAT = { attend_treats: 'hr_attend_treats', sleep_treats: 'hr_sleep_treats' };
 
+// התפילות — קבועות בקוד ואינן נערכות בהגדרות; סדר שזה שמו הוא תפילה (איחור קל / משמעותי, בלי דקות).
+var HR_PRAYER_NAMES = ['שחרית', 'מנחה', 'מעריב', 'ערבית'];
+
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_MIRROR_TABLES, HR_PRAYER_NAMES, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
          MSG_BUSY_CHECK, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_CLOSE_REPORT_FIRST,

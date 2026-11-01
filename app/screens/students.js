@@ -43,7 +43,8 @@ function screenStudentsHTML() {
 <div id="st-summary" class="st-summary"></div>
 
 <!-- Students Table -->
-<div>
+<div class="st-table">
+  <div class="st-th" id="students-th"><span>#</span><span>שם התלמיד</span><span class="st-c-cls">שיעור</span><span>מצב</span><span></span></div>
   <div id="students-tbody"></div>
 </div>
 
@@ -197,7 +198,8 @@ function renderStudents(){
     var filtInactive=inactiveSts.filter(function(s){
       return !search||s.name.toLowerCase().indexOf(search)>=0;
     });
-    if(sumEl){sumEl.innerHTML='<span class="list-subtitle">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
+    var thEl=document.getElementById('students-th'); if(thEl) thEl.classList.add('hidden');
+    if(sumEl){sumEl.classList.remove('st-summary-on');sumEl.innerHTML='<span class="list-subtitle">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
     var tbody=document.getElementById('students-tbody');
     if(!tbody)return;
     if(!filtInactive.length){tbody.innerHTML='<div class="empty-note">אין תלמידים לא פעילים</div>';return;}
@@ -218,6 +220,7 @@ function renderStudents(){
     return;
   }
 
+  var thOn=document.getElementById('students-th'); if(thOn) thOn.classList.remove('hidden');
   var filtered=activeSts.filter(function(s){
     if(S.currentFilter!=='all'&&s.cls!==S.currentFilter)return false;
     if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
@@ -227,31 +230,36 @@ function renderStudents(){
   activeSts.forEach(function(s){
     if(getActiveAbsences(s).length>0)absent++;else present++;
   });
+  // הסיכום — שלושה תאים ופס יחס: סה״כ · נוכחים · אינם נוכחים.
+  var pct=activeSts.length?Math.round(present/activeSts.length*100):0;
   if(sumEl){sumEl.classList.add('st-summary-on');sumEl.innerHTML=
-    '<span class="sum-present">&#x2705; נוכחים: '+present+'</span>'+
-    '<span class="sum-absent">&#x274C; אינם נוכחים: '+absent+'</span>'+
-    '<span class="sum-total">סה"כ: '+activeSts.length+'</span>';}
+    '<div class="sum-cells">'+
+      '<div class="sum-cell"><span class="sum-n">'+activeSts.length+'</span><span class="sum-l">סה״כ תלמידים</span></div>'+
+      '<div class="sum-cell sum-ok"><span class="sum-n">'+present+'</span><span class="sum-l"><i class="sum-dot"></i>נוכחים</span></div>'+
+      '<div class="sum-cell sum-bad"><span class="sum-n">'+absent+'</span><span class="sum-l"><i class="sum-dot"></i>אינם נוכחים</span></div>'+
+    '</div>'+
+    '<div class="sum-bar" title="'+pct+'% נוכחים"><span style="width:'+pct+'%"></span></div>';}
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var bg=i%2===0?'zebra-a':'zebra-b';
     var clsLabel=CLS_NAME[s.cls]||s.cls;
     var isPresent=getActiveAbsences(s).length===0;
+    // נוכח ואינו נוכח — אותה צורה, בלי וי ובלי איקס; ההבדל בגוון בלבד
     var presIcon=isPresent
-      ?'<span class="pill-present">&#x2713; נוכח</span>'
-      :'<span class="pill-absent">&#x2715; אינו נוכח</span>';
+      ?'<span class="pill-present">נוכח</span>'
+      :'<span class="pill-absent">אינו נוכח</span>';
     var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס" aria-label="עריכת סטטוס">'+icon('plus')+'</button>';
-    html+='<div id="st-row-'+s.client_id+'" class="'+bg+' st-row">';
+    html+='<div id="st-row-'+s.client_id+'" class="st-row">';
+    html+='<span class="st-num">'+(i+1)+'</span>';
     html+='<div class="st-row-main">';
-    html+='<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>';
-    html+='<div class="badge-row">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button>';
-    html+='<span class="cls-badge">'+esc(clsLabel)+'</span>';
+    html+='<button class="st-row-name" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</button>';
+    html+='<span class="st-sub-cls">'+esc(clsLabel)+'</span>';
     html+='</div>';
-    html+='</div>';
+    html+='<span class="st-c-cls">'+esc(clsLabel)+'</span>';
+    html+='<span class="st-c-pres">'+presIcon+'</span>';
     html+='<div class="st-row-tools">';
-    html+=presIcon;
+    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button>';
     html+=statusBtn;
     html+='</div>';
     html+='</div>';

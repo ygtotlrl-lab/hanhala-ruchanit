@@ -50,7 +50,7 @@ function hrRegHTML(st) {
             </div>
           </div>
           <div class="picker-label">בחר ${st.one} לפתיחה:</div>
-          <div id="${p}-sess-btns" class="chip-row"></div>
+          <div id="${p}-sess-btns" class="sess-grid"></div>
         </div>
         <!-- ${st.many} שמולאו היום -->
         <div id="${p}-today-sessions"></div>

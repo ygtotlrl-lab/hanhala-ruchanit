@@ -29,7 +29,7 @@ function screenLoginHTML() {
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
     <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
-    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="⏳ בודק…" data-ksave>כניסה למערכת</button>
+    <button class="auth-btn" id="auth-btn" data-act="login" data-busy="&lt;span class=&quot;btn-spin&quot; role=&quot;status&quot; aria-label=&quot;בודק&quot;&gt;&lt;/span&gt;" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
     <div class="auth-spinner" id="auth-spinner"></div>
 
@@ -342,9 +342,11 @@ function initDateFields(){
   if(dpEl) dpEl.value=dayToday();
   if(rmEl) rmEl.value=dayToday().substring(0,7);
   // שם היום מורכב כאן ולא במנוע — המנוע מחזיר תאריך עברי, ושם היום הוא לוח לועזי.
-  var hdEl=document.getElementById('hdate');
+  // בכותרת — היום בשבוע מעל, והתאריך העברי בגדול.
+  var dwEl=document.getElementById('hdr-dow'), hdEl=document.getElementById('hdr-date');
   var _now=new Date();
-  if(hdEl) hdEl.textContent='יום '+HEB_DOW[_now.getDay()]+', '+hebrewDate(_now);
+  if(dwEl) dwEl.textContent='יום '+HEB_DOW[_now.getDay()];
+  if(hdEl) hdEl.textContent=hebrewDate(_now);
 }
 
 export { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,

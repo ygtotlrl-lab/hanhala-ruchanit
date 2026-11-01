@@ -8,17 +8,6 @@ import { icon } from '../icons.js';
 function screenHomeHTML() {
   return `
 <div class="pg on" id="pg-home">
-  <div class="hero">
-    <div class="hero-date" id="hdate"></div>
-    <div class="hero-title">שלום וברכה 👋</div>
-    <div class="hero-sub">ברוכים הבאים למערכת ניהול ישיבת תומכי תמימים ראשון לציון</div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="n" id="s-tot">-</div><div class="l">תלמידים רשומים</div></div>
-    <div class="stat"><div class="stat-ok n" id="s-pre">-</div><div class="l">נוכחים היום</div></div>
-    <div class="stat"><div class="stat-bad n" id="s-abs">-</div><div class="l">חיסורים היום</div></div>
-    <div class="stat"><div class="n" id="s-rate">-</div><div class="l">% נוכחות</div></div>
-  </div>
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">
@@ -29,6 +18,15 @@ function screenHomeHTML() {
       <button class="mod-tone-bad mod" data-pg="files" data-act="page" data-page="files"><div class="mod-ic">${icon('files')}</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
       <button class="mod-tone-info mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
 
+    </div>
+  </div>
+  <div class="kpi-wrap">
+    <div class="mods-lbl">היום</div>
+    <div class="kpis">
+      <div class="kpi kpi-brand"><div class="kpi-ic">${icon('students')}</div><div class="kpi-n" id="s-tot">–</div><div class="kpi-l">תלמידים רשומים</div></div>
+      <div class="kpi kpi-ok"><div class="kpi-ic">${icon('check')}</div><div class="kpi-n" id="s-pre">–</div><div class="kpi-l">נוכחים בישיבה</div></div>
+      <div class="kpi kpi-bad"><div class="kpi-ic">${icon('close')}</div><div class="kpi-n" id="s-abs">–</div><div class="kpi-l">חיסורים בסדרים</div></div>
+      <div class="kpi kpi-info"><div class="kpi-ic">${icon('reports')}</div><div class="kpi-n" id="s-rate">–</div><div class="kpi-l">נוכחות בסדרים</div><div class="kpi-bar"><span id="s-rate-bar"></span></div></div>
     </div>
   </div>
 </div>
@@ -80,6 +78,8 @@ async function refreshDashStats() {
   if(preEl) preEl.textContent = presentCount;
   if(absEl) absEl.textContent = absCount;
   if(rateEl) rateEl.textContent = rateStr;
+  var barEl = document.getElementById('s-rate-bar');
+  if(barEl) barEl.style.width = (parseInt(rateStr, 10) || 0) + '%';
 }
 
 // הליבה עלתה עם הדף (bootRun ב-app/main.js) — כאן רק המשיכה והציור של המסך.
