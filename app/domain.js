@@ -652,17 +652,23 @@ async function hrReportValsPull() {
   return true;
 }
 
+// התלמידים — רשימה קטנה ומלאה; משותפת למשיכה המלאה ולמסך הבית.
+async function hrStudentsPull(ep) {
+  var s = await hrCloudGet('hr_students_rows');
+  if (ep != null && ctxStale(ep)) return false;
+  if (s === null || !Array.isArray(s)) return false;
+  var mergedS = mergeCore(_hrStudentsRaw(), s, { isPending: hrPendingFor('hr_students_rows'),
+                                                  mergePair: hrStudentPair });
+  _hrStudentsSaveRaw(mergedS, true);
+  return true;
+}
+
 async function hrPullFromCloud() {
   // המשתמש יכול להתחלף בין המשיכה לכתיבה — מה שנמזג עבור הקודם היה יורד לדיסק של החדש.
   var _ep = ctxEpoch();
   try {
-    var s = await hrCloudGet('hr_students_rows');
+    await hrStudentsPull(_ep);
     if (ctxStale(_ep)) return;
-    if (s !== null && Array.isArray(s)) {
-      var mergedS = mergeCore(_hrStudentsRaw(), s, { isPending: hrPendingFor('hr_students_rows'),
-                                                      mergePair: hrStudentPair });
-      _hrStudentsSaveRaw(mergedS, true);
-    }
     var atRecs = await hrSessionsPull('hr_sessions');
     if (ctxStale(_ep)) return;
     if (atRecs) S._atData = atRecs;
@@ -832,7 +838,7 @@ export { HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg,
-         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPdfFont, hrPullFromCloud,
+         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPdfFont, hrPullFromCloud, hrStudentsPull,
          hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
          hrSortRecs, hrSortStatuses, hrSortStudents, hrSupervisionAccess, hrSyncLog,
          hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,

@@ -1,8 +1,8 @@
 // app/screens/home.js — מסך הראשי
 import { dayToday } from '../../core/util.js';
 import { S, shell } from '../state.js';
-import { getActiveAbsences, getStudents, hrMarks, hrMirrorRecs, hrPullFromCloud } from '../domain.js';
-import { hrIsLate } from '../domain.sessions.js';
+import { getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorRecs, hrStudentsPull } from '../domain.js';
+import { HR_STREAMS, hrIsLate, hrPullSessions } from '../domain.sessions.js';
 import { icon } from '../icons.js';
 
 function screenHomeHTML() {
@@ -82,9 +82,12 @@ async function refreshDashStats() {
 }
 
 // הליבה עלתה עם הדף (bootRun ב-app/main.js) — כאן רק המשיכה והציור של המסך.
+// הקוביות מציגות את היום בלבד — ולכן נמשכים התלמידים וסדרי הנוכחות של היום, במקביל (שורות 46 · 87);
+// המשיכה המלאה שייכת לסנכרון ולגיבוי, לא למסך.
 async function loadDash(){
   refreshDashStats();
-  await hrPullFromCloud();
+  await Promise.all([hrStudentsPull(), hrPullSessions(HR_STREAMS.attend, hrDayWin())]);
+  refreshDashStats();
   shell.renderStudents();
   // plTick רץ כל 3 שניות על שורת החותמת בלבד, ומושך רק בשינוי אמיתי.
 }
