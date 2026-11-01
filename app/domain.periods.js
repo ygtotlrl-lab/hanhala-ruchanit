@@ -3,9 +3,10 @@
 import { dayNoon } from '../core/util.js';
 import { hebYearInfo } from '../core/hebrew.js';
 import { periodsEngine } from '../core/periods.js';
-import { MSG_PERIOD_OPEN_LAST, MSG_PERIOD_OVERLAP } from './constants.js';
+import { MSG_PERIOD_END_BEFORE, MSG_PERIOD_NONE, MSG_PERIOD_OPEN_LAST, MSG_PERIOD_OVERLAP } from './constants.js';
 import { getStudents } from './domain.js';
 import { _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
+import { icon } from './icons.js';
 
 // המפתח — «שנה-חודש»: השנה העברית ומספר החודש בתוכה מתשרי, בשתי ספרות (01…13) — אדר א׳ ואדר ב׳ הם שני חודשים.
 // כמו בקופה; המחרוזת ממוינת כרונולוגית, ולכן המנוע משווה בלי המרה.
@@ -32,7 +33,8 @@ function hrMonthKeyLabel(k) { var p = hrKeyParts(k); return p ? ((_hcMN(p.hy)[p.
 
 var HR_PER = periodsEngine({
   valid: _valid, now: hrMonthKeyNow, add: hrMonthKeyAdd, label: hrMonthKeyLabel,
-  msg: { openLast: MSG_PERIOD_OPEN_LAST, overlap: MSG_PERIOD_OVERLAP }
+  msg: { openLast: MSG_PERIOD_OPEN_LAST, overlap: MSG_PERIOD_OVERLAP, endBefore: MSG_PERIOD_END_BEFORE, none: MSG_PERIOD_NONE },
+  removeIcon: icon('close')
 });
 
 // פעיל ביום (ISO) — לפי חודשו העברי; בלי יום — החודש הנוכחי.

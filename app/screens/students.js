@@ -5,7 +5,7 @@ import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { shareBlob } from '../../core/share.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_PERIOD_END_BEFORE, MSG_PERIOD_NONE,
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
          MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
          MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
          MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
@@ -19,7 +19,7 @@ import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsence
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
-import { HR_PER, hrMonthKey, hrMonthKeyAdd, hrMonthKeyLabel, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
+import { HR_PER, hrMonthKey, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
 import { icon } from '../icons.js';
 
 function screenStudentsHTML() {
@@ -537,8 +537,7 @@ function studentFormHTML(sid){
     '<select id="st-cycle" class="st-class-sel"></select></div>'+
     // תקופות הפעילות — חודש הצטרפות וחודש עזיבה (ריק — עדיין בישיבה); כמה תקופות לתלמיד שיצא וחזר
     '<div class="field-label">תקופות פעילות</div>'+
-    '<div id="st-periods" class="per-list"></div>'+
-    '<button type="button" data-act="st-per-add" class="add-dashed-btn">+ הוסף תקופה</button>'+
+    '<div id="st-periods"></div>'+
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
@@ -609,51 +608,13 @@ function studentFormFoot(){
          '<button class="btn" data-act="student-save" data-ksave>'+icon('save')+'שמור</button>';
 }
 
-// ── עורך התקופות בטופס ──
-// בורר חודש עברי — שלוש שנים אחורה ושנה קדימה מהחודש הנוכחי, וערך שמור מחוץ לטווח נוסף כמות שהוא.
-function _perOpts(cur, open){
-  var now=hrMonthKeyNow(), ks=[], k=hrMonthKeyAdd(now,-36);
-  for(var i=0;i<=48&&k;i++){ ks.push(k); k=hrMonthKeyAdd(k,1); }
-  if(cur&&ks.indexOf(cur)<0){ ks.push(cur); ks.sort(); }
-  return (open?'<option value=""'+(cur?'':' selected')+'>עדיין בישיבה</option>':'')+
-    ks.slice().reverse().map(function(x){ return '<option value="'+x+'"'+(x===cur?' selected':'')+'>'+esc(hrMonthKeyLabel(x))+'</option>'; }).join('');
-}
-function _perRowHTML(p){
-  return '<div class="per-row" data-per-row>'+
-    '<label class="per-lbl">מ<select aria-label="חודש הצטרפות" data-f="start">'+_perOpts(p.start,false)+'</select></label>'+
-    '<label class="per-lbl">עד<select aria-label="חודש עזיבה" data-f="end">'+_perOpts(p.end||'',true)+'</select></label>'+
-    '<button type="button" data-act="row-remove" class="row-del-btn" aria-label="הסרת התקופה">'+icon('close')+'</button>'+
-  '</div>';
-}
-function _perPaint(ps){
-  var box=document.getElementById('st-periods'); if(!box) return;
-  box.innerHTML=ps.map(_perRowHTML).join('');
-}
-function stPeriodAdd(){
-  var box=document.getElementById('st-periods'); if(!box) return;
-  box.insertAdjacentHTML('beforeend', _perRowHTML({start:hrMonthKeyNow(),end:null}));
-}
-// הרשימה מהטופס — נבדקת כמו בשכר לימוד: עזיבה לפני הצטרפות, חפיפה, ותקופה פתוחה שאינה האחרונה.
-function _perRead(){
-  var ps=[], err='';
-  document.querySelectorAll('#st-periods [data-per-row]').forEach(function(r){
-    var s=(r.querySelector('[data-f="start"]')||{}).value||'', e=(r.querySelector('[data-f="end"]')||{}).value||'';
-    if(!s) return;
-    if(e&&e<s) err=MSG_PERIOD_END_BEFORE;
-    ps.push({start:s,end:e||null});
-  });
-  if(!err&&!ps.length) err=MSG_PERIOD_NONE;
-  if(!err) err=HR_PER.problem(ps);
-  return {ps:HR_PER.list({periods:ps}), err:err};
-}
-
 function openAddStudent(){
   if(checkLoginNeeded())return;
   S.editingStudentId=null;
   openModal(MSG_ADD_STUDENT_TITLE, studentFormHTML(), studentFormFoot());
   document.getElementById('st-class').value='a';
   fillCycleSel(hrCycleFor('a'));
-  _perPaint([{start:hrMonthKeyNow(),end:null}]);
+  document.getElementById('st-periods').innerHTML=HR_PER.editorHTML([]);
 }
 
 function editStudent(sid){
@@ -666,7 +627,7 @@ function editStudent(sid){
   document.getElementById('st-class').value=s.cls;
   fillCycleSel(hrCycleOf(s));
   var cw=document.getElementById('st-cycle-wrap'); if(cw) cw.classList.toggle('hidden', s.cls==='s');
-  _perPaint(HR_PER.list(s));
+  document.getElementById('st-periods').innerHTML=HR_PER.editorHTML(HR_PER.list(s));
 }
 
 function saveStudent(){
@@ -680,7 +641,7 @@ function saveStudent(){
     else console.error('[students] אזור השגיאה st-err חסר בטופס');
     return;
   }
-  var per=_perRead();
+  var per=HR_PER.read(document.getElementById('modal'));
   if(per.err){ if(errEl) errEl.textContent=per.err; return; }
   var students=getStudents();
   var newId=null;
@@ -877,4 +838,4 @@ export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged, stPeriodAdd };
+         setStudentActive, setStudentInactive, stClassChanged };

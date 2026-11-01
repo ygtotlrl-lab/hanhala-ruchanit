@@ -23,7 +23,7 @@ import { _hrMarkSynced, canAccess, hrLocalRecs,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          modalOpen, uiShown } from './domain.js';
 import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
-import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
+import { HR_PER, hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
 import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
@@ -42,7 +42,7 @@ import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged, stPeriodAdd } from './screens/students.js';
+         setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
@@ -437,7 +437,8 @@ var DOM_ACTIONS = {
                                    el.getAttribute('data-active') === '1'); },
   'combo-pick':  function (el) { return comboPick(el); },
   'st-activate': function (el) { setStudentActive(el.getAttribute('data-id')); },
-  'st-per-add':  function () { stPeriodAdd(); },
+  'per-add':     function (el) { HR_PER.addRow(el); },
+  'per-remove':  function (el) { HR_PER.removeRow(el); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
   'st-history':  function (el) { return openStatusHistory(el.getAttribute('data-id')); },
