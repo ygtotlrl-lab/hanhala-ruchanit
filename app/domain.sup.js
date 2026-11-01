@@ -126,19 +126,19 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
       var ltDateStr=ltIso?hrDayHebFmt(ltIso):'';
       lastHTML='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
-    var alert20=sr.absent>=20?'<span class="badge-bad">⚠️ 20+</span>':'';
-    var alert300=sr.lateMin>=300?'<span class="badge-warn">⏰ 300+</span>':'';
+    // חריגה מהסף (20 חיסורים או 300 דקות איחור בחודש) — מסגרת אדומה לאריח, בלי תג
+    var over=sr.absent>=20||sr.lateMin>=300;
     var clsLabel=HR_CLS_SHORT[sr.cls]||sr.cls||'';
     // אריח לכל תלמיד: שיעור וחץ למעלה, השם, ושני מספרים גדולים — חיסורים וטיפולים; «פירוט» לרוחב האריח
-    html+='<div id="'+p+'-sup-card-'+sid+'" class="sup-card-pane sup-card">';
+    html+='<div id="'+p+'-sup-card-'+sid+'" class="sup-card-pane sup-card'+(over?' sup-over':'')+'"'+(over?' title="חרג מהסף החודשי"':'')+'>';
     html+='<div class="sup-card-head" data-act="toggle-next" data-chev="'+p+'-sup-chev">';
     html+='<div class="sup-tile-top"><span class="sup-card-class">'+esc(HR_CLS_NAME[sr.cls]||clsLabel)+'</span><span class="sup-chev-icon '+p+'-sup-chev">'+icon('down')+'</span></div>';
-    html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+'</div>'+((alert20||alert300)?'<div class="rec-alerts">'+alert20+alert300+'</div>':'')+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
+    html+='<div class="rec-main"><div class="rec-title">'+esc(sr.name)+'</div>'+(lastHTML?'<div class="rec-last">'+lastHTML+'</div>':'')+'</div>';
     html+='<div class="sup-card-stats">';
     html+='<div class="sup-st sup-st-abs"><b>'+sr.absent+'</b><span>'+st.absMany+'</span></div>';
     // בזרם שיש בו תפילות — חיסורים וטיפולים בלבד, והשאר בפירוט
     if(!st.prayers) html+='<div class="sup-st sup-st-late"><b>'+sr.lateMin+'</b><span>דקות</span></div>';
-    html+='<div class="sup-st"><b>'+stuTreats.length+'</b><span>טיפולים</span></div>';
+    html+='<div class="sup-st sup-st-treat"><b>'+stuTreats.length+'</b><span>טיפולים</span></div>';
     html+='</div>';
     html+='<button data-act="'+p+'-sup-detail" data-id="'+esc(sid)+'" class="sup-detail-btn">'+icon('search')+'פירוט</button>';
     html+='</div>';
