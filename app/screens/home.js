@@ -25,6 +25,7 @@ function screenHomeHTML() {
       <button class="mod-tone-info mod" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
       <button class="mod-tone-warn mod" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
       <button class="mod-tone-info mod" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="mod-tone-brand mod" data-pg="settings" data-act="page" data-page="settings"><div class="mod-ic">${icon('settings')}</div><div class="mod-info"><div class="mod-name">הגדרות</div><div class="mod-desc">משתמשים והרשאות, סדרים, סיבות ואנשי קשר</div></div></button>
 
     </div>
   </div>
@@ -49,7 +50,6 @@ async function refreshDashStats() {
   var atData = (await hrLoadData(HR_STREAMS.attend))
     .filter(function(r){ return !(r && r.deleted); });
   var todaySess = atData.filter(function(r){ return r.session_date === todayIso; });
-  var sessCount = todaySess.length;
 
   // חיסורים — e ו-x; נוכחות — p וכל איחור; כל סדר נספר בנפרד
   var absCount = 0, presMarks = 0;
@@ -60,14 +60,11 @@ async function refreshDashStats() {
     });
   });
 
-  // אחוז נוכחות: מונה p וכל איחור, מכנה — תלמידים פעילים כפול מספר הסדרים
+  // אחוז נוכחות: נוכחים ומאחרים מתוך מי שסומן נוכח או נעדר (e · x) — תלמיד שטרם סומן, באישור או בבית אינו נספר,
+  // אחרת סדר שנפתח ועוד לא מולא היה מוריד את האחוז
   var rateStr;
-  if(sessCount === 0){
-    rateStr = '—';
-  } else {
-    var denom = activeSts.length * sessCount;
-    rateStr = denom > 0 ? Math.round(presMarks / denom * 100) + '%' : '0%';
-  }
+  var denom = presMarks + absCount;
+  rateStr = denom > 0 ? Math.round(presMarks / denom * 100) + '%' : '—';
 
   var totEl = document.getElementById('s-tot');
   var preEl = document.getElementById('s-pre');
