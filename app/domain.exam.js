@@ -10,6 +10,7 @@ import { hrDayHeb } from './domain.hebdate.js';
 import { hrMarkOf, hrSaveData } from './domain.sessions.js';
 import { _hrOpenRec, hrMarkDirty } from './domain.reg.js';
 import { icon } from './icons.js';
+import { hrStudentOn } from './domain.periods.js';
 
 var EX_MAX_BYTES = 15 * 1024 * 1024;
 
@@ -48,7 +49,7 @@ function hrRenderExam(st, forceInfo) {
   }
   var el = document.getElementById(st.p + '-students');
   if (!el) return;
-  var students = hrSortStudents(getStudents()).filter(function (s) { return s.active !== false; });
+  var students = hrSortStudents(getStudents()).filter(function (s) { return hrStudentOn(s, rec ? rec.session_date : null); });
   if (!students.length) { el.innerHTML = '<div class="empty-note">אין תלמידים פעילים</div>'; return; }
   var buf = S[st.v + 'Marks'] || {}, p = st.p;
   var todo = [], done = [];

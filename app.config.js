@@ -23,15 +23,15 @@ self.APP = Object.freeze({
     // צבע כפתור הניסיון החוזר בדף האופליין של המעטפת
     accent: '#1a3c6e',
     // לעולם אינו יורד — בלי קידום המכשיר המותקן אינו מקבל את ה-APK החדש.
-    versionCode: 24,
-    versionName: '15.0',
+    versionCode: 25,
+    versionName: '16.0',
     launcherBg: { kind: 'solid', color: '#FFFFFF' },
     // אפליקציות אחרות שקישור intent: רשאי לפתוח — שם ⟵ חבילה; ריק — המעטפת אינה פותחת אף אחת
     launch: {},
     // כפתור «יציאה» שהמעטפת קולטת וסוגרת בו את האפליקציה
     exit: false,
     // FileProvider ו-androidx — רק באפליקציה שמייצאת קובץ
-    share: false
+    share: { chooser: 'שיתוף הקובץ' }
   },
   // sign-apk.sh מסרב לחתום בכל מפתח אחר
   signSha256: '1A:FA:BE:D0:A6:60:EF:F6:FF:40:04:C9:32:F5:A7:E3:28:01:95:4E:FA:24:FF:A4:B5:79:DF:BE:2F:B4:07:4A',

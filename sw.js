@@ -1,7 +1,7 @@
 // sw.js — service worker של האפליקציה
 importScripts('./app.config.js');
 // מכאן נגזרת גרסת האפליקציה שבבאנר.
-var CACHE_NAME = self.APP.id + '-v317';
+var CACHE_NAME = self.APP.id + '-v320';
 
 var CORE = [
   './',
@@ -13,6 +13,9 @@ var CORE = [
   './app/style.css',
   './app/style.screens.css',
   './core/util.js',
+  './core/icons.js',
+  './core/share.js',
+  './core/periods.js',
   './core/sync.js',
   './core/storage.js',
   './core/mirror.js',
@@ -31,6 +34,7 @@ var CORE = [
   './app/domain.sup.js',
   './app/domain.reg.js',
   './app/domain.exam.js',
+  './app/domain.periods.js',
   './app/screens/attend.js',
   './app/screens/contacts.js',
   './app/screens/reports.js',
@@ -54,6 +58,7 @@ var CDN_ASSETS = [
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.111.0/dist/umd/supabase.js',
   'https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/pdfmake.min.js',
   'https://cdn.jsdelivr.net/npm/pdfmake@0.3.11/build/vfs_fonts.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
 ];
 

@@ -17,6 +17,7 @@ import { hrRenderArchive } from './domain.arc.js';
 import { hrRenderSupervision } from './domain.sup.js';
 import { hrRenderExam } from './domain.exam.js';
 import { icon } from './icons.js';
+import { hrStudentOn } from './domain.periods.js';
 
 function hrRegHTML(st) {
   var p=st.p;
@@ -195,7 +196,7 @@ async function hrEditSession(st, recId) {
     var hhmm=_hrSessTime(st, rec.session, ('0'+nowT.getHours()).slice(-2)+':'+('0'+nowT.getMinutes()).slice(-2));
     var apChanged=false;
     getStudents().forEach(function(stu){
-      if(stu.active===false) return;
+      if(!hrStudentOn(stu, rec.session_date)) return;
       var k=String(stu.client_id);
       if(marks[k]&&marks[k].status) return;
       var am=hrAutoMark(stu, rec.session_date, hhmm);
@@ -249,7 +250,8 @@ async function hrOpenSession(st, sessId, sessName) {
 
   var sessObj=hrCfgOf(st).sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
   var sessTime=sessObj&&sessObj.start_time?sessObj.start_time:'';
-  var students=hrSortStudents(getStudents()).filter(function(s){return s.active!==false;});
+  // מי שבישיבה בחודש של הסדר — תקופות הפעילות
+  var students=hrSortStudents(getStudents()).filter(function(s){return hrStudentOn(s, dateIso);});
   var marks=S[st.v+'Marks']={};
   S[st.v+'Pending']={};
   S[st.v+'Cleared']={};
@@ -316,7 +318,7 @@ function hrSaveLocalNow(st) {
   if(!rec) return null;
   var buf=S[st.v+'Marks'], marks={};
   getStudents().forEach(function(s){
-    if(s.active===false) return;
+    if(!hrStudentOn(s, rec.session_date)) return;
     var m=buf[s.client_id];
     marks[s.client_id]=m?hrMarkOf(st,m.status,m.status==='l'?(m.minutes||0):0,m.note,m):hrMarkOf(st,'',0,'');
   });
@@ -434,7 +436,7 @@ function hrRenderStudents(st) {
   // בתפילה האיחור בשתי דרגות ובלי דקות; בסדר — איחור אחד עם דקות
   var curRec=_hrOpenRec(st);
   var prayer=!!curRec&&hrIsPrayer(st, curRec.session);
-  var active=students.filter(function(s){return s.active!==false;});
+  var active=students.filter(function(s){return hrStudentOn(s, curRec?curRec.session_date:null);});
 
   var unmarked=[], marked=[];
   active.forEach(function(s){

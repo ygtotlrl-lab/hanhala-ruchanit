@@ -3,7 +3,6 @@ import { MSG_DELETE, dayToday, uniqHas } from '../core/util.js';
 import { idEq, newClientId, tombKill } from '../core/sync.js';
 import { sessUserId, usersNameOf } from '../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
-import { hebYearInfo } from '../core/hebrew.js';
 import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
          MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
          MSG_ROW_MISSING, MSG_SETTINGS_SAVED, HR_CLS_NAME, HR_CLS_SHORT } from './constants.js';
@@ -16,15 +15,15 @@ import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrIsPrayer, hrLiveTreats, hrL
          hrSupMonth } from './domain.sessions.js';
 import { hrRenderArchive } from './domain.arc.js';
 import { icon } from './icons.js';
+import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from './domain.periods.js';
 
 // ── השגחה, טיפולים והתראה ──
+// המעבר בין החודשים — מהחודש הראשון שבו תלמיד כלשהו פעיל ועד החודש הנוכחי.
 function hrSupNav(st, dir) {
-  var hy=S[st.v+'SupHY'], mi=S[st.v+'SupMI'];
-  mi+=dir;
-  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=hebYearInfo(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!hebYearInfo(hy))return;mi=0;}
-  S[st.v+'SupHY']=hy;S[st.v+'SupMI']=mi;
+  var k=hrMonthKeyAdd(hrMonthKey(S[st.v+'SupHY'], S[st.v+'SupMI']), dir);
+  if(!k||k<hrFirstMonthKey()||k>hrMonthKeyNow()) return;
+  var p=hrKeyParts(k);
+  S[st.v+'SupHY']=p.hy;S[st.v+'SupMI']=p.mi;
   hrRenderSupervision(st);
 }
 
@@ -48,17 +47,17 @@ async function hrRenderSupervision(st) {
 
 function _hrSupPaint(st, el, rawData, rawTreats, warn) {
   var data=(rawData||[]).filter(function(r){ return !(r && r.deleted); });
-  var students=hrSortStudents(getStudents());
-  var treats=hrLiveTreats(rawTreats);
-  var p=st.p;
-
   hrSupMonth(st);
   var hy=S[st.v+'SupHY'],mi=S[st.v+'SupMI'];
+  // מי שבישיבה בחודש המוצג — תקופות הפעילות
+  var students=hrSortStudents(getStudents()).filter(function(s){return hrStudentInHebMonth(s,hy,mi);});
+  var treats=hrLiveTreats(rawTreats);
+  var p=st.p;
   var mLabel=_hcMN(hy)[mi]+' '+_hcYL(hy);
 
-  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
-  var hasPrev=mi>0||!!hebYearInfo(hy-1);
-  var hasNext=mi<curMax||!!hebYearInfo(hy+1);
+  var vk=hrMonthKey(hy,mi),pk=hrMonthKeyAdd(vk,-1),nk=hrMonthKeyAdd(vk,1);
+  var hasPrev=!!pk&&pk>=hrFirstMonthKey();
+  var hasNext=!!nk&&nk<=hrMonthKeyNow();
 
   var navStyle='sup-nav';
   var navHTML='<div class="sup-nav-bar">'+

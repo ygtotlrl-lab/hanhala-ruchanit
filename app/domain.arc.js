@@ -2,10 +2,11 @@
 import { MSG_DELETE, dayToday } from '../core/util.js';
 import { idEq, tombKill } from '../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
+import { shareBlob } from '../core/share.js';
 import { hebDayLabel } from '../core/hebrew.js';
 import { MSG_EXPORT_FAIL, MSG_EXPORT_OK, MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE,
          MSG_NO_EXPORT_DATA, MSG_ROW_DELETED } from './constants.js';
-import { atvCls, getStudents, hrDayWin, hrMarks, hrPdfFont, hrSortRecs, hrSortStudents } from './domain.js';
+import { atvCls, getStudents, hrDayWin, hrMarks, hrPdfFont, hrSharePdf, hrSortRecs, hrSortStudents } from './domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from './domain.hebdate.js';
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
@@ -230,11 +231,7 @@ async function _hrExportExcel(st, fromIso, toIso) {
     xml+=xmlRows;
     xml+='</Table></Worksheet></Workbook>';
     var blob=new Blob(['﻿'+xml],{type:'application/vnd.ms-excel;charset=utf-8'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    a.href=url; a.download=st.file+'-'+dayToday()+'.xls';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
+    shareBlob(blob,'application/vnd.ms-excel',st.file+'-'+dayToday()+'.xls');
     toast(MSG_EXPORT_OK, null, 'good');
   } catch(e){console.error('[excel]',e); toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 }
@@ -288,7 +285,7 @@ async function _hrExportPdf(st, fromIso, toIso) {
     contentArr.push({table:{widths:['auto','auto','*','auto','auto','auto'],body:body},margin:[0,0,0,10]});
     var dd={pageSize:'A4',pageMargins:[40,40,40,40],
       content:contentArr,defaultStyle:{font:fontName,alignment:'right'}};
-    pdfMake.createPdf(dd).download(st.file+'-'+dayToday()+'.pdf');
+    hrSharePdf(dd,st.file+'-'+dayToday()+'.pdf');
   } catch(e){toast(MSG_EXPORT_FAIL+e.message, null, 'bad');}
 }
 

@@ -3,8 +3,9 @@ import { dayToday, uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
-import { hebDate, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
+import { shareBlob } from '../../core/share.js';
+import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_PERIOD_END_BEFORE, MSG_PERIOD_NONE,
          MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
          MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
          MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
@@ -14,10 +15,11 @@ import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MS
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, HR_CLS_NAME } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
-         canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSortStatuses, hrSortStudents, modalOpen,
+         canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSharePdf, hrSortStatuses, hrSortStudents, modalOpen,
          saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
+import { HR_PER, hrMonthKey, hrMonthKeyAdd, hrMonthKeyLabel, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
 import { icon } from '../icons.js';
 
 function screenStudentsHTML() {
@@ -170,8 +172,9 @@ function filterClass(cls){
 
 function renderStudents(){
   var allSts=hrSortStudents(getStudents());
-  var activeSts=allSts.filter(function(s){return s.active!==false;});
-  var inactiveSts=allSts.filter(function(s){return s.active===false;});
+  // הפעילים — מי שנשאר בישיבה אחרי החודש הנוכחי (או שתקופתו עוד לפניו); השאר — «לא פעילים». נגזר מתקופות הפעילות.
+  var activeSts=allSts.filter(hrStudentListed);
+  var inactiveSts=allSts.filter(function(s){return !hrStudentListed(s);});
   var searchEl=document.getElementById('search-st');
   var search=searchEl?searchEl.value.toLowerCase():'';
   var isInactiveView=(S.currentFilter==='inactive');
@@ -290,11 +293,13 @@ function hrCycleOf(s) { var v = parseInt(s && s.cycle, 10); return isFinite(v) &
 // התווית מהמנוע — שנה נושאת תווית אחת.
 function hrCycleLabel(n) { return n ? hebYearLabelFull(n) : ''; }
 
+// «לא פעיל» ו«החזר לפעיל» כותבים תקופה (HR_PER.toggled): כיבוי סוגר את התקופה בחודש הנוכחי — נספר החודש ויוצא מהבא;
+// הפעלה פותחת תקופה מהחודש הנוכחי, ותקופה שנסגרה החודש נפתחת מחדש.
 function setStudentInactive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
-  s.active=false;
+  if(HR_PER.continues(s)) s.periods=HR_PER.toggled(s);
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
@@ -306,7 +311,7 @@ function setStudentActive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
-  s.active=true;
+  if(!HR_PER.continues(s)) s.periods=HR_PER.toggled(s);
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
@@ -344,7 +349,7 @@ function openManageListDlg(){
 
 // ── סימון תלמיד כלא פעיל ──
 function openDeactivateStudentDlg(){
-  var students=hrSortStudents(getStudents().filter(function(s){return s.active!==false;}));
+  var students=hrSortStudents(getStudents().filter(hrStudentListed));
   var optsHTML=students.map(function(s){
     return '<option value="'+esc(s.client_id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
   }).join('');
@@ -381,10 +386,12 @@ function doYearTransition(){
   if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
   var students=getStudents();
   var changed=0;
+  // ג׳ — התקופה הפתוחה נסגרת באלול של השנה שמסתיימת (כמו אוגוסט בשכר לימוד); תקופה שמתחילה אחריו אינה נוגעת.
+  var close=hrMonthKey(y,(hebYearInfo(y)||{ml:[0]}).ml.length-1);
   students.forEach(function(s){
-    if(s.active===false) return;
+    if(HR_PER.archived(s)) return;
     if(s.cls==='g'){
-      s.active=false;
+      s.periods=HR_PER.list(s).map(function(p){return (p.start<=close&&(!p.end||p.end>close))?{start:p.start,end:close}:p;});
       s.updated_at=Date.now(); changed++;
     } else if(s.cls==='b'){
       s.cls='g'; s.updated_at=Date.now(); changed++;
@@ -528,6 +535,10 @@ function studentFormHTML(sid){
     // לתלמידים השלוחים אין מחזור — השדה מוסתר כשנבחרים
     '<div id="st-cycle-wrap"><label for="st-cycle">מחזור</label>'+
     '<select id="st-cycle" class="st-class-sel"></select></div>'+
+    // תקופות הפעילות — חודש הצטרפות וחודש עזיבה (ריק — עדיין בישיבה); כמה תקופות לתלמיד שיצא וחזר
+    '<div class="field-label">תקופות פעילות</div>'+
+    '<div id="st-periods" class="per-list"></div>'+
+    '<button type="button" data-act="st-per-add" class="add-dashed-btn">+ הוסף תקופה</button>'+
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
@@ -598,12 +609,51 @@ function studentFormFoot(){
          '<button class="btn" data-act="student-save" data-ksave>'+icon('save')+'שמור</button>';
 }
 
+// ── עורך התקופות בטופס ──
+// בורר חודש עברי — שלוש שנים אחורה ושנה קדימה מהחודש הנוכחי, וערך שמור מחוץ לטווח נוסף כמות שהוא.
+function _perOpts(cur, open){
+  var now=hrMonthKeyNow(), ks=[], k=hrMonthKeyAdd(now,-36);
+  for(var i=0;i<=48&&k;i++){ ks.push(k); k=hrMonthKeyAdd(k,1); }
+  if(cur&&ks.indexOf(cur)<0){ ks.push(cur); ks.sort(); }
+  return (open?'<option value=""'+(cur?'':' selected')+'>עדיין בישיבה</option>':'')+
+    ks.slice().reverse().map(function(x){ return '<option value="'+x+'"'+(x===cur?' selected':'')+'>'+esc(hrMonthKeyLabel(x))+'</option>'; }).join('');
+}
+function _perRowHTML(p){
+  return '<div class="per-row" data-per-row>'+
+    '<label class="per-lbl">מ<select aria-label="חודש הצטרפות" data-f="start">'+_perOpts(p.start,false)+'</select></label>'+
+    '<label class="per-lbl">עד<select aria-label="חודש עזיבה" data-f="end">'+_perOpts(p.end||'',true)+'</select></label>'+
+    '<button type="button" data-act="row-remove" class="row-del-btn" aria-label="הסרת התקופה">'+icon('close')+'</button>'+
+  '</div>';
+}
+function _perPaint(ps){
+  var box=document.getElementById('st-periods'); if(!box) return;
+  box.innerHTML=ps.map(_perRowHTML).join('');
+}
+function stPeriodAdd(){
+  var box=document.getElementById('st-periods'); if(!box) return;
+  box.insertAdjacentHTML('beforeend', _perRowHTML({start:hrMonthKeyNow(),end:null}));
+}
+// הרשימה מהטופס — נבדקת כמו בשכר לימוד: עזיבה לפני הצטרפות, חפיפה, ותקופה פתוחה שאינה האחרונה.
+function _perRead(){
+  var ps=[], err='';
+  document.querySelectorAll('#st-periods [data-per-row]').forEach(function(r){
+    var s=(r.querySelector('[data-f="start"]')||{}).value||'', e=(r.querySelector('[data-f="end"]')||{}).value||'';
+    if(!s) return;
+    if(e&&e<s) err=MSG_PERIOD_END_BEFORE;
+    ps.push({start:s,end:e||null});
+  });
+  if(!err&&!ps.length) err=MSG_PERIOD_NONE;
+  if(!err) err=HR_PER.problem(ps);
+  return {ps:HR_PER.list({periods:ps}), err:err};
+}
+
 function openAddStudent(){
   if(checkLoginNeeded())return;
   S.editingStudentId=null;
   openModal(MSG_ADD_STUDENT_TITLE, studentFormHTML(), studentFormFoot());
   document.getElementById('st-class').value='a';
   fillCycleSel(hrCycleFor('a'));
+  _perPaint([{start:hrMonthKeyNow(),end:null}]);
 }
 
 function editStudent(sid){
@@ -616,6 +666,7 @@ function editStudent(sid){
   document.getElementById('st-class').value=s.cls;
   fillCycleSel(hrCycleOf(s));
   var cw=document.getElementById('st-cycle-wrap'); if(cw) cw.classList.toggle('hidden', s.cls==='s');
+  _perPaint(HR_PER.list(s));
 }
 
 function saveStudent(){
@@ -629,15 +680,17 @@ function saveStudent(){
     else console.error('[students] אזור השגיאה st-err חסר בטופס');
     return;
   }
+  var per=_perRead();
+  if(per.err){ if(errEl) errEl.textContent=per.err; return; }
   var students=getStudents();
   var newId=null;
   if(S.editingStudentId){
     var idx=students.findIndex(function(s){return idEq(s.client_id, S.editingStudentId);});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].updated_at=Date.now();}
+    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].periods=per.ps;students[idx].updated_at=Date.now();}
   } else {
     // uuid ולא maxId+1 — שני מכשירים שמוסיפים במקביל מקצים אותו מספר, והמיזוג מאחד שני תלמידים
     newId = newClientId();
-    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,updated_at:Date.now(),created_by_client_id:sessUserId()});
+    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,periods:per.ps,updated_at:Date.now(),created_by_client_id:sessUserId()});
     students=hrSortStudents(students);
     // אין מספור מחדש — המזהה הוא מפתח המיזוג בין מכשירים
   }
@@ -706,7 +759,7 @@ function importStudentsFromFile(input) {
         if (!cls) { failed.push(name + ' (' + (clsRaw||'—') + ')'); continue; }
         // uuid ולא maxId++ — ייבוא מקביל בשני מכשירים היה מקצה אותם מזהים לתלמידים שונים
         var nid = newClientId();
-        existing.push({client_id:nid, name:name, cls:cls, cycle:hrCycleFor(cls)||null, updated_at:Date.now(), created_by_client_id:sessUserId()});
+        existing.push({client_id:nid, name:name, cls:cls, cycle:hrCycleFor(cls)||null, periods:[{start:hrMonthKeyNow(),end:null}], updated_at:Date.now(), created_by_client_id:sessUserId()});
         addedIds.push(nid);
         added++;
       }
@@ -774,19 +827,14 @@ function downloadImportTemplate() {
   ];
   var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
   var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'תבנית_תלמידים.csv';
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+  shareBlob(blob, 'text/csv', 'תבנית_תלמידים.csv');
 }
 
 function printStudents() {
   try {
     if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
     toast(MSG_PDF_BUILDING);
-    var students = hrSortStudents(getStudents().filter(function(s){return s.active!==false;}));
+    var students = hrSortStudents(getStudents().filter(function(s){return hrStudentOn(s);}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
     var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
     var _todG=new Date(),_todH=_hcH(_todG);
@@ -818,7 +866,7 @@ function printStudents() {
       ],
       defaultStyle:{font:fontName, alignment:'right'}
     };
-    pdfMake.createPdf(docDef).download('nochechut-'+dayToday()+'.pdf');
+    hrSharePdf(docDef, 'nochechut-'+dayToday()+'.pdf');
   } catch(e) {
     console.error('[pdf]', e);
     toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'bad');
@@ -829,4 +877,4 @@ export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged };
+         setStudentActive, setStudentInactive, stClassChanged, stPeriodAdd };

@@ -5,12 +5,14 @@ import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
 import { closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
-import { HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, PK_RP_VAL } from '../constants.js';
+import { HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF,
+         MSG_PDF_FAIL, PK_RP_VAL } from '../constants.js';
 import { S } from '../state.js';
-import { canEdit, getStudents, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
+import { canEdit, getStudents, hrMarks, hrMirrorRecs, hrPdfFont, hrSharePdf, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsUrl } from './contacts.js';
 import { icon } from '../icons.js';
+import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
 
 // ── הסולם והרף ──
 var RP_SCALE = ['מצוין מאוד', 'מצוין', 'טוב מאוד', 'כמעט טוב מאוד', 'טוב', 'כמעט טוב', 'מספיק', 'מספיק בקושי', 'בלתי מספיק'];
@@ -43,14 +45,16 @@ function rpMonth() {
   if (!S._rpMonth) { var h = _hcH(new Date()); S._rpMonth = { hy: h.hy, mi: h.mi }; }
   return S._rpMonth;
 }
-function rpMonthKey(m) { return m.hy + '-' + m.mi; }
+// מפתח החודש של השדות הידניים — אותו מפתח של תקופות הפעילות («שנה-חודש», 01…13).
+function rpMonthKey(m) { return hrMonthKey(m.hy, m.mi); }
 function rpMonthLabel(m) { return (_hcMN(m.hy)[m.mi] || '') + ' ' + (hebYearLabelFull(m.hy) || m.hy); }
 function rpMonthName(m) { return _hcMN(m.hy)[m.mi] || ''; }
+// מהחודש הראשון שבו תלמיד כלשהו פעיל ועד החודש הנוכחי — כמו בהשגחה.
 function rpNav(dir) {
-  var m = rpMonth(), n = _hcMN(m.hy).length, mi = m.mi + dir, hy = m.hy;
-  if (mi < 0) { hy--; mi = _hcMN(hy).length - 1; }
-  if (mi >= n) { hy++; mi = 0; }
-  S._rpMonth = { hy: hy, mi: mi };
+  var m = rpMonth(), k = hrMonthKeyAdd(hrMonthKey(m.hy, m.mi), dir);
+  if (!k || k < hrFirstMonthKey() || k > hrMonthKeyNow()) return;
+  var p = hrKeyParts(k);
+  S._rpMonth = { hy: p.hy, mi: p.mi };
   renderReports();
 }
 
@@ -110,7 +114,7 @@ function rpCompute(m) {
   HR_EXAM_SUBJECTS.forEach(function (n) { exams[n] = rpExamOf(ex, n, w); });
   var out = {};
   getStudents().forEach(function (s) {
-    if (s.active === false) return;
+    if (!hrStudentInHebMonth(s, m.hy, m.mi)) return;
     var sid = String(s.client_id), abs = 0, late = 0, dis = 0, slate = 0;
     at.forEach(function (rec) {
       var mk = hrMarks(rec)[sid]; if (!mk) return;
@@ -147,9 +151,9 @@ function screenReportsHTML() {
   <div class="inner">
     <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>גיליונות ציונים והנהגה</span></div>
     <div class="sup-nav-bar">
-      <button class="sup-nav" data-act="rp-nav" data-dir="-1" aria-label="החודש הקודם">${icon('prev')}</button>
+      <button class="sup-nav" id="rp-prev" data-act="rp-nav" data-dir="-1" aria-label="החודש הקודם">${icon('prev')}</button>
       <span class="sup-nav-label" id="rp-month-lbl"></span>
-      <button class="sup-nav" data-act="rp-nav" data-dir="1" aria-label="החודש הבא">${icon('next')}</button>
+      <button class="sup-nav" id="rp-next" data-act="rp-nav" data-dir="1" aria-label="החודש הבא">${icon('next')}</button>
     </div>
     <div class="class-tabs" id="rp-cls"></div>
     <div id="rp-fill"></div>
@@ -161,11 +165,18 @@ function screenReportsHTML() {
 
 function _rpStudents() {
   var c = S._rpCls || 'all';
-  return hrSortStudents(getStudents()).filter(function (s) { return s.active !== false && (c === 'all' || s.cls === c); });
+  var m = rpMonth();
+  return hrSortStudents(getStudents()).filter(function (s) { return hrStudentInHebMonth(s, m.hy, m.mi) && (c === 'all' || s.cls === c); });
 }
 
 function renderReports() {
   var m = rpMonth(), mk = rpMonthKey(m);
+  // החצים — כבויים בגבולות, כמו בהשגחה
+  var vk = hrMonthKey(m.hy, m.mi), pk = hrMonthKeyAdd(vk, -1), nk = hrMonthKeyAdd(vk, 1);
+  [['rp-prev', !!pk && pk >= hrFirstMonthKey()], ['rp-next', !!nk && nk <= hrMonthKeyNow()]].forEach(function (x) {
+    var b = document.getElementById(x[0]); if (!b) return;
+    b.disabled = !x[1]; b.classList.toggle('sup-nav-off', !x[1]);
+  });
   var lbl = document.getElementById('rp-month-lbl');
   if (lbl) lbl.textContent = rpMonthLabel(m);
   var c = S._rpCls || 'all';
@@ -194,13 +205,13 @@ function renderReports() {
   list.innerHTML =
     (pick.length ? '<div class="warn-note">⚠️ ב' + esc(pick.join(', ')) + ' יש כמה מבחנים החודש — יש לסמן במסך המבחנים איזה מהם נכנס לגיליון.</div>' : '') +
     '<div class="rp-list-head"><span>' + n + ' תלמידים · ' + esc(rpMonthLabel(m)) + '</span>' +
-      '<button class="btn sm" data-act="rp-print-all">' + icon('print') + 'הדפסת כל הגיליונות</button></div>' +
+      '<button class="btn sm" data-act="rp-export-all">' + icon('pdf') + 'כל הגיליונות — PDF</button></div>' +
     '<div class="st-table">' + sts.map(function (s, i) {
       var r = comp[String(s.client_id)] || {};
       return '<div class="rp-row"><span class="st-num">' + (i + 1) + '</span>' +
         '<div class="rp-row-main"><span class="rp-row-name">' + esc(s.name) + '</span>' +
           '<span class="rp-row-sub">חיסורים ' + r.abs + ' · איחור ' + r.late + ' ד׳ · שינה: ' + esc(r.sleepG) + '</span></div>' +
-        '<button class="btn sm out" data-act="rp-print" data-id="' + esc(s.client_id) + '">' + icon('pdf') + 'גיליון</button></div>';
+        '<button class="btn sm out" data-act="rp-export" data-id="' + esc(s.client_id) + '">' + icon('pdf') + 'גיליון</button></div>';
     }).join('') + '</div>';
 }
 
@@ -257,7 +268,7 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       var u = e.scan && scanUrls[e.scan];
       link = u ? '<a href="' + esc(u) + '">טופס ⇱</a>' : '';
     }
-    return '<tr><th rowspan="2" class="vlbl"><span>' + esc(n) + '</span></th><th>מבחן</th><td>' + g + '</td><td class="lnk">' + link + '</td></tr>' +
+    return '<tr><th rowspan="2" class="vlbl"><span class="v">' + esc(n) + '</span><span class="r">' + esc(n) + '</span></th><th>מבחן</th><td>' + g + '</td><td class="lnk">' + link + '</td></tr>' +
       '<tr><th>הנהגה</th><td colspan="2">' + v('h' + i) + '</td></tr>';
   }).join('');
   var head = '<div class="nm">' + esc(s.name) + '</div><div class="mo">' + esc(rpMonthName(m)) + '</div>';
@@ -290,9 +301,13 @@ var RP_PRINT_CSS =
   '.body{position:absolute;top:56mm;right:25mm;left:25mm;bottom:33mm}' +
   'h3{font-size:10.5pt;font-weight:700;margin:3.2mm 0 1.2mm;color:#444}h3.c{text-align:center;margin-top:4mm}' +
   'table{width:100%;border-collapse:collapse;font-size:9pt}' +
-  'th,td{border:.25mm solid #9a9a9a;padding:1.1mm 2mm;text-align:right;vertical-align:middle}' +
+  'th,td{border:.25mm solid #9a9a9a;padding:.75mm 2mm;text-align:right;vertical-align:middle}' +
   'th{width:30%;font-weight:700;background:#fafafa;color:#444}td{color:#222}' +
-  'table.subj th.vlbl{width:7mm;padding:0;text-align:center}table.subj th.vlbl span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:7.5pt;white-space:nowrap}' +
+  // התווית האנכית — שתיים: .v ב-writing-mode, נסתרת, קובעת את גובה התא; ו-.r מסובבת במיקום מוחלט היא שנראית —
+  // הצילום (html2canvas) מקבל את הפריסה מהדפדפן אבל אינו מצייר writing-mode.
+  'table.subj th.vlbl{width:7mm;padding:0;text-align:center;position:relative}' +
+  'table.subj th.vlbl span{font-size:7.5pt;white-space:nowrap}table.subj th.vlbl .v{writing-mode:vertical-rl;visibility:hidden}' +
+  'table.subj th.vlbl .r{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg)}' +
   'table.subj th:not(.vlbl){width:18%}td.lnk{width:22%}a{color:#1a5fb4}' +
   '.more{font-size:8.5pt;font-weight:700;color:#555;margin-top:2.5mm}' +
   '.sigrow{display:flex;gap:6mm;align-items:flex-end;margin-top:3mm}' +
@@ -316,29 +331,64 @@ async function _scanUrls(comp, sts) {
   return out;
 }
 
-async function rpPrint(sid) {
+// הייצוא — PDF, בדרך אחת (core/share.js): במעטפת גשר השיתוף, בדפדפן שיתוף או הורדה. חלון משלו והדפסת הדפדפן
+// אינם עובדים במעטפת — היא מעבירה כתובת blob למערכת, ואין מי שיפתח אותה.
+// כל עמוד (A4) מצולם (html2canvas) מתוך מסגרת נסתרת עם הגיליון, ונכנס לעמוד משלו ב-pdfMake; הקישורים (טופס · אנשי קשר)
+// נמדדים בעמוד ונכתבים מעל התמונה כשכבה שקופה — צילום לבדו מוחק אותם.
+var RP_PT_PER_PX = 595.28 / 793.7; // A4 — 210mm ב-96dpi מול 595.28 נקודות
+
+function _rpFrame(html) {
+  return new Promise(function (resolve) {
+    var f = document.createElement('iframe');
+    f.setAttribute('aria-hidden', 'true');
+    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:820px;height:1200px;border:0;visibility:hidden';
+    document.body.appendChild(f);
+    f.onload = function () {
+      var d = f.contentDocument, im = [].slice.call(d.images).map(function (i) {
+        return i.complete ? 0 : new Promise(function (r) { i.onload = i.onerror = r; });
+      });
+      Promise.all(im.concat([d.fonts ? d.fonts.ready : 0])).then(function () { resolve(f); });
+    };
+    f.srcdoc = html;
+  });
+}
+
+async function rpExport(sid) {
   var m = rpMonth(), mk = rpMonthKey(m);
   var sts = sid ? getStudents().filter(function (s) { return String(s.client_id) === String(sid); }) : _rpStudents();
   if (!sts.length) return;
-  // החלון נפתח לפני ההמתנה — דפדפן חוסם חלון שנפתח אחרי await
-  var w = window.open('', '_blank');
-  if (!w) { toast('⚠️ הדפדפן חסם את חלון ההדפסה', null, 'bad'); return; }
-  w.document.write('<p style="font-family:Arial;padding:20px;direction:rtl">מכין את הגיליון…</p>');
-  var comp = rpCompute(m), urls = await _scanUrls(comp, sts);
-  var base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
-  var title = sts.length === 1 ? ('גיליון — ' + sts[0].name + ' — ' + rpMonthLabel(m)) : ('גיליונות — ' + rpMonthLabel(m));
-  var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><base href="' + esc(base) + '"><title>' + esc(title) + '</title>' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">' +
-    '<style>' + RP_PRINT_CSS + '</style></head><body>' +
-    sts.map(function (s) { return _sheetHTML(s, m, comp[String(s.client_id)], mk, urls); }).join('') +
-    // ההדפסה אחרי שהתמונות והגופנים נטענו — חלון ההדפסה עוצר את הטעינה; בדפדפן אוטומטי (בדיקות) — בלי הדפסה
-    '<script>window.onload=function(){var im=[].slice.call(document.images).map(function(i){return i.complete?0:new Promise(function(r){i.onload=i.onerror=r;});});' +
-    'Promise.all(im.concat([document.fonts?document.fonts.ready:0])).then(function(){if(!navigator.webdriver)setTimeout(function(){window.print();},300);});};<\/script></body></html>';
-  // מסמך משלו (blob) ולא document.write — בחלון ריק שנכתב בו התמונות אינן נטענות בכל הדפדפנים
-  var url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
-  w.location.href = url;
-  setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
+  if (typeof pdfMake === 'undefined' || typeof html2canvas === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
+  toast(MSG_PDF_BUILDING);
+  var f = null;
+  try {
+    var comp = rpCompute(m), urls = await _scanUrls(comp, sts);
+    var base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
+    var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><base href="' + esc(base) + '">' +
+      '<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">' +
+      '<style>' + RP_PRINT_CSS + 'body{background:#fff}.pg{margin:0}</style></head><body>' +
+      sts.map(function (s) { return _sheetHTML(s, m, comp[String(s.client_id)], mk, urls); }).join('') + '</body></html>';
+    f = await _rpFrame(html);
+    var pages = [].slice.call(f.contentDocument.querySelectorAll('.pg')), content = [];
+    for (var i = 0; i < pages.length; i++) {
+      var pg = pages[i], box = pg.getBoundingClientRect();
+      var cv = await html2canvas(pg, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+      content.push({ image: cv.toDataURL('image/jpeg', 0.9), width: 595.28, height: 841.89, absolutePosition: { x: 0, y: 0 },
+        pageBreak: i ? 'before' : undefined });
+      [].slice.call(pg.querySelectorAll('a[href]')).forEach(function (a) {
+        var r = a.getBoundingClientRect();
+        content.push({ text: a.textContent, link: a.href, opacity: 0, fontSize: r.height * RP_PT_PER_PX * 0.75,
+          absolutePosition: { x: (r.left - box.left) * RP_PT_PER_PX, y: (r.top - box.top) * RP_PT_PER_PX } });
+      });
+    }
+    var name = (sts.length === 1 ? ('גיליון ' + sts[0].name + ' ') : 'גיליונות ') + rpMonthLabel(m) + '.pdf';
+    await hrSharePdf({ pageSize: 'A4', pageMargins: [0, 0, 0, 0], content: content, defaultStyle: { font: hrPdfFont() } }, name);
+  } catch (e) {
+    console.error('[rp-export]', e);
+    toast(MSG_PDF_FAIL + ((e && e.message) || e), null, 'bad');
+  } finally {
+    if (f) f.remove();
+  }
 }
 
-export { RP_SCALE, loadReports, renderReports, rpCompute, rpNav, rpOpenFill, rpPrint, rpSaveFill, rpSetCls,
+export { RP_SCALE, loadReports, renderReports, rpCompute, rpNav, rpExport, rpOpenFill, rpSaveFill, rpSetCls,
          screenReportsHTML };

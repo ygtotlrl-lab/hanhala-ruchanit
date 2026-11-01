@@ -11,8 +11,8 @@ android {
         applicationId "com.hanhala.ruchanit"
         minSdk 21
         targetSdk 34
-        versionCode 24
-        versionName "15.0"
+        versionCode 25
+        versionName "16.0"
     }
 
     buildTypes {
@@ -25,4 +25,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+dependencies {
+    implementation 'androidx.core:core:1.13.1'
+    // WebViewCompat.addWebMessageListener — רשימת המקורות של גשר השיתוף נאכפת ב-WebView עצמו, לכל frame
+    implementation 'androidx.webkit:webkit:1.11.0'
 }

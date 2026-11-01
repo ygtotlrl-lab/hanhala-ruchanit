@@ -4,6 +4,7 @@ import { S, shell } from '../state.js';
 import { getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorRecs, hrStudentsPull } from '../domain.js';
 import { HR_STREAMS, hrIsLate, hrPullSessions } from '../domain.sessions.js';
 import { icon } from '../icons.js';
+import { hrStudentOn } from '../domain.periods.js';
 
 function screenHomeHTML() {
   return `
@@ -39,7 +40,8 @@ async function refreshDashStats() {
   var todayIso = dayToday();
 
   var allSts = getStudents();
-  var activeSts = allSts.filter(function(s){ return s.active !== false; });
+  // פעילים — בחודש הנוכחי, לפי תקופות הפעילות
+  var activeSts = allSts.filter(function(s){ return hrStudentOn(s); });
 
   var presentCount = activeSts.filter(function(s){
     var aa = (typeof getActiveAbsences === 'function') ? getActiveAbsences(s) : [];
@@ -82,7 +84,7 @@ async function refreshDashStats() {
 }
 
 // הליבה עלתה עם הדף (bootRun ב-app/main.js) — כאן רק המשיכה והציור של המסך.
-// הקוביות מציגות את היום בלבד — ולכן נמשכים התלמידים וסדרי הנוכחות של היום, במקביל (שורות 46 · 87);
+// הקוביות מציגות את היום בלבד — ולכן נמשכים התלמידים וסדרי הנוכחות של היום, במקביל («מסך מציג מיד ומרענן ברקע» · «משיכה מסוננת בשרת»);
 // המשיכה המלאה שייכת לסנכרון ולגיבוי, לא למסך.
 async function loadDash(){
   refreshDashStats();

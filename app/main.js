@@ -23,6 +23,7 @@ import { _hrMarkSynced, canAccess, hrLocalRecs,
          hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
          modalOpen, uiShown } from './domain.js';
 import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
+import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
 import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
@@ -32,7 +33,7 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
-import { loadReports, renderReports, rpNav, rpOpenFill, rpPrint, rpSaveFill, rpSetCls,
+import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpSaveFill, rpSetCls,
          screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
@@ -41,7 +42,7 @@ import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filter
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
+         setStudentActive, setStudentInactive, stClassChanged, stPeriodAdd } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
@@ -295,12 +296,20 @@ function saveRefresh() {
   if (on && on.id) renderPage(String(on.id).replace(/^pg-/, ''));
 }
 
+// גבולות הבורר — מהחודש הראשון שבו תלמיד כלשהו פעיל (תקופות הפעילות), ועד היום;
+// באישורים (sfmF · sfmT) — עד סוף שנת הלימודים, כי אישור ניתן מראש.
+function _hcBounds(pfx){
+  var tod=_hcH(new Date()), max;
+  if(pfx==='sfmF'||pfx==='sfmT'){var ml=(hebYearInfo(tod.hy)||{ml:[]}).ml;max={hy:tod.hy,mi:ml.length-1,day:ml[ml.length-1]||30};}
+  else max=tod;
+  return {min:hrFirstMonthKey(),max:max,maxKey:hrMonthKey(max.hy,max.mi)};
+}
+
 function _hcNav(pfx,dir){
-  var v=S._hcVw[pfx]||{hy:5786,mi:0},mi=v.mi+dir,hy=v.hy;
-  var curMax=(hebYearInfo(hy)||{ml:[]}).ml.length-1;
-  if(mi<0){hy--;var pb=hebYearInfo(hy);if(!pb)return;mi=pb.ml.length-1;}
-  if(mi>curMax){hy++;if(!hebYearInfo(hy))return;mi=0;}
-  S._hcVw[pfx]={hy:hy,mi:mi};_hcDraw(pfx);}
+  var v=S._hcVw[pfx]||_hcH(new Date()),k=hrMonthKeyAdd(hrMonthKey(v.hy,v.mi),dir),b=_hcBounds(pfx);
+  if(!k||k<b.min||k>b.maxKey)return;
+  var p=hrKeyParts(k);
+  S._hcVw[pfx]={hy:p.hy,mi:p.mi};_hcDraw(pfx);}
 
 function _hcDraw(pfx){
   var v=S._hcVw[pfx],b=hebYearInfo(v.hy);if(!b)return;
@@ -310,8 +319,10 @@ function _hcDraw(pfx){
   var selH=selIso?_hcH(dayNoon(selIso)):null;
   var todH=_hcH(new Date());
   var bs='hc-nav';
-  var maxMi=(b.ml.length-1);
-  var hasPrev=v.mi>0||!!hebYearInfo(v.hy-1),hasNext=v.mi<maxMi||!!hebYearInfo(v.hy+1);
+  var bnd=_hcBounds(pfx),vk=hrMonthKey(v.hy,v.mi);
+  var pk=hrMonthKeyAdd(vk,-1),nk=hrMonthKeyAdd(vk,1);
+  var hasPrev=!!pk&&pk>=bnd.min,hasNext=!!nk&&nk<=bnd.maxKey;
+  var lastDay=vk===bnd.maxKey?bnd.max.day:99;
   // בגריד RTL התא הימני הוא יום ראשון, ולכן מספר התאים הריקים הוא fdow.
   var rtlOffset=fdow;
   var h='<div class="hc-cal">';
@@ -330,6 +341,8 @@ function _hcDraw(pfx){
     var isSel=selH&&selH.hy===v.hy&&selH.mi===v.mi&&selH.day===d;
     var isToday=todH.hy===v.hy&&todH.mi===v.mi&&todH.day===d;
     var st=isSel?'hc-day-sel':isToday?'hc-day-today':'hc-day';
+    // יום אחרי הגבול — מוצג ואינו נבחר
+    if(d>lastDay){h+='<button class="hc-day-btn hc-day hc-day-off" disabled>'+hebDayLabel(d)+'</button>';continue;}
     h+='<button data-act="hc-pick" data-pfx="'+esc(pfx)+'" data-hy="'+v.hy+'" data-mi="'+v.mi+'" data-day="'+d+'" '+
       'class="hc-day-btn '+st+'">'+hebDayLabel(d)+'</button>';
   }
@@ -340,7 +353,10 @@ function _hcOpen(pfx){
   if(uiShown(pop)){pop.classList.add('hidden');return;}
   document.querySelectorAll('.hc-pop').forEach(function(p){p.classList.add('hidden');});
   var iso=(document.getElementById(pfx+'_iso')||{}).value;
-  var vh=iso?_hcH(dayNoon(iso)):_hcH(new Date());
+  var vh=iso?_hcH(dayNoon(iso)):_hcH(new Date()),b0=_hcBounds(pfx),vk0=hrMonthKey(vh.hy,vh.mi);
+  // נפתח בתוך הגבולות — ערך שמור מחוץ להם נפתח בגבול הקרוב
+  if(vk0<b0.min){var pm=hrKeyParts(b0.min);vh={hy:pm.hy,mi:pm.mi};}
+  else if(vk0>b0.maxKey){vh={hy:b0.max.hy,mi:b0.max.mi};}
   S._hcVw[pfx]={hy:vh.hy,mi:vh.mi};_hcDraw(pfx);
   // position fixed מחושב מהטריגר — חסין ל-overflow:hidden בהורים; הערכים נכתבים למשתני CSS שהכלל .hc-pop קורא.
   var trg=document.getElementById(pfx+'_trg');
@@ -421,6 +437,7 @@ var DOM_ACTIONS = {
                                    el.getAttribute('data-active') === '1'); },
   'combo-pick':  function (el) { return comboPick(el); },
   'st-activate': function (el) { setStudentActive(el.getAttribute('data-id')); },
+  'st-per-add':  function () { stPeriodAdd(); },
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
   'st-history':  function (el) { return openStatusHistory(el.getAttribute('data-id')); },
@@ -434,8 +451,8 @@ var DOM_ACTIONS = {
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
   'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
   'rp-fill-save':   function () { rpSaveFill(); },
-  'rp-print':       function (el) { return rpPrint(el.getAttribute('data-id')); },
-  'rp-print-all':   function () { return rpPrint(null); },
+  'rp-export':      function (el) { return rpExport(el.getAttribute('data-id')); },
+  'rp-export-all':  function () { return rpExport(null); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.
   'page':        function (el) { showPage(el.getAttribute('data-page')); },
   'page-nav':    function (el) {
