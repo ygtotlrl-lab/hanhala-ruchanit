@@ -9,7 +9,6 @@ import { MIRROR, mirrorSave } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
 import { closeModal, esc, pullRender, toast } from '../core/ui.js';
-import { shareFile } from '../core/share.js';
 import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
@@ -17,25 +16,6 @@ import { AUTH, S, shell } from './state.js';
 import { icon } from './icons.js';
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
-// ה-API הוא addVirtualFileSystem/addFonts — השמה ל-pdfMake.vfs נכשלת בשקט מ-0.3 ומחזירה גופן בלי עברית.
-// PDF מ-pdfMake יוצא בדרך אחת — core/share.js: במעטפת גשר השיתוף, בדפדפן שיתוף או הורדה; download() של pdfMake אינו עובד במעטפת.
-function hrSharePdf(dd, name) {
-  return pdfMake.createPdf(dd).getBase64().then(function (b64) { shareFile(b64, 'application/pdf', name); });
-}
-
-function hrPdfFont() {
-  if (typeof pdfMake === 'undefined' || !S._alefFontB64) return 'Roboto';
-  try {
-    if (!S._hrPdfFontDone) {
-      pdfMake.addVirtualFileSystem({ 'Alef-Regular.ttf': S._alefFontB64 });
-      pdfMake.addFonts({ Alef: { normal: 'Alef-Regular.ttf', bold: 'Alef-Regular.ttf',
-                                 italics: 'Alef-Regular.ttf', bolditalics: 'Alef-Regular.ttf' } });
-      S._hrPdfFontDone = true;
-    }
-    return 'Alef';
-  } catch (e) { console.warn('[pdf] רישום הגופן נכשל', e); return 'Roboto'; }
-}
-
 function canAccess(moduleId) {
   if (!AUTH.user) return false;
   var p = AUTH.perms || AUTH.DEFAULT_PERMS;
@@ -859,7 +839,7 @@ export { hrFilterChips, HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg,
-         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPdfFont, hrSharePdf, hrPullFromCloud, hrStudentsPull,
+         hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPullFromCloud, hrStudentsPull,
          hrPushToCloud, hrSendMarks, hrSendRecs, hrSessionsPull, hrSetPending, hrSetRows, hrSetSend,
          hrSortRecs, hrSortStatuses, hrSortStudents, hrSupervisionAccess, hrSyncLog,
          hrSyncNow, hrTouchLastChanged, hrTreatsMerge, hrWriteFail, modalOpen, saveStudents, tyCls,

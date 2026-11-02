@@ -71,8 +71,10 @@ function hrFmtAt(v){
 // התאריך העברי של יום נגזר ממנו בתצוגה ואינו נשמר — עוגן צהריים לפני החשבון.
 function hrDayHeb(iso){return _hcH(dayNoon(String(iso)));}
 function hrDayHebFmt(iso){if(!iso)return '';var h=hrDayHeb(iso);return _hcFmt(h.hy,h.mi,h.day);}
+// היום — לראש מסמך ולשם קובץ.
+function hrTodayHebFmt(){var h=_hcH(new Date());return _hcFmt(h.hy,h.mi,h.day);}
 function hrSessHeb(rec){return hrDayHeb(rec.session_date);}
 function hrSessHebFmt(rec){return hrDayHebFmt(rec&&rec.session_date);}
 
-export { _hcBuild, _hcFmt, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt, hrFmtAt,
+export { _hcBuild, _hcFmt, _hcGet, _hcH, _hcMN, _hcYL, hrDayHeb, hrDayHebFmt, hrFmtAt, hrTodayHebFmt,
          hrHebMonthWin, hrHebYearWin, hrSessHeb, hrSessHebFmt };

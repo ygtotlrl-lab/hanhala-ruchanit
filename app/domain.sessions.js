@@ -102,7 +102,7 @@ var HR_STREAMS = {
     openText: ' נפתח היום ולא נסגר.', savedMsg: 'הסדר נשמר',
     msg: { closeFirst: MSG_CLOSE_SESSION_FIRST, done: MSG_SESSION_DONE, elsewhere: MSG_SESSION_OPEN_ELSEWHERE,
            openToday: MSG_SESSION_OPEN_TODAY, delTitle: MSG_DEL_SESSION_TITLE, delBody: MSG_DEL_SESSION_BODY },
-    sheet: 'סדרים', file: 'sdariim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון שמירת סדרים']
+    doc: 'ארכיון שמירת הסדרים'
   },
   sleep: {
     kind: 'sleep', p: 'sl', v: '_hr', table: 'hr_sleep_sessions', child: 'hr_sleep_marks',
@@ -114,7 +114,7 @@ var HR_STREAMS = {
     openText: ' נפתחה ולא נסגר.', savedMsg: 'הבדיקה נשמרה',
     msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
            openToday: MSG_SLEEP_OPEN, delTitle: MSG_DEL_ROW_TITLE, delBody: MSG_DEL_ROW_BODY },
-    sheet: 'שינה', file: 'shinah', pdfHead: ['ארכיון זמן שינה']
+    doc: 'ארכיון זמן שינה'
   },
   // המבחנים — אותו מסלול: «סדר» הוא מבחן בלימוד, והסימון — ציון, הערה וסריקה (exam); בלי השגחה ובלי סימון אוטומטי.
   exams: {
@@ -127,7 +127,7 @@ var HR_STREAMS = {
     openText: ' נפתח היום ולא נסגר.', savedMsg: 'המבחן נשמר',
     msg: { closeFirst: 'סגור את המבחן הנוכחי תחילה', done: 'המבחן כבר נפתח', elsewhere: 'המבחן כבר נפתח במכשיר אחר — הציונים נשמרים לרשומה הקיימת',
            openToday: 'מבחן פתוח מהיום', delTitle: 'מחיקת מבחן', delBody: 'המבחן וכל ציוניו יימחקו מהארכיון. לא ניתן לשחזר פעולה זו.' },
-    sheet: 'מבחנים', file: 'mivchanim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון מבחנים']
+    doc: 'ארכיון המבחנים'
   }
 };
 

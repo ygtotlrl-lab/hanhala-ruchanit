@@ -4,6 +4,7 @@ import { MSG_OFF_USER_WRITE, appConfigure, dayIso, dayNoon, getDeviceId,
 import { ctxEpoch, ctxStale, eraKeys, pendAlertDismiss, pendCount,
          plStampRead, runSave, sbWatch } from '../core/sync.js';
 import { lsOpen } from '../core/storage.js';
+import { exportConfigure } from '../core/export.js';
 import { logAwait } from '../core/backup.js';
 import { bootRun } from '../core/boot-run.js';
 import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
@@ -12,7 +13,7 @@ import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
 import { actWire, closeAsk, closeModal, comboInput, comboPick, dragCancel, dragDown, dragMove,
          dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
-import { HR_MIRROR_TABLES, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
+import { HR_EXPORT_FONTS, HR_MIRROR_TABLES, HR_ORG, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { icon } from './icons.js';
 import { _hrMarkSynced, canAccess, canEdit, hrLocalRecs, hrPullFromCloud, hrPushToCloud, hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail, modalOpen, uiShown } from './domain.js';
@@ -239,16 +240,8 @@ shell.hrRenderSettings = hrRenderSettings;
 shell.hrRenderStudents = hrRenderStudents;
 shell.hrPullDraw = hrPullDraw;
 
-(function(){
-  fetch('https://fonts.gstatic.com/s/alef/v22/FeVfS0NQpLYgrjJbC5FxxbU.ttf')
-    .then(function(r){return r.arrayBuffer();})
-    .then(function(buf){
-      var b=new Uint8Array(buf),chunks=[];
-      for(var i=0;i<b.length;i+=8192) chunks.push(String.fromCharCode.apply(null,b.subarray(i,i+8192)));
-      S._alefFontB64=btoa(chunks.join(''));
-    })
-    .catch(function(){});
-})();
+// הייצוא — שם המוסד, הסמל הלבן לפס העליון של המסמך, וגופני האפליקציה (מוטמעים במסמך).
+exportConfigure({ org: HR_ORG, logo: 'app/img/logo-white.png', fonts: HR_EXPORT_FONTS });
 
 function showPageInternal(pg) {
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
@@ -703,7 +696,7 @@ ensureFirstAdmin();
 
 window.bootOk();
 
-// רענון מבאנר העדכון — המשתמש שנמסר לפניו חוזר מחובר (טבלה 106); בלי מסירה — מסך הכניסה כרגיל.
+// רענון מבאנר העדכון — המשתמש שנמסר לפניו חוזר מחובר (שורת «המשתמש המחובר» בטבלה); בלי מסירה — מסך הכניסה כרגיל.
 hrHandoffResume().catch(function (e) { console.warn('[handoff] resume', e); });
 
 // עובר ב-pullRender — כמה משתמשים עובדים יחד, ומשיכה עלולה להגיע באמצע סימון.

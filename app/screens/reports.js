@@ -4,11 +4,13 @@
 import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
 import { closeModal, esc, openModal, toast } from '../../core/ui.js';
+import { exportDataUrl, exportFontCss } from '../../core/export.js';
+import { printFile } from '../../core/share.js';
 import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
-import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF,
+import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING,
          MSG_PDF_FAIL, PK_RP_VAL } from '../constants.js';
 import { S } from '../state.js';
-import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrPdfFont, hrSharePdf, hrSortStudents } from '../domain.js';
+import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrDayHeb, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsUrl } from './contacts.js';
 import { icon } from '../icons.js';
@@ -314,33 +316,10 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
   return p1 + p2;
 }
 
-// גופן הגיליון — Heebo מקבצי האפליקציה (app/fonts), בשם משלו (RpHeebo), בשני המסמכים: במסגרת — לפריסה,
-// ובמסמך הראשי — לציור: html2canvas מצייר על בד של המסמך הראשי, ובד בלי הגופן מצייר כל מילה בגופן חלופי רחב
-// יותר במקום שהפריסה מדדה — והמילים נדבקות («שמירתהסדרים»). מקומי — גם בלי רשת, ומהר יותר מגוגל.
-var RP_FONT = 'RpHeebo';
-var RP_FONT_FILES = [['400', 'hebrew', 'U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F'],
-                     ['700', 'hebrew', 'U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F'],
-                     ['400', 'latin', 'U+0000-00FF,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD'],
-                     ['700', 'latin', 'U+0000-00FF,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD']];
-var RP_FONT_CSS = RP_FONT_FILES.map(function (f) {
-  return '@font-face{font-family:' + RP_FONT + ';font-weight:' + f[0] + ';src:url(app/fonts/heebo-' + f[1] + '-' + f[0] + '.woff2) format("woff2");unicode-range:' + f[2] + '}';
-}).join('');
-var _rpFontReady = null;
-function rpFontLoad() {
-  if (_rpFontReady) return _rpFontReady;
-  if (typeof FontFace === 'undefined' || !document.fonts) return (_rpFontReady = Promise.resolve());
-  _rpFontReady = Promise.all(RP_FONT_FILES.map(function (f) {
-    var ff = new FontFace(RP_FONT, 'url(app/fonts/heebo-' + f[1] + '-' + f[0] + '.woff2)', { weight: f[0], unicodeRange: f[2] });
-    document.fonts.add(ff);
-    return ff.load().catch(function (e) { console.warn('[rp-font]', e); });
-  }));
-  return _rpFontReady;
-}
 var RP_PRINT_CSS =
   '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}' +
-  'body{font-family:RpHeebo,Heebo,Arial,sans-serif;color:#333;direction:rtl;background:#888}' +
-  '.pg{width:210mm;height:297mm;position:relative;background:#fff url(app/img/report-bg.png) center/100% 100% no-repeat;margin:0 auto 6mm;page-break-after:always;overflow:hidden}' +
-  '@media print{body{background:none}.pg{margin:0}}' +
+  'html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:F,sans-serif;color:#333;direction:rtl;background:#fff}' +
+  '.pg{width:210mm;height:297mm;position:relative;background:#fff url(@@BG@@) center/100% 100% no-repeat;break-after:page;overflow:hidden}' +
   // השם והחודש ממורכזים לגובה בפס האפור שברקע (38.5–50.5 מ״מ)
   '.nm,.mo{position:absolute;top:38.5mm;height:12mm;display:flex;align-items:center;font-size:13pt;font-weight:700;color:#333}' +
   '.nm{right:67mm;letter-spacing:.02em}.mo{right:142.5mm}' +
@@ -352,7 +331,7 @@ var RP_PRINT_CSS =
   'tr{height:6.3mm}' +
   'th,td{border:.25mm solid #8a8a8a;padding:0 2mm;text-align:right;vertical-align:middle}' +
   'th{width:30%;font-weight:700;background:#e4e4e4;color:#333}td{color:#222}' +
-  // התווית האנכית מסובבת במיקום מוחלט — הצילום (html2canvas) אינו מצייר writing-mode; מילה בשורה, ומרווח מהגבול
+  // התווית האנכית — מסובבת, מילה בשורה, ומרווח מהגבול
   'table.subj th.vlbl{width:9mm;padding:0;text-align:center;position:relative;background:#d6d6d6}' +
   'table.subj th.vlbl .r{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);font-size:7pt;line-height:1.15;white-space:nowrap;text-align:center}' +
   'table.subj th:not(.vlbl){width:16%}td.gr{width:20%;font-weight:700}a{color:#1a5fb4;font-weight:400}' +
@@ -378,67 +357,27 @@ async function _scanUrls(comp, sts) {
   return out;
 }
 
-// הייצוא — PDF, בדרך אחת (core/share.js): במעטפת גשר השיתוף, בדפדפן שיתוף או הורדה. חלון משלו והדפסת הדפדפן
-// אינם עובדים במעטפת — היא מעבירה כתובת blob למערכת, ואין מי שיפתח אותה.
-// כל עמוד (A4) מצולם (html2canvas) מתוך מסגרת נסתרת עם הגיליון, ונכנס לעמוד משלו ב-pdfMake; הקישורים (טופס · אנשי קשר)
-// נמדדים בעמוד ונכתבים מעל התמונה כשכבה שקופה — צילום לבדו מוחק אותם.
-var RP_PT_PER_PX = 595.28 / 793.7; // A4 — 210mm ב-96dpi מול 595.28 נקודות
-var RP_SCALE_PX = 1.8; // חדות הצילום — ‏~170dpi: חד בהדפסה, ומהיר מ-2 בטלפון
-
-function _rpFrame(html) {
-  return new Promise(function (resolve) {
-    var f = document.createElement('iframe');
-    f.setAttribute('aria-hidden', 'true');
-    f.style.cssText = 'position:fixed;left:-10000px;top:0;width:820px;height:1200px;border:0;visibility:hidden';
-    document.body.appendChild(f);
-    f.onload = function () {
-      var d = f.contentDocument, im = [].slice.call(d.images).map(function (i) {
-        return i.complete ? 0 : new Promise(function (r) { i.onload = i.onerror = r; });
-      });
-      Promise.all(im.concat([d.fonts ? d.fonts.ready : 0])).then(function () { resolve(f); });
-    };
-    f.srcdoc = html;
-  });
-}
-
+// הייצוא — מסמך (printFile): הגיליונות כדף HTML אחד, עמוד A4 לכל דף, והגופנים, הרקע והחתימה מוטמעים בו;
+// הקישורים (טופס · אנשי קשר) נשארים קישורים בקובץ.
 async function rpExport(sid) {
   var m = rpMonth(), mk = rpMonthKey(m);
   var sts = sid ? getStudents().filter(function (s) { return String(s.client_id) === String(sid); }) : _rpStudents();
   if (!sts.length) return;
-  if (typeof pdfMake === 'undefined' || typeof html2canvas === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'warn'); return; }
   toast(MSG_PDF_BUILDING);
-  var f = null;
   try {
-    var fontP = rpFontLoad();
-    var comp = rpCompute(m), urls = await _scanUrls(comp, sts);
-    await fontP;
-    var base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
-    var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><base href="' + esc(base) + '">' +
-      '<style>' + RP_FONT_CSS + RP_PRINT_CSS + 'body{background:#fff}.pg{margin:0}</style></head><body>' +
-      sts.map(function (s) { return _sheetHTML(s, m, comp[String(s.client_id)], mk, urls); }).join('') + '</body></html>';
-    f = await _rpFrame(html);
-    var pages = [].slice.call(f.contentDocument.querySelectorAll('.pg')), content = [];
-    for (var i = 0; i < pages.length; i++) {
-      var pg = pages[i], box = pg.getBoundingClientRect();
-      // שאר העמודים אינם נכנסים לשכפול — html2canvas משכפל את כל המסמך בכל צילום, ובייצוא שיעור שלם זה כפל על כפל
-      var cv = await html2canvas(pg, { scale: RP_SCALE_PX, backgroundColor: '#ffffff', useCORS: true, logging: false,
-        ignoreElements: function (el) { return el !== pg && el.classList && el.classList.contains('pg'); } });
-      if (sts.length > 1 && i % 2 === 1 && i < pages.length - 1) toast(MSG_PDF_BUILDING + ' ' + ((i + 1) / 2) + '/' + sts.length, 1500);
-      content.push({ image: cv.toDataURL('image/jpeg', 0.85), width: 595.28, height: 841.89, absolutePosition: { x: 0, y: 0 },
-        pageBreak: i ? 'before' : undefined });
-      [].slice.call(pg.querySelectorAll('a[href]')).forEach(function (a) {
-        var r = a.getBoundingClientRect();
-        content.push({ text: a.textContent, link: a.href, opacity: 0, fontSize: r.height * RP_PT_PER_PX * 0.75,
-          absolutePosition: { x: (r.left - box.left) * RP_PT_PER_PX, y: (r.top - box.top) * RP_PT_PER_PX } });
-      });
-    }
-    var name = (sts.length === 1 ? ('גיליון ' + sts[0].name + ' ') : 'גיליונות ') + rpMonthLabel(m) + '.pdf';
-    await hrSharePdf({ pageSize: 'A4', pageMargins: [0, 0, 0, 0], content: content, defaultStyle: { font: hrPdfFont() } }, name);
+    var comp = rpCompute(m);
+    var parts = await Promise.all([_scanUrls(comp, sts), exportFontCss('F'),
+      exportDataUrl('app/img/report-bg.png'), exportDataUrl('app/img/report-sig.png')]);
+    var name = (sts.length === 1 ? ('גיליון ' + sts[0].name + ' ') : 'גיליונות ') + rpMonthLabel(m);
+    var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>' + esc(name) + '</title>' +
+      '<style>' + parts[1] + RP_PRINT_CSS.replace('@@BG@@', parts[2]) + '</style></head><body>' +
+      sts.map(function (s) { return _sheetHTML(s, m, comp[String(s.client_id)], mk, parts[0]); }).join('')
+        .split('src="app/img/report-sig.png"').join('src="' + parts[3] + '"') +
+      '</body></html>';
+    printFile(html, name);
   } catch (e) {
     console.error('[rp-export]', e);
     toast(MSG_PDF_FAIL + ((e && e.message) || e), null, 'warn');
-  } finally {
-    if (f) f.remove();
   }
 }
 

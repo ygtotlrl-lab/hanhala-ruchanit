@@ -43,9 +43,7 @@ const S = {
   _atView: 'reg',
   _atSupRecords: undefined,
   _atSaveTimer: null,
-  _alefFontB64: null,
   _statusStudentName: undefined,
-  _hrPdfFontDone: false,
   _currentStatusType: undefined
 };
 

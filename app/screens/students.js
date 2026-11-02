@@ -1,18 +1,18 @@
 // app/screens/students.js — מצבת התלמידים והסטטוסים
-import { dayToday, uniqHas } from '../../core/util.js';
+import { uniqHas } from '../../core/util.js';
 import { idEq, newClientId, pendMark, pendTag, schedulePush, tombKill } from '../../core/sync.js';
 import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
-import { shareBlob } from '../../core/share.js';
+import { exportPdf, exportXlsx } from '../../core/export.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
-         canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSharePdf, hrSortStatuses, hrSortStudents, modalOpen,
+         canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrSortStatuses, hrSortStudents, modalOpen,
          hrFilterChips, saveStudents, tyCls, uiShown } from '../domain.js';
-import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
+import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt, hrTodayHebFmt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
-import { HR_PER, hrMonthKey, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
+import { HR_PER, hrMonthKey, hrMonthKeyNow, hrStudentListed } from '../domain.periods.js';
 import { icon } from '../icons.js';
 import { stIcon } from '../../core/icons.js';
 
@@ -20,7 +20,7 @@ function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Summary Bar -->
 <div id="st-summary" class="st-summary"></div>
@@ -671,21 +671,25 @@ function hrTombstoneStudents(ids){
 // ── ייבוא, מחיקה המונית והדפסת המצבה ──
 function importStudentsFromFile(input) {
   if (!input.files || !input.files[0]) return;
-  if (typeof XLSX === 'undefined') { toast(MSG_LIB_LOADING, null, 'warn'); return; }
   var file = input.files[0];
   input.value = ''; // איפוס השדה מאפשר לייבא שוב את אותו קובץ
   var isCsv = file.name.toLowerCase().endsWith('.csv');
+  if (!isCsv && typeof ExcelJS === 'undefined') { toast(MSG_LIB_LOADING, null, 'warn'); return; }
   var reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     try {
-      var rows;
+      var rows = [];
       if (isCsv) {
         var text = e.target.result.replace(/^\uFEFF/,'');
         rows = text.split(/\r?\n/).map(function(line){ return line.split(','); });
       } else {
-        var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        var ws = wb.Sheets[wb.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        // הגיליון הראשון; שלוש העמודות הראשונות כטקסט — כפי שהן מוצגות בתא
+        var wb = new ExcelJS.Workbook();
+        await wb.xlsx.load(e.target.result);
+        var ws = wb.worksheets[0];
+        if (ws) ws.eachRow({ includeEmpty: true }, function (row, n) {
+          rows[n - 1] = [1, 2, 3].map(function (c) { return row.getCell(c).text; });
+        });
       }
       var existing = getStudents();
       var added = 0, failed = [], skipped = 0, addedIds = [];
@@ -767,58 +771,51 @@ function confirmDeleteAll() {
   else toast(MSG_NO_STUDENTS_WIPE);
 }
 
+// תבנית הייבוא — גיליון בשלוש העמודות שהייבוא קורא, ושורת דוגמה.
 function downloadImportTemplate() {
-  // CSV עם BOM; העמודות בסדר הפוך כדי שייראו נכון בתצוגת LTR
-  var BOM = '\uFEFF';
-  var rows = [
-    ['שיעור', 'שם פרטי', 'שם משפחה'],
-    ["שיעור א'", 'יוסף', 'כהן']
-  ];
-  var csv = BOM + rows.map(function(r){ return r.join(','); }).join('\r\n');
-  var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  shareBlob(blob, 'text/csv', 'תבנית_תלמידים.csv');
+  exportXlsx({ name: 'תבנית ייבוא תלמידים', sheets: [{ name: 'תלמידים',
+    cols: [{ label: 'שיעור', type: 'text', width: 14 }, { label: 'שם פרטי', type: 'text', width: 18 }, { label: 'שם משפחה', type: 'text', width: 18 }],
+    rows: [[HR_CLS_NAME.a, 'יוסף', 'כהן']] }] })
+    .catch(function (e) { console.error('[xlsx]', e); toast(MSG_EXPORT_FAIL + ((e && e.message) || e), null, 'bad'); });
 }
 
-function printStudents() {
+// הדפסת המצבה — אותם תלמידים ואותה חלוקה כמו במסך: סה״כ · נוכחים · אינם נוכחים · השעיה.
+function _stDay(v) { if (!v) return ''; var d = new Date(v); if (isNaN(d.getTime())) return ''; var h = _hcH(d); return _hcFmt(h.hy, h.mi, h.day); }
+
+async function printStudents() {
   try {
-    if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'warn'); return; }
     toast(MSG_PDF_BUILDING);
-    var students = hrSortStudents(getStudents().filter(function(s){return hrStudentOn(s);}));
-    var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
-    var absent  = students.filter(function(s){return getActiveAbsences(s).length>0;});
-    var _todG=new Date(),_todH=_hcH(_todG);
-    var today=_hcFmt(_todH.hy,_todH.mi,_todH.day);
-    var NB = ' ';    function cls(c){return String(HR_CLS_NAME[c]||'').replace(/ /g,NB);}
-    function fixName(n){return (n||'').replace(/ /g,NB);}
-    var pRows = present.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
-    var aRows = absent.map(function(s,i){return [String(i+1), fixName(s.name), cls(s.cls)];});
-    if (!pRows.length) pRows = [['-','-','-']];
-    if (!aRows.length) aRows = [['-','-','-']];
-    var fontName = hrPdfFont();
-    // שתי השורות טקסט ולא תמונת canvas — ה-bidi בספרייה עצמה, ותמונה הייתה מבטלת חיפוש בקובץ
-    var subtitleTxt = {text:'דוח'+NB+'נוכחות'+NB+'—'+NB+today, fontSize:11, color:'#555',
-                       alignment:'center', margin:[0,0,0,14], direction:'ltr'};
-    var summaryTxt  = {text:'סה״כ:'+NB+students.length+NB+'|'+NB+'נוכחים:'+NB+present.length+NB+
-                             '|'+NB+'אינם'+NB+'נוכחים:'+NB+absent.length,
-                       fontSize:13, bold:true, color:'#333', alignment:'center',
-                       margin:[0,0,0,20], direction:'ltr'};
-    var docDef = {
-      pageSize:'A4', pageMargins:[40,40,40,40],
-      content:[
-        {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
-        subtitleTxt,
-        summaryTxt,
-        {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#2f855a', alignment:'right', margin:[0,0,0,6]},
-        {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
-        {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
-        {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}
-      ],
-      defaultStyle:{font:fontName, alignment:'right'}
-    };
-    hrSharePdf(docDef, 'nochechut-'+dayToday()+'.pdf');
-  } catch(e) {
+    var sts = hrSortStudents(getStudents().filter(hrStudentListed));
+    var present = [], out = [], susp = 0;
+    sts.forEach(function (s) {
+      var act = getActiveAbsences(s);
+      if (!act.length) { present.push(s); return; }
+      var a = act.filter(function (x) { return x.type === 'suspended'; })[0] || act[0];
+      if (a.type === 'suspended') susp++;
+      out.push([s, a]);
+    });
+    var TONE = { approved: 'ok', suspended: 'bad', left: 'warn' };
+    var outRows = out.map(function (x, i) {
+      var s = x[0], a = x[1];
+      return [String(i + 1), s.name, HR_CLS_NAME[s.cls] || '', { text: ABS_TYPE_LBL[a.type] || a.type, tone: TONE[a.type] || 'info' },
+        a.reason || '', _stDay(a.from_at), a.to_at ? _stDay(a.to_at) : 'ללא תאריך סיום'];
+    });
+    var n = 0, groups = HR_CLS_LIST.map(function (k) {
+      return { label: HR_CLS_NAME[k], rows: present.filter(function (s) { return s.cls === k; }).map(function (s) { n++; return [String(n), s.name]; }) };
+    }).filter(function (g) { return g.rows.length; });
+    var today = hrTodayHebFmt();
+    await exportPdf({ title: 'מצבת התלמידים', date: today, name: 'מצבה ' + today,
+      kpis: [{ n: sts.length, label: 'סה״כ תלמידים', tone: 'info' }, { n: present.length, label: 'נוכחים', tone: 'ok' },
+             { n: out.length - susp, label: 'אינם נוכחים', tone: 'warn' }, { n: susp, label: 'השעיה', tone: 'bad' }],
+      sections: [
+        { title: 'אינם נוכחים והשעיה', note: out.length + ' תלמידים', empty: 'כל התלמידים נוכחים',
+          cols: [{ label: '#', num: true, w: '9mm' }, { label: 'שם התלמיד' }, { label: 'שיעור' }, { label: 'סטטוס' }, { label: 'סיבה' }, { label: 'מתאריך' }, { label: 'עד תאריך' }],
+          rows: outRows },
+        { title: 'נוכחים', note: present.length + ' תלמידים, לפי שיעור', flow: true, groups: groups, empty: 'אין תלמידים נוכחים' }
+      ] });
+  } catch (e) {
     console.error('[pdf]', e);
-    toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'warn');
+    toast(MSG_PDF_FAIL + ((e && e.message) || e), null, 'bad');
   }
 }
 

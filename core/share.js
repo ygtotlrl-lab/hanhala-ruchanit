@@ -1,5 +1,6 @@
-// core/share.js — שליחת קובץ שהאפליקציה יצרה (תמונה, PDF או גיליון): במעטפת — גשר השיתוף, ובדפדפן — גיליון השיתוף, ובלעדיו הורדה
-// החתימה היא חוזה עם Java (tools/java/MainActivity.java.in, shareFile) ומשתנה בשני הצדדים יחד.
+// core/share.js — שליחת קובץ שהאפליקציה יצרה (תמונה, PDF או גיליון): במעטפת — גשר השיתוף, ובדפדפן — גיליון השיתוף, ובלעדיו הורדה;
+// ומסמך (printFile): במעטפת — גשר ההדפסה, שכותב PDF ומשתף אותו, ובדפדפן — חלון ההדפסה.
+// החתימות הן חוזה עם Java (tools/java/MainActivity.java.in — shareFile · printHtml) ומשתנות בשני הצדדים יחד.
 
 // AndroidShareBridge (addWebMessageListener) נוסה ראשון — בו WebView עצמו אוכף את רשימת המקורות;
 // AndroidShare (addJavascriptInterface) נשאר ל-WebView ישן מ-88, והמעטפת מאמתת בו את מקור הדף.
@@ -63,4 +64,25 @@ function shareBlob(blob, mime, name) {
   r.readAsDataURL(blob);
 }
 
-export { shareBlob, shareFile };
+// מסמך — דף HTML שלם, שהמעטפת מדפיסה לקובץ PDF ומשתפת; בדפדפן — חלון ההדפסה, ובו «שמירה כ-PDF».
+// מעטפת שיש בה גשר שיתוף ואין בה גשר הדפסה — גרסה ישנה: הדפסת הדפדפן אינה עובדת בה, ולכן שגיאה שמבקשת עדכון.
+function printFile(html, name) {
+  name = _safeName(name);
+  var br = window.AndroidPrintBridge;
+  if (br && typeof br.postMessage === 'function') { br.postMessage(JSON.stringify({ html: html, name: name })); return; }
+  if (window.AndroidShare && typeof window.AndroidShare.printHtml === 'function') { window.AndroidShare.printHtml(html, name); return; }
+  if (window.AndroidShareBridge || window.AndroidShare) throw new Error('יש לעדכן את האפליקציה המותקנת');
+  var f = document.createElement('iframe');
+  f.setAttribute('aria-hidden', 'true');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  f.onload = function () {
+    setTimeout(function () {
+      try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { console.error('[print]', e); }
+      setTimeout(function () { f.remove(); }, 60000);
+    }, 300);
+  };
+  f.srcdoc = html;
+  document.body.appendChild(f);
+}
+
+export { printFile, shareBlob, shareFile };
