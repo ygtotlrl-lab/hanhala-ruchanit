@@ -193,7 +193,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 #ask .sheet-ft button.danger{background:var(--brand-fill);color:var(--on-dark);border-color:var(--brand-fill);box-shadow:var(--shadow)}
 .sheet-hd{justify-content:space-between;margin-bottom:var(--sp-6)}
 .sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--brand-ink)}
-.sheet-hd .x{color:var(--text-2);padding:var(--sp-1) var(--sp-3)}
+.sheet-hd .x{color:var(--text-2)}
 .sheet-ft{gap:var(--sp-5);margin-top:var(--sp-6)}
 #modal-body label{display:block;color:var(--text-2);font-size:var(--fs-3);font-weight:600;margin-bottom:var(--sp-3)}
 #modal-body input{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
