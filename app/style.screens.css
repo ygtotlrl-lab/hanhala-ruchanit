@@ -480,19 +480,15 @@
   .st-c-cls,.st-th > .st-c-cls{display:block}
   .st-sub-cls{display:none}
 }
-/* הסיכום — שלושה תאים ופס יחס */
+/* הסיכום — ארבעה תאים */
 .st-summary{margin:var(--sp-5) 0}
-.st-summary-on{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);box-shadow:var(--shadow);padding:var(--sp-5) var(--sp-6);display:flex;flex-direction:column;gap:var(--sp-4)}
-.sum-cells{display:grid;grid-template-columns:repeat(3,1fr)}
-.sum-cell{display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);border-left:1px solid var(--border)}
+.st-summary-on{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);box-shadow:var(--shadow);padding:var(--sp-5) var(--sp-4)}
+.sum-cells{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.sum-cell{display:flex;flex-direction:column;align-items:center;gap:var(--sp-1);border-left:1px solid var(--border);text-align:center}
 .sum-cell:last-child{border-left:none}
 .sum-n{font-size:var(--fs-6);font-weight:800;line-height:var(--lh-1);color:var(--text)}
-.sum-ok .sum-n{color:var(--ok)}.sum-bad .sum-n{color:var(--bad)}
-.sum-l{font-size:var(--fs-2);color:var(--text-2);display:inline-flex;align-items:center;gap:var(--sp-2)}
-.sum-dot{width:8px;height:8px;border-radius:var(--r-7);background:currentColor;display:inline-block}
-.sum-ok .sum-dot{color:var(--ok)}.sum-bad .sum-dot{color:var(--bad)}
-.sum-bar{height:6px;border-radius:var(--r-7);background:var(--bad-soft);overflow:hidden}
-.sum-bar span{display:block;height:100%;background:var(--ok);border-radius:var(--r-7)}
+.sum-tot .sum-n{color:var(--info)}.sum-ok .sum-n{color:var(--ok)}.sum-warn .sum-n{color:var(--warn)}.sum-bad .sum-n{color:var(--bad)}
+.sum-l{font-size:var(--fs-2);color:var(--text-2)}
 
 /* בורר הסדרים — אריחים בגודל אחד, ברשת; שורה שאינה מלאה נגמרת באותו קו */
 .sess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp-4)}

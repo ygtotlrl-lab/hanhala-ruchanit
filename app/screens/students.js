@@ -20,7 +20,7 @@ function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">${icon('print')}הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">${icon('settings')}ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Filter Tabs -->
 <div id="class-tabs-row" class="fchips" role="tablist" aria-label="סינון לפי שיעור"></div>
@@ -184,19 +184,22 @@ function renderStudents(){
     if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
     return true;
   });
-  var present=0,absent=0;
+  // השעיה — מי שאחד הסטטוסים הפעילים שלו השעיה; אינם נוכחים — שאר מי שיש לו סטטוס פעיל.
+  var present=0,absent=0,susp=0;
   activeSts.forEach(function(s){
-    if(getActiveAbsences(s).length>0)absent++;else present++;
+    var act=getActiveAbsences(s);
+    if(!act.length)present++;
+    else if(act.some(function(a){return a.type==='suspended';}))susp++;
+    else absent++;
   });
-  // הסיכום — שלושה תאים ופס יחס: סה״כ · נוכחים · אינם נוכחים.
-  var pct=activeSts.length?Math.round(present/activeSts.length*100):0;
+  // הסיכום — ארבעה תאים: סה״כ · נוכחים · אינם נוכחים · השעיה.
   if(sumEl){sumEl.classList.add('st-summary-on');sumEl.innerHTML=
     '<div class="sum-cells">'+
-      '<div class="sum-cell"><span class="sum-n">'+activeSts.length+'</span><span class="sum-l">סה״כ תלמידים</span></div>'+
-      '<div class="sum-cell sum-ok"><span class="sum-n">'+present+'</span><span class="sum-l"><i class="sum-dot"></i>נוכחים</span></div>'+
-      '<div class="sum-cell sum-bad"><span class="sum-n">'+absent+'</span><span class="sum-l"><i class="sum-dot"></i>אינם נוכחים</span></div>'+
-    '</div>'+
-    '<div class="sum-bar" title="'+pct+'% נוכחים"><span style="width:'+pct+'%"></span></div>';}
+      '<div class="sum-cell sum-tot"><span class="sum-n">'+activeSts.length+'</span><span class="sum-l">סה״כ תלמידים</span></div>'+
+      '<div class="sum-cell sum-ok"><span class="sum-n">'+present+'</span><span class="sum-l">נוכחים</span></div>'+
+      '<div class="sum-cell sum-warn"><span class="sum-n">'+absent+'</span><span class="sum-l">אינם נוכחים</span></div>'+
+      '<div class="sum-cell sum-bad"><span class="sum-n">'+susp+'</span><span class="sum-l">השעיה</span></div>'+
+    '</div>';}
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
   var html='';

@@ -164,6 +164,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .btn:disabled{opacity:var(--op-4);cursor:default}
 .btn.out{background:var(--card);color:var(--brand-ink);border-color:var(--brand-ink)}
 .btn.sm{padding:var(--sp-3) var(--sp-5);font-size:var(--fs-2)}
+.btn.ic{padding:0;width:44px;height:44px;min-height:44px;border-radius:50%;justify-content:center;gap:0}
 .sw{position:relative;width:100%}
 /* הרוחב נמדד בזמן ריצה ונכתב ב-setProperty, והכלל הזה קורא אותו; בלי מדידה נשאר רוחב ההורה */
 #sw-inner{--sw-w:100%;width:var(--sw-w)}
