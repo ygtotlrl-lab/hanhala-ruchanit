@@ -452,13 +452,13 @@ function hrRenderTodaySessions(st) {
   if(!daySess.length){el.innerHTML='';return;}
   var html='<div class="day-sess-block">'+
     '<div class="day-sess-title">'+title+':</div>'+
-    '<div class="reason-list">';
+    '<div class="day-sess-list">';
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+esc(rec.session)+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+'</span>'+
-      pendTag(st.pkSess+rec.client_id)+
+      '<span class="day-sess-name">'+esc(rec.session)+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+
+        pendTag(st.pkSess+rec.client_id)+'</span>'+
       '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
       '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
     '</div>';
