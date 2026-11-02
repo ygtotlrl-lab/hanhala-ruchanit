@@ -532,19 +532,16 @@
 .ex-file-open .ico,.ex-file-up .ico,.ex-scan-up .ico,.ex-scan-open .ico{width:15px;height:15px}
 .ex-report-tog{display:flex;align-items:center;gap:var(--sp-3);font-size:var(--fs-3);font-weight:600;color:var(--text)}
 .ex-report-tog input{width:18px;height:18px;accent-color:var(--brand-fill)}
-.ex-row{display:grid;grid-template-columns:22px minmax(0,1fr) 64px;grid-template-areas:"c n g" ". note scan";align-items:center;gap:var(--sp-3) var(--sp-4);border:1.5px solid var(--border);background:var(--card);margin-bottom:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-4)}
+.ex-row{display:grid;grid-template-columns:22px minmax(0,1fr) 64px auto;grid-template-areas:"c n g scan";align-items:center;gap:var(--sp-3) var(--sp-4);border:1.5px solid var(--border);background:var(--card);margin-bottom:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-4)}
 .ex-row .at-row-class{grid-area:c}
 .ex-row .at-row-name{grid-area:n}
-.ex-grade{grid-area:g;width:64px;text-align:center;font-family:Heebo;font-size:var(--fs-4);font-weight:700;border:1.5px solid var(--border);border-radius:var(--r-3);padding:var(--sp-2);color:var(--text);background:var(--card)}
-.ex-note{grid-area:note;min-width:0;font-family:Heebo;font-size:var(--fs-2);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-4);background:var(--card);color:var(--text)}
+.ex-grade::-webkit-inner-spin-button,.ex-grade::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ex-grade{grid-area:g;-moz-appearance:textfield;width:64px;text-align:center;font-family:Heebo;font-size:var(--fs-4);font-weight:700;border:1.5px solid var(--border);border-radius:var(--r-3);padding:var(--sp-2);color:var(--text);background:var(--card)}
 .ex-scan{grid-area:scan;display:flex;gap:var(--sp-2);justify-content:flex-end}
 .ex-row-done{background:var(--card-2)}
 .ex-row-done .ex-grade{border-color:var(--ok-line);color:var(--ok)}
 .ex-scan-open{color:var(--ok);border-color:var(--ok-line)}
 .ex-in-report{font-size:var(--fs-1);font-weight:700;color:var(--info);background:var(--info-soft);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-5)}
-@media (min-width:640px){
-  .ex-row{grid-template-columns:22px minmax(0,1fr) 64px minmax(0,1.2fr) auto;grid-template-areas:"c n g note scan"}
-}
 @media (max-width:520px){ .ex-files{grid-template-columns:1fr} }
 
 /* ── התיק האישי ── */

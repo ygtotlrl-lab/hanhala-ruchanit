@@ -217,8 +217,9 @@ async function hrEditSession(st, recId) {
   } catch(eAp){ console.warn('[approval-refresh] '+st.kind+'-edit', eAp); }
   var dw=document.getElementById(st.p+'-date-wrap');
   if(dw&&rec.session_date) dw.innerHTML=_hcBuild(st.p+'_date',_hcH(dayNoon(rec.session_date)));
+  // הממלא — מי שממלא עכשיו: המשתמש המחובר, גם כשהסדר נפתח בידי אחר (מי שפתח — נשאר ברשומה, filled_by_name)
   var fl=document.getElementById(st.p+'-filler');
-  if(fl) fl.value=rec.filled_by_name||'';
+  if(fl) fl.value=(AUTH.user&&AUTH.user.full_name)||rec.filled_by_name||'';
   S[st.v+'PendingRec']=null;
   S[st.v+'CurrentSessionId']=recId;
   var hdr=document.getElementById(st.p+'-reg-header');

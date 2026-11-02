@@ -63,9 +63,8 @@ function hrRenderExam(st, forceInfo) {
     return '<div class="ex-row' + (g != null ? ' ex-row-done' : '') + '">' +
       '<div class="at-row-class">' + esc(cls) + '</div>' +
       '<div class="at-row-name">' + esc(s.name) + '</div>' +
-      '<input aria-label="ציון" type="text" inputmode="numeric" maxlength="3" placeholder="ציון" class="ex-grade" ' +
+      '<input aria-label="ציון (1–100)" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="ציון" class="ex-grade" ' +
         'value="' + (g != null ? g : '') + '" data-inp="' + p + '-grade" data-chg="' + p + '-grade" data-id="' + sid + '">' +
-      '<input aria-label="הערה" type="text" placeholder="הערה" class="ex-note" value="' + esc(m.note || '') + '" data-inp="' + p + '-note" data-id="' + sid + '">' +
       '<div class="ex-scan">' + scan +
         '<label class="ex-scan-up" title="' + (m.scan ? 'החלפת הסריקה' : 'העלאת סריקה') + '">' + icon('upload') + '<span>' + (m.scan ? 'החלפה' : 'סריקה') + '</span>' +
           '<input type="file" accept="image/*,application/pdf" class="hidden" data-chg="' + p + '-scan" data-id="' + sid + '"></label>' +
@@ -89,7 +88,7 @@ function hrExamSetGrade(st, sid, val, redraw) {
   if (raw !== '') {
     var g = parseInt(raw, 10);
     if (!isFinite(g)) return;
-    g = Math.max(0, Math.min(100, g));
+    g = Math.max(1, Math.min(100, g)); // ציון בין 1 ל-100; תלמיד שלא נבחן — בלי ציון
     next.grade = g; next.status = 'd';
   }
   buf[s] = next;
