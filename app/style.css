@@ -229,7 +229,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .hc-head{align-items:center;display:flex;justify-content:space-between;margin-bottom:var(--sp-5)}
 .hc-month{font-weight:700;color:var(--brand-ink);font-size:var(--fs-4)}
 .hc-nav-off{cursor:default;opacity:var(--op-1)}
-.hc-nav{border:none;background:none;color:var(--brand-ink);cursor:pointer;font-size:var(--fs-5);line-height:var(--lh-1);padding:var(--sp-1) var(--sp-5)}
+.hc-nav{border:none;background:none;color:var(--brand-ink);cursor:pointer;padding:0;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center}
 .hc-pop-box{border:1.5px solid var(--border);background:var(--card);position:fixed;border-radius:var(--r-5);box-shadow:var(--shadow-lg);z-index:var(--z-5)}
 .hc-time-inp{font-size:var(--fs-3);flex:1;border:1.5px solid var(--border);font-family:Heebo;padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3)}
 .hc-time-lbl{font-size:var(--fs-3);color:var(--text-3);white-space:nowrap}
@@ -272,7 +272,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .empty-note{color:var(--text-3);padding:var(--sp-7);text-align:center}
 .md-btn-ghost{flex:1;border:2px solid var(--border);background:none;cursor:pointer;font-family:Heebo;padding:var(--sp-4);border-radius:var(--r-3)}
 .chip-row{display:flex;flex-wrap:wrap;gap:var(--sp-4)}
-.row-del-btn{border:none;background:none;color:var(--bad);cursor:pointer;font-size:var(--fs-4)}
+.row-del-btn{border:none;background:none;color:var(--bad);cursor:pointer;padding:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
 .edit-row{display:flex;gap:var(--sp-3);align-items:center}
 /* מיקום הלוח נמדד בפתיחה ונכתב ב-setProperty, והכלל הזה הוא היחיד שקורא אותו */
 .hc-pop{--pop-top:auto;--pop-right:auto;top:var(--pop-top);right:var(--pop-right);left:auto}
@@ -347,7 +347,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .sup-chev-icon{display:inline-flex}
 .sup-chev-icon .ico,.arc-year-chev .ico,.arc-month-chev .ico,.arc-day-chev .ico{width:16px;height:16px;vertical-align:middle}
 .hc-trigger-ico .ico{width:17px;height:17px;vertical-align:middle}
-.ua button{display:inline-flex;align-items:center}
+.ua button{display:inline-flex;align-items:center;justify-content:center}
 .ua button .ico{width:16px;height:16px}
 .ua .ua-off{color:var(--bad)}
 .ua .ua-on{color:var(--ok)}

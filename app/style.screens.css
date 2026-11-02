@@ -252,7 +252,7 @@
 .arc-sess-head{align-items:center;display:flex;gap:var(--sp-5);cursor:pointer;padding:var(--sp-4) var(--sp-5)}
 .arc-sess-name{font-size:var(--fs-3);font-weight:700;flex:1;color:var(--brand-ink)}
 .arc-sess-summary{align-items:center;display:flex;font-size:var(--fs-3);direction:rtl;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5)}
-.arc-sess-del{font-size:var(--fs-3);border:none;background:none;color:var(--bad);cursor:pointer;padding:var(--sp-1) var(--sp-3)}
+.arc-sess-del{border:none;background:none;color:var(--bad);cursor:pointer;padding:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
 .arc-sess-body{background:var(--card);border-top:1px solid var(--border);padding:var(--sp-5) var(--sp-6)}
 .arc-mark-row{display:flex;font-size:var(--fs-3);border-bottom:1px solid var(--border);justify-content:space-between;padding:var(--sp-2) 0}
 .sup-nav-bar{align-items:center;display:flex;border:1.5px solid var(--border);background:var(--card);gap:var(--sp-3);margin-bottom:var(--sp-6);padding:var(--sp-5) var(--sp-6);border-radius:var(--radius)}
@@ -269,7 +269,7 @@
 .treat-note-input{font-size:var(--fs-3);flex:1;border:1.5px solid var(--border);font-family:Heebo;min-width:140px;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-3)}
 .treat-save-btn{font-size:var(--fs-3);border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;font-family:Heebo;padding:var(--sp-3) var(--sp-6);border-radius:var(--r-3)}
 .treat-row{align-items:center;display:flex;font-size:var(--fs-3);border-bottom:1px solid var(--border);gap:var(--sp-4);padding:var(--sp-3) 0}
-.treat-del-btn{font-size:var(--fs-3);border:none;background:none;color:var(--bad);cursor:pointer;padding:0 var(--sp-2)}
+.treat-del-btn{border:none;background:none;color:var(--bad);cursor:pointer;padding:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center}
 .mark-hist-row{align-items:center;display:flex;font-size:var(--fs-3);border-bottom:1px solid var(--border);direction:rtl;gap:var(--sp-4);padding:var(--sp-4) 0}
 .mark-hist-dow{color:var(--text-2);min-width:54px}
 .mark-hist-date{color:var(--text);min-width:90px}
