@@ -86,12 +86,19 @@
 .mod-name{font-size:var(--fs-4)}
 .mod-desc{font-size:var(--fs-3)}
 .mods-lbl{font-size:var(--fs-2);margin-bottom:var(--sp-5)}
-.alert-abs{color:var(--bad);margin-right:var(--sp-3)}
-.alert-late{color:var(--warn);margin-right:var(--sp-3)}
-.alert-lead{font-size:var(--fs-3);color:var(--text-2);margin-bottom:var(--sp-6);text-align:center}
-.alert-list{max-height:220px;overflow-y:auto}
-.alert-ok{flex:1;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;font-family:Heebo;font-size:var(--fs-4);padding:var(--sp-5) var(--sp-7);border-radius:var(--r-4)}
-.alert-row{font-size:var(--fs-3);border-bottom:1px solid var(--border);padding:var(--sp-3) 0}
+.alert-lead{font-size:var(--fs-3);color:var(--text-2);margin-bottom:var(--sp-4)}
+.alert-th{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin-bottom:var(--sp-5)}
+.alert-th span{font-size:var(--fs-2);color:var(--text-2);background:var(--card-2);border-radius:var(--r-7);padding:var(--sp-1) var(--sp-5)}
+.alert-list{max-height:55vh;overflow-y:auto;border-top:1px solid var(--border);margin:0 calc(-1 * var(--sp-7));padding:0 var(--sp-7)}
+.alert-row{display:flex;align-items:center;gap:var(--sp-5);border-bottom:1px solid var(--border);padding:var(--sp-4) 0}
+.alert-row:last-child{border-bottom:none}
+.alert-who{flex:1;min-width:0;display:flex;flex-direction:column}
+.alert-who b{font-size:var(--fs-3);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-who span{font-size:var(--fs-1);color:var(--text-3)}
+.alert-pills{display:flex;flex-direction:column;align-items:flex-end;gap:var(--sp-2)}
+.alert-pill{font-size:var(--fs-2);border-radius:var(--r-7);padding:0 var(--sp-5);white-space:nowrap;border:1px solid transparent;color:var(--text-3)}
+.alert-pill-bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.alert-pill-warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
 .mod-tone-bad{--color:var(--bad);--icbg:var(--bad-soft)}
 .mod-tone-brand{--color:var(--brand-fill);--icbg:var(--info-soft)}
 .mod-tone-ok{--color:var(--ok);--icbg:var(--ok-soft)}

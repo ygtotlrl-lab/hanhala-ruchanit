@@ -1,10 +1,10 @@
 // app/domain.reg.js — סדרים ושינה: מסך הרישום והסימונים, לשני הזרמים
-import { dayIso, dayNoon, readNum } from '../core/util.js';
+import { dayIso, dayNoon, readNum, sortCompare } from '../core/util.js';
 import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../core/sync.js';
 import { sessUserId } from '../core/auth.js';
 import { esc, openModal, toast } from '../core/ui.js';
 import { HEB_DOW, hebToGreg } from '../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutRecs,
          hrSortStudents, modalOpen, saveStudents, tyCls } from './domain.js';
@@ -595,7 +595,7 @@ function hrCheckAlert(st) {
 
   var alerts=[];
   var stats={};
-  students.forEach(function(s){stats[s.client_id]={name:s.name,absent:0,lateMin:0};});
+  students.forEach(function(s){stats[s.client_id]={name:s.name,cls:s.cls,absent:0,lateMin:0};});
   data.forEach(function(rec){
     if(String(rec.session_date||'')<monthBeg) return;
     Object.entries(hrMarks(rec)).forEach(function(e){
@@ -606,20 +606,26 @@ function hrCheckAlert(st) {
     });
   });
   Object.values(stats).forEach(function(s){
-    if(s.absent>=20||s.lateMin>=300) alerts.push(s);
+    if(s.absent>=HR_ALERT_ABS||s.lateMin>=HR_ALERT_LATE) alerts.push(s);
   });
   if(!alerts.length) return;
 
-  var listHTML=alerts.slice(0,10).map(function(s){
-    return '<div class="alert-row">'+esc(s.name)+
-      (s.absent>=20?'<span class="alert-abs"> — '+s.absent+' חיסורים</span>':'')+
-      (s.lateMin>=300?'<span class="alert-late"> — '+s.lateMin+' דק׳ איחור</span>':'')+
-      '</div>';
+  // כל החורגים, מהחמור לקל (היחס לסף); הרשימה נגללת בתוך החלון, והכותרת והסף נשארים.
+  var sev=function(s){return Math.max(s.absent/HR_ALERT_ABS, s.lateMin/HR_ALERT_LATE);};
+  alerts.sort(function(a,b){return sev(b)-sev(a)||sortCompare(a.name,b.name);});
+  var pill=function(n,lim,unit,cls){
+    return '<span class="alert-pill'+(n>=lim?' '+cls:'')+'"><b>'+n+'</b> '+unit+'</span>';
+  };
+  var listHTML=alerts.map(function(s){
+    return '<div class="alert-row"><div class="alert-who"><b>'+esc(s.name)+'</b><span>'+esc(HR_CLS_NAME[s.cls]||'')+'</span></div>'+
+      '<div class="alert-pills">'+pill(s.absent,HR_ALERT_ABS,'חיסורים','alert-pill-bad')+pill(s.lateMin,HR_ALERT_LATE,'דק׳ איחור','alert-pill-warn')+'</div></div>';
   }).join('');
+  var mName=_hcMN(curHY)[curMI]||'';
+  var lead=alerts.length===1?'תלמיד אחד חרג מהסף ב'+mName:alerts.length+' תלמידים חרגו מהסף ב'+mName;
   openModal(MSG_ABSENCE_ALERT,
-    '<p class="alert-lead">התלמידים הבאים חרגו מהסף מתחילת החודש:</p>'+
-    '<div class="alert-list">'+listHTML+'</div>',
-    '<button data-act="modal-close" class="alert-ok">הבנתי</button>');
+    '<p class="alert-lead">'+esc(lead)+'</p>'+
+    '<div class="alert-th"><span>סף: '+HR_ALERT_ABS+' חיסורים</span><span>או '+HR_ALERT_LATE+' דקות איחור</span></div>'+
+    '<div class="alert-list">'+listHTML+'</div>', '', 'warn');
 }
 
 export { _hrOpenRec, hrMarkDirty, hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,

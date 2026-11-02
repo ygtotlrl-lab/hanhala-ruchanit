@@ -3,7 +3,7 @@ import { MSG_DELETE, dayToday, uniqHas } from '../core/util.js';
 import { idEq, newClientId, tombKill } from '../core/sync.js';
 import { sessUserId, usersNameOf } from '../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
-import { HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
+import { HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
 import { S } from './state.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
@@ -125,7 +125,7 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
       lastHTML='<span class="badge-ok">'+stIcon(icon('edit'))+'יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     // חריגה מהסף (20 חיסורים או 300 דקות איחור בחודש) — מסגרת אדומה לאריח, בלי תג
-    var over=sr.absent>=20||sr.lateMin>=300;
+    var over=sr.absent>=HR_ALERT_ABS||sr.lateMin>=HR_ALERT_LATE;
     var clsLabel=HR_CLS_SHORT[sr.cls]||sr.cls||'';
     // אריח לכל תלמיד: שיעור וחץ למעלה, השם, ושני מספרים גדולים — חיסורים וטיפולים; «פירוט» לרוחב האריח
     html+='<div id="'+p+'-sup-card-'+sid+'" class="sup-card-pane sup-card'+(over?' sup-over':'')+'"'+(over?' title="חרג מהסף החודשי"':'')+'>';
