@@ -165,7 +165,7 @@ function renderStudents(){
   if(S.currentFilter==='inactive') S.currentFilter='all'; // «לא פעילים» עבר לניהול הרשימה
 
   var btnML=document.getElementById('btn-manage-list');
-  if(btnML) btnML.classList.toggle('hidden',!isAdmin());
+  if(btnML) btnML.classList.remove('hidden'); // גלוי לכולם; מי שאינו מנהל — «ללא גישה» בלחיצה
 
   var tabsRow=document.getElementById('class-tabs-row');
   var swInner=document.getElementById('sw-inner');
@@ -260,7 +260,7 @@ function setStudentInactive(sid){
 }
 
 function setStudentActive(sid){
-  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
+  if(!isAdmin()){shell.showDenied();return;}
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
@@ -285,7 +285,7 @@ var MANAGE_PICK = {
 
 // ── לא פעילים — בניהול הרשימה בלבד, למנהל: חיפוש והחזרה לפעיל ──
 function openInactiveDlg(){
-  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
+  if(!isAdmin()){shell.showDenied();return;}
   openModal('תלמידים לא פעילים',
     '<input aria-label="חיפוש" type="search" class="input-full inact-search" id="inact-search" data-inp="inact-search" placeholder="חיפוש תלמיד...">'+
     '<div id="inact-list" class="inact-list"></div>',
@@ -312,7 +312,7 @@ function renderInactiveList(){
 }
 
 function openManageListDlg(){
-  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
+  if(!isAdmin()){shell.showDenied();return;}
   var ITEMS=[
     {icon:'plus',label:'הוסף תלמיד',k:'add'},
     {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
@@ -527,7 +527,7 @@ function studentFormHTML(sid){
     // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
     (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('history')+'היסטוריית סטטוסים</button>' : '')+
     // התיק האישי — למי שמורשה לראות תיקים
-    (sid && canAccess('files') ? '<button data-act="st-file" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('files')+'תיק אישי</button>' : '');
+    (sid ? '<button data-act="st-file" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('files')+'תיק אישי</button>' : '');
 }
 
 // ── היסטוריית הסטטוסים ──
@@ -804,7 +804,7 @@ function printStudents() {
         {text:'ישיבת'+NB+'תומכי'+NB+'תמימים'+NB+'ראשל"צ', fontSize:18, bold:true, alignment:'center', margin:[0,0,0,4], color:'#1a3a6b'},
         subtitleTxt,
         summaryTxt,
-        {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#276749', alignment:'right', margin:[0,0,0,6]},
+        {text:[{text:'נוכחים'},{text:NB+'('+present.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#2f855a', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(pRows)}, margin:[0,0,0,20]},
         {text:[{text:'אינם'+NB+'נוכחים'},{text:NB+'('+absent.length+')',direction:'ltr'}], fontSize:13, bold:true, color:'#c53030', alignment:'right', margin:[0,0,0,6]},
         {table:{widths:['auto','*','auto'],body:[['#','שם','שיעור']].concat(aRows)}}

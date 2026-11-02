@@ -46,7 +46,7 @@ var MSG_ABSENCE_DUP = 'היעדרות זהה כבר רשומה לתלמיד';
 
 var MSG_REASONS_SAVED = 'הסיבות נשמרו';
 
-var MSG_ACCESS_LIMITED = 'גישה מוגבלת';
+var MSG_ACCESS_LIMITED = 'ללא גישה';
 
 var MSG_PICK_STUDENT = 'יש לבחור תלמיד';
 
@@ -297,10 +297,7 @@ var ABS_TYPE_ICON = { approved: 'approved', suspended: 'suspended', left: 'left'
 // כשל רענון מהענן — המסך מציג את העותק שבמכשיר, ואומר זאת.
 var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר';
 
-// רמת «צפייה» במודול — כל כתיבה בו נחסמת.
-var MSG_VIEW_ONLY = 'יש לך הרשאת צפייה בלבד במסך זה';
-
-export { ABS_TYPE_ICON, MSG_PULL_STALE, MSG_VIEW_ONLY, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,

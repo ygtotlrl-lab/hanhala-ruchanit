@@ -8,9 +8,9 @@
   /* צבע הזהות של האפליקציה — רכיב שמייצג אותה נגזר ממנו ולא מדיו הטקסט, והדיו שעליו צמד הפוך שמתחלף איתו */
   --brand:var(--brand-fill); --on-brand:#ffffff;
 
---on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#9c4221;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#276749;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
+--on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#c08a0b;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#2f855a;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
 /* גווני הסימון — ארבעה בלבד: נוכח ירוק · איחורים צהוב · חיסור והיעדרות אדום · באישור, בבית ומנוחה כחול; אסימון לכל קוד */
---at-p:#2f855a;--at-l:#c08a0b;--at-lk:#c08a0b;--at-lm:#c08a0b;--at-e:#c53030;--at-x:#c53030;--at-ap:#2b6cb0;--at-ak:#2b6cb0;--at-a:#2b6cb0;
+--at-p:var(--ok);--at-l:var(--warn);--at-lk:var(--warn);--at-lm:var(--warn);--at-e:var(--bad);--at-x:var(--bad);--at-ap:var(--info);--at-ak:var(--info);--at-a:var(--info);
 /* מניפת המודולים — גווני קור מאותה משפחה: כחול כהה · כחול · תכלת · טורקיז · סגול-כחול · אפור-כחול */
 --brand-ink:#1a3a6b;--brand-fill:#1a3a6b;--brand-soft:#e8eef8;--deep-1:#234a8a;--deep-2:#0f2347;--bg:#f0f4fa;--card:#fff;--card-2:#f0f4fa;--on-brand-wash:rgba(255,255,255,.13);--border:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--radius:var(--r-4);--shadow:0 2px 8px rgba(26,58,107,.1);--shadow-lg:0 4px 20px rgba(26,58,107,.16);--shadow-brand:rgba(26,58,107,.18);--shadow-brand-soft:rgba(26,58,107,.1)}
 
@@ -22,14 +22,12 @@
       --bg:#0d151d; --card:#131e29; --card-2:#0d151d;
       --on-brand-edge:rgba(255,255,255,.4);
       --bad:#ff9d9d; --bad-line:#5c2323; --bad-soft:#2b1616;
-      --warn:#f2b56e;   --warn-line:#5c3c18;   --warn-soft:#2b2012;
+      --warn:#f6d365;   --warn-line:#5c3c18;   --warn-soft:#2b2012;
       --ok:#84dba6;     --ok-line:#1f4d35;     --ok-soft:#12251c;
       --info:#93c3f7;   --info-soft:#111d2a;
       --on-brand-wash:rgba(255,255,255,.13);
       --text:#e8eef5; --text-2:#c2cfdc; --text-3:#93a5b8;
       --border:#24333f;
-      --at-p:#84dba6; --at-l:#f6d365; --at-lk:#f6d365; --at-lm:#f6d365; --at-e:#ff9d9d; --at-x:#ff9d9d;
-      --at-ap:#93c3f7; --at-ak:#93c3f7; --at-a:#93c3f7;
       --brand-ink:#7fb2f0; --brand-fill:#1a3a6b; --brand-soft:#111d2a;
       --deep-1:#234a8a; --deep-2:#0f2347;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.28);

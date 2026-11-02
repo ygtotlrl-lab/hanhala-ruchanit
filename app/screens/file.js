@@ -26,7 +26,7 @@ function openStudentFile(sid) {
 }
 
 function _fileBodyHTML(s) {
-  var ed = canEdit('files');
+  var ed = true; // הכל גלוי; ההוספה והמחיקה נבדקות בלחיצה (HR_WRITE_MODULE) — «ללא גישה» למי שבצפייה
   var form = ed ? (
     '<div class="file-form" data-ks>' +
       '<div class="file-form-row">' +

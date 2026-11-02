@@ -247,10 +247,10 @@ async function _hrExportPdf(st, fromIso, toIso) {
     function cell(s,opts){return Object.assign({text:nb(String(s==null?'':s)),alignment:'right'},opts||{});}
     var hdrRow=st.exam?[
       cell('#',{bold:true}),cell('תאריך',{bold:true}),cell(st.one,{bold:true}),
-      cell('נבחנו',{bold:true,color:'#276749'}),cell('ממוצע',{bold:true,color:'#2b4c9f'}),cell('גיליון',{bold:true})
+      cell('נבחנו',{bold:true,color:'#2f855a'}),cell('ממוצע',{bold:true,color:'#2b6cb0'}),cell('גיליון',{bold:true})
     ]:[
       cell('#',{bold:true}),cell('תאריך',{bold:true}),cell(st.one,{bold:true}),
-      cell('נוכחים',{bold:true,color:'#276749'}),cell(st.absMany,{bold:true,color:'#742a2a'}),cell('מאחרים',{bold:true,color:'#dd6b20'})
+      cell('נוכחים',{bold:true,color:'#2f855a'}),cell(st.absMany,{bold:true,color:'#c53030'}),cell('מאחרים',{bold:true,color:'#c08a0b'})
     ];
     var body=[hdrRow];
     sorted.forEach(function(rec,i){

@@ -346,7 +346,7 @@ function renderPermsTable() {
   var opts = [
     {v:'edit', l:'עריכה'},
     {v:'view', l:'צפייה'},
-    {v:'none', l:'חסום'}
+    {v:'none', l:'ללא גישה'}
   ];
   var html = AUTH.MODULES.map(function(m) {
     var row = '<tr><td>'+m.label+'</td>';

@@ -12,7 +12,7 @@ import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
 import { actWire, closeAsk, closeModal, comboInput, comboPick, dragCancel, dragDown, dragMove,
          dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
-import { HR_MIRROR_TABLES, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, MSG_VIEW_ONLY, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
+import { HR_MIRROR_TABLES, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { icon } from './icons.js';
 import { _hrMarkSynced, canAccess, canEdit, hrLocalRecs, hrPullFromCloud, hrPushToCloud, hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail, modalOpen, uiShown } from './domain.js';
@@ -231,6 +231,7 @@ S.SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key))
 // ── הרישום ב-shell ──
 // לפני כל אינטראקציה — מסך שמרנדר מסך אחר, והתחום שמנווט, עוברים דרכו.
 shell.showPage = showPage;
+shell.showDenied = showDenied;
 shell.showPageInternal = showPageInternal;
 shell.renderStudents = renderStudents;
 shell.hrRenderSupervision = hrRenderSupervision;
@@ -432,7 +433,7 @@ var DOM_ACTIONS = {
   'st-attend':   function (el) { openAttendanceEdit(el.getAttribute('data-id')); },
   'st-edit':     function (el) { editStudent(el.getAttribute('data-id')); },
   'st-history':  function (el) { return openStatusHistory(el.getAttribute('data-id')); },
-  'st-file':        function (el) { openStudentFile(el.getAttribute('data-id')); },
+  'st-file':        function (el) { if (!canAccess('files')) { showDenied(); return; } openStudentFile(el.getAttribute('data-id')); },
   'file-event-save': function () { return saveFileEvent(); },
   'file-event-del': function (el) { deleteFileEvent(el.getAttribute('data-id')); },
   'ct-group-add':   function () { addContactGroup(); },
@@ -577,9 +578,10 @@ var HR_WRITE_MODULE = {
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
 });
+// הכל גלוי לכולם; פעולה שאין עליה הרשאה — אותו דיאלוג «ללא גישה» כמו מסך חסום.
 function hrCanWrite(mod) {
   if (!mod || canEdit(mod)) return true;
-  toast(MSG_VIEW_ONLY, null, 'warn');
+  showDenied();
   return false;
 }
 Object.keys(HR_WRITE_MODULE).forEach(function (a) {
@@ -611,7 +613,7 @@ document.addEventListener('pointercancel', dragCancel);
 // שדה שנערך במודול לקריאה בלבד — ההקלדה אינה נשמרת, והמסך מצויר מחדש מהנתונים.
 var _hrVoAt = 0;
 function _hrViewOnlyRevert(el) {
-  if (Date.now() - _hrVoAt > 3000) { _hrVoAt = Date.now(); toast(MSG_VIEW_ONLY, null, 'warn'); }
+  if (Date.now() - _hrVoAt > 3000) { _hrVoAt = Date.now(); showDenied(); }
   if (el && el.type === 'file') el.value = '';
   saveRefresh();
 }
@@ -637,7 +639,7 @@ document.addEventListener('change', function (e) {
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
-  if (c === 'file-scan-pick') fileScanPicked(el);
+  if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }
   if (c === ex.p + '-grade') hrExamSetGrade(ex, el.dataset.id, el.value, true);
   else if (c === ex.p + '-scan' || c === ex.p + '-file') hrExamUpload(ex, el);
   else if (c === ex.p + '-in-report') hrExamSetInReport(ex, el.checked);

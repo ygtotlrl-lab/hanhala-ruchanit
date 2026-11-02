@@ -211,9 +211,10 @@ function renderReports() {
       (on ? '<div class="rp-fills">' + items.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' : '');
   }
   var fill = document.getElementById('rp-fill');
-  if (fill) fill.innerHTML = canEdit('reports') ?
+  // הכל גלוי; המילוי נבדק בלחיצה (HR_WRITE_MODULE)
+  if (fill) fill.innerHTML =
     sec('g', 'הנהגה כללית', RP_GENERAL) + sec('s', 'הנהגה בחומר הלימודים', RP_SUBJ_H) +
-    sec('i', 'פנימייה', RP_INTERNAT) + sec('r', 'הערות אישיות', RP_ROLES) : '';
+    sec('i', 'פנימייה', RP_INTERNAT) + sec('r', 'הערות אישיות', RP_ROLES);
   var comp = rpCompute(m);
   var list = document.getElementById('rp-list');
   if (!list) return;
