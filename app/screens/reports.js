@@ -201,12 +201,19 @@ function renderReports() {
     return '<button class="rp-fill-btn' + (k === n && n ? ' rp-full' : '') + '" data-act="rp-fill" data-f="' + f + '">' +
       '<span class="rp-fill-lbl">' + esc(label) + '</span><span class="rp-fill-n">' + k + '/' + n + '</span></button>';
   }
+  // כל סעיף — כפתור שפותח את שדותיו מתחתיו; סגור כברירה, וכל כניסה למסך — הכל סגור (loadReports)
+  var open = S._rpOpen || (S._rpOpen = {});
+  function sec(k, title, items) {
+    var full = items.filter(function (x) { return n && filled(x[0]) === n; }).length, on = !!open[k];
+    return '<button class="rp-sec' + (on ? ' on' : '') + (full === items.length && n ? ' rp-full' : '') + '" data-act="rp-sec" data-k="' + k + '" aria-expanded="' + on + '">' +
+        '<span class="rp-sec-t">' + esc(title) + '</span><span class="rp-fill-n">' + full + '/' + items.length + '</span>' +
+        '<span class="rp-sec-ch">' + icon('down') + '</span></button>' +
+      (on ? '<div class="rp-fills">' + items.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' : '');
+  }
   var fill = document.getElementById('rp-fill');
   if (fill) fill.innerHTML = canEdit('reports') ?
-    '<div class="rp-sec">הנהגה כללית</div><div class="rp-fills">' + RP_GENERAL.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' +
-    '<div class="rp-sec">הנהגה בחומר הלימודים</div><div class="rp-fills">' + RP_SUBJ_H.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' +
-    '<div class="rp-sec">פנימייה</div><div class="rp-fills">' + RP_INTERNAT.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' +
-    '<div class="rp-sec">הערות אישיות</div><div class="rp-fills">' + RP_ROLES.map(function (x) { return btn(x[0], x[1]); }).join('') + '</div>' : '';
+    sec('g', 'הנהגה כללית', RP_GENERAL) + sec('s', 'הנהגה בחומר הלימודים', RP_SUBJ_H) +
+    sec('i', 'פנימייה', RP_INTERNAT) + sec('r', 'הערות אישיות', RP_ROLES) : '';
   var comp = rpCompute(m);
   var list = document.getElementById('rp-list');
   if (!list) return;
@@ -226,6 +233,9 @@ function renderReports() {
 }
 
 function loadReports() { renderReports(); }
+// כניסה למסך (showPage) — כל הסעיפים סגורים; רענון אחרי שמירה או משיכה אינו סוגר
+function rpResetOpen() { S._rpOpen = {}; }
+function rpToggleSec(k) { var o = S._rpOpen || (S._rpOpen = {}); o[k] = !o[k]; renderReports(); }
 function rpSetCls(c) { S._rpCls = c; renderReports(); }
 
 // ── המילוי — כל התלמידים בבת אחת, רשימה נפתחת ליד כל שם; בהערות האישיות — טקסט, ושם הרב לכל שיעור ──
@@ -431,5 +441,5 @@ async function rpExport(sid) {
   }
 }
 
-export { RP_SCALE, loadReports, renderReports, rpCompute, rpNav, rpExport, rpOpenFill, rpSaveFill, rpSetCls,
+export { RP_SCALE, loadReports, rpResetOpen, rpToggleSec, renderReports, rpCompute, rpNav, rpExport, rpOpenFill, rpSaveFill, rpSetCls,
          screenReportsHTML };

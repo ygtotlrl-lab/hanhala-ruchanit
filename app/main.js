@@ -27,8 +27,7 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
-import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpSaveFill, rpSetCls,
-         screenReportsHTML } from './screens/reports.js';
+import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
@@ -266,6 +265,7 @@ function showPage(pg) {
   if (!AUTH.user) { return; }
   if (UNDER_CONSTRUCTION.indexOf(pg) !== -1) { showConstruction(); return; }
   if (!canAccess(pg)) { showDenied(); return; }
+  if (pg === 'reports') rpResetOpen();
   showPageInternal(pg);
   renderPage(pg);
 }
@@ -442,6 +442,7 @@ var DOM_ACTIONS = {
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
   'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
   'rp-fill-save':   function () { rpSaveFill(); },
+  'rp-sec':         function (el) { rpToggleSec(el.getAttribute('data-k')); },
   'rp-export':      function (el) { return rpExport(el.getAttribute('data-id')); },
   'rp-export-all':  function () { return rpExport(null); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.

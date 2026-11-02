@@ -316,7 +316,7 @@ function openManageListDlg(){
   var ITEMS=[
     {icon:'plus',label:'הוסף תלמיד',k:'add'},
     {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
-    {icon:'archive',label:'לא פעילים · '+getStudents().filter(function(s){return !hrStudentListed(s);}).length,k:'inactive'},
+    {icon:'archive',label:'לא פעילים',k:'inactive'},
     {icon:'download',label:'תבנית ייבוא',k:'tmpl'},
     {icon:'upload',label:'ייבוא תלמידים',k:'import'},
     {icon:'del',label:'מחק הכל',k:'delall',cls:'menu-danger'},
