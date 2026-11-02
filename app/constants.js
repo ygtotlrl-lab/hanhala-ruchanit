@@ -39,7 +39,7 @@ var MSG_PICK_REASON = '⚠️ יש לבחור סיבה';
 var MSG_PICK_START_DATE = '⚠️ יש לבחור תאריך התחלה';
 
 var MSG_PICK_END_DATE = '⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום';
-var MSG_END_BEFORE_START = '⚠️ תאריך הסיום לפני תאריך ההתחלה — הסטטוס לא היה חל אף פעם';
+var MSG_END_BEFORE_START = '⚠️ יש לבחור תאריך סיום אחרי תאריך ההתחלה';
 var MSG_PICK_END_CHOICE = '⚠️ יש להוסיף תאריך סיום, או לבחור «ללא תאריך סיום»';
 
 var MSG_ABSENCE_DUP = '⚠️ היעדרות זהה כבר רשומה לתלמיד';
