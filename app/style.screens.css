@@ -108,6 +108,15 @@
 .mod-tone-info{--color:var(--info);--icbg:var(--info-soft)}
 /* ── מצבת ── */
 .class-tabs{display:flex;flex-wrap:wrap;gap:var(--sp-3);margin:var(--sp-5) 0}
+/* שבבי הסינון לפי שיעור (hrFilterChips) — שורה אחת שנגללת לצד, כל השבבים ברוחב אחד ובצבע האפליקציה; הנבחר — רקע רך ומסגרת, והתג מלא. */
+.fchips{display:flex;gap:var(--sp-3);margin:var(--sp-5) 0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px}
+.fchips::-webkit-scrollbar{display:none}
+.fchip{flex:0 0 112px;display:flex;align-items:center;justify-content:center;gap:var(--sp-3);height:36px;padding:0 var(--sp-4);
+  border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--text-2);font-family:inherit;font-size:var(--fs-2);font-weight:700;cursor:pointer;white-space:nowrap}
+.fchip-n{min-width:20px;padding:0 6px;border-radius:999px;background:var(--brand-soft);color:var(--brand-ink);font-size:var(--fs-1);font-weight:700;line-height:18px;text-align:center}
+.fchip.on{background:var(--brand-soft);border-color:var(--brand-ink);box-shadow:inset 0 0 0 1px var(--brand-ink);color:var(--brand-ink)}
+.fchip.on .fchip-n{background:var(--brand-fill);color:var(--on-brand)}
+.fchip:focus-visible{outline:2px solid var(--brand-ink);outline-offset:2px}
 .cls-badge{font-size:var(--fs-2);background:var(--info-soft);color:var(--info);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);white-space:nowrap}
 .cycle-badge{font-size:var(--fs-2);background:var(--bg);color:var(--text-2);padding:var(--sp-1) var(--sp-4);border-radius:var(--r-5);white-space:nowrap}
 .deact-note{font-size:var(--fs-3);background:var(--warn-soft);color:var(--warn);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3)}

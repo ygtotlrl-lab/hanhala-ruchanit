@@ -8,7 +8,7 @@ import { lsGet, lsLog, lsSet } from '../core/storage.js';
 import { MIRROR, mirrorSave } from '../core/mirror.js';
 import { logAction } from '../core/backup.js';
 import { isAdminOf, sessGet, usersRefresh } from '../core/auth.js';
-import { closeModal, pullRender, toast } from '../core/ui.js';
+import { closeModal, esc, pullRender, toast } from '../core/ui.js';
 import { shareFile } from '../core/share.js';
 import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
@@ -839,7 +839,17 @@ function atDefaultCfg() {
   };
 }
 
-export { HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
+// שבבי הסינון לפי שיעור — במצבה ובגיליונות: שורה אחת שנגללת לצד, כל השבבים ברוחב אחד ובצבע האפליקציה,
+// והמספר בתג. items — [[מפתח, שם, מספר]]; המספר null — בלי תג.
+function hrFilterChips(items, cur, act) {
+  return items.map(function (x) {
+    var on = x[0] === cur;
+    return '<button type="button" role="tab" aria-selected="' + on + '" class="fchip' + (on ? ' on' : '') + '" data-act="' + act + '" data-cls="' + esc(x[0]) + '">' +
+      '<span class="fchip-l">' + esc(x[1]) + '</span>' + (x[2] == null ? '' : '<span class="fchip-n">' + x[2] + '</span>') + '</button>';
+  }).join('');
+}
+
+export { hrFilterChips, HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          _hrMarkSynced, _hrStudentsRaw, _hrStudentsSaveRaw,
          atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,

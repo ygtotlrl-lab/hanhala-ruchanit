@@ -39,6 +39,7 @@ var MSG_PICK_REASON = '⚠️ יש לבחור סיבה';
 var MSG_PICK_START_DATE = '⚠️ יש לבחור תאריך התחלה';
 
 var MSG_PICK_END_DATE = '⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום';
+var MSG_END_BEFORE_START = '⚠️ תאריך הסיום לפני תאריך ההתחלה — הסטטוס לא היה חל אף פעם';
 var MSG_PICK_END_CHOICE = '⚠️ יש להוסיף תאריך סיום, או לבחור «ללא תאריך סיום»';
 
 var MSG_ABSENCE_DUP = '⚠️ היעדרות זהה כבר רשומה לתלמיד';
@@ -286,12 +287,14 @@ var MSG_FILE_TOO_BIG = '⚠️ הקובץ גדול מדי (עד 15MB)';
 var HR_CLS_LIST = ['a', 'b', 'g', 's'];
 var HR_CLS_NAME = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'", s: 'התלמידים השלוחים' };
 var HR_CLS_SHORT = { a: 'א', b: 'ב', g: 'ג', s: 'של' };
+// שם השיעור בשבב הסינון — קצר, כדי שכל השבבים יהיו ברוחב אחד.
+var HR_CLS_CHIP = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'", s: 'שלוחים' };
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
 var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
@@ -307,7 +310,7 @@ export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR
          MSG_OFFLINE_LOGIN_LATER, MSG_OFF_FIRST_LOGIN, MSG_PASS_MISMATCH_X,
          MSG_PASS_NEEDS_NET, MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PDF_BUILDING,
          MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE,
-         MSG_PERMS_SAVED, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
+         MSG_PERMS_SAVED, MSG_PICK_END_CHOICE, MSG_END_BEFORE_START, MSG_PICK_END_DATE, MSG_PICK_REASON,
          MSG_PICK_START_DATE, MSG_PICK_STUDENT, MSG_REASONS_SAVED, MSG_REPORT_DONE,
          MSG_REPORT_OPEN_ELSEWHERE, MSG_ROW_DELETED, MSG_ROW_MISSING,
          MSG_SERVER_DOWN_LOCAL, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,

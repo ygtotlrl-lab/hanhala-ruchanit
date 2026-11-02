@@ -8,15 +8,15 @@ import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
 import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
          MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
          MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
-         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
+         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_END_BEFORE_START, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
          MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
          MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
-         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, HR_CLS_NAME } from '../constants.js';
+         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSharePdf, hrSortStatuses, hrSortStudents, modalOpen,
-         saveStudents, tyCls, uiShown } from '../domain.js';
+         hrFilterChips, saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
 import { HR_PER, hrMonthKey, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
@@ -29,14 +29,7 @@ function screenStudentsHTML() {
 <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button class="btn sm" data-act="students-print">${icon('print')}הדפסה</button><button id="btn-manage-list" class="hidden btn sm out" data-act="manage-list-open">${icon('settings')}ניהול רשימה</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Filter Tabs -->
-<div id="class-tabs-row" class="class-tabs">
-<button class="filter-chip btn sm on" id="ct-all" data-act="filter-class" data-cls="all">הכל</button>
-<button class="filter-chip btn sm out" id="ct-a" data-act="filter-class" data-cls="a">שיעור א'</button>
-<button class="filter-chip btn sm out" id="ct-b" data-act="filter-class" data-cls="b">שיעור ב'</button>
-<button class="filter-chip btn sm out" id="ct-g" data-act="filter-class" data-cls="g">שיעור ג'</button>
-<button class="filter-chip btn sm out" id="ct-s" data-act="filter-class" data-cls="s">התלמידים השלוחים</button>
-<button class="inactive-tab btn sm out" id="ct-inactive" data-act="filter-class" data-cls="inactive">לא פעילים</button>
-</div>
+<div id="class-tabs-row" class="fchips" role="tablist" aria-label="סינון לפי שיעור"></div>
 <!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
 <div class="st-add-row">
 <div class="sw" id="sw-inner">${comboHTML('student', { id: 'st-search', qid: 'search-st', label: 'חיפוש תלמיד', placeholder: 'חיפוש תלמיד...' })}</div>
@@ -112,6 +105,8 @@ function saveStudentStatus(type) {
   if (!toOpen && !noEnd) { toast(MSG_PICK_END_CHOICE, null, 'bad'); return; }
   // שורת סיום פתוחה בלי תאריך — לא לשמור בשקט כאילו הכול תקין.
   if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'bad'); return; }
+  // סיום שאינו אחרי ההתחלה — הסטטוס לא חל אף פעם, והסימון האוטומטי בסדרים אינו מופעל.
+  if (to && new Date(to) <= new Date(from)) { toast(MSG_END_BEFORE_START, null, 'bad'); return; }
   var sid = S._statusSid;
 
   var students = getStudents();
@@ -164,9 +159,6 @@ function checkLoginNeeded(){
 
 function filterClass(cls){
   S.currentFilter=cls;
-  ['all','a','b','g','s','inactive'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el){el.classList.remove('on');el.classList.add('out');}});
-  var el=document.getElementById('ct-'+cls)||document.getElementById('ct-all');
-  if(el){el.classList.add('on');el.classList.remove('out');}
   renderStudents();
 }
 
@@ -185,18 +177,11 @@ function renderStudents(){
   var tabsRow=document.getElementById('class-tabs-row');
   var swInner=document.getElementById('sw-inner');
   if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.setProperty('--sw-w',tw+'px');}
-  var ea=document.getElementById('ct-all');
-  if(ea)ea.textContent='הכל ('+activeSts.length+')';
-  var ea2=document.getElementById('ct-a');
-  if(ea2)ea2.textContent=CLS_NAME.a+' ('+activeSts.filter(function(s){return s.cls==='a';}).length+')';
-  var eb=document.getElementById('ct-b');
-  if(eb)eb.textContent=CLS_NAME.b+' ('+activeSts.filter(function(s){return s.cls==='b';}).length+')';
-  var eg=document.getElementById('ct-g');
-  if(eg)eg.textContent=CLS_NAME.g+' ('+activeSts.filter(function(s){return s.cls==='g';}).length+')';
-  var es=document.getElementById('ct-s');
-  if(es)es.textContent=CLS_NAME.s+' ('+activeSts.filter(function(s){return s.cls==='s';}).length+')';
-  var ei=document.getElementById('ct-inactive');
-  if(ei)ei.textContent='לא פעילים ('+inactiveSts.length+')';
+  if(tabsRow){
+    var nOf=function(k){return activeSts.filter(function(s){return s.cls===k;}).length;};
+    tabsRow.innerHTML=hrFilterChips([['all','הכל',activeSts.length]].concat(HR_CLS_LIST.map(function(k){return [k,HR_CLS_CHIP[k],nOf(k)];}))
+      .concat([['inactive','לא פעילים',inactiveSts.length]]),S.currentFilter||'all','filter-class');
+  }
 
   var sumEl=document.getElementById('st-summary');
 

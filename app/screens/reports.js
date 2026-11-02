@@ -5,10 +5,10 @@ import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
 import { closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
-import { HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF,
+import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF,
          MSG_PDF_FAIL, PK_RP_VAL } from '../constants.js';
 import { S } from '../state.js';
-import { canEdit, getStudents, hrMarks, hrMirrorRecs, hrPdfFont, hrSharePdf, hrSortStudents } from '../domain.js';
+import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrPdfFont, hrSharePdf, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsUrl } from './contacts.js';
 import { icon } from '../icons.js';
@@ -155,7 +155,7 @@ function screenReportsHTML() {
       <span class="sup-nav-label" id="rp-month-lbl"></span>
       <button class="sup-nav" id="rp-next" data-act="rp-nav" data-dir="1" aria-label="החודש הבא">${icon('next')}</button>
     </div>
-    <div class="class-tabs" id="rp-cls"></div>
+    <div class="fchips" id="rp-cls" role="tablist" aria-label="סינון לפי שיעור"></div>
     <div id="rp-fill"></div>
     <div id="rp-list"></div>
   </div>
@@ -163,10 +163,14 @@ function screenReportsHTML() {
 `;
 }
 
+// התלמידים של החודש המוצג — כל השיעורים; הסינון לפי שיעור מעליהם, והספירה בשבבים מהם.
+function _rpAll() {
+  var m = rpMonth();
+  return hrSortStudents(getStudents()).filter(function (s) { return hrStudentInHebMonth(s, m.hy, m.mi); });
+}
 function _rpStudents() {
   var c = S._rpCls || 'all';
-  var m = rpMonth();
-  return hrSortStudents(getStudents()).filter(function (s) { return hrStudentInHebMonth(s, m.hy, m.mi) && (c === 'all' || s.cls === c); });
+  return _rpAll().filter(function (s) { return c === 'all' || s.cls === c; });
 }
 
 function renderReports() {
@@ -181,9 +185,12 @@ function renderReports() {
   if (lbl) lbl.textContent = rpMonthLabel(m);
   var c = S._rpCls || 'all';
   var ct = document.getElementById('rp-cls');
-  if (ct) ct.innerHTML = [['all', 'הכל']].concat(HR_CLS_LIST.map(function (k) { return [k, HR_CLS_NAME[k]]; })).map(function (x) {
-    return '<button class="filter-chip btn sm ' + (c === x[0] ? 'on' : 'out') + '" data-act="rp-cls" data-cls="' + x[0] + '">' + x[1] + '</button>';
-  }).join('');
+  if (ct) {
+    var all = _rpAll();
+    ct.innerHTML = hrFilterChips([['all', 'הכל', all.length]].concat(HR_CLS_LIST.map(function (k) {
+      return [k, HR_CLS_CHIP[k], all.filter(function (s) { return s.cls === k; }).length];
+    })), c, 'rp-cls');
+  }
   var sts = _rpStudents(), n = sts.length;
   function filled(f) { return sts.filter(function (s) { return !!rpGet(mk, s.client_id, f); }).length; }
   function btn(f, label) {
