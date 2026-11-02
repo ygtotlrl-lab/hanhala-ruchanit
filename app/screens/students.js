@@ -20,7 +20,7 @@ function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Filter Tabs -->
 <div id="class-tabs-row" class="fchips" role="tablist" aria-label="סינון לפי שיעור"></div>
