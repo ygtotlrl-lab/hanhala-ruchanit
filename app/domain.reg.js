@@ -4,8 +4,7 @@ import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../core/syn
 import { sessUserId } from '../core/auth.js';
 import { esc, openModal, toast } from '../core/ui.js';
 import { HEB_DOW, hebToGreg } from '../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_LATE_OVER_30, MSG_NEED_MINUTES,
-         MSG_STATUS_REVERTED, HR_CLS_SHORT } from './constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutRecs,
          hrSortStudents, modalOpen, saveStudents, tyCls } from './domain.js';
@@ -88,7 +87,9 @@ function hrRegHTML(st) {
 // נקרא פעמיים, מהמטמון ואחרי הרענון, ולכן אין בו await; התאריך הוא היום של הזרם.
 function _hrPaintReg(st) {
   var dw=document.getElementById(st.p+'-date-wrap');
-  if(dw){
+  // במבחנים התאריך ריק עד שבוחרים — מבחן שנפתח בתאריך שגוי אין דרך להעביר
+  if(dw&&st.exam) dw.innerHTML=_hcBuild(st.p+'_date');
+  else if(dw){
     var logDate=dayNoon(st.day());
     var todH=_hcH(logDate);
     dw.innerHTML=_hcBuild(st.p+'_date',todH);
@@ -231,10 +232,12 @@ async function hrEditSession(st, recId) {
   hrRenderStudents(st);
 }
 
-// שדה תאריך ריק נופל ליום של הזרם — הבורר נבנה מלא, והריק הוא מצב ביניים.
+// שדה תאריך ריק נופל ליום של הזרם — הבורר נבנה מלא, והריק הוא מצב ביניים; במבחנים — ריק עד שבוחרים, ובלי תאריך אין פתיחה.
 async function hrOpenSession(st, sessId, sessName) {
   if(S[st.v+'CurrentSessionId']){toast(st.msg.closeFirst, null, 'warn');return;}
-  var dateIso=(document.getElementById(st.p+'_date_iso')||{}).value||st.day();
+  var pickedIso=(document.getElementById(st.p+'_date_iso')||{}).value;
+  if(st.exam&&!pickedIso){toast(MSG_EXAM_PICK_DATE, null, 'warn');return;}
+  var dateIso=pickedIso||st.day();
 
   // ההמתנה למשיכה מכוונת — היא מכריעה אם נוצרת רשומה שנייה לאותו סדר; החיווי והניטרול בניתוב.
   // משיכה אחת מסוננת ליום שנבחר — בדיקת הכפילות צריכה יום אחד בלבד.
