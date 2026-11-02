@@ -26,7 +26,7 @@ import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { HR_PER, hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
-import { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
+import { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
          switchUserEl, toggleUserMenu } from './screens/login.js';
 import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
@@ -426,7 +426,7 @@ function showDenied() {
 // ערך שחוזר מ-data-* הוא מחרוזת: idx + dir משרשר, ו-!'false' הוא false — ולכן ההמרה המפורשת כאן.
 // מטפל שקורא לפונקציה אסינכרונית מחזיר את ההבטחה — הניתוב משבית את הכפתור לפיה, ואין להסיר את ה-return.
 var DOM_ACTIONS = {
-  'sw-apply':            function (el) { swApply(el); },
+  'sw-apply':            function (el) { hrHandoffSave(); swApply(el); },
   'sw-dismiss':          function () { swHideUpdate(); },
   'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
   // התראות התשתית נבנות ב-JS — לכן הן מנותבות במפה ולא במאזין ישיר על הכפתור.
@@ -672,6 +672,9 @@ bootRun();
 ensureFirstAdmin();
 
 window.bootOk();
+
+// רענון מבאנר העדכון — המשתמש שנמסר לפניו חוזר מחובר (טבלה 106); בלי מסירה — מסך הכניסה כרגיל.
+hrHandoffResume().catch(function (e) { console.warn('[handoff] resume', e); });
 
 // עובר ב-pullRender — כמה משתמשים עובדים יחד, ומשיכה עלולה להגיע באמצע סימון.
 function hrPullDraw() {

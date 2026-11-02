@@ -157,11 +157,17 @@ async function _doLoginInner() {
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
+  stopLoad();
+  await afterLogin();
+}
+
+// מה שאחרי אימות מוצלח — ההרשאות, הכותרת, תפריט המשתמש והמעבר לבית; משותף לכניסה ולמסירה שאחרי עדכון.
+async function afterLogin() {
   var u = AUTH.user;
+  function dbg(msg){ console.log('[login] '+msg); }
   dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('⏳ [3/4] מנווט לדף הבית...');
-  stopLoad();
   // הסתרת מסך הכניסה והמעבר לבית רצים תמיד; כל עדכון משני עטוף בנפרד —
   // data מוגדר רק בענף המקוון, וקריאה ממנו באופליין זורקת.
   document.getElementById('auth-screen').classList.add('hidden');
@@ -182,6 +188,40 @@ async function _doLoginInner() {
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('⏳ [4/4] טוען נתונים...');
   shell.showPage('home');
+}
+
+// ── מסירה ברענון העדכון ──
+// המשתמש המחובר בזיכרון בלבד (טבלה 106), אבל רענון מבאנר העדכון אינו מוציא: לפני הרענון המזהה נמסר
+// ב-sessionStorage לחצי דקה, ובעלייה הוא נקרא ונמחק מיד. השורה נבדקת מול הענן — מושבת או שהסיסמה הוחלפה, חוזרים למסך הכניסה;
+// בלי רשת — כמו כניסה אופליין, ומאומתת מחדש כשהרשת חוזרת.
+var HANDOFF_KEY = 'hr_sw_handoff', HANDOFF_MS = 30000;
+function hrHandoffSave() {
+  try { if (AUTH.user && AUTH.user.client_id != null) sessionStorage.setItem(HANDOFF_KEY, JSON.stringify({ id: String(AUTH.user.client_id), t: Date.now() })); }
+  catch (e) { console.warn('[handoff] save', e); }
+}
+async function hrHandoffResume() {
+  var h = null;
+  try { h = JSON.parse(sessionStorage.getItem(HANDOFF_KEY) || 'null'); sessionStorage.removeItem(HANDOFF_KEY); } catch (e) { return false; }
+  var age = h ? Date.now() - Number(h.t) : -1;
+  if (!h || !h.id || !(age >= 0 && age < HANDOFF_MS)) return false;
+  mirrorLoadOne(authUsersTable());
+  var cache = usersGet();
+  var cu = Array.isArray(cache) ? cache.find(function (u) { return u && String(u.client_id) === h.id; }) : null;
+  if (!cu || cu.active === false) return false;
+  var row = null, net = true;
+  try {
+    var res = await netTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id', h.id).maybeSingle());
+    if (res && res.error) { if (isNetErr(res.error)) net = false; else return false; }
+    else row = res ? res.data : null;
+  } catch (e) { net = false; }
+  if (net && (!row || row.active !== true || row.pass_fp !== cu.pass_fp)) return false;
+  ctxSwitch();
+  AUTH.user = net ? row : cu;
+  AUTH.offlineLogin = !net;
+  if (net) usersSaveOne(row);
+  authLog(true, net ? 'online' : 'offline', AUTH.user.username);
+  await afterLogin();
+  return true;
 }
 
 function doLogout() {
@@ -349,5 +389,5 @@ function initDateFields(){
   if(hdEl) hdEl.textContent=hebrewDate(_now);
 }
 
-export { closeUserMenu, confirmSwitch, doLogin, doLogout, loadPerms, screenLoginHTML,
+export { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
          switchUserEl, toggleUserMenu };
