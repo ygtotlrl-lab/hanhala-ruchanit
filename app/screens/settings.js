@@ -61,14 +61,14 @@ function screenSettingsHTML() {
             <button data-act="absence-reason-add" data-kind="approved" class="reason-add-ok">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="reason-head-warn">${icon('suspended')}השעיה</div>
+            <div class="reason-head-bad">${icon('suspended')}השעיה</div>
             <div id="reasons-suspended" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-warn">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-bad">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="reason-head-bad">${icon('left')}לא שב</div>
+            <div class="reason-head-warn">${icon('left')}לא שב</div>
             <div id="reasons-left" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="left" class="reason-add-bad">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="left" class="reason-add-warn">+ הוסף סיבה</button>
           </div>
         </div>
         <div class="save-row-start">

@@ -286,8 +286,8 @@
 .at-code-p{--at:var(--at-p)}
 .at-code-x{--at:var(--at-x)}
 .abs-tone-approved{--ty:var(--ok);--ty-line:var(--ok-line);--ty-bg:var(--ok-soft)}
-.abs-tone-left{--ty:var(--bad);--ty-line:var(--bad-line);--ty-bg:var(--bad-soft)}
-.abs-tone-suspended{--ty:var(--warn);--ty-line:var(--warn-line);--ty-bg:var(--warn-soft)}
+.abs-tone-left{--ty:var(--warn);--ty-line:var(--warn-line);--ty-bg:var(--warn-soft)}
+.abs-tone-suspended{--ty:var(--bad);--ty-line:var(--bad-line);--ty-bg:var(--bad-soft)}
 /* ── בבנייה ── */
 .soon-note{font-size:var(--fs-3);color:var(--text-2);line-height:var(--lh-4);text-align:center}
 .soon-ok{flex:1;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;font-family:Heebo;font-size:var(--fs-4);padding:var(--sp-5) var(--sp-7);border-radius:var(--r-3)}

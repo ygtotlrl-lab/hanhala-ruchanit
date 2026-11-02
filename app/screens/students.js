@@ -418,10 +418,10 @@ function openStatusPickerModal() {
       '<button data-act="status-form" data-kind="approved" class="status-pick-ok">' +
         '<span class="tile-ico">' + icon('approved') + '</span><div>אישור</div>' +
       '</button>' +
-      '<button data-act="status-form" data-kind="suspended" class="status-pick-warn">' +
+      '<button data-act="status-form" data-kind="suspended" class="status-pick-bad">' +
         '<span class="tile-ico">' + icon('suspended') + '</span><div>השעיה</div>' +
       '</button>' +
-      '<button data-act="status-form" data-kind="left" class="status-pick-bad">' +
+      '<button data-act="status-form" data-kind="left" class="status-pick-warn">' +
         '<span class="tile-ico">' + icon('left') + '</span><div>לא שב</div>' +
       '</button>' +
     '</div>', '');
