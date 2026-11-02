@@ -4,12 +4,12 @@
 import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
 import { closeModal, esc, openModal, toast } from '../../core/ui.js';
-import { hebYearLabelFull } from '../../core/hebrew.js';
+import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
 import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF,
          MSG_PDF_FAIL, PK_RP_VAL } from '../constants.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrPdfFont, hrSharePdf, hrSortStudents } from '../domain.js';
-import { _hcH, _hcMN, hrHebMonthWin } from '../domain.hebdate.js';
+import { _hcH, _hcMN, hrDayHeb, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsUrl } from './contacts.js';
 import { icon } from '../icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
@@ -137,7 +137,9 @@ function rpCompute(m) {
       var mk = hrMarks(e.rec)[sid] || {};
       // תלמיד שלא סומן לו ציון במבחן של החודש — 0
       var g = (mk.grade != null && mk.grade !== '') ? Number(mk.grade) : 0;
-      ex1[n] = { grade: g, scan: mk.scan || null, material: e.rec.material || '' };
+      var dh = e.rec.session_date ? hrDayHeb(e.rec.session_date) : null;
+      ex1[n] = { grade: g, scan: mk.scan || null, material: e.rec.material || '',
+                 date: dh ? hebDayLabel(dh.day) + ' ' + (_hcMN(dh.hy)[dh.mi] || '') : '' };
     });
     out[sid] = { abs: abs, absG: rpGrade(RP_ABS_STEPS, abs), late: late, lateG: rpGrade(RP_LATE_STEPS, late),
                  sleepPts: pts, sleepG: rpGrade(RP_SLEEP_STEPS, pts), dis: dis, slate: slate, exams: ex1 };
@@ -269,14 +271,16 @@ function rpSaveFill() {
 function _sheetHTML(s, m, r, mk, scanUrls) {
   function v(f) { return esc(rpGet(mk, s.client_id, f)); }
   function tr(lbl, val, extra) { return '<tr><th>' + esc(lbl) + '</th><td' + (extra ? '' : ' colspan="2"') + '>' + val + '</td>' + (extra || '') + '</tr>'; }
+  // לכל לימוד: תווית מסובבת על שתי השורות (מילה בשורה) · מבחן — התיאור והתאריך, והציון בתא השמאלי (ולידו «טופס») · הנהגה
   var subj = HR_EXAM_SUBJECTS.map(function (n, i) {
-    var e = r.exams[n], g = '—', link = '';
+    var e = r.exams[n], g = '—', link = '', desc = '';
     if (e && e.grade != null) {
       g = String(e.grade);
       var u = e.scan && scanUrls[e.scan];
-      link = u ? '<a href="' + esc(u) + '">טופס ⇱</a>' : '';
+      link = u ? ' <a href="' + esc(u) + '">טופס</a>' : '';
+      desc = [e.material, e.date].filter(Boolean).map(esc).join(' · ');
     }
-    return '<tr><th rowspan="2" class="vlbl"><span class="v">' + esc(n) + '</span><span class="r">' + esc(n) + '</span></th><th>מבחן</th><td>' + g + '</td><td class="lnk">' + link + '</td></tr>' +
+    return '<tr><th rowspan="2" class="vlbl"><span class="r">' + n.split(' ').map(esc).join('<br>') + '</span></th><th>מבחן</th><td>' + desc + '</td><td class="gr">' + g + link + '</td></tr>' +
       '<tr><th>הנהגה</th><td colspan="2">' + v('h' + i) + '</td></tr>';
   }).join('');
   var head = '<div class="nm">' + esc(s.name) + '</div><div class="mo">' + esc(rpMonthName(m)) + '</div>';
@@ -287,10 +291,10 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       '<tr><th>איחורים</th><td>' + r.late + ' דקות</td><td>' + esc(r.lateG) + '</td></tr></table>' +
     '<h3>חומר הלימודים</h3><table class="subj">' + subj + '</table>' +
     '<h3>פנימייה</h3><table>' + tr('זמן שינה', esc(r.sleepG)) + RP_INTERNAT.map(function (x) { return tr(x[1], v(x[0])); }).join('') + '</table>' +
-    '<div class="more">הערות אישיות מעבר לדף | לפרטי קשר אנשי צוות הישיבה – <a href="' + esc(contactsUrl()) + '">לחץ כאן</a></div>' +
-    '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 0–100</div>' +
+    '<div class="foot"><div class="more">הערות אישיות מעבר לדף | לפרטי קשר אנשי צוות הישיבה – <a href="' + esc(contactsUrl()) + '">לחץ כאן</a></div>' +
+    '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 1–100 · 0 — לא נבחן</div>' +
       '<div class="sig"><img src="app/img/report-sig.png" alt=""><b>הרב אליעזר יוסף חי קלנגל</b><span>משגיח ראשי</span>' +
-      '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div>' +
+      '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
   '</div></section>';
   var p2 = '<section class="pg">' + head + '<div class="body"><h3 class="c">הערות אישיות</h3><table class="notes">' +
     RP_ROLES.map(function (x) {
@@ -299,28 +303,52 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
   return p1 + p2;
 }
 
+// גופן הגיליון — Heebo מקבצי האפליקציה (app/fonts), בשם משלו (RpHeebo), בשני המסמכים: במסגרת — לפריסה,
+// ובמסמך הראשי — לציור: html2canvas מצייר על בד של המסמך הראשי, ובד בלי הגופן מצייר כל מילה בגופן חלופי רחב
+// יותר במקום שהפריסה מדדה — והמילים נדבקות («שמירתהסדרים»). מקומי — גם בלי רשת, ומהר יותר מגוגל.
+var RP_FONT = 'RpHeebo';
+var RP_FONT_FILES = [['400', 'hebrew', 'U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F'],
+                     ['700', 'hebrew', 'U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F'],
+                     ['400', 'latin', 'U+0000-00FF,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD'],
+                     ['700', 'latin', 'U+0000-00FF,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD']];
+var RP_FONT_CSS = RP_FONT_FILES.map(function (f) {
+  return '@font-face{font-family:' + RP_FONT + ';font-weight:' + f[0] + ';src:url(app/fonts/heebo-' + f[1] + '-' + f[0] + '.woff2) format("woff2");unicode-range:' + f[2] + '}';
+}).join('');
+var _rpFontReady = null;
+function rpFontLoad() {
+  if (_rpFontReady) return _rpFontReady;
+  if (typeof FontFace === 'undefined' || !document.fonts) return (_rpFontReady = Promise.resolve());
+  _rpFontReady = Promise.all(RP_FONT_FILES.map(function (f) {
+    var ff = new FontFace(RP_FONT, 'url(app/fonts/heebo-' + f[1] + '-' + f[0] + '.woff2)', { weight: f[0], unicodeRange: f[2] });
+    document.fonts.add(ff);
+    return ff.load().catch(function (e) { console.warn('[rp-font]', e); });
+  }));
+  return _rpFontReady;
+}
 var RP_PRINT_CSS =
   '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}' +
-  'body{font-family:Heebo,Arial,sans-serif;color:#333;direction:rtl;background:#888}' +
+  'body{font-family:RpHeebo,Heebo,Arial,sans-serif;color:#333;direction:rtl;background:#888}' +
   '.pg{width:210mm;height:297mm;position:relative;background:#fff url(app/img/report-bg.png) center/100% 100% no-repeat;margin:0 auto 6mm;page-break-after:always;overflow:hidden}' +
   '@media print{body{background:none}.pg{margin:0}}' +
-  '.nm{position:absolute;top:40mm;right:67mm;font-size:13pt;font-weight:700;color:#333;letter-spacing:.02em}' +
-  '.mo{position:absolute;top:40mm;right:142.5mm;font-size:13pt;font-weight:700;color:#333}' +
-  '.body{position:absolute;top:56mm;right:25mm;left:25mm;bottom:33mm}' +
-  'h3{font-size:10.5pt;font-weight:700;margin:3.2mm 0 1.2mm;color:#444}h3.c{text-align:center;margin-top:4mm}' +
+  // השם והחודש ממורכזים לגובה בפס האפור שברקע (38.5–50.5 מ״מ)
+  '.nm,.mo{position:absolute;top:38.5mm;height:12mm;display:flex;align-items:center;font-size:13pt;font-weight:700;color:#333}' +
+  '.nm{right:67mm;letter-spacing:.02em}.mo{right:142.5mm}' +
+  // הגוף נגמר מעל «יחי אדוננו»; המקרא והחתימה מעוגנים לתחתיתו, והטבלאות זורמות מלמעלה
+  '.body{position:absolute;top:55mm;right:25mm;left:25mm;bottom:44mm}' +
+  'h3{font-size:10pt;font-weight:700;margin:2.2mm 0 .8mm;color:#444}h3.c{text-align:center;margin-top:4mm}' +
   'table{width:100%;border-collapse:collapse;font-size:9pt}' +
-  'th,td{border:.25mm solid #9a9a9a;padding:.75mm 2mm;text-align:right;vertical-align:middle}' +
-  'th{width:30%;font-weight:700;background:#fafafa;color:#444}td{color:#222}' +
-  // התווית האנכית — שתיים: .v ב-writing-mode, נסתרת, קובעת את גובה התא; ו-.r מסובבת במיקום מוחלט היא שנראית —
-  // הצילום (html2canvas) מקבל את הפריסה מהדפדפן אבל אינו מצייר writing-mode.
-  'table.subj th.vlbl{width:7mm;padding:0;text-align:center;position:relative}' +
-  'table.subj th.vlbl span{font-size:7.5pt;white-space:nowrap}table.subj th.vlbl .v{writing-mode:vertical-rl;visibility:hidden}' +
-  'table.subj th.vlbl .r{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg)}' +
-  'table.subj th:not(.vlbl){width:18%}td.lnk{width:22%}a{color:#1a5fb4}' +
-  '.more{font-size:8.5pt;font-weight:700;color:#555;margin-top:2.5mm}' +
-  '.sigrow{display:flex;gap:6mm;align-items:flex-end;margin-top:3mm}' +
+  // כל שורה בכל הטבלאות — אותו גובה
+  'tr{height:6.3mm}' +
+  'th,td{border:.25mm solid #8a8a8a;padding:0 2mm;text-align:right;vertical-align:middle}' +
+  'th{width:30%;font-weight:700;background:#e4e4e4;color:#333}td{color:#222}' +
+  // התווית האנכית מסובבת במיקום מוחלט — הצילום (html2canvas) אינו מצייר writing-mode; מילה בשורה, ומרווח מהגבול
+  'table.subj th.vlbl{width:9mm;padding:0;text-align:center;position:relative;background:#d6d6d6}' +
+  'table.subj th.vlbl .r{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg);font-size:7pt;line-height:1.15;white-space:nowrap;text-align:center}' +
+  'table.subj th:not(.vlbl){width:16%}td.gr{width:20%;font-weight:700}a{color:#1a5fb4;font-weight:400}' +
+  '.more{font-size:8.5pt;font-weight:700;color:#555;margin-bottom:2.5mm}' +
+  '.foot{position:absolute;bottom:0;right:0;left:0}.sigrow{display:flex;gap:6mm;align-items:flex-end}' +
   '.legend{flex:1;border:.25mm solid #9a9a9a;padding:2mm 3mm;font-size:7.5pt;line-height:1.55;color:#555}.legend b{display:block;text-decoration:underline}' +
-  '.sig{flex:1;font-size:9pt;color:#444;display:flex;flex-direction:column;gap:.6mm}.sig img{height:14mm;width:auto;align-self:flex-start}.sig small{font-size:7.5pt;color:#666;margin-top:1.5mm}' +
+  '.sig{flex:1;font-size:9pt;color:#444;display:flex;flex-direction:column;gap:.6mm}.sig img{height:12mm;width:auto;align-self:flex-start}.sig small{font-size:7.5pt;color:#666;margin-top:1.5mm}' +
   'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
 
 // הקישורים לסריקות חתומים לשנה — הגיליון נשלח להורים, וקישור לשעה היה פג לפני שנפתח.
@@ -344,6 +372,7 @@ async function _scanUrls(comp, sts) {
 // כל עמוד (A4) מצולם (html2canvas) מתוך מסגרת נסתרת עם הגיליון, ונכנס לעמוד משלו ב-pdfMake; הקישורים (טופס · אנשי קשר)
 // נמדדים בעמוד ונכתבים מעל התמונה כשכבה שקופה — צילום לבדו מוחק אותם.
 var RP_PT_PER_PX = 595.28 / 793.7; // A4 — 210mm ב-96dpi מול 595.28 נקודות
+var RP_SCALE_PX = 1.8; // חדות הצילום — ‏~170dpi: חד בהדפסה, ומהיר מ-2 בטלפון
 
 function _rpFrame(html) {
   return new Promise(function (resolve) {
@@ -369,18 +398,22 @@ async function rpExport(sid) {
   toast(MSG_PDF_BUILDING);
   var f = null;
   try {
+    var fontP = rpFontLoad();
     var comp = rpCompute(m), urls = await _scanUrls(comp, sts);
+    await fontP;
     var base = location.href.replace(/[#?].*$/, '').replace(/[^/]*$/, '');
     var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><base href="' + esc(base) + '">' +
-      '<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap" rel="stylesheet">' +
-      '<style>' + RP_PRINT_CSS + 'body{background:#fff}.pg{margin:0}</style></head><body>' +
+      '<style>' + RP_FONT_CSS + RP_PRINT_CSS + 'body{background:#fff}.pg{margin:0}</style></head><body>' +
       sts.map(function (s) { return _sheetHTML(s, m, comp[String(s.client_id)], mk, urls); }).join('') + '</body></html>';
     f = await _rpFrame(html);
     var pages = [].slice.call(f.contentDocument.querySelectorAll('.pg')), content = [];
     for (var i = 0; i < pages.length; i++) {
       var pg = pages[i], box = pg.getBoundingClientRect();
-      var cv = await html2canvas(pg, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
-      content.push({ image: cv.toDataURL('image/jpeg', 0.9), width: 595.28, height: 841.89, absolutePosition: { x: 0, y: 0 },
+      // שאר העמודים אינם נכנסים לשכפול — html2canvas משכפל את כל המסמך בכל צילום, ובייצוא שיעור שלם זה כפל על כפל
+      var cv = await html2canvas(pg, { scale: RP_SCALE_PX, backgroundColor: '#ffffff', useCORS: true, logging: false,
+        ignoreElements: function (el) { return el !== pg && el.classList && el.classList.contains('pg'); } });
+      if (sts.length > 1 && i % 2 === 1 && i < pages.length - 1) toast(MSG_PDF_BUILDING + ' ' + ((i + 1) / 2) + '/' + sts.length, 1500);
+      content.push({ image: cv.toDataURL('image/jpeg', 0.85), width: 595.28, height: 841.89, absolutePosition: { x: 0, y: 0 },
         pageBreak: i ? 'before' : undefined });
       [].slice.call(pg.querySelectorAll('a[href]')).forEach(function (a) {
         var r = a.getBoundingClientRect();

@@ -34,7 +34,7 @@ function _exInfoHTML(st, rec) {
     '</div>';
   }
   return '<div class="field-label">חומר המבחן</div>' +
-    '<textarea aria-label="חומר המבחן" rows="2" class="ex-material" data-inp="' + p + '-material" placeholder="לדוגמה: פרק המפקיד, דף לה–לז">' + esc(rec.material || '') + '</textarea>' +
+    '<textarea aria-label="חומר המבחן" rows="2" class="ex-material" data-inp="' + p + '-material">' + esc(rec.material || '') + '</textarea>' +
     '<div class="ex-files">' + fileBox('material_file', 'החומר הנלמד') + fileBox('draft_file', 'טיוטת המבחן') + '</div>' +
     '<label class="ex-report-tog"><input type="checkbox" data-chg="' + p + '-in-report"' + (rec.in_report ? ' checked' : '') + '>' +
       'זה המבחן שנכנס לגיליון החודשי ב' + esc(rec.session || '') + '</label>';

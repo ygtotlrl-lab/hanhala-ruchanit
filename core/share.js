@@ -3,11 +3,11 @@
 
 // AndroidShareBridge (addWebMessageListener) נוסה ראשון — בו WebView עצמו אוכף את רשימת המקורות;
 // AndroidShare (addJavascriptInterface) נשאר ל-WebView ישן מ-88, והמעטפת מאמתת בו את מקור הדף.
-function _bridge(b64, mime) {
+function _bridge(b64, mime, name) {
   try {
     var br = window.AndroidShareBridge;
     if (br && typeof br.postMessage === 'function') {
-      br.postMessage(JSON.stringify({ data: b64, mime: mime }));
+      br.postMessage(JSON.stringify({ data: b64, mime: mime, name: name || '' }));
       return true;
     }
     if (window.AndroidShare && typeof window.AndroidShare.shareFile === 'function') {
@@ -33,8 +33,16 @@ function _download(blob, name) {
 }
 
 // אין כאן פרמטר יעד — בורר המערכת בוחר.
+// שם הקובץ — בלי תווים שמערכת קבצים דוחה: גרשיים של שנה עברית («תשפ"ז») הופכים בכרום את השם כולו ל-download.
+function _safeName(name) {
+  var n = String(name == null ? '' : name).replace(/"/g, '״').replace(/'/g, '׳')
+    .replace(/[\\/:*?<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return n.slice(0, 120) || 'file';
+}
+
 function shareFile(b64, mime, name) {
-  if (_bridge(b64, mime)) return;
+  name = _safeName(name);
+  if (_bridge(b64, mime, name)) return;
   var blob = _blob(b64, mime);
   try {
     var file = new File([blob], name, { type: mime });

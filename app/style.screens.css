@@ -229,6 +229,7 @@
 .day-sess-title{font-size:var(--fs-2);color:var(--text-2);font-weight:600;margin-bottom:var(--sp-4)}
 .day-sess-row{align-items:center;display:flex;gap:var(--sp-5);border:1.5px solid var(--border);background:var(--bg);cursor:pointer;padding:var(--sp-4) var(--sp-6);border-radius:var(--r-3)}
 .day-sess-name{font-size:var(--fs-3);font-weight:700;color:var(--brand-ink);min-width:60px}
+.day-sess-date{font-size:var(--fs-2);font-weight:400;color:var(--text-3)}
 .day-sess-summary{display:flex;font-size:var(--fs-3);flex:1;direction:rtl;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5)}
 .day-sess-edit{font-size:var(--fs-3);color:var(--brand-ink);flex-shrink:0;font-weight:600}
 .abs-reason-blk{font-size:var(--fs-3);color:var(--text-2);margin-bottom:var(--sp-3)}

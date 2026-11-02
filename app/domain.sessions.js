@@ -12,7 +12,7 @@ import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences
          hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
          hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrSessionsPull, hrSetPending, hrSyncLog,
          hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
-import { _hcH } from './domain.hebdate.js';
+import { _hcH, _hcMN, hrSessHebFmt } from './domain.hebdate.js';
 import { icon } from './icons.js';
 import { stIcon } from '../core/icons.js';
 
@@ -137,12 +137,20 @@ function hrExamDefaultCfg() {
 }
 
 // סיכום מבחן — כמה נבחנו והממוצע, ובאיזה מבחן נכנס לגיליון החודשי.
+var HR_EXAM_LOW = 60; // ציון שמתחתיו המבחן נספר באדום
 function hrExamSummaryHTML(rec) {
-  var gs = [];
-  Object.values(hrMarks(rec)).forEach(function (m) { var g = Number(m.grade); if (m.grade != null && m.grade !== '' && isFinite(g)) gs.push(g); });
+  // כמו בסדרים — נקודה בגוון ותווית: נבחנו (ירוק) · ממוצע (כחול) · סריקות (צהוב) · מתחת ל-60 (אדום)
+  var gs = [], scans = 0;
+  Object.values(hrMarks(rec)).forEach(function (m) {
+    var g = Number(m.grade); if (m.grade != null && m.grade !== '' && isFinite(g)) gs.push(g);
+    if (m.scan) scans++;
+  });
   var avg = gs.length ? Math.round(gs.reduce(function (a, b) { return a + b; }, 0) / gs.length) : null;
+  var low = gs.filter(function (g) { return g < HR_EXAM_LOW; }).length;
   return '<span class="at-code at-code-p at-count"><i class="at-dot"></i>נבחנו: ' + gs.length + '</span>' +
     (avg != null ? '<span class="at-code at-code-ap at-count"><i class="at-dot"></i>ממוצע: ' + avg + '</span>' : '') +
+    (scans ? '<span class="at-code at-code-l at-count"><i class="at-dot"></i>סריקות: ' + scans + '</span>' : '') +
+    (low ? '<span class="at-code at-code-e at-count"><i class="at-dot"></i>מתחת ל-' + HR_EXAM_LOW + ': ' + low + '</span>' : '') +
     (rec.in_report ? '<span class="ex-in-report">בגיליון</span>' : '');
 }
 
@@ -417,7 +425,7 @@ function hrSessionDefs(st, cfg) {
   return hrSortSessionDefs((cfg||hrCfgOf(st)).sessions||[]);
 }
 
-// ברשימת היום: היום — «היום», והיום הלוגי שאינו היום (השינה לפני הצהריים) — «אמש».
+// ברשימת היום: היום — «היום», והיום הלוגי שאינו היום (השינה לפני הצהריים) — «אמש»; במבחנים — כל החודש העברי.
 function hrRenderTodaySessions(st) {
   var el=document.getElementById(st.p+'-today-sessions');
   if(!el) return;
@@ -427,18 +435,29 @@ function hrRenderTodaySessions(st) {
   var filterIso=selIso||logIso;
   var isToday=filterIso===dayToday();
   var isLogical=filterIso===logIso;
-  var daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
-    hrSessionDefs(st));
+  // במבחנים — כל מבחני החודש העברי של התאריך, מהחדש; בסדרים ובשינה — היום.
+  var daySess, title;
+  if(st.exam){
+    var fh=_hcH(dayNoon(filterIso)), curH=_hcH(new Date());
+    daySess=data.filter(function(r){
+      if(r.deleted||!r.session_date) return false;
+      var h=_hcH(dayNoon(r.session_date)); return h.hy===fh.hy&&h.mi===fh.mi;
+    }).sort(function(a,b){return sortCompare(b.session_date,a.session_date)||sortCompare(a.session,b.session);});
+    title=st.many+' שמולאו '+((fh.hy===curH.hy&&fh.mi===curH.mi)?'החודש':'ב'+(_hcMN(fh.hy)[fh.mi]||''));
+  } else {
+    daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),
+      hrSessionDefs(st));
+    title=st.many+' שמולאו '+(isToday?'היום':(isLogical?'אמש':'יום '+hrDow(filterIso)));
+  }
   if(!daySess.length){el.innerHTML='';return;}
-  var dowLabel=isToday?'היום':(isLogical?'אמש':'יום '+hrDow(filterIso));
   var html='<div class="day-sess-block">'+
-    '<div class="day-sess-title">'+st.many+' שמולאו '+dowLabel+':</div>'+
+    '<div class="day-sess-title">'+title+':</div>'+
     '<div class="reason-list">';
   daySess.forEach(function(rec){
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+esc(rec.session)+'</span>'+
+      '<span class="day-sess-name">'+esc(rec.session)+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+'</span>'+
       pendTag(st.pkSess+rec.client_id)+
       '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
       '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
