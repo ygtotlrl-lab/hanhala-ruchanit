@@ -1,6 +1,6 @@
 // app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי contacts.html קורא את אותה הגדרה
 import { esc, toast } from '../../core/ui.js';
-import { hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
+import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 
 // הכתובת שהגיליון מקשר אליה — הדף הציבורי שליד האפליקציה.
@@ -31,12 +31,15 @@ function contactsPaneHTML() {
 
 function _rowHTML(r) {
   r = r || {};
+  // השדות זה מתחת לזה — תפקיד · שם · טלפון · דוא״ל, ולכל אחד אייקון; ההסרה בפינה
+  function fld(f, ic, lbl, extra) {
+    return '<label class="ct-fld"><span class="ct-ic">' + icon(ic) + '</span>' +
+      '<input aria-label="' + lbl + '" data-f="' + f + '" placeholder="' + lbl + '"' + (extra || '') + ' value="' + esc(r[f] || '') + '"></label>';
+  }
   return '<div class="ct-row" data-ct-row>' +
-    '<input aria-label="תפקיד" data-f="role" placeholder="תפקיד" value="' + esc(r.role || '') + '">' +
-    '<input aria-label="שם" data-f="name" placeholder="שם" value="' + esc(r.name || '') + '">' +
-    '<input aria-label="טלפון" data-f="phone" placeholder="טלפון" inputmode="tel" dir="ltr" value="' + esc(r.phone || '') + '">' +
-    '<input aria-label="דוא״ל" data-f="email" placeholder="דוא״ל" inputmode="email" dir="ltr" value="' + esc(r.email || '') + '">' +
-    '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button>' +
+    fld('role', 'ctRole', 'תפקיד') + fld('name', 'user', 'שם') +
+    fld('phone', 'ctPhone', 'טלפון', ' inputmode="tel" dir="ltr"') + fld('email', 'ctMail', 'דוא״ל', ' inputmode="email" dir="ltr"') +
+    '<button data-act="row-remove" class="row-del-btn ct-row-del" aria-label="הסרת איש הקשר">' + icon('del') + '</button>' +
   '</div>';
 }
 
@@ -65,7 +68,12 @@ async function renderContactsSettings() {
   _paint(hrCfgLocalGet('contacts'));
   var r = null;
   try { r = await hrCfgGet('contacts', true); } catch (e) { r = null; }
-  if (r && r.ok && r.value && !hrSetPending('contacts')) _paint(r.value);
+  if (r && r.ok && r.value && !hrSetPending('contacts')) {
+    hrCfgLocalSet('contacts', r.value); // הפעם הבאה — מיד מהמכשיר
+    // שדה שהמשתמש כבר מקליד בו אינו נדרס
+    var act = document.activeElement, box = document.getElementById('settings-reports');
+    if (!(act && box && box.contains(act) && /INPUT|TEXTAREA/.test(act.tagName))) _paint(r.value);
+  }
 }
 
 function addContactGroup() {

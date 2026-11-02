@@ -158,12 +158,11 @@ function filterClass(cls){
 
 function renderStudents(){
   var allSts=hrSortStudents(getStudents());
-  // הפעילים — מי שנשאר בישיבה אחרי החודש הנוכחי (או שתקופתו עוד לפניו); השאר — «לא פעילים». נגזר מתקופות הפעילות.
+  // הפעילים — מי שנשאר בישיבה אחרי החודש הנוכחי (או שתקופתו עוד לפניו); השאר — «לא פעילים», בניהול הרשימה (מנהל בלבד).
   var activeSts=allSts.filter(hrStudentListed);
-  var inactiveSts=allSts.filter(function(s){return !hrStudentListed(s);});
   var searchEl=document.getElementById('search-st');
   var search=searchEl?searchEl.value.toLowerCase():'';
-  var isInactiveView=(S.currentFilter==='inactive');
+  if(S.currentFilter==='inactive') S.currentFilter='all'; // «לא פעילים» עבר לניהול הרשימה
 
   var btnML=document.getElementById('btn-manage-list');
   if(btnML) btnML.classList.toggle('hidden',!isAdmin());
@@ -173,37 +172,11 @@ function renderStudents(){
   if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.setProperty('--sw-w',tw+'px');}
   if(tabsRow){
     var nOf=function(k){return activeSts.filter(function(s){return s.cls===k;}).length;};
-    tabsRow.innerHTML=hrFilterChips([['all','הכל',activeSts.length]].concat(HR_CLS_LIST.map(function(k){return [k,HR_CLS_CHIP[k],nOf(k)];}))
-      .concat([['inactive','לא פעילים',inactiveSts.length]]),S.currentFilter||'all','filter-class');
+    tabsRow.innerHTML=hrFilterChips([['all','הכל',activeSts.length]].concat(HR_CLS_LIST.map(function(k){return [k,HR_CLS_CHIP[k],nOf(k)];})),
+      S.currentFilter||'all','filter-class');
   }
 
   var sumEl=document.getElementById('st-summary');
-
-  if(isInactiveView){
-    var filtInactive=inactiveSts.filter(function(s){
-      return !search||s.name.toLowerCase().indexOf(search)>=0;
-    });
-    var thEl=document.getElementById('students-th'); if(thEl) thEl.classList.add('hidden');
-    if(sumEl){sumEl.classList.remove('st-summary-on');sumEl.innerHTML='<span class="list-subtitle">תלמידים שהוגדרו כלא פעילים — ניתן לחפש ולהחזיר לפעיל</span>';}
-    var tbody=document.getElementById('students-tbody');
-    if(!tbody)return;
-    if(!filtInactive.length){tbody.innerHTML='<div class="empty-note">אין תלמידים לא פעילים</div>';return;}
-    tbody.innerHTML=filtInactive.map(function(s,i){
-      var bg=i%2===0?'zebra-a':'zebra-b';
-      var yr=hrCycleLabel(hrCycleOf(s));
-      var badgeHTML=yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'';
-      return '<div class="'+bg+' st-row-off">'+
-        '<div class="st-row-main">'+
-          '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>'+
-          '<div class="badge-row">'+badgeHTML+'</div>'+
-        '</div>'+
-        '<div class="st-row-act">'+
-          '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">'+icon('undo')+'החזר לפעיל</button>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-    return;
-  }
 
   var thOn=document.getElementById('students-th'); if(thOn) thOn.classList.remove('hidden');
   var filtered=activeSts.filter(function(s){
@@ -287,6 +260,7 @@ function setStudentInactive(sid){
 }
 
 function setStudentActive(sid){
+  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
@@ -295,6 +269,7 @@ function setStudentActive(sid){
   saveStudents(students);
   schedulePush();
   renderStudents();
+  renderInactiveList();
   toast(''+s.name+MSG_MARKED_ACTIVE, null, 'good');
 }
 
@@ -304,14 +279,44 @@ var MANAGE_PICK = {
   'tmpl':   function () { downloadImportTemplate(); },
   'import': function () { document.getElementById('import-file-input').click(); },
   'delall': function () { openDeleteAllModal(); },
-  'year':   function () { openYearTransitionDlg(); }
+  'year':   function () { openYearTransitionDlg(); },
+  'inactive': function () { openInactiveDlg(); }
 };
+
+// ── לא פעילים — בניהול הרשימה בלבד, למנהל: חיפוש והחזרה לפעיל ──
+function openInactiveDlg(){
+  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
+  openModal('תלמידים לא פעילים',
+    '<input aria-label="חיפוש" type="search" class="input-full inact-search" id="inact-search" data-inp="inact-search" placeholder="חיפוש תלמיד...">'+
+    '<div id="inact-list" class="inact-list"></div>',
+    '<button class="btn out" data-act="modal-close">סגור</button>', icon('archive'));
+  renderInactiveList();
+}
+function renderInactiveList(){
+  var box=document.getElementById('inact-list'); if(!box) return;
+  var q=((document.getElementById('inact-search')||{}).value||'').toLowerCase();
+  var list=hrSortStudents(getStudents()).filter(function(s){return !hrStudentListed(s)&&(!q||s.name.toLowerCase().indexOf(q)>=0);});
+  if(!list.length){box.innerHTML='<div class="empty-note">אין תלמידים לא פעילים</div>';return;}
+  box.innerHTML=list.map(function(s,i){
+    var yr=hrCycleLabel(hrCycleOf(s));
+    return '<div class="'+(i%2===0?'zebra-a':'zebra-b')+' st-row-off">'+
+      '<div class="st-row-main">'+
+        '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>'+
+        '<div class="badge-row">'+(yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'')+'</div>'+
+      '</div>'+
+      '<div class="st-row-act">'+
+        '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">'+icon('undo')+'החזר לפעיל</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
 
 function openManageListDlg(){
   if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
   var ITEMS=[
     {icon:'plus',label:'הוסף תלמיד',k:'add'},
     {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
+    {icon:'archive',label:'לא פעילים · '+getStudents().filter(function(s){return !hrStudentListed(s);}).length,k:'inactive'},
     {icon:'download',label:'תבנית ייבוא',k:'tmpl'},
     {icon:'upload',label:'ייבוא תלמידים',k:'import'},
     {icon:'del',label:'מחק הכל',k:'delall',cls:'menu-danger'},
@@ -336,7 +341,7 @@ function openDeactivateStudentDlg(){
     '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="deact-sel">'+
       '<option value="">-- בחר תלמיד --</option>'+optsHTML+
     '</select>'+
-    '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
+    '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מ«לא פעילים» בניהול הרשימה.</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
     '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אשר</button>', icon('power'));
 }
@@ -816,5 +821,5 @@ function printStudents() {
 export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
-         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
+         renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
          setStudentActive, setStudentInactive, stClassChanged };

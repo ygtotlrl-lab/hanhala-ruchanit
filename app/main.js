@@ -12,16 +12,10 @@ import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
 import { actWire, closeAsk, closeModal, comboInput, comboPick, dragCancel, dragDown, dragMove,
          dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
-import { HR_MIRROR_TABLES, HR_PERMS_KEY,
-         HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE,
-         MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET,
-         PUSH_TABLES } from './constants.js';
+import { HR_MIRROR_TABLES, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, MSG_VIEW_ONLY, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { icon } from './icons.js';
-import { _hrMarkSynced, canAccess, hrLocalRecs,
-         hrPullFromCloud, hrPushToCloud,
-         hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail,
-         modalOpen, uiShown } from './domain.js';
+import { _hrMarkSynced, canAccess, canEdit, hrLocalRecs, hrPullFromCloud, hrPushToCloud, hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail, modalOpen, uiShown } from './domain.js';
 import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { HR_PER, hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
@@ -38,11 +32,7 @@ import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpSaveFill, rp
 import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
-import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
-         importStudentsFromFile, openAttendanceEdit, openManageListDlg,
-         openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
-         renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
+import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
@@ -571,6 +561,32 @@ function hrStreamActions(st) {
 }
 Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStreamActions(HR_STREAMS[k])); });
 
+// ── אכיפת «צפייה» ──
+// רמת «צפייה» במודול חוסמת כל פעולה שכותבת בו — בנקודה אחת, לפני החיווט; קריאה, ניווט, ייצוא ופתיחת קבצים — פתוחים.
+var HR_STREAM_WRITES = ['add-treat', 'clear-mark', 'confirm-late', 'del-session', 'del-treat', 'edit-session', 'mark-edit', 'mark-set',
+  'open-session', 'resume-go', 'session-add', 'session-close', 'set-mark', 'settings-save', 'status-cancel', 'treat-row-add'];
+var HR_WRITE_MODULE = {
+  'st-activate': 'students', 'st-edit': 'students', 'st-attend': 'students', 'student-save': 'students', 'status-form': 'students',
+  'student-status-save': 'students', 'status-abs-cancel': 'students', 'status-picker-open': 'students', 'per-add': 'students',
+  'per-remove': 'students', 'manage-list-open': 'students', 'manage-pick': 'students', 'deact-st-confirm': 'students',
+  'year-transition-confirm': 'students',
+  'rp-fill': 'reports', 'rp-fill-save': 'reports',
+  'file-event-save': 'files', 'file-event-del': 'files'
+};
+Object.keys(HR_STREAMS).forEach(function (k) {
+  HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
+});
+function hrCanWrite(mod) {
+  if (!mod || canEdit(mod)) return true;
+  toast(MSG_VIEW_ONLY, null, 'warn');
+  return false;
+}
+Object.keys(HR_WRITE_MODULE).forEach(function (a) {
+  var fn = DOM_ACTIONS[a];
+  if (typeof fn !== 'function') return;
+  DOM_ACTIONS[a] = function (el) { if (!hrCanWrite(HR_WRITE_MODULE[a])) return; return fn.apply(this, arguments); };
+});
+
 actWire(DOM_ACTIONS);
 
 // הסרגלים והתפריט במעטפת הסטטית — האייקון נכנס מכאן, כי index.html אינו נושא את הסט.
@@ -591,12 +607,22 @@ document.addEventListener('pointerup', dragUp);
 document.addEventListener('pointercancel', dragCancel);
 
 
+// שדה שנערך במודול לקריאה בלבד — ההקלדה אינה נשמרת, והמסך מצויר מחדש מהנתונים.
+var _hrVoAt = 0;
+function _hrViewOnlyRevert(el) {
+  if (Date.now() - _hrVoAt > 3000) { _hrVoAt = Date.now(); toast(MSG_VIEW_ONLY, null, 'warn'); }
+  if (el && el.type === 'file') el.value = '';
+  saveRefresh();
+}
+
 document.addEventListener('input', function (e) {
   if (comboInput(e)) return;
   var el = e.target; if (!el || !el.dataset) return;
   var k = el.dataset.inp;
+  if (k === 'inact-search') { renderInactiveList(); return; }
   Object.keys(HR_STREAMS).forEach(function (kind) {
     var st = HR_STREAMS[kind];
+    if (k && k.indexOf(st.p + '-') === 0 && !canEdit(kind)) { _hrViewOnlyRevert(el); return; }
     if (k === st.p + '-late') hrSetLateMin(st, el.dataset.id, el.value);
     else if (k === st.p + '-note') hrSetNote(st, el.dataset.id, el.value);
     else if (k === st.p + '-grade') hrExamSetGrade(st, el.dataset.id, el.value, false);
@@ -609,6 +635,7 @@ document.addEventListener('change', function (e) {
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
+  if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') fileScanPicked(el);
   if (c === ex.p + '-grade') hrExamSetGrade(ex, el.dataset.id, el.value, true);
   else if (c === ex.p + '-scan' || c === ex.p + '-file') hrExamUpload(ex, el);

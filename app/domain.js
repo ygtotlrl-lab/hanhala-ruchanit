@@ -700,6 +700,10 @@ async function hrPullFromCloud() {
       var _hrCfgV = await hrCfgGet('sleep_cfg');
       if (ctxStale(_ep)) return;
       if (_hrCfgV && typeof _hrCfgV === 'object' && !hrSetPending('sleep_cfg')) { S._hrCfg = (typeof _hrCleanCfg === 'function') ? _hrCleanCfg(_hrCfgV) : _hrCfgV; hrCfgLocalSet('sleep_cfg', _hrCfgV); }
+      // אנשי הקשר — למכשיר בכל משיכה, כדי שהגדרות הדוחות ייפתחו מלאות מיד
+      var _ctV = await hrCfgGet('contacts');
+      if (ctxStale(_ep)) return;
+      if (_ctV && typeof _ctV === 'object' && !hrSetPending('contacts')) hrCfgLocalSet('contacts', _ctV);
     } catch (eCfg) { hrWriteFail('hrPullFromCloud', eCfg); }
     // ההרשאות נמשכות גם כאן ולא רק בכניסה — שינוי מגיע תוך שניות. עטוף בנפרד כדי שכשל לא יפיל את שאר המשיכה.
     // מטריצה פגומה או ריקה נדחית ב-hrApplyPerms ואינה נועלת את המשתמש.

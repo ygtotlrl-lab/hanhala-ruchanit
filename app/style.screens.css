@@ -563,11 +563,13 @@
 .ct-group{display:flex;flex-direction:column;gap:var(--sp-3)}
 .ct-group-head{display:flex;align-items:center;gap:var(--sp-3)}
 .ct-group-head .sess-field{flex:1;font-weight:700}
-.ct-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;grid-template-areas:"role name del" "phone email del";gap:var(--sp-2);align-items:center;padding-bottom:var(--sp-3);border-bottom:1px dashed var(--border)}
-.ct-row [data-f="role"]{grid-area:role}.ct-row [data-f="name"]{grid-area:name}.ct-row [data-f="phone"]{grid-area:phone}.ct-row [data-f="email"]{grid-area:email}
-.ct-row input{min-width:0;font-family:Heebo;font-size:var(--fs-2);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);background:var(--card);color:var(--text)}
-.ct-row .row-del-btn{grid-area:del}
-@media (min-width:760px){ .ct-row{grid-template-columns:1fr 1.3fr 1fr 1.4fr 30px;grid-template-areas:"role name phone email del"} }
+.ct-row{position:relative;display:flex;flex-direction:column;gap:var(--sp-2);padding:0 0 var(--sp-4);padding-inline-end:38px;border-bottom:1px dashed var(--border)}
+.ct-fld{display:flex;align-items:center;gap:var(--sp-3)}
+.ct-ic{flex:none;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-7);background:var(--brand-soft);color:var(--brand-ink)}
+.ct-ic .ico{width:16px;height:16px}
+.ct-row input{flex:1;min-width:0;font-family:Heebo;font-size:var(--fs-3);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-3) var(--sp-4);background:var(--card);color:var(--text)}
+.ct-row input[dir=ltr]{text-align:right}
+.ct-row .ct-row-del{position:absolute;inset-inline-end:0;top:0}
 
 /* ── גיליונות ציונים והנהגה ── */
 .rp-sec{font-size:var(--fs-3);font-weight:700;color:var(--text-2);margin:var(--sp-6) 0 var(--sp-3)}
@@ -638,3 +640,5 @@
 .arc-mark-row{padding:var(--sp-3) 0}
 
 .hc-day-off{opacity:.35;cursor:default}
+.inact-search{margin-bottom:var(--sp-4)}
+.inact-list{max-height:55vh;overflow:auto;border-radius:var(--r-3)}
