@@ -32,7 +32,6 @@ function screenLoginHTML() {
     <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
     <button class="auth-btn" id="auth-btn" data-act="login" data-busy="&lt;span class=&quot;btn-spin&quot; role=&quot;status&quot; aria-label=&quot;בודק&quot;&gt;&lt;/span&gt;" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
-    <div class="auth-spinner" id="auth-spinner"></div>
 
   </div>
 </div>
@@ -51,7 +50,6 @@ async function doLogin() {
       // כשל מערכת בטוסט ולא ב-auth-err, ששמור למה שהמשתמש מתקן בהקלדה.
       if (el) el.textContent = '';
       toast(MSG_LOGIN_ERR + ((e && e.message) || e || MSG_SERVER_ERR), null, 'bad');
-      var sp = document.getElementById('auth-spinner'); if (sp) sp.classList.remove('on');
     } catch (e2) {}
   }
 }
@@ -62,14 +60,11 @@ async function _doLoginInner() {
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
-  var spinner = document.getElementById('auth-spinner');
-  function showErr(msg, kind){ errEl.innerHTML=stIcon(kind || 'warn')+esc(msg); spinner.classList.remove('on'); }
-  function startLoad(){ errEl.textContent=''; spinner.classList.add('on'); }
-  function stopLoad(){ spinner.classList.remove('on'); }
+  // הבדיקה מוצגת בכפתור עצמו (data-busy) — ספינר אחד.
+  function showErr(msg, kind){ errEl.innerHTML=stIcon(kind || 'warn')+esc(msg); }
   function dbg(msg){ console.log('[login] '+msg); }
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
-  startLoad();
   dbg('[1/4] שולח בקשה לשרת...');
   var res = null, netFail = false;
   try {
@@ -158,7 +153,6 @@ async function _doLoginInner() {
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
-  stopLoad();
   await afterLogin();
 }
 

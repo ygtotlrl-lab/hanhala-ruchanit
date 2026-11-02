@@ -21,8 +21,6 @@
 .auth-btn:active{background:var(--deep-1)}
 .auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
-.auth-spinner{display:none;margin:var(--sp-5) auto 0;width:24px;height:24px;border:2.5px solid var(--border);border-top-color:var(--text);border-radius:var(--r-7);animation:auth-spin var(--dur-6) linear infinite}
-.auth-spinner.on{display:block}
 .switch-err{font-size:var(--fs-3);color:var(--bad);min-height:18px}
 .switch-name{font-weight:700;color:var(--brand-ink);font-size:var(--fs-4);margin-bottom:var(--sp-2);text-align:center}
 .switch-pass{border:2px solid var(--border);font-family:Heebo;font-size:var(--fs-5);letter-spacing:var(--ls-3);margin-bottom:var(--sp-4);padding:var(--sp-5);border-radius:var(--r-3);text-align:center;width:100%}
