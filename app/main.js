@@ -413,13 +413,13 @@ function showConstruction() {
   openModal(MSG_SOON_TITLE,
     '<p class="soon-note">' +
       'מקום זה נמצא בבנייה ויפתח בקרוב.<br>תודה על הסבלנות!</p>',
-    '<button data-act="modal-close" class="soon-ok">הבנתי</button>');
+    '<button data-act="modal-close" class="soon-ok">הבנתי</button>', icon('settings'));
 }
 
 function showDenied() {
   openModal(MSG_ACCESS_LIMITED,
     '<p class="md-note-center">אין לך הרשאה לאפשרות זו.<br>פנה למנהל המערכת.</p>',
-    '<button class="modal-ok btn" data-act="modal-close">הבנתי</button>');
+    '<button class="modal-ok btn" data-act="modal-close">הבנתי</button>', icon('key'));
 }
 
 // ── העברת מזהה ל-DOM ──
@@ -471,7 +471,7 @@ var DOM_ACTIONS = {
                  },
   'deact-st-confirm': function () {
                    var v = document.getElementById('deact-st-sel').value;
-                   if (!v) { toast(MSG_PICK_STUDENT, null, 'bad'); return; }
+                   if (!v) { toast(MSG_PICK_STUDENT, null, 'warn'); return; }
                    setStudentInactive(v);
                    closeModal();
                  },

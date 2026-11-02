@@ -4,8 +4,7 @@ import { idEq, tombKill } from '../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
 import { shareBlob } from '../core/share.js';
 import { hebDayLabel } from '../core/hebrew.js';
-import { MSG_EXPORT_FAIL, MSG_EXPORT_OK, MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE,
-         MSG_NO_EXPORT_DATA, MSG_ROW_DELETED } from './constants.js';
+import { MSG_EXPORT_FAIL, MSG_EXPORT_OK, MSG_EXPORT_PDF, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA, MSG_PULL_STALE, MSG_ROW_DELETED } from './constants.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrPdfFont, hrSharePdf, hrSortRecs, hrSortStudents } from './domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrHebYearWin, hrSessHeb,
          hrSessHebFmt } from './domain.hebdate.js';
@@ -13,6 +12,7 @@ import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRend
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
          hrExamSummaryHTML, hrSummaryHTML } from './domain.sessions.js';
 import { icon } from './icons.js';
+import { stIcon } from '../core/icons.js';
 
 // ── ארכיון הסדרים ──
 // קורא שמסר רשומות מקבל אותן כפי שהן — הוא כבר סינן, ורענון היה דורס.
@@ -22,7 +22,7 @@ async function hrRenderArchive(st, records) {
   if(records){ _hrPaintArchive(st, el, records, ''); return; }
   _hrPaintArchive(st, el, hrCachedArr(st.v+'Data',st.table)||[], '');
   var ok=await hrPullSessions(st, hrHebYearWin(_hcH(new Date()).hy));
-  _hrPaintArchive(st, el, hrCachedArr(st.v+'Data',st.table)||[], ok?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+  _hrPaintArchive(st, el, hrCachedArr(st.v+'Data',st.table)||[], ok?'':MSG_PULL_STALE);
 }
 
 function _hrPaintArchive(st, el, records, warn) {
@@ -32,7 +32,7 @@ function _hrPaintArchive(st, el, records, warn) {
     var b=document.getElementById(h.getAttribute('data-panel'));
     if(b) shown[b.id]=!b.classList.contains('hidden');
   });
-  var warnHTML=warn?'<div class="warn-note">'+esc(warn)+'</div>':'';
+  var warnHTML=warn?'<div class="warn-note">'+stIcon('warn')+esc(warn)+'</div>':'';
   if(records) records=records.filter(function(r){return !(r&&r.deleted);});
   if(!records||!records.length){
     el.innerHTML=warnHTML+'<div class="empty-note">אין רשומות</div>';return;
@@ -141,7 +141,7 @@ function _hrPaintArchive(st, el, records, warn) {
 }
 
 function hrDeleteSession(st, id) {
-  ask(st.msg.delTitle, st.msg.delBody, MSG_DELETE)
+  ask(st.msg.delTitle, st.msg.delBody, MSG_DELETE, icon('del'))
     .then(function (yes) { if (yes) _hrDeleteSessionConfirmed(st, id); });
 }
 
@@ -162,7 +162,7 @@ function hrShowExportDialog(st, type) {
     +'<div class="exp-to"><div class="form-label">עד תאריך</div>'+_hcBuild(st.p+'ExpT',null)+'</div>'
     +'<div class="md-hint-center">השאר ריק לייצוא כל הנתונים</div>',
      '<button data-act="'+st.p+'-export-go" data-type="'+esc(type)+'" class="md-btn-go">ייצא</button>'
-    +'<button data-act="modal-close" class="md-btn-cancel">ביטול</button>');
+    +'<button data-act="modal-close" class="md-btn-cancel">ביטול</button>', icon(type==='pdf'?'pdf':'table'));
 }
 
 async function hrExportConfirm(st, type) {

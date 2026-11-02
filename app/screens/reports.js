@@ -13,6 +13,7 @@ import { _hcH, _hcMN, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsUrl } from './contacts.js';
 import { icon } from '../icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
+import { stIcon } from '../../core/icons.js';
 
 // ── הסולם והרף ──
 var RP_SCALE = ['מצוין מאוד', 'מצוין', 'טוב מאוד', 'כמעט טוב מאוד', 'טוב', 'כמעט טוב', 'מספיק', 'מספיק בקושי', 'בלתי מספיק'];
@@ -210,7 +211,7 @@ function renderReports() {
   if (!n) { list.innerHTML = '<div class="empty-note">אין תלמידים</div>'; return; }
   var pick = HR_EXAM_SUBJECTS.filter(function (s0) { var e = comp[String(sts[0].client_id)].exams[s0]; return e && e.pick; });
   list.innerHTML =
-    (pick.length ? '<div class="warn-note">⚠️ ב' + esc(pick.join(', ')) + ' יש כמה מבחנים החודש — יש לסמן במסך המבחנים איזה מהם נכנס לגיליון.</div>' : '') +
+    (pick.length ? '<div class="warn-note">' + stIcon('warn') + 'ב' + esc(pick.join(', ')) + ' יש כמה מבחנים החודש — יש לסמן במסך המבחנים איזה מהם נכנס לגיליון.</div>' : '') +
     '<div class="rp-list-head"><span>' + n + ' תלמידים · ' + esc(rpMonthLabel(m)) + '</span>' +
       '<button class="btn sm" data-act="rp-export-all">' + icon('pdf') + 'כל הגיליונות — PDF</button></div>' +
     '<div class="st-table">' + sts.map(function (s, i) {
@@ -260,7 +261,7 @@ function rpSaveFill() {
   var n = rpSetMany(mk, items);
   closeModal();
   renderReports();
-  toast(n ? '✅ נשמר' : 'לא היה שינוי', null, n ? 'good' : null);
+  toast(n ? 'נשמר' : 'לא היה שינוי', null, n ? 'good' : null);
 }
 
 // ── הגיליון להדפסה ──
@@ -364,7 +365,7 @@ async function rpExport(sid) {
   var m = rpMonth(), mk = rpMonthKey(m);
   var sts = sid ? getStudents().filter(function (s) { return String(s.client_id) === String(sid); }) : _rpStudents();
   if (!sts.length) return;
-  if (typeof pdfMake === 'undefined' || typeof html2canvas === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
+  if (typeof pdfMake === 'undefined' || typeof html2canvas === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'warn'); return; }
   toast(MSG_PDF_BUILDING);
   var f = null;
   try {
@@ -391,7 +392,7 @@ async function rpExport(sid) {
     await hrSharePdf({ pageSize: 'A4', pageMargins: [0, 0, 0, 0], content: content, defaultStyle: { font: hrPdfFont() } }, name);
   } catch (e) {
     console.error('[rp-export]', e);
-    toast(MSG_PDF_FAIL + ((e && e.message) || e), null, 'bad');
+    toast(MSG_PDF_FAIL + ((e && e.message) || e), null, 'warn');
   } finally {
     if (f) f.remove();
   }

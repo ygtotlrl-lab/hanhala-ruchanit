@@ -23,141 +23,141 @@ var MSG_BAD_LOGIN = 'שם משתמש או סיסמה שגויים';
 var MSG_BUSY_CHECK = '<span class="btn-spin" role="status" aria-label="בודק"></span>';
 
 // אין לאחד עם «סיסמה שגויה» — משתמש בלי טביעה צריך שמנהל יקבע לו סיסמה, ולא לנסות שוב ושוב.
-var MSG_NO_FP_ONLINE = '❌ למשתמש הזה אין סיסמה מוגדרת במערכת — יש לקבוע לו סיסמה חדשה במסך ניהול המשתמשים';
+var MSG_NO_FP_ONLINE = 'למשתמש הזה אין סיסמה מוגדרת במערכת — יש לקבוע לו סיסמה חדשה במסך ניהול המשתמשים';
 
 // ── הודעות פר-אפליקציה ──
-var MSG_PERMS_CHANGED_PRE = '🔒 ההרשאות שלך עודכנו — ';
+var MSG_PERMS_CHANGED_PRE = 'ההרשאות שלך עודכנו — ';
 
 var MSG_PERMS_CHANGED_POST = ' אינו זמין עוד';
 
-var MSG_SERVER_DOWN_LOCAL = '⚠️ השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך';
+var MSG_SERVER_DOWN_LOCAL = 'השרת לא זמין — כניסה מקומית, יאומת מחדש בהמשך';
 
-var MSG_OFFLINE_LOGIN_LATER = '📴 כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור';
+var MSG_OFFLINE_LOGIN_LATER = 'כניסה במצב אופליין — יאומת מחדש כשהרשת תחזור';
 
-var MSG_PICK_REASON = '⚠️ יש לבחור סיבה';
+var MSG_PICK_REASON = 'יש לבחור סיבה';
 
-var MSG_PICK_START_DATE = '⚠️ יש לבחור תאריך התחלה';
+var MSG_PICK_START_DATE = 'יש לבחור תאריך התחלה';
 
-var MSG_PICK_END_DATE = '⚠️ יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום';
-var MSG_END_BEFORE_START = '⚠️ יש לבחור תאריך סיום אחרי תאריך ההתחלה';
-var MSG_PICK_END_CHOICE = '⚠️ יש להוסיף תאריך סיום, או לבחור «ללא תאריך סיום»';
+var MSG_PICK_END_DATE = 'יש לבחור תאריך סיום, או להסיר את שורת תאריך הסיום';
+var MSG_END_BEFORE_START = 'יש לבחור תאריך סיום אחרי תאריך ההתחלה';
+var MSG_PICK_END_CHOICE = 'יש להוסיף תאריך סיום, או לבחור «ללא תאריך סיום»';
 
-var MSG_ABSENCE_DUP = '⚠️ היעדרות זהה כבר רשומה לתלמיד';
+var MSG_ABSENCE_DUP = 'היעדרות זהה כבר רשומה לתלמיד';
 
-var MSG_REASONS_SAVED = '✅ הסיבות נשמרו';
+var MSG_REASONS_SAVED = 'הסיבות נשמרו';
 
-var MSG_ACCESS_LIMITED = '🔒 גישה מוגבלת';
+var MSG_ACCESS_LIMITED = 'גישה מוגבלת';
 
-var MSG_PICK_STUDENT = '⚠️ יש לבחור תלמיד';
+var MSG_PICK_STUDENT = 'יש לבחור תלמיד';
 
-var MSG_USER_SAVED_NO_FP = '⚠️ משתמש נשמר — אך ללא הכנה לכניסה ללא רשת';
+var MSG_USER_SAVED_NO_FP = 'משתמש נשמר — אך ללא הכנה לכניסה ללא רשת';
 
-var MSG_USER_SAVED = '✅ משתמש נשמר!';
+var MSG_USER_SAVED = 'משתמש נשמר!';
 
-var MSG_ACTION_FAILED = '❌ הפעולה נכשלה: ';
+var MSG_ACTION_FAILED = 'הפעולה נכשלה: ';
 
 var MSG_NO_LINK = 'אין חיבור';
 
-var MSG_USER_OFF = '🔴 משתמש הושבת';
+var MSG_USER_OFF = 'משתמש הושבת';
 
-var MSG_USER_ON = '🟢 משתמש הופעל';
+var MSG_USER_ON = 'משתמש הופעל';
 
-var MSG_PERMS_SAVED = '✅ הרשאות נשמרו!';
+var MSG_PERMS_SAVED = 'הרשאות נשמרו!';
 
-var MSG_NO_USER_SESSION = '❌ אין משתמש מחובר';
+var MSG_NO_USER_SESSION = 'אין משתמש מחובר';
 
-var MSG_FILL_ALL_X = '❌ נא למלא את כל השדות';
+var MSG_FILL_ALL_X = 'נא למלא את כל השדות';
 
-var MSG_PASS_MISMATCH_X = '❌ שתי הסיסמאות החדשות אינן זהות';
+var MSG_PASS_MISMATCH_X = 'שתי הסיסמאות החדשות אינן זהות';
 
-var MSG_PASS_NEEDS_NET = '❌ אין חיבור — לא ניתן לשנות סיסמה כעת';
+var MSG_PASS_NEEDS_NET = 'אין חיבור — לא ניתן לשנות סיסמה כעת';
 
-var MSG_USER_SWITCHED_MID = '❌ המשתמש המחובר התחלף — הסיסמה לא שונתה';
+var MSG_USER_SWITCHED_MID = 'המשתמש המחובר התחלף — הסיסמה לא שונתה';
 
-var MSG_PASS_UPDATED_X = '✅ סיסמה עודכנה!';
+var MSG_PASS_UPDATED_X = 'סיסמה עודכנה!';
 
-var MSG_PASS_UPDATED_NO_FP = '⚠️ סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת';
+var MSG_PASS_UPDATED_NO_FP = 'סיסמה עודכנה — אך ללא הכנה לכניסה ללא רשת';
 
 // כאן הכניסה הראשונה דורשת חיבור — המראה ריקה עד המשיכה הראשונה.
-var MSG_OFF_FIRST_LOGIN = '❌ אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט';
+var MSG_OFF_FIRST_LOGIN = 'אין חיבור לאינטרנט — נדרשת כניסה ראשונה עם חיבור לאינטרנט';
 
 // טבלת המשתמשים נקראת בעלייה, וטבלה חסרה נאמרת לפני הכניסה ולא כ«סיסמה שגויה».
-var MSG_TABLES_MISSING = '❌ טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
+var MSG_TABLES_MISSING = 'טבלאות המערכת חסרות — יש להריץ את קובץ ההתקנה מול המסד';
 
-var MSG_STUDENT_MISSING = '⚠️ תלמיד לא נמצא';
+var MSG_STUDENT_MISSING = 'תלמיד לא נמצא';
 
 var MSG_MARKED_INACTIVE = ' סומן כלא פעיל';
 
 var MSG_MARKED_ACTIVE = ' הוחזר לפעיל';
 // תקופות הפעילות — כמו בשכר לימוד
-var MSG_PERIOD_OVERLAP = '❌ התקופה חופפת לתקופה אחרת של התלמיד';
-var MSG_PERIOD_OPEN_LAST = '❌ תקופה פתוחה — רק האחרונה; לתקופה שלפני אחרת נדרש חודש עזיבה';
-var MSG_PERIOD_END_BEFORE = '❌ חודש העזיבה מוקדם מחודש ההצטרפות';
-var MSG_PERIOD_NONE = '❌ לתלמיד נדרשת תקופת פעילות אחת לפחות';
+var MSG_PERIOD_OVERLAP = 'התקופה חופפת לתקופה אחרת של התלמיד';
+var MSG_PERIOD_OPEN_LAST = 'תקופה פתוחה — רק האחרונה; לתקופה שלפני אחרת נדרש חודש עזיבה';
+var MSG_PERIOD_END_BEFORE = 'חודש העזיבה מוקדם מחודש ההצטרפות';
+var MSG_PERIOD_NONE = 'לתלמיד נדרשת תקופת פעילות אחת לפחות';
 
-var MSG_ADMINS_ONLY = '⚠️ גישה למנהלים בלבד';
+var MSG_ADMINS_ONLY = 'גישה למנהלים בלבד';
 
-var MSG_STUDENTS_ADMIN = '⚙️ ניהול רשימת תלמידים';
+var MSG_STUDENTS_ADMIN = 'ניהול רשימת תלמידים';
 
-var MSG_MARK_INACTIVE_TITLE = '😴 סמן תלמיד כלא פעיל';
+var MSG_MARK_INACTIVE_TITLE = 'סמן תלמיד כלא פעיל';
 
-var MSG_YEAR_ROLL_TITLE = '🔄 מעבר שנתי';
+var MSG_YEAR_ROLL_TITLE = 'מעבר שנתי';
 
 var MSG_YEAR_ROLL_C = '• שיעור ג\'';
 
-var MSG_YEAR_UNSET = '⚠️ שנת הלימודים לא נקבעה בהגדרות — המעבר השנתי אינו זמין';
+var MSG_YEAR_UNSET = 'שנת הלימודים לא נקבעה בהגדרות — המעבר השנתי אינו זמין';
 var MSG_YEAR_ROLL_A = '• שיעור א\' יישאר ריק לתלמידים חדשים';
 
-var MSG_YEAR_ROLL_DONE = '✅ מעבר שנתי הושלם — ';
+var MSG_YEAR_ROLL_DONE = 'מעבר שנתי הושלם — ';
 
 var MSG_STUDENTS_UPDATED = ' תלמידים עודכנו';
 
-var MSG_STATUS_REVERTED = '✅ הסטטוס בוטל ל-';
+var MSG_STATUS_REVERTED = 'הסטטוס בוטל ל-';
 
-var MSG_STATUS_HISTORY = '📜 היסטוריית סטטוסים';
+var MSG_STATUS_HISTORY = 'היסטוריית סטטוסים';
 
-var MSG_LIB_LOADING = '⚠️ הספרייה עדיין נטענת, נסה שוב';
+var MSG_LIB_LOADING = 'הספרייה עדיין נטענת, נסה שוב';
 
-var MSG_FILE_READ_FAIL = '❌ שגיאה בקריאת הקובץ: ';
+var MSG_FILE_READ_FAIL = 'שגיאה בקריאת הקובץ: ';
 
-var MSG_WIPE_STUDENTS_TITLE = '⚠️ מחיקת כלל התלמידים';
+var MSG_WIPE_STUDENTS_TITLE = 'מחיקת כלל התלמידים';
 
 var MSG_WIPE_STUDENTS_BODY = 'פעולה זו תמחק לצמיתות את כל התלמידים מהמערכת. לא ניתן לשחזר לאחר האישור.';
 
-var MSG_WIPE_STUDENTS_OK = '🗑️ כן, מחק הכל';
+var MSG_WIPE_STUDENTS_OK = 'כן, מחק הכל';
 
 var MSG_STUDENTS_WIPED = ' תלמידים נמחקו';
 
 var MSG_NO_STUDENTS_WIPE = 'אין תלמידים למחיקה';
 
-var MSG_PDF_ENGINE_OFF = '⚠️ מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב';
+var MSG_PDF_ENGINE_OFF = 'מנוע ה-PDF לא נטען — יש להתחבר לרשת ולנסות שוב';
 
 var MSG_PDF_BUILDING = 'מייצר PDF...';
 
-var MSG_PDF_FAIL = '⚠️ יצירת ה-PDF נכשלה: ';
+var MSG_PDF_FAIL = 'יצירת ה-PDF נכשלה: ';
 
-var MSG_SESSION_OPEN_TODAY = '⏳ סדר פתוח מהיום';
+var MSG_SESSION_OPEN_TODAY = 'סדר פתוח מהיום';
 
-var MSG_CLOSE_SESSION_FIRST = '⚠️ סגור את הסדר הנוכחי תחילה';
+var MSG_CLOSE_SESSION_FIRST = 'סגור את הסדר הנוכחי תחילה';
 
 
-var MSG_SESSION_DONE = '📋 סדר כבר מולא';
+var MSG_SESSION_DONE = 'סדר כבר מולא';
 
-var MSG_SESSION_OPEN_ELSEWHERE = '⚠️ הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
+var MSG_SESSION_OPEN_ELSEWHERE = 'הסדר כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
 
-var MSG_NEED_MINUTES = '⚠️ יש להזין מספר דקות';
+var MSG_NEED_MINUTES = 'יש להזין מספר דקות';
 
-var MSG_LATE_OVER_30 = '⚠️ מעל 30 דקות איחור יש לסמן כחיסור';
+var MSG_LATE_OVER_30 = 'מעל 30 דקות איחור יש לסמן כחיסור';
 
-var MSG_DEL_SESSION_TITLE = '🗑️ מחיקת סדר';
+var MSG_DEL_SESSION_TITLE = 'מחיקת סדר';
 
 var MSG_DEL_SESSION_BODY = 'הסדר יימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.';
 
-var MSG_ROW_DELETED = '🗑️ רשומה נמחקה';
+var MSG_ROW_DELETED = 'רשומה נמחקה';
 
-var MSG_EXPORT_PDF = '📄 ייצוא PDF';
+var MSG_EXPORT_PDF = 'ייצוא PDF';
 
-var MSG_EXPORT_XLS = '📊 ייצוא Excel';
+var MSG_EXPORT_XLS = 'ייצוא Excel';
 
 var MSG_NO_EXPORT_DATA = 'אין נתונים לייצוא';
 
@@ -167,49 +167,49 @@ var MSG_EXPORT_OK = 'הייצוא הצליח';
 
 var MSG_EXPORT_FAIL = 'שגיאה בייצוא: ';
 
-var MSG_CARE_SAVED = '✅ טיפול נשמר';
+var MSG_CARE_SAVED = 'טיפול נשמר';
 
-var MSG_DEL_CARE_TITLE = '🗑️ מחיקת טיפול';
+var MSG_DEL_CARE_TITLE = 'מחיקת טיפול';
 
 var MSG_DEL_CARE_BODY = 'האם למחוק את הטיפול? פעולה זו אינה הפיכה.';
 
-var MSG_CARE_MISSING = '⚠️ הטיפול לא נמצא';
+var MSG_CARE_MISSING = 'הטיפול לא נמצא';
 
-var MSG_DELETED_MARK = '🗑️ נמחק';
+var MSG_DELETED_MARK = 'נמחק';
 
-var MSG_MONTH_DETAIL = '📋 פירוט חודשי — ';
+var MSG_MONTH_DETAIL = 'פירוט חודשי — ';
 
-var MSG_EDIT_MARK = '✏️ עדכן סימון';
+var MSG_EDIT_MARK = 'עדכן סימון';
 
-var MSG_ROW_MISSING = '⚠️ רשומה לא נמצאה';
+var MSG_ROW_MISSING = 'רשומה לא נמצאה';
 
-var MSG_MARK_UPDATED = '✅ סימון עודכן';
+var MSG_MARK_UPDATED = 'סימון עודכן';
 
-var MSG_ABSENCE_ALERT = '⚠️ התראת חיסורים';
+var MSG_ABSENCE_ALERT = 'התראת חיסורים';
 
-var MSG_SETTINGS_SAVED = '✅ הגדרות נשמרו';
+var MSG_SETTINGS_SAVED = 'הגדרות נשמרו';
 
-var MSG_SLEEP_OPEN = '⏳ בדיקת שינה פתוחה';
+var MSG_SLEEP_OPEN = 'בדיקת שינה פתוחה';
 
-var MSG_CLOSE_REPORT_FIRST = '⚠️ סגור את הדו"ח הנוכחי תחילה';
+var MSG_CLOSE_REPORT_FIRST = 'סגור את הדו"ח הנוכחי תחילה';
 
-var MSG_REPORT_DONE = '📋 דו"ח כבר מולא';
+var MSG_REPORT_DONE = 'דו"ח כבר מולא';
 
-var MSG_REPORT_OPEN_ELSEWHERE = '⚠️ הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
+var MSG_REPORT_OPEN_ELSEWHERE = 'הדו"ח כבר נפתח במכשיר אחר — הסימונים נשמרים לרשומה הקיימת';
 
-var MSG_DEL_ROW_TITLE = '🗑️ מחיקת רשומה';
+var MSG_DEL_ROW_TITLE = 'מחיקת רשומה';
 
 var MSG_DEL_ROW_BODY = 'הרשומה תימחק לצמיתות מהארכיון. לא ניתן לשחזר פעולה זו.';
 
-var MSG_SWITCH_TITLE = '👤 כניסה משתמש';
+var MSG_SWITCH_TITLE = 'כניסה משתמש';
 
 var MSG_SWITCH_NEED_PASS = 'נא הכנס סיסמא';
 
 var MSG_SWITCH_WRONG_PASS = 'סיסמא שגויה';
 
-var MSG_SWITCHED_AS = '✅ נכנסת כ-';
+var MSG_SWITCHED_AS = 'נכנסת כ-';
 
-var MSG_SOON_TITLE = '🏗️ המודול בבנייה';
+var MSG_SOON_TITLE = 'המודול בבנייה';
 
 var MSG_ADD_STUDENT_TITLE = 'הוסף תלמיד';
 
@@ -278,10 +278,10 @@ var HR_EXAM_SUBJECTS = ['חסידות בוקר', 'נגלה עיונא', 'הלכ�
 
 // דלי הסריקות — פרטי, והקריאה בקישור חתום לשעה.
 var HR_FILES_BUCKET = 'hr-files';
-var MSG_UPLOAD_NEEDS_NET = '📴 העלאת קובץ דורשת חיבור לרשת';
-var MSG_UPLOAD_FAIL = '❌ ההעלאה נכשלה: ';
-var MSG_UPLOAD_OK = '✅ הקובץ הועלה';
-var MSG_FILE_TOO_BIG = '⚠️ הקובץ גדול מדי (עד 15MB)';
+var MSG_UPLOAD_NEEDS_NET = 'העלאת קובץ דורשת חיבור לרשת';
+var MSG_UPLOAD_FAIL = 'ההעלאה נכשלה: ';
+var MSG_UPLOAD_OK = 'הקובץ הועלה';
+var MSG_FILE_TOO_BIG = 'הקובץ גדול מדי (עד 15MB)';
 
 // השיעורים — הקוד, השם והאות הקצרה; s — התלמידים השלוחים: בלי מחזור ובלי מעבר שנתי, רק הוספה והשבתה ידניות.
 var HR_CLS_LIST = ['a', 'b', 'g', 's'];
@@ -292,9 +292,12 @@ var HR_CLS_CHIP = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
 var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
-var ABS_TYPE_ICON = { approved: '✅', suspended: '⚠️', left: '🚪' };
+var ABS_TYPE_ICON = { approved: 'approved', suspended: 'suspended', left: 'left' }; // שמות אייקון מהסט
 
-export { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
+// כשל רענון מהענן — המסך מציג את העותק שבמכשיר, ואומר זאת.
+var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר';
+
+export { ABS_TYPE_ICON, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,

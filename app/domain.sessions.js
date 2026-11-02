@@ -6,10 +6,7 @@ import { lsGet, lsSet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
 import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
-import { MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE,
-         MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE,
-         HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN,
-         PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
+import { HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_PULL_STALE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
          hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
@@ -17,6 +14,7 @@ import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences
          hrTouchLastChanged, hrTreatsMerge, hrWriteFail } from './domain.js';
 import { _hcH } from './domain.hebdate.js';
 import { icon } from './icons.js';
+import { stIcon } from '../core/icons.js';
 
 // ── המיון ──
 // הגדרות הסדרים — לפי שעת ההתחלה.
@@ -85,7 +83,7 @@ function _hrDiskArr(lsKey) {
 // כשל רענון מסומן גלוי — מסך שמציג נתון ישן בלי לומר זאת הוא הכשל השקט עצמו
 function _hrPullStaleMark(el, bad) {
   if (!el) return;
-  el.textContent = bad ? '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר' : '';
+  el.innerHTML = bad ? stIcon('warn') + esc(MSG_PULL_STALE) : '';
   el.classList.toggle('on', !!bad);
 }
 
@@ -101,7 +99,7 @@ var HR_STREAMS = {
     // הסדרים נערכים בהגדרות, ושם גם התראת החיסורים; שורת השינה נושאת הערה
     sessEdit: true, alert: true, note: false, prayers: true,
     title: 'שמירת הסדרים', one: 'סדר', many: 'סדרים', xOne: 'היעדרות', xMany: 'היעדרויות', absMany: 'חיסורים',
-    openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ הסדר נשמר',
+    openText: ' נפתח היום ולא נסגר.', savedMsg: 'הסדר נשמר',
     msg: { closeFirst: MSG_CLOSE_SESSION_FIRST, done: MSG_SESSION_DONE, elsewhere: MSG_SESSION_OPEN_ELSEWHERE,
            openToday: MSG_SESSION_OPEN_TODAY, delTitle: MSG_DEL_SESSION_TITLE, delBody: MSG_DEL_SESSION_BODY },
     sheet: 'סדרים', file: 'sdariim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון שמירת סדרים']
@@ -113,7 +111,7 @@ var HR_STREAMS = {
     defaults: hrDefaultCfg, clean: _hrCleanCfg, day: hrGetLogicalDate,
     sessEdit: false, alert: false, note: true, prayers: false,
     title: 'זמן שינה', one: 'דו"ח', many: 'דוחות', xOne: 'אירוע', xMany: 'אירועים', absMany: 'אירועים',
-    openText: ' נפתחה ולא נסגר.', savedMsg: '✅ הבדיקה נשמרה',
+    openText: ' נפתחה ולא נסגר.', savedMsg: 'הבדיקה נשמרה',
     msg: { closeFirst: MSG_CLOSE_REPORT_FIRST, done: MSG_REPORT_DONE, elsewhere: MSG_REPORT_OPEN_ELSEWHERE,
            openToday: MSG_SLEEP_OPEN, delTitle: MSG_DEL_ROW_TITLE, delBody: MSG_DEL_ROW_BODY },
     sheet: 'שינה', file: 'shinah', pdfHead: ['ארכיון זמן שינה']
@@ -126,9 +124,9 @@ var HR_STREAMS = {
     defaults: hrExamDefaultCfg, clean: function () { return hrExamDefaultCfg(); }, day: dayToday,
     sessEdit: false, alert: false, note: true, prayers: false, exam: true, sup: false,
     title: 'מבחנים', one: 'מבחן', many: 'מבחנים', xOne: 'לא נבחן', xMany: 'לא נבחנו', absMany: 'לא נבחנו',
-    openText: ' נפתח היום ולא נסגר.', savedMsg: '✅ המבחן נשמר',
-    msg: { closeFirst: '⚠️ סגור את המבחן הנוכחי תחילה', done: '📋 המבחן כבר נפתח', elsewhere: '⚠️ המבחן כבר נפתח במכשיר אחר — הציונים נשמרים לרשומה הקיימת',
-           openToday: '⏳ מבחן פתוח מהיום', delTitle: '🗑️ מחיקת מבחן', delBody: 'המבחן וכל ציוניו יימחקו מהארכיון. לא ניתן לשחזר פעולה זו.' },
+    openText: ' נפתח היום ולא נסגר.', savedMsg: 'המבחן נשמר',
+    msg: { closeFirst: 'סגור את המבחן הנוכחי תחילה', done: 'המבחן כבר נפתח', elsewhere: 'המבחן כבר נפתח במכשיר אחר — הציונים נשמרים לרשומה הקיימת',
+           openToday: 'מבחן פתוח מהיום', delTitle: 'מחיקת מבחן', delBody: 'המבחן וכל ציוניו יימחקו מהארכיון. לא ניתן לשחזר פעולה זו.' },
     sheet: 'מבחנים', file: 'mivchanim', pdfHead: ['ישיבת תומכי תמימים ראשל"צ', 'ארכיון מבחנים']
   }
 };

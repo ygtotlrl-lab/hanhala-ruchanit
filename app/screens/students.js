@@ -5,14 +5,7 @@ import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { shareBlob } from '../../core/share.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY,
-         MSG_EDIT_STUDENT_TITLE, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARK_INACTIVE_TITLE,
-         MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE,
-         MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_END_BEFORE_START, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON,
-         MSG_PICK_START_DATE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENT_MISSING,
-         MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_WIPE_STUDENTS_BODY,
-         MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
-         MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME } from '../constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_PDF_BUILDING, MSG_PDF_ENGINE_OFF, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrPdfFont, hrSharePdf, hrSortStatuses, hrSortStudents, modalOpen,
@@ -21,6 +14,7 @@ import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt } from '../domain.hebdate.js';
 import { HR_STREAMS, hrRefreshApprovalMarks } from '../domain.sessions.js';
 import { HR_PER, hrMonthKey, hrMonthKeyNow, hrStudentListed, hrStudentOn } from '../domain.periods.js';
 import { icon } from '../icons.js';
+import { stIcon } from '../../core/icons.js';
 
 function screenStudentsHTML() {
   return `
@@ -66,7 +60,7 @@ function openStatusForm(type) {
   var inp = 'sf-inp';
 
   S._currentStatusType = type;
-  openModal(ABS_TYPE_ICON[type]+' '+ABS_TYPE_LBL[type]+' — '+S._statusStudentName,
+  openModal(ABS_TYPE_LBL[type]+' — '+S._statusStudentName,
     '<div class="abs-tone '+tyCls(type)+' sf-dates">' +
       '<div>' +
         '<label class="'+lbl+'">סיבה</label>' +
@@ -89,24 +83,24 @@ function openStatusForm(type) {
       '</div>' +
     '</div>',
     '<button data-act="student-status-save" class="abs-tone '+tyCls(type)+' sf-save">שמור</button>' +
-    '<button data-act="modal-close" class="sf-cancel">ביטול</button>');
+    '<button data-act="modal-close" class="sf-cancel">ביטול</button>', icon(ABS_TYPE_ICON[type]||'details'));
 }
 
 function saveStudentStatus(type) {
   var reason = document.getElementById('sfm-reason').value;
-  if (!reason) { toast(MSG_PICK_REASON, null, 'bad'); return; }
+  if (!reason) { toast(MSG_PICK_REASON, null, 'warn'); return; }
   var from = _hcGet('sfmF');
-  if (!from) { toast(MSG_PICK_START_DATE, null, 'bad'); return; }
+  if (!from) { toast(MSG_PICK_START_DATE, null, 'warn'); return; }
   var toWrap = document.getElementById('sfmT_wrap');
   var toOpen = uiShown(toWrap);
   var to = toOpen ? _hcGet('sfmT') : null;
   var nb = document.getElementById('sfmN_btn');
   var noEnd = !!(nb && nb.classList.contains('on'));
-  if (!toOpen && !noEnd) { toast(MSG_PICK_END_CHOICE, null, 'bad'); return; }
+  if (!toOpen && !noEnd) { toast(MSG_PICK_END_CHOICE, null, 'warn'); return; }
   // שורת סיום פתוחה בלי תאריך — לא לשמור בשקט כאילו הכול תקין.
-  if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'bad'); return; }
+  if (toOpen && !to) { toast(MSG_PICK_END_DATE, null, 'warn'); return; }
   // סיום שאינו אחרי ההתחלה — הסטטוס לא חל אף פעם, והסימון האוטומטי בסדרים אינו מופעל.
-  if (to && new Date(to) <= new Date(from)) { toast(MSG_END_BEFORE_START, null, 'bad'); return; }
+  if (to && new Date(to) <= new Date(from)) { toast(MSG_END_BEFORE_START, null, 'warn'); return; }
   var sid = S._statusSid;
 
   var students = getStudents();
@@ -119,7 +113,7 @@ function saveStudentStatus(type) {
   var nw = {id: type + ':' + fromAt, type: type, reason: reason, from_at: fromAt, to_at: hrAtOfLocal(to),
             created_by_client_id: sessUserId(), updated_at: Date.now()};
   if (uniqHas(s.absences.filter(function (a) { return a && !a.deleted; }), nw, function (a) { return a.id; })) {
-    toast(MSG_ABSENCE_DUP, null, 'bad'); return;
+    toast(MSG_ABSENCE_DUP, null, 'warn'); return;
   }
   // פריט שבוטל באותו מזהה מוחלף — שני פריטים באותו מפתח הם כפילות בתוך צד אחד.
   s.absences = s.absences.filter(function (a) { return !(a && idEq(a.id, nw.id)); });
@@ -129,7 +123,7 @@ function saveStudentStatus(type) {
 
   saveStudents(students);
   hrRefreshApprovalMarks(sid);
-  return '✅ סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום');
+  return 'סטאטוס נשמר ל-' + s.name + (to ? '' : ' — ללא תאריך סיום');
 }
 
 // ── חיפוש תלמידים ──
@@ -283,25 +277,25 @@ function hrCycleLabel(n) { return n ? hebYearLabelFull(n) : ''; }
 function setStudentInactive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
-  if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
+  if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
   if(HR_PER.continues(s)) s.periods=HR_PER.toggled(s);
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+MSG_MARKED_INACTIVE, null, 'good');
+  toast(''+s.name+MSG_MARKED_INACTIVE, null, 'good');
 }
 
 function setStudentActive(sid){
   var students=getStudents();
   var s=students.find(function(x){return idEq(x.client_id, sid);});
-  if(!s){toast(MSG_STUDENT_MISSING, null, 'bad');return;}
+  if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
   if(!HR_PER.continues(s)) s.periods=HR_PER.toggled(s);
   s.updated_at=Date.now();
   saveStudents(students);
   schedulePush();
   renderStudents();
-  toast('✅ '+s.name+MSG_MARKED_ACTIVE, null, 'good');
+  toast(''+s.name+MSG_MARKED_ACTIVE, null, 'good');
 }
 
 var MANAGE_PICK = {
@@ -314,7 +308,7 @@ var MANAGE_PICK = {
 };
 
 function openManageListDlg(){
-  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'bad');return;}
+  if(!isAdmin()){toast(MSG_ADMINS_ONLY, null, 'warn');return;}
   var ITEMS=[
     {icon:'plus',label:'הוסף תלמיד',k:'add'},
     {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
@@ -329,7 +323,7 @@ function openManageListDlg(){
       '<span class="admin-ico">'+icon(item.icon)+'</span>'+item.label+
     '</button>';
   }).join('');
-  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','');
+  openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','', icon('settings'));
 }
 
 // ── סימון תלמיד כלא פעיל ──
@@ -344,16 +338,16 @@ function openDeactivateStudentDlg(){
     '</select>'+
     '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מתצוגת "לא פעילים".</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אשר</button>');
+    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אשר</button>', icon('power'));
 }
 
 // ── מעבר שנתי ──
 function openYearTransitionDlg(){
   var y=hrSchoolYear();
-  if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
+  if(!y){toast(MSG_YEAR_UNSET, null, 'warn');return;}
   openModal(MSG_YEAR_ROLL_TITLE,
     '<div class="year-note">'+
-      '<strong class="danger-strong">⚠️ פעולה בלתי הפיכה!</strong><br>'+
+      '<strong class="danger-strong">'+stIcon('warn')+'פעולה בלתי הפיכה!</strong><br>'+
       MSG_YEAR_ROLL_C+' (מחזור '+esc(hrCycleLabel(y))+') → יועברו ל<strong>לא פעילים</strong><br>'+
       '• שיעור ב\' → שיעור ג\'<br>'+
       '• שיעור א\' → שיעור ב\'<br>'+
@@ -362,13 +356,13 @@ function openYearTransitionDlg(){
     '</div>'+
     '<div class="year-danger">לא ניתן לבטל פעולה זו לאחר האישור.</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="year-transition-confirm" class="year-go">'+icon('retry')+'בצע מעבר שנתי</button>');
+    '<button data-act="year-transition-confirm" class="year-go">'+icon('retry')+'בצע מעבר שנתי</button>', icon('refresh'));
 }
 
 // הבוגרים יוצאים, השאר עולים שיעור, ואז השנה מתקדמת — באותה פעולה. המחזור אינו משתנה.
 function doYearTransition(){
   var y=hrSchoolYear();
-  if(!y){toast(MSG_YEAR_UNSET, null, 'bad');return;}
+  if(!y){toast(MSG_YEAR_UNSET, null, 'warn');return;}
   var students=getStudents();
   var changed=0;
   // ג׳ — התקופה הפתוחה נסגרת באלול של השנה שמסתיימת (כמו אוגוסט בשכר לימוד); תקופה שמתחילה אחריו אינה נוגעת.
@@ -434,7 +428,7 @@ function openCurrentStatusModal() {
   var absencesHTML = activeAbsences.map(function(a) {
     var isFuture = a.from_at && new Date(a.from_at) > _now;
     var badgeHTML = isFuture
-      ? '<span class="abs-future">⏳ עתידי</span>'
+      ? '<span class="abs-future">' + stIcon(icon('clock')) + 'עתידי</span>'
       : '<span class="abs-active">● פעיל</span>';
     return '<div class="abs-tone ' + tyCls(a.type) + ' abs-card">' +
       '<div class="abs-card-head">' +
@@ -534,7 +528,7 @@ function studentFormHTML(sid){
 // ── היסטוריית הסטטוסים ──
 // מציג מיד מהמכשיר, ומרענן מהענן את שורת התלמיד לבדה — סטטוס שנרשם ממכשיר אחר מגיע ברענון.
 async function openStatusHistory(sid) {
-  openModal(MSG_STATUS_HISTORY, '', '');
+  openModal(MSG_STATUS_HISTORY, '', '', icon('history'));
   var local = getStudents().find(function (x) { return idEq(x.client_id, sid); });
   _histPaint(local, '');
   var r = await hrStudentCloudGet(sid);
@@ -542,7 +536,7 @@ async function openStatusHistory(sid) {
   var ttl = document.getElementById('modal-title');
   if (!ttl || !modalOpen() || ttl.textContent.indexOf('היסטוריית סטטוסים') === -1) return;
   // כשל קריאה גלוי — המוצג הוא מה שהמכשיר ראה, ואין ראיה שאין אחרים
-  if (!r.ok) { _histPaint(local, '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר'); return; }
+  if (!r.ok) { _histPaint(local, MSG_PULL_STALE); return; }
   _histPaint(r.rec || local, '');
 }
 
@@ -561,11 +555,11 @@ function _histPaint(s, warn) {
   };
   list = hrSortStatuses(list);
   if (!list.length) {
-    box.innerHTML = (warn ? '<div class="warn-note">' + esc(warn) + '</div>' : '') +
+    box.innerHTML = (warn ? '<div class="warn-note">' + stIcon('warn') + esc(warn) + '</div>' : '') +
       '<div class="cloud-loading-note">לא נרשם אף סטטוס לתלמיד הזה.</div>';
     return;
   }
-  box.innerHTML = (warn ? '<div class="warn-note">' + esc(warn) + '</div>' : '') + list.map(function (a) {
+  box.innerHTML = (warn ? '<div class="warn-note">' + stIcon('warn') + esc(warn) + '</div>' : '') + list.map(function (a) {
     var cancelled = !!a.deleted;
     return '<div class="abs-tone ' + (cancelled ? 'abs-tone-off abs-cancelled' : tyCls(a.type)) +
         ' hist-card">' +
@@ -644,7 +638,7 @@ function saveStudent(){
   // הסימון נגזר מהמזהה ולא מהאיבר האחרון — המערך ממוין אחרי ה-push,
   // והאחרון הוא האחרון בסדר הא״ב ולא זה שנוסף.
   pendMark(PK_STUDENT + (S.editingStudentId != null ? S.editingStudentId : newId));
-  return '✅ תלמיד נשמר';
+  return 'תלמיד נשמר';
 }
 
 // ליבת מחיקה אחת לתלמיד בודד ולמחיקה ההמונית.
@@ -668,7 +662,7 @@ function hrTombstoneStudents(ids){
 // ── ייבוא, מחיקה המונית והדפסת המצבה ──
 function importStudentsFromFile(input) {
   if (!input.files || !input.files[0]) return;
-  if (typeof XLSX === 'undefined') { toast(MSG_LIB_LOADING, null, 'bad'); return; }
+  if (typeof XLSX === 'undefined') { toast(MSG_LIB_LOADING, null, 'warn'); return; }
   var file = input.files[0];
   input.value = ''; // איפוס השדה מאפשר לייבא שוב את אותו קובץ
   var isCsv = file.name.toLowerCase().endsWith('.csv');
@@ -722,7 +716,7 @@ function importStudentsFromFile(input) {
           renderStudents();
         }
       }
-      var mood = (!wrote) ? '❌' : (failed.length===0 ? '✅' : '⚠️');
+      var mood = (!wrote) ? 'bad' : (failed.length===0 ? 'good' : 'warn');
       var title = wrote ? (added + ' תלמידים נוספו בהצלחה')
                         : 'הייבוא נכשל — אין מקום באחסון המכשיר';
       var bodyHTML = '';
@@ -736,10 +730,10 @@ function importStudentsFromFile(input) {
         bodyHTML += '<div class="import-fail-list">'+esc(failed.slice(0,10).join(', '))+(failed.length>10?'...':'')+'</div>';
       }
       // הסיכום הוא הדיווח היחיד כאן — כשל כתיבה מקומית משנה את האייקון, הכותרת והגוף
-      openModal(mood + ' ' + title,
+      openModal(title,
         '<div class="import-done">' +
         (bodyHTML || '<div>הכל תקין!</div>') + '</div>',
-        '<button class="modal-ok btn" data-act="modal-close">סגור</button>');
+        '<button class="modal-ok btn" data-act="modal-close">סגור</button>', mood);
     } catch(err) {
       toast(MSG_FILE_READ_FAIL + (err.message||err), null, 'bad');
     }
@@ -760,7 +754,7 @@ function confirmDeleteAll() {
   var n = hrTombstoneStudents(getStudents().map(function(s){ return s.client_id; }));
   schedulePush();
   renderStudents();
-  if (n) toast('🗑️ ' + n + MSG_STUDENTS_WIPED, null, 'good');
+  if (n) toast(n + MSG_STUDENTS_WIPED, null, 'good');
   else toast(MSG_NO_STUDENTS_WIPE);
 }
 
@@ -778,7 +772,7 @@ function downloadImportTemplate() {
 
 function printStudents() {
   try {
-    if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'bad'); return; }
+    if (typeof pdfMake === 'undefined') { toast(MSG_PDF_ENGINE_OFF, null, 'warn'); return; }
     toast(MSG_PDF_BUILDING);
     var students = hrSortStudents(getStudents().filter(function(s){return hrStudentOn(s);}));
     var present = students.filter(function(s){return getActiveAbsences(s).length===0;});
@@ -815,7 +809,7 @@ function printStudents() {
     hrSharePdf(docDef, 'nochechut-'+dayToday()+'.pdf');
   } catch(e) {
     console.error('[pdf]', e);
-    toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'bad');
+    toast(MSG_PDF_FAIL + (e && e.message ? e.message : e), null, 'warn');
   }
 }
 

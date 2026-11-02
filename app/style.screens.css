@@ -178,7 +178,8 @@
 .at-count{font-weight:600;color:var(--text);display:inline-flex;align-items:center;gap:var(--sp-2);white-space:nowrap}
 .at-dot{width:9px;height:9px;border-radius:var(--r-7);background:var(--at);display:inline-block;flex-shrink:0}
 .late-min-inp{font-size:var(--fs-2);border:1.5px solid var(--border);font-family:Heebo;padding:var(--sp-2) var(--sp-4);border-radius:var(--r-2);width:80px}
-.mark-btn{font-size:var(--fs-3);font-weight:700;cursor:pointer;font-family:Heebo;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-3);transition:all var(--dur-2)}
+.mark-btn{font-size:var(--fs-3);font-weight:700;cursor:pointer;font-family:Heebo;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-3);transition:all var(--dur-2);display:inline-flex;align-items:center;justify-content:center}
+.mark-btn .ico{width:1.25em;height:1.25em;stroke-width:2.2}
 .mark-line{align-items:center;display:flex;border:1.5px solid var(--border);flex-wrap:wrap;gap:var(--sp-4);margin-bottom:var(--sp-3);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-4)}
 .mark-pick{font-size:var(--fs-3);font-weight:700;cursor:pointer;font-family:Heebo;padding:var(--sp-4) var(--sp-6);border-radius:var(--r-3);white-space:nowrap}
 .mark-row-on{background:var(--card-2)}

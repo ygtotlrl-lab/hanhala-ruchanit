@@ -15,6 +15,7 @@ import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '.
 import { HR_STREAMS } from '../domain.sessions.js';
 import { icon } from '../icons.js';
 import { contactsPaneHTML, renderContactsSettings } from './contacts.js';
+import { stIcon } from '../../core/icons.js';
 
 function screenSettingsHTML() {
   return `
@@ -282,9 +283,9 @@ function userFormHTML() {
 }
 
 function openUserModal(title) {
-  openModal('👤 ' + title, userFormHTML(),
+  openModal(title, userFormHTML(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
-    '<button class="btn" data-act="user-save" data-ksave>' + icon('save') + 'שמור</button>');
+    '<button class="btn" data-act="user-save" data-ksave>' + icon('save') + 'שמור</button>', icon('user'));
 }
 
 // מגן השליחה הכפולה בנקודת הניתוב ולא כאן — שומר שני היה משחרר כפתור שהראשון עוד מחזיק.
@@ -316,7 +317,7 @@ async function saveUser() {
   await hrTouchLastChanged();
   closeModal();
   // שתי קריאות ולא אחת — סיווג ההודעה שונה בין שני המסלולים.
-  if (noFp) toast(MSG_USER_SAVED_NO_FP, null, 'bad');
+  if (noFp) toast(MSG_USER_SAVED_NO_FP, null, 'warn');
   else toast(MSG_USER_SAVED, null, 'good');
   usersRefresh();
   renderUsersList();
@@ -324,10 +325,10 @@ async function saveUser() {
 
 async function toggleUserActive(id, current) {
   // supabase-js אינו זורק — בלי בדיקת res.error הטוסט הירוק מופיע גם בכישלון.
-  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'off'); return; }
   var res;
   try { res = await writeUser(id, {active: !current}); }
-  catch (e) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
+  catch (e) { toast(MSG_OFF_USER_WRITE, null, 'off'); return; }
   if (res && res.error) {
     toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
@@ -413,9 +414,9 @@ async function changeMyPassword() {
   var n2 = document.getElementById('mp-new2');
   if (!c1 || !n1 || !n2) { uiNoDialog('changeMyPassword', 'mp-cur'); return; }
   var oldPass = c1.value.trim(), newPass = n1.value.trim(), newPass2 = n2.value.trim();
-  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'off'); return; }
   if (!oldPass || !newPass || !newPass2) { toast(MSG_FILL_ALL_X, null, 'bad'); return; }
-  if (!PASS_SIX_RE.test(newPass)) { toast(MSG_PASS_SIX, null, 'bad'); return; }
+  if (!PASS_SIX_RE.test(newPass)) { toast(MSG_PASS_SIX, null, 'warn'); return; }
   if (newPass !== newPass2) { toast(MSG_PASS_MISMATCH_X, null, 'bad'); return; }
   // לא var {data} — הוא בולע את השגיאה, וכשל רשת היה מוצג כ«הסיסמה הנוכחית שגויה».
   var chk;
@@ -424,8 +425,8 @@ async function changeMyPassword() {
   if (chk && chk.error) { toast(MSG_PASS_VERIFY_FAIL + (chk.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   if (!chk || !chk.data) { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
   var vOld = await authVerify(chk.data, oldPass);
-  if (vOld === 'no-fp')     { toast('❌ ' + MSG_OFF_NO_FP, null, 'bad'); return; }
-  if (vOld === 'no-crypto') { toast('❌ ' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
+  if (vOld === 'no-fp')     { toast('' + MSG_OFF_NO_FP, null, 'bad'); return; }
+  if (vOld === 'no-crypto') { toast('' + MSG_OFF_NO_CRYPTO, null, 'bad'); return; }
   if (vOld !== 'ok')        { toast(MSG_PASS_CUR_BAD, null, 'bad'); return; }
   var made = await authPassFields(newPass);
   var updObj = { pass_salt: made.pass_salt, pass_fp: made.pass_fp };
@@ -434,7 +435,7 @@ async function changeMyPassword() {
     // המשתמש המחובר התחלף בזמן השינוי — נכשל-סגור: עדיף שינוי שלא נעשה מסיסמה שנכתבה על חשבון זר.
   if (!AUTH.user || AUTH.user.client_id !== _u.client_id) { toast(MSG_USER_SWITCHED_MID, null, 'bad'); return; }
   try { upd = await writeUser(_u.client_id, updObj); }
-  catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'bad'); return; }
+  catch (e2) { toast(MSG_OFF_USER_WRITE, null, 'off'); return; }
   if (upd && upd.error) { toast(MSG_PASS_UPDATE_FAIL + (upd.error.message || MSG_SERVER_ERR), null, 'bad'); return; }
   // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
@@ -447,7 +448,7 @@ async function changeMyPassword() {
   // אין ניקוי שדות — closeModal מרוקן את גוף חלון הדו-שיח.
   closeModal();
   if (made.pass_fp) toast(MSG_PASS_UPDATED_X, null, 'good');
-  else toast(MSG_PASS_UPDATED_NO_FP, null, 'bad');
+  else toast(MSG_PASS_UPDATED_NO_FP, null, 'warn');
 }
 
 async function renderUsersList() {
@@ -462,7 +463,7 @@ async function renderUsersList() {
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
-    el.innerHTML = '<div class="load-err ld">❌ לא ניתן לטעון את רשימת המשתמשים' +
+    el.innerHTML = '<div class="load-err ld">' + stIcon('bad') + 'לא ניתן לטעון את רשימת המשתמשים' +
       '<div class="load-err-detail">' + esc(em) + '</div>' +
       '<button data-act="users-render" class="retry-btn">נסה שוב</button></div>';
     return;
@@ -492,7 +493,7 @@ async function usersDragApply(list, kind) {
   var rows = Array.prototype.filter.call(list.children, function (x) { return x.getAttribute('data-drag') === kind; });
   var ids = dragOrder(list, kind, 'data-id'), was = {}, i, n = 0, bad = null;
   rows.forEach(function (x) { was[x.getAttribute('data-id')] = x.getAttribute('data-sort'); });
-  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'bad'); renderUsersList(); return; }
+  if (!navigator.onLine) { toast(MSG_OFF_USER_WRITE, null, 'off'); renderUsersList(); return; }
   for (i = 0; i < ids.length; i++) {
     if (was[ids[i]] === String(i + 1)) continue;
     var res;

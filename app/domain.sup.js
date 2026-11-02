@@ -3,9 +3,7 @@ import { MSG_DELETE, dayToday, uniqHas } from '../core/util.js';
 import { idEq, newClientId, tombKill } from '../core/sync.js';
 import { sessUserId, usersNameOf } from '../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
-import { MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY,
-         MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL,
-         MSG_ROW_MISSING, MSG_SETTINGS_SAVED, HR_CLS_NAME, HR_CLS_SHORT } from './constants.js';
+import { HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
 import { S } from './state.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
@@ -16,6 +14,7 @@ import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrIsPrayer, hrLiveTreats, hrL
 import { hrRenderArchive } from './domain.arc.js';
 import { icon } from './icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from './domain.periods.js';
+import { stIcon } from '../core/icons.js';
 
 // ── השגחה, טיפולים והתראה ──
 // המעבר בין החודשים — מהחודש הראשון שבו תלמיד כלשהו פעיל ועד החודש הנוכחי.
@@ -31,7 +30,7 @@ async function hrRenderSupervision(st) {
   var el=document.getElementById(st.p+'-sup-content');
   if(!el) return;
   if(!hrSupervisionAccess()){
-    el.innerHTML='<div class="empty-note">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
+    el.innerHTML='<div class="empty-note">'+stIcon(icon('key'))+'גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
   // מציג מיד — ניווט בין חודשים אינו ממתין לרשת; הרענון נשאר ובא אחרי הציור, כי המשגיח צריך נתון טרי
   var cD=hrCachedArr(st.v+'Data',st.table);
@@ -42,7 +41,7 @@ async function hrRenderSupervision(st) {
   // כשל משיכה מסומן גלוי — המשגיח מחליט על סמך מה שהוא רואה
   _hrSupPaint(st, el, hrCachedArr(st.v+'Data',st.table)||[],
                       hrCachedArr(st.v+'Treats',st.treatsLs)||[],
-                      (ok[0]&&ok[1])?'':'⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר');
+                      (ok[0]&&ok[1])?'':MSG_PULL_STALE);
 }
 
 function _hrSupPaint(st, el, rawData, rawTreats, warn) {
@@ -65,7 +64,7 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     '<span class="sup-nav-label">'+mLabel+'</span>'+
     '<button data-act="'+p+'-sup-nav" data-dir="1" class="'+navStyle+(hasNext?'':' sup-nav-off')+'"'+(hasNext?'':' disabled')+' aria-label="החודש הבא">'+icon('next')+'</button>'+
   '</div>';
-  if(warn) navHTML='<div class="warn-note">'+esc(warn)+'</div>'+navHTML;
+  if(warn) navHTML='<div class="warn-note">'+stIcon('warn')+esc(warn)+'</div>'+navHTML;
 
   if(!data||!data.length){
     el.innerHTML=navHTML+'<div class="empty-note">אין נתונים עדיין</div>';return;
@@ -123,7 +122,7 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     if(lastTreat){
       var ltIso=lastTreat.treat_date||'';
       var ltDateStr=ltIso?hrDayHebFmt(ltIso):'';
-      lastHTML='<span class="badge-ok">📝 יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
+      lastHTML='<span class="badge-ok">'+stIcon(icon('edit'))+'יום '+hrDow(ltIso)+' '+esc(ltDateStr)+'</span>';
     }
     // חריגה מהסף (20 חיסורים או 300 דקות איחור בחודש) — מסגרת אדומה לאריח, בלי תג
     var over=sr.absent>=20||sr.lateMin>=300;
@@ -195,7 +194,7 @@ async function hrAddTreat(st, sid) {
 }
 
 function hrDeleteTreat(st, id) {
-  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE)
+  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE, icon('del'))
     .then(function (yes) { if (yes) _hrDeleteTreatConfirmed(st, id); });
 }
 
@@ -208,7 +207,7 @@ async function _hrDeleteTreatConfirmed(st, id) {
     if(!t||String(t.id)!==String(id)||t.deleted) return;
     tombKill(t, ts); found=true;
   });
-  if(!found){ toast(MSG_CARE_MISSING, null, 'bad'); hrRenderSupervision(st); return; }
+  if(!found){ toast(MSG_CARE_MISSING, null, 'warn'); hrRenderSupervision(st); return; }
   await hrSaveTreats(st, treats);
   hrRenderSupervision(st);
   toast(MSG_DELETED_MARK, null, 'good');
@@ -249,7 +248,7 @@ function hrSupDetail(st, sid) {
   }
 
   openModal(MSG_MONTH_DETAIL+name,
-    sumHTML+'<div class="scroll-pane">'+rowsHTML+'</div>','');
+    sumHTML+'<div class="scroll-pane">'+rowsHTML+'</div>','', icon('calendar'));
 }
 
 function hrSupEditMarkDlg(st, recId, sid, curMark) {
@@ -271,13 +270,13 @@ function hrSupEditMarkDlg(st, recId, sid, curMark) {
   }).join('');
   openModal(MSG_EDIT_MARK,
     '<div class="chip-row">'+btnsHTML+'</div>',
-    '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>');
+    '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>', icon('edit'));
 }
 
 async function hrEditMark(st, recId, sid, newCode) {
   var data=await hrLoadData(st);
   var rec=data.find(function(r){return idEq(r.client_id,recId);});
-  if(!rec){toast(MSG_ROW_MISSING, null, 'bad');return;}
+  if(!rec){toast(MSG_ROW_MISSING, null, 'warn');return;}
   if(!rec.marks||typeof rec.marks!=='object') rec.marks={};
   if(!rec.marks[sid]) rec.marks[sid]={};
   rec.marks[sid].status=newCode;

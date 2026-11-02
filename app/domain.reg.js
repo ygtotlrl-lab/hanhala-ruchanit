@@ -139,7 +139,7 @@ async function hrRegLoad(st) {
       openModal(st.msg.openToday,
         '<p class="md-note-center">'+esc(openRec.session)+st.openText+'<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
-        '<button data-act="'+st.p+'-resume-go" data-id="'+esc(openRec.client_id)+'" class="md-btn-primary">'+icon('play')+'המשך</button>');
+        '<button data-act="'+st.p+'-resume-go" data-id="'+esc(openRec.client_id)+'" class="md-btn-primary">'+icon('play')+'המשך</button>', icon('clock'));
     }
   } catch(eRes){}
   if(st.alert) hrCheckAlert(st);
@@ -232,7 +232,7 @@ async function hrEditSession(st, recId) {
 
 // שדה תאריך ריק נופל ליום של הזרם — הבורר נבנה מלא, והריק הוא מצב ביניים.
 async function hrOpenSession(st, sessId, sessName) {
-  if(S[st.v+'CurrentSessionId']){toast(st.msg.closeFirst, null, 'bad');return;}
+  if(S[st.v+'CurrentSessionId']){toast(st.msg.closeFirst, null, 'warn');return;}
   var dateIso=(document.getElementById(st.p+'_date_iso')||{}).value||st.day();
 
   // ההמתנה למשיכה מכוונת — היא מכריעה אם נוצרת רשומה שנייה לאותו סדר; החיווי והניטרול בניתוב.
@@ -244,7 +244,7 @@ async function hrOpenSession(st, sessId, sessName) {
     openModal(st.msg.done,
       '<p class="md-note-center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-      '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>');
+      '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>', icon('details'));
     return;
   }
 
@@ -346,7 +346,7 @@ function hrMarkDirty(st) {
     var dup=hrFindLiveSession(data,pend.session,pend.session_date,pend.client_id);
     if(dup){
       hrAdoptSession(st, dup);
-      toast(st.msg.elsewhere, null, 'bad');
+      toast(st.msg.elsewhere, null, 'warn');
     } else if(!data.some(function(r){return r&&idEq(r.client_id,pend.client_id);})) {
       data.push(pend);
     }
@@ -362,15 +362,15 @@ function hrShowOverrideDialog(st, sid, student) {
   var a=aa&&aa[0];
   if(!a) return;
   var typeLbl=ABS_TYPE_LBL[a.type]||a.type;
-  var typeIcon=ABS_TYPE_ICON[a.type]||'📋';
+  var typeIcon=icon(ABS_TYPE_ICON[a.type]||'details');
   var reasonHTML=a.reason?'<div class="abs-reason-blk">סיבה: '+esc(a.reason)+'</div>':'';
   var datesHTML='<div class="abs-dates-blk">מ: '+hrFmtAt(a.from_at)+'<br>עד: '+(a.to_at?hrFmtAt(a.to_at):'ללא תאריך סיום')+'</div>';
-  openModal(typeIcon+' '+typeLbl+' — '+student.name,
+  openModal(typeLbl+' — '+student.name,
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
     reasonHTML+datesHTML+
     '<div class="md-question">האם לבטל את הסטטוס לגמרי?<br><span class="md-question-warn">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
     '<button data-act="modal-close" class="md-btn-close">סגור</button>'+
-    '<button data-act="'+st.p+'-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>');
+    '<button data-act="'+st.p+'-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>', typeIcon);
 }
 
 function hrCancelStudentStatusFromReg(st, sid) {
@@ -416,8 +416,8 @@ function hrConfirmLate(st, sid) {
   var s=String(sid);
   var inp=document.getElementById(st.p+'-min-'+sid);
   var val=readNum(inp, 0);
-  if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'bad');return;}
-  if(val>30){toast(MSG_LATE_OVER_30, null, 'bad');return;}
+  if(!val||val<=0){toast(MSG_NEED_MINUTES, null, 'warn');return;}
+  if(val>30){toast(MSG_LATE_OVER_30, null, 'warn');return;}
   hrSetLateMin(st,sid,val);
   delete S[st.v+'Pending'][s];
   hrRenderStudents(st);
@@ -492,7 +492,7 @@ function hrRenderStudents(st) {
       noteField+
       '<div class="at-row-marks">'+
         (hasMark?mkClearBtn(s.client_id):'')+
-        mkBtn(s.client_id,'p','✓')+
+        mkBtn(s.client_id,'p',icon('check'))+
         (prayer?mkBtn(s.client_id,'lk','איחור קל')+mkBtn(s.client_id,'lm','איחור משמעותי')
                :mkBtn(s.client_id,'l','איחור'))+
         mkBtn(s.client_id,'e','-')+
@@ -563,7 +563,7 @@ async function hrCloseSession(st) {
   // הסגירה אינה ממתינה לרשת — הרשומה נכתבת לדיסק בקריאה עצמה, והדחיפה רצה ברקע ומסומנת ⏳ עד שתצליח
   hrAutoSaveNow(st);
   var rec=cRec;
-  var msg=rec?('✅ '+rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):st.savedMsg;
+  var msg=rec?(rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):st.savedMsg;
   S[st.v+'CurrentSessionId']=null;
   S[st.v+'Marks']={};
   S[st.v+'PendingRec']=null;

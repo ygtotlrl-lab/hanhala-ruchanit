@@ -22,7 +22,7 @@ function openStudentFile(sid) {
   var s = getStudents().find(function (x) { return idEq(x.client_id, sid); });
   if (!s) return;
   S._fileSid = String(sid);
-  openModal('📁 תיק אישי — ' + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגור</button>');
+  openModal('תיק אישי — ' + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגור</button>', icon('files'));
 }
 
 function _fileBodyHTML(s) {
@@ -73,11 +73,11 @@ async function saveFileEvent() {
   var date = (document.getElementById('file-date') || { value: '' }).value || dayToday();
   var inp = document.getElementById('file-scan');
   var file = inp && inp.files && inp.files[0];
-  if (!text && !file) { toast('⚠️ יש לכתוב את האירוע או לצרף סריקה', null, 'bad'); return; }
+  if (!text && !file) { toast('יש לכתוב את האירוע או לצרף סריקה', null, 'warn'); return; }
   var sid = S._fileSid, scan = null;
   if (file) {
-    if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'bad'); return; }
-    if (file.size > FILE_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'bad'); return; }
+    if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
+    if (file.size > FILE_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'warn'); return; }
     var ext = (String(file.name).split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
     var path = 'files/' + sid + '/' + Date.now() + '.' + ext;
     try {
@@ -97,11 +97,11 @@ async function saveFileEvent() {
   saveStudents(students);
   schedulePush();
   _repaint();
-  toast('✅ האירוע נוסף לתיק', null, 'good');
+  toast('האירוע נוסף לתיק', null, 'good');
 }
 
 function deleteFileEvent(id) {
-  ask('🗑️ מחיקת אירוע', 'האירוע יימחק מהתיק האישי.', MSG_DELETE).then(function (yes) {
+  ask('מחיקת אירוע', 'האירוע יימחק מהתיק האישי.', MSG_DELETE, icon('del')).then(function (yes) {
     if (!yes) return;
     var students = getStudents();
     var s = students.find(function (x) { return idEq(x.client_id, S._fileSid); });

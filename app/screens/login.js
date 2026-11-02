@@ -17,6 +17,7 @@ import { AUTH, S, shell } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
+import { stIcon } from '../../core/icons.js';
 
 // ── המסכים ──
 // mountView() מציירת אותם לפני כל קוד שמחפש אלמנט בתוכם — אין להזיז את הקריאה אליה מטה.
@@ -62,14 +63,14 @@ async function _doLoginInner() {
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
   var spinner = document.getElementById('auth-spinner');
-  function showErr(msg){ errEl.textContent=msg; spinner.classList.remove('on'); }
+  function showErr(msg, kind){ errEl.innerHTML=stIcon(kind || 'warn')+esc(msg); spinner.classList.remove('on'); }
   function startLoad(){ errEl.textContent=''; spinner.classList.add('on'); }
   function stopLoad(){ spinner.classList.remove('on'); }
   function dbg(msg){ console.log('[login] '+msg); }
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
   startLoad();
-  dbg('⏳ [1/4] שולח בקשה לשרת...');
+  dbg('[1/4] שולח בקשה לשרת...');
   var res = null, netFail = false;
   try {
     // השורה נשלפת לפי שם המשתמש בלבד וההכרעה מול הטביעה — סינון לפי סיסמה בשאילתה
@@ -111,7 +112,7 @@ async function _doLoginInner() {
     authLog(true, 'online', username);
   } else if (authoritativeNo) {
     authLog(false, 'wrong_credentials_online', username);
-    showErr('❌ ' + MSG_BAD_LOGIN); return;
+    showErr(MSG_BAD_LOGIN, 'bad'); return;
   } else {
     // שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) אינה תשובה סמכותית — ולכן מנסים את העותק המקומי.
     dbg(netFail ? 'אין רשת — מנסה אימות מקומי (מראת המשתמשים)'
@@ -147,7 +148,7 @@ async function _doLoginInner() {
     }
     if (verdict !== 'ok') {
       authLog(false, 'wrong_credentials_offline', username);
-      showErr('❌ ' + MSG_BAD_LOGIN); return;
+      showErr(MSG_BAD_LOGIN, 'bad'); return;
     }
     var lu = cu;
     ctxSwitch();
@@ -165,9 +166,9 @@ async function _doLoginInner() {
 async function afterLogin() {
   var u = AUTH.user;
   function dbg(msg){ console.log('[login] '+msg); }
-  dbg('⏳ [2/4] משתמש אומת — טוען הרשאות...');
+  dbg('[2/4] משתמש אומת — טוען הרשאות...');
   try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
-  dbg('⏳ [3/4] מנווט לדף הבית...');
+  dbg('[3/4] מנווט לדף הבית...');
   // הסתרת מסך הכניסה והמעבר לבית רצים תמיד; כל עדכון משני עטוף בנפרד —
   // data מוגדר רק בענף המקוון, וקריאה ממנו באופליין זורקת.
   document.getElementById('auth-screen').classList.add('hidden');
@@ -186,7 +187,7 @@ async function afterLogin() {
   } catch(e) { console.warn('[login] header update failed:', e); }
   try { lkReset(); } catch(e) { console.warn('[login] lkReset:', e); }
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
-  dbg('⏳ [4/4] טוען נתונים...');
+  dbg('[4/4] טוען נתונים...');
   shell.showPage('home');
 }
 
@@ -316,7 +317,7 @@ function switchUser(id, name) {
     '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="סיסמא (6 ספרות)" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
     '<div id="switch-err" class="switch-err"></div>',
     '<button data-act="modal-close" class="md-btn-ghost-lg">'+cancelTxt+'</button>'+
-    '<button data-act="switch-confirm" data-ksave class="md-btn-primary-lg">'+enterTxt+'</button>');
+    '<button data-act="switch-confirm" data-ksave class="md-btn-primary-lg">'+enterTxt+'</button>', icon('user'));
   document.getElementById('switch-name').textContent = name;
   document.getElementById('switch-pass').focus();
 }

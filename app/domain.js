@@ -14,6 +14,7 @@ import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
 import { AUTH, S, shell } from './state.js';
+import { icon } from './icons.js';
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
 // ה-API הוא addVirtualFileSystem/addFonts — השמה ל-pdfMake.vfs נכשלת בשקט מ-0.3 ומחזירה גופן בלי עברית.
@@ -80,7 +81,7 @@ function hrApplyPerms(p) {
       }
       closeModal();
       shell.showPage('home');
-      try { toast(MSG_PERMS_CHANGED_PRE + lbl + MSG_PERMS_CHANGED_POST); } catch (e3) {}
+      try { toast(MSG_PERMS_CHANGED_PRE + lbl + MSG_PERMS_CHANGED_POST, null, icon('key')); } catch (e3) {}
     }
   }
   return changed;

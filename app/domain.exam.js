@@ -131,8 +131,8 @@ async function hrExamUpload(st, input) {
   var file = input && input.files && input.files[0];
   if (!file) return;
   input.value = '';
-  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'bad'); return; }
-  if (file.size > EX_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'bad'); return; }
+  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
+  if (file.size > EX_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'warn'); return; }
   var rec = _hrOpenRec(st);
   if (!rec) return;
   var sid = input.getAttribute('data-id'), kind = input.getAttribute('data-kind');
@@ -164,7 +164,7 @@ async function hrExamUpload(st, input) {
 // הקישור חתום לשעה — הדלי פרטי.
 async function hrOpenFile(path) {
   if (!path) return;
-  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'bad'); return; }
+  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
   var w = window.open('', '_blank');
   try {
     var res = await S.SB.storage.from(HR_FILES_BUCKET).createSignedUrl(path, 3600);

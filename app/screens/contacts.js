@@ -93,7 +93,7 @@ async function saveContacts() {
   });
   var footer = ((document.getElementById('ct-footer') || {}).value || '').trim();
   await hrCfgSet('contacts', { groups: groups, footer: footer });
-  toast('✅ אנשי הקשר נשמרו', null, 'good');
+  toast('אנשי הקשר נשמרו', null, 'good');
 }
 
 export { addContactGroup, addContactRow, contactsPaneHTML, contactsUrl, renderContactsSettings, saveContacts };
