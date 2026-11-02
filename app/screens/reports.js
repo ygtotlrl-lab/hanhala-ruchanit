@@ -292,7 +292,7 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
     '<h3>חומר הלימודים</h3><table class="subj">' + subj + '</table>' +
     '<h3>פנימייה</h3><table>' + tr('זמן שינה', esc(r.sleepG)) + RP_INTERNAT.map(function (x) { return tr(x[1], v(x[0])); }).join('') + '</table>' +
     '<div class="foot"><div class="more">הערות אישיות מעבר לדף | לפרטי קשר אנשי צוות הישיבה – <a href="' + esc(contactsUrl()) + '">לחץ כאן</a></div>' +
-    '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 1–100 · 0 — לא נבחן</div>' +
+    '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 0–100</div>' +
       '<div class="sig"><img src="app/img/report-sig.png" alt=""><b>הרב אליעזר יוסף חי קלנגל</b><span>משגיח ראשי</span>' +
       '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
   '</div></section>';
