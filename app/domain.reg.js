@@ -1,10 +1,10 @@
 // app/domain.reg.js — סדרים ושינה: מסך הרישום והסימונים, לשני הזרמים
 import { dayIso, dayNoon, readNum, sortCompare } from '../core/util.js';
-import { idEq, newClientId, pendMark, schedulePush, tombKill } from '../core/sync.js';
+import { idEq, newClientId, pendMark, plFreshWithin, schedulePush, tombKill } from '../core/sync.js';
 import { sessUserId } from '../core/auth.js';
 import { esc, openModal, toast } from '../core/ui.js';
 import { HEB_DOW, hebToGreg } from '../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_ALERT_ABS, HR_FRESH_MS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutRecs,
          hrSortStudents, modalOpen, saveStudents, tyCls } from './domain.js';
@@ -239,10 +239,10 @@ async function hrOpenSession(st, sessId, sessName) {
   if(st.exam&&!pickedIso){toast(MSG_EXAM_PICK_DATE, null, 'warn');return;}
   var dateIso=pickedIso||st.day();
 
-  // ההמתנה למשיכה מכוונת — היא מכריעה אם נוצרת רשומה שנייה לאותו סדר; החיווי והניטרול בניתוב.
-  // משיכה אחת מסוננת ליום שנבחר — בדיקת הכפילות צריכה יום אחד בלבד.
+  // בדיקת הכפילות צריכה נתון טרי — היא מכריעה אם נוצרת רשומה שנייה לאותו סדר. כשהבדיקה המחזורית אישרה
+  // בשניות האחרונות שהמראה זהה לענן — פותחים מיד; אחרת ממתינים למשיכה אחת, מסוננת ליום שנבחר (החיווי והניטרול בניתוב).
   // כשל משיכה נופל למצב המקומי; המיזוג החלוני שומר את מה שמחוץ לחלון.
-  await hrPullSessions(st, hrDayWin(dateIso));
+  if(!plFreshWithin(HR_FRESH_MS)) await hrPullSessions(st, hrDayWin(dateIso));
   var existing=hrFindLiveSession(S[st.v+'Data']||[],sessName,dateIso);
   if(existing){
     openModal(st.msg.done,

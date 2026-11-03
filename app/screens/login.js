@@ -9,7 +9,7 @@ import { AUTH_USER_COLS, authLog, authUsersTable, authVerify, isAdminOf, lkReset
          usersSaveOne } from '../../core/auth.js';
 import { closeModal, esc, openModal, shellBare, toast } from '../../core/ui.js';
 import { HEB_DOW, hebrewDate } from '../../core/hebrew.js';
-import { HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
+import { HR_LOGIN_NET_MS, HR_PERMS_KEY, MSG_BAD_LOGIN, MSG_NO_FP_ONLINE, MSG_OFFLINE_LOGIN_LATER,
          MSG_OFF_FIRST_LOGIN, MSG_SERVER_DOWN_LOCAL, MSG_SWITCHED_AS,
          MSG_SWITCH_NEED_PASS, MSG_SWITCH_TITLE,
          MSG_SWITCH_WRONG_PASS } from '../constants.js';
@@ -66,15 +66,19 @@ async function _doLoginInner() {
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
   dbg('[1/4] שולח בקשה לשרת...');
+  // ההרשאות נמשכות במקביל לשורת המשתמש — בסיסמה שגויה הן פשוט אינן בשימוש, ובנכונה חוסכים פנייה שנייה לרשת.
+  var permsP = permsFetch();
   var res = null, netFail = false;
   try {
+    // בלי רשת כלל — אין למה לחכות לתקרת הזמן; ישר לעותק שבמכשיר.
+    if (navigator.onLine === false) throw new Error('offline');
     // השורה נשלפת לפי שם המשתמש בלבד וההכרעה מול הטביעה — סינון לפי סיסמה בשאילתה
     // הופך ערך שבענן למפתח שכל מחזיק מפתח ה-anon יכול לקרוא.
     res = await netTimeout(S.SB.from(authUsersTable())
       .select(AUTH_USER_COLS.join(','))
       .eq('username', username)
       .eq('active', true)
-      .maybeSingle());
+      .maybeSingle(), HR_LOGIN_NET_MS);
   } catch(e) {
     // פסק זמן נחשב כאין רשת שמישה.
     console.error('[login] SB threw:', e && e.message);
@@ -153,15 +157,22 @@ async function _doLoginInner() {
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
-  await afterLogin();
+  await afterLogin(permsP);
+}
+
+// משיכת ההרשאות — בלי רשת כלל, או בכשל, מחזירה null, ו-loadPerms נופלת לעותק המקומי.
+function permsFetch() {
+  if (navigator.onLine === false) return Promise.resolve(null);
+  try { return Promise.resolve(hrCfgGet('perms', true)).catch(function () { return null; }); }
+  catch (e) { return Promise.resolve(null); }
 }
 
 // מה שאחרי אימות מוצלח — ההרשאות, הכותרת, תפריט המשתמש והמעבר לבית; משותף לכניסה ולמסירה שאחרי עדכון.
-async function afterLogin() {
+async function afterLogin(permsP) {
   var u = AUTH.user;
   function dbg(msg){ console.log('[login] '+msg); }
   dbg('[2/4] משתמש אומת — טוען הרשאות...');
-  try { await loadPerms(); } catch(e) { console.warn('[login] loadPerms failed:', e); }
+  try { await loadPerms(permsP); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('[3/4] מנווט לדף הבית...');
   // הסתרת מסך הכניסה והמעבר לבית רצים תמיד; כל עדכון משני עטוף בנפרד —
   // data מוגדר רק בענף המקוון, וקריאה ממנו באופליין זורקת.
@@ -233,12 +244,13 @@ function doLogout() {
   shell.showPageInternal('home');
 }
 
-async function loadPerms() {
+// permsP — משיכה שכבר יצאה (במקביל לאימות); בלעדיה — נמשכות כאן.
+async function loadPerms(permsP) {
   // supabase-js אינו זורק בכשל רשת אלא מחזיר error — חובה לבדוק אותו במפורש.
   // הקריאה דרך hrCfgGet ולא בשאילתה נפרדת: single מסמן מפתח חסר כשגיאה, והמסלול היה נופל לעותק המקומי.
   var res = null;
   try {
-    res = await hrCfgGet('perms', true);
+    res = await (permsP || permsFetch());
   } catch(e) {
     res = null;
   }
@@ -321,8 +333,11 @@ async function confirmSwitch() {
   var errEl=document.getElementById('switch-err');
   if(!pass){errEl.textContent=MSG_SWITCH_NEED_PASS;return;}
   var res=null, netFail=false;
+  // כמו בכניסה: ההרשאות במקביל, ובלי רשת כלל — ישר לעותק שבמכשיר.
+  var permsP=permsFetch();
   try {
-    res=await netTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single());
+    if(navigator.onLine===false) throw new Error('offline');
+    res=await netTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single(), HR_LOGIN_NET_MS);
   } catch(eSw){ netFail=true; }
   if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
   var u=null;
@@ -357,7 +372,7 @@ async function confirmSwitch() {
   ctxSwitch();
   AUTH.user=u;
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
-  await loadPerms();
+  await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;
   var mn=document.getElementById('user-menu-name');
