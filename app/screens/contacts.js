@@ -1,5 +1,5 @@
 // app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי contacts.html קורא את אותה הגדרה
-import { esc, toast } from '../../core/ui.js';
+import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
@@ -32,12 +32,31 @@ function contactsStaff(cls) {
   return out;
 }
 
+// הדף הציבורי בתוך האפליקציה — בדיאלוג על כל המסך, ולא ניווט: ניווט במעטפת המותקנת מחליף את האפליקציה בדף
+function contactsView() {
+  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="contacts.html" title="דף אנשי הקשר"></iframe>', '', 'watch');
+}
+
+// הקישור ללוח — להודעה שנשלחת עם הגיליונות; בלי גישה ללוח — הקישור מוצג בהודעה
+async function contactsCopyLink() {
+  var u = contactsUrl(), ok = false;
+  try { await navigator.clipboard.writeText(u); ok = true; }
+  catch (e) {
+    var t = document.createElement('textarea');
+    t.value = u; document.body.appendChild(t); t.select();
+    try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    t.remove();
+  }
+  toast(ok ? 'הקישור הועתק' : u, null, ok ? 'good' : null);
+}
+
 function contactsPaneHTML() {
   return `    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות דוחות</span></div>
       <div class="ss" data-autosave="ct-save">
         <div class="ss-t">אנשי קשר — צוות הישיבה
-          <a class="btn sm out" href="contacts.html" target="_blank" rel="noopener">${icon('watch')}צפייה בדף</a></div>
+          <span class="ct-acts"><button class="btn sm out" data-act="ct-view">${icon('watch')}צפייה בדף</button>
+          <button class="btn sm out" data-act="ct-copy">${icon('copy')}העתקת קישור</button></span></div>
         <div class="ct-link">הדף ציבורי ואין ממנו גישה לאפליקציה; הגיליון מקשר אליו:
           <span class="ct-url" id="ct-url"></span></div>
         <div id="ct-edit" class="set-stack"></div>
@@ -133,4 +152,4 @@ async function saveContacts() {
   toast(MSG_SAVED, null, 'good');
 }
 
-export { addContactGroup, addContactRow, contactsPaneHTML, contactsStaff, contactsUrl, renderContactsSettings, saveContacts };
+export { addContactGroup, addContactRow, contactsCopyLink, contactsPaneHTML, contactsStaff, contactsUrl, contactsView, renderContactsSettings, saveContacts };

@@ -29,7 +29,7 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
-import { addContactGroup, addContactRow, saveContacts } from './screens/contacts.js';
+import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -432,6 +432,8 @@ var DOM_ACTIONS = {
   'ct-group-add':   function () { addContactGroup(); },
   'ct-row-add':     function (el) { addContactRow(el); },
   'ct-save':        function () { return saveContacts(); },
+  'ct-view':        function () { contactsView(); },
+  'ct-copy':        function () { return contactsCopyLink(); },
   'perms-save':     function () { return savePerms(); },
   'rp-nav':         function (el) { rpNav(Number(el.getAttribute('data-dir'))); },
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
