@@ -1,13 +1,13 @@
 // app/screens/settings.js — ההגדרות, המשתמשים וההרשאות
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
-         MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
+         MSG_SAVED, MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
 import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, isAdminOf, usersRefresh,
          usersGet, usersSaveAll, usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
 import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_NO_USER_SESSION, MSG_PASS_MISMATCH_X, MSG_PASS_NEEDS_NET,
-         MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PERMS_SAVED, MSG_REASONS_SAVED,
+         MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X,
          MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED, MSG_USER_SAVED_NO_FP,
          MSG_PULL_STALE, MSG_USER_SWITCHED_MID } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
@@ -52,7 +52,7 @@ function screenSettingsHTML() {
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מצבת תלמידים</span></div>
-      <div class="ss" data-ks>
+      <div class="ss" data-autosave="absence-reasons-save">
         <div class="ss-t">סיבות היעדרות לפי סוג</div>
         <div class="reason-cols">
           <div>
@@ -71,16 +71,13 @@ function screenSettingsHTML() {
             <button data-act="absence-reason-add" data-kind="left" class="reason-add-warn">+ הוסף סיבה</button>
           </div>
         </div>
-        <div class="save-row-start">
-          <button class="btn" data-act="absence-reasons-save" data-ksave>${icon('save')}שמור</button>
-        </div>
       </div>
     </div>
 
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות סדרים</span></div>
-      <div class="ss" data-ks>
+      <div class="ss" data-autosave="at-settings-save">
         <div class="set-stack">
           <!-- סדרים -->
           <div class="cfg-card">
@@ -95,21 +92,15 @@ function screenSettingsHTML() {
             <button data-act="at-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
           </div>
         </div>
-        <div class="save-row-end">
-          <button data-act="at-settings-save" class="btn" data-ksave>${icon('save')}שמור הגדרות</button>
-        </div>
       </div>
     </div>
     <div id="settings-sleep" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות שינה</span></div>
-      <div class="ss" data-ks>
+      <div class="ss" data-autosave="sl-settings-save">
         <div class="set-box">
           <div class="panel-head">סוגי טיפולים</div>
           <div id="sl-cfg-treats" class="sess-list"></div>
           <button data-act="sl-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
-        </div>
-        <div class="save-row-end">
-          <button data-act="sl-settings-save" class="btn" data-ksave>${icon('save')}שמור הגדרות</button>
         </div>
       </div>
     </div>
@@ -121,7 +112,7 @@ ${contactsPaneHTML()}
         <div class="ss-t">ניהול משתמשים <button class="btn sm" data-act="user-add-open">${icon('plus')}הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss" id="ss-perms">
+      <div class="ss" id="ss-perms" data-autosave="perms-save">
         <div class="ss-t">הרשאות לפי תפקיד</div>
         <div class="table-scroll">
           <table class="pt">
@@ -179,10 +170,9 @@ async function saveAbsenceReasons() {
       reasons[type].push(v);
     });
   });
-  console.log('[absence-reasons] saving:', reasons);
   // הטוסט אחרי הכתיבה לדיסק, שסינכרונית בראש hrCfgSet; ההמתנה שאחריה היא הרשת בלבד.
   // ההבטחה מוחזרת כדי שנקודת הניתוב תשחרר את הכפתור לפיה.
-  toast(MSG_REASONS_SAVED, null, 'good');
+  toast(MSG_SAVED, null, 'good');
   return hrCfgSet('absence_reasons', reasons);
 }
 
@@ -310,7 +300,6 @@ async function saveUser() {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
-  if (id) _usersLocalPatch(id, obj);
   // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   closeModal();
@@ -331,7 +320,6 @@ async function toggleUserActive(id, current) {
     toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
   }
-  _usersLocalPatch(id, { active: !current });
   // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין.
@@ -351,7 +339,7 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id] || AUTH.DEFAULT_PERMS[m.id] || {})[role] || 'none';
-      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-chg="perms" data-mod="'+m.id+'" data-role="'+role+'">';
+      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
         selHTML += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
@@ -380,7 +368,7 @@ async function savePerms() {
   });
   hrApplyPerms(p);
   await hrCfgSet('perms', p);
-  toast(MSG_PERMS_SAVED, null, 'good');
+  toast(MSG_SAVED, null, 'good');
 }
 
 // ── שינוי סיסמה אישית ──
@@ -450,12 +438,6 @@ async function changeMyPassword() {
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'warn');
 }
 
-// מה שנכתב לענן נכתב גם לעותק שבמכשיר — אחרת הציור הראשון מהמכשיר מראה את המצב הקודם לרגע
-function _usersLocalPatch(id, fields) {
-  var arr = usersGet().map(function (u) { return u && String(u.client_id) === String(id) ? Object.assign({}, u, fields) : u; });
-  usersSaveAll(arr);
-}
-
 async function renderUsersList() {
   var el = document.getElementById('users-list');
   if (!el) return;
@@ -517,7 +499,6 @@ async function usersDragApply(list, kind) {
     var res;
     try { res = await writeUser(ids[i], { sort: i + 1 }); } catch (e) { res = { error: e }; }
     if (res && res.error) { bad = res.error; break; }
-    _usersLocalPatch(ids[i], { sort: i + 1 });
     n++;
   }
   if (n) await hrTouchLastChanged();

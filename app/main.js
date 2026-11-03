@@ -412,7 +412,7 @@ function showDenied() {
 var DOM_ACTIONS = {
   'sw-apply':            function (el) { hrHandoffSave(); swApply(el); },
   'sw-dismiss':          function () { swHideUpdate(); },
-  'reason-row-del':      function (el) { if (el.parentNode) el.parentNode.remove(); },
+  'reason-row-del':      function (el) { return _hrRemoveRow(el, el.parentNode); },
   // התראות התשתית נבנות ב-JS — לכן הן מנותבות במפה ולא במאזין ישיר על הכפתור.
   'ls-alert-close':      function () { var el = document.getElementById('ls-alert'); if (el) el.remove(); },
   'pend-alert-ok':       function () { pendAlertDismiss(); },
@@ -431,7 +431,8 @@ var DOM_ACTIONS = {
   'file-event-del': function (el) { deleteFileEvent(el.getAttribute('data-id')); },
   'ct-group-add':   function () { addContactGroup(); },
   'ct-row-add':     function (el) { addContactRow(el); },
-  'ct-remove':      function (el) { var b = el.closest('[data-ct-row],[data-ct-group]'); if (b) b.remove(); return saveContacts(); },
+  'ct-save':        function () { return saveContacts(); },
+  'perms-save':     function () { return savePerms(); },
   'rp-nav':         function (el) { rpNav(Number(el.getAttribute('data-dir'))); },
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
   'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
@@ -481,7 +482,7 @@ var DOM_ACTIONS = {
                         var chev = el.querySelector('.' + el.getAttribute('data-chev'));
                         if (chev) chev.classList.toggle('open', !open);
                       },
-  'row-remove':  function (el) { if (el.parentNode) el.parentNode.remove(); },
+  'row-remove':  function (el) { return _hrRemoveRow(el, el.closest('[data-ct-row],[data-ct-group]') || el.parentNode); },
   'settings-home':   function () { showSettingsHome(); },
   'settings-module': function (el) { showSettingsModule(el.getAttribute('data-mod')); },
   'filter-class':    function (el) { filterClass(el.getAttribute('data-cls')); },
@@ -627,13 +628,28 @@ document.addEventListener('input', function (e) {
   });
 });
 
+// מסך הגדרות נשמר מיד, בלי כפתור (שורת «הגדרות נשמרות מיד»): מיכל שנושא data-autosave — שינוי שדה בו (ביציאה או בבחירה)
+// והסרת שורה ממנו מפעילים את פעולת השמירה שלו; שדה בו נושא data-kent — Enter משחרר אותו ושומר.
+function _hrAutosave(el) {
+  var box = el && el.closest ? el.closest('[data-autosave]') : null;
+  var fn = box && DOM_ACTIONS[box.getAttribute('data-autosave')];
+  return fn ? fn(box) : undefined;
+}
+function _hrRemoveRow(el, row) {
+  var box = el.closest('[data-autosave]');
+  if (row) row.remove();
+  return box ? _hrAutosave(box) : undefined;
+}
+document.addEventListener('focusin', function (e) {
+  var t = e.target;
+  if (t && t.tagName === 'INPUT' && t.closest('[data-autosave]')) t.setAttribute('data-kent', '');
+});
+
 document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
-  // ההגדרות נשמרות מיד, בלי כפתור
-  if (el && el.dataset && el.dataset.chg === 'perms') savePerms();
-  if (el && el.dataset && el.dataset.chg === 'contacts') saveContacts();
+  _hrAutosave(el);
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }

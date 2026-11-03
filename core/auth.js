@@ -303,7 +303,14 @@ function writeUser(id, row) {
   var body = Object.assign({}, row);
   body.updated_at = Date.now();
   body.client_id = (key == null) ? (body.client_id || newClientId()) : key;
-  return _writeUserSend(body, key).then(function (res) { return app.USER_CFG.after(res, body); });
+  return _writeUserSend(body, key).then(function (res) {
+    // כתיבה מוצלחת מעדכנת מיד גם את שורתה במראה — בלי לחכות למשיכה, וציור מהמכשיר אינו מראה את הקודם
+    if (res && !res.error) {
+      var cur = usersGet().filter(function (u) { return u && String(u.client_id) === String(body.client_id); })[0];
+      usersSaveOne(Object.assign({}, cur || {}, body));
+    }
+    return app.USER_CFG.after(res, body);
+  });
 }
 
 // ── רישום כניסה ──

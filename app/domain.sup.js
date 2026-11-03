@@ -1,9 +1,9 @@
 // app/domain.sup.js — סדרים ושינה: השגחה, טיפולים והגדרות המודול, לשני הזרמים
-import { MSG_DELETE, dayToday, uniqHas } from '../core/util.js';
+import { MSG_DELETE, MSG_SAVED, dayToday, uniqHas } from '../core/util.js';
 import { idEq, newClientId, tombKill } from '../core/sync.js';
 import { sessUserId, usersNameOf } from '../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
-import { HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING, MSG_SETTINGS_SAVED } from './constants.js';
+import { HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING } from './constants.js';
 import { S } from './state.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
 import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
@@ -380,7 +380,7 @@ async function hrSaveSettingsCfg(st) {
   S[st.v+'Cfg']=null;
   await hrSaveCfg(st, cfg);
   S[st.v+'Cfg']=cfg;
-  toast(MSG_SETTINGS_SAVED, null, 'good');
+  toast(MSG_SAVED, null, 'good');
 }
 
 export { hrAddSessionRow, hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSettings,
