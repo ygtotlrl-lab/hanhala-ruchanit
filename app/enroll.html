@@ -8,7 +8,18 @@
 <title>טופס רישום — ישיבת תומכי תמימים ראשון לציון</title>
 <link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
 <!-- דף ציבורי ועצמאי: טופס הרישום, מתוך ההגדרה enroll_form; שולח בלבד (hr_enroll · הדלי hr-enroll) ואינו קורא דבר מלבד ההגדרה. -->
+<link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
+<script>
+// ההגדרה נשלפת כבר כאן, במקביל לפריסת הדף; GET פשוט (המפתח בכתובת) — בלי בקשת OPTIONS מקדימה, ואם נדחה — בכותרות כרגיל.
+self.FORM_CFG=(function(k){
+  var A=self.APP&&self.APP.supabase; if(!A) return null;
+  var u=A.url+'/rest/v1/hr_settings?select=value&key=eq.'+k;
+  return fetch(u+'&apikey='+encodeURIComponent(A.key)).then(function(r){if(!r.ok)throw r;return r;})
+    .catch(function(){return fetch(u,{headers:{apikey:A.key,Authorization:'Bearer '+A.key}});})
+    .then(function(r){if(!r.ok)throw new Error('settings '+r.status);return r.json();});
+})('enroll_form');
+</script>
 <style>
 @font-face{font-family:Heebo;font-weight:400;font-display:swap;src:url(fonts/heebo-hebrew-400.woff2) format('woff2')}
 @font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
@@ -18,7 +29,6 @@ body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);m
 button,input,select,textarea{font:inherit;color:inherit}
 header{background:linear-gradient(135deg,var(--deep),var(--brand) 60%,var(--mid));color:#fff;padding:20px 16px 22px;text-align:center}
 header img{height:64px;display:block;margin:0 auto 8px}
-header .bh{font-size:12px;opacity:.75;letter-spacing:.08em}
 header h1{font-size:22px;font-weight:700;margin-top:2px}
 header .sub{font-size:13.5px;opacity:.85;margin-top:3px}
 main{max-width:640px;margin:0 auto;padding:16px 16px 36px;display:flex;flex-direction:column;gap:14px}
@@ -99,7 +109,6 @@ textarea.in{min-height:84px;resize:vertical}
 <body>
 <header>
   <img src="img/logo-white.png" alt="ישיבת תומכי תמימים ראשון לציון">
-  <div class="bh">ב״ה</div>
   <h1>טופס רישום</h1>
   <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
 </header>
@@ -346,10 +355,19 @@ textarea.in{min-height:84px;resize:vertical}
   });
 
   if(!A){$('main').innerHTML='<div class="msgc">הטופס אינו זמין</div>';return;}
-  fetch(A.url+'/rest/v1/hr_settings?select=value&key=eq.enroll_form',{headers:hdrs()})
-    .then(function(r){return r.json();})
-    .then(function(rows){try{CFG=JSON.parse(rows[0].value);}catch(e){CFG=null;} if(!CFG||!Array.isArray(CFG.fields)) throw new Error('no form'); render();})
-    .catch(function(){$('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>';});
+  // ההגדרה האחרונה שנשמרה במכשיר מציירת את הטופס מיד; החדשה מחליפה אותה כשהגיעה — אם השתנתה ועוד לא התחילו למלא.
+  var LS='hr_cache_enroll_form', shown=null;
+  function cfgOk(c){return !!(c&&Array.isArray(c.fields));}
+  try{var c0=JSON.parse(localStorage.getItem(LS)||'null'); if(cfgOk(c0)){CFG=c0;render();shown=JSON.stringify(c0);}}catch(e){}
+  (self.FORM_CFG||Promise.reject(new Error('no config')))
+    .then(function(rows){
+      var c=JSON.parse(rows[0].value); if(!cfgOk(c)) throw new Error('no form');
+      var j=JSON.stringify(c); try{localStorage.setItem(LS,j);}catch(e){}
+      if(j===shown) return;
+      if(shown&&(Object.keys(V).length||Object.keys(FILES).length)) return;
+      CFG=c; render(); shown=j;
+    })
+    .catch(function(){ if(!shown) $('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>'; });
 })();
 </script>
 </body>
