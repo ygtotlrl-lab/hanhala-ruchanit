@@ -313,6 +313,7 @@ async function saveUser() {
     res = await writeUser(id, obj);
   } catch (e) { errEl.textContent = MSG_OFF_USER_WRITE; return; }
   if (!res || res.error) { errEl.textContent = 'שגיאה: ' + ((res && res.error && res.error.message) || MSG_SERVER_ERR); return; }
+  if (id) _usersLocalPatch(id, obj);
   // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   closeModal();
@@ -333,6 +334,7 @@ async function toggleUserActive(id, current) {
     toast(MSG_ACTION_FAILED + (res.error.message || res.error.code || MSG_NO_LINK), null, 'bad');
     return;
   }
+  _usersLocalPatch(id, { active: !current });
   // טבלת המשתמשים אינה בשכבת הדחיפה — בלי קידום אות הבדיקה המחזורית השינוי אינו נראה במכשירים אחרים.
   await hrTouchLastChanged();
   // משתמש שהושבת חייב לרדת מהעותק המקומי — אחרת הוא נשאר בר-כניסה אופליין.
@@ -451,6 +453,12 @@ async function changeMyPassword() {
   else toast(MSG_PASS_UPDATED_NO_FP, null, 'warn');
 }
 
+// מה שנכתב לענן נכתב גם לעותק שבמכשיר — אחרת הציור הראשון מהמכשיר מראה את המצב הקודם לרגע
+function _usersLocalPatch(id, fields) {
+  var arr = usersGet().map(function (u) { return u && String(u.client_id) === String(id) ? Object.assign({}, u, fields) : u; });
+  usersSaveAll(arr);
+}
+
 async function renderUsersList() {
   var el = document.getElementById('users-list');
   if (!el) return;
@@ -512,9 +520,10 @@ async function usersDragApply(list, kind) {
     var res;
     try { res = await writeUser(ids[i], { sort: i + 1 }); } catch (e) { res = { error: e }; }
     if (res && res.error) { bad = res.error; break; }
+    _usersLocalPatch(ids[i], { sort: i + 1 });
     n++;
   }
-  if (n) { await hrTouchLastChanged(); usersRefresh(); }
+  if (n) await hrTouchLastChanged();
   if (bad) toast(MSG_ACTION_FAILED + (bad.message || bad.code || MSG_NO_LINK), null, 'bad');
   renderUsersList();
 }
