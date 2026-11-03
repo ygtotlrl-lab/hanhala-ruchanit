@@ -506,6 +506,7 @@ var DOM_ACTIONS = {
   'students-print':       function () { printStudents(); },
   // טופס הרישום — בבנייה; ההרשאה כבר נאכפת
   'enroll-open':          function () { if (!canAccess('enroll')) { showDenied(); return; } showConstruction(); },
+  'intake-open':          function () { if (!canAccess('intake')) { showDenied(); return; } showConstruction(); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
   // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני
