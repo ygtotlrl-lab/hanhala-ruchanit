@@ -231,9 +231,7 @@ function _settingsPaint(cfg) {
     '<button class="add-dashed-btn" data-act="en-field-add">+ הוספת שדה</button>' +
     '<div class="ss-t">עמודות המעקב בתגובות</div>' +
     '<div class="en-track" id="en-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="en-track-add">+ הוספת עמודה</button>' +
-    '<div class="ss-t">הודעת הפרטיות שמעל כפתור השליחה</div>' +
-    '<textarea class="en-priv" id="en-privacy" rows="4" aria-label="הודעת הפרטיות">' + esc(cfg.privacy || '') + '</textarea></div>';
+    '<button class="add-dashed-btn" data-act="en-track-add">+ הוספת עמודה</button></div>';
   var bd = document.getElementById('en-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות הטופס — טופס רישום', html, '', 'settings');
@@ -285,8 +283,8 @@ function enrollSave() {
   var images = Array.prototype.map.call(document.querySelectorAll('#en-imgs [data-url]'), function (x) { return x.getAttribute('data-url'); });
   var track = Array.prototype.map.call(document.querySelectorAll('#en-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
   var iv = parseInt((document.getElementById('en-interval') || {}).value, 10);
-  var pv = document.getElementById('en-privacy');
-  var next = { interval: iv >= 2 && iv <= 20 ? iv : 4, images: images, fields: fields, track: track, privacy: pv ? pv.value.trim() : (cfg.privacy || '') };
+  // הודעת הפרטיות אינה נערכת בהגדרות — נשמרת כפי שהיא
+  var next = { interval: iv >= 2 && iv <= 20 ? iv : 4, images: images, fields: fields, track: track, privacy: cfg.privacy || ENROLL_DEFAULT.privacy };
   // סוג שהשתנה ל«בחירה» מקבל את שדה האפשרויות מיד
   var typeChanged = Array.prototype.some.call(document.querySelectorAll('#en-fields [data-fid]'), function (row) {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));

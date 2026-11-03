@@ -111,4 +111,3 @@
 .en-fline select{flex:1}
 .en-req{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-2);font-weight:700;color:var(--text-2);white-space:nowrap}
 #modal-body .en-req input{width:18px;height:18px;margin:0;padding:0}
-#modal-body .en-priv{width:100%;border:1.5px solid var(--border);border-radius:var(--r-3);padding:var(--sp-3);font-family:Heebo;font-size:var(--fs-2);line-height:var(--lh-3);background:var(--card);color:var(--text)}
