@@ -34,7 +34,7 @@ function contactsStaff(cls) {
 function contactsPaneHTML() {
   return `    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות דוחות</span></div>
-      <div class="ss" data-ks>
+      <div class="ss">
         <div class="ss-t">אנשי קשר — צוות הישיבה
           <a class="btn sm out" href="contacts.html" target="_blank" rel="noopener">${icon('watch')}צפייה בדף</a></div>
         <div class="ct-link">הדף ציבורי ואין ממנו גישה לאפליקציה; הגיליון מקשר אליו:
@@ -42,10 +42,7 @@ function contactsPaneHTML() {
         <div id="ct-edit" class="set-stack"></div>
         <button data-act="ct-group-add" class="add-dashed-btn">+ הוסף קבוצה</button>
         <label class="field-label" for="ct-footer">שורת הכתובת שבתחתית הדף</label>
-        <input id="ct-footer" class="input-full" placeholder="כתובת · דוא״ל">
-        <div class="save-row-end">
-          <button data-act="ct-save" class="btn" data-ksave>${icon('save')}שמור אנשי קשר</button>
-        </div>
+        <input id="ct-footer" class="input-full" placeholder="כתובת · דוא״ל" data-chg="contacts" data-kent>
       </div>
     </div>
 `;
@@ -56,27 +53,27 @@ function _rowHTML(r) {
   // השדות זה מתחת לזה — תפקיד · שם · טלפון · דוא״ל, ולכל אחד אייקון; ההסרה בפינה
   function fld(f, ic, lbl, extra) {
     return '<label class="ct-fld"><span class="ct-ic">' + icon(ic) + '</span>' +
-      '<input aria-label="' + lbl + '" data-f="' + f + '" placeholder="' + lbl + '"' + (extra || '') + ' value="' + esc(r[f] || '') + '"></label>';
+      '<input aria-label="' + lbl + '" data-chg="contacts" data-kent data-f="' + f + '" placeholder="' + lbl + '"' + (extra || '') + ' value="' + esc(r[f] || '') + '"></label>';
   }
   return '<div class="ct-row" data-ct-row>' +
     fld('role', 'ctRole', 'תפקיד') + fld('name', 'user', 'שם') +
     fld('phone', 'ctPhone', 'טלפון', ' inputmode="tel" dir="ltr"') + fld('email', 'ctMail', 'דוא״ל', ' inputmode="email" dir="ltr"') +
-    '<label class="ct-fld"><span class="ct-ic">' + icon('ctRole') + '</span><select aria-label="בגיליון" data-f="rp">' +
+    '<label class="ct-fld"><span class="ct-ic">' + icon('ctRole') + '</span><select aria-label="בגיליון" data-chg="contacts" data-f="rp">' +
       '<option value="">לא בגיליון</option>' + RP_ROLES.map(function (x) {
         return '<option value="' + x[0] + '"' + (r.rp === x[0] ? ' selected' : '') + '>בגיליון: ' + esc(x[1]) + '</option>';
       }).join('') + '</select></label>' +
-    '<button data-act="row-remove" class="row-del-btn ct-row-del" aria-label="הסרת איש הקשר">' + icon('del') + '</button>' +
+    '<button data-act="ct-remove" class="row-del-btn ct-row-del" aria-label="הסרת איש הקשר">' + icon('del') + '</button>' +
   '</div>';
 }
 
 function _groupHTML(g) {
   g = g || { title: '', rows: [{}] };
   return '<div class="cfg-card ct-group" data-ct-group>' +
-    '<div class="ct-group-head"><input aria-label="שם הקבוצה" data-f="title" class="sess-field" placeholder="שם הקבוצה (למשל: השגחה)" value="' + esc(g.title || '') + '">' +
-      '<select aria-label="שיעור" data-f="cls" class="ct-cls"><option value="">בלי שיעור</option>' + CT_CLS.map(function (k) {
+    '<div class="ct-group-head"><input aria-label="שם הקבוצה" data-chg="contacts" data-kent data-f="title" class="sess-field" placeholder="שם הקבוצה (למשל: השגחה)" value="' + esc(g.title || '') + '">' +
+      '<select aria-label="שיעור" data-chg="contacts" data-f="cls" class="ct-cls"><option value="">בלי שיעור</option>' + CT_CLS.map(function (k) {
         return '<option value="' + k + '"' + (g.cls === k ? ' selected' : '') + '>' + esc(HR_CLS_NAME[k]) + '</option>';
       }).join('') + '</select>' +
-      '<button data-act="row-remove" class="row-del-btn" aria-label="הסרת הקבוצה">' + icon('del') + '</button></div>' +
+      '<button data-act="ct-remove" class="row-del-btn" aria-label="הסרת הקבוצה">' + icon('del') + '</button></div>' +
     '<div data-ct-rows>' + (g.rows || []).map(_rowHTML).join('') + '</div>' +
     '<button data-act="ct-row-add" class="add-dashed-btn">+ הוסף איש קשר</button>' +
   '</div>';
@@ -116,6 +113,7 @@ function addContactRow(btn) {
   if (rows) rows.insertAdjacentHTML('beforeend', _rowHTML());
 }
 
+// נשמר מיד — בכל שינוי שדה (ביציאה ממנו) ובכל הסרה; שורה ריקה שנוספה אינה נשמרת עד שממלאים אותה
 async function saveContacts() {
   var groups = [];
   document.querySelectorAll('#ct-edit [data-ct-group]').forEach(function (g) {
@@ -132,7 +130,7 @@ async function saveContacts() {
   });
   var footer = ((document.getElementById('ct-footer') || {}).value || '').trim();
   await hrCfgSet('contacts', { groups: groups, footer: footer });
-  toast('אנשי הקשר נשמרו', null, 'good');
+  toast('נשמר', null, 'good');
 }
 
 export { addContactGroup, addContactRow, contactsPaneHTML, contactsStaff, contactsUrl, renderContactsSettings, saveContacts };

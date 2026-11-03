@@ -431,7 +431,7 @@ var DOM_ACTIONS = {
   'file-event-del': function (el) { deleteFileEvent(el.getAttribute('data-id')); },
   'ct-group-add':   function () { addContactGroup(); },
   'ct-row-add':     function (el) { addContactRow(el); },
-  'ct-save':        function () { return saveContacts(); },
+  'ct-remove':      function (el) { var b = el.closest('[data-ct-row],[data-ct-group]'); if (b) b.remove(); return saveContacts(); },
   'rp-nav':         function (el) { rpNav(Number(el.getAttribute('data-dir'))); },
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
   'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
@@ -522,7 +522,6 @@ var DOM_ACTIONS = {
   'my-pass-save':     function () { return changeMyPassword(); },
   'switch-confirm':   function () { return confirmSwitch(); },
   'student-save':     function () { return runSave(saveStudent); },
-  'perms-save':       function () { return savePerms(); },
 };
 
 // פעולות הסדרים והשינה — מפה אחת לשני הזרמים, ושם הפעולה בתחילית הזרם.
@@ -632,6 +631,9 @@ document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
+  // ההגדרות נשמרות מיד, בלי כפתור
+  if (el && el.dataset && el.dataset.chg === 'perms') savePerms();
+  if (el && el.dataset && el.dataset.chg === 'contacts') saveContacts();
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }

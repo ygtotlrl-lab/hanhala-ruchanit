@@ -121,7 +121,7 @@ ${contactsPaneHTML()}
         <div class="ss-t">ניהול משתמשים <button class="btn sm" data-act="user-add-open">${icon('plus')}הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
       </div>
-      <div class="ss" data-ks id="ss-perms">
+      <div class="ss" id="ss-perms">
         <div class="ss-t">הרשאות לפי תפקיד</div>
         <div class="table-scroll">
           <table class="pt">
@@ -130,9 +130,6 @@ ${contactsPaneHTML()}
             </tr></thead>
             <tbody id="perm-tbody"></tbody>
           </table>
-        </div>
-        <div class="save-row-start">
-          <button class="btn" data-act="perms-save" data-ksave>${icon('save')}שמור הרשאות</button>
         </div>
       </div>
       <!-- אזור מצב — שני האלמנטים האחרונים במסך, בסדר הזה -->
@@ -354,7 +351,7 @@ function renderPermsTable() {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id] || AUTH.DEFAULT_PERMS[m.id] || {})[role] || 'none';
-      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
+      var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-chg="perms" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
         selHTML += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
       });
