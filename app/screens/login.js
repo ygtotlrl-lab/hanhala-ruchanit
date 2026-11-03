@@ -17,6 +17,7 @@ import { AUTH, S, shell } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
+import { gateForget, gateLogin } from './enroll.js';
 import { stIcon } from '../../core/icons.js';
 
 // ── המסכים ──
@@ -109,6 +110,8 @@ async function _doLoginInner() {
     // נשמרת מיד, כדי שכניסה אופליין תעבוד גם אם הרענון המלא שאחרי הכניסה ייכשל.
     usersSaveOne(onlineUser);
     authLog(true, 'online', username);
+    // שער השרת (התגובות לטפסים) — ברקע, בלי להמתין
+    gateLogin(username, pass);
   } else if (authoritativeNo) {
     authLog(false, 'wrong_credentials_online', username);
     showErr(MSG_BAD_LOGIN, 'bad'); return;
@@ -231,6 +234,7 @@ async function hrHandoffResume() {
 }
 
 function doLogout() {
+  gateForget();
   ctxSwitch();
   AUTH.user = null;
   lkStop();
@@ -368,10 +372,12 @@ async function confirmSwitch() {
     // u נשמר במפורש — הרענון המלא רץ מ-authLog, אחרי AUTH.user=u.
     usersSaveOne(u);
   }
+  var _gatePass = AUTH.offlineLogin ? null : pass;
   closeModal();
   ctxSwitch();
   AUTH.user=u;
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
+  if(_gatePass) gateLogin(u.username,_gatePass);
   await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;

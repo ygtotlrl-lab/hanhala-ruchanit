@@ -463,3 +463,37 @@ grant all on table public.hr_report_vals to service_role;
 alter table public.hr_report_vals enable row level security;
 drop policy if exists hr_report_vals_all on public.hr_report_vals;
 create policy hr_report_vals_all on public.hr_report_vals as permissive for all to anon, authenticated using (true) with check (true);
+
+-- טופס הרישום הציבורי: טבלת שליחה-בלבד — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, במפתח השירות).
+-- מספרי זהות, סריקות ומידע רפואי — ולכן אינה במראה, אינה ב-PUSH_TABLES ואינה בגיבוי.
+create table if not exists public.hr_enroll (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  school_year integer not null,
+  data jsonb not null,
+  files jsonb not null default '{}'::jsonb,
+  track jsonb not null default '{}'::jsonb,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_enroll_pkey primary key (client_id)
+);
+create index if not exists hr_enroll_year_idx on public.hr_enroll using btree (school_year);
+revoke all on table public.hr_enroll from anon, authenticated;
+grant insert on table public.hr_enroll to anon, authenticated;
+grant all on table public.hr_enroll to service_role;
+alter table public.hr_enroll enable row level security;
+drop policy if exists hr_enroll_insert on public.hr_enroll;
+create policy hr_enroll_insert on public.hr_enroll as permissive for insert to anon, authenticated
+  with check (deleted = false and track = '{}'::jsonb);
+
+-- קובצי הטופס (צילומי ת״ז) — דלי פרטי, הכנסה בלבד; הקישור החתום — מהשער.
+insert into storage.buckets (id, name, public) values ('hr-enroll', 'hr-enroll', false) on conflict (id) do nothing;
+drop policy if exists hr_enroll_files_insert on storage.objects;
+create policy hr_enroll_files_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-enroll');
+
+-- תמונות הדפים הציבוריים (המצגת שבראש טופס הרישום) — דלי ציבורי; ההעלאה מהגדרות הטופס.
+insert into storage.buckets (id, name, public) values ('hr-public', 'hr-public', true) on conflict (id) do nothing;
+drop policy if exists hr_public_insert on storage.objects;
+create policy hr_public_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-public');
