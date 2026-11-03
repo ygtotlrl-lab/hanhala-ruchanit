@@ -25,7 +25,7 @@ function screenLoginHTML() {
   return `
 <div id="auth-screen">
   <div class="auth-box" data-ks>
-    <div class="auth-logo"><img src="icons/icon-512.092edf48.png" alt="לוגו"></div>
+    <div class="auth-logo"><img src="icons/icon-512.ea0cf769.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
