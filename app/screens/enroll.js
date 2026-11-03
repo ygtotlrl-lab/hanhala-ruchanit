@@ -1,5 +1,5 @@
 // app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות, הגדרות הטופס, ושער השרת
-// הטופס עצמו — enroll.html, דף ציבורי ששולח בלבד. התגובות נקראות רק דרך השער (functions/hr-gate), אחרי כניסה מקוונת:
+// הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות נקראות רק דרך השער (פונקציית Edge‏ hr-gate, שהקוד שלה ב-Supabase), אחרי כניסה מקוונת:
 // האסימון נשמר במכשיר למשתמש שנכנס, ובלעדיו — הזנת הסיסמה פעם אחת, עם רשת.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
@@ -65,7 +65,7 @@ function enrollOpen() {
     '</div>', '', 'enroll');
 }
 function enrollView() {
-  openModal('טופס רישום', '<iframe class="ct-frame" src="enroll.html" title="טופס רישום"></iframe>', '', 'watch');
+  openModal('טופס רישום', '<iframe class="ct-frame" src="app/enroll.html" title="טופס רישום"></iframe>', '', 'watch');
 }
 async function enrollCopy() {
   var u = enrollUrl(), ok = false;

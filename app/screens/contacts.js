@@ -1,4 +1,4 @@
-// app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי contacts.html קורא את אותה הגדרה
+// app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי app/contacts.html קורא את אותה הגדרה
 import { esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
@@ -8,7 +8,7 @@ import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS } from '../constants.js';
 // הכתובת שהגיליון מקשר אליה — הדף הציבורי שליד האפליקציה.
 function contactsUrl() {
   var base = (self.APP && self.APP.android && self.APP.android.url) || (location.origin + location.pathname.replace(/[^/]*$/, ''));
-  return base.replace(/\/?$/, '/') + 'contacts.html';
+  return base.replace(/\/?$/, '/') + 'app/contacts.html';
 }
 
 var CT_CLS = ['a', 'b', 'g'];
@@ -34,7 +34,7 @@ function contactsStaff(cls) {
 
 // הדף הציבורי בתוך האפליקציה — בדיאלוג על כל המסך, ולא ניווט: ניווט במעטפת המותקנת מחליף את האפליקציה בדף
 function contactsView() {
-  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="contacts.html" title="דף אנשי הקשר"></iframe>', '', 'watch');
+  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="app/contacts.html" title="דף אנשי הקשר"></iframe>', '', 'watch');
 }
 
 // הקישור ללוח — להודעה שנשלחת עם הגיליונות; בלי גישה ללוח — הקישור מוצג בהודעה

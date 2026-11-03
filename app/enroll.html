@@ -6,12 +6,12 @@
 <meta name="theme-color" content="#1a3c6e">
 <meta name="robots" content="noindex">
 <title>טופס רישום — ישיבת תומכי תמימים ראשון לציון</title>
-<link rel="icon" href="icons/favicon-32.8ac5f44c.png" sizes="32x32">
+<link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
 <!-- דף ציבורי ועצמאי: טופס הרישום, מתוך ההגדרה enroll_form; שולח בלבד (hr_enroll · הדלי hr-enroll) ואינו קורא דבר מלבד ההגדרה. -->
-<script src="app.config.js"></script>
+<script src="../app.config.js"></script>
 <style>
-@font-face{font-family:Heebo;font-weight:400;font-display:swap;src:url(app/fonts/heebo-hebrew-400.woff2) format('woff2')}
-@font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(app/fonts/heebo-hebrew-700.woff2) format('woff2')}
+@font-face{font-family:Heebo;font-weight:400;font-display:swap;src:url(fonts/heebo-hebrew-400.woff2) format('woff2')}
+@font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
 :root{--brand:#1a3a6b;--deep:#0f2347;--mid:#234a8a;--bg:#f0f4fa;--card:#fff;--line:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--soft:#e8eef8;--ok:#1f9d55;--ok-soft:#e9f7ef;--bad:#c53030}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -98,7 +98,7 @@ textarea.in{min-height:84px;resize:vertical}
 </head>
 <body>
 <header>
-  <img src="app/img/logo-white.png" alt="ישיבת תומכי תמימים ראשון לציון">
+  <img src="img/logo-white.png" alt="ישיבת תומכי תמימים ראשון לציון">
   <div class="bh">ב״ה</div>
   <h1>טופס רישום</h1>
   <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
@@ -307,7 +307,7 @@ textarea.in{min-height:84px;resize:vertical}
         rows+='<tr><th>'+esc(f.label)+'</th><td>'+esc(v)+'</td></tr>';
       });
       var c=$('copy');
-      c.innerHTML='<div class="hd"><img src="app/img/logo-white.png" alt=""><div><h1>טופס רישום</h1><div>ישיבת תומכי תמימים ראשון לציון</div></div></div>'+
+      c.innerHTML='<div class="hd"><img src="img/logo-white.png" alt=""><div><h1>טופס רישום</h1><div>ישיבת תומכי תמימים ראשון לציון</div></div></div>'+
         '<div class="meta"><span>'+(YEAR===CUR+1?'רישום לשנת הלימודים הקרובה':'רישום לשנת הלימודים הנוכחית')+' ('+gem(YEAR%1000)+')</span><span>נשלח: '+now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' · אסמכתא '+id.slice(0,8).toUpperCase()+'</span></div>'+
         '<table>'+rows+'</table>';
       var canvas=await html2canvas(c,{scale:2,backgroundColor:'#ffffff',logging:false});
