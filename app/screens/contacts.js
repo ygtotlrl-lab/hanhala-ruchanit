@@ -10,8 +10,6 @@ function contactsUrl() {
   return base.replace(/\/?$/, '/') + 'contacts.html';
 }
 
-// התפקיד בגיליון — כל תפקיד פעם אחת; המשפיע השני של שיעור הוא השורה השנייה שמסומנת «משפיע» בקבוצה שלו.
-var CT_RP_OPTS = RP_ROLES.filter(function (x, i) { return RP_ROLES.findIndex(function (y) { return y[1] === x[1]; }) === i; });
 var CT_CLS = ['a', 'b', 'g'];
 
 // שמות הרבנים בהערות האישיות שבגיליון, לשיעור אחד ({n1: שם, …}); השלוחים — עם שיעור ג׳.
@@ -22,7 +20,7 @@ function contactsStaff(cls) {
     (g.rows || []).forEach(function (r) {
       var k = r.rp;
       if (!k || !r.name) return;
-      if (RP_ROLES_BY_CLS[k]) { if (g.cls !== c) return; if (k === 'n4' && out.n4) k = 'n5'; }
+      if (RP_ROLES_BY_CLS[k] && g.cls !== c) return;
       if (!out[k]) out[k] = r.name;
     });
   });
@@ -64,7 +62,7 @@ function _rowHTML(r) {
     fld('role', 'ctRole', 'תפקיד') + fld('name', 'user', 'שם') +
     fld('phone', 'ctPhone', 'טלפון', ' inputmode="tel" dir="ltr"') + fld('email', 'ctMail', 'דוא״ל', ' inputmode="email" dir="ltr"') +
     '<label class="ct-fld"><span class="ct-ic">' + icon('ctRole') + '</span><select aria-label="בגיליון" data-f="rp">' +
-      '<option value="">לא בגיליון</option>' + CT_RP_OPTS.map(function (x) {
+      '<option value="">לא בגיליון</option>' + RP_ROLES.map(function (x) {
         return '<option value="' + x[0] + '"' + (r.rp === x[0] ? ' selected' : '') + '>בגיליון: ' + esc(x[1]) + '</option>';
       }).join('') + '</select></label>' +
     '<button data-act="row-remove" class="row-del-btn ct-row-del" aria-label="הסרת איש הקשר">' + icon('del') + '</button>' +
