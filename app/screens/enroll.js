@@ -41,17 +41,19 @@ async function gateLogin(username, pass) {
   } catch (e) { console.warn('[gate] הכניסה לשער נכשלה', e); return false; }
 }
 function gateForget() { lsRemove(GATE_KEY); }
-async function _gate(action, body) {
+// mod — המודול שההרשאה שלו נבדקת, והטבלה שהשער קורא (enroll ⟵ hr_enroll · intake ⟵ hr_intake)
+async function gateCall(mod, action, body) {
   var t = _gateTok();
   if (!t) return { login: true };
   var r;
-  try { r = await _gatePost(Object.assign({ action: action, token: t, mod: 'enroll' }, body || {})); }
+  try { r = await _gatePost(Object.assign({ action: action, token: t, mod: mod }, body || {})); }
   catch (e) { return { net: true }; }
   if (r.status === 401) { gateForget(); return { login: true }; }
   if (r.status === 403) return { perm: true };
   if (r.status !== 200) return { error: true };
   return r.body;
 }
+function _gate(action, body) { return gateCall('enroll', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
 function enrollUrl() { return contactsUrl().replace(/contacts\.html$/, 'enroll.html'); }
@@ -100,10 +102,10 @@ async function enrollResponses() {
   }
   _respPaint();
 }
-function _passHTML() {
+function _passHTML(act) {
   return '<div class="en-pass" data-ks><p>התגובות מוגנות, ונפתחות רק אחרי כניסה מקוונת. נא להזין את הסיסמה שלך.</p>' +
     '<input type="password" id="en-pass" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="••••••">' +
-    '<button class="btn" data-act="en-pass" data-ksave>כניסה</button></div>';
+    '<button class="btn" data-act="' + (act || 'en-pass') + '" data-ksave>כניסה</button></div>';
 }
 async function enrollPass() {
   var el = document.getElementById('en-pass');
@@ -187,10 +189,10 @@ function enrollAddStudent(el) {
 }
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──
-function _fieldRow(f) {
+function _fieldRow(f, drag) {
   var opts = EN_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (f.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
   var sec = f.type === 'section';
-  return '<div class="en-frow' + (sec ? ' is-sec' : '') + '" data-drag="enf" data-fid="' + esc(f.id) + '">' +
+  return '<div class="en-frow' + (sec ? ' is-sec' : '') + '" data-drag="' + (drag || 'enf') + '" data-fid="' + esc(f.id) + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
     '<div class="en-fbody">' +
       '<input data-k="label" aria-label="שם השדה" placeholder="שם השדה" value="' + esc(f.label || '') + '">' +
@@ -227,7 +229,7 @@ function _settingsPaint(cfg) {
     '<label class="add-dashed-btn en-upl">+ הוספת תמונות<input type="file" accept="image/*" multiple data-chg="en-img"></label>' +
     '<div class="en-int"><span>החלפת תמונה כל</span><input type="number" min="2" max="20" id="en-interval" aria-label="שניות" value="' + esc(cfg.interval || 4) + '"><span>שניות</span></div>' +
     '<div class="ss-t">השדות</div>' +
-    '<div class="en-fields" id="en-fields">' + cfg.fields.map(_fieldRow).join('') + '</div>' +
+    '<div class="en-fields" id="en-fields">' + cfg.fields.map(function (f) { return _fieldRow(f); }).join('') + '</div>' +
     '<button class="add-dashed-btn" data-act="en-field-add">+ הוספת שדה</button>' +
     '<div class="ss-t">עמודות המעקב בתגובות</div>' +
     '<div class="en-track" id="en-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
@@ -298,5 +300,6 @@ function enrollSave() {
 // גרירה לסידור — התמונות, השדות ועמודות המעקב; השחרור שומר מה-DOM הסופי
 ['enf', 'eni', 'ent'].forEach(function (k) { dragDef(k, function () { return enrollSave(); }); });
 
-export { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
+export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML, gateCall,
+         enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, gateForget, gateLogin };

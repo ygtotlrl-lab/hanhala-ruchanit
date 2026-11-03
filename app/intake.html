@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a3c6e">
+<meta name="robots" content="noindex">
+<title>קבלה לישיבה — ישיבת תומכי תמימים ראשון לציון</title>
+<link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
+<!-- דף ציבורי ועצמאי: קבלה לישיבה, מתוך ההגדרה intake_form; שולח בלבד (hr_intake · הדלי hr-enroll, תחת intake/) ואינו קורא דבר מלבד ההגדרה והמסמכים הציבוריים שהיא מצביעה עליהם. כמו app/enroll.html. -->
+<script src="../app.config.js"></script>
+<style>
+@font-face{font-family:Heebo;font-weight:400;font-display:swap;src:url(fonts/heebo-hebrew-400.woff2) format('woff2')}
+@font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
+:root{--brand:#1a3a6b;--deep:#0f2347;--mid:#234a8a;--bg:#f0f4fa;--card:#fff;--line:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--soft:#e8eef8;--ok:#1f9d55;--ok-soft:#e9f7ef;--bad:#c53030}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:linear-gradient(135deg,var(--deep),var(--brand) 60%,var(--mid));color:#fff;padding:20px 16px 22px;text-align:center}
+header img{height:64px;display:block;margin:0 auto 8px}
+header .bh{font-size:12px;opacity:.75;letter-spacing:.08em}
+header h1{font-size:22px;font-weight:700;margin-top:2px}
+header .sub{font-size:13.5px;opacity:.85;margin-top:3px}
+main{max-width:640px;margin:0 auto;padding:16px 16px 36px;display:flex;flex-direction:column;gap:14px}
+.req-note{font-size:14px;color:var(--text-2);text-align:center}
+.req-note b,.q{color:var(--bad)}
+.sec{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sec h2{font-size:15.5px;color:var(--brand);font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h2 b{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center}
+.f{display:flex;flex-direction:column;gap:5px}
+.f>.t{font-size:13.5px;font-weight:700}
+.f small{color:var(--text-3);font-size:12px;line-height:1.45}
+.in{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;min-height:44px;width:100%}
+.in:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+textarea.in{min-height:84px;resize:vertical}
+.in[dir=ltr]{text-align:right}
+.f.err .in,.f.err .chips,.f.err .up,.f.err .pick{border-color:var(--bad)}
+.f .msg{display:none;color:var(--bad);font-size:12.5px;font-weight:700}
+.f.err .msg{display:block}
+.chips{display:flex;gap:8px;flex-wrap:wrap;border:1.5px solid transparent;border-radius:12px}
+.chips button{padding:9px 16px;border:1.5px solid var(--line);border-radius:999px;font-size:14.5px;font-weight:700;color:var(--text-2);background:#fff;cursor:pointer}
+.chips button.on{border-color:var(--brand);background:var(--soft);color:var(--brand)}
+.pick{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;font-size:15px;background:#fff;cursor:pointer;width:100%;text-align:right;position:relative}
+.pick .v{font-weight:700}.pick .e{color:var(--text-3)}
+.pick svg{width:20px;height:20px;color:var(--brand);flex:none}
+.pick input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.up{border:1.5px dashed #9fb3d1;border-radius:12px;padding:16px;text-align:center;color:var(--brand);font-weight:700;font-size:14px;background:var(--soft);cursor:pointer;position:relative}
+.up input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.up .nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:4px;word-break:break-all}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--text-2);cursor:pointer}
+.chk input{appearance:none;flex:none;width:22px;height:22px;border:2px solid var(--brand);border-radius:6px;margin-top:1px;display:grid;place-items:center;background:#fff;cursor:pointer}
+.chk input:checked{background:var(--brand)}
+.chk input:checked::after{content:'';width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.btn{border:0;background:var(--brand);color:#fff;border-radius:14px;padding:15px;text-align:center;font-size:16.5px;font-weight:700;box-shadow:0 4px 14px rgba(26,58,107,.3);cursor:pointer;width:100%}
+.btn.out{background:#fff;color:var(--brand);border:1.5px solid var(--brand);box-shadow:none}
+.btn:disabled{opacity:.6;cursor:default}
+.priv{font-size:11.5px;line-height:1.55;color:var(--text-3);text-align:center;padding:0 4px}
+.foot{text-align:center;font-size:12.5px;padding-top:4px;font-weight:700;color:var(--brand)}
+.ok{text-align:center;padding:26px 10px 8px}
+.ok .c{width:74px;height:74px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.ok .c svg{width:40px;height:40px}
+.ok h2{font-size:21px;color:var(--brand)}.ok p{font-size:14.5px;color:var(--text-2);line-height:1.6;margin-top:6px}
+.veil{position:fixed;inset:0;background:rgba(15,35,71,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.veil.open{display:flex}
+.bx{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25);border-top:4px solid var(--brand);display:flex;flex-direction:column;gap:12px}
+.bx h3{font-size:17px;color:var(--brand)}.bx p{font-size:14px;line-height:1.6;color:var(--text-2)}
+.bx .cmp{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.8}
+.bx .cmp b{color:var(--text)}
+.bx .row2{display:flex;gap:10px}.bx .row2 .btn{flex:1;padding:12px;font-size:15px}
+.bx select{border:1.5px solid var(--line);border-radius:10px;padding:10px;font-size:15px;background:#fff;flex:1;min-width:0}
+.bx .sels{display:flex;gap:8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ok);color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.2);opacity:0;transition:.3s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--bad)}
+.msgc{text-align:center;color:var(--text-2);padding:40px 0}
+.doc{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.doc:first-of-type{border-top:0;padding-top:0}
+.doc .dt,.it h3{font-size:14.5px;font-weight:700}
+.dv{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:7px 14px;font-size:13.5px;font-weight:700;text-decoration:none;white-space:nowrap}
+.dv svg{width:17px;height:17px}
+.it{display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:0;padding-top:0}
+.it h3{display:flex;gap:6px;color:var(--text)}
+.it h3 i{font-style:normal;color:var(--brand)}
+.it .dv{align-self:flex-start}
+#copy tr.it-h th{background:#e8eef8;color:#1a3a6b}
+/* ההעתק לממלא — נבנה מחוץ למסך ומצולם ל-PDF */
+#copy{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#1a2340;font-family:Heebo,Arial,sans-serif;direction:rtl}
+#copy .hd{background:#1a3a6b;color:#fff;padding:22px 34px;display:flex;align-items:center;gap:18px}
+#copy .hd img{height:58px}
+#copy .hd h1{font-size:24px}#copy .hd div{font-size:13px;opacity:.85}
+#copy .meta{display:flex;justify-content:space-between;padding:12px 34px;font-size:13px;color:#4a5568;border-bottom:1px solid #d8e2f0}
+#copy table{width:calc(100% - 68px);margin:14px 34px;border-collapse:collapse;font-size:13.5px}
+#copy th{width:42%;text-align:right;background:#f0f4fa;padding:7px 10px;border:1px solid #d8e2f0;font-weight:700;vertical-align:top}
+#copy td{padding:7px 10px;border:1px solid #d8e2f0;vertical-align:top;white-space:pre-wrap}
+#copy tr.sh th{background:#1a3a6b;color:#fff;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <img src="img/logo-white.png" alt="ישיבת תומכי תמימים ראשון לציון">
+  <div class="bh">ב״ה</div>
+  <h1>קבלה לישיבה</h1>
+  <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
+</header>
+<main id="main"><div class="msgc">טוען…</div></main>
+<div class="veil" id="veil"><div class="bx" id="bx"></div></div>
+<div class="toast" id="toast"></div>
+<div id="copy"></div>
+<script>
+(function(){
+  var A = self.APP && self.APP.supabase;
+  var IC = {
+    cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+    eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+    ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+  };
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function $(id){return document.getElementById(id);}
+
+  // ── הלוח העברי (Intl) — כמו בטופס הרישום ──
+  var HM = {Tishri:'תשרי',Heshvan:'חשוון',Kislev:'כסלו',Tevet:'טבת',Shevat:'שבט',Adar:'אדר','Adar I':'אדר א׳','Adar II':'אדר ב׳',Nisan:'ניסן',Iyar:'אייר',Sivan:'סיוון',Tamuz:'תמוז',Av:'אב',Elul:'אלול'};
+  function heb(d){
+    var o={}; new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).formatToParts(d).forEach(function(p){o[p.type]=p.value;});
+    return {d:+o.day, m:HM[o.month]||o.month, y:+o.year};
+  }
+  function leap(y){return ((7*y+1)%19)<7;}
+  function months(y){return ['תשרי','חשוון','כסלו','טבת','שבט'].concat(leap(y)?['אדר א׳','אדר ב׳']:['אדר'],['ניסן','אייר','סיוון','תמוז','אב','אלול']);}
+  var L1=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],L10=['','י','כ','ל','מ','נ','ס','ע','פ','צ'],L100=['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+  function gem(n){
+    var s=L100[Math.floor(n/100)]+(n%100===15?'טו':n%100===16?'טז':L10[Math.floor(n%100/10)]+L1[n%10]);
+    return s.length>1?s.slice(0,-1)+'״'+s.slice(-1):s+'׳';
+  }
+  function hebLabel(h){return gem(h.d)+' '+h.m+' '+gem(h.y%1000);}
+  function noon(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2],12);}
+  function addDay(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function same(a,b){return a.d===b.d&&a.m===b.m&&a.y===b.y;}
+  function gLabel(s){var p=s.split('-');return (+p[2])+'.'+(+p[1])+'.'+p[0];}
+  // שנת הלימודים שהקבלה אליה — זו שנפתחת בזמן אלול הקרוב: השנה העברית הבאה (ובאלול עצמו — זו שנפתחה בו)
+  var TODAY=heb(new Date()), YEAR=TODAY.y+1;
+
+  // ── מצב ──
+  var CFG=null, V={}, FILES={}, SUNSET=false, DATES_OK=false;
+
+  function toast(msg,bad){var t=$('toast');t.textContent=msg;t.className='toast on'+(bad?' bad':'');clearTimeout(toast._t);toast._t=setTimeout(function(){t.className='toast'+(bad?' bad':'');},2600);}
+  function dlg(html){$('bx').innerHTML=html;$('veil').classList.add('open');}
+  function dlgClose(){$('veil').classList.remove('open');}
+
+  // ── השדות — אותם סוגים ואותה צורה כמו בטופס הרישום ──
+  function fieldHTML(f){
+    var req=f.req?' <span class="q">*</span>':'', help=f.help?'<small>'+esc(f.help)+'</small>':'';
+    var head='<span class="t">'+esc(f.label)+req+'</span>'+help, body='';
+    if(f.type==='select') body='<div class="chips" data-chips="'+f.id+'">'+(f.options||[]).map(function(o){return '<button type="button" data-v="'+esc(o)+'">'+esc(o)+'</button>';}).join('')+'</div>';
+    else if(f.type==='textarea') body='<textarea class="in" data-id="'+f.id+'"></textarea>';
+    else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
+    else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
+    else if(f.type==='file') body='<label class="up">＋ צילום או בחירת קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
+    else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'"><label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
+    else {
+      var tp=f.type==='email'?'email':f.type==='tel'?'tel':'text', im=f.type==='tel'||f.type==='idnum'?' inputmode="numeric"':'';
+      body='<input class="in" type="'+tp+'"'+im+(tp!=='text'||f.type==='idnum'?' dir="ltr"':'')+' data-id="'+f.id+'" autocomplete="off">';
+    }
+    return '<div class="f" data-f="'+f.id+'">'+head+body+'<span class="msg">שדה חובה</span></div>';
+  }
+  // «צפייה במסמך» — רק כשיש למסמך קובץ או קישור
+  function viewBtn(url){return url?'<a class="dv" href="'+esc(url)+'" target="_blank" rel="noopener">'+IC.eye+'צפייה במסמך</a>':'';}
+  function render(){
+    var html='<p class="req-note">השדות המסומנים ב-<b>*</b> הם חובה.</p>';
+    var n=0, open=false;
+    (CFG.fields||[]).forEach(function(f){
+      if(f.type==='section'){ if(open) html+='</section>'; n++; html+='<section class="sec"><h2><b>'+n+'</b>'+esc(f.label)+'</h2>'; open=true; return; }
+      if(!open){ html+='<section class="sec">'; open=true; }
+      html+=fieldHTML(f);
+    });
+    if(open) html+='</section>';
+    var docs=CFG.docs||[];
+    if(docs.length){
+      n++; html+='<section class="sec"><h2><b>'+n+'</b>מסמכים לצפייה</h2>'+
+        docs.map(function(d){return '<div class="doc"><span class="dt">'+esc(d.title)+'</span>'+viewBtn(d.url)+'</div>';}).join('')+'</section>';
+    }
+    var items=CFG.items||[];
+    if(items.length){
+      n++; html+='<section class="sec"><h2><b>'+n+'</b>מסמכים לחתימה</h2>'+
+        items.map(function(it,i){
+          return '<div class="it"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'</h3>'+viewBtn(it.doc)+
+            (it.fields||[]).filter(function(f){return f.type!=='section';}).map(fieldHTML).join('')+'</div>';
+        }).join('')+'</section>';
+    }
+    if(CFG.privacy) html+='<p class="priv">'+esc(CFG.privacy)+'</p>';
+    html+='<button class="btn" id="send" type="button">שליחת הטופס</button><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
+    $('main').innerHTML=html;
+  }
+  // כל השדות שממלאים — פרטי התלמיד ואחריהם שדות המסמכים לחתימה
+  function allFields(){
+    var out=(CFG.fields||[]).filter(function(f){return f.type!=='section';});
+    (CFG.items||[]).forEach(function(it){(it.fields||[]).forEach(function(f){if(f.type!=='section')out.push(f);});});
+    return out;
+  }
+  function fdef(id){return allFields().filter(function(f){return f.id===id;})[0];}
+  function byType(t){return allFields().filter(function(f){return f.type===t;})[0];}
+
+  // ── בורר התאריך העברי וההצלבה — כמו בטופס הרישום ──
+  function hpick(id){
+    var cur=V[id]||{d:1,m:'תשרי',y:TODAY.y-14}, ys=[];
+    for(var y=TODAY.y-8;y>=TODAY.y-30;y--) ys.push(y);
+    function opts(list,sel,lab){return list.map(function(v){return '<option value="'+esc(v)+'"'+(v==sel?' selected':'')+'>'+esc(lab?lab(v):v)+'</option>';}).join('');}
+    function days(){var a=[];for(var i=1;i<=30;i++)a.push(i);return a;}
+    dlg('<h3>'+esc(fdef(id).label)+'</h3><div class="sels">'+
+      '<select id="hd">'+opts(days(),cur.d,gem)+'</select>'+
+      '<select id="hm">'+opts(months(cur.y),cur.m)+'</select>'+
+      '<select id="hy">'+opts(ys,cur.y,function(y){return gem(y%1000);})+'</select></div>'+
+      '<div class="row2"><button class="btn out" type="button" data-close>ביטול</button><button class="btn" type="button" data-hok="'+id+'">אישור</button></div>');
+    $('hy').onchange=function(){var m=$('hm').value,ms=months(+this.value);if(ms.indexOf(m)<0)m=ms.indexOf('אדר')<0?'אדר א׳':'אדר';$('hm').innerHTML=opts(ms,m);};
+  }
+  function hpickOk(id){
+    V[id]={d:+$('hd').value,m:$('hm').value,y:+$('hy').value};
+    var b=document.querySelector('[data-hpick="'+id+'"]'); b.querySelector('span').className='v'; b.querySelector('span').textContent=hebLabel(V[id]);
+    dlgClose(); clearErr(id); SUNSET=false; checkDates();
+  }
+  function checkDates(){
+    var hf=byType('hebdate'), gf=byType('gdate'); DATES_OK=false;
+    if(!hf||!gf||!V[hf.id]||!V[gf.id]) return;
+    var h=V[hf.id], g=noon(V[gf.id]), hg=heb(g), hn=heb(addDay(g,1));
+    if(same(h,hg)){ DATES_OK=true; SUNSET=false; toast('✓ שני התאריכים תואמים'); return; }
+    var cmp='<div class="cmp">תאריך עברי שנבחר: <b>'+hebLabel(h)+'</b><br>תאריך לועזי שנבחר: <b>'+gLabel(V[gf.id])+'</b> (= <b>'+hebLabel(hg)+'</b>)</div>';
+    if(same(h,hn)) dlg('<h3>הפרש של יום אחד</h3><p>התאריך העברי מאוחר ביום אחד מהתאריך הלועזי. כך זה כשהתלמיד נולד בערב, אחרי השקיעה — אז כבר מתחיל היום העברי הבא.</p>'+cmp+
+      '<label class="chk"><input type="checkbox" id="sun"><span><b style="color:var(--text)">התלמיד נולד אחרי השקיעה</b></span></label>'+
+      '<div class="row2"><button class="btn out" type="button" data-close>חזרה לתיקון</button><button class="btn" type="button" data-sunok>אישור</button></div>');
+    else dlg('<h3>התאריכים אינם תואמים</h3><p>התאריך העברי שנבחר אינו מתאים לתאריך הלועזי. נא לבדוק את שניהם.</p>'+cmp+'<button class="btn" type="button" data-close>חזרה לתיקון</button>');
+  }
+
+  // ── בדיקה ושליחה ──
+  function clearErr(id){var f=document.querySelector('[data-f="'+id+'"]');if(f)f.classList.remove('err');}
+  function setErr(id,msg){var f=document.querySelector('[data-f="'+id+'"]');if(!f)return;f.classList.add('err');if(msg)f.querySelector('.msg').textContent=msg;}
+  function collect(){
+    var bad=null;
+    allFields().forEach(function(f){
+      var v=V[f.id], empty=(f.type==='file')?!FILES[f.id]:(f.type==='consent')?!v:(v==null||String(typeof v==='object'?'x':v).trim()==='');
+      if(f.req&&empty){setErr(f.id,'שדה חובה');bad=bad||f.id;return;}
+      if(!empty&&f.type==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim())){setErr(f.id,'כתובת אימייל אינה תקינה');bad=bad||f.id;}
+    });
+    var hf=byType('hebdate'),gf=byType('gdate');
+    if(!bad&&hf&&gf&&V[hf.id]&&V[gf.id]&&!DATES_OK){checkDates();return 'dates';}
+    if(bad){var el=document.querySelector('[data-f="'+bad+'"]');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});toast('יש למלא את השדות המסומנים',true);}
+    return bad;
+  }
+  function cid(){var a=new Uint8Array(8);crypto.getRandomValues(a);return Array.prototype.map.call(a,function(b){return (b+256).toString(16).slice(1);}).join('');}
+  function hdrs(x){return Object.assign({apikey:A.key,Authorization:'Bearer '+A.key},x||{});}
+  async function send(){
+    if(collect()) return;
+    var b=$('send'); b.disabled=true; b.textContent='שולח…';
+    var id=cid(), files={};
+    try{
+      for(var k in FILES){
+        var file=FILES[k]; if(!file) continue;
+        var ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
+        var path='intake/'+YEAR+'/'+id+'/'+k+'.'+ext;
+        var r=await fetch(A.url+'/storage/v1/object/hr-enroll/'+path,{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream','x-upsert':'false'}),body:file});
+        if(!r.ok) throw new Error('upload '+r.status);
+        files[k]={path:path,name:file.name};
+      }
+      var data={};
+      allFields().forEach(function(f){
+        if(f.type==='file') return;
+        var v=V[f.id]; if(v==null||v==='') return;
+        data[f.id]=f.type==='hebdate'?hebLabel(v):f.type==='gdate'?gLabel(v):f.type==='consent'?'מאשר':String(v).trim();
+      });
+      if(SUNSET) data._sunset='נולד אחרי השקיעה';
+      var row={client_id:id,school_year:YEAR,data:data,files:files,updated_at:Date.now()};
+      var r2=await fetch(A.url+'/rest/v1/hr_intake',{method:'POST',headers:hdrs({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(row)});
+      if(!r2.ok) throw new Error('insert '+r2.status);
+      done(id,data,files);
+    }catch(e){
+      console.warn('[intake] השליחה נכשלה',e);
+      b.disabled=false; b.textContent='שליחת הטופס';
+      toast('השליחה נכשלה — נא לנסות שוב',true);
+    }
+  }
+  function done(id,data,files){
+    var name=[data.first,data.last].filter(Boolean).join(' ');
+    $('main').innerHTML='<div class="ok"><div class="c">'+IC.ok+'</div><h2>תודה רבה!</h2><p>המסמכים נשלחו בהצלחה</p><p>נתראה בעזרת השם בתחילת זמן אלול</p></div>'+
+      '<button class="btn" id="pdf" type="button">הורדת העתק הטופס (PDF)</button><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
+    window.scrollTo(0,0);
+    $('pdf').onclick=function(){copyPdf(id,data,files,name);};
+  }
+
+  // ── ההעתק לממלא: קובץ PDF אחד — דף התשובות (מצולם, html2canvas), ואחריו הקבצים שהועלו והמסמכים לצפייה ולחתימה (pdf-lib).
+  //    קובץ שאינו PDF או תמונה שהדפדפן מצייר (למשל HEIC), ומסמך שלא נטען — מדולג; הקישור לדף אנשי הקשר אינו מסמך ואינו נכנס.
+  function loadScript(src){return new Promise(function(ok,no){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
+  var A4=[595.28,841.89];
+  function blobImg(blob){return new Promise(function(ok,no){var u=URL.createObjectURL(blob),im=new Image();im.onload=function(){ok(im);};im.onerror=function(){URL.revokeObjectURL(u);no(new Error('img'));};im.src=u;});}
+  async function addImagePage(pdf,blob){
+    var bytes=new Uint8Array(await blob.arrayBuffer()), img;
+    if(/png/.test(blob.type)) img=await pdf.embedPng(bytes);
+    else if(/jpe?g/.test(blob.type)) img=await pdf.embedJpg(bytes);
+    else { var im=await blobImg(blob), c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight; c.getContext('2d').drawImage(im,0,0);
+      img=await pdf.embedJpg(await (await fetch(c.toDataURL('image/jpeg',.9))).arrayBuffer()); }
+    var m=28, s=Math.min((A4[0]-2*m)/img.width,(A4[1]-2*m)/img.height,1), w=img.width*s, h=img.height*s;
+    pdf.addPage(A4).drawImage(img,{x:(A4[0]-w)/2,y:(A4[1]-h)/2,width:w,height:h});
+  }
+  async function addBlob(pdf,blob,name){
+    try{
+      var t=blob.type||'', pdfy=/pdf/.test(t)||/\.pdf$/i.test(name||'');
+      if(pdfy){
+        var src=await PDFLib.PDFDocument.load(new Uint8Array(await blob.arrayBuffer()),{ignoreEncryption:true});
+        (await pdf.copyPages(src,src.getPageIndices())).forEach(function(p){pdf.addPage(p);});
+      } else if(/^image\//.test(t)) await addImagePage(pdf,blob);
+    }catch(e){ console.warn('[intake] קובץ לא צורף להעתק',name,e); }
+  }
+  async function copyPdf(id,data,files,name){
+    var b=$('pdf'); b.disabled=true; b.textContent='מכין את הקובץ…';
+    try{
+      if(!window.html2canvas) await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+      if(!window.PDFLib) await loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js');
+      var now=new Date(), rows='';
+      function row(f){
+        var v=f.type==='file'?(files[f.id]?files[f.id].name:''):(data[f.id]||'');
+        if(f.type==='hebdate'&&data._sunset) v+=' ('+data._sunset+')';
+        return '<tr><th>'+esc(f.label)+'</th><td>'+esc(v)+'</td></tr>';
+      }
+      (CFG.fields||[]).forEach(function(f){ rows+=f.type==='section'?'<tr class="sh"><th colspan="2">'+esc(f.label)+'</th></tr>':row(f); });
+      if((CFG.items||[]).length){
+        rows+='<tr class="sh"><th colspan="2">מסמכים לחתימה</th></tr>';
+        CFG.items.forEach(function(it,i){
+          rows+='<tr class="it-h"><th colspan="2">'+(i+1)+'. '+esc(it.title)+'</th></tr>';
+          (it.fields||[]).forEach(function(f){ if(f.type!=='section') rows+=row(f); });
+        });
+      }
+      var c=$('copy');
+      c.innerHTML='<div class="hd"><img src="img/logo-white.png" alt=""><div><h1>קבלה לישיבה</h1><div>ישיבת תומכי תמימים ראשון לציון</div></div></div>'+
+        '<div class="meta"><span>'+gem(YEAR%1000)+'</span><span>נשלח: '+now.toLocaleDateString('he-IL')+' '+now.toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})+' · אסמכתא '+id.slice(0,8).toUpperCase()+'</span></div>'+
+        '<table>'+rows+'</table>';
+      var canvas=await html2canvas(c,{scale:2,backgroundColor:'#ffffff',logging:false});
+      var pdf=await PDFLib.PDFDocument.create();
+      var ph=Math.floor(canvas.width*A4[1]/A4[0]), y=0;
+      while(y<canvas.height){
+        var part=document.createElement('canvas'); part.width=canvas.width; part.height=Math.min(ph,canvas.height-y);
+        part.getContext('2d').drawImage(canvas,0,y,canvas.width,part.height,0,0,canvas.width,part.height);
+        var jpg=await pdf.embedJpg(await (await fetch(part.toDataURL('image/jpeg',.92))).arrayBuffer());
+        pdf.addPage(A4).drawImage(jpg,{x:0,y:A4[1]-part.height*A4[0]/canvas.width,width:A4[0],height:part.height*A4[0]/canvas.width});
+        y+=ph;
+      }
+      // הקבצים שהועלו, בסדר השדות
+      for(var i=0, fl=allFields(); i<fl.length; i++) if(fl[i].type==='file'&&FILES[fl[i].id]) await addBlob(pdf,FILES[fl[i].id],FILES[fl[i].id].name);
+      // המסמכים לצפייה ואחריהם המסמכים לחתימה — מה שיש לו קובץ
+      var urls=(CFG.docs||[]).filter(function(d){return d.url&&!d.link;}).map(function(d){return d.url;})
+        .concat((CFG.items||[]).filter(function(it){return it.doc;}).map(function(it){return it.doc;}));
+      for(var j=0;j<urls.length;j++){
+        try{ var r=await fetch(urls[j]); if(r.ok) await addBlob(pdf,await r.blob(),urls[j]); }catch(e){ console.warn('[intake] מסמך לא נטען להעתק',urls[j],e); }
+      }
+      var out=await pdf.save(), a=document.createElement('a');
+      a.href=URL.createObjectURL(new Blob([out],{type:'application/pdf'}));
+      a.download='קבלה לישיבה — '+(name||'העתק')+'.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+    }catch(e){ console.warn('[intake] ההעתק נכשל',e); toast('הכנת הקובץ נכשלה — נא לנסות שוב',true); }
+    b.disabled=false; b.textContent='הורדת העתק הטופס (PDF)';
+  }
+
+  // ── האזנה אחת לכל אירוע, בהאצלה ──
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var ch=t.closest('[data-chips] button'); if(ch){var box=ch.parentNode,id=box.getAttribute('data-chips');box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===ch);});V[id]=ch.getAttribute('data-v');clearErr(id);return;}
+    var hp=t.closest('[data-hpick]'); if(hp){hpick(hp.getAttribute('data-hpick'));return;}
+    var ho=t.closest('[data-hok]'); if(ho){hpickOk(ho.getAttribute('data-hok'));return;}
+    if(t.closest('[data-sunok]')){ if(!$('sun').checked){toast('יש לסמן את התיבה, או לחזור לתיקון',true);return;} SUNSET=true;DATES_OK=true;dlgClose();toast('✓ נשמר: נולד אחרי השקיעה');return;}
+    if(t.closest('[data-close]')||t===$('veil')){dlgClose();return;}
+    if(t.closest('#send')){send();return;}
+  });
+  document.addEventListener('input',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-id');if(id&&e.target.type!=='checkbox'&&e.target.type!=='date'){V[id]=e.target.value;clearErr(id);}});
+  document.addEventListener('change',function(e){
+    var t=e.target, id=t.getAttribute('data-id'), fk=t.getAttribute('data-file');
+    if(fk){FILES[fk]=t.files&&t.files[0]||null;document.querySelector('[data-fname="'+fk+'"]').textContent=FILES[fk]?FILES[fk].name:'';clearErr(fk);return;}
+    if(!id) return;
+    if(t.type==='checkbox'){V[id]=t.checked;clearErr(id);return;}
+    if(t.type==='date'){V[id]=t.value||null;var s=document.querySelector('[data-gshow="'+id+'"]');s.className=t.value?'v':'e';s.textContent=t.value?gLabel(t.value):'בחירה';clearErr(id);SUNSET=false;checkDates();}
+  });
+
+  if(!A){$('main').innerHTML='<div class="msgc">הטופס אינו זמין</div>';return;}
+  fetch(A.url+'/rest/v1/hr_settings?select=value&key=eq.intake_form',{headers:hdrs()})
+    .then(function(r){return r.json();})
+    .then(function(rows){try{CFG=JSON.parse(rows[0].value);}catch(e){CFG=null;} if(!CFG||!Array.isArray(CFG.fields)) throw new Error('no form'); render();})
+    .catch(function(){$('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>';});
+})();
+</script>
+</body>
+</html>

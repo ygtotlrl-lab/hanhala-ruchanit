@@ -111,3 +111,10 @@
 .en-fline select{flex:1}
 .en-req{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-2);font-weight:700;color:var(--text-2);white-space:nowrap}
 #modal-body .en-req input{width:18px;height:18px;margin:0;padding:0}
+.in-item{background:var(--card-2)}
+.in-item>.en-fbody>input[data-k=ititle]{font-weight:700;color:var(--brand-ink)}
+.in-ifields{padding-inline-start:var(--sp-3)}
+.in-dline{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap}
+.in-dline .btn{text-decoration:none}
+.in-adds{display:flex;gap:var(--sp-3)}
+.in-adds>*{flex:1}

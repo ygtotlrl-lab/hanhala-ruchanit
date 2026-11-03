@@ -32,6 +32,8 @@ import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, r
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
 import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
+import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeLinkAdd, intakeOpen,
+         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -520,7 +522,22 @@ var DOM_ACTIONS = {
   'en-track-add':         function () { enrollTrackAdd(); },
   'en-del':               function (el) { return enrollDelete(el); },
   'en-add-student':       function (el) { enrollAddStudent(el); },
-  'intake-open':          function () { if (!canAccess('intake')) { showDenied(); return; } showConstruction(); },
+  'intake-open':          function () { if (!canAccess('intake')) { showDenied(); return; } intakeOpen(); },
+  'in-view':              function () { intakeView(); },
+  'in-copy':              function () { return intakeCopy(); },
+  'in-resp':              function () { return intakeResponses(); },
+  'in-pass':              function () { return intakePass(); },
+  'in-year':              function (el) { intakeYear(el.getAttribute('data-y')); },
+  'in-file':              function (el) { return intakeFile(el); },
+  'in-settings':          function () { return intakeSettings(); },
+  'in-save':              function () { return intakeSave(); },
+  'in-field-add':         function (el) { intakeFieldAdd(el); },
+  'in-link-add':          function () { intakeLinkAdd(); },
+  'in-item-add':          function () { intakeItemAdd(); },
+  'in-item-doc-clear':    function (el) { intakeItemDocClear(el); },
+  'in-track-add':         function () { intakeTrackAdd(); },
+  'in-del':               function (el) { return intakeDelete(el); },
+  'in-add-student':       function (el) { intakeAddStudent(el); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
   // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני
@@ -586,7 +603,9 @@ var HR_WRITE_MODULE = {
   'year-transition-confirm': 'students',
   'rp-fill': 'reports', 'rp-fill-save': 'reports',
   'file-event-save': 'files', 'file-event-del': 'files',
-  'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll'
+  'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
+  'in-save': 'intake', 'in-field-add': 'intake', 'in-link-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
+  'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
@@ -667,10 +686,12 @@ document.addEventListener('change', function (e) {
   var el = e.target;
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
+  var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c === 'en-img') { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollImgUpload(el); return; }
   if (el && el.hasAttribute && el.hasAttribute('data-en-key')) { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollTrack(el); return; }
+  if (c === 'in-doc-new' || c === 'in-doc-up' || c === 'in-item-doc') { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeUpload(el); return; }
+  if (el && el.hasAttribute && el.hasAttribute('data-in-key')) { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeTrack(el); return; }
   _hrAutosave(el);
-  var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }
   if (c === ex.p + '-grade') hrExamSetGrade(ex, el.dataset.id, el.value, true);

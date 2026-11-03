@@ -497,3 +497,27 @@ create policy hr_enroll_files_insert on storage.objects for insert to anon, auth
 insert into storage.buckets (id, name, public) values ('hr-public', 'hr-public', true) on conflict (id) do nothing;
 drop policy if exists hr_public_insert on storage.objects;
 create policy hr_public_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-public');
+
+-- קבלה לישיבה (app/intake.html): טבלת שליחה-בלבד כמו hr_enroll — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, mod:'intake').
+-- הקבצים — בדלי הפרטי hr-enroll, תחת intake/<שנה>/<מזהה>/; השער מגיש קישור חתום רק לנתיב שתחת intake/. המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+create table if not exists public.hr_intake (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  school_year integer not null,
+  data jsonb not null,
+  files jsonb not null default '{}'::jsonb,
+  track jsonb not null default '{}'::jsonb,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_intake_pkey primary key (client_id)
+);
+create index if not exists hr_intake_year_idx on public.hr_intake using btree (school_year);
+revoke all on table public.hr_intake from anon, authenticated;
+grant insert on table public.hr_intake to anon, authenticated;
+grant all on table public.hr_intake to service_role;
+alter table public.hr_intake enable row level security;
+drop policy if exists hr_intake_insert on public.hr_intake;
+create policy hr_intake_insert on public.hr_intake as permissive for insert to anon, authenticated
+  with check (deleted = false and track = '{}'::jsonb);
