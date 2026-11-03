@@ -185,7 +185,7 @@ async function intakeSettings() {
   } catch (e) { console.warn('[intake] משיכת התצורה נכשלה', e); }
 }
 function _settingsPaint(cfg) {
-  var html = '<div class="en-full" id="in-set" data-autosave="in-save">' +
+  var html = '<div class="en-cfg" id="in-set" data-autosave="in-save">' +
     '<div class="ss-t">השדות</div>' +
     '<div class="en-fields" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
     '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button>' +

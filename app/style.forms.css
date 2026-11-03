@@ -100,21 +100,54 @@
 #modal-body .en-upl input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .en-int{display:flex;flex-direction:row;align-items:center;gap:var(--sp-3);font-size:var(--fs-3);color:var(--text-2)}
 #modal-body .en-int input{margin:0;flex:none;width:64px;border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2);font-family:Heebo;font-size:var(--fs-3);text-align:center;background:var(--card);color:var(--text)}
+/* ── הגדרות הטופס (טופס רישום · קבלה לישיבה) — חלון ברוחב קריאה, מקטעים בכותרות, שורות קומפקטיות ── */
+#modal .sheet:has(.en-cfg){max-width:680px}
+@media (max-width:520px){ #modal .sheet:has(.en-cfg){width:100%;max-height:100vh;border-radius:0;padding:var(--sp-6)} }
+.en-cfg{display:flex;flex-direction:column;gap:var(--sp-3)}
+.en-cfg .ss-t{font-size:var(--fs-3);font-weight:700;color:var(--brand-ink);margin-top:var(--sp-7);padding-bottom:var(--sp-3);border-bottom:1px solid var(--border)}
+.en-cfg .ss-t:first-child{margin-top:0}
 .en-fields,.en-track{display:flex;flex-direction:column;gap:var(--sp-3)}
-.en-frow,.en-trow{display:flex;align-items:flex-start;gap:var(--sp-3);padding:var(--sp-3);border:1.5px solid var(--border);border-radius:var(--r-3);background:var(--card)}
+.en-frow,.en-trow{display:flex;align-items:flex-start;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border:1px solid var(--border);border-radius:var(--r-3);background:var(--card)}
+.en-trow{align-items:center}
 .en-frow.is-sec{background:var(--brand-soft);border-color:var(--brand-soft)}
-.en-frow .grip,.en-trow .grip{padding-top:var(--sp-3);cursor:grab}
+.en-frow .grip,.en-trow .grip{flex:none;width:16px;line-height:32px;font-size:var(--fs-3);text-align:center;color:var(--text-3);opacity:var(--op-4)}
+.en-trow .grip{line-height:1}
 .en-fbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:var(--sp-2)}
 .en-fline{display:flex;gap:var(--sp-3);align-items:center}
-#modal-body .en-frow input:not([type=checkbox]),#modal-body .en-frow select,#modal-body .en-trow input{margin:0;width:100%;border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2) var(--sp-3);font-family:Heebo;font-size:var(--fs-2);background:var(--card);color:var(--text)}
+#modal-body .en-frow input:not([type=checkbox]),#modal-body .en-frow select,#modal-body .en-trow input{margin:0;width:100%;height:32px;border:1px solid var(--border);border-radius:var(--r-2);padding:0 var(--sp-4);font-family:Heebo;font-size:var(--fs-3);background:var(--card);color:var(--text)}
+#modal-body .en-fline input[data-k=label]{flex:1;min-width:0}
+#modal-body .en-fline select{flex:0 0 140px;width:140px;padding:0 var(--sp-3)}
+#modal-body .en-frow input:focus,#modal-body .en-frow select:focus,#modal-body .en-trow input:focus{outline:none;border-color:var(--brand-ink)}
+#modal-body .en-frow input.en-sub{height:28px;font-size:var(--fs-2);color:var(--text-2);background:var(--card-2);border-color:transparent}
+#modal-body .en-frow input.en-sub:focus{background:var(--card);border-color:var(--brand-ink)}
+.en-frow input::placeholder,.en-trow input::placeholder{color:var(--text-3)}
 .en-frow.is-sec input[data-k=label]{font-weight:700;color:var(--brand-ink)}
-.en-fline select{flex:1}
-.en-req{display:flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-2);font-weight:700;color:var(--text-2);white-space:nowrap}
-#modal-body .en-req input{width:18px;height:18px;margin:0;padding:0}
+#modal-body .en-req{display:inline-flex;align-items:center;gap:var(--sp-2);flex:none;margin:0;font-size:var(--fs-2);font-weight:500;color:var(--text-3);white-space:nowrap;cursor:pointer}
+#modal-body .en-req input{width:14px;height:14px;margin:0;padding:0;accent-color:var(--brand-fill);cursor:pointer}
+#modal-body .en-req:has(input:checked){color:var(--text-2)}
+.en-cfg .row-del-btn{flex:none;width:28px;height:32px;color:var(--text-3);opacity:var(--op-4);border-radius:var(--r-2)}
+.en-cfg .en-trow .row-del-btn{height:28px}
+.en-cfg .row-del-btn .ico{width:14px;height:14px}
+@media (hover:hover){ .en-cfg .row-del-btn:hover{color:var(--bad);opacity:1;background:var(--bad-soft)} .en-cfg .grip:hover{opacity:1;color:var(--brand-ink)} }
+#modal-body .en-cfg .add-dashed-btn{display:block;margin:0;width:100%;padding:var(--sp-3) var(--sp-4);font-size:var(--fs-2);font-weight:600;color:var(--text-3);border:1px dashed var(--border);border-radius:var(--r-3);text-align:center}
+@media (hover:hover){ #modal-body .en-cfg .add-dashed-btn:hover{color:var(--brand-ink);border-color:var(--brand-ink);background:var(--brand-soft)} }
+.en-cfg .en-imgs .row-del-btn{position:absolute;opacity:1;height:28px}
+#modal-body .en-cfg .en-int{margin:0}
 .in-item{background:var(--card-2)}
 .in-item>.en-fbody>input[data-k=ititle]{font-weight:700;color:var(--brand-ink)}
-.in-ifields{padding-inline-start:var(--sp-3)}
+.in-ifields{padding-inline-start:var(--sp-4);border-inline-start:2px solid var(--border);margin-top:var(--sp-2)}
+.in-ifields .en-frow{background:var(--card)}
+/* בתוך שורה — כפתור קטן בצד הפותח, ולא פס לרוחב */
+#modal-body .en-cfg .en-fbody>.add-dashed-btn,#modal-body .en-cfg .en-fbody>.en-upl{align-self:flex-start;width:auto;padding:var(--sp-2) var(--sp-5)}
+#modal-body .en-cfg .in-item>.en-fbody>.add-dashed-btn{margin-inline-start:var(--sp-4)}
 .in-dline{display:flex;gap:var(--sp-3);align-items:center;flex-wrap:wrap}
-.in-dline .btn{text-decoration:none}
+.en-cfg .in-dline .btn{text-decoration:none;min-height:0;height:28px;padding:0 var(--sp-4);gap:var(--sp-2);font-size:var(--fs-2);border-width:1px;box-shadow:none}
+.en-cfg .in-dline .btn .ico{width:14px;height:14px}
+.en-cfg .in-dline .row-del-btn{height:28px}
 .in-adds{display:flex;gap:var(--sp-3)}
 .in-adds>*{flex:1}
+@media (max-width:520px){
+  .en-fline{flex-wrap:wrap}
+  #modal-body .en-fline input[data-k=label]{flex:1 0 100%}
+  #modal-body .en-fline select{flex:1 1 auto;width:auto}
+}

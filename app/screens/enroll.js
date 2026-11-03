@@ -195,11 +195,11 @@ function _fieldRow(f, drag) {
   return '<div class="en-frow' + (sec ? ' is-sec' : '') + '" data-drag="' + (drag || 'enf') + '" data-fid="' + esc(f.id) + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
     '<div class="en-fbody">' +
-      '<input data-k="label" aria-label="שם השדה" placeholder="שם השדה" value="' + esc(f.label || '') + '">' +
-      '<div class="en-fline"><select data-k="type" aria-label="סוג">' + opts + '</select>' +
+      '<div class="en-fline"><input data-k="label" aria-label="שם השדה" placeholder="שם השדה" value="' + esc(f.label || '') + '">' +
+        '<select data-k="type" aria-label="סוג">' + opts + '</select>' +
         (sec ? '' : '<label class="en-req"><input type="checkbox" data-k="req"' + (f.req ? ' checked' : '') + '>חובה</label>') + '</div>' +
-      (sec ? '' : '<input data-k="help" aria-label="הסבר" placeholder="הסבר מתחת לשדה (רשות)" value="' + esc(f.help || '') + '">') +
-      (f.type === 'select' ? '<input data-k="options" aria-label="אפשרויות" placeholder="אפשרויות, מופרדות בפסיק" value="' + esc((f.options || []).join(', ')) + '">' : '') +
+      (sec ? '' : '<input class="en-sub" data-k="help" aria-label="הסבר" placeholder="הסבר מתחת לשדה (רשות)" value="' + esc(f.help || '') + '">') +
+      (f.type === 'select' ? '<input class="en-sub" data-k="options" aria-label="אפשרויות" placeholder="אפשרויות, מופרדות בפסיק" value="' + esc((f.options || []).join(', ')) + '">' : '') +
     '</div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
 }
@@ -223,7 +223,7 @@ async function enrollSettings() {
   } catch (e) { console.warn('[enroll] משיכת התצורה נכשלה', e); }
 }
 function _settingsPaint(cfg) {
-  var html = '<div class="en-full" id="en-set" data-autosave="en-save">' +
+  var html = '<div class="en-cfg" id="en-set" data-autosave="en-save">' +
     '<div class="ss-t">תמונות המצגת</div>' +
     '<div class="en-imgs" id="en-imgs">' + (cfg.images || []).map(_imgRow).join('') + '</div>' +
     '<label class="add-dashed-btn en-upl">+ הוספת תמונות<input type="file" accept="image/*" multiple data-chg="en-img"></label>' +
