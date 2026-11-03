@@ -148,13 +148,11 @@ function intakeAddStudent(el) {
 function _viewBtn(url) {
   return '<a class="btn sm out" href="' + esc(url) + '" target="_blank" rel="noopener">' + icon('watch') + 'צפייה במסמך</a>';
 }
-// מסמך לצפייה — כותרת, וקובץ (העלאה) או קישור (link)
+// מסמך לצפייה — כותרת וקובץ שהועלה
 function _docRow(d) {
-  var body = d.link
-    ? '<input data-k="url" dir="ltr" aria-label="קישור" placeholder="קישור" value="' + esc(d.url || '') + '">'
-    : (d.url ? '<div class="in-dline">' + _viewBtn(d.url) + '</div>'
-             : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-up"></label>');
-  return '<div class="en-frow in-doc" data-drag="ind" data-did="' + esc(d.id) + '" data-url="' + esc(d.url || '') + '"' + (d.link ? ' data-link="1"' : '') + '>' +
+  var body = d.url ? '<div class="in-dline">' + _viewBtn(d.url) + '</div>'
+    : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-up"></label>';
+  return '<div class="en-frow in-doc" data-drag="ind" data-did="' + esc(d.id) + '" data-url="' + esc(d.url || '') + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
     '<div class="en-fbody"><input data-k="title" aria-label="כותרת" placeholder="כותרת" value="' + esc(d.title || '') + '">' + body + '</div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
@@ -193,8 +191,7 @@ function _settingsPaint(cfg) {
     '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button>' +
     '<div class="ss-t">מסמכים לצפייה</div>' +
     '<div class="en-fields" id="in-docs">' + (cfg.docs || []).map(_docRow).join('') + '</div>' +
-    '<div class="in-adds"><label class="add-dashed-btn en-upl">+ הוספת מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-new"></label>' +
-      '<button class="add-dashed-btn" data-act="in-link-add">+ הוספת קישור</button></div>' +
+    '<div class="in-adds"><label class="add-dashed-btn en-upl">+ הוספת מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-new"></label></div>' +
     '<div class="ss-t">מסמכים לחתימה</div>' +
     '<div class="en-fields" id="in-items">' + (cfg.items || []).map(_itemRow).join('') + '</div>' +
     '<button class="add-dashed-btn" data-act="in-item-add">+ הוספת פריט</button>' +
@@ -215,10 +212,6 @@ function intakeFieldAdd(el) {
 function intakeTrackAdd() {
   var box = document.getElementById('in-track');
   if (box) box.insertAdjacentHTML('beforeend', _trkRow(''));
-}
-function intakeLinkAdd() {
-  var box = document.getElementById('in-docs');
-  if (box) box.insertAdjacentHTML('beforeend', _docRow({ id: _nid('d'), title: '', url: '', link: true }));
 }
 function intakeItemAdd() {
   var box = document.getElementById('in-items');
@@ -280,10 +273,7 @@ function intakeSave() {
   var cfg = intakeCfg(), prevAll = _allFields(cfg);
   var fields = _readFields(Array.prototype.slice.call(document.querySelectorAll('#in-fields > [data-fid]')), prevAll);
   var docs = Array.prototype.map.call(document.querySelectorAll('#in-docs > [data-did]'), function (row) {
-    var link = row.getAttribute('data-link') === '1', u = row.querySelector('[data-k="url"]');
-    var o = { id: row.getAttribute('data-did'), title: row.querySelector('[data-k="title"]').value.trim(), url: link ? (u ? u.value.trim() : '') : row.getAttribute('data-url') || '' };
-    if (link) o.link = true;
-    return o;
+    return { id: row.getAttribute('data-did'), title: row.querySelector('[data-k="title"]').value.trim(), url: row.getAttribute('data-url') || '' };
   }).filter(function (d) { return d.title || d.url; });
   var items = Array.prototype.map.call(document.querySelectorAll('#in-items > [data-iid]'), function (row) {
     return { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
@@ -304,5 +294,5 @@ function intakeSave() {
 // גרירה לסידור — השדות, המסמכים, הפריטים ועמודות המעקב; השחרור שומר מה-DOM הסופי
 ['inf', 'ind', 'ini', 'int'].forEach(function (k) { dragDef(k, function () { return intakeSave(); }); });
 
-export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeLinkAdd, intakeOpen,
+export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear };

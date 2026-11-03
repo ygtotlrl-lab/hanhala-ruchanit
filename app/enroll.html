@@ -355,19 +355,42 @@ textarea.in{min-height:84px;resize:vertical}
   });
 
   if(!A){$('main').innerHTML='<div class="msgc">הטופס אינו זמין</div>';return;}
-  // ההגדרה האחרונה שנשמרה במכשיר מציירת את הטופס מיד; החדשה מחליפה אותה כשהגיעה — אם השתנתה ועוד לא התחילו למלא.
-  var LS='hr_cache_enroll_form', shown=null;
+  // ההגדרה האחרונה שנשמרה במכשיר (IndexedDB) מציירת את הטופס כשנקראה; החדשה מחליפה אותה כשהגיעה — אם השתנתה ועוד לא התחילו למלא.
+  try{localStorage.removeItem('hr_cache_enroll_form');localStorage.removeItem('hr_cache_intake_form');}catch(e){}
+  var KEY='enroll_form', shown=null, fresh=false;
   function cfgOk(c){return !!(c&&Array.isArray(c.fields));}
-  try{var c0=JSON.parse(localStorage.getItem(LS)||'null'); if(cfgOk(c0)){CFG=c0;render();shown=JSON.stringify(c0);}}catch(e){}
+  // מסד קטן לדפים הציבוריים, רשומה אחת לטופס; כל כשל — null, והטופס נטען מהרשת
+  function idb(mode,op){
+    return new Promise(function(res){
+      try{
+        var o=indexedDB.open('hr-public',1);
+        o.onupgradeneeded=function(){o.result.createObjectStore('cfg');};
+        o.onerror=o.onblocked=function(){res(null);};
+        o.onsuccess=function(){
+          try{var db=o.result, tx=db.transaction('cfg',mode), rq=op(tx.objectStore('cfg'));
+            tx.oncomplete=function(){db.close();res(rq.result);};
+            tx.onerror=tx.onabort=function(){db.close();res(null);};
+          }catch(e){res(null);}
+        };
+      }catch(e){res(null);}
+    });
+  }
+  function show(j){
+    if(j===shown) return;
+    if(shown&&(Object.keys(V).length||Object.keys(FILES).length)) return;
+    CFG=JSON.parse(j); render(); shown=j;
+  }
+  var cached=idb('readonly',function(st){return st.get(KEY);}).then(function(j){
+    try{ if(!fresh&&typeof j==='string'&&cfgOk(JSON.parse(j))) show(j); }catch(e){}
+  });
   (self.FORM_CFG||Promise.reject(new Error('no config')))
     .then(function(rows){
       var c=JSON.parse(rows[0].value); if(!cfgOk(c)) throw new Error('no form');
-      var j=JSON.stringify(c); try{localStorage.setItem(LS,j);}catch(e){}
-      if(j===shown) return;
-      if(shown&&(Object.keys(V).length||Object.keys(FILES).length)) return;
-      CFG=c; render(); shown=j;
+      var j=JSON.stringify(c); fresh=true;
+      idb('readwrite',function(st){return st.put(j,KEY);});
+      show(j);
     })
-    .catch(function(){ if(!shown) $('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>'; });
+    .catch(function(){ cached.then(function(){ if(!shown) $('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>'; }); });
 })();
 </script>
 </body>

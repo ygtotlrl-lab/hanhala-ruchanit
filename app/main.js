@@ -32,7 +32,7 @@ import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, r
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
 import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
-import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeLinkAdd, intakeOpen,
+import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
@@ -532,7 +532,6 @@ var DOM_ACTIONS = {
   'in-settings':          function () { return intakeSettings(); },
   'in-save':              function () { return intakeSave(); },
   'in-field-add':         function (el) { intakeFieldAdd(el); },
-  'in-link-add':          function () { intakeLinkAdd(); },
   'in-item-add':          function () { intakeItemAdd(); },
   'in-item-doc-clear':    function (el) { intakeItemDocClear(el); },
   'in-track-add':         function () { intakeTrackAdd(); },
@@ -604,7 +603,7 @@ var HR_WRITE_MODULE = {
   'rp-fill': 'reports', 'rp-fill-save': 'reports',
   'file-event-save': 'files', 'file-event-del': 'files',
   'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
-  'in-save': 'intake', 'in-field-add': 'intake', 'in-link-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
+  'in-save': 'intake', 'in-field-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
   'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
