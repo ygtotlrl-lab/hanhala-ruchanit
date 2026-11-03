@@ -566,14 +566,15 @@
 .ct-group{display:flex;flex-direction:column;gap:var(--sp-3)}
 .ct-group-head{display:flex;align-items:center;gap:var(--sp-3)}
 .ct-group-head .sess-field{flex:1;font-weight:700}
-.ct-row{position:relative;display:flex;flex-direction:column;gap:var(--sp-2);padding:0 0 var(--sp-4);padding-inline-end:38px;border-bottom:1px dashed var(--border)}
+[data-ct-rows]{display:flex;flex-direction:column;gap:var(--sp-4)}
+.ct-row{position:relative;display:flex;flex-direction:column;gap:var(--sp-2);padding:var(--sp-3);padding-inline-end:46px;border:1.5px solid var(--border);border-radius:var(--r-4);background:var(--card-2)}
 .ct-fld{display:flex;align-items:center;gap:var(--sp-3)}
 .ct-ic{flex:none;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:var(--r-7);background:var(--brand-soft);color:var(--brand-ink)}
 .ct-ic .ico{width:16px;height:16px}
 .ct-row input,.ct-row select,.ct-group-head .ct-cls{flex:1;min-width:0;font-family:Heebo;font-size:var(--fs-3);border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-3) var(--sp-4);background:var(--card);color:var(--text)}
 .ct-group-head .ct-cls{flex:0 0 auto}
 .ct-row input[dir=ltr]{text-align:right}
-.ct-row .ct-row-del{position:absolute;inset-inline-end:0;top:0}
+.ct-row .ct-row-del{position:absolute;inset-inline-end:var(--sp-2);top:var(--sp-2)}
 
 /* ── גיליונות ציונים והנהגה ── */
 .rp-sec{display:flex;align-items:center;gap:var(--sp-4);width:100%;margin-top:var(--sp-4);padding:var(--sp-4) var(--sp-5);border:1.5px solid var(--border);border-radius:var(--r-4);background:var(--card);font-family:Heebo;font-size:var(--fs-3);font-weight:700;color:var(--text);cursor:pointer;text-align:right}

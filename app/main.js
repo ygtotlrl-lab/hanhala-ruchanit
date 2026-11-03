@@ -501,6 +501,8 @@ var DOM_ACTIONS = {
   'student-status-save':  function () { return runSave(function () { return saveStudentStatus(S._currentStatusType); }); },
   'manage-list-open':     function () { openManageListDlg(); },
   'students-print':       function () { printStudents(); },
+  // טופס הרישום — בבנייה; ההרשאה כבר נאכפת
+  'enroll-open':          function () { if (!canAccess('enroll')) { showDenied(); return; } showConstruction(); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
   // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני

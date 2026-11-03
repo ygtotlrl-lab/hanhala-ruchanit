@@ -19,7 +19,7 @@ import { icon } from './icons.js';
 function canAccess(moduleId) {
   if (!AUTH.user) return false;
   var p = AUTH.perms || AUTH.DEFAULT_PERMS;
-  var mp = p[moduleId] || {};
+  var mp = p[moduleId] || AUTH.DEFAULT_PERMS[moduleId] || {}; // מודול חדש שאינו בהרשאות השמורות — ברירת המחדל
   var level = mp[AUTH.user.role] || 'none';
   return level !== 'none';
 }
@@ -27,7 +27,7 @@ function canAccess(moduleId) {
 function canEdit(moduleId) {
   if (!AUTH.user) return false;
   var p = AUTH.perms || AUTH.DEFAULT_PERMS;
-  var mp = p[moduleId] || {};
+  var mp = p[moduleId] || AUTH.DEFAULT_PERMS[moduleId] || {}; // מודול חדש שאינו בהרשאות השמורות — ברירת המחדל
   var level = mp[AUTH.user.role] || 'none';
   return level === 'edit';
 }

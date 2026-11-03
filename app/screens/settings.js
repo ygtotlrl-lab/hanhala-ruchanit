@@ -3,13 +3,13 @@ import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
          MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
 import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, isAdminOf, usersRefresh,
-         usersSaveOne, writeUser } from '../../core/auth.js';
+         usersGet, usersSaveAll, usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
 import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_NO_USER_SESSION, MSG_PASS_MISMATCH_X, MSG_PASS_NEEDS_NET,
          MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PERMS_SAVED, MSG_REASONS_SAVED,
          MSG_USER_OFF, MSG_USER_ON, MSG_USER_SAVED, MSG_USER_SAVED_NO_FP,
-         MSG_USER_SWITCHED_MID } from '../constants.js';
+         MSG_PULL_STALE, MSG_USER_SWITCHED_MID } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '../domain.js';
 import { HR_STREAMS } from '../domain.sessions.js';
@@ -351,7 +351,7 @@ function renderPermsTable() {
   var html = AUTH.MODULES.map(function(m) {
     var row = '<tr><td>'+m.label+'</td>';
     ['admin','manager','junior'].forEach(function(role) {
-      var cur = (p[m.id]||{})[role] || 'none';
+      var cur = (p[m.id] || AUTH.DEFAULT_PERMS[m.id] || {})[role] || 'none';
       var selHTML = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
         selHTML += '<option value="'+o.v+'"'+(cur===o.v?' selected':'')+'>'+o.l+'</option>';
@@ -454,7 +454,12 @@ async function changeMyPassword() {
 async function renderUsersList() {
   var el = document.getElementById('users-list');
   if (!el) return;
-  el.innerHTML = '<div class="ld">טוען...</div>';
+  // קודם מהמכשיר (מראת המשתמשים), ואחר כך מהענן — בלי «טוען» כשיש מה להראות
+  var local = usersGet().slice().sort(function (a, b) {
+    var x = a.sort == null ? Infinity : a.sort, y = b.sort == null ? Infinity : b.sort;
+    return x - y || String(a.full_name || '').localeCompare(String(b.full_name || ''), 'he');
+  });
+  el.innerHTML = local.length ? _usersHTML(local) : '<div class="ld">טוען...</div>';
   // לא var {data} = await — פירוק בולע את res.error, וכשל רשת היה מוצג כ«אין משתמשים».
   var res;
   // הסדר נשמר ב-hr_users.sort ומסתנכרן — סדר שנשמר במכשיר בלבד שונה בכל מכשיר.
@@ -462,6 +467,7 @@ async function renderUsersList() {
     .order('sort', { ascending: true, nullsFirst: false }).order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
   if (!res || res.error || !Array.isArray(res.data)) {
+    if (local.length) { toast(MSG_PULL_STALE, null, 'off'); return; }
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
     el.innerHTML = '<div class="load-err ld">' + stIcon('bad') + 'לא ניתן לטעון את רשימת המשתמשים' +
       '<div class="load-err-detail">' + esc(em) + '</div>' +
@@ -470,7 +476,14 @@ async function renderUsersList() {
   }
   var data = res.data;
   if (!data.length) { el.innerHTML = '<div class="ld">אין משתמשים</div>'; return; }
-  el.innerHTML = data.map(function(u) {
+  usersSaveAll(data);
+  // גרירה או עריכה שהתחילו בזמן המשיכה — הציור נדחה
+  if (el.querySelector('.dragging') || el.contains(document.activeElement)) return;
+  el.innerHTML = _usersHTML(data);
+}
+
+function _usersHTML(data) {
+  return data.map(function(u) {
     var roleClass = 'role-'+u.role;
     var roleLabel = AUTH.ROLE_LABELS[u.role] || u.role;
     var activeCls = u.active ? '' : ' is-inactive';

@@ -55,13 +55,15 @@ var AUTH = {
   offlineLogin: false, // true — אומת מול העותק המקומי, ומאומת מחדש כשהרשת חוזרת
   perms: null, // {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
-    {id:'students', label:'מצבת תלמידים'},
-    {id:'attend',   label:'שמירת סדרים'},
-    {id:'sleep',    label:'זמן שינה'},
+    // השמות — כמו בשורת הניווט; תיקים אישיים וטופס רישום — כפתורים בתוך המסכים, אחרי הדוחות
+    {id:'students', label:'מצבת'},
+    {id:'attend',   label:'סדרים'},
+    {id:'sleep',    label:'שינה'},
     {id:'exams',    label:'מבחנים'},
+    {id:'reports',  label:'דוחות'},
     {id:'files',    label:'תיקים אישיים'},
-    {id:'reports',  label:'גיליונות חודשיים'},
-    {id:'settings', label:'הגדרות מערכת'}
+    {id:'enroll',   label:'טופס רישום'},
+    {id:'settings', label:'הגדרות'}
   ],
 
   ROLE_LABELS: {admin:'מנהל', manager:'צוות בכיר', junior:'צוות'},
@@ -71,8 +73,9 @@ var AUTH = {
     attend:   {admin:'edit', manager:'edit', junior:'view'},
     sleep:    {admin:'edit', manager:'edit', junior:'view'},
     exams:    {admin:'edit', manager:'edit', junior:'view'},
-    files:    {admin:'edit', manager:'edit', junior:'none'},
     reports:  {admin:'edit', manager:'view', junior:'none'},
+    files:    {admin:'edit', manager:'edit', junior:'none'},
+    enroll:   {admin:'edit', manager:'view', junior:'none'},
     settings: {admin:'edit', manager:'none', junior:'none'}
   }
 };
