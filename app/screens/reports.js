@@ -309,7 +309,9 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       '<div class="sig"><img src="app/img/report-sig.png" alt=""><b>הרב אליעזר יוסף חי קלנגל</b><span>משגיח ראשי</span>' +
       '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
   '</div></section>';
-  var p2 = '<section class="pg">' + head + '<div class="body"><h3 class="c">הערות אישיות</h3><table class="notes">' +
+  var p2 = '<section class="pg">' + head + '<div class="body"><table class="notes">' +
+    // כותרת לכל עמודה: מעל השם — «שם ומשפחה», ומעל ההערה — «הערות אישיות»; עמודת התפקיד מסבירה את עצמה
+    '<thead><tr class="nh"><th></th><th>שם ומשפחה</th><th>הערות אישיות</th></tr></thead>' +
     RP_ROLES.map(function (x) {
       return '<tr><th>' + esc(x[1]) + '</th><td class="who">' + esc(rpGet(mk, 'cls-' + s.cls, x[0])) + '</td><td>' + v(x[0]) + '</td></tr>';
     }).join('') + '</table></div></section>';
@@ -339,6 +341,7 @@ var RP_PRINT_CSS =
   '.foot{position:absolute;bottom:0;right:0;left:0}.sigrow{display:flex;gap:6mm;align-items:flex-end}' +
   '.legend{flex:1;border:.25mm solid #9a9a9a;padding:2mm 3mm;font-size:7.5pt;line-height:1.55;color:#555}.legend b{display:block;text-decoration:underline}' +
   '.sig{flex:1;font-size:9pt;color:#444;display:flex;flex-direction:column;gap:.6mm}.sig img{height:12mm;width:auto;align-self:flex-start}.sig small{font-size:7.5pt;color:#666;margin-top:1.5mm}' +
+  'table.notes tr.nh{height:auto}table.notes tr.nh th{width:auto;border:none;background:none;text-align:center;font-size:10pt;padding:4mm 0 1.5mm;color:#444}' +
   'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
 
 // הקישורים לסריקות חתומים לשנה — הגיליון נשלח להורים, וקישור לשעה היה פג לפני שנפתח.
