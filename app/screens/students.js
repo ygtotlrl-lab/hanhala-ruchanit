@@ -819,7 +819,7 @@ async function printStudents() {
   }
 }
 
-export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass,
+export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, openAddStudent,
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
          renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
