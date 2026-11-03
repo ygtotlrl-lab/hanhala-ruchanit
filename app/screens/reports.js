@@ -304,7 +304,8 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       '<tr><th>איחורים</th><td>' + r.late + ' דקות</td><td>' + esc(r.lateG) + '</td></tr></table>' +
     '<h3>חומר הלימודים</h3><table class="subj">' + subj + '</table>' +
     '<h3>פנימייה</h3><table>' + tr('זמן שינה', esc(r.sleepG)) + RP_INTERNAT.map(function (x) { return tr(x[1], v(x[0])); }).join('') + '</table>' +
-    '<div class="foot"><div class="more">הערות אישיות מעבר לדף | לפרטי קשר אנשי צוות הישיבה – <a href="' + esc(contactsUrl()) + '">לחץ כאן</a></div>' +
+    // כל המשפט קישור, ולא רק «לחץ כאן» — מטרה גדולה למגע, גם במציג PDF בטלפון.
+    '<div class="foot"><div class="more">הערות אישיות מעבר לדף | <a href="' + esc(contactsUrl()) + '">לפרטי קשר אנשי צוות הישיבה – לחץ כאן</a></div>' +
     '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 0–100</div>' +
       '<div class="sig"><img src="app/img/report-sig.png" alt=""><b>הרב אליעזר יוסף חי קלנגל</b><span>משגיח ראשי</span>' +
       '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
