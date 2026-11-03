@@ -2,11 +2,35 @@
 import { esc, toast } from '../../core/ui.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
+import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS } from '../constants.js';
 
 // הכתובת שהגיליון מקשר אליה — הדף הציבורי שליד האפליקציה.
 function contactsUrl() {
   var base = (self.APP && self.APP.android && self.APP.android.url) || (location.origin + location.pathname.replace(/[^/]*$/, ''));
   return base.replace(/\/?$/, '/') + 'contacts.html';
+}
+
+// התפקיד בגיליון — כל תפקיד פעם אחת; המשפיע השני של שיעור הוא השורה השנייה שמסומנת «משפיע» בקבוצה שלו.
+var CT_RP_OPTS = RP_ROLES.filter(function (x, i) { return RP_ROLES.findIndex(function (y) { return y[1] === x[1]; }) === i; });
+var CT_CLS = ['a', 'b', 'g'];
+
+// שמות הרבנים בהערות האישיות שבגיליון, לשיעור אחד ({n1: שם, …}); השלוחים — עם שיעור ג׳.
+// ר"מ ומשפיע — מהקבוצה שמסומנת בשיעור, והשאר — מכל קבוצה; שם שהוא שם של תפקיד («ראש הישיבה») — שמו של בעל התפקיד.
+function contactsStaff(cls) {
+  var v = hrCfgLocalGet('contacts'), out = {}, c = cls === 's' ? 'g' : cls;
+  ((v && v.groups) || []).forEach(function (g) {
+    (g.rows || []).forEach(function (r) {
+      var k = r.rp;
+      if (!k || !r.name) return;
+      if (RP_ROLES_BY_CLS[k]) { if (g.cls !== c) return; if (k === 'n4' && out.n4) k = 'n5'; }
+      if (!out[k]) out[k] = r.name;
+    });
+  });
+  RP_ROLES.forEach(function (x) {
+    var y = RP_ROLES.find(function (y) { return y[1] === out[x[0]] && y[0] !== x[0]; });
+    if (y && out[y[0]]) out[x[0]] = out[y[0]];
+  });
+  return out;
 }
 
 function contactsPaneHTML() {
@@ -39,6 +63,10 @@ function _rowHTML(r) {
   return '<div class="ct-row" data-ct-row>' +
     fld('role', 'ctRole', 'תפקיד') + fld('name', 'user', 'שם') +
     fld('phone', 'ctPhone', 'טלפון', ' inputmode="tel" dir="ltr"') + fld('email', 'ctMail', 'דוא״ל', ' inputmode="email" dir="ltr"') +
+    '<label class="ct-fld"><span class="ct-ic">' + icon('ctRole') + '</span><select aria-label="בגיליון" data-f="rp">' +
+      '<option value="">לא בגיליון</option>' + CT_RP_OPTS.map(function (x) {
+        return '<option value="' + x[0] + '"' + (r.rp === x[0] ? ' selected' : '') + '>בגיליון: ' + esc(x[1]) + '</option>';
+      }).join('') + '</select></label>' +
     '<button data-act="row-remove" class="row-del-btn ct-row-del" aria-label="הסרת איש הקשר">' + icon('del') + '</button>' +
   '</div>';
 }
@@ -47,6 +75,9 @@ function _groupHTML(g) {
   g = g || { title: '', rows: [{}] };
   return '<div class="cfg-card ct-group" data-ct-group>' +
     '<div class="ct-group-head"><input aria-label="שם הקבוצה" data-f="title" class="sess-field" placeholder="שם הקבוצה (למשל: השגחה)" value="' + esc(g.title || '') + '">' +
+      '<select aria-label="שיעור" data-f="cls" class="ct-cls"><option value="">בלי שיעור</option>' + CT_CLS.map(function (k) {
+        return '<option value="' + k + '"' + (g.cls === k ? ' selected' : '') + '>' + esc(HR_CLS_NAME[k]) + '</option>';
+      }).join('') + '</select>' +
       '<button data-act="row-remove" class="row-del-btn" aria-label="הסרת הקבוצה">' + icon('del') + '</button></div>' +
     '<div data-ct-rows>' + (g.rows || []).map(_rowHTML).join('') + '</div>' +
     '<button data-act="ct-row-add" class="add-dashed-btn">+ הוסף איש קשר</button>' +
@@ -91,17 +122,19 @@ async function saveContacts() {
   var groups = [];
   document.querySelectorAll('#ct-edit [data-ct-group]').forEach(function (g) {
     var title = (g.querySelector('[data-f="title"]') || {}).value || '';
+    var cls = (g.querySelector('[data-f="cls"]') || {}).value || '';
     var rows = [];
     g.querySelectorAll('[data-ct-row]').forEach(function (row) {
       var o = {};
-      ['role', 'name', 'phone', 'email'].forEach(function (k) { o[k] = ((row.querySelector('[data-f="' + k + '"]') || {}).value || '').trim(); });
+      ['role', 'name', 'phone', 'email', 'rp'].forEach(function (k) { o[k] = ((row.querySelector('[data-f="' + k + '"]') || {}).value || '').trim(); });
+      if (!o.rp) delete o.rp;
       if (o.name || o.role) rows.push(o);
     });
-    if (title.trim() || rows.length) groups.push({ title: title.trim(), rows: rows });
+    if (title.trim() || rows.length) groups.push(cls ? { title: title.trim(), cls: cls, rows: rows } : { title: title.trim(), rows: rows });
   });
   var footer = ((document.getElementById('ct-footer') || {}).value || '').trim();
   await hrCfgSet('contacts', { groups: groups, footer: footer });
   toast('אנשי הקשר נשמרו', null, 'good');
 }
 
-export { addContactGroup, addContactRow, contactsPaneHTML, contactsUrl, renderContactsSettings, saveContacts };
+export { addContactGroup, addContactRow, contactsPaneHTML, contactsStaff, contactsUrl, renderContactsSettings, saveContacts };

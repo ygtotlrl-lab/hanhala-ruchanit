@@ -8,11 +8,11 @@ import { exportDataUrl, exportFontCss } from '../../core/export.js';
 import { printFile } from '../../core/share.js';
 import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
 import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING,
-         MSG_PDF_FAIL, PK_RP_VAL } from '../constants.js';
+         MSG_PDF_FAIL, PK_RP_VAL, RP_ROLES } from '../constants.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrDayHeb, hrHebMonthWin } from '../domain.hebdate.js';
-import { contactsUrl } from './contacts.js';
+import { contactsStaff } from './contacts.js';
 import { icon } from '../icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
 import { stIcon } from '../../core/icons.js';
@@ -33,7 +33,6 @@ function rpGrade(steps, v) {
 var RP_GENERAL = [['g1', 'יראת שמים והנהגה חסידית'], ['g2', 'משמעת וקבלת עול'], ['g3', 'הלכות ועבודת תפילה']];
 var RP_SUBJ_H = HR_EXAM_SUBJECTS.map(function (n, i) { return ['h' + i, n]; });
 var RP_INTERNAT = [['p1', 'סדר וניקיון'], ['p2', 'שמירת הרכוש']];
-var RP_ROLES = [['n1', 'ראש הישיבה'], ['n2', 'משגיח'], ['n3', 'ר"מ'], ['n4', 'משפיע'], ['n5', 'משפיע'], ['n6', 'משיב'], ['n7', 'מדריך']];
 var RP_CLS = HR_CLS_SHORT;
 
 function rpFieldLabel(f) {
@@ -241,18 +240,19 @@ function rpResetOpen() { S._rpOpen = {}; }
 function rpToggleSec(k) { var o = S._rpOpen || (S._rpOpen = {}); o[k] = !o[k]; renderReports(); }
 function rpSetCls(c) { S._rpCls = c; renderReports(); }
 
-// ── המילוי — כל התלמידים בבת אחת, רשימה נפתחת ליד כל שם; בהערות האישיות — טקסט, ושם הרב לכל שיעור ──
+// ── המילוי — כל התלמידים בבת אחת, רשימה נפתחת ליד כל שם; בהערות האישיות — טקסט, ושם הרב מאנשי הקשר ──
 function rpOpenFill(f) {
   var m = rpMonth(), mk = rpMonthKey(m), sts = _rpStudents();
   var isNote = /^n/.test(f);
   var opts = '<option value="">—</option>' + RP_SCALE.map(function (g) { return '<option>' + esc(g) + '</option>'; }).join('');
   var head = '';
   if (isNote) {
+    // שם הרב — מאנשי הקשר שבהגדרות הדוחות, לקריאה בלבד; השלוחים — עם שיעור ג׳
     var cls = {}; sts.forEach(function (s) { cls[s.cls] = 1; });
     head = '<div class="rp-staff">' + Object.keys(RP_CLS).filter(function (k) { return cls[k]; }).map(function (k) {
-      return '<label class="rp-staff-row"><span>שם ה' + esc(rpFieldLabel(f)) + ' — ' + esc(HR_CLS_NAME[k]) + '</span>' +
-        '<input data-rp-staff="' + k + '" value="' + esc(rpGet(mk, 'cls-' + k, f)) + '" placeholder="הרב…"></label>';
-    }).join('') + '</div>';
+      return '<div class="rp-staff-row"><span>' + esc(rpFieldLabel(f)) + ' — ' + esc(HR_CLS_NAME[k]) + '</span>' +
+        '<b>' + esc(contactsStaff(k)[f] || '—') + '</b></div>';
+    }).join('') + '<div class="rp-staff-src">מתוך אנשי הקשר שבהגדרות הדוחות</div></div>';
   }
   var rows = sts.map(function (s) {
     var v = rpGet(mk, s.client_id, f);
@@ -272,7 +272,6 @@ function rpOpenFill(f) {
 function rpSaveFill() {
   var f = S._rpFillF, mk = rpMonthKey(rpMonth()), items = [];
   document.querySelectorAll('#modal-body [data-rp-sid]').forEach(function (el) { items.push({ sid: el.getAttribute('data-rp-sid'), f: f, v: el.value.trim() }); });
-  document.querySelectorAll('#modal-body [data-rp-staff]').forEach(function (el) { items.push({ sid: 'cls-' + el.getAttribute('data-rp-staff'), f: f, v: el.value.trim() }); });
   var n = rpSetMany(mk, items);
   closeModal();
   renderReports();
@@ -304,17 +303,18 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       '<tr><th>איחורים</th><td>' + r.late + ' דקות</td><td>' + esc(r.lateG) + '</td></tr></table>' +
     '<h3>חומר הלימודים</h3><table class="subj">' + subj + '</table>' +
     '<h3>פנימייה</h3><table>' + tr('זמן שינה', esc(r.sleepG)) + RP_INTERNAT.map(function (x) { return tr(x[1], v(x[0])); }).join('') + '</table>' +
-    // כל המשפט קישור, ולא רק «לחץ כאן» — מטרה גדולה למגע, גם במציג PDF בטלפון.
-    '<div class="foot"><div class="more">הערות אישיות מעבר לדף | <a href="' + esc(contactsUrl()) + '">לפרטי קשר אנשי צוות הישיבה – לחץ כאן</a></div>' +
+    // שורת טקסט, בלי קישור — הקישור נשלח בהודעה שמצורפת לגיליון
+    '<div class="foot"><div class="more">הערות אישיות מעבר לדף | לפרטי קשר אנשי צוות הישיבה – קישור מצו"ב</div>' +
     '<div class="sigrow"><div class="legend"><b>מקרא:</b>ציון הנהגה: ' + RP_SCALE.join(' / ') + '<br>ציון מבחנים: 0–100</div>' +
       '<div class="sig"><img src="app/img/report-sig.png" alt=""><b>הרב אליעזר יוסף חי קלנגל</b><span>משגיח ראשי</span>' +
       '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
   '</div></section>';
+  var staff = contactsStaff(s.cls);
   var p2 = '<section class="pg">' + head + '<div class="body"><table class="notes">' +
     // כותרת לכל עמודה: מעל השם — «שם ומשפחה», ומעל ההערה — «הערות אישיות»; עמודת התפקיד מסבירה את עצמה
     '<thead><tr class="nh"><th></th><th>שם ומשפחה</th><th>הערות אישיות</th></tr></thead>' +
     RP_ROLES.map(function (x) {
-      return '<tr><th>' + esc(x[1]) + '</th><td class="who">' + esc(rpGet(mk, 'cls-' + s.cls, x[0])) + '</td><td>' + v(x[0]) + '</td></tr>';
+      return '<tr><th>' + esc(x[1]) + '</th><td class="who">' + esc(staff[x[0]] || '') + '</td><td>' + v(x[0]) + '</td></tr>';
     }).join('') + '</table></div></section>';
   return p1 + p2;
 }
