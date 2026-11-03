@@ -65,6 +65,7 @@ textarea.in{min-height:84px;resize:vertical}
 .btn{border:0;background:var(--brand);color:#fff;border-radius:14px;padding:15px;text-align:center;font-size:16.5px;font-weight:700;box-shadow:0 4px 14px rgba(26,58,107,.3);cursor:pointer;width:100%}
 .btn.out{background:#fff;color:var(--brand);border:1.5px solid var(--brand);box-shadow:none}
 .btn:disabled{opacity:.6;cursor:default}
+.priv{font-size:11.5px;line-height:1.55;color:var(--text-3);text-align:center;padding:0 4px}
 .foot{text-align:center;font-size:12.5px;padding-top:4px;font-weight:700;color:var(--brand)}
 .ok{text-align:center;padding:26px 10px 8px}
 .ok .c{width:74px;height:74px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
@@ -192,6 +193,7 @@ textarea.in{min-height:84px;resize:vertical}
       html+=fieldHTML(f);
     });
     if(open) html+='</section>';
+    if(CFG.privacy) html+='<p class="priv">'+esc(CFG.privacy)+'</p>';
     html+='<button class="btn" id="send" type="button">שליחת הטופס</button><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
     $('main').innerHTML=html;
     yearLine(); carWire((CFG.images||[]).length,CFG.interval||4);
