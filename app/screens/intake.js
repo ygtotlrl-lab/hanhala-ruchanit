@@ -261,6 +261,8 @@ function _readFields(rows, prevAll) {
       if (o.type === 'select') {
         var ol = v('options');
         var prev = prevAll.filter(function (x) { return x.id === o.id; })[0];
+        // «אפשרות ראשית» (`lead`) אינה נערכת בהגדרות — נשמרת כפי שהייתה
+        if (prev && prev.lead) o.lead = true;
         o.options = ol != null ? ol.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : ((prev && prev.options) || []);
       }
     }

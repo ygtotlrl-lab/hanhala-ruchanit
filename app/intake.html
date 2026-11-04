@@ -50,6 +50,14 @@ textarea.in{min-height:84px;resize:vertical}
 .chips{display:flex;gap:8px;flex-wrap:wrap;border:1.5px solid transparent;border-radius:12px}
 .chips button{padding:9px 16px;border:1.5px solid var(--line);border-radius:999px;font-size:14.5px;font-weight:700;color:var(--text-2);background:#fff;cursor:pointer}
 .chips button.on{border-color:var(--brand);background:var(--soft);color:var(--brand)}
+/* בחירה עם אפשרות ראשית (lead) — הראשונה כפתור מלא לכל הרוחב, והשאר מקופלות תחת «אפשרות אחרת» */
+.chips.lead{flex-direction:column;align-items:stretch;gap:6px}
+.chips.lead .pri{width:100%;border-radius:12px;padding:13px 16px;font-size:15.5px;border:2px solid var(--brand);color:var(--brand)}
+.chips.lead .pri.on{background:var(--brand);color:#fff}
+.chips.lead details{font-size:13px;color:var(--text-3)}
+.chips.lead summary{cursor:pointer;padding:4px 2px;width:max-content;text-decoration:underline;text-underline-offset:3px}
+.chips.lead details>div{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:6px}
+.chips.lead details button{font-size:13.5px;padding:7px 14px}
 .pick{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;font-size:15px;background:#fff;cursor:pointer;width:100%;text-align:right;position:relative}
 .pick .v{font-weight:700}.pick .e{color:var(--text-3)}
 .pick svg{width:20px;height:20px;color:var(--brand);flex:none}
@@ -170,7 +178,12 @@ textarea.in{min-height:84px;resize:vertical}
   function fieldHTML(f){
     var req=f.req?' <span class="q">*</span>':'', help=f.help?'<small>'+esc(f.help)+'</small>':'';
     var head='<span class="t">'+esc(f.label)+req+'</span>'+help, body='';
-    if(f.type==='select') body='<div class="chips" data-chips="'+f.id+'">'+(f.options||[]).map(function(o){return '<button type="button" data-v="'+esc(o)+'">'+esc(o)+'</button>';}).join('')+'</div>';
+    if(f.type==='select'&&f.lead&&(f.options||[]).length>1){
+      var o0=f.options[0];
+      body='<div class="chips lead" data-chips="'+f.id+'"><button type="button" class="pri" data-v="'+esc(o0)+'">'+esc(o0)+'</button>'+
+        '<details><summary>אפשרות אחרת</summary><div>'+f.options.slice(1).map(function(o){return '<button type="button" data-v="'+esc(o)+'">'+esc(o)+'</button>';}).join('')+'</div></details></div>';
+    }
+    else if(f.type==='select') body='<div class="chips" data-chips="'+f.id+'">'+(f.options||[]).map(function(o){return '<button type="button" data-v="'+esc(o)+'">'+esc(o)+'</button>';}).join('')+'</div>';
     else if(f.type==='textarea') body='<textarea class="in" data-id="'+f.id+'"></textarea>';
     else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
     else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
@@ -398,7 +411,7 @@ textarea.in{min-height:84px;resize:vertical}
   // ── האזנה אחת לכל אירוע, בהאצלה ──
   document.addEventListener('click',function(e){
     var t=e.target;
-    var ch=t.closest('[data-chips] button'); if(ch){var box=ch.parentNode,id=box.getAttribute('data-chips');box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===ch);});V[id]=ch.getAttribute('data-v');clearErr(id);return;}
+    var ch=t.closest('[data-chips] button'); if(ch){var box=ch.closest('[data-chips]'),id=box.getAttribute('data-chips');box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===ch);});V[id]=ch.getAttribute('data-v');clearErr(id);return;}
     var hp=t.closest('[data-hpick]'); if(hp){hpick(hp.getAttribute('data-hpick'));return;}
     var ho=t.closest('[data-hok]'); if(ho){hpickOk(ho.getAttribute('data-hok'));return;}
     if(t.closest('[data-sunok]')){ if(!$('sun').checked){toast('יש לסמן את התיבה, או לחזור לתיקון',true);return;} SUNSET=true;DATES_OK=true;dlgClose();toast('✓ נשמר: נולד אחרי השקיעה');return;}
