@@ -162,10 +162,9 @@ function _itemRow(it) {
   var doc = it.doc
     ? '<div class="in-dline">' + _viewBtn(it.doc) + '<button class="row-del-btn" data-act="in-item-doc-clear" aria-label="הסרה">' + icon('close') + '</button></div>'
     : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-item-doc"></label>';
-  return '<div class="en-frow in-item' + (it.frozen ? ' in-frozen' : '') + '" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
+  return '<div class="en-frow in-item" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
-    '<div class="en-fbody"><div class="en-fline"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' +
-      '<label class="en-req"><input type="checkbox" data-k="frozen"' + (it.frozen ? ' checked' : '') + '>מוקפא</label></div>' + doc +
+    '<div class="en-fbody"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' + doc +
       '<div class="en-fields in-ifields">' + (it.fields || []).map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
       '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button></div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
@@ -279,10 +278,9 @@ function intakeSave() {
   var items = Array.prototype.map.call(document.querySelectorAll('#in-items > [data-iid]'), function (row) {
     var it = { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
              fields: _readFields(Array.prototype.slice.call(row.querySelectorAll('.in-ifields > [data-fid]')), prevAll) };
-    // «מוקפא» — מוצג בטופס באפור, בלי שדות למילוי ובלי חובה, עד שמפשירים
-    var fz = row.querySelector('[data-k="frozen"]');
-    if (fz && fz.checked) it.frozen = true;
-    row.classList.toggle('in-frozen', !!it.frozen);
+    // «מוקפא» (`frozen`) אינו נערך בהגדרות — נשמר כפי שהיה; ההקפאה וההפשרה במסד
+    var was = (cfg.items || []).filter(function (x) { return x.id === it.id; })[0];
+    if (was && was.frozen) it.frozen = true;
     return it;
   }).filter(function (it) { return it.title || it.doc || it.fields.length; });
   var track = Array.prototype.map.call(document.querySelectorAll('#in-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
