@@ -189,8 +189,10 @@ function enrollAddStudent(el) {
 }
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──
+// «חתימה» — רק בקבלה לישיבה (inf): ההורה חותם באצבע, והחתימה נשמרת כתמונה
+var IN_TYPES = EN_TYPES.slice(0, -1).concat([['signature', 'חתימה']], EN_TYPES.slice(-1));
 function _fieldRow(f, drag) {
-  var opts = EN_TYPES.map(function (t) { return '<option value="' + t[0] + '"' + (f.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
+  var opts = (drag === 'inf' ? IN_TYPES : EN_TYPES).map(function (t) { return '<option value="' + t[0] + '"' + (f.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('');
   var sec = f.type === 'section';
   return '<div class="en-frow' + (sec ? ' is-sec' : '') + '" data-drag="' + (drag || 'enf') + '" data-fid="' + esc(f.id) + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +

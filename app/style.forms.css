@@ -134,7 +134,10 @@
 .en-cfg .en-imgs .row-del-btn{position:absolute;opacity:1;height:28px}
 #modal-body .en-cfg .en-int{margin:0}
 .in-item{background:var(--card-2)}
-.in-item>.en-fbody>input[data-k=ititle]{font-weight:700;color:var(--brand-ink)}
+.in-item>.en-fbody>.en-fline>input[data-k=ititle]{font-weight:700;color:var(--brand-ink)}
+/* פריט מוקפא — אפור עד שמפשירים */
+.in-item.in-frozen>.en-fbody>:not(.en-fline){opacity:var(--op-4)}
+.in-item.in-frozen>.en-fbody>.en-fline>input[data-k=ititle]{color:var(--text-3)}
 .in-ifields{padding-inline-start:var(--sp-4);border-inline-start:2px solid var(--border);margin-top:var(--sp-2)}
 .in-ifields .en-frow{background:var(--card)}
 /* בתוך שורה — כפתור קטן בצד הפותח, ולא פס לרוחב */

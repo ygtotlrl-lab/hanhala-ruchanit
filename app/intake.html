@@ -57,6 +57,17 @@ textarea.in{min-height:84px;resize:vertical}
 .up{border:1.5px dashed #9fb3d1;border-radius:12px;padding:16px;text-align:center;color:var(--brand);font-weight:700;font-size:14px;background:var(--soft);cursor:pointer;position:relative}
 .up input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .up .nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:4px;word-break:break-all}
+.sig{position:relative;border:1.5px dashed #9fb3d1;border-radius:12px;background:#fff;height:150px;touch-action:none}
+.sig canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
+.sig .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:14px;pointer-events:none}
+.sig.has .ph{display:none}
+.sig button{position:absolute;top:6px;left:6px;border:0;background:var(--soft);color:var(--brand);font-weight:700;font-size:12.5px;border-radius:999px;padding:4px 12px;cursor:pointer}
+.sig:not(.has) button{display:none}
+.f.err .sig{border-color:var(--bad)}
+.chk-h{font-size:13.5px;line-height:1.55;color:var(--text)}
+.it.frz{opacity:.45}
+.it.frz h3 em{font-style:normal;font-size:12px;font-weight:700;color:var(--text-3);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-inline-start:6px}
+#copy td img.sg{height:56px;display:block}
 .chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--text-2);cursor:pointer}
 .chk input{appearance:none;flex:none;width:22px;height:22px;border:2px solid var(--brand);border-radius:6px;margin-top:1px;display:grid;place-items:center;background:#fff;cursor:pointer}
 .chk input:checked{background:var(--brand)}
@@ -149,7 +160,7 @@ textarea.in{min-height:84px;resize:vertical}
   var TODAY=heb(new Date()), YEAR=TODAY.y+1;
 
   // ── מצב ──
-  var CFG=null, V={}, FILES={}, SUNSET=false, DATES_OK=false;
+  var CFG=null, V={}, FILES={}, SIGS={}, SUNSET=false, DATES_OK=false;
 
   function toast(msg,bad){var t=$('toast');t.textContent=msg;t.className='toast on'+(bad?' bad':'');clearTimeout(toast._t);toast._t=setTimeout(function(){t.className='toast'+(bad?' bad':'');},2600);}
   function dlg(html){$('bx').innerHTML=html;$('veil').classList.add('open');}
@@ -164,7 +175,9 @@ textarea.in{min-height:84px;resize:vertical}
     else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
     else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
     else if(f.type==='file') body='<label class="up">＋ צילום או בחירת קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
-    else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'"><label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
+    else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'">'+(f.help?'<div class="chk-h">'+esc(f.help)+'</div>':'')+'<label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
+    // חתימה באצבע — נשמרת כתמונה עם הקבצים שהועלו
+    else if(f.type==='signature') body='<div class="sig" data-sig="'+f.id+'"><canvas></canvas><span class="ph">יש לחתום כאן באצבע</span><button type="button" data-sigclr="'+f.id+'">ניקוי</button></div>';
     else {
       var tp=f.type==='email'?'email':f.type==='tel'?'tel':'text', im=f.type==='tel'||f.type==='idnum'?' inputmode="numeric"':'';
       body='<input class="in" type="'+tp+'"'+im+(tp!=='text'||f.type==='idnum'?' dir="ltr"':'')+' data-id="'+f.id+'" autocomplete="off">';
@@ -191,6 +204,8 @@ textarea.in{min-height:84px;resize:vertical}
     if(items.length){
       n++; html+='<section class="sec"><h2><b>'+n+'</b>מסמכים לחתימה</h2>'+
         items.map(function(it,i){
+          // פריט מוקפא — באפור, בלי שדות ובלי חובה, עד שמפשירים
+          if(it.frozen) return '<div class="it frz"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'<em>בהמשך</em></h3></div>';
           return '<div class="it"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'</h3>'+viewBtn(it.doc)+
             (it.fields||[]).filter(function(f){return f.type!=='section';}).map(fieldHTML).join('')+'</div>';
         }).join('')+'</section>';
@@ -198,11 +213,24 @@ textarea.in{min-height:84px;resize:vertical}
     if(CFG.privacy) html+='<p class="priv">'+esc(CFG.privacy)+'</p>';
     html+='<button class="btn" id="send" type="button">שליחת הטופס</button><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
     $('main').innerHTML=html;
+    document.querySelectorAll('[data-sig]').forEach(sigInit);
+  }
+  // ── חתימה — ציור בקנבס, ובסוף כל משיכה התמונה נשמרת כקובץ (PNG) ──
+  function sigInit(box){
+    var id=box.getAttribute('data-sig'), cv=box.querySelector('canvas'), ctx, last=null;
+    function size(){var r=box.getBoundingClientRect(),k=window.devicePixelRatio||1;cv.width=r.width*k;cv.height=r.height*k;ctx=cv.getContext('2d');ctx.scale(k,k);ctx.lineWidth=2.2;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#0f2347';}
+    size();
+    function pt(e){var r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+    cv.addEventListener('pointerdown',function(e){e.preventDefault();cv.setPointerCapture(e.pointerId);last=pt(e);ctx.beginPath();ctx.arc(last.x,last.y,1.1,0,7);ctx.fillStyle='#0f2347';ctx.fill();});
+    cv.addEventListener('pointermove',function(e){if(!last)return;var p=pt(e);ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();last=p;});
+    function end(){if(!last)return;last=null;box.classList.add('has');cv.toBlob(function(b){FILES[id]=new File([b],'חתימה.png',{type:'image/png'});SIGS[id]=cv.toDataURL('image/png');clearErr(id);},'image/png');}
+    cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+    box._clr=function(){ctx.clearRect(0,0,cv.width,cv.height);box.classList.remove('has');FILES[id]=null;delete SIGS[id];};
   }
   // כל השדות שממלאים — פרטי התלמיד ואחריהם שדות המסמכים לחתימה
   function allFields(){
     var out=(CFG.fields||[]).filter(function(f){return f.type!=='section';});
-    (CFG.items||[]).forEach(function(it){(it.fields||[]).forEach(function(f){if(f.type!=='section')out.push(f);});});
+    (CFG.items||[]).forEach(function(it){if(!it.frozen)(it.fields||[]).forEach(function(f){if(f.type!=='section')out.push(f);});});
     return out;
   }
   function fdef(id){return allFields().filter(function(f){return f.id===id;})[0];}
@@ -244,7 +272,7 @@ textarea.in{min-height:84px;resize:vertical}
   function collect(){
     var bad=null;
     allFields().forEach(function(f){
-      var v=V[f.id], empty=(f.type==='file')?!FILES[f.id]:(f.type==='consent')?!v:(v==null||String(typeof v==='object'?'x':v).trim()==='');
+      var v=V[f.id], empty=(f.type==='file'||f.type==='signature')?!FILES[f.id]:(f.type==='consent')?!v:(v==null||String(typeof v==='object'?'x':v).trim()==='');
       if(f.req&&empty){setErr(f.id,'שדה חובה');bad=bad||f.id;return;}
       if(!empty&&f.type==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim())){setErr(f.id,'כתובת אימייל אינה תקינה');bad=bad||f.id;}
     });
@@ -270,7 +298,7 @@ textarea.in{min-height:84px;resize:vertical}
       }
       var data={};
       allFields().forEach(function(f){
-        if(f.type==='file') return;
+        if(f.type==='file'||f.type==='signature') return;
         var v=V[f.id]; if(v==null||v==='') return;
         data[f.id]=f.type==='hebdate'?hebLabel(v):f.type==='gdate'?gLabel(v):f.type==='consent'?'מאשר':String(v).trim();
       });
@@ -323,6 +351,7 @@ textarea.in{min-height:84px;resize:vertical}
       if(!window.PDFLib) await loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js');
       var now=new Date(), rows='';
       function row(f){
+        if(f.type==='signature') return '<tr><th>'+esc(f.label)+'</th><td>'+(SIGS[f.id]?'<img class="sg" src="'+SIGS[f.id]+'" alt="">':'')+'</td></tr>';
         var v=f.type==='file'?(files[f.id]?files[f.id].name:''):(data[f.id]||'');
         if(f.type==='hebdate'&&data._sunset) v+=' ('+data._sunset+')';
         return '<tr><th>'+esc(f.label)+'</th><td>'+esc(v)+'</td></tr>';
@@ -331,6 +360,7 @@ textarea.in{min-height:84px;resize:vertical}
       if((CFG.items||[]).length){
         rows+='<tr class="sh"><th colspan="2">מסמכים לחתימה</th></tr>';
         CFG.items.forEach(function(it,i){
+          if(it.frozen) return;
           rows+='<tr class="it-h"><th colspan="2">'+(i+1)+'. '+esc(it.title)+'</th></tr>';
           (it.fields||[]).forEach(function(f){ if(f.type!=='section') rows+=row(f); });
         });
@@ -353,7 +383,7 @@ textarea.in{min-height:84px;resize:vertical}
       for(var i=0, fl=allFields(); i<fl.length; i++) if(fl[i].type==='file'&&FILES[fl[i].id]) await addBlob(pdf,FILES[fl[i].id],FILES[fl[i].id].name);
       // המסמכים לצפייה ואחריהם המסמכים לחתימה — מה שיש לו קובץ
       var urls=(CFG.docs||[]).filter(function(d){return d.url;}).map(function(d){return d.url;})
-        .concat((CFG.items||[]).filter(function(it){return it.doc;}).map(function(it){return it.doc;}));
+        .concat((CFG.items||[]).filter(function(it){return it.doc&&!it.frozen;}).map(function(it){return it.doc;}));
       for(var j=0;j<urls.length;j++){
         try{ var r=await fetch(urls[j]); if(r.ok) await addBlob(pdf,await r.blob(),urls[j]); }catch(e){ console.warn('[intake] מסמך לא נטען להעתק',urls[j],e); }
       }
@@ -373,6 +403,7 @@ textarea.in{min-height:84px;resize:vertical}
     var ho=t.closest('[data-hok]'); if(ho){hpickOk(ho.getAttribute('data-hok'));return;}
     if(t.closest('[data-sunok]')){ if(!$('sun').checked){toast('יש לסמן את התיבה, או לחזור לתיקון',true);return;} SUNSET=true;DATES_OK=true;dlgClose();toast('✓ נשמר: נולד אחרי השקיעה');return;}
     if(t.closest('[data-close]')||t===$('veil')){dlgClose();return;}
+    var sc=t.closest('[data-sigclr]'); if(sc){var bx=document.querySelector('[data-sig="'+sc.getAttribute('data-sigclr')+'"]');if(bx&&bx._clr)bx._clr();return;}
     if(t.closest('#send')){send();return;}
   });
   document.addEventListener('input',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-id');if(id&&e.target.type!=='checkbox'&&e.target.type!=='date'){V[id]=e.target.value;clearErr(id);}});

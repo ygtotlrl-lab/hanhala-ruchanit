@@ -89,7 +89,7 @@ function _respPaint() {
     var d = x.data || {}, f = x.files || {};
     var name = [d.first, d.last].filter(Boolean).join(' ') || '—';
     var cells = fields.map(function (fl) {
-      if (fl.type === 'file') return '<td>' + (f[fl.id] ? '<button class="btn sm out" data-act="in-file" data-path="' + esc(f[fl.id].path) + '">' + icon('watch') + 'פתיחה</button>' : '') + '</td>';
+      if (fl.type === 'file' || fl.type === 'signature') return '<td>' + (f[fl.id] ? '<button class="btn sm out" data-act="in-file" data-path="' + esc(f[fl.id].path) + '">' + icon('watch') + 'פתיחה</button>' : '') + '</td>';
       return '<td>' + esc(d[fl.id] || '') + '</td>';
     }).join('');
     var trk = (cfg.track || []).map(function (t) {
@@ -162,9 +162,10 @@ function _itemRow(it) {
   var doc = it.doc
     ? '<div class="in-dline">' + _viewBtn(it.doc) + '<button class="row-del-btn" data-act="in-item-doc-clear" aria-label="הסרה">' + icon('close') + '</button></div>'
     : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-item-doc"></label>';
-  return '<div class="en-frow in-item" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
+  return '<div class="en-frow in-item' + (it.frozen ? ' in-frozen' : '') + '" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
-    '<div class="en-fbody"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' + doc +
+    '<div class="en-fbody"><div class="en-fline"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' +
+      '<label class="en-req"><input type="checkbox" data-k="frozen"' + (it.frozen ? ' checked' : '') + '>מוקפא</label></div>' + doc +
       '<div class="en-fields in-ifields">' + (it.fields || []).map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
       '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button></div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
@@ -276,8 +277,13 @@ function intakeSave() {
     return { id: row.getAttribute('data-did'), title: row.querySelector('[data-k="title"]').value.trim(), url: row.getAttribute('data-url') || '' };
   }).filter(function (d) { return d.title || d.url; });
   var items = Array.prototype.map.call(document.querySelectorAll('#in-items > [data-iid]'), function (row) {
-    return { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
+    var it = { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
              fields: _readFields(Array.prototype.slice.call(row.querySelectorAll('.in-ifields > [data-fid]')), prevAll) };
+    // «מוקפא» — מוצג בטופס באפור, בלי שדות למילוי ובלי חובה, עד שמפשירים
+    var fz = row.querySelector('[data-k="frozen"]');
+    if (fz && fz.checked) it.frozen = true;
+    row.classList.toggle('in-frozen', !!it.frozen);
+    return it;
   }).filter(function (it) { return it.title || it.doc || it.fields.length; });
   var track = Array.prototype.map.call(document.querySelectorAll('#in-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
   // הודעת הפרטיות אינה נערכת בהגדרות — נשמרת כפי שהיא
