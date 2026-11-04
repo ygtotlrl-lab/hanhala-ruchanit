@@ -41,6 +41,8 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 36px;display:flex;flex-dire
 .car .ar.r{right:10px}.car .ar.l{left:10px}
 .dots{display:flex;gap:6px;justify-content:center;margin-top:-4px}
 .dots i{width:7px;height:7px;border-radius:4px;background:#b9c7dd;transition:width .3s}.dots i.on{background:var(--brand);width:20px}
+.about{align-self:center;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:7px 16px;font-size:14px;font-weight:700;text-decoration:none}
+.about svg{width:16px;height:16px}
 .req-note{font-size:14px;color:var(--text-2);text-align:center}
 .req-note b,.q{color:var(--bad)}
 .yr{display:flex;justify-content:center;align-items:center;gap:8px;font-size:13.5px;color:var(--text-2);flex-wrap:wrap}
@@ -124,7 +126,11 @@ textarea.in{min-height:84px;resize:vertical}
     next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
     prev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
     ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+,
+    ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>'
   };
+  // הערך על הישיבה בחב״דפדיה — מתחת למצגת
+  var ABOUT_URL = 'https://chabadpedia.co.il/wiki/%D7%AA%D7%95%D7%9E%D7%9B%D7%99_%D7%AA%D7%9E%D7%99%D7%9E%D7%99%D7%9D_%D7%A8%D7%90%D7%A9%D7%95%D7%9F_%D7%9C%D7%A6%D7%99%D7%95%D7%9F_(%D7%92%D7%93%D7%95%D7%9C%D7%94)';
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function $(id){return document.getElementById(id);}
 
@@ -193,6 +199,7 @@ textarea.in{min-height:84px;resize:vertical}
   }
   function render(){
     var html=carousel(CFG.images||[],CFG.interval)+
+      '<a class="about" href="'+ABOUT_URL+'" target="_blank" rel="noopener">אודות הישיבה - חב"דפדיה'+IC.ext+'</a>'+
       '<p class="req-note">השדות המסומנים ב-<b>*</b> הם חובה.</p>'+
       '<div class="yr" id="yr"></div>';
     var n=0, open=false;
