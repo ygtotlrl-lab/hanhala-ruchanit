@@ -10,6 +10,7 @@
 <!-- דף ציבורי ועצמאי: קבלה לישיבה, מתוך ההגדרה intake_form; שולח בלבד (hr_intake · הדלי hr-enroll, תחת intake/) ואינו קורא דבר מלבד ההגדרה והמסמכים הציבוריים שהיא מצביעה עליהם. כמו app/enroll.html. -->
 <link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
+<script src="capture.js"></script>
 <script>
 // ההגדרה נשלפת כבר כאן, במקביל לפריסת הדף; GET פשוט (המפתח בכתובת) — בלי בקשת OPTIONS מקדימה, ואם נדחה — בכותרות כרגיל.
 self.FORM_CFG=(function(k){
@@ -65,6 +66,8 @@ textarea.in{min-height:84px;resize:vertical}
 .up{border:1.5px dashed #9fb3d1;border-radius:12px;padding:16px;text-align:center;color:var(--brand);font-weight:700;font-size:14px;background:var(--soft);cursor:pointer;position:relative}
 .up input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .up .nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:4px;word-break:break-all}
+.up-pick{display:flex;gap:10px}.up-pick .up{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:700;font-size:14px}
+.up-nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:6px;word-break:break-all;text-align:center}
 .sig{position:relative;border:1.5px dashed #9fb3d1;border-radius:12px;background:#fff;height:150px;touch-action:none}
 .sig canvas{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair}
 .sig .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:14px;pointer-events:none}
@@ -197,7 +200,8 @@ textarea.in{min-height:84px;resize:vertical}
     else if(f.type==='textarea') body='<textarea class="in" data-id="'+f.id+'"></textarea>';
     else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
     else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
-    else if(f.type==='file') body='<label class="up">＋ תמונה או קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
+    else if(f.type==='file') body='<div class="up-pick"><label class="up">＋ העלאת קובץ<input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>'+
+      '<button type="button" class="up up-cam" data-cam="'+f.id+'">'+(window.Capture?Capture.icon:'')+'<span>צילום</span></button></div><span class="nm up-nm" data-fname="'+f.id+'"></span>';
     else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'">'+(f.help?'<div class="chk-h">'+esc(f.help)+'</div>':'')+'<label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
     // חתימה באצבע — נשמרת כתמונה עם הקבצים שהועלו
     else if(f.type==='signature') body='<div class="sig" data-sig="'+f.id+'"><canvas></canvas><span class="ph">יש לחתום כאן באצבע</span><button type="button" data-sigclr="'+f.id+'">ניקוי</button></div>';
@@ -435,8 +439,11 @@ textarea.in{min-height:84px;resize:vertical}
   }
 
   // ── האזנה אחת לכל אירוע, בהאצלה ──
+  // קובץ שנבחר או צולם — נשמר ב-FILES ושמו מוצג מתחת לשני הכפתורים
+  function setFile(fk,file,label){FILES[fk]=file||null;document.querySelector('[data-fname="'+fk+'"]').textContent=file?(label||file.name):'';if(file)clearErr(fk);}
   document.addEventListener('click',function(e){
     var t=e.target;
+    var cam=t.closest('[data-cam]'); if(cam&&window.Capture){var ck=cam.getAttribute('data-cam');Capture.camera({title:'צילום מסמך',name:'צילום'}).then(function(file){if(file)setFile(ck,file,'צילום · '+(file.pages===1?'עמוד אחד':file.pages+' עמודים'));});return;}
     var pv=t.closest('[data-pv]'); if(pv){e.preventDefault();pdfView(pv.getAttribute('href'),pv.getAttribute('data-pv'));return;}
     if(t.closest('[data-pvx]')){$('pv').classList.remove('open');$('pv-b').innerHTML='';return;}
     var ch=t.closest('[data-chips] button'); if(ch){var box=ch.closest('[data-chips]'),id=box.getAttribute('data-chips');box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===ch);});V[id]=ch.getAttribute('data-v');clearErr(id);return;}
@@ -450,7 +457,7 @@ textarea.in{min-height:84px;resize:vertical}
   document.addEventListener('input',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-id');if(id&&e.target.type!=='checkbox'&&e.target.type!=='date'){V[id]=e.target.value;clearErr(id);}});
   document.addEventListener('change',function(e){
     var t=e.target, id=t.getAttribute('data-id'), fk=t.getAttribute('data-file');
-    if(fk){FILES[fk]=t.files&&t.files[0]||null;document.querySelector('[data-fname="'+fk+'"]').textContent=FILES[fk]?FILES[fk].name:'';clearErr(fk);return;}
+    if(fk){var raw=t.files&&t.files[0]||null;setFile(fk,raw);if(raw&&window.Capture)Capture.compress(raw).then(function(c){if(FILES[fk]===raw)FILES[fk]=c;});return;}
     if(!id) return;
     if(t.type==='checkbox'){V[id]=t.checked;clearErr(id);return;}
     if(t.type==='date'){V[id]=t.value||null;var s=document.querySelector('[data-gshow="'+id+'"]');s.className=t.value?'v':'e';s.textContent=t.value?gLabel(t.value):'בחירה';clearErr(id);SUNSET=false;checkDates();}

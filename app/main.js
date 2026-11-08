@@ -35,7 +35,7 @@ import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile,
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
-import { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
+import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
@@ -587,6 +587,7 @@ function hrStreamActions(st) {
   a[p + 'treat-row-add'] = function () { hrAddTreatRow(st); };
   a[p + 'session-add']   = function () { hrAddSessionRow(st); };
   a[p + 'open-file']     = function (el) { return hrOpenFile(el.getAttribute('data-path')); };
+  if (st.exam) a[p + 'scan-cam'] = function (el) { return hrExamCamera(st, el); };
   return a;
 }
 Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStreamActions(HR_STREAMS[k])); });
@@ -594,7 +595,7 @@ Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStre
 // ── אכיפת «צפייה» ──
 // רמת «צפייה» במודול חוסמת כל פעולה שכותבת בו — בנקודה אחת, לפני החיווט; קריאה, ניווט, ייצוא ופתיחת קבצים — פתוחים.
 var HR_STREAM_WRITES = ['add-treat', 'clear-mark', 'confirm-late', 'del-session', 'del-treat', 'edit-session', 'mark-edit', 'mark-set',
-  'open-session', 'resume-go', 'session-add', 'session-close', 'set-mark', 'settings-save', 'status-cancel', 'treat-row-add'];
+  'open-session', 'resume-go', 'scan-cam', 'session-add', 'session-close', 'set-mark', 'settings-save', 'status-cancel', 'treat-row-add'];
 var HR_WRITE_MODULE = {
   'st-activate': 'students', 'st-edit': 'students', 'st-attend': 'students', 'student-save': 'students', 'status-form': 'students',
   'student-status-save': 'students', 'status-abs-cancel': 'students', 'status-picker-open': 'students', 'per-add': 'students',

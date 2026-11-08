@@ -11,6 +11,7 @@ import { hrMarkOf, hrSaveData } from './domain.sessions.js';
 import { _hrOpenRec, hrMarkDirty } from './domain.reg.js';
 import { icon } from './icons.js';
 import { hrStudentOn } from './domain.periods.js';
+import './capture.js';
 
 var EX_MAX_BYTES = 15 * 1024 * 1024;
 
@@ -66,9 +67,13 @@ function hrRenderExam(st, forceInfo) {
       '<input aria-label="ציון (1–100)" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="ציון" class="ex-grade" ' +
         'value="' + (g != null ? g : '') + '" data-inp="' + p + '-grade" data-chg="' + p + '-grade" data-id="' + sid + '">' +
       '<div class="ex-scan">' + scan +
-        '<label class="ex-scan-up" title="' + (m.scan ? 'החלפת הסריקה' : 'העלאת סריקה') + '">' + icon('upload') + '<span>' + (m.scan ? 'החלפה' : 'סריקה') + '</span>' +
+        '<label class="ex-scan-up" title="' + (m.scan ? 'החלפת הסריקה בקובץ' : 'העלאת קובץ') + '">' + icon('upload') + '<span>' + (m.scan ? 'החלפה' : 'קובץ') + '</span>' +
           '<input type="file" accept="image/*,application/pdf" class="hidden" data-chg="' + p + '-scan" data-id="' + sid + '"></label>' +
+        '<button type="button" class="ex-scan-up ex-scan-cam" data-act="' + p + '-scan-cam" data-id="' + sid + '" title="צילום הסריקה">' +
+          window.Capture.icon + '<span>צילום</span></button>' +
       '</div>' +
+      '<input class="ex-note" type="text" placeholder="הערה (לא נכנסת לגיליון)" aria-label="הערה" value="' + esc(m.note || '') + '" ' +
+        'data-inp="' + p + '-note" data-id="' + sid + '">' +
     '</div>';
   }
   var html = todo.map(row).join('');
@@ -130,14 +135,27 @@ async function hrExamUpload(st, input) {
   var file = input && input.files && input.files[0];
   if (!file) return;
   input.value = '';
+  // תמונה מוקטנת לפני ההעלאה — סריקה בגווני אפור; קובץ PDF עולה כמו שהוא
+  var sid = input.getAttribute('data-id');
+  file = await window.Capture.compress(file, { gray: !!sid });
+  return _hrExamPut(st, file, sid, input.getAttribute('data-kind'), input.closest('label'));
+}
+
+// צילום הסריקה במצלמה — עמוד אחר עמוד, ממוזג ל-PDF אחד (app/capture.js). נפתח מתוך הלחיצה עצמה.
+function hrExamCamera(st, el) {
+  var sid = el.getAttribute('data-id');
+  var s = getStudents().filter(function (x) { return idEq(x.client_id, sid); })[0];
+  return window.Capture.camera({ title: 'סריקת מבחן' + (s ? ' — ' + s.name : ''), name: 'מבחן', gray: true })
+    .then(function (file) { if (file) return _hrExamPut(st, file, sid, null, el); });
+}
+
+async function _hrExamPut(st, file, sid, kind, lbl) {
   if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
   if (file.size > EX_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'warn'); return; }
   var rec = _hrOpenRec(st);
   if (!rec) return;
-  var sid = input.getAttribute('data-id'), kind = input.getAttribute('data-kind');
   var ext = (String(file.name).split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
   var path = 'exams/' + rec.client_id + '/' + (sid ? 'scan-' + sid : kind) + '-' + Date.now() + '.' + ext;
-  var lbl = input.closest('label');
   if (lbl) lbl.classList.add('is-busy');
   try {
     var res = await S.SB.storage.from(HR_FILES_BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false });
@@ -175,4 +193,4 @@ async function hrOpenFile(path) {
   }
 }
 
-export { hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile, hrRenderExam };
+export { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile, hrRenderExam };
