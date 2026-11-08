@@ -6,7 +6,7 @@ import { lsGet, lsSet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
 import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
-import { HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_PULL_STALE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
+import { HR_DORM_SESSIONS, HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_PULL_STALE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
          hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
@@ -210,8 +210,9 @@ function hrAdoptSession(st, rec) {
   S[st.v+'CurrentSessionId'] = rec.client_id;
 }
 
-// sessDateIso אופציונלי — בלעדיו אישורים תמיד פעילים
-function hrAutoMark(student, sessDateIso, sessStartTime) {
+// sessDateIso אופציונלי — בלעדיו אישורים תמיד פעילים.
+// «פנימייה» — בבית רק בזמן השינה ובסדרים שב-HR_DORM_SESSIONS; לכן st ושם הסדר.
+function hrAutoMark(student, sessDateIso, sessStartTime, sessName, st) {
   // תאריך עזר מזמן הסדר — ברישום רטרואקטיבי הסטטוס נבדק לפי הסדר ולא לפי השעון
   var sessRef = null;
   if (sessDateIso) {
@@ -222,6 +223,7 @@ function hrAutoMark(student, sessDateIso, sessStartTime) {
   for(var i=0;i<aa.length;i++){
     var t=aa[i].type;
     if(t==='suspended'||t==='left') return 'ak';
+    if(t==='dorm'){ if(st&&(st.kind==='sleep'||(st.kind==='attend'&&HR_DORM_SESSIONS.indexOf(sessName)>=0))) return 'ak'; continue; }
     if(t==='approved'){
       if(!sessDateIso) return 'ap';
       var fromL=hrLocalOfAt(aa[i].from_at), toL=hrLocalOfAt(aa[i].to_at);
@@ -303,7 +305,7 @@ async function hrRefreshApprovalMarks(sid) {
         if (cur !== '' && cur !== 'ap') return;
         var sessTime = '';
         for (var i = 0; i < cfgS.length; i++) { if (cfgS[i].name === rec.session) { sessTime = cfgS[i].start_time || ''; break; } }
-        var am = hrAutoMark(student, rec.session_date, sessTime);
+        var am = hrAutoMark(student, rec.session_date, sessTime, rec.session, st);
         var next = (am === 'ap') ? 'ap' : '';
         if (next === cur) return;
         if (!rec.marks) rec.marks = {};

@@ -8,7 +8,7 @@
   /* צבע הזהות של האפליקציה — רכיב שמייצג אותה נגזר ממנו ולא מדיו הטקסט, והדיו שעליו צמד הפוך שמתחלף איתו */
   --brand:var(--brand-fill); --on-brand:#ffffff;
 
---on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#c08a0b;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#2f855a;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-soft:#ebf4ff;
+--on-brand-edge:rgba(255,255,255,.4);--bad:#c53030;--bad-line:#feb2b2;--bad-soft:#fff5f5;--warn:#c08a0b;--warn-line:#fbd38d;--warn-soft:#fffbeb;--ok:#2f855a;--ok-line:#9ae6b4;--ok-soft:#f0fff4;--info:#2b6cb0;--info-line:#bee3f8;--info-soft:#ebf4ff;
 /* גווני הסימון — ארבעה בלבד: נוכח ירוק · איחורים צהוב · חיסור והיעדרות אדום · באישור, בבית ומנוחה כחול; אסימון לכל קוד */
 --at-p:var(--ok);--at-l:var(--warn);--at-lk:var(--warn);--at-lm:var(--warn);--at-e:var(--bad);--at-x:var(--bad);--at-ap:var(--info);--at-ak:var(--info);--at-a:var(--info);
 /* מניפת המודולים — גווני קור מאותה משפחה: כחול כהה · כחול · תכלת · טורקיז · סגול-כחול · אפור-כחול */
@@ -24,7 +24,7 @@
       --bad:#ff9d9d; --bad-line:#5c2323; --bad-soft:#2b1616;
       --warn:#f6d365;   --warn-line:#5c3c18;   --warn-soft:#2b2012;
       --ok:#84dba6;     --ok-line:#1f4d35;     --ok-soft:#12251c;
-      --info:#93c3f7;   --info-soft:#111d2a;
+      --info:#93c3f7;   --info-line:#1f3c5c;   --info-soft:#111d2a;
       --on-brand-wash:rgba(255,255,255,.13);
       --text:#e8eef5; --text-2:#c2cfdc; --text-3:#93a5b8;
       --border:#24333f;

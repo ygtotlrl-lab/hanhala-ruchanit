@@ -66,9 +66,14 @@ function screenSettingsHTML() {
             <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-bad">+ הוסף סיבה</button>
           </div>
           <div>
-            <div class="reason-head-warn">${icon('left')}לא שב</div>
+            <div class="reason-head-warn">${icon('suspended')}פנימייה</div>
+            <div id="reasons-dorm" class="reason-list"></div>
+            <button data-act="absence-reason-add" data-kind="dorm" class="reason-add-warn">+ הוסף סיבה</button>
+          </div>
+          <div>
+            <div class="reason-head-info">${icon('left')}לא שב</div>
             <div id="reasons-left" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="left" class="reason-add-warn">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="left" class="reason-add-info">+ הוסף סיבה</button>
           </div>
         </div>
       </div>
@@ -161,8 +166,8 @@ function showSettingsModule(mod) {
 }
 
 async function saveAbsenceReasons() {
-  var reasons = {approved:[], suspended:[], left:[]};
-  ['approved','suspended','left'].forEach(function(type) {
+  var reasons = {approved:[], suspended:[], dorm:[], left:[]};
+  ['approved','suspended','dorm','left'].forEach(function(type) {
     // ערך שכבר נאסף אינו נאסף שוב — הרשימה מזינה בורר, ואפשרות כפולה בו אינה ניתנת להבחנה.
     document.querySelectorAll('#reasons-'+type+' input').forEach(function(inp) {
       var v = inp.value.trim();
@@ -178,7 +183,7 @@ async function saveAbsenceReasons() {
 
 function renderAbsenceReasons() {
   var reasons = getAbsenceReasons();
-  ['approved','suspended','left'].forEach(function(type) {
+  ['approved','suspended','dorm','left'].forEach(function(type) {
     var el = document.getElementById('reasons-'+type);
     if (!el) return;
     el.innerHTML = '';

@@ -7,7 +7,7 @@ import { exportPdf, exportXlsx } from '../../core/export.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
 import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
-import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, getStudents,
+import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, hrAwayAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrSortStatuses, hrSortStudents, modalOpen,
          hrFilterChips, saveStudents, tyCls, uiShown } from '../domain.js';
 import { _hcBuild, _hcFmt, _hcGet, _hcH, hrFmtAt, hrTodayHebFmt } from '../domain.hebdate.js';
@@ -119,7 +119,7 @@ function saveStudentStatus(type) {
   // פריט שבוטל באותו מזהה מוחלף — שני פריטים באותו מפתח הם כפילות בתוך צד אחד.
   s.absences = s.absences.filter(function (a) { return !(a && idEq(a.id, nw.id)); });
   s.absences.push(nw);
-  s.present = false;
+  if (type !== 'dorm') s.present = false;
   s.updated_at = Date.now();
 
   saveStudents(students);
@@ -185,10 +185,10 @@ function renderStudents(){
     if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
     return true;
   });
-  // השעיה — מי שאחד הסטטוסים הפעילים שלו השעיה; אינם נוכחים — שאר מי שיש לו סטטוס פעיל.
+  // השעיה — מי שאחד הסטטוסים הפעילים שלו השעיה; אינם נוכחים — שאר מי שיש לו סטטוס פעיל; «פנימייה» — נוכח.
   var present=0,absent=0,susp=0;
   activeSts.forEach(function(s){
-    var act=getActiveAbsences(s);
+    var act=hrAwayAbsences(s);
     if(!act.length)present++;
     else if(act.some(function(a){return a.type==='suspended';}))susp++;
     else absent++;
@@ -206,7 +206,7 @@ function renderStudents(){
   var html='';
   filtered.forEach(function(s,i){
     var clsLabel=CLS_NAME[s.cls]||s.cls;
-    var isPresent=getActiveAbsences(s).length===0;
+    var isPresent=hrAwayAbsences(s).length===0;
     // נוכח ואינו נוכח — אותה צורה, בלי וי ובלי איקס; ההבדל בגוון בלבד
     var presIcon=isPresent
       ?'<span class="pill-present">נוכח</span>'
@@ -426,7 +426,10 @@ function openStatusPickerModal() {
       '<button data-act="status-form" data-kind="suspended" class="status-pick-bad">' +
         '<span class="tile-ico">' + icon('suspended') + '</span><div>השעיה</div>' +
       '</button>' +
-      '<button data-act="status-form" data-kind="left" class="status-pick-warn">' +
+      '<button data-act="status-form" data-kind="dorm" class="status-pick-warn">' +
+        '<span class="tile-ico">' + icon('suspended') + '</span><div>פנימייה</div>' +
+      '</button>' +
+      '<button data-act="status-form" data-kind="left" class="status-pick-info">' +
         '<span class="tile-ico">' + icon('left') + '</span><div>לא שב</div>' +
       '</button>' +
     '</div>', '');
@@ -479,7 +482,7 @@ function cancelSingleAbsence(absenceId) {
     s.absences.forEach(function(a){ if (idEq(a.id, absenceId)) { tombKill(a); a.deleted_by_client_id = sessUserId(); } });
   }
   var stillActive = getActiveAbsences(s);
-  if (stillActive.length === 0) s.present = true;
+  if (hrAwayAbsences(s).length === 0) s.present = true;
   s.updated_at = Date.now();
   saveStudents(students);
   schedulePush();
@@ -792,13 +795,13 @@ async function printStudents() {
     var sts = hrSortStudents(getStudents().filter(hrStudentListed));
     var present = [], out = [], susp = 0;
     sts.forEach(function (s) {
-      var act = getActiveAbsences(s);
+      var act = hrAwayAbsences(s);
       if (!act.length) { present.push(s); return; }
       var a = act.filter(function (x) { return x.type === 'suspended'; })[0] || act[0];
       if (a.type === 'suspended') susp++;
       out.push([s, a]);
     });
-    var TONE = { approved: 'ok', suspended: 'bad', left: 'warn' };
+    var TONE = { approved: 'ok', suspended: 'bad', dorm: 'warn', left: 'info' };
     var outRows = out.map(function (x, i) {
       var s = x[0], a = x[1];
       return [String(i + 1), s.name, HR_CLS_NAME[s.cls] || '', { text: ABS_TYPE_LBL[a.type] || a.type, tone: TONE[a.type] || 'info' },

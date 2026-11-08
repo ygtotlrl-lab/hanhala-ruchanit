@@ -1,7 +1,7 @@
 // app/screens/home.js — מסך הראשי
 import { dayToday } from '../../core/util.js';
 import { S, shell } from '../state.js';
-import { getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorRecs, hrStudentsPull } from '../domain.js';
+import { getStudents, hrAwayAbsences, hrDayWin, hrMarks, hrMirrorRecs, hrStudentsPull } from '../domain.js';
 import { HR_STREAMS, hrIsLate, hrPullSessions } from '../domain.sessions.js';
 import { icon } from '../icons.js';
 import { hrStudentOn } from '../domain.periods.js';
@@ -44,7 +44,7 @@ async function refreshDashStats() {
   var activeSts = allSts.filter(function(s){ return hrStudentOn(s); });
 
   var presentCount = activeSts.filter(function(s){
-    var aa = (typeof getActiveAbsences === 'function') ? getActiveAbsences(s) : [];
+    var aa = hrAwayAbsences(s);
     return !aa || aa.length === 0;
   }).length;
 

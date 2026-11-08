@@ -702,7 +702,7 @@ async function hrPullFromCloud() {
 
 // הסוג עובר במחלקה שמציבה משתנה --ty אחד; סוג לא מוכר נופל לברירת המחדל של abs-tone ואינו יוצר גוון רביעי.
 function tyCls(t) {
-  return (t === 'approved' || t === 'suspended' || t === 'left') ? 'abs-tone-' + t : '';
+  return (t === 'approved' || t === 'suspended' || t === 'dorm' || t === 'left') ? 'abs-tone-' + t : '';
 }
 
 // הגוון באסימון --at-<קוד>, והמחלקה מציבה אותו במשתנה --at; קוד לא מוכר נשאר בברירת המחדל.
@@ -767,6 +767,11 @@ function hrLocalOfAt(iso) {
   return dayIso(d) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
+// מי שאינו נוכח — הסטטוסים הפעילים בלי «פנימייה», שבמצבה נשאר נוכח
+function hrAwayAbsences(s, refDate) {
+  return getActiveAbsences(s, refDate).filter(function (a) { return a.type !== 'dorm'; });
+}
+
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
   if (!Array.isArray(s.absences)) return [];
@@ -780,13 +785,19 @@ function hrSortStatuses(list) {
 }
 
 function getAbsenceReasons() {
-  try { return hrCfgLocalGet('absence_reasons') || getDefaultReasons(); } catch(e) { return getDefaultReasons(); }
+  // סוג שאין לו רשימה בהגדרות השמורות (סוג חדש) — רשימת ברירת המחדל שלו
+  var d = getDefaultReasons(), c = null;
+  try { c = hrCfgLocalGet('absence_reasons'); } catch(e) { c = null; }
+  if (!c) return d;
+  Object.keys(d).forEach(function (k) { if (!Array.isArray(c[k])) c[k] = d[k]; });
+  return c;
 }
 
 function getDefaultReasons() {
   return {
     approved: ['חופשה', 'אירוע משפחתי', 'רפואי', 'אחר'],
     suspended: ['משמעת', 'אחר'],
+    dorm: ['משמעת', 'אחר'],
     left: ['לא חזר מחופשה', 'עזב לצמיתות', 'אחר']
   };
 }
@@ -836,7 +847,7 @@ function hrFilterChips(items, cur, act) {
 
 export { hrFilterChips, HR_MIRROR_STREAMS, _hrCleanCfg, hrStudentCloudGet,
          _hrMarkSynced, _hrStudentsRaw, _hrStudentsSaveRaw,
-         atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences,
+         atDefaultCfg, atvCls, canAccess, canEdit, getAbsenceReasons, getActiveAbsences, hrAwayAbsences,
          getStudents, hrApplyPerms, hrAtOfLocal, hrLocalOfAt, hrCfgGet, hrCfgLocalGet,
          hrCfgLocalSet, hrCfgSet, hrCloudGet, hrCount, hrDayWin, hrDefaultCfg,
          hrLocalRecs, hrMarks, hrMirrorPutRecs, hrMirrorRecs, hrRecTs, hrPullFromCloud, hrStudentsPull,

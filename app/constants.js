@@ -311,8 +311,10 @@ var INTAKE_DEFAULT = {"fields": [{"id": "s1", "type": "section", "label": "פר�
 var HR_CLS_CHIP = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'", s: 'שלוחים' };
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
-var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', left: 'לא שב' };
-var ABS_TYPE_ICON = { approved: 'approved', suspended: 'suspended', left: 'left' }; // שמות אייקון מהסט
+var ABS_TYPE_LBL = { approved: 'אישור', suspended: 'השעיה', dorm: 'פנימייה', left: 'לא שב' };
+// «פנימייה» — נוכח במצבה, ובבית רק בסדרים האלה ובזמן השינה (hrAutoMark)
+var HR_DORM_SESSIONS = ['חסידות בוקר', 'חסידות ערב', 'שחרית'];
+var ABS_TYPE_ICON = { approved: 'approved', suspended: 'suspended', dorm: 'suspended', left: 'left' }; // שמות אייקון מהסט
 
 // כשל רענון מהענן — המסך מציג את העותק שבמכשיר, ואומר זאת.
 var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר';
@@ -320,7 +322,7 @@ var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא ה�
 // מבחן נפתח רק אחרי שנבחר תאריך — השדה ריק כברירה.
 var MSG_EXAM_PICK_DATE = 'יש לבחור תאריך למבחן';
 
-export { ABS_TYPE_ICON, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_ALERT_ABS, HR_ALERT_LATE, HR_EXPORT_FONTS, HR_FRESH_MS, HR_LOGIN_NET_MS, HR_ORG, HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,

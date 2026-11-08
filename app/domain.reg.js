@@ -200,7 +200,7 @@ async function hrEditSession(st, recId) {
       if(!hrStudentOn(stu, rec.session_date)) return;
       var k=String(stu.client_id);
       if(marks[k]&&marks[k].status) return;
-      var am=hrAutoMark(stu, rec.session_date, hhmm);
+      var am=hrAutoMark(stu, rec.session_date, hhmm, rec.session, st);
       if(am){
         marks[k]=hrMarkOf(st,am,0,'');
         cleared[k]=true;
@@ -260,7 +260,7 @@ async function hrOpenSession(st, sessId, sessName) {
   S[st.v+'Pending']={};
   S[st.v+'Cleared']={};
   if(!st.exam) students.forEach(function(s){
-    var am=hrAutoMark(s,dateIso,sessTime);
+    var am=hrAutoMark(s,dateIso,sessTime,sessName,st);
     if(am) marks[s.client_id]=hrMarkOf(st,am,0,'');
   });
 
@@ -469,7 +469,7 @@ function hrRenderStudents(st) {
     var cls=HR_CLS_SHORT[s.cls]||s.cls||'';
     var autoHintHTML='';
     // הרמז נגזר מתאריך הסדר ושעתו, כמו הסימון האוטומטי עצמו — ולא מהשעון: בסדר של אתמול הוא מתאר את אתמול
-    var am=hrAutoMark(s, curRec?curRec.session_date:null, curRec?_hrSessTime(st, curRec.session, ''):'');
+    var am=hrAutoMark(s, curRec?curRec.session_date:null, curRec?_hrSessTime(st, curRec.session, ''):'', curRec?curRec.session:'', st);
     if(am&&isMark&&!S[st.v+'Cleared'][s.client_id]){
       var aLbl=am==='ap'?'באישור':am==='ak'?'בבית':'';
       if(aLbl) autoHintHTML='<span class="mark-hint">('+aLbl+')</span>';
@@ -524,7 +524,7 @@ function hrSetMark(st, sid, code) {
   var curRec=_hrOpenRec(st);
   var sessDateIso=curRec?curRec.session_date:null;
   var sessTime=curRec?_hrSessTime(st, curRec.session, ''):'';
-  var autoM=student?hrAutoMark(student,sessDateIso,sessTime):null;
+  var autoM=student?hrAutoMark(student,sessDateIso,sessTime,curRec?curRec.session:'',st):null;
   var cur=S[st.v+'Marks'][sid];
   if(autoM&&cur&&cur.status===autoM&&!S[st.v+'Cleared'][sid]){
     hrShowOverrideDialog(st,sid,student);
