@@ -210,12 +210,12 @@ textarea.in{min-height:84px;resize:vertical}
   // «צפייה במסמך» — רק כשיש למסמך קובץ או קישור
   function viewBtn(url,title){return url?'<a class="dv" href="'+esc(url)+'" data-pv="'+esc(title||'')+'" target="_blank" rel="noopener">'+IC.eye+'צפייה במסמך</a>':'';}
   // המסמך נפתח בתוך הדף, בעמודים (pdf.js) — חלון חדש אינו נפתח בתוך האפליקציה המותקנת
-  var PDFJS='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+  var PDFJS='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
   async function pdfView(url,title){
     $('pv-t').textContent=title||'';var b=$('pv-b');b.innerHTML='<div class="ld">טוען…</div>';$('pv').classList.add('open');
     try{
-      if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';}
-      var doc=await window.pdfjsLib.getDocument(url).promise;b.innerHTML='';
+      if(!window.pdfjsLib){await loadScript(PDFJS+'build/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'build/pdf.worker.min.js';}
+      var doc=await window.pdfjsLib.getDocument({url:url,cMapUrl:PDFJS+'cmaps/',cMapPacked:true,standardFontDataUrl:PDFJS+'standard_fonts/',disableFontFace:true}).promise;b.innerHTML='';
       var w=Math.min(b.clientWidth-24,1000),dpr=Math.min(window.devicePixelRatio||1,2);
       for(var n=1;n<=doc.numPages;n++){
         if(!$('pv').classList.contains('open'))return;
