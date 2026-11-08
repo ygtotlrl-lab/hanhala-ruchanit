@@ -552,6 +552,7 @@
 .ex-scan-cam svg{width:15px;height:15px}
 .ex-note{grid-area:note;font-family:Heebo;font-size:var(--fs-2);border:1.5px solid var(--border);border-radius:var(--r-3);padding:var(--sp-2) var(--sp-3);color:var(--text);background:var(--card);min-width:0}
 .ex-note::placeholder{color:var(--text-3)}
+@media (max-width:639px){.ex-row{grid-template-columns:22px minmax(0,1fr) 64px;grid-template-areas:"c n g" ". scan scan" ". note note"}.ex-scan{justify-content:flex-start;flex-wrap:wrap}}
 .ex-in-report{font-size:var(--fs-1);font-weight:700;color:var(--info);background:var(--info-soft);padding:var(--sp-1) var(--sp-3);border-radius:var(--r-5)}
 @media (max-width:520px){ .ex-files{grid-template-columns:1fr} }
 
