@@ -25,7 +25,7 @@ self.FORM_CFG=(function(k){
 @font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
 :root{--brand:#1a3a6b;--deep:#0f2347;--mid:#234a8a;--bg:#f0f4fa;--card:#fff;--line:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--soft:#e8eef8;--ok:#1f9d55;--ok-soft:#e9f7ef;--bad:#c53030}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 header{background:linear-gradient(135deg,var(--deep),var(--brand) 60%,var(--mid));color:#fff;padding:20px 16px 22px;text-align:center}
 header img{height:64px;display:block;margin:0 auto 8px}
@@ -91,6 +91,15 @@ textarea.in{min-height:84px;resize:vertical}
 .ok h2{font-size:21px;color:var(--brand)}.ok p{font-size:14.5px;color:var(--text-2);line-height:1.6;margin-top:6px}
 .veil{position:fixed;inset:0;background:rgba(15,35,71,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
 .veil.open{display:flex}
+/* צפייה במסמך — בתוך הדף, כדי שתעבוד גם בתוך האפליקציה ובאפליקציה המותקנת */
+.pv{position:fixed;inset:0;background:#525659;z-index:30;display:none;flex-direction:column}
+.pv.open{display:flex}
+.pv-h{display:flex;align-items:center;gap:10px;background:var(--deep);color:#fff;padding:10px 14px;font-weight:700;font-size:15px}
+.pv-h span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-x{background:none;border:0;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:4px 8px}
+.pv-b{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px;-webkit-overflow-scrolling:touch}
+.pv-b canvas{max-width:100%;height:auto;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.pv-b .ld{color:#fff;margin-top:40px}
 .bx{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25);border-top:4px solid var(--brand);display:flex;flex-direction:column;gap:12px}
 .bx h3{font-size:17px;color:var(--brand)}.bx p{font-size:14px;line-height:1.6;color:var(--text-2)}
 .bx .cmp{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.8}
@@ -133,6 +142,7 @@ textarea.in{min-height:84px;resize:vertical}
 </header>
 <main id="main"><div class="msgc">טוען…</div></main>
 <div class="veil" id="veil"><div class="bx" id="bx"></div></div>
+<div class="pv" id="pv" role="dialog" aria-modal="true"><div class="pv-h"><span id="pv-t"></span><button class="pv-x" data-pvx aria-label="סגירה">✕</button></div><div class="pv-b" id="pv-b"></div></div>
 <div class="toast" id="toast"></div>
 <div id="copy"></div>
 <script>
@@ -187,7 +197,7 @@ textarea.in{min-height:84px;resize:vertical}
     else if(f.type==='textarea') body='<textarea class="in" data-id="'+f.id+'"></textarea>';
     else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
     else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
-    else if(f.type==='file') body='<label class="up">＋ צילום או בחירת קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
+    else if(f.type==='file') body='<label class="up">＋ תמונה או קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
     else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'">'+(f.help?'<div class="chk-h">'+esc(f.help)+'</div>':'')+'<label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
     // חתימה באצבע — נשמרת כתמונה עם הקבצים שהועלו
     else if(f.type==='signature') body='<div class="sig" data-sig="'+f.id+'"><canvas></canvas><span class="ph">יש לחתום כאן באצבע</span><button type="button" data-sigclr="'+f.id+'">ניקוי</button></div>';
@@ -198,7 +208,23 @@ textarea.in{min-height:84px;resize:vertical}
     return '<div class="f" data-f="'+f.id+'">'+head+body+'<span class="msg">שדה חובה</span></div>';
   }
   // «צפייה במסמך» — רק כשיש למסמך קובץ או קישור
-  function viewBtn(url){return url?'<a class="dv" href="'+esc(url)+'" target="_blank" rel="noopener">'+IC.eye+'צפייה במסמך</a>':'';}
+  function viewBtn(url,title){return url?'<a class="dv" href="'+esc(url)+'" data-pv="'+esc(title||'')+'" target="_blank" rel="noopener">'+IC.eye+'צפייה במסמך</a>':'';}
+  // המסמך נפתח בתוך הדף, בעמודים (pdf.js) — חלון חדש אינו נפתח בתוך האפליקציה המותקנת
+  var PDFJS='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+  async function pdfView(url,title){
+    $('pv-t').textContent=title||'';var b=$('pv-b');b.innerHTML='<div class="ld">טוען…</div>';$('pv').classList.add('open');
+    try{
+      if(!window.pdfjsLib){await loadScript(PDFJS+'pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc=PDFJS+'pdf.worker.min.js';}
+      var doc=await window.pdfjsLib.getDocument(url).promise;b.innerHTML='';
+      var w=Math.min(b.clientWidth-24,1000),dpr=Math.min(window.devicePixelRatio||1,2);
+      for(var n=1;n<=doc.numPages;n++){
+        if(!$('pv').classList.contains('open'))return;
+        var pg=await doc.getPage(n),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:w/v0.width*dpr});
+        var c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.style.width=Math.round(vp.width/dpr)+'px';b.appendChild(c);
+        await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+      }
+    }catch(e){console.warn('[intake] צפייה נכשלה',e);b.innerHTML='<div class="ld">פתיחת המסמך נכשלה</div>';}
+  }
   function render(){
     var html='<p class="req-note">השדות המסומנים ב-<b>*</b> הם חובה.</p>';
     var n=0, open=false;
@@ -211,7 +237,7 @@ textarea.in{min-height:84px;resize:vertical}
     var docs=CFG.docs||[];
     if(docs.length){
       n++; html+='<section class="sec"><h2><b>'+n+'</b>מסמכים לצפייה</h2>'+
-        docs.map(function(d){return '<div class="doc"><span class="dt">'+esc(d.title)+'</span>'+viewBtn(d.url)+'</div>';}).join('')+'</section>';
+        docs.map(function(d){return '<div class="doc"><span class="dt">'+esc(d.title)+'</span>'+viewBtn(d.url,d.title)+'</div>';}).join('')+'</section>';
     }
     var items=CFG.items||[];
     if(items.length){
@@ -219,7 +245,7 @@ textarea.in{min-height:84px;resize:vertical}
         items.map(function(it,i){
           // פריט מוקפא — באפור, בלי שדות ובלי חובה, עד שמפשירים
           if(it.frozen) return '<div class="it frz"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'<em>בהמשך</em></h3></div>';
-          return '<div class="it"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'</h3>'+viewBtn(it.doc)+
+          return '<div class="it"><h3><i>'+(i+1)+'.</i>'+esc(it.title)+'</h3>'+viewBtn(it.doc,it.title)+
             (it.fields||[]).filter(function(f){return f.type!=='section';}).map(fieldHTML).join('')+'</div>';
         }).join('')+'</section>';
     }
@@ -411,6 +437,8 @@ textarea.in{min-height:84px;resize:vertical}
   // ── האזנה אחת לכל אירוע, בהאצלה ──
   document.addEventListener('click',function(e){
     var t=e.target;
+    var pv=t.closest('[data-pv]'); if(pv){e.preventDefault();pdfView(pv.getAttribute('href'),pv.getAttribute('data-pv'));return;}
+    if(t.closest('[data-pvx]')){$('pv').classList.remove('open');$('pv-b').innerHTML='';return;}
     var ch=t.closest('[data-chips] button'); if(ch){var box=ch.closest('[data-chips]'),id=box.getAttribute('data-chips');box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===ch);});V[id]=ch.getAttribute('data-v');clearErr(id);return;}
     var hp=t.closest('[data-hpick]'); if(hp){hpick(hp.getAttribute('data-hpick'));return;}
     var ho=t.closest('[data-hok]'); if(ho){hpickOk(ho.getAttribute('data-hok'));return;}

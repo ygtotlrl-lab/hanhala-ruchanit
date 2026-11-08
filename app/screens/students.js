@@ -317,20 +317,24 @@ function renderInactiveList(){
 
 function openManageListDlg(){
   if(!isAdmin()){shell.showDenied();return;}
-  var ITEMS=[
-    {icon:'plus',label:'הוסף תלמיד',k:'add'},
-    {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
-    {icon:'archive',label:'לא פעילים',k:'inactive'},
-    {icon:'download',label:'תבנית ייבוא',k:'tmpl'},
-    {icon:'upload',label:'ייבוא תלמידים',k:'import'},
-    {icon:'del',label:'מחק הכל',k:'delall',cls:'menu-danger'},
-    {icon:'retry',label:'מעבר שנתי',k:'year',cls:'menu-warn'}
+  // קבוצות לפי עניין, כל השורות בצבע אחד — האזהרה בדיאלוג האישור שאחרי הבחירה
+  var GROUPS=[
+    {t:'תלמידים',items:[
+      {icon:'plus',label:'הוסף תלמיד',k:'add'},
+      {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
+      {icon:'archive',label:'לא פעילים',k:'inactive'}]},
+    {t:'ייבוא',items:[
+      {icon:'download',label:'תבנית ייבוא',k:'tmpl'},
+      {icon:'upload',label:'ייבוא תלמידים',k:'import'}]},
+    {t:'סוף שנה',items:[
+      {icon:'retry',label:'מעבר שנתי',k:'year'},
+      {icon:'del',label:'מחק הכל',k:'delall'}]}
   ];
-  var rowsHTML=ITEMS.map(function(item){
-    return '<button data-act="manage-pick" data-mk="'+item.k+'" '+
-      'class="admin-item '+(item.cls||'menu-plain')+'">'+
-      '<span class="admin-ico">'+icon(item.icon)+'</span>'+item.label+
-    '</button>';
+  var rowsHTML=GROUPS.map(function(g){
+    return '<div class="admin-grp"><div class="admin-grp-t">'+g.t+'</div>'+g.items.map(function(item){
+      return '<button data-act="manage-pick" data-mk="'+item.k+'" class="admin-item">'+
+        '<span class="admin-ico">'+icon(item.icon)+'</span>'+item.label+'</button>';
+    }).join('')+'</div>';
   }).join('');
   openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','', icon('settings'));
 }

@@ -213,7 +213,12 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 @media (prefers-reduced-motion:reduce){.btn-spin{animation:none}}
 .admin-ico{font-size:var(--fs-5);text-align:center;width:28px}
 .admin-item{align-items:center;display:flex;border-bottom:1px solid var(--card-2);border:none;background:var(--card);cursor:pointer;direction:rtl;font-family:Heebo;font-size:var(--fs-4);font-weight:600;gap:var(--sp-6);padding:var(--sp-5) var(--sp-6);text-align:right;width:100%}
-.admin-list{margin:0 calc(-1 * var(--sp-7)) calc(-1 * var(--sp-7))}
+.admin-list{display:flex;flex-direction:column;gap:var(--sp-6)}
+.admin-grp{background:var(--card-2);border-radius:var(--r-5);padding:var(--sp-3)}
+.admin-grp-t{font-size:var(--fs-2);font-weight:700;color:var(--text-3);padding:var(--sp-3) var(--sp-5) var(--sp-2)}
+.admin-grp .admin-item{background:none;border-radius:var(--r-4);color:var(--brand-ink)}
+.admin-grp .admin-item:hover{background:var(--card)}
+.admin-grp .admin-ico{width:36px;height:36px;border-radius:50%;background:var(--card);color:var(--brand-ink);align-items:center;flex:none}
 .avatar-btn{align-items:center;display:flex;font-size:var(--fs-3);border:1.5px solid var(--on-brand-edge);backdrop-filter:blur(4px);background:var(--on-brand-wash);color:var(--on-brand);cursor:pointer;font-family:Heebo;font-weight:600;gap:var(--sp-4);padding:var(--sp-4) var(--sp-6);border-radius:var(--r-6);transition:all var(--dur-3);white-space:nowrap}
 .avatar-ico{font-size:var(--fs-4)}
 .avatar-wrap{align-items:center;display:flex;position:relative}
@@ -238,9 +243,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .hc-wrap{position:relative}
 .load-err-detail{margin-top:var(--sp-2);font-size:var(--fs-2);color:var(--text-3)}
 .load-err{color:var(--bad)}
-.menu-danger{color:var(--bad)}
-.menu-plain{color:var(--brand-ink)}
-.menu-warn{color:var(--warn)}
 .mp-err{font-size:var(--fs-3);color:var(--bad);min-height:18px;text-align:right}
 .mp-fld{border:2px solid var(--border);font-family:Heebo;font-size:var(--fs-5);letter-spacing:var(--ls-3);margin-bottom:var(--sp-5);padding:var(--sp-5);border-radius:var(--r-3);text-align:center;width:100%}
 .mp-lbl{font-size:var(--fs-3);color:var(--text-2);display:block;font-family:Heebo;font-weight:600;margin-bottom:var(--sp-2);text-align:right}
@@ -350,3 +352,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .ua button .ico{width:16px;height:16px}
 .ua .ua-off{color:var(--bad)}
 .ua .ua-on{color:var(--ok)}
+
+/* מצבה ושאר כותרות המסכים בטלפון — כפתורי האייקון יורדים לשורה משלהם מתחת לכותרת */
+@media (max-width:639px){.ptitle .gap:not(:last-child){flex-basis:100%;height:0}}

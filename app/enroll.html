@@ -25,7 +25,7 @@ self.FORM_CFG=(function(k){
 @font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
 :root{--brand:#1a3a6b;--deep:#0f2347;--mid:#234a8a;--bg:#f0f4fa;--card:#fff;--line:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--soft:#e8eef8;--ok:#1f9d55;--ok-soft:#e9f7ef;--bad:#c53030}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
 header{background:linear-gradient(135deg,var(--deep),var(--brand) 60%,var(--mid));color:#fff;padding:20px 16px 22px;text-align:center}
 header img{height:64px;display:block;margin:0 auto 8px}
@@ -39,6 +39,8 @@ main{max-width:640px;margin:0 auto;padding:16px 16px 36px;display:flex;flex-dire
 .car .ar{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--brand);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
 .car .ar svg{width:20px;height:20px}
 .car .ar.r{right:10px}.car .ar.l{left:10px}
+.car.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--deep),var(--brand));color:rgba(255,255,255,.35)}
+.car.ph svg{width:30%;height:30%}
 .dots{display:flex;gap:6px;justify-content:center;margin-top:-4px}
 .dots i{width:7px;height:7px;border-radius:4px;background:#b9c7dd;transition:width .3s}.dots i.on{background:var(--brand);width:20px}
 .about{align-self:center;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:7px 16px;font-size:14px;font-weight:700;text-decoration:none}
@@ -125,6 +127,7 @@ textarea.in{min-height:84px;resize:vertical}
     cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
     next:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
     prev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+    img:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M20.5 16l-5-5-8.5 8.5"/></svg>',
     ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
 ,
     ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>'
@@ -164,7 +167,7 @@ textarea.in{min-height:84px;resize:vertical}
 
   // ── המצגת: מתחלפת כל interval שניות, נעצרת כשהעכבר או האצבע עליה, חיצים והחלקה, במעגל ──
   function carousel(imgs,sec){
-    if(!imgs.length) return '';
+    if(!imgs.length) return '<div class="car ph" aria-hidden="true">'+IC.img+'</div>';
     return '<div class="car" id="car">'+imgs.map(function(u,i){return '<img src="'+esc(u)+'" alt=""'+(i?' loading="lazy"':' class="on"')+'>';}).join('')+
       (imgs.length>1?'<span class="cap" id="cap">תמונה מהווי הישיבה · 1 מתוך '+imgs.length+'</span>':'')+(imgs.length>1?'<button class="ar r" data-car="-1" aria-label="הקודמת">'+IC.next+'</button><button class="ar l" data-car="1" aria-label="הבאה">'+IC.prev+'</button>':'')+
       '</div>'+(imgs.length>1?'<div class="dots" id="dots">'+imgs.map(function(_,i){return '<i'+(i?'':' class="on"')+'></i>';}).join('')+'</div>':'');
@@ -189,7 +192,7 @@ textarea.in{min-height:84px;resize:vertical}
     else if(f.type==='textarea') body='<textarea class="in" data-id="'+f.id+'"></textarea>';
     else if(f.type==='hebdate') body='<button type="button" class="pick" data-hpick="'+f.id+'"><span class="e">בחירה</span>'+IC.cal+'</button>';
     else if(f.type==='gdate') body='<label class="pick"><span class="e" data-gshow="'+f.id+'">בחירה</span>'+IC.cal+'<input type="date" data-id="'+f.id+'" max="'+new Date().toISOString().slice(0,10)+'"></label>';
-    else if(f.type==='file') body='<label class="up">＋ צילום או בחירת קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
+    else if(f.type==='file') body='<label class="up">＋ תמונה או קובץ<span class="nm" data-fname="'+f.id+'"></span><input type="file" accept="image/*,application/pdf" data-file="'+f.id+'"></label>';
     else if(f.type==='consent') return '<div class="f" data-f="'+f.id+'"><label class="chk"><input type="checkbox" data-id="'+f.id+'"><span>'+esc(f.label)+req+'</span></label><span class="msg">שדה חובה</span></div>';
     else {
       var tp=f.type==='email'?'email':f.type==='tel'?'tel':'text', im=f.type==='tel'||f.type==='idnum'?' inputmode="numeric"':'';
