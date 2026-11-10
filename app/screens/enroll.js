@@ -2,7 +2,7 @@
 // הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
-import { gateCall, gateLogin, gateOpen } from '../gate.js';
+import { gateCall, gateOpen } from '../gate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { ENROLL_DEFAULT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
@@ -61,18 +61,10 @@ async function enrollResponses() {
   }
   _respPaint();
 }
-function _passHTML(act) {
-  return '<div class="en-pass" data-ks><p>התגובות מוגנות, ונפתחות רק אחרי כניסה מקוונת. נא להזין את הסיסמה שלך.</p>' +
-    '<input type="password" id="en-pass" inputmode="numeric" maxlength="6" autocomplete="current-password" placeholder="••••••">' +
-    '<button class="btn" data-act="' + (act || 'en-pass') + '" data-ksave>כניסה</button></div>';
-}
-async function enrollPass() {
-  var el = document.getElementById('en-pass');
-  if (!el || !el.value) return;
-  if (!navigator.onLine) { toast('אין רשת', null, 'off'); return; }
-  var ok = await gateLogin(AUTH.user.username, el.value);
-  if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
-  return enrollResponses();
+// בלי חיבור לשער — אין כאן סיסמה: הצפייה נפתחת מהכניסה לאפליקציה בלבד, ולכן ההוראה היא לצאת ולהיכנס שוב, עם רשת
+function _passHTML() {
+  return '<div class="en-pass"><p>הצפייה בתגובות נפתחת עם הכניסה לאפליקציה. כדי לחדש אותה — יש לצאת ולהיכנס שוב, עם רשת.</p>' +
+    '<button class="btn" data-act="logout">' + icon('logout') + 'יציאה וכניסה מחדש</button></div>';
 }
 // התגובות — כרטיס לכל מי שמילא (resp.js)
 function _respOpts() {
@@ -311,5 +303,4 @@ function enrollSave() {
 ['enf', 'eni', 'ent'].forEach(function (k) { dragDef(k, function () { return enrollSave(); }); });
 
 export { _fieldRow as enrollFieldRow, _fcSyncRows as fcSyncRows, fcRemember, _passHTML as gatePassHTML, privacyHTML, textsHTML, textsRead,
-         enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollPass,
-         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch };
+         enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch };

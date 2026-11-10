@@ -11,7 +11,7 @@ import { respListHTML, respScreenHTML, respSections } from './resp.js';
 import { contactsUrl } from './contacts.js';
 import { enrollFieldRow, fcRemember, fcSyncRows, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
 import { fcCardHTML, fcOnLabel, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
-import { gateCall, gateLogin, gateOpen } from '../gate.js';
+import { gateCall, gateOpen } from '../gate.js';
 import { openAddStudent } from './students.js';
 
 var INTAKE_PUBLIC = 'hr-public';
@@ -51,7 +51,7 @@ async function intakeResponses() {
   var r = await _gate('list');
   var box = document.getElementById('in-resp');
   if (!box) return;
-  if (r.login) { box.innerHTML = gatePassHTML('in-pass'); return; }
+  if (r.login) { box.innerHTML = gatePassHTML(); return; }
   if (r.perm) { box.innerHTML = '<div class="ld">אין לך הרשאה לתגובות.</div>'; return; }
   if (r.net || r.error) { box.innerHTML = '<div class="ld">אין חיבור לשרת — התגובות נקראות רק עם רשת.</div><button class="retry-btn" data-act="in-resp">נסה שוב</button>'; return; }
   S._inRows = r.rows || [];
@@ -60,14 +60,6 @@ async function intakeResponses() {
     S._inYear = ys.length ? Math.max.apply(null, ys) : null;
   }
   _respPaint();
-}
-async function intakePass() {
-  var el = document.getElementById('en-pass');
-  if (!el || !el.value) return;
-  if (!navigator.onLine) { toast('אין רשת', null, 'off'); return; }
-  var ok = await gateLogin(AUTH.user.username, el.value);
-  if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
-  return intakeResponses();
 }
 // התגובות — כרטיס לכל מי שמילא (resp.js): פרטי התלמיד, ואחריהם חלק לכל מסמך לחתימה שיש בו שדות
 function _respOpts() {
@@ -309,4 +301,4 @@ function intakeSave() {
 ['inf', 'ind', 'ini', 'int'].forEach(function (k) { dragDef(k, function () { return intakeSave(); }); });
 
 export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear,
-         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch };
+         intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch };

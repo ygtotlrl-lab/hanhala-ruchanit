@@ -9,7 +9,7 @@ import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../dom
 import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
 import { gatePassHTML, textsHTML, textsRead } from './enroll.js';
-import { gateCall, gateLogin } from '../gate.js';
+import { gateCall } from '../gate.js';
 import { hrDayHeb, hrDayHebFmt } from '../domain.hebdate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { fcCardHTML, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
@@ -73,19 +73,11 @@ async function meetingResponses() {
   if (pp && pp.ok && Array.isArray(pp.value) && !hrSetPending('meeting_past')) S._mtPast = pp.value;
   var box = document.getElementById('mt-resp');
   if (!box) return;
-  if (r.login) { box.innerHTML = gatePassHTML('mt-pass'); return; }
+  if (r.login) { box.innerHTML = gatePassHTML(); return; }
   if (r.perm) { box.innerHTML = '<div class="ld">אין לך הרשאה לתגובות.</div>'; return; }
   if (r.net || r.error) { box.innerHTML = '<div class="ld">אין חיבור לשרת — התגובות נקראות רק עם רשת.</div><button class="retry-btn" data-act="mt-resp">נסה שוב</button>'; return; }
   S._mtRows = r.rows || [];
   _respPaint();
-}
-async function meetingPass() {
-  var el = document.getElementById('en-pass');
-  if (!el || !el.value) return;
-  if (!navigator.onLine) { toast('אין רשת', null, 'off'); return; }
-  var ok = await gateLogin(AUTH.user.username, el.value);
-  if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
-  return meetingResponses();
 }
 // המסך: הכותרת (היום, כמה משפחות וכמה פגישות) · מתג «לפי תלמיד» / «לפי רב» · חיפוש · הרשימה (#mt-list)
 // לפי תלמיד (ברירת המחדל) — כרטיס לכל משפחה שנרשמה: השם, השיעור, ומתחתם הפגישות לפי השעה; לפי רב — רק רבנים שיש להם פגישות, ובסוף מי שעוד בלי
@@ -345,4 +337,4 @@ function meetingSave() {
   return p;
 }
 
-export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView, meetingMode, meetingSearch, meetingNew, meetingNewMake, meetingYear };
+export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingResponses, meetingSave, meetingSettings, meetingView, meetingMode, meetingSearch, meetingNew, meetingNewMake, meetingYear };

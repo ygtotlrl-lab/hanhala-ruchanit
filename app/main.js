@@ -30,11 +30,10 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
-import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollPass,
-         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch } from './screens/enroll.js';
+import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear,
-         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch } from './screens/intake.js';
-import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingPass, meetingResponses, meetingSave, meetingSettings,
+         intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch } from './screens/intake.js';
+import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingResponses, meetingSave, meetingSettings,
          meetingMode, meetingNew, meetingNewMake, meetingSearch, meetingView, meetingYear } from './screens/meeting.js';
 import { fcChipAdd, fcChipDel, fcToggle, renderForms, screenFormsHTML } from './screens/forms.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
@@ -517,7 +516,6 @@ var DOM_ACTIONS = {
   'en-view':              function () { enrollView(); },
   'en-copy':              function () { return enrollCopy(); },
   'en-resp':              function () { return enrollResponses(); },
-  'en-pass':              function () { return enrollPass(); },
   'en-year':              function (el) { enrollYear(el.getAttribute('data-y')); },
   'en-open':              function (el) { enrollOpenRow(el); },
   'en-file':              function (el) { return enrollFile(el); },
@@ -530,7 +528,6 @@ var DOM_ACTIONS = {
   'in-view':              function () { intakeView(); },
   'in-copy':              function () { return intakeCopy(); },
   'in-resp':              function () { return intakeResponses(); },
-  'in-pass':              function () { return intakePass(); },
   'in-year':              function (el) { intakeYear(el.getAttribute('data-y')); },
   'in-open':              function (el) { intakeOpenRow(el); },
   'in-file':              function (el) { return intakeFile(el); },
@@ -545,7 +542,6 @@ var DOM_ACTIONS = {
   'mt-view':              function () { meetingView(); },
   'mt-copy':              function () { return meetingCopy(); },
   'mt-resp':              function () { return meetingResponses(); },
-  'mt-pass':              function () { return meetingPass(); },
   'mt-settings':          function () { return meetingSettings(); },
   'mt-save':              function () { return meetingSave(); },
   'mt-block-add':         function () { meetingBlockAdd(); },

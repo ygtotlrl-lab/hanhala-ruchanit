@@ -52,6 +52,16 @@ function gateForget() {
   _cred = null;
 }
 function _drop() { var m = _gateMap(); delete m[_uid()]; lsSet(GATE_KEY, JSON.stringify(m)); }
+// חידוש — אסימון שנשארו לו פחות מ-25 יום מוחלף בחדש ל-30 יום, בלי סיסמה (renew בשער);
+// נקרא בכל עלייה ובכל כניסה, גם ברענון מהבאנר — כך הצפייה בתגובות אינה פגה כל עוד האפליקציה בשימוש
+async function gateRenew() {
+  var e = AUTH.user ? _gateMap()[_uid()] : null;
+  if (!e || !(e.exp > Date.now()) || e.exp - Date.now() > 25 * 864e5) return;
+  try {
+    var r = await _gatePost({ action: 'renew', token: e.token });
+    if (r.status === 200 && r.body.token) { var m = _gateMap(); m[_uid()] = { token: r.body.token, exp: r.body.exp }; lsSet(GATE_KEY, JSON.stringify(m)); }
+  } catch (x) { /* בלי רשת — בפעם הבאה */ }
+}
 // אסימון תקף, ואם אין — חיבור שקט עם הסיסמה שבזיכרון
 async function _tokEnsure(fresh) {
   if (fresh) _drop();
@@ -118,4 +128,4 @@ async function gateOpen(path) {
   toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? 'אין הרשאה לקובץ' : 'הקובץ לא נפתח — אין חיבור לשרת', null, 'bad');
 }
 
-export { gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut };
+export { gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
