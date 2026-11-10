@@ -6,7 +6,7 @@ import { lsGet, lsSet } from '../core/storage.js';
 import { MIRROR } from '../core/mirror.js';
 import { esc } from '../core/ui.js';
 import { HEB_DOW } from '../core/hebrew.js';
-import { HR_DORM_SESSIONS, HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_PULL_STALE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
+import { HR_CLS_NAME, HR_DORM_SESSIONS, HR_EXAM_SUBJECTS, HR_PRAYER_NAMES, MSG_CLOSE_REPORT_FIRST, MSG_CLOSE_SESSION_FIRST, MSG_DEL_ROW_BODY, MSG_DEL_ROW_TITLE, MSG_DEL_SESSION_BODY, MSG_DEL_SESSION_TITLE, MSG_PULL_STALE, MSG_REPORT_DONE, MSG_REPORT_OPEN_ELSEWHERE, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE, MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, PK_AT_MARK, PK_AT_SESS, PK_EX_MARK, PK_EX_SESS, PK_SL_MARK, PK_SL_SESS } from './constants.js';
 import { S, shell } from './state.js';
 import { HR_MIRROR_STREAMS, _hrCleanCfg, atDefaultCfg, atvCls, getActiveAbsences, getStudents,
          hrCfgGet, hrCfgLocalGet, hrDayWin, hrCfgLocalSet, hrCfgSet, hrCount, hrDefaultCfg, hrLocalOfAt,
@@ -154,6 +154,11 @@ function hrExamSummaryHTML(rec) {
     (rec.in_report ? '<span class="ex-in-report">בגיליון</span>' : '');
 }
 
+// השיעור שנבחן במבחן — השלוחים עם ג׳.
+function hrExamGrp(cls) { return cls === 's' ? 'g' : cls; }
+// שם הסדר להצגה — ובמבחן לפי שיעור גם השיעור.
+function hrRecLabel(rec) { return String((rec && rec.session) || '') + (rec && rec.cls ? ' · ' + (HR_CLS_NAME[rec.cls] || rec.cls) : ''); }
+
 // תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
 function hrGetLogicalDate() {
   if(new Date().getHours()<12) return dayToday(-1);
@@ -187,12 +192,17 @@ function hrMarkOf(st, status, minutes, note, extra) {
 
 // שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הבדיקה המחזורית יכולה להביא סדר מתחרה אחרי הפתיחה.
 // אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד.
-function hrFindLiveSession(data, sessName, dateIso, exceptId) {
+// מבחן (cls נמסר) — אחד לכל לימוד, שיעור וחודש עברי; סדר ושינה — אחד לכל שם ויום.
+function hrFindLiveSession(data, sessName, dateIso, exceptId, cls) {
   if (!Array.isArray(data)) return null;
+  var h = cls ? _hcH(dayNoon(dateIso)) : null;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
-    if (!r || r.deleted) continue;
-    if (r.session !== sessName || r.session_date !== dateIso) continue;
+    if (!r || r.deleted || r.session !== sessName) continue;
+    if (cls) {
+      if (r.cls !== cls || !r.session_date) continue;
+      var hr = _hcH(dayNoon(r.session_date)); if (hr.hy !== h.hy || hr.mi !== h.mi) continue;
+    } else if (r.session_date !== dateIso) continue;
     if (exceptId != null && idEq(r.client_id, exceptId)) continue;
     return r;
   }
@@ -459,7 +469,7 @@ function hrRenderTodaySessions(st) {
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+esc(rec.session)+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+
+      '<span class="day-sess-name">'+esc(hrRecLabel(rec))+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+
         pendTag(st.pkSess+rec.client_id)+'</span>'+
       '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
       '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
@@ -470,7 +480,7 @@ function hrRenderTodaySessions(st) {
 }
 
 export { HR_STREAMS, _hrDiskArr, _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg,
-         hrCfgOf, hrDow, hrExamSummaryHTML, hrFindLiveSession, hrIsLate, hrIsPrayer, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
+         hrCfgOf, hrDow, hrExamGrp, hrExamSummaryHTML, hrRecLabel, hrFindLiveSession, hrIsLate, hrIsPrayer, hrGetLogicalDate, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrMarkOf, hrPullCfg, hrPullSessions, hrPullTreats, hrRefreshApprovalMarks,
          hrRenderTodaySessions, hrSaveCfg, hrSaveData, hrSaveTreats, hrSessionDefs, hrSortAbsenceRows,
          hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears, hrSortSessionDefs,

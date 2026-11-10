@@ -596,3 +596,15 @@
 .hc-day-off{opacity:.35;cursor:default}
 .inact-search{margin-bottom:var(--sp-4)}
 .inact-list{max-height:55vh;overflow:auto;border-radius:var(--r-3)}
+
+/* המבחנים — הלימוד הנבחר, וקובייה לכל שיעור */
+.sess-pick-btn.on{background:var(--info-soft);border-color:var(--brand)}
+.ex-cls-panel{margin-top:var(--sp-6)}
+.ex-cls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--sp-4)}
+.ex-cls-tile{display:flex;flex-direction:column;gap:var(--sp-3);padding:var(--sp-5);border:2px dashed var(--border);border-radius:var(--r-4);background:var(--bg)}
+.ex-cls-tile.has{border-style:solid;border-color:var(--brand)}
+.ex-cls-name{font-weight:700;color:var(--brand)}
+.ex-cls-date{font-size:var(--fs-2);color:var(--text-2)}
+.ex-cls-mat{font-size:var(--fs-2)}
+.ex-cls-sum{display:flex;flex-wrap:wrap;gap:var(--sp-2)}
+.ex-cls-tile .btn{align-self:flex-start;margin-top:auto}

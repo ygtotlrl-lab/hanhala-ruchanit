@@ -2,12 +2,12 @@
 // המבחן הוא «סדר» של הזרם השלישי (HR_STREAMS.exams) — השמירה, הסנכרון והארכיון משותפים; כאן רק מה שנבדל.
 import { idEq, pendMark } from '../core/sync.js';
 import { esc, toast } from '../core/ui.js';
-import { HR_CLS_SHORT, HR_EXAM_DIRS, HR_EXAM_SUBJECTS, MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET,
+import { HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_DIRS, HR_EXAM_HINTS, HR_EXAM_SUBJECTS, MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET,
          MSG_UPLOAD_OK } from './constants.js';
 import { S } from './state.js';
 import { getStudents, hrMirrorPutRecs, hrSortStudents } from './domain.js';
 import { hrDayHeb } from './domain.hebdate.js';
-import { hrMarkOf, hrSaveData } from './domain.sessions.js';
+import { hrExamGrp, hrMarkOf, hrSaveData } from './domain.sessions.js';
 import { _hrOpenRec, hrMarkDirty } from './domain.reg.js';
 import { icon } from './icons.js';
 import { hrMonthKeyOfIso, hrStudentOn } from './domain.periods.js';
@@ -35,11 +35,13 @@ function _exInfoHTML(st, rec) {
         '<input type="file" accept="image/*,application/pdf" class="hidden" data-chg="' + p + '-file" data-kind="' + kind + '"></label>' +
     '</div>';
   }
+  var hint = HR_EXAM_HINTS[HR_EXAM_SUBJECTS.indexOf(rec.session)];
   return '<div class="field-label">חומר המבחן</div>' +
-    '<textarea aria-label="חומר המבחן" rows="2" class="ex-material" data-inp="' + p + '-material">' + esc(rec.material || '') + '</textarea>' +
+    '<textarea aria-label="חומר המבחן" rows="2" class="ex-material" data-inp="' + p + '-material"' +
+      (hint ? ' placeholder="' + esc('לדוגמה: ' + hint) + '"' : '') + '>' + esc(rec.material || '') + '</textarea>' +
     '<div class="ex-files">' + fileBox('material_file', 'החומר הנלמד') + fileBox('draft_file', 'טיוטת המבחן') + '</div>' +
     '<label class="ex-report-tog"><input type="checkbox" data-chg="' + p + '-in-report"' + (rec.in_report ? ' checked' : '') + '>' +
-      'זה המבחן שנכנס לגיליון החודשי ב' + esc(rec.session || '') + '</label>';
+      'זה המבחן שנכנס לגיליון החודשי ב' + esc(rec.session || '') + (rec.cls ? ' ל' + esc(HR_CLS_NAME[rec.cls] || '') : '') + '</label>';
 }
 
 function hrRenderExam(st, forceInfo) {
@@ -51,7 +53,7 @@ function hrRenderExam(st, forceInfo) {
   }
   var el = document.getElementById(st.p + '-students');
   if (!el) return;
-  var students = hrSortStudents(getStudents()).filter(function (s) { return hrStudentOn(s, rec ? rec.session_date : null); });
+  var students = hrSortStudents(getStudents()).filter(function (s) { return hrStudentOn(s, rec ? rec.session_date : null) && (!rec || !rec.cls || hrExamGrp(s.cls) === rec.cls); });
   if (!students.length) { el.innerHTML = '<div class="empty-note">אין תלמידים פעילים</div>'; return; }
   var buf = S[st.v + 'Marks'] || {}, p = st.p;
   var todo = [], done = [];
@@ -65,7 +67,7 @@ function hrRenderExam(st, forceInfo) {
     return '<div class="ex-row' + (g != null ? ' ex-row-done' : '') + '">' +
       '<div class="at-row-class">' + esc(cls) + '</div>' +
       '<div class="at-row-name">' + esc(s.name) + '</div>' +
-      '<input aria-label="ציון (1–100)" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="ציון" class="ex-grade" ' +
+      '<input aria-label="ציון (0–100)" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="ציון" class="ex-grade" ' +
         'value="' + (g != null ? g : '') + '" data-inp="' + p + '-grade" data-chg="' + p + '-grade" data-id="' + sid + '">' +
       '<div class="ex-scan">' + scan +
         '<label class="ex-scan-up" title="' + (m.scan ? 'החלפת הסריקה בקובץ' : 'העלאת קובץ') + '">' + icon('upload') + '<span>' + (m.scan ? 'החלפה' : 'קובץ') + '</span>' +
@@ -94,7 +96,7 @@ function hrExamSetGrade(st, sid, val, redraw) {
   if (raw !== '') {
     var g = parseInt(raw, 10);
     if (!isFinite(g)) return;
-    g = Math.max(1, Math.min(100, g)); // ציון בין 1 ל-100; תלמיד שלא נבחן — בלי ציון
+    g = Math.max(0, Math.min(100, g)); // ציון בין 0 ל-100; תלמיד שלא נבחן — בלי ציון
     next.grade = g; next.status = 'd';
   }
   buf[s] = next;
@@ -111,7 +113,7 @@ function hrExamSetField(st, field, val) {
   hrMarkDirty(st);
 }
 
-// מבחן אחד לכל לימוד בכל חודש עברי נכנס לגיליון — סימון אחד מוריד את הסימון משאר המבחנים באותו לימוד ובאותו חודש.
+// מבחן אחד לכל לימוד, שיעור וחודש עברי נכנס לגיליון — סימון אחד מוריד את הסימון משאר המבחנים באותו לימוד, שיעור וחודש.
 function hrExamSetInReport(st, on) {
   var rec = _hrOpenRec(st);
   if (!rec) return;
@@ -121,7 +123,7 @@ function hrExamSetInReport(st, on) {
   if (!on) return;
   var h = hrDayHeb(rec.session_date), touched = false, data = S[st.v + 'Data'] || [];
   data.forEach(function (r) {
-    if (!r || r.deleted || idEq(r.client_id, rec.client_id) || r.session !== rec.session || !r.in_report) return;
+    if (!r || r.deleted || idEq(r.client_id, rec.client_id) || r.session !== rec.session || (r.cls || '') !== (rec.cls || '') || !r.in_report) return;
     var hr = hrDayHeb(r.session_date);
     if (hr.hy !== h.hy || hr.mi !== h.mi) return;
     r.in_report = false; r.updated_at = Date.now(); touched = true;

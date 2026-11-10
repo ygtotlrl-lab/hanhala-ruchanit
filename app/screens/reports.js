@@ -99,9 +99,9 @@ function rpSetMany(mk, items) {
 // ── החישוב ──
 function _inWin(rec, w) { return rec && !rec.deleted && rec.session_date >= w.from && rec.session_date <= w.to; }
 
-// המבחן של הלימוד בחודש — המסומן «נכנס לגיליון», ובלי סימון — היחיד; כמה בלי סימון — אין (הרב בוחר במסך המבחנים).
-function rpExamOf(exRecs, subj, w) {
-  var list = exRecs.filter(function (r) { return _inWin(r, w) && r.session === subj; });
+// המבחן של הלימוד בחודש לשיעור (grp — השלוחים עם ג׳) — המסומן «נכנס לגיליון», ובלי סימון — היחיד; כמה בלי סימון — אין (הרב בוחר במסך המבחנים).
+function rpExamOf(exRecs, subj, w, grp) {
+  var list = exRecs.filter(function (r) { return _inWin(r, w) && r.session === subj && (!r.cls || r.cls === grp); });
   var chosen = list.filter(function (r) { return r.in_report; })[0];
   if (chosen) return { rec: chosen };
   if (list.length === 1) return { rec: list[0] };
@@ -114,7 +114,7 @@ function rpCompute(m) {
   var sl = (hrMirrorRecs('hr_sleep_sessions') || []).filter(function (r) { return _inWin(r, w); });
   var ex = hrMirrorRecs('hr_exams') || [];
   var exams = {};
-  HR_EXAM_SUBJECTS.forEach(function (n) { exams[n] = rpExamOf(ex, n, w); });
+  ['a', 'b', 'g'].forEach(function (c) { exams[c] = {}; HR_EXAM_SUBJECTS.forEach(function (n) { exams[c][n] = rpExamOf(ex, n, w, c); }); });
   var out = {};
   getStudents().forEach(function (s) {
     if (!hrStudentInHebMonth(s, m.hy, m.mi)) return;
@@ -134,7 +134,7 @@ function rpCompute(m) {
     var pts = dis * 7 + Math.floor(slate / 10);
     var ex1 = {};
     HR_EXAM_SUBJECTS.forEach(function (n) {
-      var e = exams[n];
+      var e = (exams[s.cls === 's' ? 'g' : s.cls] || {})[n];
       if (!e || !e.rec) { ex1[n] = e && e.pick ? { pick: e.pick } : null; return; }
       var mk = hrMarks(e.rec)[sid] || {};
       // תלמיד שלא סומן לו ציון במבחן של החודש — 0
@@ -221,7 +221,7 @@ function renderReports() {
   var list = document.getElementById('rp-list');
   if (!list) return;
   if (!n) { list.innerHTML = '<div class="empty-note">אין תלמידים</div>'; return; }
-  var pick = HR_EXAM_SUBJECTS.filter(function (s0) { var e = comp[String(sts[0].client_id)].exams[s0]; return e && e.pick; });
+  var pick = HR_EXAM_SUBJECTS.filter(function (s0) { return sts.some(function (st0) { var c = comp[String(st0.client_id)], e = c && c.exams[s0]; return e && e.pick; }); });
   list.innerHTML =
     (pick.length ? '<div class="warn-note">' + stIcon('warn') + 'ב' + esc(pick.join(', ')) + ' יש כמה מבחנים החודש — יש לסמן במסך המבחנים איזה מהם נכנס לגיליון.</div>' : '') +
     '<div class="rp-list-head"><span>' + n + ' תלמידים · ' + esc(rpMonthLabel(m)) + '</span>' +

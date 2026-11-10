@@ -10,7 +10,7 @@ import { _hcBuild, _hcH, _hcMN, _hcYL, hrDayHebFmt, hrHebYearWin, hrSessHeb,
          hrSessHebFmt, hrTodayHebFmt } from './domain.hebdate.js';
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
-         hrExamSummaryHTML, hrSummaryHTML } from './domain.sessions.js';
+         hrExamSummaryHTML, hrRecLabel, hrSummaryHTML } from './domain.sessions.js';
 import { icon } from './icons.js';
 import { stIcon } from '../core/icons.js';
 
@@ -106,7 +106,7 @@ function _hrPaintArchive(st, el, records, warn) {
           var sId=uid('s'+rec.client_id);
           html+='<div class="arc-sess-card">';
           html+='<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">';
-          html+='<span class="arc-sess-name">'+esc(rec.session)+'</span>';
+          html+='<span class="arc-sess-name">'+esc(hrRecLabel(rec))+'</span>';
           html+='<div class="arc-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>';
           html+='<button data-act="'+st.p+'-del-session" data-id="'+esc(rec.client_id)+'" aria-label="מחיקה" title="מחיקה" class="arc-sess-del">'+icon('del')+'</button>';
           html+='</div>';
@@ -212,7 +212,7 @@ async function _hrExportExcel(st, fromIso, toIso) {
         if(st.exam){
           var g=m.grade!=null&&m.grade!==''?Number(m.grade):null;
           if(g!=null&&isFinite(g)) acc.grades.push(g);
-          detail.push([rec.session_date,heb,rec.session,rec.material||'',s.name,cls,g,rec.filled_by_name||'']);
+          detail.push([rec.session_date,heb,hrRecLabel(rec),rec.material||'',s.name,cls,g,rec.filled_by_name||'']);
           return;
         }
         if(m.status) acc.c[m.status]=(acc.c[m.status]||0)+1;
@@ -261,7 +261,7 @@ async function _hrExportPdf(st, fromIso, toIso) {
       if(st.exam){
         var gs=ms.map(function(m){return m.grade!=null&&m.grade!==''?Number(m.grade):NaN;}).filter(isFinite);
         tot.gr=tot.gr.concat(gs);
-        cur.rows.push([String(tot.n),heb,rec.session,rec.material||'',String(gs.length),
+        cur.rows.push([String(tot.n),heb,hrRecLabel(rec),rec.material||'',String(gs.length),
           gs.length?String(Math.round(gs.reduce(function(a,b){return a+b;},0)/gs.length)):'',
           rec.in_report?{text:'כן',tone:'info'}:'']);
         return;

@@ -4,13 +4,13 @@ import { idEq, newClientId, pendMark, plFreshWithin, schedulePush, tombKill } fr
 import { sessUserId } from '../core/auth.js';
 import { esc, openModal, toast } from '../core/ui.js';
 import { HEB_DOW, hebToGreg } from '../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_ALERT_ABS, HR_FRESH_MS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_EXAM_CLS, HR_ALERT_ABS, HR_FRESH_MS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_ABSENCE_ALERT, MSG_BUSY_CHECK, MSG_EXAM_PICK_DATE, MSG_LATE_OVER_30, MSG_NEED_MINUTES, MSG_STATUS_REVERTED } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { atvCls, getActiveAbsences, getStudents, hrDayWin, hrMarks, hrMirrorPutRecs,
          hrSortStudents, modalOpen, saveStudents, tyCls } from './domain.js';
 import { _hcBuild, _hcFmt, _hcH, _hcMN, hrFmtAt, hrSessHebFmt } from './domain.hebdate.js';
 import { _hrPullStaleMark, hrAdoptSession, hrAutoMark, hrCachedArr, hrCachedCfg, hrCfgOf,
-         hrFindLiveSession, hrMarkOf, hrPullCfg, hrPullSessions, hrRenderTodaySessions,
+         hrExamGrp, hrExamSummaryHTML, hrFindLiveSession, hrMarkOf, hrRecLabel, hrPullCfg, hrPullSessions, hrRenderTodaySessions,
          hrIsPrayer, hrSaveData, hrSessionDefs } from './domain.sessions.js';
 import { hrRenderArchive } from './domain.arc.js';
 import { hrRenderSupervision } from './domain.sup.js';
@@ -41,10 +41,10 @@ function hrRegHTML(st) {
       <div id="${p}-reg-picker">
         <div class="card-pane">
           <div class="filter-row">
-            <div class="field-wide">
+            ${st.exam?'':`<div class="field-wide">
               <label class="field-label">תאריך</label>
               <div id="${p}-date-wrap"></div>
-            </div>
+            </div>`}
             <div class="field-narrow">
               <label class="field-label" for="${p}-filler">ממלא</label>
               <input aria-label="שם הממלא" id="${p}-filler" class="input-full" placeholder="שם הממלא">
@@ -52,6 +52,7 @@ function hrRegHTML(st) {
           </div>
           <div class="picker-label">בחר ${st.one} לפתיחה:</div>
           <div id="${p}-sess-btns" class="sess-grid"></div>
+          ${st.exam?`<div id="${p}-cls-panel" class="ex-cls-panel hidden"></div>`:''}
         </div>
         <!-- ${st.many} שמולאו היום -->
         <div id="${p}-today-sessions"></div>
@@ -88,8 +89,7 @@ function hrRegHTML(st) {
 function _hrPaintReg(st) {
   var dw=document.getElementById(st.p+'-date-wrap');
   // במבחנים התאריך ריק עד שבוחרים — מבחן שנפתח בתאריך שגוי אין דרך להעביר
-  if(dw&&st.exam) dw.innerHTML=_hcBuild(st.p+'_date');
-  else if(dw){
+  if(dw&&!st.exam){
     var logDate=dayNoon(st.day());
     var todH=_hcH(logDate);
     dw.innerHTML=_hcBuild(st.p+'_date',todH);
@@ -138,7 +138,7 @@ async function hrRegLoad(st) {
     // ההצעה אינה דורסת חלון דו-שיח פתוח, ואינה מוצעת למי שכבר פתח סדר בזמן המשיכה
     if(openRec && !modalOpen() && !S[st.v+'CurrentSessionId']) {
       openModal(st.msg.openToday,
-        '<p class="md-note-center">'+esc(openRec.session)+st.openText+'<br>להמשיך את הרישום?</p>',
+        '<p class="md-note-center">'+esc(hrRecLabel(openRec))+st.openText+'<br>להמשיך את הרישום?</p>',
         '<button data-act="modal-close" class="md-btn-ghost">אחר כך</button>'+
         '<button data-act="'+st.p+'-resume-go" data-id="'+esc(openRec.client_id)+'" class="md-btn-primary">'+icon('play')+'המשך</button>', icon('clock'));
     }
@@ -155,8 +155,34 @@ function hrFillSessionBtns(st) {
     btn.textContent=s.name;
     btn.className='sess-pick-btn';
     btn.dataset.act=st.p+'-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
+    if(st.exam&&S[st.v+'Subj']===s.name) btn.classList.add('on');
     el.appendChild(btn);
   });
+  if(st.exam) hrExamClsPanel(st);
+}
+
+// ── המבחנים — שיעור לכל קובייה ──
+// אחרי בחירת הלימוד — שלוש קוביות, אחת לכל שיעור, בחודש העברי הנוכחי: מבחן שכבר נפתח — פרטיו ופתיחה לעריכה;
+// ובלעדיו — תאריך משלו (כל שיעור נבחן ביום אחר) ופתיחה.
+function hrExamClsPanel(st) {
+  var el=document.getElementById(st.p+'-cls-panel');
+  if(!el) return;
+  var subj=S[st.v+'Subj'];
+  if(!subj){el.classList.add('hidden');el.innerHTML='';return;}
+  var data=S[st.v+'Data']||[], today=dayIso(new Date());
+  el.classList.remove('hidden');
+  el.innerHTML='<div class="picker-label">'+esc(subj)+' — בחר שיעור:</div><div class="ex-cls-grid">'+HR_EXAM_CLS.map(function(c){
+    var rec=hrFindLiveSession(data, subj, today, null, c);
+    var head='<div class="ex-cls-name">'+esc(HR_CLS_NAME[c])+'</div>';
+    if(rec) return '<div class="ex-cls-tile has">'+head+
+      '<div class="ex-cls-date">'+esc(hrSessHebFmt(rec))+'</div>'+
+      (rec.material?'<div class="ex-cls-mat">'+esc(rec.material)+'</div>':'')+
+      '<div class="ex-cls-sum">'+hrExamSummaryHTML(rec)+'</div>'+
+      '<button class="btn sm" data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'">'+icon('edit')+'פתיחה</button></div>';
+    return '<div class="ex-cls-tile">'+head+
+      '<label class="field-label">תאריך המבחן</label>'+_hcBuild(st.p+'_date_'+c)+
+      '<button class="btn sm" data-act="'+st.p+'-open-session" data-busy="'+esc(MSG_BUSY_CHECK)+'" data-sname="'+esc(subj)+'" data-cls="'+c+'">'+icon('play')+'פתיחת מבחן</button></div>';
+  }).join('')+'</div>';
 }
 
 function hrShowTab(st, tab) {
@@ -225,7 +251,7 @@ async function hrEditSession(st, recId) {
   S[st.v+'CurrentSessionId']=recId;
   var hdr=document.getElementById(st.p+'-reg-header');
   if(hdr) hdr.innerHTML=
-    '<span class="rec-title">'+esc(rec.session)+'</span>'+
+    '<span class="rec-title">'+esc(hrRecLabel(rec))+'</span>'+
     '<span class="rec-date">'+hrSessHebFmt(rec)+'</span>';
   document.getElementById(st.p+'-reg-picker').classList.add('hidden');
   document.getElementById(st.p+'-reg-list').classList.remove('hidden');
@@ -233,9 +259,11 @@ async function hrEditSession(st, recId) {
 }
 
 // שדה תאריך ריק נופל ליום של הזרם — הבורר נבנה מלא, והריק הוא מצב ביניים; במבחנים — ריק עד שבוחרים, ובלי תאריך אין פתיחה.
-async function hrOpenSession(st, sessId, sessName) {
+async function hrOpenSession(st, sessId, sessName, cls) {
   if(S[st.v+'CurrentSessionId']){toast(st.msg.closeFirst, null, 'warn');return;}
-  var pickedIso=(document.getElementById(st.p+'_date_iso')||{}).value;
+  // במבחנים הלחיצה על לימוד פותחת את קוביות השיעורים, והפתיחה עצמה — מהקובייה, בתאריך שלה
+  if(st.exam&&!cls){ S[st.v+'Subj']=(S[st.v+'Subj']===sessName)?null:sessName; hrFillSessionBtns(st); return; }
+  var pickedIso=(document.getElementById(st.p+(cls?'_date_'+cls:'_date')+'_iso')||{}).value;
   if(st.exam&&!pickedIso){toast(MSG_EXAM_PICK_DATE, null, 'warn');return;}
   var dateIso=pickedIso||st.day();
 
@@ -243,10 +271,10 @@ async function hrOpenSession(st, sessId, sessName) {
   // בשניות האחרונות שהמראה זהה לענן — פותחים מיד; אחרת ממתינים למשיכה אחת, מסוננת ליום שנבחר (החיווי והניטרול בניתוב).
   // כשל משיכה נופל למצב המקומי; המיזוג החלוני שומר את מה שמחוץ לחלון.
   if(!plFreshWithin(HR_FRESH_MS)) await hrPullSessions(st, hrDayWin(dateIso));
-  var existing=hrFindLiveSession(S[st.v+'Data']||[],sessName,dateIso);
+  var existing=hrFindLiveSession(S[st.v+'Data']||[],sessName,dateIso,null,cls);
   if(existing){
     openModal(st.msg.done,
-      '<p class="md-note-center">'+esc(sessName)+' כבר מולא היום.<br>האם לפתוח לעריכה?</p>',
+      '<p class="md-note-center">'+esc(hrRecLabel(existing))+(cls?' כבר נפתח החודש.':' כבר מולא היום.')+'<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
       '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>', icon('details'));
     return;
@@ -255,7 +283,7 @@ async function hrOpenSession(st, sessId, sessName) {
   var sessObj=hrCfgOf(st).sessions.find(function(s){return s.name===sessName||idEq(s.id, sessId);});
   var sessTime=sessObj&&sessObj.start_time?sessObj.start_time:'';
   // מי שבישיבה בחודש של הסדר — תקופות הפעילות
-  var students=hrSortStudents(getStudents()).filter(function(s){return hrStudentOn(s, dateIso);});
+  var students=hrSortStudents(getStudents()).filter(function(s){return hrStudentOn(s, dateIso)&&(!cls||hrExamGrp(s.cls)===cls);});
   var marks=S[st.v+'Marks']={};
   S[st.v+'Pending']={};
   S[st.v+'Cleared']={};
@@ -283,13 +311,14 @@ async function hrOpenSession(st, sessId, sessName) {
     updated_at:Date.now(),
     open:true
   };
+  if(cls) rec.cls=cls;
 
   // הרשומה נשמרת רק בסימון הראשון בפועל (hrMarkDirty) — מונע רישומי רפאים.
   // אין קריאת טעינה שנייה — הנתונים כבר הוצבו מהמשיכה, וקריאה חוזרת מחזירה אותו מערך.
   S[st.v+'PendingRec']=rec;
   S[st.v+'CurrentSessionId']=rec.client_id;
 
-  _hrMountOpenSession(st, sessName, dateHeb);
+  _hrMountOpenSession(st, hrRecLabel(rec), dateHeb);
 }
 
 // ההרכבה נפרדת מהבדיקה — הפתיחה חייבת להמתין למשיכה שמכריעה על כפילות,
@@ -347,7 +376,7 @@ function hrMarkDirty(st) {
     if(!S[st.v+'Data']) S[st.v+'Data']=[];
     var data=S[st.v+'Data'];
     // הבדיקה חוזרת כאן — זו נקודת היצירה, והבדיקה המחזורית יכלה להביא סדר מתחרה מאז הפתיחה
-    var dup=hrFindLiveSession(data,pend.session,pend.session_date,pend.client_id);
+    var dup=hrFindLiveSession(data,pend.session,pend.session_date,pend.client_id,pend.cls);
     if(dup){
       hrAdoptSession(st, dup);
       toast(st.msg.elsewhere, null, 'warn');
@@ -567,13 +596,14 @@ async function hrCloseSession(st) {
   // הסגירה אינה ממתינה לרשת — הרשומה נכתבת לדיסק בקריאה עצמה, והדחיפה רצה ברקע ומסומנת ⏳ עד שתצליח
   hrAutoSaveNow(st);
   var rec=cRec;
-  var msg=rec?(rec.session+' — '+hrSessHebFmt(rec)+' נשמר'):st.savedMsg;
+  var msg=rec?(hrRecLabel(rec)+' — '+hrSessHebFmt(rec)+' נשמר'):st.savedMsg;
   S[st.v+'CurrentSessionId']=null;
   S[st.v+'Marks']={};
   S[st.v+'PendingRec']=null;
   document.getElementById(st.p+'-reg-list').classList.add('hidden');
   document.getElementById(st.p+'-reg-picker').classList.remove('hidden');
   hrRenderTodaySessions(st);
+  if(st.exam) hrExamClsPanel(st);
   toast(msg, null, 'good');
 }
 

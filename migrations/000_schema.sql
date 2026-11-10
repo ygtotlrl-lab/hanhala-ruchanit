@@ -267,7 +267,10 @@ create table if not exists public.hr_exams (
   material_file text,
   draft_file text,
   in_report boolean,
-  constraint hr_exams_pkey PRIMARY KEY (client_id)
+  cls text,
+  constraint hr_exams_pkey PRIMARY KEY (client_id),
+  -- המבחן לפי שיעור — השלוחים נבחנים עם ג׳
+  constraint hr_exams_cls_check CHECK ((cls IS NULL) OR (cls = ANY (ARRAY['a'::text, 'b'::text, 'g'::text])))
 );
 
 create table if not exists public.hr_exam_marks (

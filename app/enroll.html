@@ -230,9 +230,10 @@ textarea.in{min-height:84px;resize:vertical}
   function byType(t){return (CFG.fields||[]).filter(function(f){return f.type===t;})[0];}
 
   // ── בורר התאריך העברי ──
+  var HY_FIRST=5765, HY_LAST=5795;
   function hpick(id){
     var cur=V[id]||{d:1,m:'תשרי',y:TODAY.y-14}, ys=[];
-    for(var y=TODAY.y-8;y>=TODAY.y-30;y--) ys.push(y);
+    for(var y=HY_LAST;y>=HY_FIRST;y--) ys.push(y); // תשס״ה עד תשצ״ה
     function opts(list,sel,lab){return list.map(function(v){return '<option value="'+esc(v)+'"'+(v==sel?' selected':'')+'>'+esc(lab?lab(v):v)+'</option>';}).join('');}
     function days(){var a=[];for(var i=1;i<=30;i++)a.push(i);return a;}
     dlg('<h3>'+esc(fdef(id).label)+'</h3><div class="sels">'+

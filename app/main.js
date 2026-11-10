@@ -562,7 +562,7 @@ var DOM_ACTIONS = {
 function hrStreamActions(st) {
   var a = {}, p = st.p + '-';
   var id = function (el) { return el.getAttribute('data-id'); };
-  a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname); };
+  a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname, el.dataset.cls); };
   a[p + 'resume-go']     = function (el) { var r = hrEditSession(st, id(el)); closeModal(); return r; };
   a[p + 'edit-session']  = function (el) { return hrEditSession(st, id(el)); };
   a[p + 'status-cancel'] = function (el) { hrCancelStudentStatusFromReg(st, id(el)); closeModal(); };
