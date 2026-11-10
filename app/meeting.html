@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
 <script src="form-gate.js"></script>
+<script src="form-texts.js"></script>
 <script>
 self.FORM_CFG=(function(k){
   var A=self.APP&&self.APP.supabase; if(!A) return null;
@@ -170,9 +171,9 @@ textarea.in{min-height:84px;resize:vertical}
   function isCls(id){return SF.cls.some(function(x){return x.id===id;});}
   function isMgmt(id){return SF.mgmt.some(function(x){return x.id===id;});}
   function nCls(){return MINE.filter(function(m){return isCls(m.staff);}).length;}
-  // כמו בשער: עד שניים מרבני השיעור, עד אחד מההנהלה, ומי שרק בהנהלה — רק אחרי רב שיעור; מי שבשניהם — פגישה אחת, שנספרת בשניהם
+  // כמו בשער: עד שניים מרבני השיעור, עד אחד מההנהלה, ומי שרק בהנהלה — רק אחרי רב שיעור; מי שבשניהם — פגישה אחת, מסומנת בשניהם ונספרת ברבני השיעור
   function check(ids){
-    var nc=ids.filter(isCls).length, nm=ids.filter(isMgmt).length;
+    var nc=ids.filter(isCls).length, nm=ids.filter(function(i){return isMgmt(i)&&!isCls(i);}).length;
     if(nc>2) return 'max'; if(nm>1) return 'max_mgmt';
     if(ids.some(function(i){return !isCls(i);})&&nc<1) return 'cls_first';
     return '';
@@ -181,7 +182,7 @@ textarea.in{min-height:84px;resize:vertical}
   function render(){
     var when=CFG.date?dayLabel(CFG.date)+' · '+esc(CFG.from)+'–'+esc(CFG.to):'';
     var html='<div class="when">'+when+'</div>';
-    if(!CFG.open||!CFG.date){ $('main').innerHTML=html+'<div class="msgc">השיבוץ לאסיפה סגור.'+(CFG.phone?' לפרטים: <span dir="ltr">'+esc(CFG.phone)+'</span>':'')+'</div>'; return; }
+    if(!CFG.open||!CFG.date){ $('main').innerHTML=html+'<div class="msgc"><span>השיבוץ לאסיפה סגור.</span>'+(CFG.phone?' <span>לפרטים:</span> <span dir="ltr">'+esc(CFG.phone)+'</span>':'')+'</div>'; return; }
     if(CFG.flyer) html+='<img class="flyer" src="'+esc(CFG.flyer)+'" alt="מודעת האסיפה">';
     html+=FormGate.html()+'<div id="fb"></div><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
     $('main').innerHTML=html;
@@ -259,7 +260,7 @@ textarea.in{min-height:84px;resize:vertical}
 
   if(!A){$('main').innerHTML='<div class="msgc">הדף אינו זמין</div>';return;}
   (self.FORM_CFG||Promise.reject(new Error('no config')))
-    .then(function(rows){ var c=rows&&rows[0]?JSON.parse(rows[0].value):null; CFG=c||{open:false}; render(); })
+    .then(function(rows){ var c=rows&&rows[0]?JSON.parse(rows[0].value):null; CFG=c||{open:false}; FormTexts.apply(CFG.texts); render(); })
     .catch(function(){ $('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>'; });
 })();
 </script>

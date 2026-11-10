@@ -12,6 +12,7 @@
 <script src="../app.config.js"></script>
 <script src="capture.js"></script>
 <script src="form-gate.js"></script>
+<script src="form-texts.js"></script>
 <script>
 // ההגדרה נשלפת כבר כאן, במקביל לפריסת הדף; GET פשוט (המפתח בכתובת) — בלי בקשת OPTIONS מקדימה, ואם נדחה — בכותרות כרגיל.
 self.FORM_CFG=(function(k){
@@ -208,7 +209,7 @@ textarea.in{min-height:84px;resize:vertical}
   function render(){
     var html=carousel(CFG.images||[],CFG.interval)+
       '<a class="about" href="'+ABOUT_URL+'" target="_blank" rel="noopener">אודות הישיבה - חב"דפדיה'+IC.ext+'</a>'+
-      '<p class="req-note">השדות המסומנים ב-<b>*</b> הם חובה.</p>'+
+      '<p class="req-note">השדות המסומנים ב-* הם חובה.</p>'+
       '<div class="yr" id="yr"></div>';
     // מספר הזהות — ראשון, ושאר הטופס נעול עד שממלאים אותו (form-gate.js)
     var idf=(CFG.fields||[]).filter(function(f){return f.type==='idnum';})[0]; IDF=idf?idf.id:null;
@@ -247,8 +248,8 @@ textarea.in{min-height:84px;resize:vertical}
   }
   function yearLine(){
     $('yr').innerHTML=YEAR===CUR+1
-      ? 'רישום לשנת הלימודים הקרובה · <button type="button" data-year="'+CUR+'">לשנת הלימודים הנוכחית</button>'
-      : 'רישום לשנת הלימודים הנוכחית · <button type="button" data-year="'+(CUR+1)+'">לשנת הלימודים הקרובה</button>';
+      ? '<span>רישום לשנת הלימודים הקרובה</span> · <button type="button" data-year="'+CUR+'">לשנת הלימודים הנוכחית</button>'
+      : '<span>רישום לשנת הלימודים הנוכחית</span> · <button type="button" data-year="'+(CUR+1)+'">לשנת הלימודים הקרובה</button>';
   }
   function fdef(id){return (CFG.fields||[]).filter(function(f){return f.id===id;})[0];}
   function byType(t){return (CFG.fields||[]).filter(function(f){return f.type===t;})[0];}
@@ -439,7 +440,7 @@ textarea.in{min-height:84px;resize:vertical}
   function show(j){
     if(j===shown) return;
     if(shown&&(Object.keys(V).length||Object.keys(FILES).length)) return;
-    CFG=JSON.parse(j); render(); shown=j;
+    CFG=JSON.parse(j); FormTexts.apply(CFG.texts); render(); shown=j;
   }
   var cached=idb('readonly',function(st){return st.get(KEY);}).then(function(j){
     try{ if(!fresh&&typeof j==='string'&&cfgOk(JSON.parse(j))) show(j); }catch(e){}

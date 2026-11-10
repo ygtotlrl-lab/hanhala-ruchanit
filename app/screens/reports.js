@@ -276,7 +276,11 @@ function rpSaveFill() {
 
 // ── הגיליון להדפסה ──
 // הרקע — המסגרת מהעיצוב (ב״ה, הכותרת, הפס האפור, «יחי» והלוגו), והתוכן מעליה; עמוד שני להערות האישיות.
-function _sheetHTML(s, m, r, mk, scanUrls) {
+// אייקון מסמך מצורף — ליד הציון ובכותרת הנספח
+var RP_CLIP = '<svg class="clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>';
+// scans — {נתיב: [תמונות העמודים]}: טופס המבחן מצורף לגיליון — ליד הציון «נספח N», והסריקה בעמודים בסוף הגיליון של התלמיד, בלי קישור
+function _sheetHTML(s, m, r, mk, scans) {
+  var att = [];
   function v(f) { return esc(rpGet(mk, s.client_id, f)); }
   function tr(lbl, val, extra) { return '<tr><th>' + esc(lbl) + '</th><td' + (extra ? '' : ' colspan="2"') + '>' + val + '</td>' + (extra || '') + '</tr>'; }
   // לכל לימוד: תווית מסובבת על שתי השורות (מילה בשורה) · מבחן — התיאור והתאריך, והציון בתא השמאלי (ולידו «טופס») · הנהגה
@@ -284,8 +288,8 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
     var e = r.exams[n], g = '—', link = '', desc = '';
     if (e && e.grade != null) {
       g = String(e.grade);
-      var u = e.scan && scanUrls[e.scan];
-      link = u ? ' <a href="' + esc(u) + '">טופס</a>' : '';
+      var pages = e.scan && scans[e.scan];
+      if (pages && pages.length) { att.push([n, e, pages]); link = ' <span class="att">' + RP_CLIP + 'נספח ' + att.length + '</span>'; }
       desc = [e.material, e.date].filter(Boolean).map(esc).join(' · ');
     }
     return '<tr><th rowspan="2" class="vlbl"><span class="r">' + n.split(' ').map(esc).join('<br>') + '</span></th><th>מבחן</th><td>' + desc + '</td><td class="gr">' + g + link + '</td></tr>' +
@@ -312,7 +316,16 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
     RP_ROLES.map(function (x) {
       return '<tr><th>' + esc(x[1]) + '</th><td class="who">' + esc(staff[x[0]] || '') + '</td><td>' + v(x[0]) + '</td></tr>';
     }).join('') + '</table></div></section>';
-  return p1 + p2;
+  // הנספחים — עמוד לכל עמוד בסריקה, ובראשו: הלימוד, החומר, התאריך והציון
+  var ap = att.map(function (a, i) {
+    return a[2].map(function (img, j) {
+      return '<section class="pg ap"><div class="aph">' + RP_CLIP + 'נספח ' + (i + 1) + ' — טופס המבחן ב' + esc(a[0]) +
+        (a[2].length > 1 ? ' (' + (j + 1) + '/' + a[2].length + ')' : '') +
+        '<span>' + esc(s.name) + ' · ' + [a[1].material, a[1].date].filter(Boolean).map(esc).join(' · ') + ' · ציון ' + esc(a[1].grade) + '</span></div>' +
+        '<img src="' + img + '" alt=""></section>';
+    }).join('');
+  }).join('');
+  return p1 + p2 + ap;
 }
 
 var RP_PRINT_CSS =
@@ -339,20 +352,61 @@ var RP_PRINT_CSS =
   '.legend{flex:1;border:.25mm solid #9a9a9a;padding:2mm 3mm;font-size:7.5pt;line-height:1.55;color:#555}.legend b{display:block;text-decoration:underline}' +
   '.sig{flex:1;font-size:9pt;color:#444;display:flex;flex-direction:column;gap:.6mm}.sig img{height:12mm;width:auto;align-self:flex-start}.sig small{font-size:7.5pt;color:#666;margin-top:1.5mm}' +
   'table.notes tr.nh{height:auto}table.notes tr.nh th{width:auto;border:none;background:none;text-align:center;font-size:10pt;padding:4mm 0 1.5mm;color:#444}' +
-  'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
+  'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}' +
+  '.att{display:inline-flex;align-items:center;gap:1mm;font-size:7.5pt;font-weight:400;color:#1a5fb4;margin-inline-start:2mm}.clip{width:3.2mm;height:3.2mm}' +
+  '.pg.ap{background:#fff;padding:12mm 14mm;display:flex;flex-direction:column;gap:5mm}' +
+  '.aph{display:flex;align-items:center;gap:2mm;font-size:12pt;font-weight:700;color:#333;border-bottom:.4mm solid #999;padding-bottom:3mm;flex-wrap:wrap}' +
+  '.aph .clip{width:5mm;height:5mm;color:#1a5fb4}.aph span{font-size:9pt;font-weight:400;color:#666;flex-basis:100%}' +
+  '.pg.ap img{flex:1;min-height:0;width:100%;object-fit:contain}';
 
-// הקישורים לסריקות חתומים בלי תפוגה, מהשער — הגיליון נשלח להורים ונשמר אצלם.
-async function _scanUrls(comp, sts) {
+// הסריקות — נמשכות מהשער ומוטמעות בגיליון כתמונות: תמונה — כפי שהיא (מוקטנת), ו-PDF — עמוד אחר עמוד (pdf.js).
+// הקישור החתום (בהרשאת הדוחות) משמש רק למשיכה כאן, ואינו נכנס לקובץ.
+var RP_PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+var RP_IMG_W = 1400;
+function _loadScript(src) { return new Promise(function (ok, no) { var el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = no; document.head.appendChild(el); }); }
+function _canvasJpeg(c) { return c.toDataURL('image/jpeg', 0.72); }
+async function _imgPages(blob) {
+  var url = URL.createObjectURL(blob);
+  try {
+    var img = await new Promise(function (ok, no) { var i = new Image(); i.onload = function () { ok(i); }; i.onerror = no; i.src = url; });
+    var k = Math.min(1, RP_IMG_W / img.naturalWidth), c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    return [_canvasJpeg(c)];
+  } finally { URL.revokeObjectURL(url); }
+}
+async function _pdfPages(blob) {
+  if (!window.pdfjsLib) { await _loadScript(RP_PDFJS + 'build/pdf.min.js'); window.pdfjsLib.GlobalWorkerOptions.workerSrc = RP_PDFJS + 'build/pdf.worker.min.js'; }
+  var doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()), disableFontFace: true }).promise, out = [];
+  for (var i = 1; i <= doc.numPages; i++) {
+    var pg = await doc.getPage(i), v0 = pg.getViewport({ scale: 1 }), vp = pg.getViewport({ scale: RP_IMG_W / v0.width });
+    var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    await pg.render({ canvasContext: g, viewport: vp }).promise;
+    out.push(_canvasJpeg(c));
+  }
+  return out;
+}
+async function _scanPages(comp, sts) {
   var paths = {};
   sts.forEach(function (s) {
     var r = comp[String(s.client_id)]; if (!r) return;
     Object.keys(r.exams).forEach(function (n) { var e = r.exams[n]; if (e && e.scan) paths[e.scan] = 1; });
   });
-  return gateLinks(Object.keys(paths), 'forever');
+  var urls = await gateLinks(Object.keys(paths), 'forever'), out = {}, fail = 0;
+  await Promise.all(Object.keys(urls).map(async function (p) {
+    try {
+      var res = await fetch(urls[p]); if (!res.ok) throw new Error(res.status);
+      var blob = await res.blob();
+      out[p] = /\.pdf$/i.test(p) || blob.type === 'application/pdf' ? await _pdfPages(blob) : await _imgPages(blob);
+    } catch (e) { fail++; console.warn('[rp-scan]', p, e); }
+  }));
+  if (fail || Object.keys(urls).length < Object.keys(paths).length) toast('חלק מטפסי המבחנים לא צורפו — אין חיבור לשרת', null, 'warn');
+  return out;
 }
 
 // הייצוא — מסמך (printFile): הגיליונות כדף HTML אחד, עמוד A4 לכל דף, והגופנים, הרקע והחתימה מוטמעים בו;
-// הקישורים (טופס · אנשי קשר) נשארים קישורים בקובץ.
+// טופסי המבחנים מצורפים כנספחים בסוף הגיליון של כל תלמיד.
 async function rpExport(sid) {
   var m = rpMonth(), mk = rpMonthKey(m);
   var sts = sid ? getStudents().filter(function (s) { return String(s.client_id) === String(sid); }) : _rpStudents();
@@ -360,7 +414,7 @@ async function rpExport(sid) {
   toast(MSG_PDF_BUILDING);
   try {
     var comp = rpCompute(m);
-    var parts = await Promise.all([_scanUrls(comp, sts), exportFontCss('F'),
+    var parts = await Promise.all([_scanPages(comp, sts), exportFontCss('F'),
       exportDataUrl('app/img/report-bg.png'), exportDataUrl('app/img/report-sig.png')]);
     var name = (sts.length === 1 ? ('גיליון ' + sts[0].name + ' ') : 'גיליונות ') + rpMonthLabel(m);
     var html = '<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>' + esc(name) + '</title>' +

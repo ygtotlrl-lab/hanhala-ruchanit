@@ -10,6 +10,7 @@ import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../dom
 import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
 import { openAddStudent } from './students.js';
+import '../form-texts.js';
 
 var ENROLL_PUBLIC = 'hr-public';
 var EN_TYPES = [['text', 'טקסט'], ['idnum', 'מספר זהות'], ['tel', 'טלפון'], ['email', 'אימייל'], ['select', 'בחירה'],
@@ -148,6 +149,31 @@ function enrollAddStudent(el) {
 }
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──
+// ── הטקסטים הקבועים בדף (form-texts.js) והודעת הפרטיות — נערכים כאן, בשלושת הטפסים ──
+// הטקסט נשמר רק כשהשתנה, במפתח הנוסח המקורי; ריק — חזרה למקורי
+function textsHTML(form, cfg) {
+  var list = self.FormTexts.list(form), tx = cfg.texts || {};
+  var changed = list.filter(function (k) { return tx[k] && tx[k] !== k; }).length;
+  return '<details class="en-texts"><summary class="ss-t">הטקסטים בדף' + (changed ? ' · שונו ' + changed : '') + '</summary>' +
+    '<div class="en-tx">' + list.map(function (k) {
+      var v = tx[k] || k, long = k.length > 60;
+      return '<label class="en-txr' + (v !== k ? ' on' : '') + '"><span>' + esc(k) + '</span>' +
+        (long ? '<textarea rows="2" data-tx="' + esc(k) + '">' + esc(v) + '</textarea>' : '<input data-tx="' + esc(k) + '" value="' + esc(v) + '">') + '</label>';
+    }).join('') + '</div></details>';
+}
+function textsRead(box) {
+  var out = {};
+  if (!box) return out;
+  box.querySelectorAll('[data-tx]').forEach(function (el) {
+    var k = el.getAttribute('data-tx'), v = el.value.trim();
+    if (v && v !== k) out[k] = v;
+  });
+  return out;
+}
+function privacyHTML(id, cfg, def) {
+  return '<div class="ss-t">הודעת הפרטיות</div><textarea class="en-priv" id="' + id + '" rows="4" aria-label="הודעת הפרטיות">' + esc(cfg.privacy || def || '') + '</textarea>';
+}
+
 // «חתימה» — רק בקבלה לישיבה (inf): ההורה חותם באצבע, והחתימה נשמרת כתמונה
 var IN_TYPES = EN_TYPES.slice(0, -1).concat([['signature', 'חתימה']], EN_TYPES.slice(-1));
 function _fieldRow(f, drag) {
@@ -161,6 +187,7 @@ function _fieldRow(f, drag) {
         (sec ? '' : '<label class="en-req"><input type="checkbox" data-k="req"' + (f.req ? ' checked' : '') + '>חובה</label>') + '</div>' +
       (sec ? '' : '<input class="en-sub" data-k="help" aria-label="הסבר" placeholder="הסבר מתחת לשדה (רשות)" value="' + esc(f.help || '') + '">') +
       (f.type === 'select' ? '<input class="en-sub" data-k="options" aria-label="אפשרויות" placeholder="אפשרויות, מופרדות בפסיק" value="' + esc((f.options || []).join(', ')) + '">' : '') +
+      (f.type === 'select' && drag === 'inf' ? '<label class="en-req"><input type="checkbox" data-k="lead"' + (f.lead ? ' checked' : '') + '>אפשרות ראשית — הראשונה כפתור מלא, והשאר תחת «אפשרות אחרת»</label>' : '') +
     '</div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
 }
@@ -194,7 +221,8 @@ function _settingsPaint(cfg) {
     '<button class="add-dashed-btn" data-act="en-field-add">+ הוספת שדה</button>' +
     '<div class="ss-t">עמודות המעקב בתגובות</div>' +
     '<div class="en-track" id="en-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="en-track-add">+ הוספת עמודה</button></div>';
+    '<button class="add-dashed-btn" data-act="en-track-add">+ הוספת עמודה</button>' +
+    privacyHTML('en-privacy', cfg, ENROLL_DEFAULT.privacy) + textsHTML('enroll', cfg) + '</div>';
   var bd = document.getElementById('en-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות הטופס — טופס רישום', html, '', 'settings');
@@ -246,8 +274,9 @@ function enrollSave() {
   var images = Array.prototype.map.call(document.querySelectorAll('#en-imgs [data-url]'), function (x) { return x.getAttribute('data-url'); });
   var track = Array.prototype.map.call(document.querySelectorAll('#en-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
   var iv = parseInt((document.getElementById('en-interval') || {}).value, 10);
-  // הודעת הפרטיות אינה נערכת בהגדרות — נשמרת כפי שהיא
-  var next = { interval: iv >= 2 && iv <= 20 ? iv : 4, images: images, fields: fields, track: track, privacy: cfg.privacy || ENROLL_DEFAULT.privacy };
+  var pv = document.getElementById('en-privacy');
+  var next = { interval: iv >= 2 && iv <= 20 ? iv : 4, images: images, fields: fields, track: track,
+               privacy: pv ? pv.value.trim() : (cfg.privacy || ENROLL_DEFAULT.privacy), texts: textsRead(document.getElementById('en-set')) };
   // סוג שהשתנה ל«בחירה» מקבל את שדה האפשרויות מיד
   var typeChanged = Array.prototype.some.call(document.querySelectorAll('#en-fields [data-fid]'), function (row) {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));
@@ -261,6 +290,6 @@ function enrollSave() {
 // גרירה לסידור — התמונות, השדות ועמודות המעקב; השחרור שומר מה-DOM הסופי
 ['enf', 'eni', 'ent'].forEach(function (k) { dragDef(k, function () { return enrollSave(); }); });
 
-export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML,
+export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML, privacyHTML, textsHTML, textsRead,
          enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear };

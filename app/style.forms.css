@@ -175,3 +175,10 @@
 .chk-inline{display:inline-flex;align-items:center;gap:var(--sp-3);cursor:pointer}
 .mt-flyer{display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center}
 .mt-flyer img{width:140px;height:auto;border-radius:var(--r-3);border:1px solid var(--border)}
+.en-texts summary{cursor:pointer;list-style:none}.en-texts summary::-webkit-details-marker{display:none}
+.en-texts summary::after{content:' ▾';color:var(--text-3)}
+.en-tx{display:flex;flex-direction:column;gap:var(--sp-3);margin-top:var(--sp-3)}
+.en-txr{display:flex;flex-direction:column;gap:var(--sp-1);font-size:var(--fs-2);color:var(--text-3)}
+.en-txr input,.en-txr textarea,.en-priv{padding:var(--sp-3) var(--sp-4);border:1px solid var(--border);border-radius:var(--r-3);background:var(--card);color:var(--text);font:inherit;font-size:var(--fs-3)}
+.en-txr.on input,.en-txr.on textarea{border-color:var(--brand)}
+.en-priv{width:100%;resize:vertical}

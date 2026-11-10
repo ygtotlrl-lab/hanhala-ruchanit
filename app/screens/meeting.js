@@ -8,7 +8,7 @@ import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
-import { gatePassHTML } from './enroll.js';
+import { gatePassHTML, textsHTML, textsRead } from './enroll.js';
 import { gateCall, gateLogin } from '../gate.js';
 import { hrDayHebFmt } from '../domain.hebdate.js';
 
@@ -165,7 +165,7 @@ function _settingsPaint(cfg) {
     '<div class="mt-blocks" id="mt-blocks">' + (cfg.blocked || []).map(_blockRow).join('') + '</div>' +
     '<div class="in-adds"><button class="add-dashed-btn" data-act="mt-block-add">+ הוספת שעות תפוסות</button></div>' +
     '<div class="ss-t">הרבנים — מאנשי הקשר</div>' +
-    '<div class="mt-staff-ro">' + _staffListHTML() + '</div></div>';
+    '<div class="mt-staff-ro">' + _staffListHTML() + '</div>' + textsHTML('meeting', cfg) + '</div>';
   var bd = document.getElementById('mt-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות האסיפה — שיבוץ לאסיפת הורים', html, '', 'settings');
@@ -196,7 +196,7 @@ function meetingSave() {
     return { from: row.querySelector('[data-k="from"]').value, to: row.querySelector('[data-k="to"]').value };
   }).filter(function (b) { return b.from && b.to; });
   var next = { date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
-               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer') };
+               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer'), texts: textsRead(document.getElementById('mt-set')) };
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
   return p;

@@ -8,7 +8,7 @@ import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
-import { enrollFieldRow, gatePassHTML } from './enroll.js';
+import { enrollFieldRow, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
 import { gateCall, gateLogin, gateOpen } from '../gate.js';
 import { openAddStudent } from './students.js';
 
@@ -163,6 +163,7 @@ function _itemRow(it) {
   return '<div class="en-frow in-item" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
     '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
     '<div class="en-fbody"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' + doc +
+      '<label class="en-req"><input type="checkbox" data-k="frozen"' + (it.frozen ? ' checked' : '') + '>מוקפא — מוצג באפור, בלי שדות ובלי חובה</label>' +
       '<div class="en-fields in-ifields">' + (it.fields || []).map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
       '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button></div>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
@@ -195,7 +196,8 @@ function _settingsPaint(cfg) {
     '<button class="add-dashed-btn" data-act="in-item-add">+ הוספת פריט</button>' +
     '<div class="ss-t">עמודות המעקב בתגובות</div>' +
     '<div class="en-track" id="in-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="in-track-add">+ הוספת עמודה</button></div>';
+    '<button class="add-dashed-btn" data-act="in-track-add">+ הוספת עמודה</button>' +
+    privacyHTML('in-privacy', cfg, INTAKE_DEFAULT.privacy) + textsHTML('intake', cfg) + '</div>';
   var bd = document.getElementById('in-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות הטופס — קבלה לישיבה', html, '', 'settings');
@@ -259,8 +261,9 @@ function _readFields(rows, prevAll) {
       if (o.type === 'select') {
         var ol = v('options');
         var prev = prevAll.filter(function (x) { return x.id === o.id; })[0];
-        // «אפשרות ראשית» (`lead`) אינה נערכת בהגדרות — נשמרת כפי שהייתה
-        if (prev && prev.lead) o.lead = true;
+        // «אפשרות ראשית» — בשאלת בחירה; תיבה שאינה במסך (סוג שהשתנה זה עתה) — כפי שהייתה
+        var ld = v('lead');
+        if (ld === null ? (prev && prev.lead) : ld) o.lead = true;
         o.options = ol != null ? ol.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : ((prev && prev.options) || []);
       }
     }
@@ -278,14 +281,15 @@ function intakeSave() {
   var items = Array.prototype.map.call(document.querySelectorAll('#in-items > [data-iid]'), function (row) {
     var it = { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
              fields: _readFields(Array.prototype.slice.call(row.querySelectorAll('.in-ifields > [data-fid]')), prevAll) };
-    // «מוקפא» (`frozen`) אינו נערך בהגדרות — נשמר כפי שהיה; ההקפאה וההפשרה במסד
-    var was = (cfg.items || []).filter(function (x) { return x.id === it.id; })[0];
-    if (was && was.frozen) it.frozen = true;
+    // «מוקפא» — הפריט מוצג באפור, בלי שדות ובלי חובה, עד שמפשירים
+    var fz = row.querySelector(':scope > .en-fbody > label [data-k="frozen"]');
+    if (fz && fz.checked) it.frozen = true;
     return it;
   }).filter(function (it) { return it.title || it.doc || it.fields.length; });
   var track = Array.prototype.map.call(document.querySelectorAll('#in-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
-  // הודעת הפרטיות אינה נערכת בהגדרות — נשמרת כפי שהיא
-  var next = { fields: fields, docs: docs, items: items, track: track, privacy: cfg.privacy || INTAKE_DEFAULT.privacy };
+  var pv = document.getElementById('in-privacy');
+  var next = { fields: fields, docs: docs, items: items, track: track,
+               privacy: pv ? pv.value.trim() : (cfg.privacy || INTAKE_DEFAULT.privacy), texts: textsRead(document.getElementById('in-set')) };
   var typeChanged = Array.prototype.some.call(document.querySelectorAll('#in-set [data-fid]'), function (row) {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));
   });

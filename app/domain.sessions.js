@@ -474,11 +474,14 @@ function hrRenderTodaySessions(st) {
   var html='<div class="day-sess-block">'+
     '<div class="day-sess-title">'+title+':</div>'+
     '<div class="day-sess-list">';
+  var lastSubj=null;
   daySess.forEach(function(rec){
+    // במבחנים — תגית לכל לימוד בין המבחנים, ובשורה: השיעור והתאריך
+    if(st.exam&&rec.session!==lastSubj){lastSubj=rec.session;html+='<div class="day-sess-tag"><span>'+esc(rec.session||'')+'</span></div>';}
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
     html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+esc(hrRecLabel(rec))+(st.exam?' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':'')+
+      '<span class="day-sess-name">'+(st.exam?esc(rec.cls?(HR_CLS_NAME[rec.cls]||rec.cls)+(rec.extra?' · מבחן נוסף':''):hrRecLabel(rec))+' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':esc(hrRecLabel(rec)))+
         pendTag(st.pkSess+rec.client_id)+'</span>'+
       '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
       '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
