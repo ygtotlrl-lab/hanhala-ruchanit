@@ -171,7 +171,7 @@ function _respPaint() {
   var fams = rows.map(function (x) { return x.student_client_id || x.student_name; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
   var v = S._mtView === 'rb' ? 'rb' : 'st';
   box.innerHTML =
-    (years.length > 1 ? '<div class="en-bar">' + years.map(function (x) {
+    (years.length ? '<div class="en-bar">' + years.map(function (x) {
       var n = all.filter(function (r) { return r.meet_date === x.d; }).length;
       return '<button class="chip' + (x.y === selY ? ' on' : '') + '" data-act="mt-year" data-y="' + x.y + '">' + esc(_yl(x.y)) + ' <b>' + n + '</b></button>';
     }).join('') + '</div>' : '') +

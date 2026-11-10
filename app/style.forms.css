@@ -249,7 +249,8 @@
 .fm-row:first-child{border-top:0}
 @media (hover:hover){ .fm-row:hover{background:var(--card-2)} }
 .fc-ic{flex:none;width:40px;height:40px;border-radius:var(--r-3);background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center}
-.fc-ic .ico{width:20px;height:20px}
+.fc-ic .ico{width:20px;height:20px;margin:0;display:block}
+.fc-chev .ico,.fm-acts .btn .ico{margin-inline-end:0}
 .fc-h{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .fc-h b{font-size:var(--fs-4);font-weight:700;color:var(--brand-ink)}
 .fc-h small{font-size:var(--fs-2);color:var(--text-3);font-weight:400}

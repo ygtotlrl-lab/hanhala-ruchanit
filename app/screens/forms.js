@@ -98,14 +98,11 @@ async function renderForms() {
   if (!box) return;
   box.innerHTML = FORMS.map(function (f) { return _cardHTML(f); }).join('');
   // ההגדרות — מהענן, כדי שמצב הטופס יהיה המעודכן ולא העותק שבמכשיר
-  S._fmCfg = S._fmCfg || {};
-  FORMS.forEach(function (f) {
-    hrCfgGet(f.key, true).then(function (r) {
-      if (!r || !r.ok || !r.value) return;
-      S._fmCfg[f.key] = r.value;
-      var st = document.querySelector('#fm-st-' + f.k), sm = fcSummary(f.k);
-      if (st) { st.classList.toggle('on', sm.open); st.textContent = sm.open ? (f.k === 'mt' ? 'פתוח לשיבוץ' : 'פתוח') : 'סגור'; }
-    }, function () {});
+  _fmLoad(function (f) {
+    var st = document.querySelector('#fm-st-' + f.k), sm = fcSummary(f.k);
+    if (st) { st.classList.toggle('on', sm.open); st.textContent = sm.open ? (f.k === 'mt' ? 'פתוח לשיבוץ' : 'פתוח') : 'סגור'; }
+    var sub = document.getElementById('fm-sub-' + f.k);
+    if (sub && !sub.dataset.n) sub.textContent = sm.line;
   });
   FORMS.forEach(async function (f) {
     var r = await gateCall(f.mod, 'list');
@@ -122,14 +119,25 @@ async function renderForms() {
       var n = rows.filter(function (x) { return x.school_year === y; }).length;
       txt = (y ? _yr(y) + ' · ' : '') + n + (n === 1 ? ' תגובה' : ' תגובות');
     }
-    el.textContent = txt;
+    el.textContent = txt; el.dataset.n = '1';
   });
 }
 
 // ── בהגדרות — חלק «טפסים»: שורה לכל טופס, ובה התקציר ──
-function renderFormsSettings() {
+// ההגדרות של שלושת הטפסים — מהענן, וציור מחדש כשהגיעו (העותק שבמכשיר עלול להיות ישן או חסר)
+function _fmLoad(paint) {
+  S._fmCfg = S._fmCfg || {};
+  FORMS.forEach(function (f) {
+    hrCfgGet(f.key, true).then(function (r) {
+      if (!r || !r.ok || !r.value) return;
+      S._fmCfg[f.key] = r.value; paint(f);
+    }, function () {});
+  });
+}
+function renderFormsSettings(again) {
   var box = document.getElementById('set-forms-list');
   if (!box) return;
+  if (!again) _fmLoad(function () { renderFormsSettings(true); });
   box.innerHTML = FORMS.map(function (f) {
     var s = fcSummary(f.k);
     return '<button class="fm-row" data-act="' + f.k + '-settings"><span class="fc-ic">' + icon(f.ico) + '</span>' +
