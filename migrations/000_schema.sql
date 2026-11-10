@@ -514,3 +514,39 @@ alter table public.hr_intake enable row level security;
 drop policy if exists hr_intake_insert on public.hr_intake;
 create policy hr_intake_insert on public.hr_intake as permissive for insert to anon, authenticated
   with check (deleted = false and track = '{}'::jsonb);
+
+-- טיוטות הטפסים הציבוריים (טופס הרישום · קבלה לישיבה) — רק דרך השער hr-gate; המפתח — גיבוב של הטופס ומספר הזהות.
+create table if not exists public.hr_drafts (
+  form text not null,
+  key text not null,
+  draft jsonb not null,
+  updated_at bigint not null,
+  constraint hr_drafts_pkey primary key (form, key)
+);
+revoke all on table public.hr_drafts from anon, authenticated;
+grant all on table public.hr_drafts to service_role;
+alter table public.hr_drafts enable row level security;
+
+-- השיבוץ לאסיפת הורים (app/meeting.html · ההגדרה meeting_cfg) — רק דרך השער hr-gate; שעה אחת לרב, ורב אחד פעם אחת לתלמיד.
+create table if not exists public.hr_meeting (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  meet_date date not null,
+  student_client_id text not null,
+  student_name text,
+  cls text,
+  staff_id text not null,
+  staff_name text,
+  slot text not null,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_meeting_pkey primary key (client_id),
+  constraint hr_meeting_slot_check check (slot ~ '^[0-2][0-9]:[0-5][0-9]$')
+);
+create unique index if not exists hr_meeting_slot_uq on public.hr_meeting (meet_date, staff_id, slot) where not deleted;
+create unique index if not exists hr_meeting_staff_uq on public.hr_meeting (meet_date, student_client_id, staff_id) where not deleted;
+revoke all on table public.hr_meeting from anon, authenticated;
+grant all on table public.hr_meeting to service_role;
+alter table public.hr_meeting enable row level security;

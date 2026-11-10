@@ -20,7 +20,7 @@ function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="enroll-open" aria-label="טופס רישום" title="טופס רישום">${icon('enroll')}</button><button class="btn ic out" data-act="intake-open" aria-label="קבלה לישיבה" title="קבלה לישיבה">${icon('intake')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="import-file" data-chg="import-students"></div>
+<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>מצבת התלמידים</span><span class="gap"></span><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="enroll-open" aria-label="טופס רישום" title="טופס רישום">${icon('enroll')}</button><button class="btn ic out" data-act="intake-open" aria-label="קבלה לישיבה" title="קבלה לישיבה">${icon('intake')}</button><button class="btn ic out" data-act="meeting-open" aria-label="שיבוץ לאסיפת הורים" title="שיבוץ לאסיפת הורים">${icon('meeting')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="import-file" data-chg="import-students"></div>
 
 <!-- Summary Bar -->
 <div id="st-summary" class="st-summary"></div>
@@ -520,6 +520,9 @@ function stClassChanged(){
 function studentFormHTML(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" class="st-form-input">'+
+    // מספר הזהות (או הדרכון) — מזהה את התלמיד בדפים הציבוריים (השיבוץ לאסיפת הורים)
+    '<label for="st-idnum">מספר זהות (או דרכון)</label>'+
+    '<input aria-label="מספר זהות" type="text" id="st-idnum" dir="ltr" inputmode="numeric" autocomplete="off" class="st-form-input">'+
     '<label for="st-class">שיעור</label>'+
     '<select id="st-class" class="st-class-sel" data-chg="st-class">'+
       '<option value="a">שיעור א\'</option>'+
@@ -619,6 +622,7 @@ function editStudent(sid){
   S.editingStudentId=sid;
   openModal(MSG_EDIT_STUDENT_TITLE, studentFormHTML(sid), studentFormFoot());
   document.getElementById('st-name').value=s.name;
+  document.getElementById('st-idnum').value=s.idnum||'';
   document.getElementById('st-class').value=s.cls;
   fillCycleSel(hrCycleOf(s));
   var cw=document.getElementById('st-cycle-wrap'); if(cw) cw.classList.toggle('hidden', s.cls==='s');
@@ -628,6 +632,9 @@ function editStudent(sid){
 function saveStudent(){
   var name=(document.getElementById('st-name')||{value:''}).value.trim();
   var cls=(document.getElementById('st-class')||{value:'a'}).value;
+  var idnum=(document.getElementById('st-idnum')||{value:''}).value.trim().toUpperCase().replace(/\s+/g,'');
+  // מספר ישראלי — תשע ספרות, משלימים אפסים משמאל
+  if(/^\d{1,9}$/.test(idnum)) idnum=('000000000'+idnum).slice(-9);
   var cycle=cls==='s'?null:(parseInt((document.getElementById('st-cycle')||{value:''}).value,10)||hrCycleFor(cls)||null);
   var errEl=document.getElementById('st-err');
   if(errEl) errEl.textContent='';
@@ -642,11 +649,11 @@ function saveStudent(){
   var newId=null;
   if(S.editingStudentId){
     var idx=students.findIndex(function(s){return idEq(s.client_id, S.editingStudentId);});
-    if(idx>-1){students[idx].name=name;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].periods=per.ps;students[idx].updated_at=Date.now();}
+    if(idx>-1){students[idx].name=name;students[idx].idnum=idnum||null;students[idx].cls=cls;students[idx].cycle=cycle;students[idx].periods=per.ps;students[idx].updated_at=Date.now();}
   } else {
     // uuid ולא maxId+1 — שני מכשירים שמוסיפים במקביל מקצים אותו מספר, והמיזוג מאחד שני תלמידים
     newId = newClientId();
-    students.push({client_id:newId,name:name,cls:cls,cycle:cycle,periods:per.ps,updated_at:Date.now(),created_by_client_id:sessUserId()});
+    students.push({client_id:newId,name:name,idnum:idnum||null,cls:cls,cycle:cycle,periods:per.ps,updated_at:Date.now(),created_by_client_id:sessUserId()});
     students=hrSortStudents(students);
     // אין מספור מחדש — המזהה הוא מפתח המיזוג בין מכשירים
   }

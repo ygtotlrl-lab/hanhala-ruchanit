@@ -138,6 +138,8 @@ function intakeAddStudent(el) {
   openAddStudent();
   var n = document.getElementById('st-name');
   if (n) n.value = [d.first, d.last].filter(Boolean).join(' ');
+  var idn = document.getElementById('st-idnum');
+  if (idn && d.idnum) idn.value = d.idnum;
 }
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──

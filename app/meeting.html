@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a3c6e">
+<meta name="robots" content="noindex">
+<title>שיבוץ לאסיפת הורים — ישיבת תומכי תמימים ראשון לציון</title>
+<link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
+<!-- דף ציבורי ועצמאי: שיבוץ לאסיפת הורים, מתוך ההגדרה meeting_cfg; מספר הזהות של התלמיד פותח אותו, והתלמיד, השיעור והשיבוצים — רק דרך השער hr-gate. -->
+<link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
+<script src="../app.config.js"></script>
+<script src="form-gate.js"></script>
+<script>
+self.FORM_CFG=(function(k){
+  var A=self.APP&&self.APP.supabase; if(!A) return null;
+  var u=A.url+'/rest/v1/hr_settings?select=value&key=eq.'+k;
+  return fetch(u+'&apikey='+encodeURIComponent(A.key)).then(function(r){if(!r.ok)throw r;return r;})
+    .catch(function(){return fetch(u,{headers:{apikey:A.key,Authorization:'Bearer '+A.key}});})
+    .then(function(r){if(!r.ok)throw new Error('settings '+r.status);return r.json();});
+})('meeting_cfg');
+</script>
+<style>
+@font-face{font-family:Heebo;font-weight:400;font-display:swap;src:url(fonts/heebo-hebrew-400.woff2) format('woff2')}
+@font-face{font-family:Heebo;font-weight:700;font-display:swap;src:url(fonts/heebo-hebrew-700.woff2) format('woff2')}
+:root{--brand:#1a3a6b;--deep:#0f2347;--mid:#234a8a;--bg:#f0f4fa;--card:#fff;--line:#d8e2f0;--text:#1a2340;--text-2:#4a5568;--text-3:#8a97b0;--soft:#e8eef8;--ok:#1f9d55;--ok-soft:#e9f7ef;--bad:#c53030}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+header{background:linear-gradient(135deg,var(--deep),var(--brand) 60%,var(--mid));color:#fff;padding:20px 16px 22px;text-align:center}
+header img{height:64px;display:block;margin:0 auto 8px}
+header h1{font-size:22px;font-weight:700;margin-top:2px}
+header .sub{font-size:13.5px;opacity:.85;margin-top:3px}
+main{max-width:640px;margin:0 auto;padding:16px 16px 36px;display:flex;flex-direction:column;gap:14px}
+.car{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:16/10;background:var(--deep);box-shadow:0 6px 20px rgba(15,35,71,.18);touch-action:pan-y}
+.car img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
+.car img.on{opacity:1}
+.car .cap{position:absolute;bottom:12px;right:12px;background:rgba(15,35,71,.55);color:#fff;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px;z-index:1}
+.car .ar{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:var(--brand);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.car .ar svg{width:20px;height:20px}
+.car .ar.r{right:10px}.car .ar.l{left:10px}
+.car.ph{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--deep),var(--brand));color:rgba(255,255,255,.35)}
+.car.ph svg{width:30%;height:30%}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:-4px}
+.dots i{width:7px;height:7px;border-radius:4px;background:#b9c7dd;transition:width .3s}.dots i.on{background:var(--brand);width:20px}
+.about{align-self:center;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--brand);color:var(--brand);background:#fff;border-radius:999px;padding:7px 16px;font-size:14px;font-weight:700;text-decoration:none}
+.about svg{width:16px;height:16px}
+.req-note{font-size:14px;color:var(--text-2);text-align:center}
+.req-note b,.q{color:var(--bad)}
+.yr{display:flex;justify-content:center;align-items:center;gap:8px;font-size:13.5px;color:var(--text-2);flex-wrap:wrap}
+.yr button{border:0;background:none;color:var(--brand);font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:2px}
+.sec{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.sec h2{font-size:15.5px;color:var(--brand);font-weight:700;display:flex;align-items:center;gap:8px}
+.sec h2 b{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12.5px;display:inline-flex;align-items:center;justify-content:center}
+.f{display:flex;flex-direction:column;gap:5px}
+.f>.t{font-size:13.5px;font-weight:700}
+.f small{color:var(--text-3);font-size:12px;line-height:1.45}
+.in{border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;min-height:44px;width:100%}
+.in:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand)}
+textarea.in{min-height:84px;resize:vertical}
+.in[dir=ltr]{text-align:right}
+.f.err .in,.f.err .chips,.f.err .up,.f.err .pick{border-color:var(--bad)}
+.f .msg{display:none;color:var(--bad);font-size:12.5px;font-weight:700}
+.f.err .msg{display:block}
+.chips{display:flex;gap:8px;flex-wrap:wrap;border:1.5px solid transparent;border-radius:12px}
+.chips button{padding:9px 16px;border:1.5px solid var(--line);border-radius:999px;font-size:14.5px;font-weight:700;color:var(--text-2);background:#fff;cursor:pointer}
+.chips button.on{border-color:var(--brand);background:var(--soft);color:var(--brand)}
+.pick{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;font-size:15px;background:#fff;cursor:pointer;width:100%;text-align:right;position:relative}
+.pick .v{font-weight:700}.pick .e{color:var(--text-3)}
+.pick svg{width:20px;height:20px;color:var(--brand);flex:none}
+.pick input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.up{border:1.5px dashed #9fb3d1;border-radius:12px;padding:16px;text-align:center;color:var(--brand);font-weight:700;font-size:14px;background:var(--soft);cursor:pointer;position:relative}
+.up input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.up .nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:4px;word-break:break-all}
+.up-pick{display:flex;gap:10px}.up-pick .up{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-weight:700;font-size:14px}
+.up-nm{display:block;font-weight:400;color:var(--text-2);font-size:13px;margin-top:6px;word-break:break-all;text-align:center}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;color:var(--text-2);cursor:pointer}
+.chk input{appearance:none;flex:none;width:22px;height:22px;border:2px solid var(--brand);border-radius:6px;margin-top:1px;display:grid;place-items:center;background:#fff;cursor:pointer}
+.chk input:checked{background:var(--brand)}
+.chk input:checked::after{content:'';width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.btn{border:0;background:var(--brand);color:#fff;border-radius:14px;padding:15px;text-align:center;font-size:16.5px;font-weight:700;box-shadow:0 4px 14px rgba(26,58,107,.3);cursor:pointer;width:100%}
+.btn.out{background:#fff;color:var(--brand);border:1.5px solid var(--brand);box-shadow:none}
+.btn:disabled{opacity:.6;cursor:default}
+.priv{font-size:11.5px;line-height:1.55;color:var(--text-3);text-align:center;padding:0 4px}
+.foot{text-align:center;font-size:12.5px;padding-top:4px;font-weight:700;color:var(--brand)}
+.ok{text-align:center;padding:26px 10px 8px}
+.ok .c{width:74px;height:74px;border-radius:50%;background:var(--ok-soft);color:var(--ok);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.ok .c svg{width:40px;height:40px}
+.ok h2{font-size:21px;color:var(--brand)}.ok p{font-size:14.5px;color:var(--text-2);line-height:1.6;margin-top:6px}
+.veil{position:fixed;inset:0;background:rgba(15,35,71,.45);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.veil.open{display:flex}
+.bx{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25);border-top:4px solid var(--brand);display:flex;flex-direction:column;gap:12px}
+.bx h3{font-size:17px;color:var(--brand)}.bx p{font-size:14px;line-height:1.6;color:var(--text-2)}
+.bx .cmp{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.8}
+.bx .cmp b{color:var(--text)}
+.bx .row2{display:flex;gap:10px}.bx .row2 .btn{flex:1;padding:12px;font-size:15px}
+.bx select{border:1.5px solid var(--line);border-radius:10px;padding:10px;font-size:15px;background:#fff;flex:1;min-width:0}
+.bx .sels{display:flex;gap:8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ok);color:#fff;font-weight:700;font-size:14px;padding:11px 18px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.2);opacity:0;transition:.3s;z-index:30;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.bad{background:var(--bad)}
+.msgc{text-align:center;color:var(--text-2);padding:40px 0}
+
+.when{text-align:center;font-weight:700;color:var(--brand);font-size:15px}
+.who{background:var(--soft);border-radius:12px;padding:10px 14px;font-weight:700;color:var(--brand);text-align:center}
+.expl{font-size:14px;color:var(--text-2);line-height:1.6;text-align:center}
+.staff{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.staff.on{border-color:var(--brand)}
+.staff h3{font-size:15.5px;color:var(--text)}.staff h3 span{font-weight:400;color:var(--text-2);font-size:13px;margin-inline-start:6px}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.slots button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:8px 0;font-weight:700;font-size:14px;color:var(--brand);cursor:pointer}
+.slots button.mine{background:var(--brand);border-color:var(--brand);color:#fff}
+.slots button.busy{opacity:.45}
+.slots button:disabled{background:#eef1f6;color:#b6c0cf;border-color:#e3e8f0;cursor:not-allowed;text-decoration:line-through}
+.mine-list{display:flex;flex-direction:column;gap:8px}
+.mine-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--ok-soft);border-radius:12px;padding:10px 14px;font-size:14.5px}
+.mine-row b{color:var(--ok)}
+.btn.sm{padding:10px;font-size:14.5px}
+</style>
+</head>
+<body>
+<header>
+  <img src="img/logo-white.png" alt="ישיבת תומכי תמימים ראשון לציון">
+  <h1>שיבוץ לאסיפת הורים</h1>
+  <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
+</header>
+<main id="main"><div class="msgc">טוען…</div></main>
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  var A = self.APP && self.APP.supabase;
+  var IC = { ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' };
+  var CLS = {a:"שיעור א'", b:"שיעור ב'", g:"שיעור ג'", s:'התלמידים השלוחים'};
+  var DOW = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function $(id){return document.getElementById(id);}
+  var HM = {Tishri:'תשרי',Heshvan:'חשוון',Kislev:'כסלו',Tevet:'טבת',Shevat:'שבט',Adar:'אדר','Adar I':'אדר א׳','Adar II':'אדר ב׳',Nisan:'ניסן',Iyar:'אייר',Sivan:'סיוון',Tamuz:'תמוז',Av:'אב',Elul:'אלול'};
+  function heb(d){
+    var o={}; new Intl.DateTimeFormat('en-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'}).formatToParts(d).forEach(function(p){o[p.type]=p.value;});
+    return {d:+o.day, m:HM[o.month]||o.month, y:+o.year};
+  }
+  var L1=['','א','ב','ג','ד','ה','ו','ז','ח','ט'],L10=['','י','כ','ל','מ','נ','ס','ע','פ','צ'],L100=['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+  function gem(n){
+    var s=L100[Math.floor(n/100)]+(n%100===15?'טו':n%100===16?'טז':L10[Math.floor(n%100/10)]+L1[n%10]);
+    return s.length>1?s.slice(0,-1)+'״'+s.slice(-1):s+'׳';
+  }
+  function noon(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2],12);}
+  function dayLabel(iso){var d=noon(iso),h=heb(d);return 'יום '+DOW[d.getDay()]+', '+gem(h.d)+' '+h.m+' '+gem(h.y%1000);}
+  function toast(msg,bad){var t=$('toast');t.textContent=msg;t.className='toast on'+(bad?' bad':'');clearTimeout(toast._t);toast._t=setTimeout(function(){t.className='toast'+(bad?' bad':'');},2600);}
+  function api(body){
+    return fetch(A.url+'/functions/v1/hr-gate',{method:'POST',headers:{'Content-Type':'application/json',apikey:A.key,Authorization:'Bearer '+A.key},body:JSON.stringify(body)})
+      .then(function(r){return r.json().catch(function(){return {error:'bad'};});}).catch(function(){return {error:'net'};});
+  }
+
+  // ── מצב ──
+  var CFG=null, ID=null, ST=null, MINE=[], TAKEN=[], BUSY=false;
+  function slots(){
+    var out=[], p=function(t){var a=String(t||'').split(':');return (+a[0])*60+(+a[1]||0);}, f=p(CFG.from), t=p(CFG.to), n=Math.max(5,+CFG.slot||10);
+    for(var m=f;m+n<=t;m+=n) out.push(('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2));
+    return out;
+  }
+  function grp(c){return c==='s'?'g':c;}
+  function staffFor(){return (CFG.staff||[]).filter(function(s){return !(s.cls&&s.cls.length)||s.cls.indexOf(grp(ST.cls))>=0;});}
+  function nameOf(id){var s=(CFG.staff||[]).filter(function(x){return x.id===id;})[0];return s?s.name:'';}
+
+  function render(){
+    var when=CFG.date?dayLabel(CFG.date)+' · '+esc(CFG.from)+'–'+esc(CFG.to):'';
+    var html='<div class="when">'+when+'</div>';
+    if(!CFG.open||!CFG.date){ $('main').innerHTML=html+'<div class="msgc">השיבוץ לאסיפה סגור.'+(CFG.phone?' לפרטים: <span dir="ltr">'+esc(CFG.phone)+'</span>':'')+'</div>'; return; }
+    html+=FormGate.html()+'<div id="fb"></div><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
+    $('main').innerHTML=html;
+    FormGate.mount({form:'meeting', A:A, lookup:lookup});
+  }
+  // מספר הזהות — התלמיד והשיעור מהמצבה, והשיבוצים שכבר נקבעו
+  async function lookup(id,kind){
+    var r=await api({action:'meet_get', id:id});
+    if(r&&r.student){ ID=id; ST=r.student; MINE=r.mine||[]; TAKEN=r.taken||[]; MINE.length?done():pick(); return true; }
+    toast(r&&r.error==='nf'?'לא מצאנו תלמיד עם מספר זהות זה':'אין חיבור — נסו שוב',true);
+    if(r&&r.error==='nf') $('fb').innerHTML='<div class="msgc">לא מצאנו תלמיד עם מספר זהות זה.'+(CFG.phone?' לפרטים: <span dir="ltr">'+esc(CFG.phone)+'</span>':'')+'</div>';
+    return false;
+  }
+  function mineHTML(){
+    if(!MINE.length) return '';
+    return '<div class="mine-list">'+MINE.slice().sort(function(a,b){return a.time<b.time?-1:1;}).map(function(m){
+      return '<div class="mine-row"><span>'+esc(nameOf(m.staff)||m.staff_name||'')+'</span><b>'+esc(m.time)+'</b></div>';}).join('')+'</div>';
+  }
+  function done(){
+    $('fb').innerHTML='<div class="ok"><div class="c">'+IC.ok+'</div><h2>השיבוץ נקלט. נשמח לראותכם!</h2></div>'+
+      '<div class="who">'+esc(ST.name)+' · '+esc(CLS[ST.cls]||'')+'</div>'+mineHTML()+
+      '<button class="btn" type="button" id="ics">הוספה ליומן</button>'+
+      '<button class="btn out" type="button" id="chg">שינוי או ביטול השיבוץ</button>';
+    $('ics').onclick=ics; $('chg').onclick=pick;
+  }
+  function pick(){
+    var ss=slots(), mineBy={}; MINE.forEach(function(m){mineBy[m.staff]=m.time;});
+    var myTimes=MINE.map(function(m){return m.time;}), full=Object.keys(mineBy).length>=2;
+    var html='<div class="who">'+esc(ST.name)+' · '+esc(CLS[ST.cls]||'')+'</div>'+
+      '<p class="expl">יש לבחור עד שני רבנים ולכל אחד שעה פנויה. כל פגישה '+(+CFG.slot||10)+' דקות.</p>'+mineHTML();
+    staffFor().forEach(function(s){
+      var my=mineBy[s.id];
+      html+='<div class="staff'+(my?' on':'')+'"><h3>'+esc(s.name)+(s.role?'<span>'+esc(s.role)+'</span>':'')+'</h3><div class="slots">'+
+        ss.map(function(t){
+          var taken=TAKEN.some(function(x){return x.staff===s.id&&x.time===t;})&&my!==t;
+          var clash=!my&&full||(my!==t&&myTimes.indexOf(t)>=0);
+          return '<button type="button" data-s="'+esc(s.id)+'" data-t="'+t+'"'+(my===t?' class="mine"':'')+(taken||clash?' disabled':'')+(taken?' title="שעה זו כבר נתפסה"':'')+'>'+t+'</button>';
+        }).join('')+'</div></div>';
+    });
+    if(MINE.length) html+='<button class="btn" type="button" id="fin">סיום</button>';
+    $('fb').innerHTML=html;
+    if($('fin')) $('fin').onclick=done;
+  }
+  // לחיצה על שעה — שיבוץ מיד; על השעה שלכם — ביטול; ושעה אחרת אצל אותו רב — החלפה
+  document.addEventListener('click',async function(e){
+    var b=e.target.closest&&e.target.closest('.slots button'); if(!b||BUSY) return;
+    var s=b.getAttribute('data-s'), t=b.getAttribute('data-t'), mine=MINE.some(function(m){return m.staff===s&&m.time===t;});
+    if(!mine&&MINE.length>=2&&!MINE.some(function(m){return m.staff===s;})){toast('ניתן לבחור עד שני רבנים',true);return;}
+    BUSY=true; b.classList.add('busy');
+    var r=await api({action:'meet_book', id:ID, staff:s, time:mine?'':t});
+    BUSY=false;
+    if(r&&r.mine){ MINE=r.mine; TAKEN=r.taken||TAKEN; pick(); if(!mine) toast('השיבוץ נקלט. נשמח לראותכם!'); return; }
+    if(r&&r.taken){ TAKEN=r.taken; }
+    toast(r&&r.error==='taken'?'שעה זו כבר נתפסה':r&&r.error==='max'?'ניתן לבחור עד שני רבנים':'אין חיבור — נסו שוב',true);
+    pick();
+  });
+  // קובץ יומן (ics) — פגישה לכל רב
+  function ics(){
+    var d=CFG.date.replace(/-/g,''), n=+CFG.slot||10, ev=MINE.map(function(m,i){
+      var a=m.time.split(':'), st=(+a[0])*60+(+a[1]), en=st+n, f=function(x){return ('0'+Math.floor(x/60)).slice(-2)+('0'+x%60).slice(-2)+'00';};
+      return 'BEGIN:VEVENT\r\nUID:'+ID+'-'+i+'@hanhala\r\nDTSTAMP:'+new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z\r\nDTSTART:'+d+'T'+f(st)+'\r\nDTEND:'+d+'T'+f(en)+
+        '\r\nSUMMARY:אסיפת הורים — '+(nameOf(m.staff)||'')+'\r\nLOCATION:ישיבת תומכי תמימים ראשון לציון\r\nEND:VEVENT\r\n';
+    }).join('');
+    var blob=new Blob(['BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//hanhala//meeting//HE\r\n'+ev+'END:VCALENDAR\r\n'],{type:'text/calendar'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='אסיפת הורים.ics'; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  if(!A){$('main').innerHTML='<div class="msgc">הדף אינו זמין</div>';return;}
+  (self.FORM_CFG||Promise.reject(new Error('no config')))
+    .then(function(rows){ var c=rows&&rows[0]?JSON.parse(rows[0].value):null; CFG=c||{open:false}; render(); })
+    .catch(function(){ $('main').innerHTML='<div class="msgc">אין חיבור — נסו שוב מאוחר יותר</div>'; });
+})();
+</script>
+</body>
+</html>

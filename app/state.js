@@ -55,7 +55,7 @@ var AUTH = {
   offlineLogin: false, // true — אומת מול העותק המקומי, ומאומת מחדש כשהרשת חוזרת
   perms: null, // {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
-    // השמות — כמו בשורת הניווט; תיקים אישיים, טופס רישום וקבלה לישיבה — כפתורים בתוך המסכים, אחרי הדוחות
+    // השמות — כמו בשורת הניווט; תיקים אישיים, טופס רישום, קבלה לישיבה ואסיפת הורים — כפתורים בתוך המסכים, אחרי הדוחות
     {id:'students', label:'מצבת'},
     {id:'attend',   label:'סדרים'},
     {id:'sleep',    label:'שינה'},
@@ -64,6 +64,7 @@ var AUTH = {
     {id:'files',    label:'תיקים אישיים'},
     {id:'enroll',   label:'טופס רישום'},
     {id:'intake',   label:'קבלה לישיבה'},
+    {id:'meeting',  label:'אסיפת הורים'},
     {id:'settings', label:'הגדרות'}
   ],
 
@@ -78,6 +79,7 @@ var AUTH = {
     files:    {admin:'edit', manager:'edit', junior:'none'},
     enroll:   {admin:'edit', manager:'edit', junior:'none'},
     intake:   {admin:'edit', manager:'edit', junior:'none'},
+    meeting:  {admin:'edit', manager:'edit', junior:'none'},
     settings: {admin:'edit', manager:'none', junior:'none'}
   }
 };

@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
 <script src="capture.js"></script>
+<script src="form-gate.js"></script>
 <script>
 // ההגדרה נשלפת כבר כאן, במקביל לפריסת הדף; GET פשוט (המפתח בכתובת) — בלי בקשת OPTIONS מקדימה, ואם נדחה — בכותרות כרגיל.
 self.FORM_CFG=(function(k){
@@ -162,7 +163,7 @@ textarea.in{min-height:84px;resize:vertical}
   var TODAY=heb(new Date()), CUR=TODAY.y+(TODAY.m==='אלול'?1:0);
 
   // ── מצב ──
-  var CFG=null, V={}, FILES={}, YEAR=CUR+1, SUNSET=false, DATES_OK=false;
+  var CFG=null, V={}, FILES={}, UP={}, RID=null, IDF=null, IDKIND='id', YEAR=CUR+1, SUNSET=false, DATES_OK=false;
 
   function toast(msg,bad){var t=$('toast');t.textContent=msg;t.className='toast on'+(bad?' bad':'');clearTimeout(toast._t);toast._t=setTimeout(function(){t.className='toast'+(bad?' bad':'');},2600);}
   function dlg(html){$('bx').innerHTML=html;$('veil').classList.add('open');}
@@ -209,17 +210,40 @@ textarea.in{min-height:84px;resize:vertical}
       '<a class="about" href="'+ABOUT_URL+'" target="_blank" rel="noopener">אודות הישיבה - חב"דפדיה'+IC.ext+'</a>'+
       '<p class="req-note">השדות המסומנים ב-<b>*</b> הם חובה.</p>'+
       '<div class="yr" id="yr"></div>';
+    // מספר הזהות — ראשון, ושאר הטופס נעול עד שממלאים אותו (form-gate.js)
+    var idf=(CFG.fields||[]).filter(function(f){return f.type==='idnum';})[0]; IDF=idf?idf.id:null;
+    if(IDF) html+=FormGate.html()+'<div id="fb">';
     var n=0, open=false;
     (CFG.fields||[]).forEach(function(f){
+      if(f.id===IDF) return;
       if(f.type==='section'){ if(open) html+='</section>'; n++; html+='<section class="sec"><h2><b>'+n+'</b>'+esc(f.label)+'</h2>'; open=true; return; }
       if(!open){ html+='<section class="sec">'; open=true; }
       html+=fieldHTML(f);
     });
     if(open) html+='</section>';
     if(CFG.privacy) html+='<p class="priv">'+esc(CFG.privacy)+'</p>';
-    html+='<button class="btn" id="send" type="button">שליחת הטופס</button><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
+    html+='<button class="btn" id="send" type="button">שליחת הטופס</button>'+(IDF?FormGate.savedNote()+'</div>':'')+'<div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
     $('main').innerHTML=html;
     yearLine(); carWire((CFG.images||[]).length,CFG.interval||4);
+    if(IDF) FormGate.mount({form:'enroll', A:A,
+      state:function(){return {V:V, UP:UP, RID:RID, YEAR:YEAR, SUNSET:SUNSET, DATES_OK:DATES_OK};},
+      restore:function(d){V=d.V||{};UP=d.UP||{};RID=d.RID||null;YEAR=d.YEAR||YEAR;SUNSET=!!d.SUNSET;DATES_OK=!!d.DATES_OK;fillDom();yearLine();},
+      onOpen:function(id,kind){V[IDF]=id;IDKIND=kind;if(!RID)RID=cid();},
+      onReset:function(){var id=V[IDF];V={};UP={};FILES={};SUNSET=false;DATES_OK=false;V[IDF]=id;RID=cid();fillDom();}});
+  }
+  // הטיוטה שנטענה — לתוך השדות שבמסך
+  function fillDom(){
+    (CFG.fields||[]).forEach(function(f){
+      if(f.id===IDF||f.type==='section') return;
+      var v=V[f.id];
+      if(f.type==='select'){var box=document.querySelector('[data-chips="'+f.id+'"]');if(box)box.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',v!=null&&x.getAttribute('data-v')===v);});return;}
+      if(f.type==='hebdate'){var b=document.querySelector('[data-hpick="'+f.id+'"] span');if(b){b.className=v?'v':'e';b.textContent=v?hebLabel(v):'בחירה';}return;}
+      if(f.type==='file'){var nm=document.querySelector('[data-fname="'+f.id+'"]');if(nm)nm.textContent=UP[f.id]?UP[f.id].name:'';return;}
+      var el=document.querySelector('[data-id="'+f.id+'"]'); if(!el) return;
+      if(f.type==='consent'){el.checked=!!v;return;}
+      if(f.type==='gdate'){el.value=v||'';var g=document.querySelector('[data-gshow="'+f.id+'"]');if(g){g.className=v?'v':'e';g.textContent=v?gLabel(v):'בחירה';}return;}
+      el.value=v==null?'':v;
+    });
   }
   function yearLine(){
     $('yr').innerHTML=YEAR===CUR+1
@@ -268,7 +292,7 @@ textarea.in{min-height:84px;resize:vertical}
     var bad=null;
     (CFG.fields||[]).forEach(function(f){
       if(f.type==='section') return;
-      var v=V[f.id], empty=(f.type==='file')?!FILES[f.id]:(f.type==='consent')?!v:(v==null||String(typeof v==='object'?'x':v).trim()==='');
+      var v=V[f.id], empty=(f.type==='file')?!(UP[f.id]||FILES[f.id]):(f.type==='consent')?!v:(v==null||String(typeof v==='object'?'x':v).trim()==='');
       if(f.req&&empty){setErr(f.id,'שדה חובה');bad=bad||f.id;return;}
       if(!empty&&f.type==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v).trim())){setErr(f.id,'כתובת אימייל אינה תקינה');bad=bad||f.id;}
     });
@@ -282,9 +306,11 @@ textarea.in{min-height:84px;resize:vertical}
   async function send(){
     if(collect()) return;
     var b=$('send'); b.disabled=true; b.textContent='שולח…';
-    var id=cid(), files={};
+    var id=RID||cid(), files={};
     try{
+      for(var k0 in UP) if(UP[k0]) files[k0]=UP[k0];
       for(var k in FILES){
+        if(!FILES[k]||files[k]) continue;
         var file=FILES[k], ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
         var path='enroll/'+YEAR+'/'+id+'/'+k+'.'+ext;
         var r=await fetch(A.url+'/functions/v1/hr-gate?a=put&p='+encodeURIComponent(path),{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream'}),body:file});
@@ -297,10 +323,12 @@ textarea.in{min-height:84px;resize:vertical}
         var v=V[f.id]; if(v==null||v==='') return;
         data[f.id]=f.type==='hebdate'?hebLabel(v):f.type==='gdate'?gLabel(v):f.type==='consent'?'מאשר':String(v).trim();
       });
+      if(IDF&&IDKIND==='pp') data._idtype='דרכון';
       if(SUNSET) data._sunset='נולד אחרי השקיעה';
       var row={client_id:id,school_year:YEAR,data:data,files:files,updated_at:Date.now()};
       var r2=await fetch(A.url+'/rest/v1/hr_enroll',{method:'POST',headers:hdrs({'Content-Type':'application/json',Prefer:'return=minimal'}),body:JSON.stringify(row)});
       if(!r2.ok) throw new Error('insert '+r2.status);
+      if(IDF) FormGate.drop();
       done(id,data,files);
     }catch(e){
       console.warn('[enroll] השליחה נכשלה',e);
@@ -351,7 +379,22 @@ textarea.in{min-height:84px;resize:vertical}
 
   // ── האזנה אחת לכל אירוע, בהאצלה ──
   // קובץ שנבחר או צולם — נשמר ב-FILES ושמו מוצג מתחת לשני הכפתורים
-  function setFile(fk,file,label){FILES[fk]=file||null;document.querySelector('[data-fname="'+fk+'"]').textContent=file?(label||file.name):'';if(file)clearErr(fk);}
+  function setFile(fk,file,label){FILES[fk]=file||null;delete UP[fk];document.querySelector('[data-fname="'+fk+'"]').textContent=file?(label||file.name):'';if(file){clearErr(fk);if(IDF)upNow(fk,file,label);}}
+  // קובץ עולה מיד לטיוטה — כך הוא נשאר גם כשיוצאים וחוזרים
+  async function upNow(fk,file,label){
+    var nm=document.querySelector('[data-fname="'+fk+'"]');
+    try{
+      var orig=file;
+      if(window.Capture&&!file.pages) file=await Capture.compress(file);
+      if(FILES[fk]!==orig) return;
+      FILES[fk]=file;
+      var ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
+      var path='enroll/'+YEAR+'/'+RID+'/'+fk+'-'+Date.now()+'.'+ext;
+      var r=await fetch(A.url+'/functions/v1/hr-gate?a=put&p='+encodeURIComponent(path),{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream'}),body:file});
+      if(!r.ok) throw new Error('upload '+r.status);
+      UP[fk]={path:path,name:label||file.name}; FormGate.save();
+    }catch(e){console.warn('[enroll] ההעלאה נכשלה',e);toast('העלאת הקובץ נכשלה — נא לנסות שוב',true);if(nm)nm.textContent='';FILES[fk]=null;}
+  }
   document.addEventListener('click',function(e){
     var t=e.target;
     var cam=t.closest('[data-cam]'); if(cam&&window.Capture){var ck=cam.getAttribute('data-cam');Capture.camera({title:'צילום מסמך',name:'צילום'}).then(function(file){if(file)setFile(ck,file,'צילום · '+(file.pages===1?'עמוד אחד':file.pages+' עמודים'));});return;}
@@ -366,7 +409,7 @@ textarea.in{min-height:84px;resize:vertical}
   document.addEventListener('input',function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-id');if(id&&e.target.type!=='checkbox'&&e.target.type!=='date'){V[id]=e.target.value;clearErr(id);}});
   document.addEventListener('change',function(e){
     var t=e.target, id=t.getAttribute('data-id'), fk=t.getAttribute('data-file');
-    if(fk){var raw=t.files&&t.files[0]||null;setFile(fk,raw);if(raw&&window.Capture)Capture.compress(raw).then(function(c){if(FILES[fk]===raw)FILES[fk]=c;});return;}
+    if(fk){var raw=t.files&&t.files[0]||null;setFile(fk,raw);if(!IDF&&raw&&window.Capture)Capture.compress(raw).then(function(c){if(FILES[fk]===raw)FILES[fk]=c;});return;}
     if(!id) return;
     if(t.type==='checkbox'){V[id]=t.checked;clearErr(id);return;}
     if(t.type==='date'){V[id]=t.value||null;var s=document.querySelector('[data-gshow="'+id+'"]');s.className=t.value?'v':'e';s.textContent=t.value?gLabel(t.value):'בחירה';clearErr(id);SUNSET=false;checkDates();}

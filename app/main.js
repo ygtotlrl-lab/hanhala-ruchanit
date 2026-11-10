@@ -34,6 +34,8 @@ import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
+import { meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingStaffAdd,
+         meetingStaffFill, meetingView } from './screens/meeting.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -537,6 +539,16 @@ var DOM_ACTIONS = {
   'in-track-add':         function () { intakeTrackAdd(); },
   'in-del':               function (el) { return intakeDelete(el); },
   'in-add-student':       function (el) { intakeAddStudent(el); },
+  'meeting-open':         function () { if (!canAccess('meeting')) { showDenied(); return; } meetingOpen(); },
+  'mt-view':              function () { meetingView(); },
+  'mt-copy':              function () { return meetingCopy(); },
+  'mt-resp':              function () { return meetingResponses(); },
+  'mt-pass':              function () { return meetingPass(); },
+  'mt-settings':          function () { return meetingSettings(); },
+  'mt-save':              function () { return meetingSave(); },
+  'mt-staff-add':         function () { meetingStaffAdd(); },
+  'mt-staff-fill':        function () { return meetingStaffFill(); },
+  'mt-del':               function (el) { return meetingDelete(el); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
   // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני
@@ -605,7 +617,8 @@ var HR_WRITE_MODULE = {
   'file-event-save': 'files', 'file-event-del': 'files',
   'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
   'in-save': 'intake', 'in-field-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
-  'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake'
+  'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake',
+  'mt-save': 'meeting', 'mt-staff-add': 'meeting', 'mt-staff-fill': 'meeting', 'mt-del': 'meeting'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
