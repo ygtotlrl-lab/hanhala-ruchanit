@@ -114,8 +114,8 @@ textarea.in{min-height:84px;resize:vertical}
 .slots button.busy{opacity:.45}
 .slots button:disabled{background:#eef1f6;color:#b6c0cf;border-color:#e3e8f0;cursor:not-allowed;text-decoration:line-through}
 .mine-list{display:flex;flex-direction:column;gap:8px}
-.mine-row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--ok-soft);border-radius:12px;padding:10px 14px;font-size:14.5px}
-.mine-row b{color:var(--ok)}
+.mine-row{display:flex;justify-content:flex-start;align-items:center;flex-wrap:wrap;gap:6px 10px;background:var(--ok-soft);border-radius:12px;padding:10px 14px;font-size:14.5px}
+.mine-row b{color:var(--ok);background:#fff;border-radius:999px;padding:2px 10px;direction:ltr;font-variant-numeric:tabular-nums}
 .btn.sm{padding:10px;font-size:14.5px}
 .sec-t{font-size:16px;color:var(--brand);margin-top:6px}
 .staff.lock{opacity:.55}
@@ -181,6 +181,8 @@ textarea.in{min-height:84px;resize:vertical}
   }
   // שעות תפוסות (הרצאות וכד׳) — לכל הרבנים
   function tmin(t){var a=String(t||'').split(':');return (+a[0])*60+(+a[1]||0);}
+  // סוף הפגישה — השעה ועוד אורך פגישה
+  function endOf(t){var m=tmin(t)+(+CFG.slot||10);return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+m%60).slice(-2);}
   function blocked(t){var m=tmin(t);return (CFG.blocked||[]).some(function(b){return b&&b.from&&b.to&&m>=tmin(b.from)&&m<tmin(b.to);});}
   // הרבנים — מהשער, לפי השיעור: רבני השיעור (חובה שניים), ואחריהם אחד מהנהלת הישיבה
   function nameOf(id){var s=SF.cls.concat(SF.mgmt).filter(function(x){return x.id===id;})[0];return s?s.name:'';}
@@ -245,7 +247,7 @@ textarea.in{min-height:84px;resize:vertical}
   function mineHTML(){
     if(!MINE.length) return '';
     return '<div class="mine-list">'+MINE.slice().sort(function(a,b){return a.time<b.time?-1:1;}).map(function(m){
-      return '<div class="mine-row"><span>'+esc(nameOf(m.staff)||m.staff_name||'')+'</span><b>'+esc(m.time)+'</b></div>';}).join('')+'</div>';
+      return '<div class="mine-row"><span>'+esc(nameOf(m.staff)||m.staff_name||'')+'</span><b>'+esc(m.time)+'–'+esc(endOf(m.time))+'</b></div>';}).join('')+'</div>';
   }
   function done(){
     $('fb').innerHTML='<div class="ok"><div class="c">'+IC.ok+'</div><h2>השיבוץ נקלט. נשמח לראותכם!</h2></div>'+
