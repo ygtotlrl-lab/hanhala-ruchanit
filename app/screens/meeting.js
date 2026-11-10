@@ -73,7 +73,10 @@ function meetingCfg() {
 // ── התגובות — השיבוצים: לפי תלמיד (מי נרשם ולמי) או לפי רב ──
 async function meetingResponses() {
   openModal('התגובות — שיבוץ לאסיפת הורים', '<div class="en-full" id="mt-resp"><div class="ld">טוען…</div></div>', '', 'table');
-  var r = await _gate('list');
+  // ההגדרה — מהענן, כדי שהשעות ו«פתוח לשיבוץ» בכותרת יהיו המעודכנים ולא העותק שבמכשיר
+  var both = await Promise.all([_gate('list'), hrCfgGet(MT_KEY, true).catch(function () { return null; })]);
+  var r = both[0], c = both[1];
+  if (c && c.ok && c.value && !hrSetPending(MT_KEY)) S._mtCfg = c.value;
   var box = document.getElementById('mt-resp');
   if (!box) return;
   if (r.login) { box.innerHTML = gatePassHTML('mt-pass'); return; }
@@ -93,8 +96,9 @@ async function meetingPass() {
 // המסך: הכותרת (היום, כמה משפחות וכמה פגישות) · מתג «לפי תלמיד» / «לפי רב» · חיפוש · הרשימה (#mt-list)
 // לפי תלמיד (ברירת המחדל) — כרטיס לכל משפחה שנרשמה: השם, השיעור, ומתחתם הפגישות לפי השעה; לפי רב — רק רבנים שיש להם פגישות, ובסוף מי שעוד בלי
 var MT_CLS_ORDER = ['a', 'b', 'g', 's'];
+function _mtCfgNow() { return hrSetPending(MT_KEY) ? meetingCfg() : (S._mtCfg || meetingCfg()); }
 function _mtDate() {
-  var cfg = meetingCfg(), rows = S._mtRows || [];
+  var cfg = _mtCfgNow(), rows = S._mtRows || [];
   if (cfg.date) return cfg.date;
   return rows.map(function (x) { return x.meet_date; }).filter(Boolean).sort().pop() || '';
 }
@@ -150,7 +154,7 @@ function _mtListHTML() {
 function _respPaint() {
   var box = document.getElementById('mt-resp');
   if (!box) return;
-  var cfg = meetingCfg(), rows = _mtRowsNow(), d = _mtDate();
+  var cfg = _mtCfgNow(), rows = _mtRowsNow(), d = _mtDate();
   var fams = rows.map(function (x) { return x.student_client_id || x.student_name; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
   var v = S._mtView === 'rb' ? 'rb' : 'st';
   box.innerHTML =
@@ -255,6 +259,7 @@ function meetingSave() {
   }).filter(function (b) { return b.from && b.to; });
   var next = { date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
                open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer'), texts: textsRead(document.getElementById('mt-set')) };
+  S._mtCfg = next;
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
   return p;
