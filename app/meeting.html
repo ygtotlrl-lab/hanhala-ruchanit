@@ -119,7 +119,20 @@ textarea.in{min-height:84px;resize:vertical}
 .btn.sm{padding:10px;font-size:14.5px}
 .sec-t{font-size:16px;color:var(--brand);margin-top:6px}
 .staff.lock{opacity:.55}
-.flyer{display:block;width:100%;height:auto;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.flyer-w{position:relative;border-radius:16px;overflow:hidden;background:var(--soft);min-height:200px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.flyer-w.ok{min-height:0;background:none}
+.flyer{display:block;width:100%;height:auto;opacity:0;transition:opacity .3s}.flyer-w.ok .flyer{opacity:1}
+.flyer-w .spin{position:absolute;top:50%;left:50%;margin:-16px 0 0 -16px}.flyer-w.ok .spin{display:none}
+/* ספינר — בטעינת הדף, המודעה ובדיקת מספר הזהות */
+.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-row{display:flex;justify-content:center;padding:28px 0}
+#fb{display:flex;flex-direction:column;gap:16px}
+.staff{gap:12px;padding:16px}
+.slots{gap:8px}
+.btns{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+.btn .bi{width:20px;height:20px;vertical-align:-4px;margin-inline-end:8px}
+.pv .staff h3 span{margin-inline-start:0}
 </style>
 </head>
 <body>
@@ -128,12 +141,15 @@ textarea.in{min-height:84px;resize:vertical}
   <h1>שיבוץ לאסיפת הורים</h1>
   <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
 </header>
-<main id="main"><div class="msgc">טוען…</div></main>
+<main id="main"><div class="spin-row"><span class="spin" role="status" aria-label="טוען"></span></div></main>
 <div class="toast" id="toast"></div>
 <script>
 (function(){
   var A = self.APP && self.APP.supabase;
-  var IC = { ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' };
+  var IC = {
+    cal:'<svg class="bi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M8 3v4M16 3v4M3.5 10h17M12 13v5M9.5 15.5h5"/></svg>',
+    edit:'<svg class="bi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
+    ok:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>' };
   var CLS = {a:"שיעור א'", b:"שיעור ב'", g:"שיעור ג'", s:'התלמידים השלוחים'};
   var DOW = ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -183,17 +199,47 @@ textarea.in{min-height:84px;resize:vertical}
     var when=CFG.date?dayLabel(CFG.date)+' · '+esc(CFG.from)+'–'+esc(CFG.to):'';
     var html='<div class="when">'+when+'</div>';
     if(!CFG.open||!CFG.date){ $('main').innerHTML=html+'<div class="msgc"><span>השיבוץ לאסיפה סגור.</span>'+(CFG.phone?' <span>לפרטים:</span> <span dir="ltr">'+esc(CFG.phone)+'</span>':'')+'</div>'; return; }
-    if(CFG.flyer) html+='<img class="flyer" src="'+esc(CFG.flyer)+'" alt="מודעת האסיפה">';
+    if(CFG.flyer) html+='<div class="flyer-w" id="flw"><span class="spin" role="status" aria-label="טוען"></span><img class="flyer" src="'+esc(CFG.flyer)+'" alt="מודעת האסיפה"></div>';
     html+=FormGate.html()+'<div id="fb"></div><div class="foot">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד</div>';
     $('main').innerHTML=html;
+    var im=document.querySelector('#flw img');
+    if(im){var okf=function(){$('flw').classList.add('ok');};if(im.complete&&im.naturalWidth)okf();else{im.onload=okf;im.onerror=function(){$('flw').remove();};}}
     FormGate.mount({form:'meeting', A:A, lookup:lookup});
+    preview();
+  }
+  // לפני מספר הזהות — כל הטופס באפור (הנעילה של form-gate.js), בלי שם התלמיד ובלי שמות הרבנים: התפקידים מאנשי הקשר
+  var PV=null;
+  function previewStaff(){
+    if(PV) return Promise.resolve(PV);
+    return fetch(A.url+'/rest/v1/hr_settings?select=value&key=eq.contacts',{headers:{apikey:A.key,Authorization:'Bearer '+A.key}})
+      .then(function(r){return r.json();}).then(function(rows){
+        var v=JSON.parse(rows[0].value), cls=[], mg=[], re=/ראש הישיבה|משגיח ראשי|מנהל הלימודים/;
+        (v.groups||[]).forEach(function(g){(g.rows||[]).forEach(function(x){
+          if(g.cls==='a'&&['n3','n4','n5'].indexOf(x.rp)>=0&&x.role) cls.push(x.role);
+          if(x.role&&re.test(x.role)&&mg.indexOf(x.role)<0) mg.push(x.role);
+        });});
+        PV={cls:cls,mgmt:mg}; return PV;
+      }).catch(function(){ PV={cls:['ר"מ','משפיע חסידות בוקר','משפיע חסידות ערב'],mgmt:['ראש הישיבה','משגיח ראשי','מנהל הלימודים']}; return PV; });
+  }
+  function preview(msg){
+    previewStaff().then(function(p){
+      if(ID) return;
+      var ss=slots();
+      function box(role){return '<div class="staff"><h3><span>'+esc(role)+'</span></h3><div class="slots">'+ss.map(function(t){return '<button type="button" disabled>'+t+'</button>';}).join('')+'</div></div>';}
+      $('fb').innerHTML=(msg||'')+'<div class="pv" style="display:flex;flex-direction:column;gap:16px">'+
+        '<p class="expl">אפשר לבחור עד שניים מרבני השיעור, ולכל אחד שעה פנויה. כל פגישה '+(+CFG.slot||10)+' דקות.</p>'+
+        '<h2 class="sec-t">רבני השיעור · 0 מתוך 2</h2>'+p.cls.map(box).join('')+
+        (p.mgmt.length?'<h2 class="sec-t">הנהלת הישיבה</h2><p class="expl">אחרי שבחרתם רב שיעור, אפשר לבחור גם פגישה אחת עם הנהלת הישיבה.</p>'+p.mgmt.map(box).join(''):'')+'</div>';
+    });
   }
   // מספר הזהות — התלמיד והשיעור מהמצבה, והשיבוצים שכבר נקבעו
   async function lookup(id,kind){
+    $('fb').insertAdjacentHTML('afterbegin','<div class="spin-row" id="fbw"><span class="spin" role="status" aria-label="טוען"></span></div>');
     var r=await api({action:'meet_get', id:id});
+    var w=$('fbw'); if(w) w.remove();
     if(r&&r.student){ ID=id; ST=r.student; SF=r.staff||SF; MINE=r.mine||[]; TAKEN=r.taken||[]; nCls()>=1?done():pick(); return true; }
     toast(r&&r.error==='nf'?'אין תלמיד במספר זה':'אין חיבור — נסו שוב',true);
-    if(r&&r.error==='nf') $('fb').innerHTML='<div class="msgc">אין תלמיד במספר זה</div>';
+    if(r&&r.error==='nf') preview('<div class="msgc">אין תלמיד במספר זה</div>');
     return false;
   }
   function mineHTML(){
@@ -204,8 +250,8 @@ textarea.in{min-height:84px;resize:vertical}
   function done(){
     $('fb').innerHTML='<div class="ok"><div class="c">'+IC.ok+'</div><h2>השיבוץ נקלט. נשמח לראותכם!</h2></div>'+
       '<div class="who">'+esc(ST.name)+' · '+esc(CLS[ST.cls]||'')+'</div>'+mineHTML()+
-      '<button class="btn" type="button" id="ics">הוספה ליומן</button>'+
-      '<button class="btn out" type="button" id="chg">שינוי או ביטול השיבוץ</button>';
+      '<div class="btns"><button class="btn" type="button" id="ics">'+IC.cal+'<span>הוספה ליומן</span></button>'+
+      '<button class="btn out" type="button" id="chg">'+IC.edit+'<span>שינוי או ביטול השיבוץ</span></button></div>';
     $('ics').onclick=ics; $('chg').onclick=pick;
   }
   function pick(){

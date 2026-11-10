@@ -116,6 +116,9 @@ textarea.in{min-height:84px;resize:vertical}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.bad{background:var(--bad)}
 .msgc{text-align:center;color:var(--text-2);padding:40px 0}
+.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-row{display:flex;justify-content:center;padding:40px 0}
 .doc{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
 .doc:first-of-type{border-top:0;padding-top:0}
 .doc .dt,.it h3{font-size:14.5px;font-weight:700}
@@ -145,7 +148,7 @@ textarea.in{min-height:84px;resize:vertical}
   <h1>קבלה לישיבה</h1>
   <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
 </header>
-<main id="main"><div class="msgc">טוען…</div></main>
+<main id="main"><div class="spin-row"><span class="spin" role="status" aria-label="טוען"></span></div></main>
 <div class="veil" id="veil"><div class="bx" id="bx"></div></div>
 <div class="pv" id="pv" role="dialog" aria-modal="true"><div class="pv-h"><span id="pv-t"></span><button class="pv-x" data-pvx aria-label="סגירה">✕</button></div><div class="pv-b" id="pv-b"></div></div>
 <div class="toast" id="toast"></div>

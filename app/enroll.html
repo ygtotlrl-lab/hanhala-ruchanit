@@ -103,6 +103,9 @@ textarea.in{min-height:84px;resize:vertical}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.bad{background:var(--bad)}
 .msgc{text-align:center;color:var(--text-2);padding:40px 0}
+.spin{display:inline-block;width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin-row{display:flex;justify-content:center;padding:40px 0}
 /* ההעתק לממלא — נבנה מחוץ למסך ומצולם ל-PDF */
 #copy{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#1a2340;font-family:Heebo,Arial,sans-serif;direction:rtl}
 #copy .hd{background:#1a3a6b;color:#fff;padding:22px 34px;display:flex;align-items:center;gap:18px}
@@ -121,7 +124,7 @@ textarea.in{min-height:84px;resize:vertical}
   <h1>טופס רישום</h1>
   <div class="sub">ישיבת תומכי תמימים ראשון לציון</div>
 </header>
-<main id="main"><div class="msgc">טוען…</div></main>
+<main id="main"><div class="spin-row"><span class="spin" role="status" aria-label="טוען"></span></div></main>
 <div class="veil" id="veil"><div class="bx" id="bx"></div></div>
 <div class="toast" id="toast"></div>
 <div id="copy"></div>
