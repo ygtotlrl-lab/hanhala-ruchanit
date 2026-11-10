@@ -1,5 +1,5 @@
 // app/screens/intake.js — קבלה לישיבה: הדיאלוג שמהמצבה, התגובות והגדרות הטופס — כמו טופס הרישום (app/screens/enroll.js), ובאותו שער.
-// הטופס עצמו — app/intake.html, דף ציבורי ששולח בלבד (hr_intake · הדלי הפרטי hr-enroll, תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+// הטופס עצמו — app/intake.html, דף ציבורי ששולח בלבד (hr_intake · והקבצים דרך השער, במאגר הפרטי תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
@@ -8,7 +8,8 @@ import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
-import { enrollFieldRow, gateCall, gateLogin, gatePassHTML } from './enroll.js';
+import { enrollFieldRow, gatePassHTML } from './enroll.js';
+import { gateCall, gateLogin, gateOpen } from '../gate.js';
 import { openAddStudent } from './students.js';
 
 var INTAKE_PUBLIC = 'hr-public';
@@ -118,12 +119,7 @@ async function intakeTrack(el) {
     toast(MSG_SAVED, null, 'good');
   } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
 }
-async function intakeFile(el) {
-  var w = window.open('', '_blank');
-  var r = await _gate('file', { path: el.getAttribute('data-path') });
-  if (r && r.url) { if (w) w.location.href = r.url; else window.location.href = r.url; }
-  else { if (w) w.close(); toast('הקובץ לא נפתח — אין חיבור לשרת', null, 'bad'); }
-}
+function intakeFile(el) { return gateOpen(el.getAttribute('data-path')); }
 async function intakeDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._inRows || []).filter(function (x) { return x.client_id === id; })[0];

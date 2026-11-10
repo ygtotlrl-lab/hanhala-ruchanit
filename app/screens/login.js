@@ -17,7 +17,7 @@ import { AUTH, S, shell } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
-import { gateForget, gateLogin } from './enroll.js';
+import { gateForget, gateLogin } from '../gate.js';
 import { stIcon } from '../../core/icons.js';
 
 // ── המסכים ──

@@ -2,7 +2,7 @@
 // המבחן הוא «סדר» של הזרם השלישי (HR_STREAMS.exams) — השמירה, הסנכרון והארכיון משותפים; כאן רק מה שנבדל.
 import { idEq, pendMark } from '../core/sync.js';
 import { esc, toast } from '../core/ui.js';
-import { HR_CLS_SHORT, HR_FILES_BUCKET, MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET,
+import { HR_CLS_SHORT, HR_EXAM_DIRS, HR_EXAM_SUBJECTS, MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET,
          MSG_UPLOAD_OK } from './constants.js';
 import { S } from './state.js';
 import { getStudents, hrMirrorPutRecs, hrSortStudents } from './domain.js';
@@ -10,7 +10,8 @@ import { hrDayHeb } from './domain.hebdate.js';
 import { hrMarkOf, hrSaveData } from './domain.sessions.js';
 import { _hrOpenRec, hrMarkDirty } from './domain.reg.js';
 import { icon } from './icons.js';
-import { hrStudentOn } from './domain.periods.js';
+import { hrMonthKeyOfIso, hrStudentOn } from './domain.periods.js';
+import { gateExt, gateOpen, gatePut } from './gate.js';
 import './capture.js';
 
 var EX_MAX_BYTES = 15 * 1024 * 1024;
@@ -150,21 +151,18 @@ function hrExamCamera(st, el) {
 }
 
 async function _hrExamPut(st, file, sid, kind, lbl) {
-  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
+  if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
   if (file.size > EX_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'warn'); return; }
   var rec = _hrOpenRec(st);
   if (!rec) return;
-  var ext = (String(file.name).split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
-  var path = 'exams/' + rec.client_id + '/' + (sid ? 'scan-' + sid : kind) + '-' + Date.now() + '.' + ext;
+  // exams/<שנה>/<חודש>/<לימוד>/<מזהה תלמיד או סוג הקובץ>-<רגע>.<סיומת> — השנה והחודש עבריים, מתאריך המבחן
+  var mk = hrMonthKeyOfIso(rec.session_date).split('-'), si = HR_EXAM_SUBJECTS.indexOf(rec.session);
+  var path = 'exams/' + mk[0] + '/' + mk[1] + '/' + (si < 0 ? 'other' : HR_EXAM_DIRS[si]) + '/' +
+    (sid ? sid : kind) + '-' + Date.now() + '.' + gateExt(file);
   if (lbl) lbl.classList.add('is-busy');
-  try {
-    var res = await S.SB.storage.from(HR_FILES_BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false });
-    if (!res || res.error) throw (res && res.error) || new Error('upload');
-  } catch (e) {
-    if (lbl) lbl.classList.remove('is-busy');
-    toast(MSG_UPLOAD_FAIL + ((e && e.message) || e), null, 'bad');
-    return;
-  }
+  var ok = await gatePut(path, file);
+  if (lbl) lbl.classList.remove('is-busy');
+  if (!ok) return;
   if (sid) {
     var buf = S[st.v + 'Marks'], cur = buf[sid] || hrMarkOf(st, '', 0, '');
     cur.scan = path;
@@ -178,19 +176,7 @@ async function _hrExamPut(st, file, sid, kind, lbl) {
   toast(MSG_UPLOAD_OK, null, 'good');
 }
 
-// הקישור חתום לשעה — הדלי פרטי.
-async function hrOpenFile(path) {
-  if (!path) return;
-  if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
-  var w = window.open('', '_blank');
-  try {
-    var res = await S.SB.storage.from(HR_FILES_BUCKET).createSignedUrl(path, 3600);
-    if (!res || res.error || !res.data) throw (res && res.error) || new Error('url');
-    if (w) w.location.href = res.data.signedUrl; else window.location.href = res.data.signedUrl;
-  } catch (e) {
-    if (w) w.close();
-    toast(MSG_UPLOAD_FAIL + ((e && e.message) || e), null, 'bad');
-  }
-}
+// הקובץ — במאגר הפרטי, בקישור חתום לשעה מהשער.
+function hrOpenFile(path) { return gateOpen(path); }
 
 export { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile, hrRenderExam };

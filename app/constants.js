@@ -288,8 +288,8 @@ var HR_PRAYER_NAMES = ['שחרית', 'מנחה', 'מעריב', 'ערבית'];
 // הלימודים שנבחנים בהם — קבועים בקוד, בסדר גיליון הציונים; מבחן נפתח לאחד מהם.
 var HR_EXAM_SUBJECTS = ['חסידות בוקר', 'נגלה עיונא', 'הלכה', 'נגלה גירסא', 'גאולה ומשיח', 'חסידות ערב'];
 
-// דלי הסריקות — פרטי, והקריאה בקישור חתום לשעה.
-var HR_FILES_BUCKET = 'hr-files';
+// תיקיית הלימוד במאגר הקבצים — באותו סדר כמו HR_EXAM_SUBJECTS; שם תיקייה — אותיות לטיניות בלבד.
+var HR_EXAM_DIRS = ['chasidus-boker', 'nigle-iyun', 'halacha', 'nigle-girsa', 'geula', 'chasidus-erev'];
 var MSG_UPLOAD_NEEDS_NET = 'העלאת קובץ דורשת חיבור לרשת';
 var MSG_UPLOAD_FAIL = 'ההעלאה נכשלה: ';
 var MSG_UPLOAD_OK = 'הקובץ הועלה';
@@ -322,7 +322,7 @@ var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא ה�
 // מבחן נפתח רק אחרי שנבחר תאריך — השדה ריק כברירה.
 var MSG_EXAM_PICK_DATE = 'יש לבחור תאריך למבחן';
 
-export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_DIRS, HR_EXAM_SUBJECTS, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_ALERT_ABS, HR_ALERT_LATE, HR_EXPORT_FONTS, HR_FRESH_MS, HR_LOGIN_NET_MS, HR_ORG, HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,

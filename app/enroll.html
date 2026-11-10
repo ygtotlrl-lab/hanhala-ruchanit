@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <title>טופס רישום — ישיבת תומכי תמימים ראשון לציון</title>
 <link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
-<!-- דף ציבורי ועצמאי: טופס הרישום, מתוך ההגדרה enroll_form; שולח בלבד (hr_enroll · הדלי hr-enroll) ואינו קורא דבר מלבד ההגדרה. -->
+<!-- דף ציבורי ועצמאי: טופס הרישום, מתוך ההגדרה enroll_form; שולח בלבד (hr_enroll · והקבצים דרך השער hr-gate, למאגר הפרטי תחת enroll/) ואינו קורא דבר מלבד ההגדרה. -->
 <link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
 <script src="capture.js"></script>
@@ -285,8 +285,8 @@ textarea.in{min-height:84px;resize:vertical}
     try{
       for(var k in FILES){
         var file=FILES[k], ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
-        var path=YEAR+'/'+id+'/'+k+'.'+ext;
-        var r=await fetch(A.url+'/storage/v1/object/hr-enroll/'+path,{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream','x-upsert':'false'}),body:file});
+        var path='enroll/'+YEAR+'/'+id+'/'+k+'.'+ext;
+        var r=await fetch(A.url+'/functions/v1/hr-gate?a=put&p='+encodeURIComponent(path),{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream'}),body:file});
         if(!r.ok) throw new Error('upload '+r.status);
         files[k]={path:path,name:file.name};
       }

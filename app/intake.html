@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <title>קבלה לישיבה — ישיבת תומכי תמימים ראשון לציון</title>
 <link rel="icon" href="../icons/favicon-32.8ac5f44c.png" sizes="32x32">
-<!-- דף ציבורי ועצמאי: קבלה לישיבה, מתוך ההגדרה intake_form; שולח בלבד (hr_intake · הדלי hr-enroll, תחת intake/) ואינו קורא דבר מלבד ההגדרה והמסמכים הציבוריים שהיא מצביעה עליהם. כמו app/enroll.html. -->
+<!-- דף ציבורי ועצמאי: קבלה לישיבה, מתוך ההגדרה intake_form; שולח בלבד (hr_intake · והקבצים דרך השער hr-gate, למאגר הפרטי תחת intake/) ואינו קורא דבר מלבד ההגדרה והמסמכים הציבוריים שהיא מצביעה עליהם. כמו app/enroll.html. -->
 <link rel="preconnect" href="https://kxbtskqobynewvnckaaz.supabase.co" crossorigin>
 <script src="../app.config.js"></script>
 <script src="capture.js"></script>
@@ -335,7 +335,7 @@ textarea.in{min-height:84px;resize:vertical}
         var file=FILES[k]; if(!file) continue;
         var ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5)||'bin';
         var path='intake/'+YEAR+'/'+id+'/'+k+'.'+ext;
-        var r=await fetch(A.url+'/storage/v1/object/hr-enroll/'+path,{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream','x-upsert':'false'}),body:file});
+        var r=await fetch(A.url+'/functions/v1/hr-gate?a=put&p='+encodeURIComponent(path),{method:'POST',headers:hdrs({'Content-Type':file.type||'application/octet-stream'}),body:file});
         if(!r.ok) throw new Error('upload '+r.status);
         files[k]={path:path,name:file.name};
       }

@@ -4,7 +4,8 @@ import { MSG_DELETE, dayToday } from '../../core/util.js';
 import { idEq, newClientId, schedulePush, tombKill } from '../../core/sync.js';
 import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, esc, openModal, toast } from '../../core/ui.js';
-import { HR_FILES_BUCKET, MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
+import { MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
+import { gateExt, gatePut } from '../gate.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, saveStudents } from '../domain.js';
 import { hrDayHebFmt } from '../domain.hebdate.js';
@@ -74,24 +75,20 @@ async function saveFileEvent() {
   var inp = document.getElementById('file-scan');
   var file = inp && inp.files && inp.files[0];
   if (!text && !file) { toast('יש לכתוב את האירוע או לצרף סריקה', null, 'warn'); return; }
-  var sid = S._fileSid, scan = null;
+  var sid = S._fileSid, scan = null, eid = newClientId();
   if (file) {
-    if (!navigator.onLine || !S.SB) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
+    if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
     if (file.size > FILE_MAX_BYTES) { toast(MSG_FILE_TOO_BIG, null, 'warn'); return; }
-    var ext = (String(file.name).split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
-    var path = 'files/' + sid + '/' + Date.now() + '.' + ext;
-    try {
-      var res = await S.SB.storage.from(HR_FILES_BUCKET).upload(path, file, { contentType: file.type || undefined, upsert: false });
-      if (!res || res.error) throw (res && res.error) || new Error('upload');
-      scan = path;
-    } catch (e) { toast(MSG_UPLOAD_FAIL + ((e && e.message) || e), null, 'bad'); return; }
+    // files/<מזהה תלמיד>/<מזהה האירוע>.<סיומת>
+    scan = await gatePut('files/' + sid + '/' + eid + '.' + gateExt(file), file);
+    if (!scan) return;
   }
   var students = getStudents();
   var s = students.find(function (x) { return idEq(x.client_id, sid); });
   if (!s) return;
   if (!Array.isArray(s.file_events)) s.file_events = [];
   var now = Date.now();
-  s.file_events.push({ id: newClientId(), date: date, text: text, scan: scan,
+  s.file_events.push({ id: eid, date: date, text: text, scan: scan,
                        created_by_client_id: sessUserId(), updated_at: now });
   s.updated_at = now;
   saveStudents(students);

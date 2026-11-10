@@ -1,9 +1,8 @@
-// app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות, הגדרות הטופס, ושער השרת
-// הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות נקראות רק דרך השער (פונקציית Edge‏ hr-gate, שהקוד שלה ב-Supabase), אחרי כניסה מקוונת:
-// האסימון נשמר במכשיר למשתמש שנכנס, ובלעדיו — הזנת הסיסמה פעם אחת, עם רשת.
+// app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות והגדרות הטופס
+// הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
-import { lsGet, lsRemove, lsSet } from '../../core/storage.js';
+import { gateCall, gateLogin, gateOpen } from '../gate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { ENROLL_DEFAULT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
@@ -12,47 +11,10 @@ import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
 import { openAddStudent } from './students.js';
 
-var GATE_KEY = 'hr_gate';
 var ENROLL_PUBLIC = 'hr-public';
 var EN_TYPES = [['text', 'טקסט'], ['idnum', 'מספר זהות'], ['tel', 'טלפון'], ['email', 'אימייל'], ['select', 'בחירה'],
   ['hebdate', 'תאריך עברי'], ['gdate', 'תאריך לועזי'], ['textarea', 'טקסט ארוך'], ['file', 'קובץ'], ['consent', 'תיבת אישור'], ['section', 'כותרת קבוצה']];
 
-// ── השער ──
-function _gateUrl() { return self.APP.supabase.url + '/functions/v1/hr-gate'; }
-function _gateTok() {
-  var g = null;
-  try { g = JSON.parse(lsGet(GATE_KEY) || 'null'); } catch (e) { g = null; }
-  return (g && AUTH.user && String(g.uid) === String(AUTH.user.client_id) && g.exp > Date.now()) ? g.token : null;
-}
-async function _gatePost(body) {
-  var k = self.APP.supabase.key;
-  var r = await fetch(_gateUrl(), { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: k, Authorization: 'Bearer ' + k }, body: JSON.stringify(body) });
-  var j = null;
-  try { j = await r.json(); } catch (e) { j = null; }
-  return { status: r.status, body: j || {} };
-}
-// בכניסה מקוונת — ברקע, בלי להמתין: כשל כאן אינו נוגע בכניסה, ורק מסך התגובות יבקש סיסמה
-async function gateLogin(username, pass) {
-  try {
-    var r = await _gatePost({ action: 'login', username: username, password: pass });
-    if (r.status !== 200 || !r.body.token) return false;
-    lsSet(GATE_KEY, JSON.stringify({ uid: AUTH.user && AUTH.user.client_id, token: r.body.token, exp: r.body.exp }));
-    return true;
-  } catch (e) { console.warn('[gate] הכניסה לשער נכשלה', e); return false; }
-}
-function gateForget() { lsRemove(GATE_KEY); }
-// mod — המודול שההרשאה שלו נבדקת, והטבלה שהשער קורא (enroll ⟵ hr_enroll · intake ⟵ hr_intake)
-async function gateCall(mod, action, body) {
-  var t = _gateTok();
-  if (!t) return { login: true };
-  var r;
-  try { r = await _gatePost(Object.assign({ action: action, token: t, mod: mod }, body || {})); }
-  catch (e) { return { net: true }; }
-  if (r.status === 401) { gateForget(); return { login: true }; }
-  if (r.status === 403) return { perm: true };
-  if (r.status !== 200) return { error: true };
-  return r.body;
-}
 function _gate(action, body) { return gateCall('enroll', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
@@ -161,12 +123,7 @@ async function enrollTrack(el) {
     toast(MSG_SAVED, null, 'good');
   } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
 }
-async function enrollFile(el) {
-  var w = window.open('', '_blank');
-  var r = await _gate('file', { path: el.getAttribute('data-path') });
-  if (r && r.url) { if (w) w.location.href = r.url; else window.location.href = r.url; }
-  else { if (w) w.close(); toast('הקובץ לא נפתח — אין חיבור לשרת', null, 'bad'); }
-}
+function enrollFile(el) { return gateOpen(el.getAttribute('data-path')); }
 async function enrollDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._enRows || []).filter(function (x) { return x.client_id === id; })[0];
@@ -302,6 +259,6 @@ function enrollSave() {
 // גרירה לסידור — התמונות, השדות ועמודות המעקב; השחרור שומר מה-DOM הסופי
 ['enf', 'eni', 'ent'].forEach(function (k) { dragDef(k, function () { return enrollSave(); }); });
 
-export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML, gateCall,
+export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML,
          enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
-         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, gateForget, gateLogin };
+         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear };

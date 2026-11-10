@@ -7,7 +7,7 @@ import { closeModal, esc, openModal, toast } from '../../core/ui.js';
 import { exportDataUrl, exportFontCss } from '../../core/export.js';
 import { printFile } from '../../core/share.js';
 import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
-import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, HR_FILES_BUCKET, MSG_PDF_BUILDING,
+import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, MSG_PDF_BUILDING,
          MSG_PDF_FAIL, PK_RP_VAL, RP_ROLES } from '../constants.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
@@ -16,6 +16,7 @@ import { contactsStaff } from './contacts.js';
 import { icon } from '../icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
 import { stIcon } from '../../core/icons.js';
+import { gateLinks } from '../gate.js';
 
 // ── הסולם והרף ──
 var RP_SCALE = ['מצוין מאוד', 'מצוין', 'טוב מאוד', 'כמעט טוב מאוד', 'טוב', 'כמעט טוב', 'מספיק', 'מספיק בקושי', 'בלתי מספיק'];
@@ -345,20 +346,14 @@ var RP_PRINT_CSS =
   'table.notes tr.nh{height:auto}table.notes tr.nh th{width:auto;border:none;background:none;text-align:center;font-size:10pt;padding:4mm 0 1.5mm;color:#444}' +
   'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
 
-// הקישורים לסריקות חתומים לשנה — הגיליון נשלח להורים, וקישור לשעה היה פג לפני שנפתח.
+// הקישורים לסריקות חתומים לשנה, מהשער — הגיליון נשלח להורים, וקישור לשעה היה פג לפני שנפתח.
 async function _scanUrls(comp, sts) {
   var paths = {};
   sts.forEach(function (s) {
     var r = comp[String(s.client_id)]; if (!r) return;
     Object.keys(r.exams).forEach(function (n) { var e = r.exams[n]; if (e && e.scan) paths[e.scan] = 1; });
   });
-  var list = Object.keys(paths), out = {};
-  if (!list.length || !S.SB || !navigator.onLine) return out;
-  try {
-    var res = await S.SB.storage.from(HR_FILES_BUCKET).createSignedUrls(list, 60 * 60 * 24 * 365);
-    (res && res.data || []).forEach(function (x) { if (x && x.path && x.signedUrl) out[x.path] = x.signedUrl; });
-  } catch (e) { }
-  return out;
+  return gateLinks(Object.keys(paths), 'year');
 }
 
 // הייצוא — מסמך (printFile): הגיליונות כדף HTML אחד, עמוד A4 לכל דף, והגופנים, הרקע והחתימה מוטמעים בו;
