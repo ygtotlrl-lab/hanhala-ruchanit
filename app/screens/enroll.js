@@ -11,6 +11,7 @@ import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
 import { openAddStudent } from './students.js';
 import '../form-texts.js';
+import { respListHTML, respScreenHTML, respSections } from './resp.js';
 
 var ENROLL_PUBLIC = 'hr-public';
 var EN_TYPES = [['text', 'טקסט'], ['idnum', 'מספר זהות'], ['tel', 'טלפון'], ['email', 'אימייל'], ['select', 'בחירה'],
@@ -78,43 +79,27 @@ async function enrollPass() {
   if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
   return enrollResponses();
 }
+// התגובות — כרטיס לכל מי שמילא (resp.js)
+function _respOpts() {
+  var cfg = enrollCfg(), rows = S._enRows || [];
+  var years = rows.map(function (x) { return x.school_year; }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
+  return {
+    p: 'en', edit: canEdit('enroll'), track: cfg.track || [], sections: respSections(cfg.fields),
+    rows: rows.filter(function (x) { return S._enYear == null || x.school_year === S._enYear; }),
+    years: years.map(function (y) { return { y: y, label: _yearLabel(y), on: y === S._enYear, n: rows.filter(function (x) { return x.school_year === y; }).length }; })
+  };
+}
 function _respPaint() {
   var box = document.getElementById('en-resp');
-  if (!box) return;
-  var cfg = enrollCfg(), rows = S._enRows || [], edit = canEdit('enroll');
-  var years = rows.map(function (x) { return x.school_year; }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
-  var list = rows.filter(function (x) { return S._enYear == null || x.school_year === S._enYear; });
-  var fields = cfg.fields.filter(function (f) { return f.type !== 'section'; });
-  var head = '<tr><th class="en-sticky">שם</th><th>נשלח</th>' +
-    fields.filter(function (f) { return f.id !== 'first' && f.id !== 'last'; }).map(function (f) { return '<th>' + esc(f.label) + '</th>'; }).join('') +
-    (cfg.track || []).map(function (t) { return '<th class="en-trk">' + esc(t) + '</th>'; }).join('') + '<th></th></tr>';
-  var body = list.map(function (x) {
-    var d = x.data || {}, f = x.files || {};
-    var name = [d.first, d.last].filter(Boolean).join(' ') || '—';
-    var cells = fields.filter(function (fl) { return fl.id !== 'first' && fl.id !== 'last'; }).map(function (fl) {
-      if (fl.type === 'file') return '<td>' + (f[fl.id] ? '<button class="btn sm out" data-act="en-file" data-path="' + esc(f[fl.id].path) + '">' + icon('watch') + 'פתיחה</button>' : '') + '</td>';
-      var v = d[fl.id] || '';
-      if (fl.type === 'hebdate' && d._sunset) v += ' (' + d._sunset + ')';
-      return '<td>' + esc(v) + '</td>';
-    }).join('');
-    var trk = (cfg.track || []).map(function (t) {
-      var v = (x.track || {})[t] || '';
-      return '<td class="en-trk"><input class="en-in" value="' + esc(v) + '" data-en-id="' + esc(x.client_id) + '" data-en-key="' + esc(t) + '"' + (edit ? '' : ' disabled') + '></td>';
-    }).join('');
-    var dt = new Date(x.created_at);
-    return '<tr><th class="en-sticky">' + esc(name) + '</th><td>' + esc(dt.toLocaleDateString('he-IL')) + '</td>' + cells + trk +
-      '<td class="en-acts">' + (edit ? '<button class="btn sm out" data-act="en-add-student" data-id="' + esc(x.client_id) + '">' + icon('plus') + 'הוספה למצבה</button>' +
-      '<button class="row-del-btn" data-act="en-del" data-id="' + esc(x.client_id) + '" aria-label="מחיקה">' + icon('del') + '</button>' : '') + '</td></tr>';
-  }).join('');
-  box.innerHTML =
-    '<div class="en-bar">' + years.map(function (y) {
-      var n = rows.filter(function (x) { return x.school_year === y; }).length;
-      return '<button class="chip' + (y === S._enYear ? ' on' : '') + '" data-act="en-year" data-y="' + y + '">' + esc(_yearLabel(y)) + ' <b>' + n + '</b></button>';
-    }).join('') + '</div>' +
-    (list.length ? '<div class="table-scroll en-scroll"><table class="en-tbl"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
-                 : '<div class="ld">אין תגובות</div>');
+  if (box) box.innerHTML = respScreenHTML(_respOpts());
 }
-function enrollYear(y) { S._enYear = +y; _respPaint(); }
+function _listPaint() {
+  var box = document.getElementById('en-list');
+  if (box) box.innerHTML = respListHTML(_respOpts());
+}
+function enrollYear(y) { S._enYear = +y; S._enOpen = null; _respPaint(); }
+function enrollOpenRow(el) { var id = el.getAttribute('data-id'); S._enOpen = S._enOpen === id ? null : id; _listPaint(); }
+function enrollSearch(v) { S._enQ = v; _listPaint(); }
 // עמודת מעקב — נשמרת ביציאה מהשדה, דרך השער
 async function enrollTrack(el) {
   var r = await _gate('track', { id: el.getAttribute('data-en-id'), key: el.getAttribute('data-en-key'), value: el.value });
@@ -292,4 +277,4 @@ function enrollSave() {
 
 export { _fieldRow as enrollFieldRow, _passHTML as gatePassHTML, privacyHTML, textsHTML, textsRead,
          enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
-         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear };
+         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch };

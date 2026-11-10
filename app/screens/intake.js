@@ -7,6 +7,7 @@ import { INTAKE_DEFAULT, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../consta
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
+import { respListHTML, respScreenHTML, respSections } from './resp.js';
 import { contactsUrl } from './contacts.js';
 import { enrollFieldRow, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
 import { gateCall, gateLogin, gateOpen } from '../gate.js';
@@ -76,41 +77,32 @@ async function intakePass() {
   if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
   return intakeResponses();
 }
+// התגובות — כרטיס לכל מי שמילא (resp.js): פרטי התלמיד, ואחריהם חלק לכל מסמך לחתימה שיש בו שדות
+function _respOpts() {
+  var cfg = intakeCfg(), rows = S._inRows || [];
+  var years = rows.map(function (x) { return x.school_year; }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
+  var sections = respSections(cfg.fields, 'פרטי התלמיד');
+  (cfg.items || []).forEach(function (it) {
+    var fs = (it.fields || []).filter(function (f) { return f.type !== 'section'; });
+    if (fs.length) sections.push({ title: it.title, fields: fs });
+  });
+  return {
+    p: 'in', edit: canEdit('intake'), track: cfg.track || [], sections: sections,
+    rows: rows.filter(function (x) { return S._inYear == null || x.school_year === S._inYear; }),
+    years: years.map(function (y) { return { y: y, label: _yearLabel(y), on: y === S._inYear, n: rows.filter(function (x) { return x.school_year === y; }).length }; })
+  };
+}
 function _respPaint() {
   var box = document.getElementById('in-resp');
-  if (!box) return;
-  var cfg = intakeCfg(), rows = S._inRows || [], edit = canEdit('intake');
-  var years = rows.map(function (x) { return x.school_year; }).filter(function (y, i, a) { return a.indexOf(y) === i; }).sort().reverse();
-  var list = rows.filter(function (x) { return S._inYear == null || x.school_year === S._inYear; });
-  var fields = _allFields(cfg).filter(function (f) { return f.id !== 'first' && f.id !== 'last'; });
-  var head = '<tr><th class="en-sticky">שם</th><th>נשלח</th>' +
-    fields.map(function (f) { return '<th>' + esc(f.label) + '</th>'; }).join('') +
-    (cfg.track || []).map(function (t) { return '<th class="en-trk">' + esc(t) + '</th>'; }).join('') + '<th></th></tr>';
-  var body = list.map(function (x) {
-    var d = x.data || {}, f = x.files || {};
-    var name = [d.first, d.last].filter(Boolean).join(' ') || '—';
-    var cells = fields.map(function (fl) {
-      if (fl.type === 'file' || fl.type === 'signature') return '<td>' + (f[fl.id] ? '<button class="btn sm out" data-act="in-file" data-path="' + esc(f[fl.id].path) + '">' + icon('watch') + 'פתיחה</button>' : '') + '</td>';
-      return '<td>' + esc(d[fl.id] || '') + '</td>';
-    }).join('');
-    var trk = (cfg.track || []).map(function (t) {
-      var v = (x.track || {})[t] || '';
-      return '<td class="en-trk"><input class="en-in" value="' + esc(v) + '" data-in-id="' + esc(x.client_id) + '" data-in-key="' + esc(t) + '"' + (edit ? '' : ' disabled') + '></td>';
-    }).join('');
-    var dt = new Date(x.created_at);
-    return '<tr><th class="en-sticky">' + esc(name) + '</th><td>' + esc(dt.toLocaleDateString('he-IL')) + '</td>' + cells + trk +
-      '<td class="en-acts">' + (edit ? '<button class="btn sm out" data-act="in-add-student" data-id="' + esc(x.client_id) + '">' + icon('plus') + 'הוספה למצבה</button>' +
-      '<button class="row-del-btn" data-act="in-del" data-id="' + esc(x.client_id) + '" aria-label="מחיקה">' + icon('del') + '</button>' : '') + '</td></tr>';
-  }).join('');
-  box.innerHTML =
-    '<div class="en-bar">' + years.map(function (y) {
-      var n = rows.filter(function (x) { return x.school_year === y; }).length;
-      return '<button class="chip' + (y === S._inYear ? ' on' : '') + '" data-act="in-year" data-y="' + y + '">' + esc(_yearLabel(y)) + ' <b>' + n + '</b></button>';
-    }).join('') + '</div>' +
-    (list.length ? '<div class="table-scroll en-scroll"><table class="en-tbl"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>'
-                 : '<div class="ld">אין תגובות</div>');
+  if (box) box.innerHTML = respScreenHTML(_respOpts());
 }
-function intakeYear(y) { S._inYear = +y; _respPaint(); }
+function _listPaint() {
+  var box = document.getElementById('in-list');
+  if (box) box.innerHTML = respListHTML(_respOpts());
+}
+function intakeYear(y) { S._inYear = +y; S._inOpen = null; _respPaint(); }
+function intakeOpenRow(el) { var id = el.getAttribute('data-id'); S._inOpen = S._inOpen === id ? null : id; _listPaint(); }
+function intakeSearch(v) { S._inQ = v; _listPaint(); }
 async function intakeTrack(el) {
   var r = await _gate('track', { id: el.getAttribute('data-in-id'), key: el.getAttribute('data-in-key'), value: el.value });
   if (r && r.ok) {
@@ -303,4 +295,4 @@ function intakeSave() {
 ['inf', 'ind', 'ini', 'int'].forEach(function (k) { dragDef(k, function () { return intakeSave(); }); });
 
 export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
-         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear };
+         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch };

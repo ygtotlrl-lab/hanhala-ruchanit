@@ -31,11 +31,11 @@ import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
 import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
-         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
+         enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
-         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
+         intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch } from './screens/intake.js';
 import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings,
-         meetingView } from './screens/meeting.js';
+         meetingMode, meetingSearch, meetingView } from './screens/meeting.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -517,6 +517,7 @@ var DOM_ACTIONS = {
   'en-resp':              function () { return enrollResponses(); },
   'en-pass':              function () { return enrollPass(); },
   'en-year':              function (el) { enrollYear(el.getAttribute('data-y')); },
+  'en-open':              function (el) { enrollOpenRow(el); },
   'en-file':              function (el) { return enrollFile(el); },
   'en-settings':          function () { return enrollSettings(); },
   'en-save':              function () { return enrollSave(); },
@@ -530,6 +531,7 @@ var DOM_ACTIONS = {
   'in-resp':              function () { return intakeResponses(); },
   'in-pass':              function () { return intakePass(); },
   'in-year':              function (el) { intakeYear(el.getAttribute('data-y')); },
+  'in-open':              function (el) { intakeOpenRow(el); },
   'in-file':              function (el) { return intakeFile(el); },
   'in-settings':          function () { return intakeSettings(); },
   'in-save':              function () { return intakeSave(); },
@@ -549,6 +551,7 @@ var DOM_ACTIONS = {
   'mt-block-add':         function () { meetingBlockAdd(); },
   'mt-flyer-del':         function () { return meetingFlyerDel(); },
   'mt-del':               function (el) { return meetingDelete(el); },
+  'mt-mode':              function (el) { meetingMode(el.getAttribute('data-v')); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
   // «ללא תאריך סיום» והוספת תאריך — אחד מהשניים; בחירה באחד מבטלת את השני
@@ -668,6 +671,9 @@ document.addEventListener('input', function (e) {
   var el = e.target; if (!el || !el.dataset) return;
   var k = el.dataset.inp;
   if (k === 'inact-search') { renderInactiveList(); return; }
+  if (k === 'en-q') { enrollSearch(el.value); return; }
+  if (k === 'in-q') { intakeSearch(el.value); return; }
+  if (k === 'mt-q') { meetingSearch(el.value); return; }
   Object.keys(HR_STREAMS).forEach(function (kind) {
     var st = HR_STREAMS[kind];
     if (k && k.indexOf(st.p + '-') === 0 && !canEdit(kind)) { _hrViewOnlyRevert(el); return; }

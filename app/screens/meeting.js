@@ -70,7 +70,7 @@ function meetingCfg() {
   return { date: '', from: '17:00', to: '21:00', slot: 10, open: false, phone: _phone(), blocked: [] };
 }
 
-// ── התגובות — השיבוצים, לפי רב ושעה ──
+// ── התגובות — השיבוצים: לפי תלמיד (מי נרשם ולמי) או לפי רב ──
 async function meetingResponses() {
   openModal('התגובות — שיבוץ לאסיפת הורים', '<div class="en-full" id="mt-resp"><div class="ld">טוען…</div></div>', '', 'table');
   var r = await _gate('list');
@@ -90,24 +90,82 @@ async function meetingPass() {
   if (!ok) { toast('הסיסמה שגויה, או שאין חיבור לשרת', null, 'bad'); return; }
   return meetingResponses();
 }
+// המסך: הכותרת (היום, כמה משפחות וכמה פגישות) · מתג «לפי תלמיד» / «לפי רב» · חיפוש · הרשימה (#mt-list)
+// לפי תלמיד (ברירת המחדל) — כרטיס לכל משפחה שנרשמה: השם, השיעור, ומתחתם הפגישות לפי השעה; לפי רב — רק רבנים שיש להם פגישות, ובסוף מי שעוד בלי
+var MT_CLS_ORDER = ['a', 'b', 'g', 's'];
+function _mtDate() {
+  var cfg = meetingCfg(), rows = S._mtRows || [];
+  if (cfg.date) return cfg.date;
+  return rows.map(function (x) { return x.meet_date; }).filter(Boolean).sort().pop() || '';
+}
+function _mtRowsNow() { var d = _mtDate(); return (S._mtRows || []).filter(function (x) { return !d || x.meet_date === d; }); }
+function _mtStaff(rows) {
+  var staff = meetingStaff().map(function (s) { return { id: s.id, name: s.name, role: s.mgmt || '' }; });
+  rows.forEach(function (x) { if (!staff.some(function (s) { return s.id === x.staff_id; })) staff.push({ id: x.staff_id, name: x.staff_name, role: '' }); });
+  return staff;
+}
+function _mtDel(x, edit) {
+  return edit ? '<button class="rs-x" data-act="mt-del" data-id="' + esc(x.client_id) + '" aria-label="ביטול השיבוץ" title="ביטול השיבוץ">' + icon('del') + '</button>' : '';
+}
+function _mtListHTML() {
+  var rows = _mtRowsNow(), edit = canEdit('meeting'), staff = _mtStaff(rows), q = (S._mtQ || '').trim();
+  var role = {}; staff.forEach(function (s) { role[s.id] = s.role; });
+  function hit(t) { return !q || q.split(/\s+/).every(function (w) { return String(t || '').indexOf(w) >= 0; }); }
+  if (!rows.length) return '<div class="rs-empty">עדיין אין שיבוצים</div>';
+  var bySlot = function (a, b) { return a.slot < b.slot ? -1 : 1; };
+  if (S._mtView === 'rb') {
+    var withB = staff.filter(function (s) { return rows.some(function (x) { return x.staff_id === s.id; }); });
+    var empty = staff.filter(function (s) { return withB.indexOf(s) < 0; });
+    var html = withB.map(function (s) {
+      var mine = rows.filter(function (x) { return x.staff_id === s.id && (hit(x.student_name) || hit(s.name)); }).sort(bySlot);
+      if (!mine.length) return '';
+      return '<div class="rs-card open"><div class="rs-head rs-static"><span class="rs-av">' + icon('user') + '</span>' +
+        '<span class="rs-main"><b>' + esc(s.name) + '</b>' + (s.role ? '<small>' + esc(s.role) + '</small>' : '') + '</span>' +
+        '<span class="rs-trk">' + mine.length + (mine.length === 1 ? ' פגישה' : ' פגישות') + '</span></div><div class="mt-rows">' + mine.map(function (x) {
+          return '<div class="mt-r"><span class="mt-tm">' + esc(x.slot) + '</span><span class="mt-who">' + esc(x.student_name) + '</span><span class="mt-cl">' + esc(HR_CLS_NAME[x.cls] || '') + '</span>' + _mtDel(x, edit) + '</div>';
+        }).join('') + '</div></div>';
+    }).join('');
+    if (!html) return '<div class="rs-empty">לא נמצא שם כזה</div>';
+    if (empty.length && !q) html += '<div class="mt-none">עדיין בלי פגישות: ' + empty.map(function (s) { return esc(s.name); }).join(' · ') + '</div>';
+    return html;
+  }
+  var fam = {};
+  rows.forEach(function (x) {
+    var k = x.student_client_id || x.student_name;
+    (fam[k] = fam[k] || { name: x.student_name, cls: x.cls, list: [], first: x.created_at }).list.push(x);
+  });
+  var list = Object.keys(fam).map(function (k) { return fam[k]; }).filter(function (f) { return hit(f.name); })
+    .sort(function (a, b) { var ca = MT_CLS_ORDER.indexOf(a.cls), cb = MT_CLS_ORDER.indexOf(b.cls); return ca !== cb ? ca - cb : (a.name < b.name ? -1 : 1); });
+  if (!list.length) return '<div class="rs-empty">לא נמצא שם כזה</div>';
+  return list.map(function (f) {
+    var nm = String(f.name || '').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0); }).join('');
+    return '<div class="rs-card open"><div class="rs-head rs-static"><span class="rs-av">' + esc(nm) + '</span>' +
+      '<span class="rs-main"><b>' + esc(f.name) + '</b><small>' + esc(HR_CLS_NAME[f.cls] || '') + '</small></span>' +
+      '<span class="rs-trk">' + f.list.length + (f.list.length === 1 ? ' פגישה' : ' פגישות') + '</span></div><div class="mt-rows">' +
+      f.list.sort(bySlot).map(function (x) {
+        return '<div class="mt-r"><span class="mt-tm">' + esc(x.slot) + '</span><span class="mt-who">' + esc(x.staff_name) + '</span><span class="mt-cl">' + esc(role[x.staff_id] || '') + '</span>' + _mtDel(x, edit) + '</div>';
+      }).join('') + '</div></div>';
+  }).join('');
+}
 function _respPaint() {
   var box = document.getElementById('mt-resp');
   if (!box) return;
-  var cfg = meetingCfg(), rows = (S._mtRows || []).filter(function (x) { return !cfg.date || x.meet_date === cfg.date; });
-  var edit = canEdit('meeting');
-  var staff = meetingStaff().map(function (s) { return { id: s.id, name: s.name, role: s.mgmt || '' }; });
-  rows.forEach(function (x) { if (!staff.some(function (s) { return s.id === x.staff_id; })) staff.push({ id: x.staff_id, name: x.staff_name, role: '' }); });
-  var html = '<div class="mt-head">' + esc(cfg.date ? hrDayHebFmt(cfg.date) : '') + ' · ' + rows.length + ' שיבוצים</div>';
-  staff.forEach(function (s) {
-    var mine = rows.filter(function (x) { return x.staff_id === s.id; }).sort(function (a, b) { return a.slot < b.slot ? -1 : 1; });
-    html += '<div class="mt-staff"><div class="mt-sname">' + esc(s.name) + (s.role ? ' <span>' + esc(s.role) + '</span>' : '') + ' <b>' + mine.length + '</b></div>' +
-      (mine.length ? '<table class="en-tbl mt-tbl"><tbody>' + mine.map(function (x) {
-        return '<tr><td class="mt-t">' + esc(x.slot) + '</td><td>' + esc(x.student_name) + '</td><td>' + esc(HR_CLS_NAME[x.cls] || '') + '</td>' +
-          '<td class="en-acts">' + (edit ? '<button class="row-del-btn" data-act="mt-del" data-id="' + esc(x.client_id) + '" aria-label="ביטול השיבוץ">' + icon('del') + '</button>' : '') + '</td></tr>';
-      }).join('') + '</tbody></table>' : '<div class="ld">אין שיבוצים</div>') + '</div>';
-  });
-  box.innerHTML = html;
+  var cfg = meetingCfg(), rows = _mtRowsNow(), d = _mtDate();
+  var fams = rows.map(function (x) { return x.student_client_id || x.student_name; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
+  var v = S._mtView === 'rb' ? 'rb' : 'st';
+  box.innerHTML =
+    '<div class="mt-sum">' +
+      '<div class="mt-day">' + icon('calendar') + '<span>' + esc(d ? hrDayHebFmt(d) : 'לא נקבע תאריך') + (cfg.from && cfg.to ? ' · <bdi dir="ltr">' + esc(cfg.from) + '–' + esc(cfg.to) + '</bdi>' : '') + '</span>' +
+        '<em class="' + (cfg.open ? 'on' : '') + '">' + (cfg.open ? 'פתוח לשיבוץ' : 'השיבוץ סגור') + '</em></div>' +
+      '<div class="mt-kpis"><div><b>' + fams + '</b><span>משפחות נרשמו</span></div><div><b>' + rows.length + '</b><span>פגישות נקבעו</span></div></div>' +
+    '</div>' +
+    '<div class="rs-top"><div class="mt-seg"><button class="' + (v === 'st' ? 'on' : '') + '" data-act="mt-mode" data-v="st">לפי תלמיד</button>' +
+      '<button class="' + (v === 'rb' ? 'on' : '') + '" data-act="mt-mode" data-v="rb">לפי רב</button></div>' +
+      '<label class="rs-search">' + icon('search') + '<input type="search" placeholder="חיפוש לפי שם" data-inp="mt-q" value="' + esc(S._mtQ || '') + '"></label></div>' +
+    '<div class="rs-list" id="mt-list">' + _mtListHTML() + '</div>';
 }
+function meetingMode(v) { S._mtView = v === 'rb' ? 'rb' : 'st'; _respPaint(); }
+function meetingSearch(v) { S._mtQ = v; var box = document.getElementById('mt-list'); if (box) box.innerHTML = _mtListHTML(); }
 async function meetingDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._mtRows || []).filter(function (x) { return x.client_id === id; })[0];
@@ -202,4 +260,4 @@ function meetingSave() {
   return p;
 }
 
-export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView };
+export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView, meetingMode, meetingSearch };
