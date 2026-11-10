@@ -64,7 +64,7 @@ async function gatePut(path, file) {
   } catch (e) { toast(MSG_UPLOAD_FAIL + ((e && e.message) || e), null, 'bad'); return null; }
 }
 
-// קישורים חתומים — לשעה, או לשנה (ttl:'year' — סריקות המבחנים בגיליון שנשלח להורים); { נתיב: קישור }
+// קישורים חתומים — לשעה, או בלי תפוגה (ttl:'forever' — סריקות המבחנים בגיליון שנשלח להורים); { נתיב: קישור }
 async function gateLinks(paths, ttl) {
   if (!paths.length || !navigator.onLine) return {};
   var r = await gateCall('', 'links', { paths: paths, ttl: ttl || '' });

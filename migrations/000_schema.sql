@@ -435,12 +435,7 @@ alter table public.hr_users enable row level security;
 drop policy if exists hr_users_all on public.hr_users;
 create policy hr_users_all on public.hr_users as permissive for all to anon, authenticated using (true) with check (true);
 
--- הסריקות (מבחנים ותיק אישי) — דלי פרטי; הקריאה בקישור חתום. אין מחיקה ואין עדכון — קובץ חדש בנתיב חדש.
-insert into storage.buckets (id, name, public) values ('hr-files', 'hr-files', false) on conflict (id) do nothing;
-drop policy if exists hr_files_read on storage.objects;
-create policy hr_files_read on storage.objects for select to anon, authenticated using (bucket_id = 'hr-files');
-drop policy if exists hr_files_insert on storage.objects;
-create policy hr_files_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-files');
+-- הקבצים (מבחנים, תיק אישי, טופס הרישום וקבלה לישיבה) — במאגר הפרטי hanhala-ruchanit-files שב-GitHub, רק דרך השער hr-gate; אין להם דלי במסד.
 
 -- גיליון הציונים וההנהגה: השדות שהרב ממלא — שורה לכל חודש עברי, תלמיד ושדה. client_id = <חודש>:<תלמיד>:<שדה>.
 create table if not exists public.hr_report_vals (
@@ -488,18 +483,13 @@ drop policy if exists hr_enroll_insert on public.hr_enroll;
 create policy hr_enroll_insert on public.hr_enroll as permissive for insert to anon, authenticated
   with check (deleted = false and track = '{}'::jsonb);
 
--- קובצי הטופס (צילומי ת״ז) — דלי פרטי, הכנסה בלבד; הקישור החתום — מהשער.
-insert into storage.buckets (id, name, public) values ('hr-enroll', 'hr-enroll', false) on conflict (id) do nothing;
-drop policy if exists hr_enroll_files_insert on storage.objects;
-create policy hr_enroll_files_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-enroll');
-
 -- תמונות הדפים הציבוריים (המצגת שבראש טופס הרישום) — דלי ציבורי; ההעלאה מהגדרות הטופס.
 insert into storage.buckets (id, name, public) values ('hr-public', 'hr-public', true) on conflict (id) do nothing;
 drop policy if exists hr_public_insert on storage.objects;
 create policy hr_public_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-public');
 
 -- קבלה לישיבה (app/intake.html): טבלת שליחה-בלבד כמו hr_enroll — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, mod:'intake').
--- הקבצים — בדלי הפרטי hr-enroll, תחת intake/<שנה>/<מזהה>/; השער מגיש קישור חתום רק לנתיב שתחת intake/. המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+-- הקבצים — דרך השער, במאגר הפרטי תחת intake/<שנה>/<מזהה>/. המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
 create table if not exists public.hr_intake (
   client_id text not null,
   created_at timestamp with time zone not null default now(),

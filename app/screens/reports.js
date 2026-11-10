@@ -346,14 +346,14 @@ var RP_PRINT_CSS =
   'table.notes tr.nh{height:auto}table.notes tr.nh th{width:auto;border:none;background:none;text-align:center;font-size:10pt;padding:4mm 0 1.5mm;color:#444}' +
   'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
 
-// הקישורים לסריקות חתומים לשנה, מהשער — הגיליון נשלח להורים, וקישור לשעה היה פג לפני שנפתח.
+// הקישורים לסריקות חתומים בלי תפוגה, מהשער — הגיליון נשלח להורים ונשמר אצלם.
 async function _scanUrls(comp, sts) {
   var paths = {};
   sts.forEach(function (s) {
     var r = comp[String(s.client_id)]; if (!r) return;
     Object.keys(r.exams).forEach(function (n) { var e = r.exams[n]; if (e && e.scan) paths[e.scan] = 1; });
   });
-  return gateLinks(Object.keys(paths), 'year');
+  return gateLinks(Object.keys(paths), 'forever');
 }
 
 // הייצוא — מסמך (printFile): הגיליונות כדף HTML אחד, עמוד A4 לכל דף, והגופנים, הרקע והחתימה מוטמעים בו;
