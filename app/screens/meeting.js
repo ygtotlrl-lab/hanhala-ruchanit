@@ -10,7 +10,9 @@ import { icon } from '../icons.js';
 import { contactsUrl } from './contacts.js';
 import { gatePassHTML, textsHTML, textsRead } from './enroll.js';
 import { gateCall, gateLogin } from '../gate.js';
-import { hrDayHebFmt } from '../domain.hebdate.js';
+import { hrDayHeb, hrDayHebFmt } from '../domain.hebdate.js';
+import { hebYearLabelFull } from '../../core/hebrew.js';
+import { fcCardHTML, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
 
 var MT_KEY = 'meeting_cfg';
 var MT_CLS = ['a', 'b', 'g'];
@@ -18,15 +20,6 @@ function _gate(action, body) { return gateCall('meeting', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
 function meetingUrl() { return contactsUrl().replace(/contacts\.html$/, 'meeting.html'); }
-function meetingOpen() {
-  openModal('שיבוץ לאסיפת הורים',
-    '<div class="en-menu">' +
-      '<button class="en-tile" data-act="mt-view">' + icon('watch') + 'צפייה בדף</button>' +
-      '<button class="en-tile" data-act="mt-copy">' + icon('copy') + 'העתקת קישור</button>' +
-      '<button class="en-tile" data-act="mt-resp">' + icon('table') + 'התגובות</button>' +
-      '<button class="en-tile" data-act="mt-settings">' + icon('settings') + 'הגדרות האסיפה</button>' +
-    '</div>', '', 'meeting');
-}
 function meetingView() {
   openModal('שיבוץ לאסיפת הורים', '<iframe class="ct-frame" src="app/meeting.html" title="שיבוץ לאסיפת הורים"></iframe>', '', 'watch');
 }
@@ -74,9 +67,10 @@ function meetingCfg() {
 async function meetingResponses() {
   openModal('התגובות — שיבוץ לאסיפת הורים', '<div class="en-full" id="mt-resp"><div class="ld">טוען…</div></div>', '', 'table');
   // ההגדרה — מהענן, כדי שהשעות ו«פתוח לשיבוץ» בכותרת יהיו המעודכנים ולא העותק שבמכשיר
-  var both = await Promise.all([_gate('list'), hrCfgGet(MT_KEY, true).catch(function () { return null; })]);
-  var r = both[0], c = both[1];
+  var both = await Promise.all([_gate('list'), hrCfgGet(MT_KEY, true).catch(function () { return null; }), hrCfgGet('meeting_past', true).catch(function () { return null; })]);
+  var r = both[0], c = both[1], pp = both[2];
   if (c && c.ok && c.value && !hrSetPending(MT_KEY)) S._mtCfg = c.value;
+  if (pp && pp.ok && Array.isArray(pp.value) && !hrSetPending('meeting_past')) S._mtPast = pp.value;
   var box = document.getElementById('mt-resp');
   if (!box) return;
   if (r.login) { box.innerHTML = gatePassHTML('mt-pass'); return; }
@@ -97,8 +91,17 @@ async function meetingPass() {
 // לפי תלמיד (ברירת המחדל) — כרטיס לכל משפחה שנרשמה: השם, השיעור, ומתחתם הפגישות לפי השעה; לפי רב — רק רבנים שיש להם פגישות, ובסוף מי שעוד בלי
 var MT_CLS_ORDER = ['a', 'b', 'g', 's'];
 function _mtCfgNow() { return hrSetPending(MT_KEY) ? meetingCfg() : (S._mtCfg || meetingCfg()); }
+// השנה שבתגובות — הנוכחית, או אסיפה שעברה (לקריאה בלבד)
+function _mtPastList() { return S._mtPast || meetingPast(); }
+function _mtSel() {
+  var cur = _mtCfgNow(), y = S._mtYear;
+  if (!y || y === _mtYearOf(cur)) return { cfg: cur, past: false };
+  var p = _mtPastList().filter(function (x) { return +x.year === +y; })[0];
+  return p ? { cfg: p, past: true } : { cfg: cur, past: false };
+}
+function meetingYear(y) { S._mtYear = +y || null; _respPaint(); }
 function _mtDate() {
-  var cfg = _mtCfgNow(), rows = S._mtRows || [];
+  var cfg = _mtSel().cfg, rows = S._mtRows || [];
   if (cfg.date) return cfg.date;
   return rows.map(function (x) { return x.meet_date; }).filter(Boolean).sort().pop() || '';
 }
@@ -112,7 +115,7 @@ function _mtDel(x, edit) {
   return edit ? '<button class="rs-x" data-act="mt-del" data-id="' + esc(x.client_id) + '" aria-label="ביטול השיבוץ" title="ביטול השיבוץ">' + icon('del') + '</button>' : '';
 }
 function _mtListHTML() {
-  var rows = _mtRowsNow(), edit = canEdit('meeting'), staff = _mtStaff(rows), q = (S._mtQ || '').trim();
+  var rows = _mtRowsNow(), edit = canEdit('forms') && !_mtSel().past, staff = _mtStaff(rows), q = (S._mtQ || '').trim();
   var role = {}; staff.forEach(function (s) { role[s.id] = s.role; });
   function hit(t) { return !q || q.split(/\s+/).every(function (w) { return String(t || '').indexOf(w) >= 0; }); }
   if (!rows.length) return '<div class="rs-empty">עדיין אין שיבוצים</div>';
@@ -154,13 +157,19 @@ function _mtListHTML() {
 function _respPaint() {
   var box = document.getElementById('mt-resp');
   if (!box) return;
-  var cfg = _mtCfgNow(), rows = _mtRowsNow(), d = _mtDate();
+  var sel = _mtSel(), cfg = sel.cfg, rows = _mtRowsNow(), d = _mtDate(), cur = _mtCfgNow(), cy = _mtYearOf(cur);
+  var years = _mtPastList().map(function (p) { return { y: +p.year, d: p.date }; }).concat([{ y: cy, d: cur.date }]).filter(function (x) { return x.y; });
+  var all = S._mtRows || [], selY = sel.past ? +S._mtYear : cy;
   var fams = rows.map(function (x) { return x.student_client_id || x.student_name; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).length;
   var v = S._mtView === 'rb' ? 'rb' : 'st';
   box.innerHTML =
+    (years.length > 1 ? '<div class="en-bar">' + years.map(function (x) {
+      var n = all.filter(function (r) { return r.meet_date === x.d; }).length;
+      return '<button class="chip' + (x.y === selY ? ' on' : '') + '" data-act="mt-year" data-y="' + x.y + '">' + esc(_yl(x.y)) + ' <b>' + n + '</b></button>';
+    }).join('') + '</div>' : '') +
     '<div class="mt-sum">' +
       '<div class="mt-day">' + icon('calendar') + '<span>' + esc(d ? hrDayHebFmt(d) : 'לא נקבע תאריך') + (cfg.from && cfg.to ? ' · <bdi dir="ltr">' + esc(cfg.from) + '–' + esc(cfg.to) + '</bdi>' : '') + '</span>' +
-        '<em class="' + (cfg.open ? 'on' : '') + '">' + (cfg.open ? 'פתוח לשיבוץ' : 'השיבוץ סגור') + '</em></div>' +
+        '<em class="' + (!sel.past && cfg.open ? 'on' : '') + '">' + (sel.past ? 'הסתיימה · לקריאה בלבד' : cfg.open ? 'פתוח לשיבוץ' : 'השיבוץ סגור') + '</em></div>' +
       '<div class="mt-kpis"><div><b>' + fams + '</b><span>משפחות נרשמו</span></div><div><b>' + rows.length + '</b><span>פגישות נקבעו</span></div></div>' +
     '</div>' +
     '<div class="rs-top"><div class="mt-seg"><button class="' + (v === 'st' ? 'on' : '') + '" data-act="mt-mode" data-v="st">לפי תלמיד</button>' +
@@ -183,9 +192,9 @@ async function meetingDelete(el) {
 
 // ── הגדרות האסיפה — נשמרות מיד (data-autosave) ──
 function _blockRow(b) {
-  return '<div class="mt-brow" data-blk><label>משעה<input type="time" data-k="from" value="' + esc(b.from || '') + '"></label>' +
-    '<label>עד שעה<input type="time" data-k="to" value="' + esc(b.to || '') + '"></label>' +
-    '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
+  return '<div class="mt-brow" data-blk><span class="mt-bl">תפוס</span><input type="time" data-k="from" aria-label="משעה" value="' + esc(b.from || '') + '">' +
+    '<span class="mt-bl">עד</span><input type="time" data-k="to" aria-label="עד שעה" value="' + esc(b.to || '') + '">' +
+    '<button data-act="row-remove" class="fc-ib" aria-label="הסרה">' + icon('close') + '</button></div>';
 }
 // הרבנים לקריאה בלבד — מאנשי הקשר; עריכה — בהגדרות הדוחות
 function _staffListHTML() {
@@ -198,42 +207,102 @@ function _staffListHTML() {
   return html + '<div class="mt-sgrp"><b>הנהלת הישיבה</b>' + m.map(function (s) { return '<span>' + esc(s.name) + ' <i>' + esc(s.mgmt) + '</i></span>'; }).join('') + '</div>';
 }
 async function meetingSettings() {
-  if (!canEdit('meeting')) { shell.showDenied(); return; }
-  _settingsPaint(meetingCfg());
+  if (!canEdit('forms')) { shell.showDenied(); return; }
+  S._mtNew = false;
+  _settingsPaint(_mtCfgNow());
   try {
     var r = await hrCfgGet(MT_KEY, true);
     if (r && r.ok && r.value && !hrSetPending(MT_KEY)) {
+      S._mtCfg = r.value;
       var box = document.getElementById('mt-set');
       if (box && !box.contains(document.activeElement)) _settingsPaint(r.value);
     }
   } catch (e) { console.warn('[meeting] משיכת התצורה נכשלה', e); }
 }
+// ── אסיפה לכל שנה ──
+// meeting_cfg — האסיפה הנוכחית, והיא שבדף להורים; meeting_past — האסיפות שעברו (שנה · תאריך · שעות), לבורר השנים שבתגובות.
+// «+ אסיפה חדשה» מעבירה את הנוכחית ל-meeting_past ופותחת את הבאה סגורה לשיבוץ, בלי תאריך ובלי מודעה; השיבוצים נשארים עם התאריך שלהם.
+function _mtYearOf(c) {
+  if (c && c.year) return +c.year;
+  if (c && c.date) { var h = hrDayHeb(c.date); return h && h.hy; }
+  return +(hrCfgLocalGet('school_year') || 0) || null;
+}
+function _yl(y) { return y ? (hebYearLabelFull(y) || String(y)) : ''; }
+function meetingPast() { var v = hrCfgLocalGet('meeting_past'); return Array.isArray(v) ? v : []; }
+// פס הזמן — מה פנוי לשיבוץ ומה תפוס, לפי השעות שבדף
+function _tlHTML(c) {
+  var f = tmin(c.from), t = tmin(c.to), n = Math.max(5, +c.slot || 10);
+  if (!(t > f)) return '';
+  var free = 0; for (var m = f; m + n <= t; m += n) { if (!(c.blocked || []).some(function (b) { return b.from && b.to && m >= tmin(b.from) && m < tmin(b.to); })) free++; }
+  var bl = (c.blocked || []).filter(function (b) { return b.from && b.to; }).map(function (b) {
+    var s0 = Math.max(f, tmin(b.from)), e0 = Math.min(t, tmin(b.to)); if (e0 <= s0) return '';
+    return '<span style="right:' + ((s0 - f) / (t - f) * 100) + '%;width:' + ((e0 - s0) / (t - f) * 100) + '%"></span>';
+  }).join('');
+  var ticks = []; for (var h = Math.ceil(f / 60) * 60; h <= t; h += 60) ticks.push('<i style="right:' + ((h - f) / (t - f) * 100) + '%">' + ('0' + h / 60).slice(-2) + ':00</i>');
+  return '<div class="fc-lbl">הזמן לשיבוץ</div><div class="mt-tl">' + bl + '</div><div class="mt-tlx">' + ticks.join('') + '</div>' +
+    '<div class="mt-leg"><span>פנוי לשיבוץ · ' + free + ' משבצות לכל רב</span><span class="x">תפוס לכל הרבנים</span></div>';
+}
+function tmin(x) { var a = String(x || '').split(':'); return (+a[0]) * 60 + (+a[1] || 0); }
 function _settingsPaint(cfg) {
-  var html = '<div class="en-cfg" id="mt-set" data-autosave="mt-save">' +
-    '<label class="chk-inline mt-open"><input type="checkbox" id="mt-open"' + (cfg.open ? ' checked' : '') + '>פתוח לשיבוץ</label>' +
-    '<div class="ss-t">מועד האסיפה</div>' +
-    '<div class="mt-when"><label>תאריך<input type="date" id="mt-date" value="' + esc(cfg.date || '') + '"></label>' +
-      '<label>משעה<input type="time" id="mt-from" value="' + esc(cfg.from || '17:00') + '"></label>' +
-      '<label>עד שעה<input type="time" id="mt-to" value="' + esc(cfg.to || '21:00') + '"></label>' +
-      '<label>דקות לפגישה<input type="number" id="mt-slot" min="5" max="60" step="5" value="' + (cfg.slot || 10) + '"></label></div>' +
-    '<div class="ss-t">מודעת האסיפה</div>' +
-    '<input type="hidden" id="mt-flyer" value="' + esc(cfg.flyer || '') + '">' +
-    '<div class="mt-flyer">' + (cfg.flyer ? '<img src="' + esc(cfg.flyer) + '" alt="מודעת האסיפה">' : '') +
-      '<label class="add-dashed-btn">' + (cfg.flyer ? 'החלפת המודעה' : '+ העלאת מודעה') +
-        '<input type="file" accept="image/*" class="hidden" data-chg="mt-flyer-up"></label>' +
-      (cfg.flyer ? '<button class="add-dashed-btn" data-act="mt-flyer-del">הסרת המודעה</button>' : '') + '</div>' +
-    '<label class="mt-ph">טלפון המזכירות (בהודעה כשהשיבוץ סגור)<input type="tel" id="mt-phone" dir="ltr" value="' + esc(cfg.phone || '') + '"></label>' +
-    '<div class="ss-t">שעות תפוסות</div>' +
-    '<div class="mt-blocks" id="mt-blocks">' + (cfg.blocked || []).map(_blockRow).join('') + '</div>' +
-    '<div class="in-adds"><button class="add-dashed-btn" data-act="mt-block-add">+ הוספת שעות תפוסות</button></div>' +
-    '<div class="ss-t">הרבנים — מאנשי הקשר</div>' +
-    '<div class="mt-staff-ro">' + _staffListHTML() + '</div>' + textsHTML('meeting', cfg) + '</div>';
-  var bd = document.getElementById('mt-set');
-  if (bd) bd.outerHTML = html;
-  else openModal('הגדרות האסיפה — שיבוץ לאסיפת הורים', html, '', 'settings');
+  var old = document.getElementById('mt-set'), was = fcOpenId(old), y = _mtYearOf(cfg);
+  var nf = S._mtNew ? '<div class="fc-new"><b>אסיפה חדשה — ' + esc(_yl((y || 0) + 1)) + '</b>' +
+      '<p>האסיפה של ' + esc(_yl(y)) + ' נשמרת עם כל השיבוצים שלה, ונשארת לצפייה בתגובות. החדשה מתחילה <b>סגורה לשיבוץ</b> — בלי תאריך ובלי מודעה.</p>' +
+      '<div class="fc-lbl">מה להעתיק מ' + esc(_yl(y)) + '</div>' +
+      '<label class="fc-tg">השעות ואורך הפגישה' + fcSw('id="mtn-hours"', true) + '</label>' +
+      '<label class="fc-tg">השעות התפוסות' + fcSw('id="mtn-blocked"', false) + '</label>' +
+      '<label class="fc-tg">הנוסחים בדף וטלפון המזכירות' + fcSw('id="mtn-texts"', true) + '</label>' +
+      '<div class="fc-fact"><button type="button" class="btn sm out" data-act="mt-new-cancel">ביטול</button><button type="button" class="btn sm" data-act="mt-new-make">יצירת האסיפה</button></div></div>' : '';
+  var html = '<div class="en-cfg fc-page" id="mt-set" data-autosave="mt-save">' +
+    '<div class="mt-yr"><span class="on">' + esc(_yl(y) || 'האסיפה הנוכחית') + '</span>' +
+      (S._mtNew ? '' : '<button type="button" class="mt-yr-add" data-act="mt-new">+ אסיפה חדשה</button>') + '</div>' + nf +
+    fcStatusHTML({ p: 'mt', id: 'mt-open', on: !!cfg.open, label: 'פתוח לשיבוץ', url: meetingUrl() }) +
+    fcCardHTML({ id: 'fc-mt-when', ico: 'calendar', title: 'מועד האסיפה', open: was ? was === 'fc-mt-when' : true,
+      sum: cfg.date ? hrDayHebFmt(cfg.date) + ' · \u2066' + (cfg.from || '') + '–' + (cfg.to || '') + '\u2069' : 'לא נקבע תאריך',
+      body: '<div class="mt-when"><label>תאריך<input type="date" id="mt-date" value="' + esc(cfg.date || '') + '"></label>' +
+          '<label>דקות לפגישה<input type="number" id="mt-slot" min="5" max="60" step="5" value="' + (cfg.slot || 10) + '"></label>' +
+          '<label>משעה<input type="time" id="mt-from" value="' + esc(cfg.from || '17:00') + '"></label>' +
+          '<label>עד שעה<input type="time" id="mt-to" value="' + esc(cfg.to || '21:00') + '"></label></div>' +
+        '<div id="mt-tl-box">' + _tlHTML(cfg) + '</div>' +
+        '<div class="fc-lbl">שעות תפוסות — לכל הרבנים</div>' +
+        '<div class="mt-blocks" id="mt-blocks">' + (cfg.blocked || []).map(_blockRow).join('') + '</div>' +
+        '<button class="add-dashed-btn" data-act="mt-block-add">+ שעות תפוסות</button>' }) +
+    fcCardHTML({ id: 'fc-mt-flyer', ico: 'image', title: 'המודעה', open: was === 'fc-mt-flyer',
+      sum: cfg.flyer ? 'הועלתה — בראש הדף' : 'אין מודעה',
+      body: '<input type="hidden" id="mt-flyer" value="' + esc(cfg.flyer || '') + '">' +
+        '<div class="mt-flyer">' + (cfg.flyer ? '<img src="' + esc(cfg.flyer) + '" alt="מודעת האסיפה">' : '') +
+          '<label class="btn sm out en-upl">' + icon('upload') + (cfg.flyer ? 'החלפת המודעה' : 'העלאת מודעה') +
+            '<input type="file" accept="image/*" data-chg="mt-flyer-up"></label>' +
+          (cfg.flyer ? '<button class="btn sm out fc-del" data-act="mt-flyer-del">' + icon('del') + 'הסרה</button>' : '') + '</div>' }) +
+    fcCardHTML({ id: 'fc-mt-staff', ico: 'user', title: 'הרבנים', open: was === 'fc-mt-staff',
+      sum: 'מאנשי הקשר · ' + meetingStaff().length + ' רבנים',
+      body: '<div class="mt-staff-ro">' + _staffListHTML() + '</div><p class="fc-note">הרבנים נקבעים באנשי הקשר, בהגדרות הדוחות.</p>' }) +
+    fcCardHTML({ id: 'fc-mt-texts', ico: 'text', title: 'הנוסחים בדף', open: was === 'fc-mt-texts',
+      sum: (cfg.phone ? 'טלפון המזכירות · ' : '') + Object.keys(cfg.texts || {}).length + ' טקסטים שונו',
+      body: '<label class="mt-ph">טלפון המזכירות (בהודעה כשהשיבוץ סגור)<input type="tel" id="mt-phone" dir="ltr" value="' + esc(cfg.phone || '') + '"></label>' + textsHTML('meeting', cfg) }) +
+    '</div>';
+  if (old) old.outerHTML = html;
+  else openModal('אסיפת הורים — הגדרות', html, '', 'settings');
+}
+function meetingNew(on) { S._mtNew = !!on; _settingsPaint(_mtCfgNow()); }
+function meetingNewMake() {
+  var cur = _mtCfgNow(), y = _mtYearOf(cur) || 0;
+  var g = function (id) { return !!(document.getElementById(id) || {}).checked; };
+  var past = meetingPast().filter(function (p) { return +p.year !== y; });
+  if (cur.date) past.push({ year: y, date: cur.date, from: cur.from, to: cur.to, slot: cur.slot });
+  past.sort(function (a, b) { return a.year - b.year; });
+  var hrs = g('mtn-hours'), tx = g('mtn-texts');
+  var next = { year: y + 1, date: '', open: false, flyer: '',
+               from: hrs ? cur.from : '18:00', to: hrs ? cur.to : '21:00', slot: hrs ? cur.slot : 10,
+               blocked: g('mtn-blocked') ? (cur.blocked || []) : [], phone: tx ? cur.phone : _phone(), texts: tx ? (cur.texts || {}) : {} };
+  hrCfgSet('meeting_past', past);
+  S._mtCfg = next; S._mtNew = false; S._mtYear = null;
+  hrCfgSet(MT_KEY, next);
+  toast('נפתחה האסיפה של ' + _yl(y + 1), null, 'good');
+  _settingsPaint(next);
 }
 // המודעה בראש דף השיבוץ — תמונה בדלי הציבורי hr-public, תחת meeting/, בנתיב חדש בכל העלאה; מחליפים בכל שנה
 async function meetingFlyerUpload(input) {
+  // ההעלאה — לאסיפה הנוכחית
   var f = input.files && input.files[0]; input.value = '';
   if (!f) return;
   if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
@@ -242,11 +311,11 @@ async function meetingFlyerUpload(input) {
   var res = await S.SB.storage.from('hr-public').upload(path, f, { contentType: f.type || undefined, upsert: false });
   if (!res || res.error) { toast(MSG_UPLOAD_FAIL + ((res && res.error && res.error.message) || ''), null, 'bad'); return; }
   var el = document.getElementById('mt-flyer'); if (el) el.value = S.SB.storage.from('hr-public').getPublicUrl(path).data.publicUrl;
-  await meetingSave(); _settingsPaint(meetingCfg());
+  await meetingSave(); _settingsPaint(_mtCfgNow());
 }
 async function meetingFlyerDel() {
   var el = document.getElementById('mt-flyer'); if (el) el.value = '';
-  await meetingSave(); _settingsPaint(meetingCfg());
+  await meetingSave(); _settingsPaint(_mtCfgNow());
 }
 function meetingBlockAdd() {
   var box = document.getElementById('mt-blocks'); if (!box) return;
@@ -257,12 +326,15 @@ function meetingSave() {
   var blocked = Array.prototype.map.call(document.querySelectorAll('#mt-blocks > [data-blk]'), function (row) {
     return { from: row.querySelector('[data-k="from"]').value, to: row.querySelector('[data-k="to"]').value };
   }).filter(function (b) { return b.from && b.to; });
-  var next = { date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
+  var cur = _mtCfgNow();
+  var next = { year: _mtYearOf(cur), date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
                open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer'), texts: textsRead(document.getElementById('mt-set')) };
   S._mtCfg = next;
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
+  var tl = document.getElementById('mt-tl-box'); if (tl) tl.innerHTML = _tlHTML(next);
+  var st = document.querySelector('#mt-set .fc-stat'); if (st) st.classList.toggle('on', next.open);
   return p;
 }
 
-export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView, meetingMode, meetingSearch };
+export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView, meetingMode, meetingSearch, meetingNew, meetingNewMake, meetingYear };

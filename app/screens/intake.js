@@ -9,7 +9,8 @@ import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../dom
 import { icon } from '../icons.js';
 import { respListHTML, respScreenHTML, respSections } from './resp.js';
 import { contactsUrl } from './contacts.js';
-import { enrollFieldRow, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
+import { enrollFieldRow, fcRemember, fcSyncRows, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
+import { fcCardHTML, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
 import { gateCall, gateLogin, gateOpen } from '../gate.js';
 import { openAddStudent } from './students.js';
 
@@ -18,15 +19,6 @@ function _gate(action, body) { return gateCall('intake', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
 function intakeUrl() { return contactsUrl().replace(/contacts\.html$/, 'intake.html'); }
-function intakeOpen() {
-  openModal('קבלה לישיבה',
-    '<div class="en-menu">' +
-      '<button class="en-tile" data-act="in-view">' + icon('watch') + 'צפייה בטופס</button>' +
-      '<button class="en-tile" data-act="in-copy">' + icon('copy') + 'העתקת קישור</button>' +
-      '<button class="en-tile" data-act="in-resp">' + icon('table') + 'התגובות</button>' +
-      '<button class="en-tile" data-act="in-settings">' + icon('settings') + 'הגדרות הטופס</button>' +
-    '</div>', '', 'intake');
-}
 function intakeView() {
   openModal('קבלה לישיבה', '<iframe class="ct-frame" src="app/intake.html" title="קבלה לישיבה"></iframe>', '', 'watch');
 }
@@ -87,7 +79,7 @@ function _respOpts() {
     if (fs.length) sections.push({ title: it.title, fields: fs });
   });
   return {
-    p: 'in', edit: canEdit('intake'), track: cfg.track || [], sections: sections,
+    p: 'in', edit: canEdit('forms'), track: cfg.track || [], sections: sections,
     rows: rows.filter(function (x) { return S._inYear == null || x.school_year === S._inYear; }),
     years: years.map(function (y) { return { y: y, label: _yearLabel(y), on: y === S._inYear, n: rows.filter(function (x) { return x.school_year === y; }).length }; })
   };
@@ -135,37 +127,44 @@ function intakeAddStudent(el) {
 }
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──
-function _viewBtn(url) {
-  return '<a class="btn sm out" href="' + esc(url) + '" target="_blank" rel="noopener">' + icon('watch') + 'צפייה במסמך</a>';
-}
 // מסמך לצפייה — כותרת וקובץ שהועלה
+// מסמך לצפייה — שורה: הכותרת (נערכת במקום) · צפייה, או צירוף כשאין קובץ · הסרה
 function _docRow(d) {
-  var body = d.url ? '<div class="in-dline">' + _viewBtn(d.url) + '</div>'
-    : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-up"></label>';
-  return '<div class="en-frow in-doc" data-drag="ind" data-did="' + esc(d.id) + '" data-url="' + esc(d.url || '') + '">' +
-    '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
-    '<div class="en-fbody"><input data-k="title" aria-label="כותרת" placeholder="כותרת" value="' + esc(d.title || '') + '">' + body + '</div>' +
-    '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
+  var act = d.url ? '<a class="fc-ib" href="' + esc(d.url) + '" target="_blank" rel="noopener" aria-label="צפייה במסמך" title="צפייה במסמך">' + icon('watch') + '</a>'
+    : '<label class="btn sm out en-upl">' + icon('upload') + 'צירוף<input type="file" accept="application/pdf,image/*" data-chg="in-doc-up"></label>';
+  return '<div class="fc-doc in-doc" data-drag="ind" data-did="' + esc(d.id) + '" data-url="' + esc(d.url || '') + '">' +
+    '<span class="grip" data-grip aria-hidden="true">⠿</span><span class="fc-dic' + (d.url ? '' : ' none') + '">' + icon('doc') + '</span>' +
+    '<input data-k="title" class="fc-flat" aria-label="כותרת" placeholder="כותרת המסמך" value="' + esc(d.title || '') + '">' + act +
+    '<button data-act="row-remove" class="fc-ib" aria-label="הסרה">' + icon('close') + '</button></div>';
 }
-// מסמך לחתימה — כותרת · מסמך מצורף (רשות) · השדות שלו, באותו עורך שדות כמו טופס הרישום
+// מסמך לחתימה — שורה (הכותרת · מסמך ושדות · פעיל או מוקפא), ולחיצה פותחת: כותרת · המסמך המצורף · «מוקפא» · השדות שלו · הסרה
 function _itemRow(it) {
+  var nf = (it.fields || []).length, open = _fcOpenI.indexOf(it.id) >= 0 || !it.title;
+  var meta = (it.doc ? 'מסמך מצורף' : 'בלי מסמך') + ' · ' + (nf ? nf + ' שדות' : 'אין שדות');
   var doc = it.doc
-    ? '<div class="in-dline">' + _viewBtn(it.doc) + '<button class="row-del-btn" data-act="in-item-doc-clear" aria-label="הסרה">' + icon('close') + '</button></div>'
+    ? '<div class="fc-docline">' + icon('doc') + '<span>המסמך המצורף</span><a class="btn sm out" href="' + esc(it.doc) + '" target="_blank" rel="noopener">' + icon('watch') + 'צפייה</a>' +
+        '<button type="button" class="btn sm out" data-act="in-item-doc-clear">' + icon('close') + 'הסרה</button></div>'
     : '<label class="add-dashed-btn en-upl">+ צירוף מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-item-doc"></label>';
-  return '<div class="en-frow in-item" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
-    '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
-    '<div class="en-fbody"><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' + doc +
-      '<label class="en-req"><input type="checkbox" data-k="frozen"' + (it.frozen ? ' checked' : '') + '>מוקפא — מוצג באפור, בלי שדות ובלי חובה</label>' +
-      '<div class="en-fields in-ifields">' + (it.fields || []).map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
-      '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button></div>' +
-    '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
+  return '<div class="fc-f fc-item in-item' + (it.frozen ? ' frz' : '') + (open ? ' open' : '') + '" data-drag="ini" data-iid="' + esc(it.id) + '" data-doc="' + esc(it.doc || '') + '">' +
+    '<div class="fc-fr" data-act="fc-fedit"><span class="grip" data-grip aria-hidden="true">⠿</span>' +
+      '<span class="fc-fn"><b>' + esc(it.title || 'מסמך חדש') + '</b><small>' + esc(meta) + '</small></span>' +
+      '<span class="fc-pill' + (it.frozen ? '' : ' on') + '">' + (it.frozen ? 'מוקפא' : 'פעיל') + '</span><span class="fc-chev">' + icon('down') + '</span></div>' +
+    '<div class="fc-fe">' +
+      '<div class="fc-lbl">כותרת</div><input data-k="ititle" aria-label="כותרת" placeholder="כותרת" value="' + esc(it.title || '') + '">' + doc +
+      '<label class="fc-tg">מוקפא — מוצג באפור בדף, בלי שדות ובלי חובה' + fcSw('data-k="frozen"', it.frozen) + '</label>' +
+      '<div class="fc-lbl">השדות של המסמך</div>' +
+      '<div class="en-fields fc-fields in-ifields">' + (it.fields || []).map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
+      '<button class="add-dashed-btn" data-act="in-field-add">+ שדה</button>' +
+      '<div class="fc-fact"><button type="button" class="btn sm out fc-del" data-act="row-remove">' + icon('del') + 'הסרת המסמך</button>' +
+        '<button type="button" class="btn sm" data-act="fc-fedit">סיום</button></div>' +
+    '</div></div>';
 }
 function _trkRow(t) {
   return '<div class="en-trow" data-drag="int"><span class="grip" data-grip aria-hidden="true">⠿</span>' +
     '<input data-k="track" aria-label="עמודה" value="' + esc(t) + '"><button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
 }
 async function intakeSettings() {
-  if (!canEdit('intake')) { shell.showDenied(); return; }
+  if (!canEdit('forms')) { shell.showDenied(); return; }
   _settingsPaint(intakeCfg());
   try {
     var r = await hrCfgGet('intake_form', true);
@@ -175,24 +174,37 @@ async function intakeSettings() {
     }
   } catch (e) { console.warn('[intake] משיכת התצורה נכשלה', e); }
 }
+// דף ההגדרות: המתג והקישור, ואחריהם כרטיסים מתקפלים — פרטי התלמיד · מסמכים לצפייה · מסמכים לחתימה · עמודות המעקב · הנוסחים בדף
+var _fcOpenI = [];
 function _settingsPaint(cfg) {
-  var html = '<div class="en-cfg" id="in-set" data-autosave="in-save">' +
-    '<div class="ss-t">השדות</div>' +
-    '<div class="en-fields" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="in-field-add">+ הוספת שדה</button>' +
-    '<div class="ss-t">מסמכים לצפייה</div>' +
-    '<div class="en-fields" id="in-docs">' + (cfg.docs || []).map(_docRow).join('') + '</div>' +
-    '<div class="in-adds"><label class="add-dashed-btn en-upl">+ הוספת מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-new"></label></div>' +
-    '<div class="ss-t">מסמכים לחתימה</div>' +
-    '<div class="en-fields" id="in-items">' + (cfg.items || []).map(_itemRow).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="in-item-add">+ הוספת פריט</button>' +
-    '<div class="ss-t">עמודות המעקב בתגובות</div>' +
-    '<div class="en-track" id="in-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
-    '<button class="add-dashed-btn" data-act="in-track-add">+ הוספת עמודה</button>' +
-    privacyHTML('in-privacy', cfg, INTAKE_DEFAULT.privacy) + textsHTML('intake', cfg) + '</div>';
-  var bd = document.getElementById('in-set');
-  if (bd) bd.outerHTML = html;
-  else openModal('הגדרות הטופס — קבלה לישיבה', html, '', 'settings');
+  var old = document.getElementById('in-set'), was = fcOpenId(old);
+  fcRemember(old);
+  _fcOpenI = old ? Array.prototype.map.call(old.querySelectorAll('.fc-item.open'), function (r) { return r.getAttribute('data-iid'); }) : [];
+  var items = cfg.items || [], frz = items.filter(function (i) { return i.frozen; }).length;
+  var html = '<div class="en-cfg fc-page" id="in-set" data-autosave="in-save">' +
+    fcStatusHTML({ p: 'in', id: 'in-open', on: cfg.open !== false, label: 'הטופס פתוח למילוי', url: intakeUrl() }) +
+    fcCardHTML({ id: 'fc-in-fields', ico: 'fields', title: 'פרטי התלמיד', open: was === 'fc-in-fields',
+      sum: cfg.fields.filter(function (f) { return f.type !== 'section'; }).length + ' שדות',
+      body: '<div class="en-fields fc-fields" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
+        '<button class="add-dashed-btn" data-act="in-field-add">+ שדה</button>' }) +
+    fcCardHTML({ id: 'fc-in-docs', ico: 'doc', title: 'מסמכים לצפייה', open: was === 'fc-in-docs',
+      sum: (cfg.docs || []).length + ' מסמכים',
+      body: '<div class="fc-docs" id="in-docs">' + (cfg.docs || []).map(_docRow).join('') + '</div>' +
+        '<label class="add-dashed-btn en-upl">+ העלאת מסמך<input type="file" accept="application/pdf,image/*" data-chg="in-doc-new"></label>' }) +
+    fcCardHTML({ id: 'fc-in-items', ico: 'sign', title: 'מסמכים לחתימה', open: was === 'fc-in-items',
+      sum: items.length + ' מסמכים' + (frz ? ' · ' + frz + ' מוקפא' : ''),
+      body: '<div class="fc-fields" id="in-items">' + items.map(_itemRow).join('') + '</div>' +
+        '<button class="add-dashed-btn" data-act="in-item-add">+ מסמך לחתימה</button>' }) +
+    fcCardHTML({ id: 'fc-in-track', ico: 'track', title: 'עמודות המעקב', open: was === 'fc-in-track',
+      sum: (cfg.track || []).length ? (cfg.track || []).length + ' עמודות — בכל תגובה' : 'אין עמודות',
+      body: '<div class="en-track" id="in-track">' + (cfg.track || []).map(_trkRow).join('') + '</div>' +
+        '<button class="add-dashed-btn" data-act="in-track-add">+ עמודה</button>' }) +
+    fcCardHTML({ id: 'fc-in-texts', ico: 'text', title: 'הנוסחים בדף', open: was === 'fc-in-texts',
+      sum: 'הודעת הפרטיות · ' + Object.keys(cfg.texts || {}).length + ' טקסטים שונו',
+      body: privacyHTML('in-privacy', cfg, INTAKE_DEFAULT.privacy) + textsHTML('intake', cfg) }) +
+    '</div>';
+  if (old) old.outerHTML = html;
+  else openModal('קבלה לישיבה — הגדרות', html, '', 'settings');
 }
 function _nid(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 36 * 36).toString(36); }
 // «+ הוספת שדה» — לפרטי התלמיד, או לפריט שהכפתור בתוכו
@@ -244,7 +256,7 @@ async function intakeUpload(input) {
 function _readFields(rows, prevAll) {
   var out = [];
   rows.forEach(function (row) {
-    function v(k) { var el = row.querySelector(':scope > .en-fbody [data-k="' + k + '"]'); return el ? (el.type === 'checkbox' ? el.checked : el.value.trim()) : null; }
+    function v(k) { var el = row.querySelector(':scope > .fc-fe [data-k="' + k + '"]'); return el ? (el.type === 'checkbox' ? el.checked : el.value.trim()) : null; }
     var o = { id: row.getAttribute('data-fid'), type: v('type') || 'text', label: v('label') || '' };
     if (!o.label) return;
     if (o.type !== 'section') {
@@ -274,25 +286,27 @@ function intakeSave() {
     var it = { id: row.getAttribute('data-iid'), title: row.querySelector('[data-k="ititle"]').value.trim(), doc: row.getAttribute('data-doc') || '',
              fields: _readFields(Array.prototype.slice.call(row.querySelectorAll('.in-ifields > [data-fid]')), prevAll) };
     // «מוקפא» — הפריט מוצג באפור, בלי שדות ובלי חובה, עד שמפשירים
-    var fz = row.querySelector(':scope > .en-fbody > label [data-k="frozen"]');
+    var fz = row.querySelector(':scope > .fc-fe > .fc-tg [data-k="frozen"]');
     if (fz && fz.checked) it.frozen = true;
     return it;
   }).filter(function (it) { return it.title || it.doc || it.fields.length; });
   var track = Array.prototype.map.call(document.querySelectorAll('#in-track [data-k="track"]'), function (x) { return x.value.trim(); }).filter(Boolean);
   var pv = document.getElementById('in-privacy');
+  var op = document.getElementById('in-open');
   var next = { fields: fields, docs: docs, items: items, track: track,
-               privacy: pv ? pv.value.trim() : (cfg.privacy || INTAKE_DEFAULT.privacy), texts: textsRead(document.getElementById('in-set')) };
+               privacy: pv ? pv.value.trim() : (cfg.privacy || INTAKE_DEFAULT.privacy), texts: textsRead(document.getElementById('in-set')),
+               open: op ? op.checked : cfg.open !== false };
   var typeChanged = Array.prototype.some.call(document.querySelectorAll('#in-set [data-fid]'), function (row) {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));
   });
   var p = hrCfgSet('intake_form', next);
   toast(MSG_SAVED, null, 'good');
-  if (typeChanged) _settingsPaint(next);
+  if (typeChanged) _settingsPaint(next); else fcSyncRows(document.getElementById('in-set'));
   return p;
 }
 
 // גרירה לסידור — השדות, המסמכים, הפריטים ועמודות המעקב; השחרור שומר מה-DOM הסופי
 ['inf', 'ind', 'ini', 'int'].forEach(function (k) { dragDef(k, function () { return intakeSave(); }); });
 
-export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
+export { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch };

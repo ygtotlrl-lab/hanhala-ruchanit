@@ -30,12 +30,13 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
 import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
-import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollOpen, enrollPass,
+import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollPass,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch } from './screens/enroll.js';
-import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
+import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear, intakeOpenRow, intakeSearch } from './screens/intake.js';
-import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings,
-         meetingMode, meetingSearch, meetingView } from './screens/meeting.js';
+import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingPass, meetingResponses, meetingSave, meetingSettings,
+         meetingMode, meetingNew, meetingNewMake, meetingSearch, meetingView, meetingYear } from './screens/meeting.js';
+import { fcChipAdd, fcChipDel, fcToggle, renderForms, screenFormsHTML } from './screens/forms.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -222,6 +223,7 @@ function mountView() {
     screenReportsHTML() +
     screenSleepHTML() +
     screenExamsHTML() +
+    screenFormsHTML() +
     screenSettingsHTML();
 }
 
@@ -278,6 +280,7 @@ function renderPage(pg) {
   if (pg === 'exams') hrRegLoad(HR_STREAMS.exams);
   if (pg === 'reports') loadReports();
   if (pg === 'sleep') loadSleep();
+  if (pg === 'forms') renderForms();
 }
 
 // רענון אינו ניווט — אין לקרוא כאן ל-showPage: שמירה שמנווטת מוציאה את המשתמש ממקומו.
@@ -511,7 +514,6 @@ var DOM_ACTIONS = {
   'manage-list-open':     function () { openManageListDlg(); },
   'students-print':       function () { printStudents(); },
   // טופס הרישום — בבנייה; ההרשאה כבר נאכפת
-  'enroll-open':          function () { if (!canAccess('enroll')) { showDenied(); return; } enrollOpen(); },
   'en-view':              function () { enrollView(); },
   'en-copy':              function () { return enrollCopy(); },
   'en-resp':              function () { return enrollResponses(); },
@@ -521,11 +523,10 @@ var DOM_ACTIONS = {
   'en-file':              function (el) { return enrollFile(el); },
   'en-settings':          function () { return enrollSettings(); },
   'en-save':              function () { return enrollSave(); },
-  'en-field-add':         function () { enrollFieldAdd(); },
+  'en-field-add':         function (el) { enrollFieldAdd(el); },
   'en-track-add':         function () { enrollTrackAdd(); },
   'en-del':               function (el) { return enrollDelete(el); },
   'en-add-student':       function (el) { enrollAddStudent(el); },
-  'intake-open':          function () { if (!canAccess('intake')) { showDenied(); return; } intakeOpen(); },
   'in-view':              function () { intakeView(); },
   'in-copy':              function () { return intakeCopy(); },
   'in-resp':              function () { return intakeResponses(); },
@@ -541,7 +542,6 @@ var DOM_ACTIONS = {
   'in-track-add':         function () { intakeTrackAdd(); },
   'in-del':               function (el) { return intakeDelete(el); },
   'in-add-student':       function (el) { intakeAddStudent(el); },
-  'meeting-open':         function () { if (!canAccess('meeting')) { showDenied(); return; } meetingOpen(); },
   'mt-view':              function () { meetingView(); },
   'mt-copy':              function () { return meetingCopy(); },
   'mt-resp':              function () { return meetingResponses(); },
@@ -551,6 +551,12 @@ var DOM_ACTIONS = {
   'mt-block-add':         function () { meetingBlockAdd(); },
   'mt-flyer-del':         function () { return meetingFlyerDel(); },
   'mt-del':               function (el) { return meetingDelete(el); },
+  'fc-fedit':             function (el) { fcToggle(el); },
+  'mt-new':               function () { meetingNew(true); },
+  'mt-new-cancel':        function () { meetingNew(false); },
+  'mt-new-make':          function () { meetingNewMake(); },
+  'mt-year':              function (el) { meetingYear(el.getAttribute('data-y')); },
+  'fc-opt-del':           function (el) { fcChipDel(el); },
   'mt-mode':              function (el) { meetingMode(el.getAttribute('data-v')); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
@@ -618,10 +624,10 @@ var HR_WRITE_MODULE = {
   'year-transition-confirm': 'students',
   'rp-fill': 'reports', 'rp-fill-save': 'reports',
   'file-event-save': 'files', 'file-event-del': 'files',
-  'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
-  'in-save': 'intake', 'in-field-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
-  'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake',
-  'mt-save': 'meeting', 'mt-block-add': 'meeting', 'mt-flyer-del': 'meeting', 'mt-del': 'meeting'
+  'en-save': 'forms', 'en-field-add': 'forms', 'en-track-add': 'forms', 'en-del': 'forms', 'en-add-student': 'forms',
+  'in-save': 'forms', 'in-field-add': 'forms', 'in-item-add': 'forms', 'in-item-doc-clear': 'forms',
+  'in-track-add': 'forms', 'in-del': 'forms', 'in-add-student': 'forms',
+  'mt-save': 'forms', 'mt-block-add': 'forms', 'mt-flyer-del': 'forms', 'mt-del': 'forms', 'fc-opt-del': 'forms', 'mt-new': 'forms', 'mt-new-make': 'forms'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
@@ -706,11 +712,12 @@ document.addEventListener('change', function (e) {
   if (el && el.dataset && el.dataset.chg === 'import-students') importStudentsFromFile(el);
   if (el && el.dataset && el.dataset.chg === 'st-class') stClassChanged();
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
-  if (c === 'en-img') { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollImgUpload(el); return; }
-  if (el && el.hasAttribute && el.hasAttribute('data-en-key')) { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollTrack(el); return; }
-  if (c === 'mt-flyer-up') { if (!canEdit('meeting')) { _hrViewOnlyRevert(el); return; } meetingFlyerUpload(el); return; }
-  if (c === 'in-doc-new' || c === 'in-doc-up' || c === 'in-item-doc') { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeUpload(el); return; }
-  if (el && el.hasAttribute && el.hasAttribute('data-in-key')) { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeTrack(el); return; }
+  if (c === 'en-img') { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } enrollImgUpload(el); return; }
+  if (el && el.hasAttribute && el.hasAttribute('data-en-key')) { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } enrollTrack(el); return; }
+  if (c === 'mt-flyer-up') { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } meetingFlyerUpload(el); return; }
+  if (c === 'in-doc-new' || c === 'in-doc-up' || c === 'in-item-doc') { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } intakeUpload(el); return; }
+  if (el && el.hasAttribute && el.hasAttribute('data-in-key')) { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } intakeTrack(el); return; }
+  if (el && el.classList && el.classList.contains('fc-chip-add')) { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } fcChipAdd(el); }
   _hrAutosave(el);
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }

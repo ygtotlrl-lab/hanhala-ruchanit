@@ -15,6 +15,7 @@ import { getAbsenceReasons, hrApplyPerms, hrCfgSet, hrTouchLastChanged } from '.
 import { HR_STREAMS } from '../domain.sessions.js';
 import { icon } from '../icons.js';
 import { contactsPaneHTML, renderContactsSettings } from './contacts.js';
+import { renderFormsSettings } from './forms.js';
 import { stIcon } from '../../core/icons.js';
 
 function screenSettingsHTML() {
@@ -42,11 +43,21 @@ function screenSettingsHTML() {
           <span class="tile-ico">${icon('reports')}</span>
           <span class="set-module-label">דוחות</span>
         </button>
+        <button data-act="settings-module" data-mod="forms" class="set-module-tile">
+          <span class="tile-ico">${icon('forms')}</span>
+          <span class="set-module-label">טפסים</span>
+        </button>
         <button data-act="settings-module" data-mod="system" class="set-module-tile">
           <span class="tile-ico">${icon('settings')}</span>
           <span class="set-module-label">הגדרות מערכת</span>
         </button>
       </div>
+    </div>
+
+    <!-- הגדרות הטפסים — שורה לכל טופס, ולחיצה פותחת את דף ההגדרות שלו -->
+    <div id="settings-forms" class="hidden">
+      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות הטפסים</span></div>
+      <div class="fm-rows" id="set-forms-list"></div>
     </div>
 
     <!-- הגדרות מצבת תלמידים -->
@@ -140,7 +151,7 @@ ${contactsPaneHTML()}
 var PASS_SIX_RE = /^[0-9]{6}$/;
 
 function showSettingsHome() {
-  ['students','attend','sleep','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','reports','forms','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });
@@ -153,7 +164,7 @@ function showSettingsHome() {
 // כאן ההרשאה נגזרת מ-hr_users.role דרך canAccess, והעמודה NOT NULL בלי DEFAULT.
 function showSettingsModule(mod) {
   document.getElementById('settings-home').classList.add('hidden');
-  ['students','attend','sleep','reports','system'].forEach(function(m) {
+  ['students','attend','sleep','reports','forms','system'].forEach(function(m) {
     var el = document.getElementById('settings-'+m);
     if (el) el.classList.add('hidden');
   });
@@ -162,6 +173,7 @@ function showSettingsModule(mod) {
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'reports') { renderContactsSettings(); }
+  if (mod === 'forms') { renderFormsSettings(); }
   if (HR_STREAMS[mod]) shell.hrRenderSettings(HR_STREAMS[mod]);
 }
 

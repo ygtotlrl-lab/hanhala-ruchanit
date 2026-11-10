@@ -26,6 +26,7 @@ function screenHomeHTML() {
       <button class="mod mod-tone-brand" data-pg="sleep" data-act="page" data-page="sleep"><div class="mod-ic">${icon('sleep')}</div><div class="mod-info"><div class="mod-name">זמן שינה</div><div class="mod-desc">מעקב שעות שינה וכיבוי אורות</div></div></button>
       <button class="mod mod-tone-brand" data-pg="exams" data-act="page" data-page="exams"><div class="mod-ic">${icon('exams')}</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
       <button class="mod mod-tone-brand" data-pg="reports" data-act="page" data-page="reports"><div class="mod-ic">${icon('reports')}</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
+      <button class="mod mod-tone-brand" data-pg="forms" data-act="page" data-page="forms"><div class="mod-ic">${icon('forms')}</div><div class="mod-info"><div class="mod-name">טפסים</div><div class="mod-desc">טופס רישום, קבלה לישיבה ושיבוץ לאסיפת הורים</div></div></button>
       <button class="mod mod-tone-brand" data-pg="settings" data-act="page" data-page="settings"><div class="mod-ic">${icon('settings')}</div><div class="mod-info"><div class="mod-name">הגדרות</div><div class="mod-desc">משתמשים והרשאות, סדרים, סיבות ואנשי קשר</div></div></button>
 
     </div>

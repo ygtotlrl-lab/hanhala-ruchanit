@@ -55,16 +55,14 @@ var AUTH = {
   offlineLogin: false, // true — אומת מול העותק המקומי, ומאומת מחדש כשהרשת חוזרת
   perms: null, // {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
-    // השמות — כמו בשורת הניווט; תיקים אישיים, טופס רישום, קבלה לישיבה ואסיפת הורים — כפתורים בתוך המסכים, אחרי הדוחות
+    // השמות — כמו בשורת הניווט; תיקים אישיים — כפתור בתוך פרטי התלמיד; «טפסים» — טופס רישום, קבלה לישיבה ואסיפת הורים, בהרשאה אחת
     {id:'students', label:'מצבת'},
     {id:'attend',   label:'סדרים'},
     {id:'sleep',    label:'שינה'},
     {id:'exams',    label:'מבחנים'},
     {id:'reports',  label:'דוחות'},
     {id:'files',    label:'תיקים אישיים'},
-    {id:'enroll',   label:'טופס רישום'},
-    {id:'intake',   label:'קבלה לישיבה'},
-    {id:'meeting',  label:'אסיפת הורים'},
+    {id:'forms',    label:'טפסים'},
     {id:'settings', label:'הגדרות'}
   ],
 
@@ -77,9 +75,7 @@ var AUTH = {
     exams:    {admin:'edit', manager:'edit', junior:'view'},
     reports:  {admin:'edit', manager:'view', junior:'none'},
     files:    {admin:'edit', manager:'edit', junior:'none'},
-    enroll:   {admin:'edit', manager:'edit', junior:'none'},
-    intake:   {admin:'edit', manager:'edit', junior:'none'},
-    meeting:  {admin:'edit', manager:'edit', junior:'none'},
+    forms:    {admin:'edit', manager:'view', junior:'view'},
     settings: {admin:'edit', manager:'none', junior:'none'}
   }
 };
