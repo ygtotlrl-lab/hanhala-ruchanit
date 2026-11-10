@@ -1,13 +1,12 @@
 // app/domain.exam.js — המבחנים: רשימת התלמידים עם ציון, הערה וסריקה, פרטי המבחן והקבצים
 // המבחן הוא «סדר» של הזרם השלישי (HR_STREAMS.exams) — השמירה, הסנכרון והארכיון משותפים; כאן רק מה שנבדל.
-import { idEq, pendMark } from '../core/sync.js';
+import { idEq } from '../core/sync.js';
 import { esc, toast } from '../core/ui.js';
 import { HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_DIRS, HR_EXAM_HINTS, HR_EXAM_SUBJECTS, MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET,
          MSG_UPLOAD_OK } from './constants.js';
 import { S } from './state.js';
-import { getStudents, hrMirrorPutRecs, hrSortStudents } from './domain.js';
-import { hrDayHeb } from './domain.hebdate.js';
-import { hrExamGrp, hrMarkOf, hrSaveData } from './domain.sessions.js';
+import { getStudents, hrSortStudents } from './domain.js';
+import { hrExamGrp, hrMarkOf } from './domain.sessions.js';
 import { _hrOpenRec, hrMarkDirty } from './domain.reg.js';
 import { icon } from './icons.js';
 import { hrMonthKeyOfIso, hrStudentOn } from './domain.periods.js';
@@ -22,7 +21,7 @@ function _exGrade(m) {
   return isFinite(g) ? g : null;
 }
 
-// ── פרטי המבחן — חומר, קבצים, והאם נכנס לגיליון ──
+// ── פרטי המבחן — חומר וקבצים ──
 // נבנים רק כשהמבחן מתחלף — ציור חוזר היה מוחק את מה שמוקלד בשדה החומר.
 function _exInfoHTML(st, rec) {
   var p = st.p;
@@ -39,9 +38,7 @@ function _exInfoHTML(st, rec) {
   return '<div class="field-label">חומר המבחן</div>' +
     '<textarea aria-label="חומר המבחן" rows="2" class="ex-material" data-inp="' + p + '-material"' +
       (hint ? ' placeholder="' + esc('לדוגמה: ' + hint) + '"' : '') + '>' + esc(rec.material || '') + '</textarea>' +
-    '<div class="ex-files">' + fileBox('material_file', 'החומר הנלמד') + fileBox('draft_file', 'טיוטת המבחן') + '</div>' +
-    '<label class="ex-report-tog"><input type="checkbox" data-chg="' + p + '-in-report"' + (rec.in_report ? ' checked' : '') + '>' +
-      'זה המבחן שנכנס לגיליון החודשי ב' + esc(rec.session || '') + (rec.cls ? ' ל' + esc(HR_CLS_NAME[rec.cls] || '') : '') + '</label>';
+    '<div class="ex-files">' + fileBox('material_file', 'החומר הנלמד') + fileBox('draft_file', 'טיוטת המבחן') + '</div>';
 }
 
 function hrRenderExam(st, forceInfo) {
@@ -113,25 +110,6 @@ function hrExamSetField(st, field, val) {
   hrMarkDirty(st);
 }
 
-// מבחן אחד לכל לימוד, שיעור וחודש עברי נכנס לגיליון — סימון אחד מוריד את הסימון משאר המבחנים באותו לימוד, שיעור וחודש.
-function hrExamSetInReport(st, on) {
-  var rec = _hrOpenRec(st);
-  if (!rec) return;
-  rec.in_report = !!on;
-  rec.updated_at = Date.now();
-  hrMarkDirty(st);
-  if (!on) return;
-  var h = hrDayHeb(rec.session_date), touched = false, data = S[st.v + 'Data'] || [];
-  data.forEach(function (r) {
-    if (!r || r.deleted || idEq(r.client_id, rec.client_id) || r.session !== rec.session || (r.cls || '') !== (rec.cls || '') || !r.in_report) return;
-    var hr = hrDayHeb(r.session_date);
-    if (hr.hy !== h.hy || hr.mi !== h.mi) return;
-    r.in_report = false; r.updated_at = Date.now(); touched = true;
-    pendMark(st.pkSess + r.client_id);
-  });
-  if (touched) { hrMirrorPutRecs(st.table, data); hrSaveData(st, data, null); }
-}
-
 // ── הקבצים ──
 // העלאה דורשת רשת — הקובץ אינו נשמר במראה; הנתיב הוא שנשמר, והוא חדש בכל העלאה.
 async function hrExamUpload(st, input) {
@@ -181,4 +159,4 @@ async function _hrExamPut(st, file, sid, kind, lbl) {
 // הקובץ — במאגר הפרטי, בקישור חתום לשעה מהשער.
 function hrOpenFile(path) { return gateOpen(path); }
 
-export { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile, hrRenderExam };
+export { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile, hrRenderExam };

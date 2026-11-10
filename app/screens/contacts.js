@@ -14,7 +14,7 @@ function contactsUrl() {
 var CT_CLS = ['a', 'b', 'g'];
 
 // שמות הרבנים בהערות האישיות שבגיליון, לשיעור אחד ({n1: שם, …}); השלוחים — עם שיעור ג׳.
-// ר"מ ומשפיע — מהקבוצה שמסומנת בשיעור, והשאר — מכל קבוצה; שם שהוא שם של תפקיד («ראש הישיבה») — שמו של בעל התפקיד.
+// ר"מ ושני המשפיעים — מהקבוצה שמסומנת בשיעור, והשאר — מכל קבוצה; שם שהוא שם של תפקיד («ראש הישיבה») — שמו של בעל התפקיד.
 function contactsStaff(cls) {
   var v = hrCfgLocalGet('contacts'), out = {}, c = cls === 's' ? 'g' : cls;
   ((v && v.groups) || []).forEach(function (g) {
@@ -25,9 +25,13 @@ function contactsStaff(cls) {
       if (!out[k]) out[k] = r.name;
     });
   });
+  // שם שהוא שם של תפקיד — שמו של בעל התפקיד: לפי תפקיד בגיליון, ובלעדיו — לפי התפקיד שבשורה באנשי הקשר
+  var byRole = {};
+  ((v && v.groups) || []).forEach(function (g) { (g.rows || []).forEach(function (r) { if (r.role && r.name && !byRole[r.role]) byRole[r.role] = r.name; }); });
   RP_ROLES.forEach(function (x) {
     var y = RP_ROLES.find(function (y) { return y[1] === out[x[0]] && y[0] !== x[0]; });
     if (y && out[y[0]]) out[x[0]] = out[y[0]];
+    else if (out[x[0]] && byRole[out[x[0]]] && byRole[out[x[0]]] !== out[x[0]]) out[x[0]] = byRole[out[x[0]]];
   });
   return out;
 }

@@ -15,7 +15,6 @@ import { _hcH, _hcMN, hrDayHeb, hrHebMonthWin } from '../domain.hebdate.js';
 import { contactsStaff } from './contacts.js';
 import { icon } from '../icons.js';
 import { hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrStudentInHebMonth } from '../domain.periods.js';
-import { stIcon } from '../../core/icons.js';
 import { gateLinks } from '../gate.js';
 
 // ── הסולם והרף ──
@@ -99,13 +98,11 @@ function rpSetMany(mk, items) {
 // ── החישוב ──
 function _inWin(rec, w) { return rec && !rec.deleted && rec.session_date >= w.from && rec.session_date <= w.to; }
 
-// המבחן של הלימוד בחודש לשיעור (grp — השלוחים עם ג׳) — המסומן «נכנס לגיליון», ובלי סימון — היחיד; כמה בלי סימון — אין (הרב בוחר במסך המבחנים).
+// המבחן של הלימוד בחודש לשיעור (grp — השלוחים עם ג׳): המבחן של הקובייה — אחד לשיעור בחודש; מבחן נוסף (extra) אינו נכנס לגיליון.
 function rpExamOf(exRecs, subj, w, grp) {
-  var list = exRecs.filter(function (r) { return _inWin(r, w) && r.session === subj && (!r.cls || r.cls === grp); });
-  var chosen = list.filter(function (r) { return r.in_report; })[0];
-  if (chosen) return { rec: chosen };
-  if (list.length === 1) return { rec: list[0] };
-  return list.length ? { pick: list.length } : null;
+  var list = exRecs.filter(function (r) { return _inWin(r, w) && r.session === subj && !r.extra && (!r.cls || r.cls === grp); });
+  list.sort(function (a, b) { return (a.cls ? 0 : 1) - (b.cls ? 0 : 1); });
+  return list.length ? { rec: list[0] } : null;
 }
 
 function rpCompute(m) {
@@ -135,7 +132,7 @@ function rpCompute(m) {
     var ex1 = {};
     HR_EXAM_SUBJECTS.forEach(function (n) {
       var e = (exams[s.cls === 's' ? 'g' : s.cls] || {})[n];
-      if (!e || !e.rec) { ex1[n] = e && e.pick ? { pick: e.pick } : null; return; }
+      if (!e || !e.rec) { ex1[n] = null; return; }
       var mk = hrMarks(e.rec)[sid] || {};
       // תלמיד שלא סומן לו ציון במבחן של החודש — 0
       var g = (mk.grade != null && mk.grade !== '') ? Number(mk.grade) : 0;
@@ -221,9 +218,7 @@ function renderReports() {
   var list = document.getElementById('rp-list');
   if (!list) return;
   if (!n) { list.innerHTML = '<div class="empty-note">אין תלמידים</div>'; return; }
-  var pick = HR_EXAM_SUBJECTS.filter(function (s0) { return sts.some(function (st0) { var c = comp[String(st0.client_id)], e = c && c.exams[s0]; return e && e.pick; }); });
   list.innerHTML =
-    (pick.length ? '<div class="warn-note">' + stIcon('warn') + 'ב' + esc(pick.join(', ')) + ' יש כמה מבחנים החודש — יש לסמן במסך המבחנים איזה מהם נכנס לגיליון.</div>' : '') +
     '<div class="rp-list-head"><span>' + n + ' תלמידים · ' + esc(rpMonthLabel(m)) + '</span>' +
       '<button class="btn sm" data-act="rp-export-all">' + icon('pdf') + 'כל הגיליונות — PDF</button></div>' +
     '<div class="st-table">' + sts.map(function (s, i) {
@@ -311,12 +306,17 @@ function _sheetHTML(s, m, r, mk, scanUrls) {
       '<small>העתק מהגיליון נשלח לכ"ק אדמו"ר שליט"א מלך המשיח</small></div></div></div>' +
   '</div></section>';
   var staff = contactsStaff(s.cls);
+  // טפסי המבחנים בסוף הגיליון — לכל לימוד כותרת והקישור המלא, גלוי: בצפייה בטלפון (וואטסאפ) הקישור «טופס» שבטבלה לא תמיד נפתח
+  var fl = HR_EXAM_SUBJECTS.map(function (n) { var e = r.exams[n], u = e && e.scan && scanUrls[e.scan]; return u ? [n, u] : null; }).filter(Boolean);
+  var forms = fl.length ? '<h3 class="c">טפסי המבחנים</h3><table class="forms">' + fl.map(function (x) {
+    return '<tr><th>' + esc(x[0]) + '</th><td><a href="' + esc(x[1]) + '">' + esc(x[1]) + '</a></td></tr>';
+  }).join('') + '</table>' : '';
   var p2 = '<section class="pg">' + head + '<div class="body"><table class="notes">' +
     // כותרת לכל עמודה: מעל השם — «שם ומשפחה», ומעל ההערה — «הערות אישיות»; עמודת התפקיד מסבירה את עצמה
     '<thead><tr class="nh"><th></th><th>שם ומשפחה</th><th>הערות אישיות</th></tr></thead>' +
     RP_ROLES.map(function (x) {
       return '<tr><th>' + esc(x[1]) + '</th><td class="who">' + esc(staff[x[0]] || '') + '</td><td>' + v(x[0]) + '</td></tr>';
-    }).join('') + '</table></div></section>';
+    }).join('') + '</table>' + forms + '</div></section>';
   return p1 + p2;
 }
 
@@ -344,7 +344,8 @@ var RP_PRINT_CSS =
   '.legend{flex:1;border:.25mm solid #9a9a9a;padding:2mm 3mm;font-size:7.5pt;line-height:1.55;color:#555}.legend b{display:block;text-decoration:underline}' +
   '.sig{flex:1;font-size:9pt;color:#444;display:flex;flex-direction:column;gap:.6mm}.sig img{height:12mm;width:auto;align-self:flex-start}.sig small{font-size:7.5pt;color:#666;margin-top:1.5mm}' +
   'table.notes tr.nh{height:auto}table.notes tr.nh th{width:auto;border:none;background:none;text-align:center;font-size:10pt;padding:4mm 0 1.5mm;color:#444}' +
-  'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}';
+  'table.notes th{width:17%}table.notes td.who{width:25%;font-weight:700}table.notes td{height:12mm}' +
+  'table.forms th{width:22%}table.forms td{font-size:6.5pt;line-height:1.3;word-break:break-all;padding:1mm 2mm}table.forms a{color:#1a5fb4}';
 
 // הקישורים לסריקות חתומים בלי תפוגה, מהשער — הגיליון נשלח להורים ונשמר אצלם.
 async function _scanUrls(comp, sts) {

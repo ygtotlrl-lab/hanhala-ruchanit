@@ -263,7 +263,7 @@ async function _hrExportPdf(st, fromIso, toIso) {
         tot.gr=tot.gr.concat(gs);
         cur.rows.push([String(tot.n),heb,hrRecLabel(rec),rec.material||'',String(gs.length),
           gs.length?String(Math.round(gs.reduce(function(a,b){return a+b;},0)/gs.length)):'',
-          rec.in_report?{text:'כן',tone:'info'}:'']);
+          rec.extra?'':{text:'כן',tone:'info'}]);
         return;
       }
       var p=ms.filter(function(m){return m.status==='p';}).length;

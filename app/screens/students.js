@@ -521,8 +521,8 @@ function studentFormHTML(sid){
   return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" class="st-form-input">'+
     // מספר הזהות (או הדרכון) — מזהה את התלמיד בדפים הציבוריים (השיבוץ לאסיפת הורים)
-    '<label for="st-idnum">מספר זהות (או דרכון)</label>'+
-    '<input aria-label="מספר זהות" type="text" id="st-idnum" dir="ltr" inputmode="numeric" autocomplete="off" class="st-form-input">'+
+    '<label for="st-idnum">מספר תעודת זהות (או מספר דרכון, אם אין)</label>'+
+    '<input aria-label="מספר זהות" type="text" id="st-idnum" dir="ltr" autocomplete="off" class="st-form-input">'+
     '<label for="st-class">שיעור</label>'+
     '<select id="st-class" class="st-class-sel" data-chg="st-class">'+
       '<option value="a">שיעור א\'</option>'+

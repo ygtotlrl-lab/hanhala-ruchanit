@@ -64,8 +64,12 @@ main{max-width:760px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-dire
     var el=document.getElementById('list');
     var groups=(v&&Array.isArray(v.groups))?v.groups:[];
     if(!groups.length){el.innerHTML='<div class="msg">הרשימה ריקה</div>';return;}
+    // שם שהוא שם של תפקיד («ראש הישיבה», «מנהל הלימודים») — בעל התפקיד, בשמו ובפרטיו, ובתפקיד שבשורה
+    var holder={};
+    groups.forEach(function(g){(g.rows||[]).forEach(function(r){if(r.role&&r.name&&!holder[r.role])holder[r.role]=r;});});
     el.innerHTML=groups.map(function(g){
-      return '<section class="grp"><h2>'+esc(g.title)+'</h2>'+(g.rows||[]).map(function(r){
+      return '<section class="grp"><h2>'+esc(g.title)+'</h2>'+(g.rows||[]).map(function(r0){
+        var h=holder[r0.name], r=h&&h!==r0?{role:r0.role,name:h.name,phone:r0.phone||h.phone,email:r0.email||h.email}:r0;
         var acts='';
         if(r.phone){
           var mob=/^05/.test(String(r.phone).replace(/\D/g,''));

@@ -34,10 +34,10 @@ import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
-import { meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingStaffAdd,
-         meetingStaffFill, meetingView } from './screens/meeting.js';
+import { meetingBlockAdd, meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings,
+         meetingView } from './screens/meeting.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
-import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamSetInReport, hrExamUpload, hrOpenFile } from './domain.exam.js';
+import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
@@ -546,8 +546,7 @@ var DOM_ACTIONS = {
   'mt-pass':              function () { return meetingPass(); },
   'mt-settings':          function () { return meetingSettings(); },
   'mt-save':              function () { return meetingSave(); },
-  'mt-staff-add':         function () { meetingStaffAdd(); },
-  'mt-staff-fill':        function () { return meetingStaffFill(); },
+  'mt-block-add':         function () { meetingBlockAdd(); },
   'mt-del':               function (el) { return meetingDelete(el); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
@@ -574,7 +573,7 @@ var DOM_ACTIONS = {
 function hrStreamActions(st) {
   var a = {}, p = st.p + '-';
   var id = function (el) { return el.getAttribute('data-id'); };
-  a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname, el.dataset.cls); };
+  a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname, el.dataset.cls, el.dataset.extra === '1'); };
   a[p + 'resume-go']     = function (el) { var r = hrEditSession(st, id(el)); closeModal(); return r; };
   a[p + 'edit-session']  = function (el) { return hrEditSession(st, id(el)); };
   a[p + 'status-cancel'] = function (el) { hrCancelStudentStatusFromReg(st, id(el)); closeModal(); };
@@ -618,7 +617,7 @@ var HR_WRITE_MODULE = {
   'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
   'in-save': 'intake', 'in-field-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
   'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake',
-  'mt-save': 'meeting', 'mt-staff-add': 'meeting', 'mt-staff-fill': 'meeting', 'mt-del': 'meeting'
+  'mt-save': 'meeting', 'mt-block-add': 'meeting', 'mt-del': 'meeting'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
@@ -709,7 +708,6 @@ document.addEventListener('change', function (e) {
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }
   if (c === ex.p + '-grade') hrExamSetGrade(ex, el.dataset.id, el.value, true);
   else if (c === ex.p + '-scan' || c === ex.p + '-file') hrExamUpload(ex, el);
-  else if (c === ex.p + '-in-report') hrExamSetInReport(ex, el.checked);
 });
 
 

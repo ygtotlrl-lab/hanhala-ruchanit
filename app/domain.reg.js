@@ -174,15 +174,34 @@ function hrExamClsPanel(st) {
   el.innerHTML='<div class="picker-label">'+esc(subj)+' — בחר שיעור:</div><div class="ex-cls-grid">'+HR_EXAM_CLS.map(function(c){
     var rec=hrFindLiveSession(data, subj, today, null, c);
     var head='<div class="ex-cls-name">'+esc(HR_CLS_NAME[c])+'</div>';
+    var xtra=_hrExamExtras(st, data, subj, today, c);
     if(rec) return '<div class="ex-cls-tile has">'+head+
       '<div class="ex-cls-date">'+esc(hrSessHebFmt(rec))+'</div>'+
       (rec.material?'<div class="ex-cls-mat">'+esc(rec.material)+'</div>':'')+
       '<div class="ex-cls-sum">'+hrExamSummaryHTML(rec)+'</div>'+
-      '<button class="btn sm" data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'">'+icon('edit')+'פתיחה</button></div>';
+      '<button class="btn sm" data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'">'+icon('edit')+'פתיחה</button>'+xtra+'</div>';
     return '<div class="ex-cls-tile">'+head+
       '<label class="field-label">תאריך המבחן</label>'+_hcBuild(st.p+'_date_'+c)+
-      '<button class="btn sm" data-act="'+st.p+'-open-session" data-busy="'+esc(MSG_BUSY_CHECK)+'" data-sname="'+esc(subj)+'" data-cls="'+c+'">'+icon('play')+'פתיחת מבחן</button></div>';
+      '<button class="btn sm" data-act="'+st.p+'-open-session" data-busy="'+esc(MSG_BUSY_CHECK)+'" data-sname="'+esc(subj)+'" data-cls="'+c+'">'+icon('play')+'פתיחת מבחן</button>'+xtra+'</div>';
   }).join('')+'</div>';
+}
+
+// מבחנים נוספים של השיעור בחודש — אינם נכנסים לגיליון: רשימה, ו«＋ מבחן נוסף» פותח תאריך משלו
+function _hrExamExtras(st, data, subj, today, c) {
+  var h=_hcH(dayNoon(today));
+  var list=data.filter(function(r){
+    if(!r||r.deleted||!r.extra||r.session!==subj||r.cls!==c||!r.session_date) return false;
+    var hr=_hcH(dayNoon(r.session_date)); return hr.hy===h.hy&&hr.mi===h.mi;
+  }).sort(function(a,b){return a.session_date<b.session_date?-1:1;});
+  return '<div class="ex-x">'+list.map(function(r){
+      return '<button class="ex-x-row" data-act="'+st.p+'-edit-session" data-id="'+esc(r.client_id)+'">'+
+        '<span>מבחן נוסף · '+esc(hrSessHebFmt(r))+'</span>'+icon('edit')+'</button>';
+    }).join('')+
+    '<details class="ex-x-add"><summary>＋ מבחן נוסף</summary>'+
+      '<div class="ex-x-note">לא נכנס לגיליון</div>'+
+      '<label class="field-label">תאריך המבחן</label>'+_hcBuild(st.p+'_xdate_'+c)+
+      '<button class="btn sm" data-act="'+st.p+'-open-session" data-busy="'+esc(MSG_BUSY_CHECK)+'" data-sname="'+esc(subj)+'" data-cls="'+c+'" data-extra="1">'+icon('play')+'פתיחת מבחן נוסף</button>'+
+    '</details></div>';
 }
 
 function hrShowTab(st, tab) {
@@ -259,11 +278,11 @@ async function hrEditSession(st, recId) {
 }
 
 // שדה תאריך ריק נופל ליום של הזרם — הבורר נבנה מלא, והריק הוא מצב ביניים; במבחנים — ריק עד שבוחרים, ובלי תאריך אין פתיחה.
-async function hrOpenSession(st, sessId, sessName, cls) {
+async function hrOpenSession(st, sessId, sessName, cls, extra) {
   if(S[st.v+'CurrentSessionId']){toast(st.msg.closeFirst, null, 'warn');return;}
   // במבחנים הלחיצה על לימוד פותחת את קוביות השיעורים, והפתיחה עצמה — מהקובייה, בתאריך שלה
   if(st.exam&&!cls){ S[st.v+'Subj']=(S[st.v+'Subj']===sessName)?null:sessName; hrFillSessionBtns(st); return; }
-  var pickedIso=(document.getElementById(st.p+(cls?'_date_'+cls:'_date')+'_iso')||{}).value;
+  var pickedIso=(document.getElementById(st.p+(cls?(extra?'_xdate_':'_date_')+cls:'_date')+'_iso')||{}).value;
   if(st.exam&&!pickedIso){toast(MSG_EXAM_PICK_DATE, null, 'warn');return;}
   var dateIso=pickedIso||st.day();
 
@@ -271,10 +290,10 @@ async function hrOpenSession(st, sessId, sessName, cls) {
   // בשניות האחרונות שהמראה זהה לענן — פותחים מיד; אחרת ממתינים למשיכה אחת, מסוננת ליום שנבחר (החיווי והניטרול בניתוב).
   // כשל משיכה נופל למצב המקומי; המיזוג החלוני שומר את מה שמחוץ לחלון.
   if(!plFreshWithin(HR_FRESH_MS)) await hrPullSessions(st, hrDayWin(dateIso));
-  var existing=hrFindLiveSession(S[st.v+'Data']||[],sessName,dateIso,null,cls);
+  var existing=hrFindLiveSession(S[st.v+'Data']||[],sessName,dateIso,null,cls,extra);
   if(existing){
     openModal(st.msg.done,
-      '<p class="md-note-center">'+esc(hrRecLabel(existing))+(cls?' כבר נפתח החודש.':' כבר מולא היום.')+'<br>האם לפתוח לעריכה?</p>',
+      '<p class="md-note-center">'+esc(hrRecLabel(existing))+(cls&&!extra?' כבר נפתח החודש.':cls?' כבר נפתח ביום זה.':' כבר מולא היום.')+'<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
       '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>', icon('details'));
     return;
@@ -312,6 +331,7 @@ async function hrOpenSession(st, sessId, sessName, cls) {
     open:true
   };
   if(cls) rec.cls=cls;
+  if(extra) rec.extra=true;
 
   // הרשומה נשמרת רק בסימון הראשון בפועל (hrMarkDirty) — מונע רישומי רפאים.
   // אין קריאת טעינה שנייה — הנתונים כבר הוצבו מהמשיכה, וקריאה חוזרת מחזירה אותו מערך.

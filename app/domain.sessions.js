@@ -151,13 +151,13 @@ function hrExamSummaryHTML(rec) {
     (avg != null ? '<span class="at-code at-code-ap at-count"><i class="at-dot"></i>ממוצע: ' + avg + '</span>' : '') +
     (scans ? '<span class="at-code at-code-l at-count"><i class="at-dot"></i>סריקות: ' + scans + '</span>' : '') +
     (low ? '<span class="at-code at-code-e at-count"><i class="at-dot"></i>מתחת ל-' + HR_EXAM_LOW + ': ' + low + '</span>' : '') +
-    (rec.in_report ? '<span class="ex-in-report">בגיליון</span>' : '');
+    (rec.extra ? '<span class="ex-in-report">לא נכנס לגיליון</span>' : '');
 }
 
 // השיעור שנבחן במבחן — השלוחים עם ג׳.
 function hrExamGrp(cls) { return cls === 's' ? 'g' : cls; }
 // שם הסדר להצגה — ובמבחן לפי שיעור גם השיעור.
-function hrRecLabel(rec) { return String((rec && rec.session) || '') + (rec && rec.cls ? ' · ' + (HR_CLS_NAME[rec.cls] || rec.cls) : ''); }
+function hrRecLabel(rec) { return String((rec && rec.session) || '') + (rec && rec.cls ? ' · ' + (HR_CLS_NAME[rec.cls] || rec.cls) : '') + (rec && rec.extra ? ' · מבחן נוסף' : ''); }
 
 // תאריך לוגי — לפני 12:00 נחשב הלילה הקודם
 function hrGetLogicalDate() {
@@ -193,13 +193,17 @@ function hrMarkOf(st, status, minutes, note, extra) {
 // שם סדר ותאריך זהים הם תקלה; הבדיקה חוזרת בנקודת היצירה כי הבדיקה המחזורית יכולה להביא סדר מתחרה אחרי הפתיחה.
 // אין אינדקס ייחודי על (session, session_date) — הוא נכשל על זוגות שכבר במסד.
 // מבחן (cls נמסר) — אחד לכל לימוד, שיעור וחודש עברי; סדר ושינה — אחד לכל שם ויום.
-function hrFindLiveSession(data, sessName, dateIso, exceptId, cls) {
+// במבחן לפי שיעור: המבחן שנכנס לגיליון — אחד בחודש העברי; מבחן נוסף (extra) — אחד ביום.
+function hrFindLiveSession(data, sessName, dateIso, exceptId, cls, extra) {
   if (!Array.isArray(data)) return null;
-  var h = cls ? _hcH(dayNoon(dateIso)) : null;
+  var h = cls && !extra ? _hcH(dayNoon(dateIso)) : null;
   for (var i = 0; i < data.length; i++) {
     var r = data[i];
     if (!r || r.deleted || r.session !== sessName) continue;
-    if (cls) {
+    if (cls && !!r.extra !== !!extra) continue;
+    if (cls && extra) {
+      if (r.cls !== cls || r.session_date !== dateIso) continue;
+    } else if (cls) {
       if (r.cls !== cls || !r.session_date) continue;
       var hr = _hcH(dayNoon(r.session_date)); if (hr.hy !== h.hy || hr.mi !== h.mi) continue;
     } else if (r.session_date !== dateIso) continue;

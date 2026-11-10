@@ -1,7 +1,7 @@
 // app/screens/meeting.js — שיבוץ לאסיפת הורים: הדיאלוג שמהמצבה, התגובות (השיבוצים) והגדרות האסיפה — כמו טופס הרישום ובאותו שער.
 // הדף עצמו — app/meeting.html, ציבורי: מספר הזהות של התלמיד פותח אותו (התלמיד והשיעור — מהמצבה, בשער), ובו עד שני רבנים ולכל אחד שעה פנויה.
-// ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · הרבנים (שם · תפקיד · שיעורים; בלי שיעור — לכולם).
-import { ask, dragDef, esc, openModal, toast } from '../../core/ui.js';
+// ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · שעות תפוסות; הרבנים — תמיד מאנשי הקשר.
+import { ask, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
 import { HR_CLS_NAME } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
@@ -42,27 +42,20 @@ async function meetingCopy() {
 
 // ── התצורה ──
 function _uid() { return 'm' + Math.random().toString(36).slice(2, 8); }
-// הרבנים מאנשי הקשר: ר"מ ומשפיע של כל שיעור, ולכל השיעורים — ראש הישיבה, המשגיח הראשי ומנהל הלימודים
-function _staffFromContacts() {
-  var v = hrCfgLocalGet('contacts'), groups = (v && v.groups) || [], out = [], byRole = {};
-  groups.forEach(function (g) { (g.rows || []).forEach(function (r) { if (r.role && r.name) byRole[r.role] = byRole[r.role] || r.name; }); });
-  var real = function (n) { return byRole[n] || n; }; // שם שהוא שם של תפקיד — שמו של בעל התפקיד
-  function add(name, role, cls) {
-    name = real(name);
-    var cur = out.filter(function (x) { return x.name === name; })[0];
-    if (cur) { if (!cls.length) cur.cls = []; else if (cur.cls.length) cls.forEach(function (c) { if (cur.cls.indexOf(c) < 0) cur.cls.push(c); }); return; }
-    out.push({ id: _uid(), name: name, role: role, cls: cls.slice() });
-  }
-  groups.forEach(function (g) {
-    (g.rows || []).forEach(function (r) {
-      if (!r.name) return;
-      var role = String(r.role || '');
-      if (/ראש הישיבה/.test(role) || /משגיח ראשי/.test(role) || /מנהל הלימודים/.test(role)) add(r.name, role, []);
-    });
-  });
+// הרבנים — תמיד מאנשי הקשר, כמו בשער (meetStaff): רבני השיעור — ר"מ ושני המשפיעים (n3 · n4 · n5) של כל שיעור,
+// והנהלת הישיבה — ראש הישיבה, המשגיח הראשי ומנהל הלימודים; שם שהוא שם של תפקיד — בעל התפקיד, והמזהה — השם.
+var MT_MGMT = [/ראש הישיבה/, /משגיח ראשי/, /מנהל הלימודים/];
+function meetingStaff() {
+  var v = hrCfgLocalGet('contacts'), groups = (v && v.groups) || [], byRole = {}, out = [];
+  groups.forEach(function (g) { (g.rows || []).forEach(function (r) { if (r.role && r.name && !byRole[r.role]) byRole[r.role] = r.name; }); });
+  function real(n) { return byRole[n] && byRole[n] !== n ? byRole[n] : n; }
+  function get(name) { var x = out.filter(function (y) { return y.name === name; })[0]; if (!x) { x = { id: name, name: name, roles: {}, mgmt: '' }; out.push(x); } return x; }
   groups.forEach(function (g) {
     if (MT_CLS.indexOf(g.cls) < 0) return;
-    (g.rows || []).forEach(function (r) { if ((r.rp === 'n3' || r.rp === 'n4') && r.name) add(r.name, String(r.role || ''), [g.cls]); });
+    (g.rows || []).forEach(function (r) { if (r.name && ['n3', 'n4', 'n5'].indexOf(r.rp) >= 0) { var x = get(real(String(r.name))); if (!x.roles[g.cls]) x.roles[g.cls] = String(r.role || ''); } });
+  });
+  groups.forEach(function (g) {
+    (g.rows || []).forEach(function (r) { var role = String(r.role || ''); if (r.name && MT_MGMT.some(function (re) { return re.test(role); })) { var x = get(real(String(r.name))); if (!x.mgmt) x.mgmt = role; } });
   });
   return out;
 }
@@ -73,8 +66,8 @@ function _phone() {
 }
 function meetingCfg() {
   var v = hrCfgLocalGet(MT_KEY);
-  if (v && Array.isArray(v.staff)) return v;
-  return { date: '', from: '17:00', to: '21:00', slot: 10, open: false, phone: _phone(), staff: _staffFromContacts() };
+  if (v && v.date !== undefined) return v;
+  return { date: '', from: '17:00', to: '21:00', slot: 10, open: false, phone: _phone(), blocked: [] };
 }
 
 // ── התגובות — השיבוצים, לפי רב ושעה ──
@@ -102,7 +95,7 @@ function _respPaint() {
   if (!box) return;
   var cfg = meetingCfg(), rows = (S._mtRows || []).filter(function (x) { return !cfg.date || x.meet_date === cfg.date; });
   var edit = canEdit('meeting');
-  var staff = cfg.staff.slice();
+  var staff = meetingStaff().map(function (s) { return { id: s.id, name: s.name, role: s.mgmt || '' }; });
   rows.forEach(function (x) { if (!staff.some(function (s) { return s.id === x.staff_id; })) staff.push({ id: x.staff_id, name: x.staff_name, role: '' }); });
   var html = '<div class="mt-head">' + esc(cfg.date ? hrDayHebFmt(cfg.date) : '') + ' · ' + rows.length + ' שיבוצים</div>';
   staff.forEach(function (s) {
@@ -127,15 +120,20 @@ async function meetingDelete(el) {
 }
 
 // ── הגדרות האסיפה — נשמרות מיד (data-autosave) ──
-function _staffRow(s) {
-  return '<div class="en-frow mt-srow" data-drag="mts" data-sid="' + esc(s.id) + '">' +
-    '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
-    '<div class="en-fbody"><div class="mt-sline"><input data-k="name" aria-label="שם" placeholder="שם הרב" value="' + esc(s.name || '') + '">' +
-      '<input data-k="role" aria-label="תפקיד" placeholder="תפקיד" value="' + esc(s.role || '') + '"></div>' +
-      '<div class="mt-cls">' + MT_CLS.map(function (c) {
-        return '<label class="chk-inline"><input type="checkbox" data-k="cls" value="' + c + '"' + ((s.cls || []).indexOf(c) >= 0 ? ' checked' : '') + '>' + esc(HR_CLS_NAME[c]) + '</label>';
-      }).join('') + '<span class="mt-hint">בלי סימון — לכל השיעורים</span></div></div>' +
+function _blockRow(b) {
+  return '<div class="mt-brow" data-blk><label>משעה<input type="time" data-k="from" value="' + esc(b.from || '') + '"></label>' +
+    '<label>עד שעה<input type="time" data-k="to" value="' + esc(b.to || '') + '"></label>' +
     '<button data-act="row-remove" class="row-del-btn" aria-label="הסרה">' + icon('close') + '</button></div>';
+}
+// הרבנים לקריאה בלבד — מאנשי הקשר; עריכה — בהגדרות הדוחות
+function _staffListHTML() {
+  var all = meetingStaff();
+  var html = MT_CLS.map(function (c) {
+    var l = all.filter(function (s) { return s.roles[c]; });
+    return '<div class="mt-sgrp"><b>' + esc(HR_CLS_NAME[c]) + '</b>' + l.map(function (s) { return '<span>' + esc(s.name) + ' <i>' + esc(s.roles[c]) + '</i></span>'; }).join('') + '</div>';
+  }).join('');
+  var m = all.filter(function (s) { return s.mgmt; });
+  return html + '<div class="mt-sgrp"><b>הנהלת הישיבה</b>' + m.map(function (s) { return '<span>' + esc(s.name) + ' <i>' + esc(s.mgmt) + '</i></span>'; }).join('') + '</div>';
 }
 async function meetingSettings() {
   if (!canEdit('meeting')) { shell.showDenied(); return; }
@@ -157,36 +155,29 @@ function _settingsPaint(cfg) {
       '<label>עד שעה<input type="time" id="mt-to" value="' + esc(cfg.to || '21:00') + '"></label>' +
       '<label>דקות לפגישה<input type="number" id="mt-slot" min="5" max="60" step="5" value="' + (cfg.slot || 10) + '"></label></div>' +
     '<label class="mt-ph">טלפון המזכירות (בהודעה כשהשיבוץ סגור)<input type="tel" id="mt-phone" dir="ltr" value="' + esc(cfg.phone || '') + '"></label>' +
-    '<div class="ss-t">הרבנים</div>' +
-    '<div class="en-fields" id="mt-staff">' + (cfg.staff || []).map(_staffRow).join('') + '</div>' +
-    '<div class="in-adds"><button class="add-dashed-btn" data-act="mt-staff-add">+ הוספת רב</button>' +
-      '<button class="add-dashed-btn" data-act="mt-staff-fill">מילוי מאנשי הקשר</button></div></div>';
+    '<div class="ss-t">שעות תפוסות</div>' +
+    '<div class="mt-blocks" id="mt-blocks">' + (cfg.blocked || []).map(_blockRow).join('') + '</div>' +
+    '<div class="in-adds"><button class="add-dashed-btn" data-act="mt-block-add">+ הוספת שעות תפוסות</button></div>' +
+    '<div class="ss-t">הרבנים — מאנשי הקשר</div>' +
+    '<div class="mt-staff-ro">' + _staffListHTML() + '</div></div>';
   var bd = document.getElementById('mt-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות האסיפה — שיבוץ לאסיפת הורים', html, '', 'settings');
 }
-function meetingStaffAdd() {
-  var box = document.getElementById('mt-staff'); if (!box) return;
-  box.insertAdjacentHTML('beforeend', _staffRow({ id: _uid(), name: '', role: '', cls: [] }));
-}
-async function meetingStaffFill() {
-  if (!(await ask('מילוי מאנשי הקשר', 'רשימת הרבנים תוחלף ברבנים מאנשי הקשר: ר״מ ומשפיע לכל שיעור, וראש הישיבה, המשגיח הראשי ומנהל הלימודים לכל השיעורים.', 'מילוי', 'meeting'))) return;
-  var cfg = meetingCfg(); cfg.staff = _staffFromContacts();
-  _settingsPaint(cfg); meetingSave();
+function meetingBlockAdd() {
+  var box = document.getElementById('mt-blocks'); if (!box) return;
+  box.insertAdjacentHTML('beforeend', _blockRow({}));
 }
 function meetingSave() {
   var v = function (id) { return (document.getElementById(id) || { value: '' }).value; };
-  var staff = Array.prototype.map.call(document.querySelectorAll('#mt-staff > [data-sid]'), function (row) {
-    return { id: row.getAttribute('data-sid'), name: row.querySelector('[data-k="name"]').value.trim(), role: row.querySelector('[data-k="role"]').value.trim(),
-             cls: Array.prototype.map.call(row.querySelectorAll('[data-k="cls"]:checked'), function (x) { return x.value; }) };
-  }).filter(function (s) { return s.name; });
+  var blocked = Array.prototype.map.call(document.querySelectorAll('#mt-blocks > [data-blk]'), function (row) {
+    return { from: row.querySelector('[data-k="from"]').value, to: row.querySelector('[data-k="to"]').value };
+  }).filter(function (b) { return b.from && b.to; });
   var next = { date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
-               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), staff: staff };
+               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked };
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
   return p;
 }
-dragDef('mts', function () { return meetingSave(); });
 
-export { meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingStaffAdd,
-         meetingStaffFill, meetingView };
+export { meetingBlockAdd, meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView };
