@@ -451,14 +451,19 @@ function hrRenderTodaySessions(st) {
   var filterIso=selIso||logIso;
   var isToday=filterIso===dayToday();
   var isLogical=filterIso===logIso;
-  // במבחנים — כל מבחני החודש העברי של התאריך, מהחדש; בסדרים ובשינה — היום.
+  // במבחנים — כל מבחני החודש העברי של התאריך, לפי הלימוד ואחריו השיעור; בסדרים ובשינה — היום.
   var daySess, title;
   if(st.exam){
     var fh=_hcH(dayNoon(filterIso)), curH=_hcH(new Date());
     daySess=data.filter(function(r){
       if(r.deleted||!r.session_date) return false;
       var h=_hcH(dayNoon(r.session_date)); return h.hy===fh.hy&&h.mi===fh.mi;
-    }).sort(function(a,b){return sortCompare(b.session_date,a.session_date)||sortCompare(a.session,b.session);});
+    }).sort(function(a,b){
+      // לפי הלימוד (בסדר הגיליון), ואחריו השיעור (א׳ ⟵ ב׳ ⟵ ג׳), המבחן של הקובייה לפני מבחן נוסף, ואז התאריך
+      var ia=HR_EXAM_SUBJECTS.indexOf(a.session), ib=HR_EXAM_SUBJECTS.indexOf(b.session), co='abgz';
+      return ((ia<0?99:ia)-(ib<0?99:ib))||(co.indexOf(a.cls||'z')-co.indexOf(b.cls||'z'))||((a.extra?1:0)-(b.extra?1:0))||
+        sortCompare(a.session_date,b.session_date)||sortCompare(a.session,b.session);
+    });
     title=st.many+' שמולאו '+((fh.hy===curH.hy&&fh.mi===curH.mi)?'החודש':'ב'+(_hcMN(fh.hy)[fh.mi]||''));
   } else {
     daySess=hrSortDayRecs(data.filter(function(r){return !r.deleted&&r.session_date===filterIso;}),

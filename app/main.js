@@ -34,7 +34,7 @@ import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile,
          enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear, intakeOpen,
          intakePass, intakeResponses, intakeSave, intakeSettings, intakeTrack, intakeTrackAdd, intakeUpload, intakeView, intakeYear } from './screens/intake.js';
-import { meetingBlockAdd, meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings,
+import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings,
          meetingView } from './screens/meeting.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
@@ -547,6 +547,7 @@ var DOM_ACTIONS = {
   'mt-settings':          function () { return meetingSettings(); },
   'mt-save':              function () { return meetingSave(); },
   'mt-block-add':         function () { meetingBlockAdd(); },
+  'mt-flyer-del':         function () { return meetingFlyerDel(); },
   'mt-del':               function (el) { return meetingDelete(el); },
   'users-render':         function () { return renderUsersList(); },
   'hc-toggle':            function () { _hcToggle(); },
@@ -617,7 +618,7 @@ var HR_WRITE_MODULE = {
   'en-save': 'enroll', 'en-field-add': 'enroll', 'en-track-add': 'enroll', 'en-del': 'enroll', 'en-add-student': 'enroll',
   'in-save': 'intake', 'in-field-add': 'intake', 'in-item-add': 'intake', 'in-item-doc-clear': 'intake',
   'in-track-add': 'intake', 'in-del': 'intake', 'in-add-student': 'intake',
-  'mt-save': 'meeting', 'mt-block-add': 'meeting', 'mt-del': 'meeting'
+  'mt-save': 'meeting', 'mt-block-add': 'meeting', 'mt-flyer-del': 'meeting', 'mt-del': 'meeting'
 };
 Object.keys(HR_STREAMS).forEach(function (k) {
   HR_STREAM_WRITES.forEach(function (a) { HR_WRITE_MODULE[HR_STREAMS[k].p + '-' + a] = k; });
@@ -701,6 +702,7 @@ document.addEventListener('change', function (e) {
   var c = el && el.dataset ? el.dataset.chg : null, ex = HR_STREAMS.exams;
   if (c === 'en-img') { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollImgUpload(el); return; }
   if (el && el.hasAttribute && el.hasAttribute('data-en-key')) { if (!canEdit('enroll')) { _hrViewOnlyRevert(el); return; } enrollTrack(el); return; }
+  if (c === 'mt-flyer-up') { if (!canEdit('meeting')) { _hrViewOnlyRevert(el); return; } meetingFlyerUpload(el); return; }
   if (c === 'in-doc-new' || c === 'in-doc-up' || c === 'in-item-doc') { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeUpload(el); return; }
   if (el && el.hasAttribute && el.hasAttribute('data-in-key')) { if (!canEdit('intake')) { _hrViewOnlyRevert(el); return; } intakeTrack(el); return; }
   _hrAutosave(el);

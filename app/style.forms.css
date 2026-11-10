@@ -173,3 +173,5 @@
 .mt-sgrp i{font-style:normal;color:var(--text-3);font-size:var(--fs-2)}
 .mt-open{font-weight:700}
 .chk-inline{display:inline-flex;align-items:center;gap:var(--sp-3);cursor:pointer}
+.mt-flyer{display:flex;flex-wrap:wrap;gap:var(--sp-4);align-items:center}
+.mt-flyer img{width:140px;height:auto;border-radius:var(--r-3);border:1px solid var(--border)}

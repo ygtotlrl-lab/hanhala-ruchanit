@@ -3,7 +3,7 @@
 // ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · שעות תפוסות; הרבנים — תמיד מאנשי הקשר.
 import { ask, esc, openModal, toast } from '../../core/ui.js';
 import { MSG_SAVED } from '../../core/util.js';
-import { HR_CLS_NAME } from '../constants.js';
+import { HR_CLS_NAME, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
@@ -154,6 +154,12 @@ function _settingsPaint(cfg) {
       '<label>משעה<input type="time" id="mt-from" value="' + esc(cfg.from || '17:00') + '"></label>' +
       '<label>עד שעה<input type="time" id="mt-to" value="' + esc(cfg.to || '21:00') + '"></label>' +
       '<label>דקות לפגישה<input type="number" id="mt-slot" min="5" max="60" step="5" value="' + (cfg.slot || 10) + '"></label></div>' +
+    '<div class="ss-t">מודעת האסיפה</div>' +
+    '<input type="hidden" id="mt-flyer" value="' + esc(cfg.flyer || '') + '">' +
+    '<div class="mt-flyer">' + (cfg.flyer ? '<img src="' + esc(cfg.flyer) + '" alt="מודעת האסיפה">' : '') +
+      '<label class="add-dashed-btn">' + (cfg.flyer ? 'החלפת המודעה' : '+ העלאת מודעה') +
+        '<input type="file" accept="image/*" class="hidden" data-chg="mt-flyer-up"></label>' +
+      (cfg.flyer ? '<button class="add-dashed-btn" data-act="mt-flyer-del">הסרת המודעה</button>' : '') + '</div>' +
     '<label class="mt-ph">טלפון המזכירות (בהודעה כשהשיבוץ סגור)<input type="tel" id="mt-phone" dir="ltr" value="' + esc(cfg.phone || '') + '"></label>' +
     '<div class="ss-t">שעות תפוסות</div>' +
     '<div class="mt-blocks" id="mt-blocks">' + (cfg.blocked || []).map(_blockRow).join('') + '</div>' +
@@ -163,6 +169,22 @@ function _settingsPaint(cfg) {
   var bd = document.getElementById('mt-set');
   if (bd) bd.outerHTML = html;
   else openModal('הגדרות האסיפה — שיבוץ לאסיפת הורים', html, '', 'settings');
+}
+// המודעה בראש דף השיבוץ — תמונה בדלי הציבורי hr-public, תחת meeting/, בנתיב חדש בכל העלאה; מחליפים בכל שנה
+async function meetingFlyerUpload(input) {
+  var f = input.files && input.files[0]; input.value = '';
+  if (!f) return;
+  if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
+  var ext = (f.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'png';
+  var path = 'meeting/' + Date.now().toString(36) + '.' + ext;
+  var res = await S.SB.storage.from('hr-public').upload(path, f, { contentType: f.type || undefined, upsert: false });
+  if (!res || res.error) { toast(MSG_UPLOAD_FAIL + ((res && res.error && res.error.message) || ''), null, 'bad'); return; }
+  var el = document.getElementById('mt-flyer'); if (el) el.value = S.SB.storage.from('hr-public').getPublicUrl(path).data.publicUrl;
+  await meetingSave(); _settingsPaint(meetingCfg());
+}
+async function meetingFlyerDel() {
+  var el = document.getElementById('mt-flyer'); if (el) el.value = '';
+  await meetingSave(); _settingsPaint(meetingCfg());
 }
 function meetingBlockAdd() {
   var box = document.getElementById('mt-blocks'); if (!box) return;
@@ -174,10 +196,10 @@ function meetingSave() {
     return { from: row.querySelector('[data-k="from"]').value, to: row.querySelector('[data-k="to"]').value };
   }).filter(function (b) { return b.from && b.to; });
   var next = { date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
-               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked };
+               open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer') };
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
   return p;
 }
 
-export { meetingBlockAdd, meetingCopy, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView };
+export { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingOpen, meetingPass, meetingResponses, meetingSave, meetingSettings, meetingView };
