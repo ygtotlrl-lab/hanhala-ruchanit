@@ -150,15 +150,15 @@ function enrollAddStudent(el) {
 
 // ── הגדרות הטופס — נשמרות מיד (data-autosave) ──
 // ── הטקסטים הקבועים בדף (form-texts.js) והודעת הפרטיות — נערכים כאן, בשלושת הטפסים ──
-// הטקסט נשמר רק כשהשתנה, במפתח הנוסח המקורי; ריק — חזרה למקורי
+// נשמר רק טקסט ששונה, במפתח הנוסח המקורי (texts)
 function textsHTML(form, cfg) {
   var list = self.FormTexts.list(form), tx = cfg.texts || {};
-  var changed = list.filter(function (k) { return tx[k] && tx[k] !== k; }).length;
-  return '<details class="en-texts"><summary class="ss-t">הטקסטים בדף' + (changed ? ' · שונו ' + changed : '') + '</summary>' +
+  // שדה לכל טקסט, ובו הטקסט שבדף — עורכים בו, והדף משתנה
+  return '<details class="en-texts"><summary class="ss-t">הטקסטים בדף</summary>' +
     '<div class="en-tx">' + list.map(function (k) {
-      var v = tx[k] || k, long = k.length > 60;
-      return '<label class="en-txr' + (v !== k ? ' on' : '') + '"><span>' + esc(k) + '</span>' +
-        (long ? '<textarea rows="2" data-tx="' + esc(k) + '">' + esc(v) + '</textarea>' : '<input data-tx="' + esc(k) + '" value="' + esc(v) + '">') + '</label>';
+      var v = tx[k] || k;
+      return k.length > 60 ? '<textarea class="en-txr" rows="2" aria-label="טקסט בדף" data-tx="' + esc(k) + '">' + esc(v) + '</textarea>'
+        : '<input class="en-txr" aria-label="טקסט בדף" data-tx="' + esc(k) + '" value="' + esc(v) + '">';
     }).join('') + '</div></details>';
 }
 function textsRead(box) {
