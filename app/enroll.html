@@ -210,7 +210,7 @@ textarea.in{min-height:84px;resize:vertical}
     return '<div class="f" data-f="'+f.id+'">'+head+body+'<span class="msg">שדה חובה</span></div>';
   }
   function render(){
-    // «הטופס פתוח למילוי» כבוי בהגדרות — הודעה במקום הטופס; בלי הסימון (תצורה ישנה) — פתוח
+    // «פתוח לרישום» / «פתוח לחתימה» כבוי בהגדרות — הודעה במקום הטופס; בלי הסימון (תצורה ישנה) — פתוח
     if(CFG.open===false){$('main').innerHTML='<div class="msgc">הטופס סגור כעת.</div>';return;}
     var html=carousel(CFG.images||[],CFG.interval)+
       '<a class="about" href="'+ABOUT_URL+'" target="_blank" rel="noopener">אודות הישיבה - חב"דפדיה'+IC.ext+'</a>'+

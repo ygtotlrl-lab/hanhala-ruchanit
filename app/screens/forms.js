@@ -11,9 +11,9 @@ import { gateCall } from '../gate.js';
 import { contactsUrl } from './contacts.js';
 
 var FORMS = [
-  { k: 'en', mod: 'enroll', key: 'enroll_form', file: 'enroll.html', title: 'טופס רישום', ico: 'enroll' },
-  { k: 'in', mod: 'intake', key: 'intake_form', file: 'intake.html', title: 'קבלה לישיבה', ico: 'intake' },
-  { k: 'mt', mod: 'meeting', key: 'meeting_cfg', file: 'meeting.html', title: 'אסיפת הורים', ico: 'meeting' }
+  { k: 'en', mod: 'enroll', key: 'enroll_form', file: 'enroll.html', title: 'טופס רישום', ico: 'enroll', on: 'פתוח לרישום' },
+  { k: 'in', mod: 'intake', key: 'intake_form', file: 'intake.html', title: 'קבלה לישיבה', ico: 'intake', on: 'פתוח לחתימה' },
+  { k: 'mt', mod: 'meeting', key: 'meeting_cfg', file: 'meeting.html', title: 'אסיפת הורים', ico: 'meeting', on: 'פתוח לשיבוץ' }
 ];
 function formUrl(file) { return contactsUrl().replace(/contacts\.html$/, file); }
 
@@ -87,7 +87,7 @@ function _cardHTML(f, cnt) {
   var s = fcSummary(f.k);
   return '<div class="fm-card"><div class="fm-head"><span class="fc-ic">' + icon(f.ico) + '</span>' +
       '<span class="fc-h"><b>' + esc(f.title) + '</b><small id="fm-sub-' + f.k + '">' + esc(cnt || s.line) + '</small></span>' +
-      '<span class="fm-st' + (s.open ? ' on' : '') + '" id="fm-st-' + f.k + '">' + (s.open ? (f.k === 'mt' ? 'פתוח לשיבוץ' : 'פתוח') : 'סגור') + '</span></div>' +
+      '<span class="fm-st' + (s.open ? ' on' : '') + '" id="fm-st-' + f.k + '">' + (s.open ? f.on : 'סגור') + '</span></div>' +
     '<div class="fm-acts"><button class="btn" data-act="' + f.k + '-resp">' + icon('table') + 'התגובות</button>' +
       '<button class="btn out" data-act="' + f.k + '-view">' + icon('watch') + 'צפייה</button>' +
       '<button class="btn out" data-act="' + f.k + '-copy">' + icon('copy') + 'קישור</button></div></div>';
@@ -100,7 +100,7 @@ async function renderForms() {
   // ההגדרות — מהענן, כדי שמצב הטופס יהיה המעודכן ולא העותק שבמכשיר
   _fmLoad(function (f) {
     var st = document.querySelector('#fm-st-' + f.k), sm = fcSummary(f.k);
-    if (st) { st.classList.toggle('on', sm.open); st.textContent = sm.open ? (f.k === 'mt' ? 'פתוח לשיבוץ' : 'פתוח') : 'סגור'; }
+    if (st) { st.classList.toggle('on', sm.open); st.textContent = sm.open ? f.on : 'סגור'; }
     var sub = document.getElementById('fm-sub-' + f.k);
     if (sub && !sub.dataset.n) sub.textContent = sm.line;
   });
@@ -141,9 +141,11 @@ function renderFormsSettings(again) {
   box.innerHTML = FORMS.map(function (f) {
     var s = fcSummary(f.k);
     return '<button class="fm-row" data-act="' + f.k + '-settings"><span class="fc-ic">' + icon(f.ico) + '</span>' +
-      '<span class="fc-h"><b>' + esc(f.title) + '</b><small>' + (s.open ? 'פתוח' : 'סגור') + ' · ' + esc(s.line) + '</small></span>' +
+      '<span class="fc-h"><b>' + esc(f.title) + '</b><small>' + (s.open ? f.on : 'סגור') + ' · ' + esc(s.line) + '</small></span>' +
       '<span class="fc-chev">' + icon('prev') + '</span></button>';
   }).join('');
 }
 
-export { fcCardHTML, fcChipAdd, fcChipDel, fcToggle, fcOpenId, fcStatusHTML, fcSw, formUrl, renderForms, renderFormsSettings, screenFormsHTML };
+// המצב בשם המלא של כל טופס — פתוח לרישום · פתוח לחתימה · פתוח לשיבוץ
+function fcOnLabel(k) { return FORMS.filter(function (f) { return f.k === k; })[0].on; }
+export { fcOnLabel, fcCardHTML, fcChipAdd, fcChipDel, fcToggle, fcOpenId, fcStatusHTML, fcSw, formUrl, renderForms, renderFormsSettings, screenFormsHTML };

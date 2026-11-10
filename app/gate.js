@@ -1,5 +1,5 @@
 // app/gate.js — שער השרת (פונקציית Edge‏ hr-gate, שהקוד שלה ב-Supabase): הכניסה, הקריאות, והקבצים.
-// האסימון נשמר במכשיר למשתמש שנכנס (30 יום), ובלעדיו — הזנת הסיסמה פעם אחת, עם רשת.
+// האסימון נשמר במכשיר לכל משתמש (30 יום), ומתחדש בשקט מהסיסמה שהוזנה בכניסה; הזנת סיסמה בתגובות — רק כשאין ממה לחדש (רענון מהבאנר שאחריו פג האסימון).
 // הקבצים — במאגר הפרטי hanhala-ruchanit-files, רק דרך השער: העלאה בגוף הבקשה, ופתיחה בקישור חתום שהשער מגיש.
 import { toast } from '../core/ui.js';
 import { lsGet, lsRemove, lsSet } from '../core/storage.js';
@@ -10,10 +10,17 @@ var GATE_KEY = 'hr_gate';
 var MSG_GATE_RELOGIN = 'הקבצים דורשים כניסה מקוונת — צא והיכנס שוב, עם רשת';
 
 function _gateUrl() { return self.APP.supabase.url + '/functions/v1/hr-gate'; }
-function _gateTok() {
+// האסימונים — לכל משתמש בנפרד, במפת uid ⟵ {token, exp}; החלפת משתמש אינה מוחקת את האסימון של האחר
+function _gateMap() {
   var g = null;
   try { g = JSON.parse(lsGet(GATE_KEY) || 'null'); } catch (e) { g = null; }
-  return (g && AUTH.user && String(g.uid) === String(AUTH.user.client_id) && g.exp > Date.now()) ? g.token : null;
+  if (g && g.token) { var o = {}; o[String(g.uid)] = { token: g.token, exp: g.exp }; return o; } // הצורה הישנה — אסימון אחד
+  return (g && typeof g === 'object') ? g : {};
+}
+function _uid() { return AUTH.user ? String(AUTH.user.client_id) : ''; }
+function _gateTok() {
+  var e = AUTH.user ? _gateMap()[_uid()] : null;
+  return (e && e.exp > Date.now()) ? e.token : null;
 }
 function _hdrs(x) { var k = self.APP.supabase.key; return Object.assign({ apikey: k, Authorization: 'Bearer ' + k }, x || {}); }
 async function _gatePost(body) {
@@ -23,29 +30,49 @@ async function _gatePost(body) {
   return { status: r.status, body: j || {} };
 }
 // בכל כניסה — ברקע, בלי להמתין: כשל כאן אינו נוגע בכניסה.
-// כניסה בלי רשת (או שהשער לא ענה) — הפרטים נשמרים בזיכרון בלבד, לא בדיסק, עד שהשער עונה: בקריאה הבאה לשער או כשהרשת חוזרת;
-// כך התגובות אינן מבקשות שוב את הסיסמה שהוזנה בכניסה לאפליקציה.
-var _later = null;
+// הסיסמה שהוזנה בכניסה נשמרת בזיכרון בלבד (לא בדיסק), למשך הכניסה: כשאין אסימון, או שהשער דחה אותו, או שהרשת חזרה —
+// השער מתחבר מחדש בשקט, והתגובות אינן מבקשות שוב את הסיסמה.
+var _cred = null;
+function _credOk() { return !!(_cred && AUTH.user && AUTH.user.username === _cred.u); }
 async function gateLogin(username, pass) {
+  _cred = { u: username, p: pass };
   try {
     var r = await _gatePost({ action: 'login', username: username, password: pass });
-    _later = null;
-    if (r.status !== 200 || !r.body.token) return false;
-    lsSet(GATE_KEY, JSON.stringify({ uid: AUTH.user && AUTH.user.client_id, token: r.body.token, exp: r.body.exp }));
+    if (r.status !== 200 || !r.body.token) { if (r.status === 401) _cred = null; return false; }
+    var m = _gateMap(); m[_uid()] = { token: r.body.token, exp: r.body.exp };
+    lsSet(GATE_KEY, JSON.stringify(m));
     return true;
-  } catch (e) { _later = { u: username, p: pass }; console.warn('[gate] הכניסה לשער נכשלה — תנוסה שוב כשתהיה רשת', e); return false; }
+  } catch (e) { console.warn('[gate] הכניסה לשער נכשלה — תנוסה שוב כשתהיה רשת', e); return false; }
 }
-self.addEventListener('online', function () { if (_later && AUTH.user && AUTH.user.username === _later.u) gateLogin(_later.u, _later.p); });
-function gateForget() { lsRemove(GATE_KEY); }
+self.addEventListener('online', function () { if (_credOk() && !_gateTok()) gateLogin(_cred.u, _cred.p); });
+// יציאה — האסימון של המשתמש היוצא והסיסמה שבזיכרון יורדים
+function gateForget() {
+  var m = _gateMap(); delete m[_uid()];
+  lsSet(GATE_KEY, JSON.stringify(m));
+  _cred = null;
+}
+function _drop() { var m = _gateMap(); delete m[_uid()]; lsSet(GATE_KEY, JSON.stringify(m)); }
+// אסימון תקף, ואם אין — חיבור שקט עם הסיסמה שבזיכרון
+async function _tokEnsure(fresh) {
+  if (fresh) _drop();
+  var t = _gateTok();
+  if (!t && _credOk()) { await gateLogin(_cred.u, _cred.p); t = _gateTok(); }
+  return t;
+}
 // mod — המודול שההרשאה שלו נבדקת, והטבלה שהשער קורא (enroll ⟵ hr_enroll · intake ⟵ hr_intake)
 async function gateCall(mod, action, body) {
-  var t = _gateTok();
-  if (!t && _later && AUTH.user && AUTH.user.username === _later.u) { await gateLogin(_later.u, _later.p); t = _gateTok(); }
+  var t = await _tokEnsure(false);
   if (!t) return { login: true };
   var r;
   try { r = await _gatePost(Object.assign({ action: action, token: t, mod: mod }, body || {})); }
   catch (e) { return { net: true }; }
-  if (r.status === 401) { gateForget(); return { login: true }; }
+  // השער דחה את האסימון — חיבור מחדש בשקט, וניסיון אחד נוסף
+  if (r.status === 401) {
+    t = await _tokEnsure(true);
+    if (!t) return { login: true };
+    try { r = await _gatePost(Object.assign({ action: action, token: t, mod: mod }, body || {})); } catch (e) { return { net: true }; }
+    if (r.status === 401) { _drop(); return { login: true }; }
+  }
   if (r.status === 403) return { perm: true };
   if (r.status !== 200) return { error: true };
   return r.body;
@@ -58,12 +85,14 @@ function gateExt(file) { return (String(file && file.name || '').split('.').pop(
 // העלאה לנתיב חדש (exams/ · files/) — מחזירה את הנתיב, או null אחרי הודעה
 async function gatePut(path, file) {
   if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return null; }
-  var t = _gateTok();
+  var t = await _tokEnsure(false);
   if (!t) { toast(MSG_GATE_RELOGIN, null, 'warn'); return null; }
   try {
-    var r = await fetch(_gateUrl() + '?a=put&p=' + encodeURIComponent(path), {
-      method: 'POST', headers: _hdrs({ 'Content-Type': file.type || 'application/octet-stream', 'x-gate-token': t }), body: file });
-    if (r.status === 401) { gateForget(); toast(MSG_GATE_RELOGIN, null, 'warn'); return null; }
+    var put = function (tk) { return fetch(_gateUrl() + '?a=put&p=' + encodeURIComponent(path), {
+      method: 'POST', headers: _hdrs({ 'Content-Type': file.type || 'application/octet-stream', 'x-gate-token': tk }), body: file }); };
+    var r = await put(t);
+    if (r.status === 401) { t = await _tokEnsure(true); r = t ? await put(t) : r; }
+    if (r.status === 401) { _drop(); toast(MSG_GATE_RELOGIN, null, 'warn'); return null; }
     if (r.status === 403) { toast(MSG_UPLOAD_FAIL + 'אין הרשאה', null, 'bad'); return null; }
     if (!r.ok) throw new Error(String(r.status));
     return path;

@@ -235,7 +235,7 @@ textarea.in{min-height:84px;resize:vertical}
     }catch(e){console.warn('[intake] צפייה נכשלה',e);b.innerHTML='<div class="ld">פתיחת המסמך נכשלה</div>';}
   }
   function render(){
-    // «הטופס פתוח למילוי» כבוי בהגדרות — הודעה במקום הטופס; בלי הסימון (תצורה ישנה) — פתוח
+    // «פתוח לרישום» / «פתוח לחתימה» כבוי בהגדרות — הודעה במקום הטופס; בלי הסימון (תצורה ישנה) — פתוח
     if(CFG.open===false){$('main').innerHTML='<div class="msgc">הטופס סגור כעת.</div>';return;}
     var html='<p class="req-note">השדות המסומנים ב-* הם חובה.</p>';
     // מספר הזהות — ראשון, ושאר הטופס נעול עד שממלאים אותו (form-gate.js)

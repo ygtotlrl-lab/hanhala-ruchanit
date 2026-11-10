@@ -355,3 +355,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 
 /* מצבה ושאר כותרות המסכים בטלפון — כפתורי האייקון יורדים לשורה משלהם מתחת לכותרת */
 @media (max-width:639px){.ptitle .gap:not(:last-child){flex-basis:100%;height:0}}
+/* מצבת התלמידים — שני אייקונים בלבד בכותרת, ולכן שורה אחת גם בטלפון */
+.ptitle.pt-1row{flex-wrap:nowrap}
+.ptitle.pt-1row>span:not(.gap){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:639px){.ptitle.pt-1row .gap:not(:last-child){flex:1;flex-basis:auto;height:auto}}

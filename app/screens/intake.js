@@ -10,7 +10,7 @@ import { icon } from '../icons.js';
 import { respListHTML, respScreenHTML, respSections } from './resp.js';
 import { contactsUrl } from './contacts.js';
 import { enrollFieldRow, fcRemember, fcSyncRows, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
-import { fcCardHTML, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
+import { fcCardHTML, fcOnLabel, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
 import { gateCall, gateLogin, gateOpen } from '../gate.js';
 import { openAddStudent } from './students.js';
 
@@ -182,7 +182,7 @@ function _settingsPaint(cfg) {
   _fcOpenI = old ? Array.prototype.map.call(old.querySelectorAll('.fc-item.open'), function (r) { return r.getAttribute('data-iid'); }) : [];
   var items = cfg.items || [], frz = items.filter(function (i) { return i.frozen; }).length;
   var html = '<div class="en-cfg fc-page" id="in-set" data-autosave="in-save">' +
-    fcStatusHTML({ p: 'in', id: 'in-open', on: cfg.open !== false, label: 'הטופס פתוח למילוי', url: intakeUrl() }) +
+    fcStatusHTML({ p: 'in', id: 'in-open', on: cfg.open !== false, label: fcOnLabel('in'), url: intakeUrl() }) +
     fcCardHTML({ id: 'fc-in-fields', ico: 'fields', title: 'פרטי התלמיד', open: was === 'fc-in-fields',
       sum: cfg.fields.filter(function (f) { return f.type !== 'section'; }).length + ' שדות',
       body: '<div class="en-fields fc-fields" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +

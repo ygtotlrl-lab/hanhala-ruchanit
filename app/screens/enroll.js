@@ -12,7 +12,7 @@ import { contactsUrl } from './contacts.js';
 import { openAddStudent } from './students.js';
 import '../form-texts.js';
 import { respListHTML, respScreenHTML, respSections } from './resp.js';
-import { fcCardHTML, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
+import { fcCardHTML, fcOnLabel, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
 
 var ENROLL_PUBLIC = 'hr-public';
 // השדות שהעריכה שלהם פתוחה — נשארים פתוחים כשהדף מצויר מחדש (שינוי סוג)
@@ -223,7 +223,7 @@ function _settingsPaint(cfg) {
   fcRemember(old);
   var fs = cfg.fields.filter(function (f) { return f.type !== 'section'; });
   var html = '<div class="en-cfg fc-page" id="en-set" data-autosave="en-save">' +
-    fcStatusHTML({ p: 'en', id: 'en-open', on: cfg.open !== false, label: 'הטופס פתוח למילוי', url: enrollUrl() }) +
+    fcStatusHTML({ p: 'en', id: 'en-open', on: cfg.open !== false, label: fcOnLabel('en'), url: enrollUrl() }) +
     fcCardHTML({ id: 'fc-en-imgs', ico: 'image', title: 'המצגת', open: was === 'fc-en-imgs',
       sum: (cfg.images || []).length + ' תמונות · כל ' + (cfg.interval || 4) + ' שניות',
       body: '<div class="en-imgs" id="en-imgs">' + (cfg.images || []).map(_imgRow).join('') +
