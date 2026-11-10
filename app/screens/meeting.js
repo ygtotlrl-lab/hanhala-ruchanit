@@ -144,10 +144,18 @@ function _mtListHTML() {
   var list = Object.keys(fam).map(function (k) { return fam[k]; }).filter(function (f) { return hit(f.name); })
     .sort(function (a, b) { var ca = MT_CLS_ORDER.indexOf(a.cls), cb = MT_CLS_ORDER.indexOf(b.cls); return ca !== cb ? ca - cb : (a.name < b.name ? -1 : 1); });
   if (!list.length) return '<div class="rs-empty">לא נמצא שם כזה</div>';
+  // כותרת קטנה לכל שיעור, ותחתיה המשפחות שלו
+  var lastCls = null;
   return list.map(function (f) {
+    var hd = '';
+    if (f.cls !== lastCls) {
+      lastCls = f.cls;
+      var n = list.filter(function (g) { return g.cls === f.cls; }).length;
+      hd = '<div class="mt-clsh">' + esc(HR_CLS_NAME[f.cls] || 'ללא שיעור') + '<span>' + n + (n === 1 ? ' משפחה' : ' משפחות') + '</span></div>';
+    }
     var nm = String(f.name || '').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0); }).join('');
-    return '<div class="rs-card open"><div class="rs-head rs-static"><span class="rs-av">' + esc(nm) + '</span>' +
-      '<span class="rs-main"><b>' + esc(f.name) + '</b><small>' + esc(HR_CLS_NAME[f.cls] || '') + '</small></span>' +
+    return hd + '<div class="rs-card open"><div class="rs-head rs-static"><span class="rs-av">' + esc(nm) + '</span>' +
+      '<span class="rs-main"><b>' + esc(f.name) + '</b></span>' +
       '<span class="rs-trk">' + f.list.length + (f.list.length === 1 ? ' פגישה' : ' פגישות') + '</span></div><div class="mt-rows">' +
       f.list.sort(bySlot).map(function (x) {
         return '<div class="mt-r"><span class="mt-tm">' + esc(x.slot) + '</span><span class="mt-who">' + esc(x.staff_name) + '</span><span class="mt-cl">' + esc(role[x.staff_id] || '') + '</span>' + _mtDel(x, edit) + '</div>';

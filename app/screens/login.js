@@ -157,6 +157,8 @@ async function _doLoginInner() {
     AUTH.user = lu;
     AUTH.offlineLogin = true;
     authLog(true, 'offline', username);
+    // שער השרת — יתחבר כשתהיה רשת, בלי לבקש שוב את הסיסמה
+    gateLogin(username, pass);
     toast(serverErr ? MSG_SERVER_DOWN_LOCAL
                     : MSG_OFFLINE_LOGIN_LATER, null, 'bad');
   }
@@ -372,7 +374,7 @@ async function confirmSwitch() {
     // u נשמר במפורש — הרענון המלא רץ מ-authLog, אחרי AUTH.user=u.
     usersSaveOne(u);
   }
-  var _gatePass = AUTH.offlineLogin ? null : pass;
+  var _gatePass = pass;
   closeModal();
   ctxSwitch();
   AUTH.user=u;

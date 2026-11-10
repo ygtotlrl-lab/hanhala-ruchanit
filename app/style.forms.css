@@ -365,3 +365,6 @@
 #modal-body .fc-page .fc-link .btn,#modal-body .fc-stat .btn{flex:none}
 #modal-body .fc-page label.btn{margin:0;display:inline-flex;align-items:center;gap:var(--sp-2);flex:none}
 #modal-body .fc-page label.add-dashed-btn{margin:0;display:block}
+.mt-clsh{display:flex;align-items:baseline;gap:var(--sp-3);margin-top:var(--sp-4);padding:0 var(--sp-2) var(--sp-1);border-bottom:1.5px solid var(--border);font-size:var(--fs-3);font-weight:700;color:var(--brand)}
+.mt-clsh:first-child{margin-top:0}
+.mt-clsh span{font-size:var(--fs-2);font-weight:500;color:var(--text-3)}

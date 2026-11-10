@@ -22,19 +22,25 @@ async function _gatePost(body) {
   try { j = await r.json(); } catch (e) { j = null; }
   return { status: r.status, body: j || {} };
 }
-// בכניסה מקוונת — ברקע, בלי להמתין: כשל כאן אינו נוגע בכניסה, ורק מה שעובר בשער יבקש סיסמה
+// בכל כניסה — ברקע, בלי להמתין: כשל כאן אינו נוגע בכניסה.
+// כניסה בלי רשת (או שהשער לא ענה) — הפרטים נשמרים בזיכרון בלבד, לא בדיסק, עד שהשער עונה: בקריאה הבאה לשער או כשהרשת חוזרת;
+// כך התגובות אינן מבקשות שוב את הסיסמה שהוזנה בכניסה לאפליקציה.
+var _later = null;
 async function gateLogin(username, pass) {
   try {
     var r = await _gatePost({ action: 'login', username: username, password: pass });
+    _later = null;
     if (r.status !== 200 || !r.body.token) return false;
     lsSet(GATE_KEY, JSON.stringify({ uid: AUTH.user && AUTH.user.client_id, token: r.body.token, exp: r.body.exp }));
     return true;
-  } catch (e) { console.warn('[gate] הכניסה לשער נכשלה', e); return false; }
+  } catch (e) { _later = { u: username, p: pass }; console.warn('[gate] הכניסה לשער נכשלה — תנוסה שוב כשתהיה רשת', e); return false; }
 }
+self.addEventListener('online', function () { if (_later && AUTH.user && AUTH.user.username === _later.u) gateLogin(_later.u, _later.p); });
 function gateForget() { lsRemove(GATE_KEY); }
 // mod — המודול שההרשאה שלו נבדקת, והטבלה שהשער קורא (enroll ⟵ hr_enroll · intake ⟵ hr_intake)
 async function gateCall(mod, action, body) {
   var t = _gateTok();
+  if (!t && _later && AUTH.user && AUTH.user.username === _later.u) { await gateLogin(_later.u, _later.p); t = _gateTok(); }
   if (!t) return { login: true };
   var r;
   try { r = await _gatePost(Object.assign({ action: action, token: t, mod: mod }, body || {})); }
