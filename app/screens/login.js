@@ -30,7 +30,7 @@ function screenLoginHTML() {
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
-    <div class="auth-field"><label for="auth-pass">סיסמה (6 ספרות)</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
+    <div class="auth-field"><label for="auth-pass">סיסמה</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
     <button class="auth-btn" id="auth-btn" data-act="login" data-busy="&lt;span class=&quot;btn-spin&quot; role=&quot;status&quot; aria-label=&quot;בודק&quot;&gt;&lt;/span&gt;" data-ksave>כניסה למערכת</button>
     <div class="auth-err" id="auth-err"></div>
 
@@ -200,7 +200,11 @@ async function afterLogin(permsP) {
   try { initDateFields(); } catch(e) { console.warn('[login] initDateFields:', e); }
   dbg('[4/4] טוען נתונים...');
   shell.showPage('home');
+  if (_afterHook) try { _afterHook(); } catch (e) { console.warn('[login] afterHook:', e); }
 }
+// אחרי הכניסה — המקום שממנו יצאו להיכנס מחדש (התגובות), במקום הבית; נרשם ב-app/main.js
+var _afterHook = null;
+function onAfterLogin(fn) { _afterHook = fn; }
 
 // ── מסירה ברענון העדכון ──
 // המשתמש המחובר בזיכרון בלבד (שורת «המשתמש המחובר» בטבלה), אבל רענון מבאנר העדכון אינו מוציא: לפני הרענון המזהה נמסר
@@ -327,7 +331,7 @@ function switchUser(id, name) {
   openModal(MSG_SWITCH_TITLE,
     '<div class="switch-name" id="switch-name"></div>'+
     '<div class="switch-sub">'+subTitle+'</div>'+
-    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="סיסמא (6 ספרות)" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
+    '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="סיסמה" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
     '<div id="switch-err" class="switch-err"></div>',
     '<button data-act="modal-close" class="md-btn-ghost-lg">'+cancelTxt+'</button>'+
     '<button data-act="switch-confirm" data-ksave class="md-btn-primary-lg">'+enterTxt+'</button>', icon('user'));
@@ -409,4 +413,4 @@ function initDateFields(){
 }
 
 export { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
-         switchUserEl, toggleUserMenu };
+         switchUserEl, toggleUserMenu, onAfterLogin };

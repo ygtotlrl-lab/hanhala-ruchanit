@@ -73,7 +73,7 @@ async function meetingResponses() {
   if (pp && pp.ok && Array.isArray(pp.value) && !hrSetPending('meeting_past')) S._mtPast = pp.value;
   var box = document.getElementById('mt-resp');
   if (!box) return;
-  if (r.login) { box.innerHTML = gatePassHTML(); return; }
+  if (r.login) { box.innerHTML = gatePassHTML('mt-resp'); return; }
   if (r.perm) { box.innerHTML = '<div class="ld">אין לך הרשאה לתגובות.</div>'; return; }
   if (r.net || r.error) { box.innerHTML = '<div class="ld">אין חיבור לשרת — התגובות נקראות רק עם רשת.</div><button class="retry-btn" data-act="mt-resp">נסה שוב</button>'; return; }
   S._mtRows = r.rows || [];

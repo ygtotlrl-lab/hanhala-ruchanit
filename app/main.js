@@ -21,7 +21,7 @@ import { _hcFmt, _hcH, _hcMN, _hcYL } from './domain.hebdate.js';
 import { HR_PER, hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from './domain.periods.js';
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
-import { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
+import { closeUserMenu, confirmSwitch, doLogin, doLogout, onAfterLogin, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
          switchUserEl, toggleUserMenu } from './screens/login.js';
 import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
@@ -36,6 +36,7 @@ import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile,
 import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingResponses, meetingSave, meetingSettings,
          meetingMode, meetingNew, meetingNewMake, meetingSearch, meetingView, meetingYear } from './screens/meeting.js';
 import { fcChipAdd, fcChipDel, fcToggle, renderForms, screenFormsHTML } from './screens/forms.js';
+import { GATE_KEY } from './gate.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
@@ -81,10 +82,10 @@ var LS_CFG = {
   logKey: 'hr_ls_log',
   // חובה בתחילית האפליקציה — ה-origin משותף, וסימן בלי תחילית נדרס בכל דחייה.
   dismissKey: 'hr_sw_dismissed',
-  // מפתח שאינו במרשם נמחק בעלייה.
+  // מפתח שאינו במרשם נמחק בעלייה — ובהם האסימון של השער (GATE_KEY): בלעדיו כל עדכון היה מחייב כניסה מחדש לתגובות.
   keys: function () {
     return [LS_CFG.logKey, LS_CFG.dismissKey, DEV_CFG.key, PEND_CFG.key,
-            BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY]
+            BK_CFG.flagKey, BK_CFG.logQueueKey, HR_PERMS_KEY, GATE_KEY]
       .concat(eraKeys(), mirrorTables().map(mirrorKey),
               Object.keys(HR_SET_FLAT).map(function (k) { return HR_SET_FLAT[k]; }));
   }
@@ -417,6 +418,13 @@ function showDenied() {
 // ── העברת מזהה ל-DOM ──
 // ערך שחוזר מ-data-* הוא מחרוזת: idx + dir משרשר, ו-!'false' הוא false — ולכן ההמרה המפורשת כאן.
 // מטפל שקורא לפונקציה אסינכרונית מחזיר את ההבטחה — הניתוב משבית את הכפתור לפיה, ואין להסיר את ה-return.
+var _hrBack = '';
+onAfterLogin(function () {
+  var a = _hrBack; _hrBack = '';
+  if (!a || !DOM_ACTIONS[a]) return;
+  shell.showPage('forms');
+  DOM_ACTIONS[a]();
+});
 var DOM_ACTIONS = {
   'sw-apply':            function (el) { hrHandoffSave(); swApply(el); },
   'sw-dismiss':          function () { swHideUpdate(); },
@@ -564,6 +572,8 @@ var DOM_ACTIONS = {
                           },
   'login':            function () { return doLogin(); },
   'logout':           function () { doLogout(); },
+  // יציאה וכניסה מחדש מהתגובות — ואחרי הכניסה חוזרים ישר לאותן תגובות, בלי הבית ובלי המסך הזה שוב
+  'gate-relogin':     function (el) { _hrBack = el.getAttribute('data-back') || ''; closeModal(); doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'my-pass':          function () { closeUserMenu(); myPasswordModal(); },
   'user-menu-toggle': function () { return toggleUserMenu(); },

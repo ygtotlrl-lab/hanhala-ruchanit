@@ -51,7 +51,7 @@ async function enrollResponses() {
   var r = await _gate('list');
   var box = document.getElementById('en-resp');
   if (!box) return;
-  if (r.login) { box.innerHTML = _passHTML(); return; }
+  if (r.login) { box.innerHTML = _passHTML('en-resp'); return; }
   if (r.perm) { box.innerHTML = '<div class="ld">אין לך הרשאה לתגובות.</div>'; return; }
   if (r.net || r.error) { box.innerHTML = '<div class="ld">אין חיבור לשרת — התגובות נקראות רק עם רשת.</div><button class="retry-btn" data-act="en-resp">נסה שוב</button>'; return; }
   S._enRows = r.rows || [];
@@ -62,9 +62,9 @@ async function enrollResponses() {
   _respPaint();
 }
 // בלי חיבור לשער — אין כאן סיסמה: הצפייה נפתחת מהכניסה לאפליקציה בלבד, ולכן ההוראה היא לצאת ולהיכנס שוב, עם רשת
-function _passHTML() {
+function _passHTML(back) {
   return '<div class="en-pass"><p>הצפייה בתגובות נפתחת עם הכניסה לאפליקציה. כדי לחדש אותה — יש לצאת ולהיכנס שוב, עם רשת.</p>' +
-    '<button class="btn" data-act="logout">' + icon('logout') + 'יציאה וכניסה מחדש</button></div>';
+    '<button class="btn" data-act="gate-relogin" data-back="' + (back || 'en-resp') + '">' + icon('logout') + 'יציאה וכניסה מחדש</button></div>';
 }
 // התגובות — כרטיס לכל מי שמילא (resp.js)
 function _respOpts() {

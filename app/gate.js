@@ -128,4 +128,4 @@ async function gateOpen(path) {
   toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? 'אין הרשאה לקובץ' : 'הקובץ לא נפתח — אין חיבור לשרת', null, 'bad');
 }
 
-export { gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
+export { GATE_KEY, gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
