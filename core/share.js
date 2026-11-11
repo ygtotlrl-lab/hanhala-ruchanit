@@ -1,6 +1,6 @@
 // core/share.js — שליחת קובץ שהאפליקציה יצרה (תמונה, PDF או גיליון): במעטפת — גשר השיתוף, ובדפדפן — גיליון השיתוף, ובלעדיו הורדה;
 // ומסמך (printFile): במעטפת — גשר ההדפסה, שכותב PDF ומשתף אותו, ובדפדפן — חלון ההדפסה.
-// החתימות הן חוזה עם Java (tools/java/MainActivity.java.in — shareFile · printHtml) ומשתנות בשני הצדדים יחד.
+// החתימות הן חוזה עם Java (tools/java/MainActivity.java.in — shareFile · shareFiles · printHtml) ומשתנות בשני הצדדים יחד.
 
 // AndroidShareBridge (addWebMessageListener) נוסה ראשון — בו WebView עצמו אוכף את רשימת המקורות;
 // AndroidShare (addJavascriptInterface) נשאר ל-WebView ישן מ-88, והמעטפת מאמתת בו את מקור הדף.
@@ -57,6 +57,31 @@ function shareFile(b64, mime, name) {
   _download(blob, name);
 }
 
+// כמה קבצים בשיתוף אחד — list: [{ b64, mime, name }] (דוח שחולק לכמה תמונות).
+// במעטפת — גשר הקבצים (AndroidShareFiles), ובו בורר אחד לכולם; מעטפת שאין בה גשר כזה — גרסה ישנה: שגיאה שמבקשת עדכון, כמו בהדפסה;
+// בדפדפן — גיליון השיתוף עם כל הקבצים, ובלעדיו הורדה של כל קובץ בשמו.
+function shareFiles(list) {
+  list = (list || []).map(function (f) { return { b64: f.b64, mime: f.mime, name: _safeName(f.name) }; });
+  if (!list.length) return;
+  if (list.length === 1) { shareFile(list[0].b64, list[0].mime, list[0].name); return; }
+  var mb = window.AndroidShareFiles;
+  if (mb && typeof mb.postMessage === 'function') {
+    mb.postMessage(JSON.stringify({ files: list.map(function (f) { return { data: f.b64, mime: f.mime, name: f.name }; }) }));
+    return;
+  }
+  if (window.AndroidShareBridge || window.AndroidShare) throw new Error('יש לעדכן את האפליקציה המותקנת');
+  var blobs = list.map(function (f) { return _blob(f.b64, f.mime); });
+  function each() { blobs.forEach(function (b, i) { setTimeout(function () { _download(b, list[i].name); }, i * 400); }); }
+  try {
+    var files = blobs.map(function (b, i) { return new File([b], list[i].name, { type: list[i].mime }); });
+    if (navigator.canShare && navigator.canShare({ files: files })) {
+      navigator.share({ files: files }).catch(function (err) { if (err && err.name !== 'AbortError') each(); });
+      return;
+    }
+  } catch (e) { /* הורדה */ }
+  each();
+}
+
 // קובץ שנבנה כ-Blob (גיליון, CSV) — אותו מסלול, דרך base64.
 function shareBlob(blob, mime, name) {
   var r = new FileReader();
@@ -85,4 +110,4 @@ function printFile(html, name) {
   document.body.appendChild(f);
 }
 
-export { printFile, shareBlob, shareFile };
+export { printFile, shareBlob, shareFile, shareFiles };
