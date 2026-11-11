@@ -164,8 +164,7 @@ function _respPaint() {
   var v = S._mtView === 'rb' ? 'rb' : 'st';
   box.innerHTML =
     (years.length ? '<div class="en-bar">' + years.map(function (x) {
-      var n = all.filter(function (r) { return r.meet_date === x.d; }).length;
-      return '<button class="chip' + (x.y === selY ? ' on' : '') + '" data-act="mt-year" data-y="' + x.y + '">' + esc(_yl(x.y)) + ' <b>' + n + '</b></button>';
+      return '<button class="chip' + (x.y === selY ? ' on' : '') + '" data-act="mt-year" data-y="' + x.y + '">' + esc(_yl(x.y)) + '</button>';
     }).join('') + '</div>' : '') +
     '<div class="mt-sum">' +
       '<div class="mt-day">' + icon('calendar') + '<span>' + esc(d ? hrDayHebFmt(d) : 'לא נקבע תאריך') + (cfg.from && cfg.to ? ' · <bdi dir="ltr">' + esc(cfg.from) + '–' + esc(cfg.to) + '</bdi>' : '') + '</span>' +
