@@ -25,10 +25,12 @@ import { stIcon } from '../../core/icons.js';
 function screenLoginHTML() {
   return `
 <div id="auth-screen">
-  <div class="auth-box" data-ks>
+  <div class="auth-band">
     <div class="auth-logo"><img src="icons/icon-512.ea0cf769.png" alt="לוגו"></div>
     <div class="auth-title">הנהלה רוחנית</div>
     <div class="auth-sub">מערכת ניהול הישיבה</div>
+  </div>
+  <div class="auth-box" data-ks>
     <div class="auth-field"><label for="auth-user">שם משתמש</label><input aria-label="שם משתמש" type="text" id="auth-user" placeholder="שם משתמש" autocomplete="username"></div>
     <div class="auth-field"><label for="auth-pass">סיסמה</label><input type="password" id="auth-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="current-password"></div>
     <button class="auth-btn" id="auth-btn" data-act="login" data-busy="&lt;span class=&quot;btn-spin&quot; role=&quot;status&quot; aria-label=&quot;בודק&quot;&gt;&lt;/span&gt;" data-ksave>כניסה למערכת</button>

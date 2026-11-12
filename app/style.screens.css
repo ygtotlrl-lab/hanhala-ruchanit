@@ -5,19 +5,21 @@
 @media (hover:hover){
   .auth-btn:hover{background:var(--deep-1)}
 }
-#auth-screen{position:fixed;inset:0;background:linear-gradient(160deg,var(--deep-2),var(--brand-fill),var(--deep-1));display:flex;align-items:center;justify-content:center;z-index:var(--z-7);flex-direction:column}
+/* מסך הכניסה — פס תכלת מעוגל ובו הסמל, השם והתיאור, וכרטיס לבן שעולה עליו; כמו הפסים שבמסגרת */
+#auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:stretch;justify-content:flex-start;z-index:var(--z-7);flex-direction:column;overflow-y:auto}
 #auth-screen.hidden{display:none}
-.auth-box{background:var(--card);border-radius:var(--r-6);padding:var(--sp-7) var(--sp-7);width:90%;max-width:340px;box-shadow:0 20px 60px var(--sh-3);text-align:center}
-.auth-logo{width:72px;height:72px;margin:0 auto var(--sp-6);border-radius:var(--r-5);overflow:hidden;background:var(--card-2);display:flex;align-items:center;justify-content:center}
-.auth-logo img{width:100%;height:100%;object-fit:contain}
-.auth-title{font-size:var(--fs-5);font-weight:700;color:var(--text);margin-bottom:var(--sp-2)}
-.auth-sub{font-size:var(--fs-3);color:var(--text-3);margin-bottom:var(--sp-7)}
+.auth-band{background:var(--bar);border-radius:0 0 32px 32px;padding:56px var(--sp-7) 76px;display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);text-align:center}
+.auth-box{background:var(--card);border-radius:22px;padding:var(--sp-7) 20px;width:calc(100% - 2 * var(--sp-6));max-width:380px;margin:-48px auto var(--sp-7);box-shadow:0 1px 3px rgba(20,40,80,.06);text-align:center}
+.auth-logo{width:132px;height:132px;margin:0 auto var(--sp-5);border-radius:28px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(20,40,80,.06)}
+.auth-logo img{width:116px;height:116px;object-fit:contain}
+.auth-title{font-size:1.6rem;font-weight:800;color:var(--bar-ink)}
+.auth-sub{font-size:var(--fs-4);color:var(--bar-ink-2)}
 .auth-field{display:flex;flex-direction:column;gap:var(--sp-3);margin-bottom:var(--sp-6);text-align:right}
 .auth-field label{font-size:var(--fs-3);font-weight:600;color:var(--text-2)}
-.auth-field input{border:2px solid var(--border);border-radius:var(--r-4);padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border var(--dur-3);direction:rtl}
+.auth-field input{border:1.5px solid var(--border);background:var(--bg);color:var(--text);border-radius:var(--r-5);min-height:52px;padding:var(--sp-5) var(--sp-6);font-family:Heebo;font-size:var(--fs-4);outline:none;transition:border var(--dur-3);direction:rtl}
 .auth-field input#auth-pass{direction:ltr;text-align:center;letter-spacing:var(--ls-3);font-size:var(--fs-5)}
 .auth-field input:focus{border-color:var(--brand)}
-.auth-btn{width:100%;background:var(--brand-fill);color:var(--on-dark);border:none;border-radius:var(--r-4);padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
+.auth-btn{width:100%;min-height:54px;background:var(--brand-fill);color:var(--on-dark);border:none;border-radius:16px;padding:var(--sp-5);font-family:Heebo;font-size:var(--fs-4);font-weight:700;cursor:pointer;margin-top:var(--sp-3);transition:background var(--dur-3)}
 .auth-btn:active{background:var(--deep-1)}
 .auth-btn:disabled{opacity:var(--op-3);cursor:default}
 .auth-err{color:var(--bad);font-size:var(--fs-3);margin-top:var(--sp-4);min-height:18px}
@@ -392,8 +394,7 @@
 }
 @media (min-width:900px){
   .logo{width:60px;height:60px}
-  .logo.hdr-logo{display:block}
-  .hdr-logo-w{display:none}
+  .logo.hdr-logo{height:66px;width:auto}
 }
 @media (min-width:900px){
   .hdiv{display:block}
@@ -736,7 +737,14 @@
 }
 .kpi-wrap{padding:var(--sp-7) var(--sp-6) var(--sp-5)}
 .stx-home{padding:var(--sp-5) var(--sp-6) var(--sp-7)}
-.mods-lbl{margin-bottom:var(--sp-6)}
+/* כמו הפסים — כותרת קטע בדיו מלא בלי סימן, כרטיסים לבנים בלי מסגרת ובצל רך, ואייקון בעיגול תכלת */
+.mods-lbl{margin-bottom:var(--sp-5);font-size:1.05rem;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
+.mods-lbl::before{display:none}
+.kpis,.stx-btn,.mod{border:0;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06)}
+.mod::before{display:none}
+.mod{align-items:center}
+.mod-ic,.stx-btn-ic{width:44px;height:44px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink)}
+.mod-ic .ico,.stx-btn-ic .ico{width:20px;height:20px}
 .mods{gap:var(--sp-6)}
 .mods-wrap{padding-top:var(--sp-3)}
 @media (min-width:900px){
