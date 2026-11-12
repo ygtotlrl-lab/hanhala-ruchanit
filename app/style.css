@@ -144,7 +144,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 
 /* ── רכיבים ── */
 @media (hover:hover){
-  .back:hover{border-color:var(--brand-ink);color:var(--brand-ink);background:var(--card-2)}
+  .back:hover{background:var(--border)}
 }
 @media (hover:hover){
   .btn:hover{background:var(--deep-1);border-color:var(--deep-1);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
@@ -166,7 +166,10 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 }
 .inner{padding:var(--sp-7) var(--sp-7);max-width:var(--col);width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
 .ptitle{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
-.back{background:none;border:1.5px solid var(--border);color:var(--text-2);border-radius:var(--r-6);padding:var(--sp-3) var(--sp-6);font-size:var(--fs-3);font-family:Heebo;cursor:pointer;transition:all var(--dur-3);white-space:nowrap;display:inline-flex;align-items:center;line-height:var(--lh-1)}
+/* כותרת המסך — השם צמוד לימין, וכפתור החזרה צמוד לשמאל: עיגול רך ובו החץ בלבד (aria-label «חזרה») */
+.back{order:99;margin-inline-start:auto;flex:none;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--dur-3)}
+.back .ico{width:20px;height:20px;margin:0}
+.back:active{background:var(--border)}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--brand-fill);color:var(--on-dark);border:2px solid var(--brand-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
 .btn:active{transform:translateY(1px)}

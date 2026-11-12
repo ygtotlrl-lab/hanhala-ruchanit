@@ -351,7 +351,6 @@
 .year-note{font-size:var(--fs-3);color:var(--text-2);line-height:var(--lh-4);margin-bottom:var(--sp-6)}
 .set-module-tile{align-items:center;display:flex;gap:var(--sp-5);border:2px solid var(--border);background:var(--card);cursor:pointer;flex-direction:column;font-family:Heebo;padding:var(--sp-7) var(--sp-6);border-radius:var(--r-5);box-shadow:var(--shadow);transition:all var(--dur-3)}
 .set-module-label{font-size:var(--fs-3);color:var(--brand-ink);font-weight:600}
-.set-back-btn{align-items:center;font-size:var(--fs-3);border:1.5px solid var(--border);background:none;color:var(--text-2);cursor:pointer;display:inline-flex;font-family:Heebo;line-height:var(--lh-1);padding:var(--sp-3) var(--sp-6);border-radius:var(--r-6)}
 .cfg-card{border:1.5px solid var(--border);background:var(--card);padding:var(--sp-6);border-radius:var(--radius)}
 .cfg-row-input{font-size:var(--fs-3);border:1.5px solid var(--border);font-family:Heebo;padding:var(--sp-3) var(--sp-4);border-radius:var(--r-3);width:112px}
 
@@ -740,12 +739,32 @@
 /* כמו הפסים — כותרת קטע בדיו מלא בלי סימן, כרטיסים לבנים בלי מסגרת ובצל רך, ואייקון בעיגול תכלת */
 .mods-lbl{margin-bottom:var(--sp-5);font-size:1.05rem;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
 .mods-lbl::before{display:none}
-.kpis,.stx-btn,.mod{border:0;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06)}
+/* כיוון «ג · רשימה אחת» — שלושת החלקים נבדלים זה מזה:
+   «היום» — מסגרת דקה, ובתחתית כל תא קו דק בגוון המספר שלו;
+   הסטטיסטיקה — כפתורים לבנים במסגרת בצבע הזהות, והאייקון בעיגול מלא;
+   המודולים — כרטיס אחד, שורה לכל מודול וקו דק ביניהן, האייקון בריבוע מעוגל וחץ בצבע הזהות בקצה. */
+.kpis{border:1px solid var(--border);border-radius:var(--r-6);box-shadow:none}
+.kpi{box-shadow:inset 0 -3px 0 color-mix(in srgb,var(--c) 16%,transparent)}
+.kpi-brand{--c:var(--text)}
+.stx-btn{border:1.5px solid var(--brand-fill);border-radius:var(--r-6);box-shadow:none}
+.stx-btn-ic{width:44px;height:44px;border-radius:50%;background:var(--brand-fill);color:var(--on-brand)}
+.stx-btn-ic .ico{width:20px;height:20px}
+.mods{display:flex;flex-direction:column;gap:0;background:var(--card);border-radius:var(--r-6);overflow:hidden;box-shadow:0 1px 3px rgba(20,40,80,.06)}
+.mod{border:0;border-radius:0;box-shadow:none;align-items:center;width:100%;padding:var(--sp-6)}
+.mod+.mod{border-top:1px solid var(--border)}
 .mod::before{display:none}
-.mod{align-items:center}
-.mod-ic,.stx-btn-ic{width:44px;height:44px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink)}
-.mod-ic .ico,.stx-btn-ic .ico{width:20px;height:20px}
-.mods{gap:var(--sp-6)}
+.mod-ic{width:42px;height:42px;border-radius:var(--r-5);background:var(--brand-soft);color:var(--brand-ink)}
+.mod-ic .ico{width:20px;height:20px}
+.mod-go{flex:none;display:flex;color:var(--brand-ink)}
+.mod-go .ico{width:18px;height:18px;margin:0}
+@media (hover:hover){ .mod:hover{transform:none;box-shadow:none;background:var(--card-2)} .mod:hover .mod-ic{transform:none} }
+/* מ-900px — שתי עמודות באותו כרטיס, וקו דק בין העמודות ובין השורות */
+@media (min-width:900px){
+  .mods{display:grid;grid-template-columns:1fr 1fr}
+  .mod+.mod{border-top:0}
+  .mod:nth-child(n+3){border-top:1px solid var(--border)}
+  .mod:nth-child(odd){border-left:1px solid var(--border)}
+}
 .mods-wrap{padding-top:var(--sp-3)}
 @media (min-width:900px){
   .kpi-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-5)}

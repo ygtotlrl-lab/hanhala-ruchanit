@@ -80,7 +80,7 @@ function fcSummary(k) {
 // ── המסך ──
 function screenFormsHTML() {
   return '<div class="pg" id="pg-forms"><div class="inner">' +
-    '<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">' + icon('back') + 'חזרה</button><span>טפסים</span></div>' +
+    '<div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">' + icon('back') + '</button><span>טפסים</span></div>' +
     '<div class="fm-list" id="fm-list"></div></div></div>';
 }
 function _cardHTML(f, cnt) {

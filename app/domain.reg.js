@@ -24,7 +24,7 @@ function hrRegHTML(st) {
 <div class="pg" id="pg-${st.kind}">
   <div class="inner">
     <div class="ptitle">
-      <button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button>
+      <button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">${icon('back')}</button>
       <span>${st.title}</span>
     </div>
     <!-- לשוניות -->

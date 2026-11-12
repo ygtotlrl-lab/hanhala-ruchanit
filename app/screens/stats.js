@@ -32,7 +32,7 @@ function statsHomeHTML() {
 // ── המסך ──
 function screenStatsHTML() {
   return '<div class="pg" id="pg-stats"><div class="inner">' +
-    '<div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">' + icon('back') + 'חזרה</button><span>סטטיסטיקה</span></div>' +
+    '<div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">' + icon('back') + '</button><span>סטטיסטיקה</span></div>' +
     '<div class="at-tab-bar" id="stx-tabs"></div><div id="stx-body"></div></div></div>';
 }
 

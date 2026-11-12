@@ -25,7 +25,7 @@ function screenSettingsHTML() {
 
     <!-- דף ראשי הגדרות -->
     <div id="settings-home">
-      <div class="ptitle"><button class="back" data-pg="home" data-act="page" data-page="home">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
+      <div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">${icon('back')}</button><span>הגדרות מערכת</span></div>
       <div class="set-tiles">
         <button data-act="settings-module" data-mod="students" class="set-module-tile">
           <span class="tile-ico">${icon('students')}</span>
@@ -56,13 +56,13 @@ function screenSettingsHTML() {
 
     <!-- הגדרות הטפסים — שורה לכל טופס, ולחיצה פותחת את דף ההגדרות שלו -->
     <div id="settings-forms" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות הטפסים</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות הטפסים</span></div>
       <div class="fm-rows" id="set-forms-list"></div>
     </div>
 
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מצבת תלמידים</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות מצבת תלמידים</span></div>
       <div class="ss" data-autosave="absence-reasons-save">
         <div class="ss-t">סיבות היעדרות לפי סוג</div>
         <div class="reason-cols">
@@ -92,7 +92,7 @@ function screenSettingsHTML() {
 
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות סדרים</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות סדרים</span></div>
       <div class="ss" data-autosave="at-settings-save">
         <div class="set-stack">
           <!-- סדרים -->
@@ -111,7 +111,7 @@ function screenSettingsHTML() {
       </div>
     </div>
     <div id="settings-sleep" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות שינה</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות שינה</span></div>
       <div class="ss" data-autosave="sl-settings-save">
         <div class="set-box">
           <div class="panel-head">סוגי טיפולים</div>
@@ -123,7 +123,7 @@ function screenSettingsHTML() {
 ${contactsPaneHTML()}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות מערכת</span></div>
+      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">ניהול משתמשים <button class="btn sm" data-act="user-add-open">${icon('plus')}הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
