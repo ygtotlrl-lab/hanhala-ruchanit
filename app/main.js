@@ -65,7 +65,9 @@ appConfigure({
   get PUSH_CFG() { return PUSH_CFG; },
   get RTY_CFG() { return RTY_CFG; },
   get USER_CFG() { return USER_CFG; },
-  get saveRefresh() { return saveRefresh; }
+  get saveRefresh() { return saveRefresh; },
+  // רענון העדכון — גם האוטומטי — אינו מוציא: המשתמש נמסר לפניו
+  get swBeforeReload() { return hrHandoffSave; }
 });
 
 var MIRROR_CFG = {
@@ -429,7 +431,7 @@ onAfterLogin(function () {
   DOM_ACTIONS[a]();
 });
 var DOM_ACTIONS = {
-  'sw-apply':            function (el) { hrHandoffSave(); swApply(el); },
+  'sw-apply':            function (el) { swApply(el); },
   'sw-dismiss':          function () { swHideUpdate(); },
   'reason-row-del':      function (el) { return _hrRemoveRow(el, el.parentNode); },
   // התראות התשתית נבנות ב-JS — לכן הן מנותבות במפה ולא במאזין ישיר על הכפתור.
