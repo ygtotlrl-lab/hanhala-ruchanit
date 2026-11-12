@@ -58,7 +58,7 @@ function contactsPaneHTML() {
   return `    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות דוחות</span></div>
       <div class="ss" data-autosave="ct-save">
-        <div class="ss-t">אנשי קשר — צוות הישיבה</div>
+        <div class="ss-t ct-title">אנשי קשר — צוות הישיבה</div>
         <div class="ct-acts"><button class="btn sm out" data-act="ct-view">${icon('watch')}צפייה בדף</button>
           <button class="btn sm out" data-act="ct-copy">${icon('copy')}העתקת קישור</button></div>
         <div id="ct-edit" class="set-stack"></div>

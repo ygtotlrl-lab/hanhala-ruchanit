@@ -1,9 +1,11 @@
 /* app/style.forms.css — המשך של style.screens.css (מעל 50KB): אנשי הקשר, הגיליונות, וטופסי הרישום והקבלה */
 /* ── אנשי קשר בהגדרות הדוחות ── */
+/* כותרת אנשי הקשר — ממורכזת */
+#pg-settings .ss-t.ct-title{justify-content:center;text-align:center}
 /* שני הכפתורים — מתחת לכותרת, בשורה אחת ובגודל אחד */
 .ct-acts{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4);margin-bottom:var(--sp-6)}
 .ct-acts .btn{justify-content:center;width:100%}
-@media (min-width:640px){ .ct-acts{grid-template-columns:repeat(2,minmax(0,220px))} }
+@media (min-width:640px){ .ct-acts{grid-template-columns:repeat(2,minmax(0,220px));justify-content:center} }
 /* «הוסף קבוצה» — באותו מרווח שבין הקבוצות (set-stack), מעליו ומתחתיו */
 .ct-group-add{margin:var(--sp-6) 0}
 /* הדף הציבורי בדיאלוג — על כל המסך */

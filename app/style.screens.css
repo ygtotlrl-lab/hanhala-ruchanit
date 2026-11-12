@@ -374,7 +374,6 @@
   .mods-wrap{padding:0 var(--sp-7) var(--sp-7)}
   .kpi-wrap{padding:var(--sp-7)}
 }
-}
 @media (min-width:900px){
   .hero{padding:var(--sp-7) var(--sp-7) var(--sp-7)}
 }
@@ -386,7 +385,7 @@
 }
 @media (min-width:900px){
   .stat .n{font-size:var(--fs-6)}
-  .kpis{grid-template-columns:repeat(4,1fr);gap:var(--sp-6)}
+  .kpis{grid-template-columns:repeat(4,1fr)}
 }
 @media (min-width:900px){
   header{height:76px;padding:0 var(--sp-7)}
@@ -718,3 +717,29 @@
 .stx-tbl td{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
 .stx-tbl td:first-child{font-weight:600}
 .stx-c-ok{color:var(--ok)}.stx-c-warn{color:var(--warn)}.stx-c-bad{color:var(--bad)}.stx-c-na{color:var(--text-3);font-weight:500}
+
+/* ── הראשי: «היום» בכרטיס אחד, והאוויר בין הקטעים ──
+   ארבעה תאים בכרטיס אחד — 2×2 בטלפון ושורה אחת מ-900px, קווים דקים ביניהם, בלי אייקונים ובלי פסי צבע;
+   המספר בגוון שלו. בין הקטעים — מרווח אחיד, והמודולים בשורה לכל אחד עם התיאור. */
+.kpis{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);box-shadow:var(--shadow);gap:0;overflow:hidden}
+.kpi{border:0;border-radius:0;box-shadow:none;padding:var(--sp-6) var(--sp-4);gap:var(--sp-2);align-items:center;text-align:center}
+.kpi::before{display:none}
+.kpi-ic{display:none}
+.kpi-top{justify-content:center}
+.kpi-l{font-size:var(--fs-2);color:var(--text-2);font-weight:600}
+.kpi-n{font-size:calc(var(--fs-6) * 1.1)}
+.kpi:nth-child(odd){border-left:1px solid var(--border)}
+.kpi:nth-child(-n+2){border-bottom:1px solid var(--border)}
+@media (min-width:900px){
+  .kpi{border-bottom:0 !important;border-left:1px solid var(--border)}
+  .kpi:last-child{border-left:0}
+}
+.kpi-wrap{padding:var(--sp-7) var(--sp-6) var(--sp-5)}
+.stx-home{padding:var(--sp-5) var(--sp-6) var(--sp-7)}
+.mods-lbl{margin-bottom:var(--sp-6)}
+.mods{gap:var(--sp-6)}
+.mods-wrap{padding-top:var(--sp-3)}
+@media (min-width:900px){
+  .kpi-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-5)}
+  .stx-home{padding:var(--sp-5) var(--sp-7) var(--sp-7)}
+}
