@@ -616,3 +616,105 @@
 .ex-x-add summary::-webkit-details-marker{display:none}
 .ex-x-add[open]{display:flex;flex-direction:column;gap:var(--sp-2)}
 .ex-x-note{font-size:var(--fs-1);color:var(--text-2)}
+
+/* ── סטטיסטיקה ──
+   בראשי — שלושה כפתורים בשורה, בלי מספרים; במסך — לשוניות הסוג, ורשת כרטיסים: עמודה אחת בטלפון, שתיים מ-900px */
+.stx-home{padding:0 var(--sp-6) var(--sp-6)}
+.stx-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-4)}
+.stx-btn{display:flex;align-items:center;gap:var(--sp-4);background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);box-shadow:var(--shadow);padding:var(--sp-5);cursor:pointer;font-family:Heebo;text-align:right;color:var(--text);transition:all var(--dur-3);min-width:0}
+.stx-btn-ic{width:38px;height:38px;border-radius:var(--r-7);display:flex;align-items:center;justify-content:center;background:var(--brand-soft);color:var(--brand-ink);flex-shrink:0}
+.stx-btn-ic .ico{width:20px;height:20px;margin:0}
+.stx-btn-name{flex:1;min-width:0;font-size:var(--fs-3);font-weight:700;line-height:var(--lh-2)}
+.stx-btn-go{color:var(--text-3);display:flex}
+.stx-btn-go .ico{width:16px;height:16px;margin:0}
+@media (hover:hover){ .stx-btn:hover{border-color:var(--brand-ink);box-shadow:var(--shadow-lg);transform:translateY(-2px)} }
+/* בטלפון צר — האייקון מעל השם, והחץ יורד */
+@media (max-width:520px){
+  .stx-btn{flex-direction:column;justify-content:center;text-align:center;padding:var(--sp-5) var(--sp-3);gap:var(--sp-3)}
+  .stx-btn-name{font-size:var(--fs-2)}
+  .stx-btn-go{display:none}
+}
+@media (min-width:900px){ .stx-home{padding:0 var(--sp-7) var(--sp-7)} }
+
+.stx-grid{display:grid;grid-template-columns:1fr;gap:var(--sp-6)}
+@media (min-width:900px){ .stx-grid{grid-template-columns:repeat(2,minmax(0,1fr))} .stx-wide{grid-column:1/-1} }
+.stx-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);box-shadow:var(--shadow);overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.stx-h{display:flex;flex-direction:column;gap:var(--sp-1);padding:var(--sp-6) var(--sp-6) var(--sp-4);border-bottom:1px solid var(--border);position:relative}
+.stx-h::before{content:"";position:absolute;top:var(--sp-6);right:0;width:3px;height:18px;background:var(--brand-fill);border-radius:var(--r-1) 0 0 var(--r-1)}
+.stx-h b{font-size:var(--fs-4);font-weight:700;color:var(--brand-ink)}
+.stx-h small{font-size:var(--fs-1);color:var(--text-3);font-weight:500}
+.stx-b{padding:var(--sp-6);flex:1}
+.stx-empty{color:var(--text-3);text-align:center;font-size:var(--fs-3);padding:var(--sp-6) 0;height:100%;display:flex;align-items:center;justify-content:center}
+.stx-note{font-size:var(--fs-2);color:var(--text-2);margin-top:var(--sp-5);text-align:center}
+
+/* מספר גדול ומתחתיו ההשוואות */
+.stx-big{display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);text-align:center}
+.stx-big-n{font-size:calc(var(--fs-6) * 1.6);font-weight:800;color:var(--brand-ink);line-height:var(--lh-1);font-variant-numeric:tabular-nums}
+.stx-big-l{font-size:var(--fs-2);color:var(--text-3)}
+.stx-ds{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-3);margin-top:var(--sp-4)}
+.stx-d{display:inline-flex;align-items:center;gap:var(--sp-2);font-size:var(--fs-2);font-weight:700;border-radius:var(--r-7);padding:var(--sp-1) var(--sp-5);border:1px solid var(--border);background:var(--card-2);color:var(--text-2);font-variant-numeric:tabular-nums}
+.stx-d em{font-style:normal;font-weight:500;color:inherit;opacity:.85}
+.stx-d-good{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.stx-d-bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.stx-d-na{color:var(--text-3);font-weight:500}
+.stx-arr{display:inline-flex}
+.stx-arr .ico{width:14px;height:14px;margin:0}
+.stx-arr.up .ico{transform:rotate(180deg)}
+
+/* השנה מול אשתקד */
+.stx-duo{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-4)}
+.stx-duo-c{display:flex;flex-direction:column;align-items:center;gap:var(--sp-2);padding:var(--sp-5);border-radius:var(--r-4);background:var(--brand-soft)}
+.stx-duo-c span{font-size:var(--fs-2);color:var(--text-2);font-weight:600}
+.stx-duo-c b{font-size:var(--fs-6);font-weight:800;color:var(--brand-ink);font-variant-numeric:tabular-nums}
+.stx-duo-ly{background:var(--card-2)}
+.stx-duo-ly b{color:var(--text-2)}
+
+/* עמודות לכל חודש — זוג לכל חודש: השנה ואשתקד */
+.stx-legend{display:flex;gap:var(--sp-5);font-size:var(--fs-2);color:var(--text-2);margin-bottom:var(--sp-5)}
+.stx-legend span{display:inline-flex;align-items:center;gap:var(--sp-2)}
+.stx-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.stx-legend i.cur,.stx-col.cur{background:var(--brand-fill)}
+.stx-legend i.ly,.stx-col.ly{background:var(--border)}
+.stx-bars{display:flex;gap:var(--sp-2);align-items:stretch;overflow-x:auto;padding-top:var(--sp-7)}
+.stx-mon{flex:1 0 44px;display:flex;flex-direction:column;align-items:stretch}
+.stx-pair{height:150px;display:flex;align-items:flex-end;justify-content:center;gap:3px;border-bottom:1px solid var(--border)}
+.stx-col{position:relative;width:14px;height:calc(var(--v) * 100%);border-radius:4px 4px 0 0}
+.stx-pair{position:relative}
+.stx-vals{position:absolute;inset-inline:0;bottom:calc(var(--v) * 100%);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:2px;pointer-events:none}
+.stx-vals i{font-style:normal;font-size:10px;font-weight:800;line-height:1.25;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stx-vals i.cur{color:var(--brand-ink)}.stx-vals i.ly{color:var(--text-3)}
+.stx-ml{font-size:var(--fs-1);color:var(--text-3);text-align:center;margin-top:var(--sp-2);white-space:nowrap}
+
+/* רשימה עם פס */
+.stx-hl{display:grid;grid-template-columns:minmax(0,1.2fr) 1fr auto;gap:var(--sp-4) var(--sp-5);align-items:center}
+.stx-hr{display:contents}
+.stx-hr-l{display:flex;flex-direction:column;min-width:0;font-size:var(--fs-3);font-weight:600;color:var(--text)}
+.stx-hr-l small{font-size:var(--fs-1);color:var(--text-3);font-weight:500}
+.stx-track{height:10px;border-radius:999px;background:var(--card-2);overflow:hidden;display:flex}
+.stx-track span{display:block;height:100%;border-radius:999px;background:var(--brand-fill)}
+.stx-t-ok .stx-track span{background:var(--ok)}.stx-t-warn .stx-track span{background:var(--warn)}.stx-t-bad .stx-track span{background:var(--bad)}
+.stx-hr-v{font-size:var(--fs-3);font-weight:800;color:var(--brand-ink);font-variant-numeric:tabular-nums;text-align:left;white-space:nowrap}
+
+/* רשימת תלמידים ממוספרת */
+.stx-pl{list-style:none;display:flex;flex-direction:column}
+.stx-pl li{display:flex;align-items:center;gap:var(--sp-4);padding:var(--sp-4) 0;border-bottom:1px solid var(--border)}
+.stx-pl li:last-child{border-bottom:none}
+.stx-more{font-size:var(--fs-2);color:var(--text-3);text-align:center;padding-top:var(--sp-4);font-weight:600}
+.stx-pn{width:26px;height:26px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);font-size:var(--fs-1);font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stx-pw{flex:1;min-width:0;display:flex;flex-direction:column}
+.stx-pw b{font-size:var(--fs-3);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stx-pw small{font-size:var(--fs-1);color:var(--text-3)}
+.stx-pills{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--sp-2);max-width:60%}
+.stx-pill{font-size:var(--fs-1);font-weight:700;border-radius:var(--r-7);padding:0 var(--sp-4);white-space:nowrap;border:1px solid var(--border);background:var(--card-2);color:var(--text-2);font-variant-numeric:tabular-nums}
+.stx-pill-ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok-line)}
+.stx-pill-warn{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-line)}
+.stx-pill-bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.stx-pill-info{background:var(--info-soft);color:var(--info);border-color:var(--info-line)}
+
+/* טבלה קטנה — לימוד מול שיעור, תפילות */
+.stx-tbl{overflow-x:auto;border:1px solid var(--border);border-radius:var(--r-4)}
+.stx-tbl th{text-align:center}
+.stx-tbl th:first-child,.stx-tbl td:first-child{text-align:right}
+.stx-tbl td{text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
+.stx-tbl td:first-child{font-weight:600}
+.stx-c-ok{color:var(--ok)}.stx-c-warn{color:var(--warn)}.stx-c-bad{color:var(--bad)}.stx-c-na{color:var(--text-3);font-weight:500}

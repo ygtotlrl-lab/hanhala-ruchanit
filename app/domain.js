@@ -18,6 +18,8 @@ import { icon } from './icons.js';
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
 function canAccess(moduleId) {
   if (!AUTH.user) return false;
+  // הסטטיסטיקה — צפייה בלבד, לכל מי שנכנס; אינה בטבלת ההרשאות
+  if (moduleId === 'stats') return true;
   var p = AUTH.perms || AUTH.DEFAULT_PERMS;
   var mp = p[moduleId] || AUTH.DEFAULT_PERMS[moduleId] || {}; // מודול חדש שאינו בהרשאות השמורות — ברירת המחדל
   var level = mp[AUTH.user.role] || 'none';

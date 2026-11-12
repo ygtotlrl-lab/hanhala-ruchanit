@@ -5,6 +5,7 @@ import { getStudents, hrAwayAbsences, hrDayWin, hrMarks, hrMirrorRecs, hrStudent
 import { HR_STREAMS, hrIsLate, hrPullSessions } from '../domain.sessions.js';
 import { icon } from '../icons.js';
 import { hrStudentOn } from '../domain.periods.js';
+import { statsHomeHTML } from './stats.js';
 
 function screenHomeHTML() {
   return `
@@ -18,6 +19,7 @@ function screenHomeHTML() {
       <div class="kpi kpi-info"><div class="kpi-top"><span class="kpi-l">נוכחות בסדרים</span><span class="kpi-ic">${icon('reports')}</span></div><div class="kpi-n" id="s-rate">–</div><div class="kpi-sub">מתוך מי שסומן</div></div>
     </div>
   </div>
+  ${statsHomeHTML()}
   <div class="mods-wrap">
     <div class="mods-lbl">מודולים</div>
     <div class="mods">

@@ -36,6 +36,7 @@ import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile,
 import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meetingDelete, meetingResponses, meetingSave, meetingSettings,
          meetingMode, meetingNew, meetingNewMake, meetingSearch, meetingView, meetingYear } from './screens/meeting.js';
 import { fcChipAdd, fcChipDel, fcToggle, renderForms, screenFormsHTML } from './screens/forms.js';
+import { renderStats, screenStatsHTML, statsOpen } from './screens/stats.js';
 import { GATE_KEY } from './gate.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
@@ -224,6 +225,7 @@ function mountView() {
     screenSleepHTML() +
     screenExamsHTML() +
     screenFormsHTML() +
+    screenStatsHTML() +
     screenSettingsHTML();
 }
 
@@ -281,6 +283,7 @@ function renderPage(pg) {
   if (pg === 'reports') loadReports();
   if (pg === 'sleep') loadSleep();
   if (pg === 'forms') renderForms();
+  if (pg === 'stats') renderStats();
 }
 
 // רענון אינו ניווט — אין לקרוא כאן ל-showPage: שמירה שמנווטת מוציאה את המשתמש ממקומו.
@@ -460,6 +463,9 @@ var DOM_ACTIONS = {
   'rp-export-all':  function () { return rpExport(null); },
   // page-nav הוא page ועוד סימון הכפתור הפעיל — הסרגל התחתון מסמן, וכפתורי הפנים אינם.
   'page':        function (el) { showPage(el.getAttribute('data-page')); },
+  // סטטיסטיקה — הכפתור בראשי פותח את הסוג שלו, והלשונית במסך מחליפה סוג בלי לצאת
+  'stats':       function (el) { statsOpen(el.getAttribute('data-k')); showPage('stats'); window.scrollTo(0, 0); },
+  'stats-tab':   function (el) { statsOpen(el.getAttribute('data-k')); renderStats(); },
   'page-nav':    function (el) {
                    showPage(el.getAttribute('data-page'));
                    document.querySelectorAll('.bn').forEach(function (b) { b.classList.remove('on'); });
@@ -804,4 +810,6 @@ function hrPullDraw() {
   if (typeof refreshDashStats === 'function') refreshDashStats();
   var rpPg = document.getElementById('pg-reports');
   if (rpPg && rpPg.classList.contains('on') && !modalOpen()) renderReports();
+  var stPg = document.getElementById('pg-stats');
+  if (stPg && stPg.classList.contains('on') && !modalOpen()) renderStats();
 }
