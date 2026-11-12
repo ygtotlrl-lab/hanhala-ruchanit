@@ -67,11 +67,17 @@
 
 /* חלונות עם טבלת שורות — רחבים יותר, כדי שהשורות לא יישברו */
 #modal .sheet:has(.scroll-pane),#modal .sheet:has(.rp-fill-box),#modal .sheet:has(.file-form){max-width:720px}
-.mark-hist-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;align-items:center;gap:var(--sp-4)}
-.mark-hist-dow,.mark-hist-date{white-space:nowrap;color:var(--text-2)}
+.mark-hist-row{display:grid;grid-template-columns:auto minmax(0,1fr) 78px;align-items:center;gap:var(--sp-5)}
+/* תג הלוח — היום בשבוע, היום בחודש והחודש, ברוחב קבוע */
+.mh-cal{width:58px;display:flex;flex-direction:column;align-items:center;border:1.5px solid var(--border);border-radius:var(--r-3);background:var(--card-2);padding:var(--sp-2) 0;line-height:1.15}
+.mh-cal small{font-size:var(--fs-1);color:var(--text-3);font-weight:600}
+.mh-cal b{font-size:var(--fs-5);font-weight:800;color:var(--brand-ink)}
+.mh-main{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
 .mark-hist-sess{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.mark-hist-row .hist-mark{white-space:nowrap;flex:none}
-@media (max-width:520px){ .mark-hist-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"dow sess mark" "date sess edit"} .mark-hist-dow{grid-area:dow}.mark-hist-date{grid-area:date;font-size:var(--fs-1)}.mark-hist-sess{grid-area:sess}.mark-hist-row .hist-mark{grid-area:mark}.mark-hist-row .mark-edit-btn{grid-area:edit} }
+.mark-hist-row .hist-mark{white-space:nowrap;flex:none;font-size:var(--fs-3)}
+/* כפתור העריכה — רוחב אחד בכל השורות, ובשורת איחור המקום נשמר ריק */
+.mark-hist-row .mark-edit-btn{width:78px;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2)}
+.mark-edit-none{border:0 !important;visibility:hidden}
 
 
 /* ── טופס הרישום: הדיאלוג שמהמצבה, התגובות וההגדרות ── */

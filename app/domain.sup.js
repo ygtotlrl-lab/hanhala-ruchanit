@@ -6,7 +6,8 @@ import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
 import { HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_NAME, HR_CLS_SHORT, MSG_CARE_MISSING, MSG_CARE_SAVED, MSG_DELETED_MARK, MSG_DEL_CARE_BODY, MSG_DEL_CARE_TITLE, MSG_EDIT_MARK, MSG_MARK_UPDATED, MSG_MONTH_DETAIL, MSG_PULL_STALE, MSG_ROW_MISSING } from './constants.js';
 import { S } from './state.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortStudents, hrSupervisionAccess } from './domain.js';
-import { _hcMN, _hcYL, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
+import { _hcMN, _hcYL, hrDayHeb, hrDayHebFmt, hrHebMonthWin, hrSessHeb } from './domain.hebdate.js';
+import { hebDayLabel } from '../core/hebrew.js';
 import { hrCachedArr, hrCachedCfg, hrCfgOf, hrDow, hrIsPrayer, hrLiveTreats, hrLoadData, hrLoadTreats,
          hrMarkLabels, hrPullCfg, hrPullSessions, hrPullTreats, hrRenderTodaySessions, hrSaveCfg,
          hrSaveData, hrSaveTreats, hrSortAbsenceRows, hrSortSupRecords, hrSortTreats,
@@ -225,7 +226,7 @@ function hrSupDetail(st, sid) {
   if(st.prayers&&sum){
     var cell=function(lbl,n,code){return '<div class="sup-sum-cell"><span class="'+(code?atvCls(code)+' ':'')+'sup-sum-n">'+n+'</span><span class="sup-sum-l">'+lbl+'</span></div>';};
     // שורה עליונה — טיפולים · סה״כ חיסורים · דקות איחור; ומתחתיה ארבעת הפילוחים
-    sumHTML='<div class="sup-sum sup-sum-3">'+cell('טיפולים',sum.treats||0,'')+cell('סה״כ חיסורים',sum.absent,'e')+cell('דקות איחור',sum.lateMin,'l')+'</div>'+
+    sumHTML='<div class="sup-sum sup-sum-3">'+cell('טיפולים',sum.treats||0,'p')+cell('סה״כ חיסורים',sum.absent,'e')+cell('דקות איחור',sum.lateMin,'l')+'</div>'+
       '<div class="sup-sum sup-sum-4">'+cell('חיסורים בסדרים',sum.absSed,'e')+cell('חיסורים בתפילות',sum.absPr,'e')+
       cell('איחורים קלים בתפילה',sum.lk,'lk')+cell('איחורים משמעותיים בתפילה',sum.lm,'lm')+'</div>';
   }
@@ -236,13 +237,16 @@ function hrSupDetail(st, sid) {
     hrSortSupRecords(records).forEach(function(r){
       var lbl=r.mark==='l'?('איחור — '+(r.minutes||0)+' ד׳'):(LBL[r.mark]||r.mark);
       var noteStr=r.note?(' — '+r.note):'';
+      // התאריך — תג לוח: היום בשבוע, היום בחודש גדול, והחודש; ומימינו הסדר והסימון
+      var dh=hrDayHeb(r.session_date);
       rowsHTML+='<div class="mark-hist-row">';
-      rowsHTML+='<span class="mark-hist-dow">יום '+hrDow(r.session_date)+'</span>';
-      rowsHTML+='<span class="mark-hist-date">'+esc(hrDayHebFmt(r.session_date))+'</span>';
-      rowsHTML+='<span class="mark-hist-sess">'+esc(r.session)+'</span>';
-      rowsHTML+='<span class="'+atvCls(r.mark)+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span>';
-      rowsHTML+='<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" '+
-        ' class="mark-edit-btn">'+icon('edit')+'ערוך</button>';
+      rowsHTML+='<span class="mh-cal"><small>'+esc(hrDow(r.session_date))+'</small><b>'+esc(hebDayLabel(dh.day))+'</b><small>'+esc(_hcMN(dh.hy)[dh.mi]||'')+'</small></span>';
+      rowsHTML+='<span class="mh-main"><span class="mark-hist-sess">'+esc(r.session)+'</span>'+
+        '<span class="'+atvCls(r.mark)+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span></span>';
+      // עריכה — לחיסור בלבד; איחור נערך בסדר שבו נרשם
+      rowsHTML+=(r.mark==='e'||r.mark==='x')
+        ? '<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" class="mark-edit-btn">'+icon('edit')+'ערוך</button>'
+        : '<span class="mark-edit-btn mark-edit-none" aria-hidden="true"></span>';
       rowsHTML+='</div>';
     });
   }
@@ -252,6 +256,7 @@ function hrSupDetail(st, sid) {
 }
 
 function hrSupEditMarkDlg(st, recId, sid, curMark) {
+  if(curMark!=='e'&&curMark!=='x') return;   // איחור נערך בסדר עצמו, לא מהפירוט
   var rec=(S[st.v+'Data']||[]).find(function(r){return idEq(r.client_id,recId);});
   var pr=!!rec&&hrIsPrayer(st, rec.session);
   var CODES=[
