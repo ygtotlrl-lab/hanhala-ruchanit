@@ -270,7 +270,8 @@ function hrSupEditMarkDlg(st, recId, sid, curMark) {
   }).join('');
   openModal(MSG_EDIT_MARK,
     '<div class="chip-row">'+btnsHTML+'</div>',
-    '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>', icon('edit'));
+    // ביטול חוזר לפירוט של אותו תלמיד, ולא לרשימה
+    '<button data-act="'+st.p+'-sup-detail" data-id="'+esc(sid)+'" class="md-btn-ghost">ביטול</button>', icon('edit'));
 }
 
 async function hrEditMark(st, recId, sid, newCode) {
@@ -285,10 +286,12 @@ async function hrEditMark(st, recId, sid, newCode) {
   // הטוסט אחרי הכתיבה לדיסק, שסינכרונית בראש השמירה; ההמתנה שאחריה היא הרשת בלבד.
   // ההבטחה מוחזרת כדי שנקודת הניתוב תשחרר את הכפתור לפיה.
   var _p=hrSaveData(st, data, hrDayWin(rec.session_date));
-  closeModal();
   hrRenderTodaySessions(st);
   hrRenderArchive(st);
+  // הציור מהמכשיר סינכרוני בראש hrRenderSupervision — הסיכומים כבר מעודכנים כשהפירוט נפתח שוב,
+  // והמשגיח נשאר בפירוט של אותו תלמיד
   hrRenderSupervision(st);
+  hrSupDetail(st, sid);
   toast(MSG_MARK_UPDATED, null, 'good');
   await _p;
 }
