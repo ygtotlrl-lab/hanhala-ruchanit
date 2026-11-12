@@ -58,13 +58,11 @@ function contactsPaneHTML() {
   return `    <div id="settings-reports" class="hidden">
       <div class="ptitle"><button data-act="settings-home" class="set-back-btn">${icon('back')}חזרה</button><span>הגדרות דוחות</span></div>
       <div class="ss" data-autosave="ct-save">
-        <div class="ss-t">אנשי קשר — צוות הישיבה
-          <span class="ct-acts"><button class="btn sm out" data-act="ct-view">${icon('watch')}צפייה בדף</button>
-          <button class="btn sm out" data-act="ct-copy">${icon('copy')}העתקת קישור</button></span></div>
-        <div class="ct-link">הדף ציבורי ואין ממנו גישה לאפליקציה; הגיליון מקשר אליו:
-          <span class="ct-url" id="ct-url"></span></div>
+        <div class="ss-t">אנשי קשר — צוות הישיבה</div>
+        <div class="ct-acts"><button class="btn sm out" data-act="ct-view">${icon('watch')}צפייה בדף</button>
+          <button class="btn sm out" data-act="ct-copy">${icon('copy')}העתקת קישור</button></div>
         <div id="ct-edit" class="set-stack"></div>
-        <button data-act="ct-group-add" class="add-dashed-btn">+ הוסף קבוצה</button>
+        <button data-act="ct-group-add" class="add-dashed-btn ct-group-add">+ הוסף קבוצה</button>
         <label class="field-label" for="ct-footer">שורת הכתובת שבתחתית הדף</label>
         <input id="ct-footer" class="input-full" placeholder="כתובת · דוא״ל">
       </div>
@@ -110,8 +108,6 @@ function _paint(v) {
   box.innerHTML = groups.map(_groupHTML).join('');
   var f = document.getElementById('ct-footer');
   if (f) f.value = (v && v.footer) || '';
-  var u = document.getElementById('ct-url');
-  if (u) u.textContent = contactsUrl();
 }
 
 async function renderContactsSettings() {
