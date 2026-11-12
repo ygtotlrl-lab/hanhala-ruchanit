@@ -5,6 +5,7 @@ import { MIRROR, mirrorSave } from './mirror.js';
 import { newClientId } from './sync.js';
 import { logAction, logFlush } from './backup.js';
 import { bootWire } from './boot-run.js';
+import { shellIcon } from './icons.js';
 
 // ── נעילת חוסר-פעילות ──
 var LK_LOCK_MS = 5 * 60 * 1000;
@@ -26,7 +27,8 @@ function _lkStyle() {
     '#lk-warn.lk-hidden{display:none}' +
     '#lk-warn .lk-box{background:var(--card);color:var(--text);border-radius:14px;' +
     'padding:28px 24px;text-align:center;max-width:280px;width:90%}' +
-    '#lk-warn .lk-ico{font-size:2rem;margin-bottom:6px}' +
+    '#lk-warn .lk-ico{display:flex;justify-content:center;color:var(--warn);margin-bottom:6px}' +
+    '#lk-warn .lk-ico svg{width:36px;height:36px;margin:0}' +
     '#lk-warn .lk-ttl{font-weight:700;font-size:1.05rem;margin-bottom:8px}' +
     '#lk-warn .lk-txt{font-size:.88rem;opacity:var(--op-6);margin-bottom:18px;line-height:var(--lh-4)}' +
     '#lk-warn button{width:100%;border:0;border-radius:10px;padding:11px 16px;' +
@@ -45,7 +47,8 @@ function _lkWarnEl() {
   box.className = 'lk-box';
   var ico = document.createElement('div');
   ico.className = 'lk-ico';
-  ico.textContent = '⚠️';
+  // אייקון המצב שהאפליקציה מסרה (warn) — לא אמוג׳י
+  ico.innerHTML = shellIcon('warn');
   var ttl = document.createElement('div');
   ttl.className = 'lk-ttl';
   ttl.textContent = 'האפליקציה תינעל';
@@ -54,7 +57,7 @@ function _lkWarnEl() {
   txt.textContent = 'דקה של חוסר פעילות נותרה. לחץ להמשך.';
   var btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = 'אני כאן ✋';
+  btn.textContent = 'אני כאן';
   btn.dataset.act = 'lk-stay';
   box.appendChild(ico); box.appendChild(ttl); box.appendChild(txt); box.appendChild(btn);
   el.appendChild(box);

@@ -259,9 +259,9 @@ function showPageInternal(pg) {
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
   var pgEl=document.getElementById('pg-'+pg);
-  var nbEl=document.querySelector('[data-pg="'+pg+'"]');
   if(pgEl) pgEl.classList.add('on');
-  if(nbEl) nbEl.classList.add('on');
+  // שני הסרגלים — העליון (מסך רחב) והתחתון (טלפון); הראשון שנמצא היה העליון בלבד, והתחתון נשאר בלי לשונית פעילה
+  document.querySelectorAll('.nb[data-pg="'+pg+'"], .bn[data-pg="'+pg+'"]').forEach(function(b){b.classList.add('on');});
 }
 
 var UNDER_CONSTRUCTION = [];
