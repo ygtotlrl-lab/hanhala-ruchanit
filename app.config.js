@@ -30,7 +30,7 @@ self.APP = Object.freeze({
     launch: {},
     // כפתור «יציאה» שהמעטפת קולטת וסוגרת בו את האפליקציה
     exit: false,
-    // FileProvider ו-androidx — רק באפליקציה שמייצאת קובץ; print — גשר ההדפסה, למסמכים
+    // גשר השיתוף (FileProvider ו-androidx) וגשר ההדפסה — בכל האפליקציות, אחידים
     share: { chooser: 'שיתוף הקובץ', print: true }
   },
   // sign-apk.sh מסרב לחתום בכל מפתח אחר
