@@ -243,10 +243,7 @@ function hrSupDetail(st, sid) {
       rowsHTML+='<span class="mh-cal"><small>'+esc(hrDow(r.session_date))+'</small><b>'+esc(hebDayLabel(dh.day))+'</b><small>'+esc(_hcMN(dh.hy)[dh.mi]||'')+'</small></span>';
       rowsHTML+='<span class="mh-main"><span class="mark-hist-sess">'+esc(r.session)+'</span>'+
         '<span class="'+atvCls(r.mark)+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span></span>';
-      // עריכה — לחיסור בלבד; איחור נערך בסדר שבו נרשם
-      rowsHTML+=(r.mark==='e'||r.mark==='x')
-        ? '<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" class="mark-edit-btn">'+icon('edit')+'ערוך</button>'
-        : '<span class="mark-edit-btn mark-edit-none" aria-hidden="true"></span>';
+      rowsHTML+='<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" class="mark-edit-btn">'+icon('edit')+'ערוך</button>';
       rowsHTML+='</div>';
     });
   }
@@ -256,7 +253,6 @@ function hrSupDetail(st, sid) {
 }
 
 function hrSupEditMarkDlg(st, recId, sid, curMark) {
-  if(curMark!=='e'&&curMark!=='x') return;   // איחור נערך בסדר עצמו, לא מהפירוט
   var rec=(S[st.v+'Data']||[]).find(function(r){return idEq(r.client_id,recId);});
   var pr=!!rec&&hrIsPrayer(st, rec.session);
   var CODES=[

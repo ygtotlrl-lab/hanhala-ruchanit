@@ -75,9 +75,8 @@
 .mh-main{display:flex;flex-direction:column;gap:var(--sp-1);min-width:0}
 .mark-hist-sess{font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mark-hist-row .hist-mark{white-space:nowrap;flex:none;font-size:var(--fs-3)}
-/* כפתור העריכה — רוחב אחד בכל השורות, ובשורת איחור המקום נשמר ריק */
+/* כפתור העריכה — רוחב אחד בכל השורות */
 .mark-hist-row .mark-edit-btn{width:78px;display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2)}
-.mark-edit-none{border:0 !important;visibility:hidden}
 
 
 /* ── טופס הרישום: הדיאלוג שמהמצבה, התגובות וההגדרות ── */
