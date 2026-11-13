@@ -468,7 +468,7 @@
 .st-table{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-5);overflow:hidden;box-shadow:var(--shadow)}
 /* כמו מצבת משרד החינוך: עמודה לכל שדה, והטבלה נגללת לרוחב כשהמסך צר */
 .st-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.st-grid{min-width:720px}
+.st-grid{min-width:100%;width:max-content}
 .st-th,.st-row{display:grid;grid-template-columns:36px 118px minmax(200px,1fr) 96px 124px 108px;align-items:center;column-gap:var(--sp-6);padding:var(--sp-4) var(--sp-6)}
 .st-th{background:var(--brand-soft);color:var(--brand-ink);font-size:var(--fs-2);font-weight:700;border-bottom:1.5px solid var(--border);white-space:nowrap}
 .st-th.hidden{display:none}
