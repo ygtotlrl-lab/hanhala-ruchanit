@@ -223,7 +223,7 @@ function _settingsPaint(cfg) {
         '<div class="en-int"><span>החלפת תמונה כל</span><input type="number" min="2" max="20" id="en-interval" aria-label="שניות" value="' + esc(cfg.interval || 4) + '"><span>שניות</span></div>' }) +
     fcCardHTML({ id: 'fc-en-fields', ico: 'fields', title: 'השדות', open: was === 'fc-en-fields',
       sum: cfg.fields.filter(function (f) { return f.type === 'section'; }).length + ' קבוצות · ' + fs.length + ' שדות · ' + fs.filter(function (f) { return f.req; }).length + ' חובה',
-      body: '<div class="en-fields fc-fields" id="en-fields">' + cfg.fields.map(function (f) { return _fieldRow(f); }).join('') + '</div>' +
+      body: '<div class="en-fields fc-fields fc-fields-top" id="en-fields">' + cfg.fields.map(function (f) { return _fieldRow(f); }).join('') + '</div>' +
         '<div class="fc-adds"><button class="add-dashed-btn" data-act="en-field-add">+ שדה</button><button class="add-dashed-btn" data-act="en-field-add" data-sec="1">+ קבוצה</button></div>' }) +
     fcCardHTML({ id: 'fc-en-track', ico: 'track', title: 'עמודות המעקב', open: was === 'fc-en-track',
       sum: (cfg.track || []).length + ' עמודות — בכל תגובה',

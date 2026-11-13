@@ -61,7 +61,7 @@ td{padding:var(--sp-4) var(--sp-5)}
 
 /* ── קליפה ──
    שורש הקליפה (shell) אינו תיבה — הוא נושא את מצב החשיפה, והכותרת הדביקה והסרגל ממשיכים להתנהג כילדי body */
-#shell{display:contents}
+.shell{display:contents}
 header{background:var(--bar);border-radius:0 0 22px 22px;padding:0 var(--sp-7);display:flex;align-items:center;justify-content:space-between;height:76px;position:sticky;top:0;z-index:var(--z-2)}
 .hl{display:flex;align-items:center;gap:var(--sp-6)}
 .logo{width:60px;height:60px;object-fit:contain;border-radius:var(--r-5);background:var(--card);padding:var(--sp-2);}
@@ -157,10 +157,10 @@ header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w,header.is-inner .hdiv
   .combo-opt:hover{background:var(--card-2)}
 }
 @media (hover:hover){
-  #ask .sheet-ft button:hover{background:var(--card-2)}
+  .veil-ask .sheet-ft button:hover{background:var(--card-2)}
 }
 @media (hover:hover){
-  #ask .sheet-ft button.danger:hover{background:var(--deep-1);border-color:var(--deep-1)}
+  .veil-ask .sheet-ft button.danger:hover{background:var(--deep-1);border-color:var(--deep-1)}
 }
 @media (hover:hover){
   .clr-btn:hover{border-color:var(--bad);color:var(--bad)}
@@ -193,17 +193,17 @@ header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w,header.is-inner .hdiv
 .sw::before{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a3a6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat center/contain;pointer-events:none}
 .veil{align-items:center;backdrop-filter:blur(2px);direction:rtl}
 .sheet{background:var(--card);border-radius:var(--r-5);padding:var(--sp-7);width:92%;max-width:420px;box-shadow:0 20px 60px var(--sh-2);border-top:4px solid var(--brand-ink);max-height:85vh;overflow-y:auto}
-#ask .sheet{max-width:340px}
-#ask-body{font-size:var(--fs-4);color:var(--text-2)}
-#ask .sheet-ft button{flex:1;display:inline-flex;align-items:center;justify-content:center;background:var(--card);color:var(--brand-ink);border:2px solid var(--brand-ink);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3)}
-#ask .sheet-ft button.danger{background:var(--brand-fill);color:var(--on-dark);border-color:var(--brand-fill);box-shadow:var(--shadow)}
+.veil-ask .sheet{max-width:340px}
+.ask-body{font-size:var(--fs-4);color:var(--text-2)}
+.veil-ask .sheet-ft button{flex:1;display:inline-flex;align-items:center;justify-content:center;background:var(--card);color:var(--brand-ink);border:2px solid var(--brand-ink);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3)}
+.veil-ask .sheet-ft button.danger{background:var(--brand-fill);color:var(--on-dark);border-color:var(--brand-fill);box-shadow:var(--shadow)}
 .sheet-hd{justify-content:space-between;margin-bottom:var(--sp-6)}
 .sheet-hd h3{margin:0;font-size:var(--fs-4);font-weight:700;color:var(--brand-ink)}
 .sheet-hd .x{color:var(--text-2)}
 .sheet-ft{gap:var(--sp-5);margin-top:var(--sp-6)}
-#modal-body label:not(.per-lbl){display:block;color:var(--text-2);font-size:var(--fs-3);font-weight:600;margin-bottom:var(--sp-3)}
-#modal-body input{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
-#modal-body input:focus{outline:none;border-color:var(--brand-ink)}
+.modal-body label:not(.per-lbl){display:block;color:var(--text-2);font-size:var(--fs-3);font-weight:600;margin-bottom:var(--sp-3)}
+.modal-body input{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
+.modal-body input:focus{outline:none;border-color:var(--brand-ink)}
 .cs{text-align:center;padding:var(--sp-7) var(--sp-7);background:var(--card);border-radius:var(--r-5);border:1px solid var(--border);box-shadow:var(--shadow)}
 .cs .ci{font-size:var(--fs-7);margin-bottom:var(--sp-6);opacity:var(--op-4)}
 .cs h3{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);margin-bottom:var(--sp-4)}
@@ -283,9 +283,9 @@ header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w,header.is-inner .hdiv
 .edit-row{display:flex;gap:var(--sp-3);align-items:center}
 /* מיקום הלוח נמדד בפתיחה ונכתב ב-setProperty, והכלל הזה הוא היחיד שקורא אותו */
 .hc-pop{--pop-top:auto;--pop-right:auto;top:var(--pop-top);right:var(--pop-right);left:auto}
-#sfmT_btn.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
+.sfm-t-btn.on{background:var(--bad-soft);color:var(--bad);border-color:var(--bad-line)}
 .sf-end-row{display:flex;gap:var(--sp-4);flex-wrap:wrap}
-#sfmN_btn.on{background:var(--brand-fill);color:var(--on-brand);border-color:var(--brand-fill)}
+.sfm-n-btn.on{background:var(--brand-fill);color:var(--on-brand);border-color:var(--brand-fill)}
 .md-note-center{font-size:var(--fs-3);color:var(--text-2);text-align:center}
 .md-btn-primary{flex:1;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;font-family:Heebo;font-weight:600;padding:var(--sp-4);border-radius:var(--r-3)}
 .filter-chip{font-size:var(--fs-2);padding:var(--sp-3) var(--sp-5)}
@@ -365,6 +365,6 @@ header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w,header.is-inner .hdiv
 .avatar-ini{display:none}
 @media (max-width:899px){
   .avatar-btn{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;font-size:var(--fs-3);font-weight:800}
-  .avatar-btn .avatar-ico,.avatar-btn #hdr-username{display:none}
+  .avatar-btn .avatar-ico,.avatar-btn .hdr-username{display:none}
   .avatar-btn .avatar-ini{display:inline}
 }

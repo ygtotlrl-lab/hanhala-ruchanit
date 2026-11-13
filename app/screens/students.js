@@ -73,8 +73,8 @@ function openStatusForm(type) {
       '<div>' +
         // סיום הוא הכרעה מפורשת — תאריך, או «ללא»; השמירה חסומה עד שנבחר אחד מהם
         '<div class="sf-end-row">' +
-          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle">' + icon('plus') + 'הוסף תאריך סיום</button>' +
-          '<button id="sfmN_btn" data-act="hc-noend" type="button" class="sf-end-toggle">ללא תאריך סיום</button>' +
+          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle sfm-t-btn">' + icon('plus') + 'הוסף תאריך סיום</button>' +
+          '<button id="sfmN_btn" data-act="hc-noend" type="button" class="sf-end-toggle sfm-n-btn">ללא תאריך סיום</button>' +
         '</div>' +
         '<div id="sfmT_wrap" class="hidden">' +
           '<label class="'+lbl+'">תאריך סיום</label>' +

@@ -22,7 +22,7 @@ function formUrl(file) { return contactsUrl().replace(/contacts\.html$/, file); 
 function fcSw(attrs, on) { return '<input type="checkbox" class="fc-sw" ' + attrs + (on ? ' checked' : '') + '>'; }
 // בראש דף ההגדרות: המתג (פתוח למילוי / לשיבוץ) ו«צפייה», ומתחתם הקישור ו«העתקה»
 function fcStatusHTML(o) {
-  return '<label class="fc-stat' + (o.on ? ' on' : '') + '">' + fcSw('id="' + o.id + '"', o.on) + '<b>' + esc(o.label) + '</b>' +
+  return '<label class="fc-stat">' + fcSw('id="' + o.id + '"', o.on) + '<b>' + esc(o.label) + '</b>' +
       '<button type="button" class="btn sm out" data-act="' + o.p + '-view">' + icon('watch') + 'צפייה</button></label>' +
     '<div class="fc-link">' + icon('link') + '<span dir="ltr">' + esc(o.url) + '</span>' +
       '<button type="button" class="btn sm out" data-act="' + o.p + '-copy">' + icon('copy') + 'העתקה</button></div>';

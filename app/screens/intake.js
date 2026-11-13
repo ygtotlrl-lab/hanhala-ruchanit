@@ -177,7 +177,7 @@ function _settingsPaint(cfg) {
     fcStatusHTML({ p: 'in', id: 'in-open', on: cfg.open !== false, label: fcOnLabel('in'), url: intakeUrl() }) +
     fcCardHTML({ id: 'fc-in-fields', ico: 'fields', title: 'פרטי התלמיד', open: was === 'fc-in-fields',
       sum: cfg.fields.filter(function (f) { return f.type !== 'section'; }).length + ' שדות',
-      body: '<div class="en-fields fc-fields" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
+      body: '<div class="en-fields fc-fields fc-fields-top" id="in-fields">' + cfg.fields.map(function (f) { return enrollFieldRow(f, 'inf'); }).join('') + '</div>' +
         '<button class="add-dashed-btn" data-act="in-field-add">+ שדה</button>' }) +
     fcCardHTML({ id: 'fc-in-docs', ico: 'doc', title: 'מסמכים לצפייה', open: was === 'fc-in-docs',
       sum: (cfg.docs || []).length + ' מסמכים',

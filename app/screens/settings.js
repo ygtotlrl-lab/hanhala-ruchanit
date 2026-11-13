@@ -20,7 +20,7 @@ import { stIcon } from '../../core/icons.js';
 
 function screenSettingsHTML() {
   return `
-<div class="pg" id="pg-settings">
+<div class="pg pg-settings" id="pg-settings">
   <div class="inner">
 
     <!-- דף ראשי הגדרות -->

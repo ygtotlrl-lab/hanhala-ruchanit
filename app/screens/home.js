@@ -9,7 +9,7 @@ import { statsHomeHTML } from './stats.js';
 
 function screenHomeHTML() {
   return `
-<div class="pg on" id="pg-home">
+<div class="pg on pg-home" id="pg-home">
   <div class="kpi-wrap">
     <div class="mods-lbl">היום</div>
     <div class="kpis">

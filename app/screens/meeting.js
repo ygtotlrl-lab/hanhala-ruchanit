@@ -332,7 +332,6 @@ function meetingSave() {
   var p = hrCfgSet(MT_KEY, next);
   toast(MSG_SAVED, null, 'good');
   var tl = document.getElementById('mt-tl-box'); if (tl) tl.innerHTML = _tlHTML(next);
-  var st = document.querySelector('#mt-set .fc-stat'); if (st) st.classList.toggle('on', next.open);
   return p;
 }
 
