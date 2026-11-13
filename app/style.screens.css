@@ -143,7 +143,13 @@
 .inactive-tab{font-size:var(--fs-2);color:var(--text-3);padding:var(--sp-3) var(--sp-5)}
 .is-inactive{opacity:var(--op-3)}
 .st-activate{font-size:var(--fs-2);border:1.5px solid var(--ok-line);background:var(--ok-soft);color:var(--ok);cursor:pointer;font-family:Heebo;font-weight:600;padding:var(--sp-3) var(--sp-5);border-radius:var(--r-6);white-space:nowrap}
-.st-add-row{display:flex;justify-content:center;margin:0 0 var(--sp-6)}
+.st-add-row{display:flex;align-items:center;gap:var(--sp-4);margin:0 0 var(--sp-6)}
+.st-add-row .sw{flex:1;min-width:0}
+.st-add-row .sw input{min-height:46px}
+.st-tool{width:46px;height:46px;flex:none;border:0;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:background var(--dur-3)}
+.st-tool.hidden{display:none}
+.st-tool .ico{width:20px;height:20px}
+@media (hover:hover){.st-tool:hover{filter:brightness(.95)}}
 .st-attend{align-items:center;border:none;background:var(--brand-fill);color:var(--on-brand);cursor:pointer;display:inline-flex;font-size:var(--fs-5);font-weight:300;height:32px;justify-content:center;line-height:var(--lh-1);border-radius:var(--r-7);width:32px}
 .st-class-sel{border:1px solid var(--border);margin:var(--sp-3) 0 var(--sp-5);padding:var(--sp-4);border-radius:var(--r-2);width:100%}
 .st-edit{align-items:center;border:none;background:var(--bg);color:var(--brand-ink);cursor:pointer;display:inline-flex;font-size:var(--fs-4);height:28px;justify-content:center;border-radius:var(--r-3);width:28px}
@@ -351,7 +357,7 @@
   .nb{padding:var(--sp-4) var(--sp-5)}
 }
 @media (min-width:640px){
-  header{height:60px}
+  header{height:72px}
 }
 @media (min-width:640px){
   .logo{width:46px;height:46px}
@@ -380,7 +386,8 @@
   .kpis{grid-template-columns:repeat(4,1fr)}
 }
 @media (min-width:900px){
-  header{height:76px;padding:0 var(--sp-7)}
+  header{height:88px;padding:0 var(--sp-7)}
+  .hdr-page{font-size:2rem}
 }
 @media (min-width:900px){
   .logo{width:60px;height:60px}

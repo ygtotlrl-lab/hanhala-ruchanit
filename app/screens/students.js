@@ -20,16 +20,15 @@ function screenStudentsHTML() {
   return `
 <div class="pg" id="pg-students">
 <div class="inner">
-<div class="pt-tools"><button id="btn-manage-list" class="hidden btn ic out" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="btn ic out" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="import-file" data-chg="import-students"></div>
-
 <!-- Summary Bar -->
 <div id="st-summary" class="st-summary"></div>
 
 <!-- Filter Tabs -->
 <div id="class-tabs-row" class="fchips" role="tablist" aria-label="סינון לפי שיעור"></div>
-<!-- Search: ממורכזת, רוחב דינמי לפי שורת הכפתורים -->
+<!-- חיפוש, ולצדו הכלים: ניהול רשימה · הדפסה -->
 <div class="st-add-row">
 <div class="sw" id="sw-inner">${comboHTML('student', { id: 'st-search', qid: 'search-st', label: 'חיפוש תלמיד', placeholder: 'חיפוש תלמיד...' })}</div>
+<button id="btn-manage-list" class="hidden st-tool" data-act="manage-list-open" aria-label="ניהול רשימה" title="ניהול רשימה">${icon('settings')}</button><button class="st-tool" data-act="students-print" aria-label="הדפסה" title="הדפסה">${icon('print')}</button><input type="file" aria-label="קובץ ייבוא תלמידים" id="import-file-input" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="import-file" data-chg="import-students">
 </div>
 
 
@@ -169,8 +168,6 @@ function renderStudents(){
   if(btnML) btnML.classList.remove('hidden'); // גלוי לכולם; מי שאינו מנהל — «ללא גישה» בלחיצה
 
   var tabsRow=document.getElementById('class-tabs-row');
-  var swInner=document.getElementById('sw-inner');
-  if(tabsRow&&swInner){var tw=tabsRow.offsetWidth;if(tw>0)swInner.style.setProperty('--sw-w',tw+'px');}
   if(tabsRow){
     var nOf=function(k){return activeSts.filter(function(s){return s.cls===k;}).length;};
     tabsRow.innerHTML=hrFilterChips([['all','הכל',activeSts.length]].concat(HR_CLS_LIST.map(function(k){return [k,HR_CLS_CHIP[k],nOf(k)];})),

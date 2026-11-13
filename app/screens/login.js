@@ -190,6 +190,7 @@ async function afterLogin(permsP) {
     var wrap = document.getElementById('user-avatar-wrap');
     var hdru = document.getElementById('hdr-username');
     if (hdru) hdru.textContent = u.full_name;
+    hrSetInitials(u.full_name);
     if (wrap) wrap.classList.remove('hidden');
     var mn = document.getElementById('user-menu-name');
     if (mn) mn.textContent = u.full_name;
@@ -390,6 +391,7 @@ async function confirmSwitch() {
   await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;
+  hrSetInitials(u.full_name);
   var mn=document.getElementById('user-menu-name');
   if(mn) mn.textContent=u.full_name;
   var mr=document.getElementById('user-menu-role');
@@ -416,3 +418,11 @@ function initDateFields(){
 
 export { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
          switchUserEl, toggleUserMenu, onAfterLogin };
+
+// ראשי התיבות לעיגול המשתמש בטלפון — אות ראשונה של שתי המילים הראשונות
+function hrSetInitials(name){
+  var el=document.getElementById('hdr-initials'); if(!el) return;
+  var w=String(name||'').trim().split(/\s+/).filter(Boolean);
+  el.textContent=w.slice(0,2).map(function(x){return x.charAt(0);}).join('');
+  var b=el.closest('.avatar-btn'); if(b){b.title=name||'';b.setAttribute('aria-label',name||'');}
+}
