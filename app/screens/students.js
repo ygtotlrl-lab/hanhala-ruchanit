@@ -202,7 +202,7 @@ function renderStudents(){
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var clsLabel=CLS_NAME[s.cls]||s.cls;
+    var clsLabel=s.cls==='s'?'הת׳ השלוחים':(CLS_NAME[s.cls]||s.cls);
     var isPresent=hrAwayAbsences(s).length===0;
     // נוכח ואינו נוכח — אותה צורה, בלי וי ובלי איקס; ההבדל בגוון בלבד
     var presIcon=isPresent
@@ -427,7 +427,7 @@ function openStatusPickerModal() {
       '<button data-act="status-form" data-kind="left" class="status-pick-info">' +
         '<span class="tile-ico">' + icon('left') + '</span><div>לא שב</div>' +
       '</button>' +
-    '</div>', '');
+    '</div>' + '<button data-act="st-history" data-id="' + esc(S._statusSid) + '" class="st-hist-link">' + icon('history') + 'היסטוריית סטטוסים</button>', '');
 }
 
 function openCurrentStatusModal() {
@@ -455,7 +455,7 @@ function openCurrentStatusModal() {
     '</div>';
   }).join('');
   openModal(s.name, absencesHTML +
-    '<button data-act="status-picker-open" class="abs-add">' + icon('plus') + 'הוסף סיבה נוספת</button>', '');
+    '<button data-act="status-picker-open" class="abs-add">' + icon('plus') + 'הוסף סיבה נוספת</button>' + '<button data-act="st-history" data-id="' + esc(S._statusSid) + '" class="st-hist-link">' + icon('history') + 'היסטוריית סטטוסים</button>', '');
 }
 
 function hrRefreshSupervisionViews() {
@@ -518,25 +518,31 @@ function studentFormHTML(sid){
     // מספר הזהות (או הדרכון) — מזהה את התלמיד בדפים הציבוריים (השיבוץ לאסיפת הורים)
     '<label for="st-idnum">מספר תעודת זהות (או מספר דרכון, אם אין)</label>'+
     '<input aria-label="מספר זהות" type="text" id="st-idnum" dir="ltr" autocomplete="off" class="st-form-input">'+
-    '<label for="st-class">שיעור</label>'+
+    // שיעור · מחזור · תקופות — רכיב אחד: השיבוץ בישיבה, נפרד מפרטי הזיהוי
+    '<div class="st-sect"><div class="st-sect-hd">שיבוץ ותקופות</div>'+
+    '<div class="st-pair">'+
+    '<div><label for="st-class">שיעור</label>'+
     '<select id="st-class" class="st-class-sel" data-chg="st-class">'+
       '<option value="a">שיעור א\'</option>'+
       '<option value="b">שיעור ב\'</option>'+
       '<option value="g">שיעור ג\'</option>'+
       '<option value="s">התלמידים השלוחים</option>'+
-    '</select>'+
+    '</select></div>'+
     // לתלמידים השלוחים אין מחזור — השדה מוסתר כשנבחרים
     '<div id="st-cycle-wrap"><label for="st-cycle">מחזור</label>'+
     '<select id="st-cycle" class="st-class-sel"></select></div>'+
+    '</div>'+
     // תקופות הפעילות — חודש הצטרפות וחודש עזיבה (ריק — עדיין בישיבה); כמה תקופות לתלמיד שיצא וחזר
     '<div class="field-label">תקופות פעילות</div>'+
     '<div id="st-periods"></div>'+
+    '</div>'+
     // ערוץ שגיאה מוטבע: שגיאת משתמש שמתוקנת בהקלדה, וטוסט שנעלם משאיר טופס פתוח בלי הסבר
     '<div id="st-err" class="st-err"></div>'+
-    // אין היסטוריה לתלמיד שטרם נשמר — בהוספה הכפתור היה מציג «אין ראיה» בכל פעם
-    (sid ? '<button data-act="st-history" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('history')+'היסטוריית סטטוסים</button>' : '')+
-    // התיק האישי — למי שמורשה לראות תיקים
-    (sid ? '<button data-act="st-file" data-id="'+esc(sid)+'" class="st-history-btn">'+icon('files')+'תיק אישי</button>' : '');
+    // התיק האישי — שורת קישור, לא כפתור פעולה; היסטוריית הסטטוסים — בתפריט הסטטוס (הפלוס)
+    (sid ? '<button data-act="st-file" data-id="'+esc(sid)+'" class="st-file-link">'+
+      '<span class="st-file-ic">'+icon('files')+'</span>'+
+      '<span class="st-file-txt"><b>תיק אישי</b><small>מסמכים ואירועים של התלמיד</small></span>'+
+      '<span class="st-file-go">'+icon('prev')+'</span></button>' : '');
 }
 
 // ── היסטוריית הסטטוסים ──
