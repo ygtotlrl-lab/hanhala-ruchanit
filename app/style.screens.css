@@ -739,30 +739,24 @@
 /* כמו הפסים — כותרת קטע בדיו מלא בלי סימן, כרטיסים לבנים בלי מסגרת ובצל רך, ואייקון בעיגול תכלת */
 .mods-lbl{margin-bottom:var(--sp-5);font-size:1.05rem;font-weight:700;color:var(--text);text-transform:none;letter-spacing:0}
 .mods-lbl::before{display:none}
-/* כיוון «ג · רשימה אחת» — שלושת החלקים נבדלים זה מזה:
+/* כיוון «א · פס צד» — שלושת החלקים נבדלים זה מזה:
    «היום» — מסגרת דקה;
-   הסטטיסטיקה — כפתורים לבנים במסגרת בצבע הזהות, והאייקון בעיגול מלא;
-   המודולים — כרטיס אחד, שורה לכל מודול וקו דק ביניהן, האייקון בריבוע מעוגל וחץ בצבע הזהות בקצה. */
+   הסטטיסטיקה — אריחים מלאים ברך הזהות, בלי מסגרת, והאייקון בעיגול לבן;
+   המודולים — כרטיס לבן לכל מודול, פס בצבע הזהות בצד הימני, האייקון בעיגול רך וחץ קטן בצד השמאלי. */
 .kpis{border:1px solid var(--border);border-radius:var(--r-6);box-shadow:none}
-.stx-btn{border:1.5px solid var(--brand-fill);border-radius:var(--r-6);box-shadow:none}
-.stx-btn-ic{width:44px;height:44px;border-radius:50%;background:var(--brand-fill);color:var(--on-brand)}
+.stx-btn{border:0;border-radius:var(--r-6);box-shadow:none;background:var(--brand-soft);color:var(--brand-ink)}
+.stx-btn-ic{width:44px;height:44px;border-radius:50%;background:var(--card);color:var(--brand-ink)}
 .stx-btn-ic .ico{width:20px;height:20px}
-.mods{display:flex;flex-direction:column;gap:0;background:var(--card);border-radius:var(--r-6);overflow:hidden;box-shadow:0 1px 3px rgba(20,40,80,.06)}
-.mod{border:0;border-radius:0;box-shadow:none;align-items:center;width:100%;padding:var(--sp-6)}
-.mod+.mod{border-top:1px solid var(--border)}
+.stx-btn-go{color:var(--brand-ink)}
+@media (hover:hover){ .stx-btn:hover{border:0;background:var(--border)} }
+.mods{gap:var(--sp-5)}
+.mod{border:0;border-right:5px solid var(--brand-fill);border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06);align-items:center;padding:var(--sp-6)}
 .mod::before{display:none}
-.mod-ic{width:42px;height:42px;border-radius:var(--r-5);background:var(--brand-soft);color:var(--brand-ink)}
+.mod-ic{width:44px;height:44px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink)}
 .mod-ic .ico{width:20px;height:20px}
-.mod-go{flex:none;display:flex;color:var(--brand-ink)}
+.mod-go{flex:none;display:flex;color:var(--text-3)}
 .mod-go .ico{width:18px;height:18px;margin:0}
-@media (hover:hover){ .mod:hover{transform:none;box-shadow:none;background:var(--card-2)} .mod:hover .mod-ic{transform:none} }
-/* מ-900px — שתי עמודות באותו כרטיס, וקו דק בין העמודות ובין השורות */
-@media (min-width:900px){
-  .mods{display:grid;grid-template-columns:1fr 1fr}
-  .mod+.mod{border-top:0}
-  .mod:nth-child(n+3){border-top:1px solid var(--border)}
-  .mod:nth-child(odd){border-left:1px solid var(--border)}
-}
+@media (hover:hover){ .mod:hover{transform:none;box-shadow:0 2px 8px rgba(20,40,80,.1);border-color:var(--brand-fill)} .mod:hover .mod-ic{transform:none} }
 .mods-wrap{padding-top:var(--sp-3)}
 @media (min-width:900px){
   .kpi-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-5)}
