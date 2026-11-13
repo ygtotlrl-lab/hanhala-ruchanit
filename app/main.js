@@ -10,7 +10,7 @@ import { bootRun } from '../core/boot-run.js';
 import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
-import { actWire, closeAsk, closeModal, comboInput, comboPick, dragCancel, dragDown, dragMove,
+import { actWire, closeAsk, closeModal, comboInput, comboMore, comboPick, dragCancel, dragDown, dragMove,
          dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
 import { HR_EXPORT_FONTS, HR_MIRROR_TABLES, HR_ORG, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
@@ -453,6 +453,7 @@ var DOM_ACTIONS = {
   'user-toggle': function (el) { return toggleUserActive(el.getAttribute('data-id'),
                                    el.getAttribute('data-active') === '1'); },
   'combo-pick':  function (el) { return comboPick(el); },
+  'combo-more':  function (el) { return comboMore(el); },
   'st-activate': function (el) { setStudentActive(el.getAttribute('data-id')); },
   'per-add':     function (el) { HR_PER.addRow(el); },
   'per-remove':  function (el) { HR_PER.removeRow(el); },
