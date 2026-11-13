@@ -469,10 +469,10 @@
 /* כמו מצבת משרד החינוך: עמודה לכל שדה, והטבלה נגללת לרוחב כשהמסך צר */
 .st-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .st-grid{min-width:100%;width:max-content}
-.st-th,.st-row{display:grid;grid-template-columns:36px 118px minmax(200px,1fr) 96px 124px 108px;align-items:center;column-gap:var(--sp-6);padding:var(--sp-4) var(--sp-6)}
+.st-th,.st-row{display:grid;grid-template-columns:36px 118px minmax(200px,1fr) 96px 124px 64px 64px;align-items:center;column-gap:var(--sp-6);padding:var(--sp-4) var(--sp-6)}
 .st-th{background:var(--brand-soft);color:var(--brand-ink);font-size:var(--fs-2);font-weight:700;border-bottom:1.5px solid var(--border);white-space:nowrap}
 .st-th.hidden{display:none}
-.st-th > .st-c-tools{text-align:left}
+.st-c-act{display:flex;justify-content:center;text-align:center}
 .st-row{border-bottom:1px solid var(--border);background:var(--card);min-height:60px}
 .st-row:last-child{border-bottom:none}
 .st-num{font-size:var(--fs-2);color:var(--text-3);text-align:center;font-variant-numeric:tabular-nums}

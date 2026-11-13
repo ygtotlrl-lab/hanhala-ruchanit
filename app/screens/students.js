@@ -34,7 +34,7 @@ function screenStudentsHTML() {
 
 <!-- Students Table -->
 <div class="st-table"><div class="st-scroll"><div class="st-grid">
-  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span>מצב</span><span class="st-c-tools">פעולות</span></div>
+  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span>מצב</span><span class="st-c-act">פרטים</span><span class="st-c-act">סטטוס</span></div>
   <div id="students-tbody"></div>
 </div></div></div>
 
@@ -217,10 +217,8 @@ function renderStudents(){
     html+='<button class="st-row-name" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</button>';
     html+='<span class="st-c-cls">'+esc(clsLabel)+'</span>';
     html+='<span class="st-c-pres">'+presIcon+'</span>';
-    html+='<div class="st-row-tools">';
-    html+='<button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button>';
-    html+=statusBtn;
-    html+='</div>';
+    html+='<span class="st-c-act"><button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button></span>';
+    html+='<span class="st-c-act">'+statusBtn+'</span>';
     html+='</div>';
   });
   tbody.innerHTML=html;
