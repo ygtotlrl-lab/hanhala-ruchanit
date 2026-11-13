@@ -32,7 +32,6 @@ function statsHomeHTML() {
 // ── המסך ──
 function screenStatsHTML() {
   return '<div class="pg" id="pg-stats"><div class="inner">' +
-    '<div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">' + icon('back') + '</button><span>סטטיסטיקה</span></div>' +
     '<div class="at-tab-bar" id="stx-tabs"></div><div id="stx-body"></div></div></div>';
 }
 
@@ -44,7 +43,7 @@ function renderStats() {
   if (!tabs || !body) return;
   var k = statsKind();
   tabs.innerHTML = STX_KINDS.map(function (t) {
-    return '<button data-act="stats-tab" data-k="' + t.k + '" class="' + (t.k === k ? 'at-tab-btn-on' : 'at-tab-btn') + '">' + icon(t.ico) + t.name + '</button>';
+    return '<button data-act="stats-tab" data-k="' + t.k + '" class="' + (t.k === k ? 'at-tab-btn-on' : 'at-tab-btn') + '">' + t.name + '</button>';
   }).join('');
   var cards;
   try { cards = k === 'exams' ? examCards() : k === 'susp' ? suspCards() : attendCards(); }

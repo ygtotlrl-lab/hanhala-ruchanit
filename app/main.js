@@ -246,6 +246,7 @@ S.SB=sbWatch(supabase.createClient(self.APP.supabase.url,self.APP.supabase.key))
 shell.showPage = showPage;
 shell.showDenied = showDenied;
 shell.showPageInternal = showPageInternal;
+shell.hdrTitle = hdrTitle;
 shell.renderStudents = renderStudents;
 shell.hrRenderSupervision = hrRenderSupervision;
 shell.hrRenderSettings = hrRenderSettings;
@@ -255,7 +256,18 @@ shell.hrPullDraw = hrPullDraw;
 // הייצוא — שם המוסד, הסמל הלבן לפס העליון של המסמך, וגופני האפליקציה (מוטמעים במסמך).
 exportConfigure({ org: HR_ORG, logo: 'app/img/logo-white.png', fonts: HR_EXPORT_FONTS });
 
+// שם המסך בפס העליון — במסכים הפנימיים במקום הסמל והתאריך; במסך הראשי — הסמל והתאריך.
+// במסך ההגדרות — שם החלק שנפתח בו (shell.hdrTitle מ-showSettingsModule).
+var PAGE_TITLES = { students: 'מצבת התלמידים', reports: 'גיליונות ציונים והנהגה', forms: 'טפסים',
+                    settings: 'הגדרות מערכת', stats: 'סטטיסטיקה' };
+function hdrTitle(t) {
+  var h = document.querySelector('header'), el = document.getElementById('hdr-page');
+  if (!h || !el) return;
+  el.textContent = t || '';
+  h.classList.toggle('is-inner', !!t);
+}
 function showPageInternal(pg) {
+  hdrTitle(pg === 'home' ? '' : (PAGE_TITLES[pg] || (HR_STREAMS[pg] && HR_STREAMS[pg].title) || ''));
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
   document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
   var pgEl=document.getElementById('pg-'+pg);

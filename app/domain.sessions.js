@@ -471,23 +471,24 @@ function hrRenderTodaySessions(st) {
     title=st.many+' שמולאו '+(isToday?'היום':(isLogical?'אמש':'יום '+hrDow(filterIso)));
   }
   if(!daySess.length){el.innerHTML='';return;}
-  var html='<div class="day-sess-block">'+
-    '<div class="day-sess-title">'+title+':</div>'+
-    '<div class="day-sess-list">';
+  // כרטיס אחד: כותרת בפס רך ומונה, ושורה לכל סדר — השם, ומתחתיו מי מילא (במבחנים — התאריך), כפתור עריכה עגול,
+  // והסיכום בתגיות בגוון הקוד (.day-row-sum). במבחנים — כותרת קטנה לכל לימוד.
+  var html='<div class="day-card"><div class="day-card-hd"><span>'+esc(title)+'</span><span class="day-card-n">'+daySess.length+'</span></div>';
   var lastSubj=null;
   daySess.forEach(function(rec){
-    // במבחנים — תגית לכל לימוד בין המבחנים, ובשורה: השיעור והתאריך
-    if(st.exam&&rec.session!==lastSubj){lastSubj=rec.session;html+='<div class="day-sess-tag"><span>'+esc(rec.session||'')+'</span></div>';}
+    if(st.exam&&rec.session!==lastSubj){lastSubj=rec.session;html+='<div class="day-card-tag">'+esc(rec.session||'')+'</div>';}
     var cnts={};
     Object.values(hrMarks(rec)).forEach(function(m){if(m.status)cnts[m.status]=(cnts[m.status]||0)+1;});
-    html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-sess-row">'+
-      '<span class="day-sess-name">'+(st.exam?esc(rec.cls?(HR_CLS_NAME[rec.cls]||rec.cls)+(rec.extra?' · מבחן נוסף':''):hrRecLabel(rec))+' <span class="day-sess-date">'+esc(hrSessHebFmt(rec))+'</span>':esc(hrRecLabel(rec)))+
-        pendTag(st.pkSess+rec.client_id)+'</span>'+
-      '<div class="day-sess-summary">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
-      '<span class="day-sess-edit">'+icon('edit')+'ערוך</span>'+
+    var name=st.exam?(rec.cls?(HR_CLS_NAME[rec.cls]||rec.cls)+(rec.extra?' · מבחן נוסף':''):hrRecLabel(rec)):hrRecLabel(rec);
+    var meta=st.exam?hrSessHebFmt(rec):(rec.filled_by_name||'');
+    html+='<div data-act="'+st.p+'-edit-session" data-id="'+esc(rec.client_id)+'" class="day-row">'+
+      '<div class="day-row-top"><span class="day-row-txt"><b>'+esc(name)+pendTag(st.pkSess+rec.client_id)+'</b>'+
+        (meta?'<small>'+esc(meta)+'</small>':'')+'</span>'+
+        '<span class="day-row-edit" role="button" aria-label="עריכה">'+icon('edit')+'</span></div>'+
+      '<div class="day-row-sum">'+(st.exam?hrExamSummaryHTML(rec):hrSummaryHTML(st, cnts))+'</div>'+
     '</div>';
   });
-  html+='</div></div>';
+  html+='</div>';
   el.innerHTML=html;
 }
 

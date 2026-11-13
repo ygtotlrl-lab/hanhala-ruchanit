@@ -25,7 +25,6 @@ function screenSettingsHTML() {
 
     <!-- דף ראשי הגדרות -->
     <div id="settings-home">
-      <div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">${icon('back')}</button><span>הגדרות מערכת</span></div>
       <div class="set-tiles">
         <button data-act="settings-module" data-mod="students" class="set-module-tile">
           <span class="tile-ico">${icon('students')}</span>
@@ -56,13 +55,11 @@ function screenSettingsHTML() {
 
     <!-- הגדרות הטפסים — שורה לכל טופס, ולחיצה פותחת את דף ההגדרות שלו -->
     <div id="settings-forms" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות הטפסים</span></div>
       <div class="fm-rows" id="set-forms-list"></div>
     </div>
 
     <!-- הגדרות מצבת תלמידים -->
     <div id="settings-students" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות מצבת תלמידים</span></div>
       <div class="ss" data-autosave="absence-reasons-save">
         <div class="ss-t">סיבות היעדרות לפי סוג</div>
         <div class="reason-cols">
@@ -92,7 +89,6 @@ function screenSettingsHTML() {
 
     <!-- הגדרות מודול סדרים -->
     <div id="settings-attend" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות סדרים</span></div>
       <div class="ss" data-autosave="at-settings-save">
         <div class="set-stack">
           <!-- סדרים -->
@@ -111,7 +107,6 @@ function screenSettingsHTML() {
       </div>
     </div>
     <div id="settings-sleep" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות שינה</span></div>
       <div class="ss" data-autosave="sl-settings-save">
         <div class="set-box">
           <div class="panel-head">סוגי טיפולים</div>
@@ -123,7 +118,6 @@ function screenSettingsHTML() {
 ${contactsPaneHTML()}
     <!-- הגדרות מערכת - משתמשים והרשאות -->
     <div id="settings-system" class="hidden">
-      <div class="ptitle"><button data-act="settings-home" class="back" aria-label="חזרה" title="חזרה">${icon('back')}</button><span>הגדרות מערכת</span></div>
       <div class="ss" id="ss-users">
         <div class="ss-t">ניהול משתמשים <button class="btn sm" data-act="user-add-open">${icon('plus')}הוסף</button></div>
         <div id="users-list"><div class="ld">טוען...</div></div>
@@ -157,7 +151,11 @@ function showSettingsHome() {
   });
   var h = document.getElementById('settings-home');
   if (h) h.classList.remove('hidden');
+  shell.hdrTitle('הגדרות מערכת');
 }
+// שם החלק בפס העליון — כשם האריח שפותח אותו
+var SETTINGS_TITLES = { students: 'הגדרות מצבת תלמידים', attend: 'הגדרות סדרים', sleep: 'הגדרות שינה',
+                        reports: 'הגדרות דוחות', forms: 'הגדרות הטפסים', system: 'הגדרות מערכת' };
 
 // אין להוסיף שער סיסמה מעל מסך ההגדרות — ההרשאה נגזרת מהמשתמש המחובר, ושער כזה נופל בהתקנה טרייה לערך ברירת מחדל.
 // אין לזרוע ברירת מחדל לסיסמה או לתפקיד בשום מקום — תפקיד נכתב במפורש ביצירת המשתמש.
@@ -170,6 +168,7 @@ function showSettingsModule(mod) {
   });
   var target = document.getElementById('settings-'+mod);
   if (target) target.classList.remove('hidden');
+  shell.hdrTitle(SETTINGS_TITLES[mod] || 'הגדרות מערכת');
   if (mod === 'system') { renderUsersList(); renderPermsTable(); }
   if (mod === 'students') { renderAbsenceReasons(); }
   if (mod === 'reports') { renderContactsSettings(); }

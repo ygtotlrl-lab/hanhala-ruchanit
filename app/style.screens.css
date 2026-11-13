@@ -235,16 +235,7 @@
 .abs-type-label{font-weight:700;color:var(--ty);font-size:var(--fs-4)}
 .abs-reason{font-size:var(--fs-3);color:var(--text-2);margin-bottom:var(--sp-2)}
 .abs-dates{font-size:var(--fs-2);color:var(--text-3);line-height:var(--lh-5)}
-.day-sess-block{border-top:1.5px solid var(--border);margin-top:var(--sp-6);padding-top:var(--sp-6)}
-.day-sess-title{font-size:var(--fs-2);color:var(--text-2);font-weight:600;margin-bottom:var(--sp-4)}
 /* עמודה אחת לשם בכל השורות — הסיכום מתחיל בקו אחיד, לפי השם הארוך (ועד 40% מהרוחב) */
-.day-sess-list{display:grid;grid-template-columns:fit-content(40%) minmax(0,1fr) auto;row-gap:var(--sp-3)}
-.day-sess-row{grid-column:1/-1;display:grid;grid-template-columns:subgrid;align-items:center;column-gap:var(--sp-5);border:1.5px solid var(--border);background:var(--bg);cursor:pointer;padding:var(--sp-4) var(--sp-6);border-radius:var(--r-3)}
-.day-sess-name{font-size:var(--fs-3);font-weight:700;color:var(--brand-ink)}
-.day-sess-date{font-size:var(--fs-2);font-weight:400;color:var(--text-3)}
-.day-sess-tag{grid-column:1/-1;margin-top:var(--sp-3)}.day-sess-tag span{display:inline-block;background:var(--brand-soft);color:var(--brand-ink);font-weight:700;font-size:var(--fs-2);padding:var(--sp-2) var(--sp-5);border-radius:var(--r-5)}
-.day-sess-summary{display:flex;font-size:var(--fs-3);direction:rtl;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5)}
-.day-sess-edit{font-size:var(--fs-3);color:var(--brand-ink);flex-shrink:0;font-weight:600}
 .abs-reason-blk{font-size:var(--fs-3);color:var(--text-2);margin-bottom:var(--sp-3)}
 .abs-dates-blk{font-size:var(--fs-2);color:var(--text-3);line-height:var(--lh-5)}
 .at-clear-btn{font-size:var(--fs-2);border:1.5px dashed var(--border);background:none;color:var(--text-3);cursor:pointer;font-family:Heebo;margin-right:var(--sp-1);padding:var(--sp-2) var(--sp-4);border-radius:var(--r-2)}
@@ -438,9 +429,6 @@
   .mods-lbl{font-size:var(--fs-3);margin-bottom:var(--sp-6)}
 }
 @media (min-width:900px){
-  .ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-7)}
-}
-@media (min-width:900px){
   table{font-size:inherit}
 }
 @media (min-width:900px){
@@ -502,9 +490,7 @@
 .sum-l{font-size:var(--fs-2);color:var(--text-2)}
 
 /* בורר הסדרים — אריחים בגודל אחד, ברשת; שורה שאינה מלאה נגמרת באותו קו */
-.sess-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp-4)}
 .sess-grid .sess-pick-btn{width:100%;min-height:48px;margin:0;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;line-height:var(--lh-2)}
-@media (max-width:520px){ .sess-grid{grid-template-columns:repeat(2,1fr)} }
 
 /* ההשגחה — אריח לכל תלמיד, ברשת; אריח שנפתח לטיפול תופס את כל השורה */
 .sup-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-4);grid-auto-flow:row dense}
@@ -762,3 +748,47 @@
   .kpi-wrap{padding:var(--sp-7) var(--sp-7) var(--sp-5)}
   .stx-home{padding:var(--sp-5) var(--sp-7) var(--sp-7)}
 }
+
+/* ── מסכי הבחירה — הסדרים, השינה והמבחנים ──
+   לשוניות במיכל לבן אחד · כרטיס התאריך והממלא · «בחר … לפתיחה» ושורה לכל בחירה: עיגול · השם · חץ ·
+   במבחנים — הלימוד שנבחר נפרש, ולוח השיעורים צמוד מתחתיו · ומתחת — «…שמולאו» בכרטיס אחד, והסיכום בתגיות. */
+.at-tab-bar{border:0;border-radius:var(--r-6);padding:var(--sp-2);box-shadow:0 1px 3px rgba(20,40,80,.06);margin-bottom:var(--sp-5)}
+.at-tab-btn,.at-tab-btn-on{min-height:44px;border-radius:var(--r-5)}
+[id$="-reg-picker"] .card-pane{border:0;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06);padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5)}
+[id$="-reg-picker"] .filter-row{flex-wrap:nowrap;gap:var(--sp-5);margin:0}
+[id$="-reg-picker"] .field-wide,[id$="-reg-picker"] .field-narrow{min-width:0;flex:1}
+[id$="-reg-picker"] .picker-label{font-size:1.05rem;font-weight:700;color:var(--text);margin:var(--sp-6) var(--sp-2) var(--sp-4)}
+.sess-grid{display:flex;flex-direction:column;gap:var(--sp-4)}
+.sess-grid .sess-pick-btn{justify-content:flex-start;text-align:right;gap:var(--sp-6);min-height:58px;padding:var(--sp-5) var(--sp-6);background:var(--card);border:1.5px solid transparent;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06);font-size:var(--fs-4);font-weight:700;color:var(--text)}
+.sp-ring{flex:none;width:16px;height:16px;box-sizing:border-box;border-radius:50%;border:4px solid var(--brand-fill)}
+.sp-name{flex:1;min-width:0}
+.sp-go{flex:none;display:flex;color:var(--text-3)}
+.sp-go .ico{width:18px;height:18px;margin:0}
+.sess-grid .sess-pick-btn.on{background:var(--card);border-color:var(--brand-fill);border-radius:var(--r-6) var(--r-6) 0 0;box-shadow:none}
+/* לוח השיעורים — צמוד לשורת הלימוד שנבחר: אותה מסגרת, ושורה לכל שיעור */
+.sess-grid .ex-cls-panel{margin-top:calc(-1 * var(--sp-4));background:var(--card);border:1.5px solid var(--brand-fill);border-top:0;border-radius:0 0 var(--r-6) var(--r-6);padding:0 var(--sp-6) var(--sp-4)}
+.ex-cls-grid{display:flex;flex-direction:column;gap:0}
+.ex-cls-tile,.ex-cls-tile.has{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--sp-3) var(--sp-4);padding:var(--sp-5) 0;border:0;border-top:1px solid var(--border);border-radius:0;background:none}
+.ex-cls-name{flex:1 1 auto;color:var(--text);font-size:var(--fs-4)}
+.ex-cls-tile .field-label{display:none}
+.ex-cls-tile .btn{margin-top:0;align-self:center}
+.ex-cls-tile .ex-x{flex-basis:100%;border-top:0;padding-top:0;margin-top:0}
+.ex-x-add summary{display:flex;align-items:center;justify-content:center;min-height:40px;border:1.5px dashed var(--border);border-radius:var(--r-5);color:var(--brand-ink)}
+/* «…שמולאו» — כרטיס אחד: כותרת בפס רך ומונה, שורה לכל סדר, והסיכום בתגיות בגוון הקוד */
+.day-card{background:var(--card);border-radius:var(--r-6);overflow:hidden;box-shadow:0 1px 3px rgba(20,40,80,.06);margin-top:var(--sp-6)}
+.day-card-hd{display:flex;justify-content:space-between;align-items:center;padding:var(--sp-5) var(--sp-6);background:var(--brand-soft);color:var(--brand-ink);font-size:var(--fs-4);font-weight:700}
+.day-card-n{min-width:24px;height:24px;padding:0 var(--sp-3);border-radius:var(--r-7);background:var(--brand-fill);color:var(--on-brand);font-size:var(--fs-2);display:flex;align-items:center;justify-content:center}
+.day-card-tag{padding:var(--sp-4) var(--sp-6) 0;font-size:var(--fs-2);font-weight:700;color:var(--text-2)}
+.day-row{padding:var(--sp-5) var(--sp-6);display:flex;flex-direction:column;gap:var(--sp-4);cursor:pointer}
+.day-row+.day-row{border-top:1px solid var(--border)}
+.day-row-top{display:flex;align-items:center;gap:var(--sp-5)}
+.day-row-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+.day-row-txt b{font-size:var(--fs-4);color:var(--text)}
+.day-row-txt small{font-size:var(--fs-2);color:var(--text-3)}
+.day-row-edit{flex:none;width:34px;height:34px;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:flex;align-items:center;justify-content:center}
+.day-row-edit .ico{width:16px;height:16px;margin:0}
+.day-row-sum{display:flex;flex-wrap:wrap;gap:var(--sp-3)}
+.day-row-sum .at-count,.ex-cls-sum .at-count{padding:var(--sp-1) var(--sp-4);border-radius:var(--r-7);background:color-mix(in srgb,var(--at) 14%,transparent);color:color-mix(in srgb,var(--at) 82%,var(--text));font-size:var(--fs-2);font-weight:700}
+.day-row-sum .at-dot,.ex-cls-sum .at-dot{display:none}
+.ex-cls-sum{flex-basis:100%;gap:var(--sp-3)}
+@media (hover:hover){ .day-row:hover{background:var(--card-2)} }

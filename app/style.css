@@ -130,6 +130,10 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .logo.hdr-logo{height:58px;width:auto}
 .hdr-motto{font-size:var(--fs-1);font-weight:500;opacity:var(--op-5)}
 .hdr-name{font-size:var(--fs-4)}
+/* במסכים הפנימיים — שם המסך בפס העליון במקום הסמל והתאריך (header.is-inner, מ-showPageInternal) */
+.hdr-page{display:none;margin:0;font-size:1.45rem;font-weight:800;color:var(--bar-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+header.is-inner .hdr-page{display:block}
+header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w,header.is-inner .hdiv,header.is-inner .htxt.hdr-titles{display:none}
 .htxt.hdr-titles{display:flex;align-items:flex-start;flex-direction:column;gap:var(--sp-1);line-height:var(--lh-2)}
 /* בכותרת — היום בשבוע קטן מעל, והתאריך העברי מתחתיו */
 .hdr-dow{font-size:var(--fs-2);opacity:var(--op-6)}
@@ -143,9 +147,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 }
 
 /* ── רכיבים ── */
-@media (hover:hover){
-  .back:hover{background:var(--border)}
-}
 @media (hover:hover){
   .btn:hover{background:var(--deep-1);border-color:var(--deep-1);box-shadow:var(--shadow-lg);transform:translateY(-1px)}
 }
@@ -165,11 +166,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   .clr-btn:hover{border-color:var(--bad);color:var(--bad)}
 }
 .inner{padding:var(--sp-7) var(--sp-7);max-width:var(--col);width:100%;margin:0 auto;box-sizing:border-box;overflow-x:hidden}
-.ptitle{font-size:var(--fs-5);font-weight:700;color:var(--brand-ink);display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7);padding-bottom:var(--sp-6);border-bottom:2px solid var(--border);flex-wrap:wrap}
-/* כותרת המסך — השם צמוד לימין, וכפתור החזרה צמוד לשמאל: עיגול רך ובו החץ בלבד (aria-label «חזרה») */
-.back{order:99;margin-inline-start:auto;flex:none;width:40px;height:40px;padding:0;border:0;border-radius:50%;background:var(--brand-soft);color:var(--brand-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:background var(--dur-3)}
-.back .ico{width:20px;height:20px;margin:0}
-.back:active{background:var(--border)}
 .gap{flex:1}
 .btn{display:inline-flex;align-items:center;gap:var(--sp-4);background:var(--brand-fill);color:var(--on-dark);border:2px solid var(--brand-fill);border-radius:var(--r-6);padding:var(--sp-4) var(--sp-7);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;transition:all var(--dur-3);box-shadow:var(--shadow);white-space:nowrap}
 .btn:active{transform:translateY(1px)}
@@ -217,7 +213,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .ld{text-align:center;padding:var(--sp-7);color:var(--text-3)}
 /* סוף התוכן מרוחק מסרגל הניווט כראשו מהכותרת. */
 .inner{padding:var(--sp-6);padding-bottom:calc(var(--tabbar-h) + var(--sp-6) + env(safe-area-inset-bottom,0px))}
-.ptitle{font-size:var(--fs-5);margin-bottom:var(--sp-6)}
 .btn{padding:var(--sp-5) var(--sp-6);font-size:var(--fs-3);min-height:44px}
 @keyframes auth-spin{to{transform:rotate(360deg)}}
 /* ספינר הכפתור העסוק — בלי טקסט, בצבע הכפתור */
@@ -365,9 +360,5 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .ua .ua-off{color:var(--bad)}
 .ua .ua-on{color:var(--ok)}
 
-/* מצבה ושאר כותרות המסכים בטלפון — כפתורי האייקון יורדים לשורה משלהם מתחת לכותרת */
-@media (max-width:639px){.ptitle .gap:not(:last-child){flex-basis:100%;height:0}}
-/* מצבת התלמידים — שני אייקונים בלבד בכותרת, ולכן שורה אחת גם בטלפון */
-.ptitle.pt-1row{flex-wrap:nowrap}
-.ptitle.pt-1row>span:not(.gap){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media (max-width:639px){.ptitle.pt-1row .gap:not(:last-child){flex:1;flex-basis:auto;height:auto}}
+/* מצבת התלמידים — «ניהול רשימה» ו«הדפסה» כאייקונים, בשורה קטנה בצד השמאלי מעל הסיכום */
+.pt-tools{display:flex;justify-content:flex-end;align-items:center;gap:var(--sp-4);margin-bottom:var(--sp-5)}

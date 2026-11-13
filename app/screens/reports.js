@@ -151,7 +151,6 @@ function screenReportsHTML() {
   return `
 <div class="pg" id="pg-reports">
   <div class="inner">
-    <div class="ptitle"><button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">${icon('back')}</button><span>גיליונות ציונים והנהגה</span></div>
     <div class="sup-nav-bar">
       <button class="sup-nav" id="rp-prev" data-act="rp-nav" data-dir="-1" aria-label="החודש הקודם">${icon('prev')}</button>
       <span class="sup-nav-label" id="rp-month-lbl"></span>

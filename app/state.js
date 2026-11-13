@@ -83,6 +83,6 @@ var AUTH = {
 // ── מה שמסך צריך מ-main ──
 // main רושם כאן בעלייה — מודול שמייבא מ-main סוגר מעגל, והרישום הוא הכיוון האחד.
 const shell = { showPage: null, showPageInternal: null, renderStudents: null, hrRenderSupervision: null,
-                hrRenderSettings: null, hrRenderStudents: null, hrPullDraw: null, showDenied: null };
+                hrRenderSettings: null, hrRenderStudents: null, hrPullDraw: null, showDenied: null, hdrTitle: null };
 
 export { AUTH, S, shell };

@@ -23,15 +23,11 @@ function hrRegHTML(st) {
   return `
 <div class="pg" id="pg-${st.kind}">
   <div class="inner">
-    <div class="ptitle">
-      <button class="back" aria-label="חזרה" title="חזרה" data-pg="home" data-act="page" data-page="home">${icon('back')}</button>
-      <span>${st.title}</span>
-    </div>
     <!-- לשוניות -->
     <div class="at-tab-bar">
-      <button id="${p}-tab-reg" data-act="${p}-tab" data-tab="reg" class="at-tab-btn-on">${icon('entry')}רישום</button>
-      <button id="${p}-tab-arc" data-act="${p}-tab" data-tab="arc" class="at-tab-btn">${icon('archive')}ארכיון</button>
-      ${st.sup===false?'':`<button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">${icon('watch')}השגחה</button>`}
+      <button id="${p}-tab-reg" data-act="${p}-tab" data-tab="reg" class="at-tab-btn-on">רישום</button>
+      <button id="${p}-tab-arc" data-act="${p}-tab" data-tab="arc" class="at-tab-btn">ארכיון</button>
+      ${st.sup===false?'':`<button id="${p}-tab-sup" data-act="${p}-tab" data-tab="sup" class="at-tab-btn">השגחה</button>`}
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
     <div id="${p}-pullStale" class="at-pull-warn"></div>
@@ -50,10 +46,10 @@ function hrRegHTML(st) {
               <input aria-label="שם הממלא" id="${p}-filler" class="input-full" placeholder="שם הממלא">
             </div>
           </div>
-          <div class="picker-label">בחר ${st.one} לפתיחה:</div>
-          <div id="${p}-sess-btns" class="sess-grid"></div>
-          ${st.exam?`<div id="${p}-cls-panel" class="ex-cls-panel hidden"></div>`:''}
         </div>
+        <div class="picker-label">בחר ${st.one} לפתיחה</div>
+        <div id="${p}-sess-btns" class="sess-grid"></div>
+        ${st.exam?`<div id="${p}-cls-panel" class="ex-cls-panel hidden"></div>`:''}
         <!-- ${st.many} שמולאו היום -->
         <div id="${p}-today-sessions"></div>
       </div>
@@ -146,13 +142,18 @@ async function hrRegLoad(st) {
   if(st.alert) hrCheckAlert(st);
 }
 
+// רשימת הבחירה — שורה לכל סדר, דו״ח שינה או לימוד: עיגול · השם · חץ. במבחנים — הלימוד שנבחר נפרש במקום,
+// ולוח השיעורים יושב מתחתיו (hrExamClsPanel), ולכן הוא מוצא מהרשימה לפני שהיא נבנית מחדש.
 function hrFillSessionBtns(st) {
   var el=document.getElementById(st.p+'-sess-btns');
   if(!el) return;
+  var pn=st.exam?document.getElementById(st.p+'-cls-panel'):null;
+  if(pn&&pn.parentNode===el) el.after(pn);
   el.innerHTML='';
   hrSessionDefs(st).forEach(function(s){
     var btn=document.createElement('button');
-    btn.textContent=s.name;
+    var open=st.exam&&S[st.v+'Subj']===s.name;
+    btn.innerHTML='<span class="sp-ring" aria-hidden="true"></span><span class="sp-name">'+esc(s.name)+'</span><span class="sp-go" aria-hidden="true">'+icon(open?'down':'prev')+'</span>';
     btn.className='sess-pick-btn';
     btn.dataset.act=st.p+'-open-session';btn.dataset.busy=MSG_BUSY_CHECK;btn.dataset.sid=s.id;btn.dataset.sname=s.name;
     if(st.exam&&S[st.v+'Subj']===s.name) btn.classList.add('on');
@@ -168,10 +169,13 @@ function hrExamClsPanel(st) {
   var el=document.getElementById(st.p+'-cls-panel');
   if(!el) return;
   var subj=S[st.v+'Subj'];
-  if(!subj){el.classList.add('hidden');el.innerHTML='';return;}
+  if(!subj){el.classList.add('hidden');el.innerHTML='';var g=document.getElementById(st.p+'-sess-btns');if(g&&el.parentNode===g)g.after(el);return;}
   var data=S[st.v+'Data']||[], today=dayIso(new Date());
   el.classList.remove('hidden');
-  el.innerHTML='<div class="picker-label">'+esc(subj)+' — בחר שיעור:</div><div class="ex-cls-grid">'+HR_EXAM_CLS.map(function(c){
+  // הלוח נפרש מתחת לשורת הלימוד שנבחר
+  var on=document.querySelector('#'+st.p+'-sess-btns .sess-pick-btn.on');
+  if(on) on.after(el);
+  el.innerHTML='<div class="ex-cls-grid">'+HR_EXAM_CLS.map(function(c){
     var rec=hrFindLiveSession(data, subj, today, null, c);
     var head='<div class="ex-cls-name">'+esc(HR_CLS_NAME[c])+'</div>';
     var xtra=_hrExamExtras(st, data, subj, today, c);
