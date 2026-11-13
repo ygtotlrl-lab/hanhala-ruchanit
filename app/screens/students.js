@@ -33,10 +33,10 @@ function screenStudentsHTML() {
 
 
 <!-- Students Table -->
-<div class="st-table">
-  <div class="st-th" id="students-th"><span>#</span><span>שם התלמיד</span><span class="st-c-cls">שיעור</span><span>מצב</span><span></span></div>
+<div class="st-table"><div class="st-scroll"><div class="st-grid">
+  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span>מצב</span><span class="st-c-tools">פעולות</span></div>
   <div id="students-tbody"></div>
-</div>
+</div></div></div>
 
 </div>
 
@@ -211,10 +211,10 @@ function renderStudents(){
     var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס" aria-label="עריכת סטטוס">'+icon('plus')+'</button>';
     html+='<div id="st-row-'+s.client_id+'" class="st-row">';
     html+='<span class="st-num">'+(i+1)+'</span>';
-    html+='<div class="st-row-main">';
+    html+=s.idnum
+      ?'<button class="st-row-name st-c-id" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.idnum)+'</button>'
+      :'<span class="st-c-id st-c-none">—</span>';
     html+='<button class="st-row-name" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</button>';
-    html+='<span class="st-sub-cls">'+esc(clsLabel)+'</span>';
-    html+='</div>';
     html+='<span class="st-c-cls">'+esc(clsLabel)+'</span>';
     html+='<span class="st-c-pres">'+presIcon+'</span>';
     html+='<div class="st-row-tools">';
