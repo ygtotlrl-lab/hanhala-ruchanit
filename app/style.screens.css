@@ -757,6 +757,8 @@
 [id$="-reg-picker"] .card-pane{border:0;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06);padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5)}
 [id$="-reg-picker"] .filter-row{flex-wrap:nowrap;gap:var(--sp-5);margin:0}
 [id$="-reg-picker"] .field-wide,[id$="-reg-picker"] .field-narrow{min-width:0;flex:1}
+/* בטלפון — התאריך המלא בשורה משלו, והממלא מתחתיו; במסך רחב — זה לצד זה */
+@media (max-width:520px){ [id$="-reg-picker"] .filter-row{flex-wrap:wrap;gap:var(--sp-4)} [id$="-reg-picker"] .field-wide{flex-basis:100%} }
 [id$="-reg-picker"] .picker-label{font-size:1.05rem;font-weight:700;color:var(--text);margin:var(--sp-6) var(--sp-2) var(--sp-4)}
 .sess-grid{display:flex;flex-direction:column;gap:var(--sp-4)}
 .sess-grid .sess-pick-btn{justify-content:flex-start;text-align:right;gap:var(--sp-6);min-height:58px;padding:var(--sp-5) var(--sp-6);background:var(--card);border:1.5px solid transparent;border-radius:var(--r-6);box-shadow:0 1px 3px rgba(20,40,80,.06);font-size:var(--fs-4);font-weight:700;color:var(--text)}
