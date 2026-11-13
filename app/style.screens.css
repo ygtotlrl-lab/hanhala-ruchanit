@@ -387,7 +387,7 @@
 }
 @media (min-width:900px){
   header{height:88px;padding:0 var(--sp-7)}
-  .hdr-page{font-size:2rem}
+  .hdr-page{font-size:1.65rem}
 }
 @media (min-width:900px){
   .logo{width:60px;height:60px}
