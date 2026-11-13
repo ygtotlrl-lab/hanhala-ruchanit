@@ -65,18 +65,27 @@ function lastYearOf(k) {
   }
   return i < 0 ? '' : hrMonthKey(p.hy - 1, i);
 }
-// השנה עד החודש הנוכחי, ואשתקד עד אותו חודש — המפתחות
-function ytd() {
-  var now = hrMonthKeyNow(), p = hrKeyParts(now), ly = lastYearOf(now), lp = hrKeyParts(ly);
-  var cur = [], last = [];
-  for (var i = 0; i <= p.mi; i++) cur.push(hrMonthKey(p.hy, i));
-  if (lp) for (var j = 0; j <= lp.mi; j++) last.push(hrMonthKey(lp.hy, j));
-  return { hy: p.hy, now: now, cur: cur, last: last };
+// שנת הלימודים — מאלול ועד מנחם אב: אלול של השנה העברית הקודמת פותח אותה, ואלול של השנה עצמו — פותח את הבאה.
+// השנה (hy) — השנה העברית של התשרי שבה; היא שבתווית.
+function schoolYearOf(k) {
+  var p = hrKeyParts(k); if (!p) return null;
+  var names = _hcMN(p.hy) || [], last = names.length - 1;
+  return p.mi === last ? p.hy + 1 : p.hy;
 }
-// חודשי השנה הנוכחית מתשרי עד אלול, וכל אחד מול החודש שלו אשתקד
+function schoolMonths(hy) {
+  var prev = _hcMN(hy - 1) || [], cur = _hcMN(hy) || [], out = [hrMonthKey(hy - 1, prev.length - 1)];
+  for (var i = 0; i < cur.length - 1; i++) out.push(hrMonthKey(hy, i));
+  return out;
+}
+// השנה עד החודש הנוכחי, ואשתקד עד אותו חודש — המפתחות; ההשוואה מתחדשת בכל חודש, ומתאפסת באלול
+function upTo(hy, k) { var l = schoolMonths(hy), i = l.indexOf(k); return i < 0 ? [] : l.slice(0, i + 1); }
+function ytd() {
+  var now = hrMonthKeyNow(), hy = schoolYearOf(now), ly = lastYearOf(now);
+  return { hy: hy, now: now, cur: upTo(hy, now), last: ly ? upTo(schoolYearOf(ly), ly) : [] };
+}
+// חודשי שנת הלימודים מאלול עד מנחם אב, וכל אחד מול החודש שלו אשתקד
 function yearMonths() {
-  var hy = hrKeyParts(hrMonthKeyNow()).hy;
-  return (_hcMN(hy) || []).map(function (n, i) { var k = hrMonthKey(hy, i); return { k: k, name: n, ly: lastYearOf(k) }; });
+  return schoolMonths(schoolYearOf(hrMonthKeyNow())).map(function (k) { return { k: k, name: mName(k), ly: lastYearOf(k) }; });
 }
 function inSet(list) { var o = {}; list.forEach(function (k) { o[k] = 1; }); return o; }
 
@@ -207,7 +216,7 @@ function attendCards() {
       delta(rate(cur), rate(M[ly]), ' נק׳', true, 'מול ' + mName(ly) + ' אשתקד')])));
 
   // 2 · השנה מול שנה שעברה
-  out.push(card('השנה מול שנה שעברה', 'מתשרי ועד ' + mName(now) + ', בשתי השנים',
+  out.push(card('השנה מול שנה שעברה', 'מאלול ועד ' + mName(now) + ', בשתי השנים',
     duo(sumRate(M, Y.cur), Y.last.length ? sumRate(M, Y.last) : null, pct, 'שנת ' + yLabel(Y.hy), 'שנת ' + yLabel(Y.hy - 1), true)));
 
   // 3 · מגמה חודשית — השנה מול אשתקד
@@ -318,7 +327,7 @@ function examCards() {
   // 2 · השנה מול שנה שעברה
   var curY = inSet(Y.cur), lastY = inSet(Y.last);
   var gy = G.filter(function (x) { return curY[x.k]; }), gl = G.filter(function (x) { return lastY[x.k]; });
-  out.push(card('השנה מול שנה שעברה', 'ממוצע הציונים מתשרי ועד ' + mName(Y.now),
+  out.push(card('השנה מול שנה שעברה', 'ממוצע הציונים מאלול ועד ' + mName(Y.now),
     duo(avg(gy), gl.length ? avg(gl) : null, num1, 'שנת ' + yLabel(Y.hy), 'שנת ' + yLabel(Y.hy - 1), true)));
 
   // 3 · מגמה חודשית
@@ -446,7 +455,7 @@ function suspCards() {
 
   // 3 · השנה מול שנה שעברה — מספר וימים
   var lastHas = Y.last.length && Y.last[0] >= DS;
-  out.push(card('השנה מול שנה שעברה', 'מתשרי ועד ' + mName(now) + ', בשתי השנים',
+  out.push(card('השנה מול שנה שעברה', 'מאלול ועד ' + mName(now) + ', בשתי השנים',
     duo(curY.length, lastHas ? lastY.length : null, cnt, 'שנת ' + yLabel(Y.hy), 'שנת ' + yLabel(Y.hy - 1), false) +
     '<div class="stx-note">ימי השעיה: ' + days(curY) + ' השנה' + (lastHas ? ' · ' + days(lastY) + ' אשתקד' : '') + '</div>'));
 
@@ -475,7 +484,7 @@ function suspCards() {
 
   // 8 · ממוצע אורך השעיה — השנה מול אשתקד
   var mean = function (list) { return list.length ? days(list) / list.length : null; };
-  out.push(card('ממוצע אורך השעיה', 'בימים · מתשרי ועד ' + mName(now),
+  out.push(card('ממוצע אורך השעיה', 'בימים · מאלול ועד ' + mName(now),
     duo(mean(curY), lastHas ? mean(lastY) : null, num1, 'שנת ' + yLabel(Y.hy), 'שנת ' + yLabel(Y.hy - 1), false)));
 
   // 9 · חזרו בשבוע האחרון · 10 · חוזרים בשבוע הקרוב
