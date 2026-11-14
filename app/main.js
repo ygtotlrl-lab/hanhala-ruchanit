@@ -45,7 +45,7 @@ import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
          hrRegHTML, hrRegLoad, hrShowTab } from './domain.reg.js';
-import { hrDeleteSession, hrExportConfirm, hrShowExportDialog } from './domain.arc.js';
+import { hrArcEdit, hrDeleteSession, hrExportConfirm, hrShowExportDialog } from './domain.arc.js';
 import { hrAddSessionRow, hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSettings,
          hrRenderSupervision, hrSaveSettingsCfg, hrSupDetail, hrSupEditMarkDlg,
          hrSupNav } from './domain.sup.js';
@@ -613,6 +613,7 @@ function hrStreamActions(st) {
   a[p + 'open-session']  = function (el) { return hrOpenSession(st, el.dataset.sid, el.dataset.sname, el.dataset.cls, el.dataset.extra === '1'); };
   a[p + 'resume-go']     = function (el) { var r = hrEditSession(st, id(el)); closeModal(); return r; };
   a[p + 'edit-session']  = function (el) { return hrEditSession(st, id(el)); };
+  a[p + 'arc-edit']      = function (el) { return hrArcEdit(st, id(el)); };
   a[p + 'status-cancel'] = function (el) { hrCancelStudentStatusFromReg(st, id(el)); closeModal(); };
   a[p + 'set-mark']      = function (el) { hrSetMark(st, id(el), el.getAttribute('data-code')); };
   a[p + 'clear-mark']    = function (el) { hrClearMark(st, id(el)); };
@@ -642,7 +643,7 @@ Object.keys(HR_STREAMS).forEach(function (k) { Object.assign(DOM_ACTIONS, hrStre
 
 // ── אכיפת «צפייה» ──
 // רמת «צפייה» במודול חוסמת כל פעולה שכותבת בו — בנקודה אחת, לפני החיווט; קריאה, ניווט, ייצוא ופתיחת קבצים — פתוחים.
-var HR_STREAM_WRITES = ['add-treat', 'clear-mark', 'confirm-late', 'del-session', 'del-treat', 'edit-session', 'mark-edit', 'mark-set',
+var HR_STREAM_WRITES = ['add-treat', 'arc-edit', 'clear-mark', 'confirm-late', 'del-session', 'del-treat', 'edit-session', 'mark-edit', 'mark-set',
   'open-session', 'resume-go', 'scan-cam', 'session-add', 'session-close', 'set-mark', 'settings-save', 'status-cancel', 'treat-row-add'];
 var HR_WRITE_MODULE = {
   'st-activate': 'students', 'st-edit': 'students', 'st-attend': 'students', 'student-save': 'students', 'status-form': 'students',

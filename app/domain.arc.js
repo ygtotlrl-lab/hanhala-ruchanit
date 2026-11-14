@@ -4,13 +4,16 @@ import { idEq, tombKill } from '../core/sync.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
 import { exportPdf, exportXlsx } from '../core/export.js';
 import { hebDayLabel } from '../core/hebrew.js';
-import { HR_CLS_NAME, HR_ORG, MSG_EXPORT_FAIL, MSG_EXPORT_PDF, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA, MSG_PULL_STALE, MSG_ROW_DELETED } from './constants.js';
+import { HR_CLS_NAME, HR_EXAM_SUBJECTS, HR_ORG, MSG_EXPORT_FAIL, MSG_EXPORT_PDF, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_EXPORT_XLS, MSG_NO_DATA_IN_RANGE, MSG_NO_EXPORT_DATA, MSG_PULL_STALE, MSG_ROW_DELETED } from './constants.js';
 import { atvCls, getStudents, hrDayWin, hrMarks, hrSortRecs, hrSortStudents } from './domain.js';
 import { _hcBuild, _hcH, _hcMN, _hcYL, hrDayHebFmt, hrHebYearWin, hrSessHeb,
          hrSessHebFmt, hrTodayHebFmt } from './domain.hebdate.js';
 import { hrCachedArr, hrIsLate, hrLoadData, hrMarkLabels, hrPullSessions, hrRenderTodaySessions, hrSaveData,
          hrSessionDefs, hrSortDayRecs, hrSortDays, hrSortHebMonths, hrSortHebYears,
-         hrExamSummaryHTML, hrRecLabel, hrSummaryHTML } from './domain.sessions.js';
+         hrExamGrp, hrExamSummaryHTML, hrRecLabel, hrSummaryHTML } from './domain.sessions.js';
+import { hrEditSession, hrShowTab } from './domain.reg.js';
+import { hrStudentOn } from './domain.periods.js';
+import { S } from './state.js';
 import { icon } from './icons.js';
 import { stIcon } from '../core/icons.js';
 
@@ -82,6 +85,8 @@ function _hrPaintArchive(st, el, records, warn) {
       '</div>';
       html+='<div id="'+mId+'" class="'+(isMonthCur?'':'hidden')+' arc-month-body">';
 
+      // מבחנים — כמו בחודש עצמו: לימוד ככותרת, ושורה לכל שיעור, ולא לפי ימים
+      if(st.exam){ html+=_hrExamMonthHTML(st, byYear[hy][mi], uid, students)+'</div></div>'; return; }
       var defs=hrSessionDefs(st);
       var days=hrSortDays(Object.keys(byYear[hy][mi]));
       days.forEach(function(iso){
@@ -138,6 +143,54 @@ function _hrPaintArchive(st, el, records, warn) {
     var b=document.getElementById(id);
     if(b) b.classList.toggle('hidden',!shown[id]);
   });
+}
+
+// ── מבחנים בארכיון — לימוד ⟵ שיעור ──
+// בסדר הגיליון, ובתוכו א׳ ⟵ ב׳ ⟵ ג׳, המבחן של הקובייה לפני מבחן נוסף. ברשימה — תלמידי השיעור בלבד (hrExamGrp):
+// מי שבחודש של המבחן, ומי מהשיעור שקיבל בו ציון גם אם יצא מאז.
+function _hrExamMonthHTML(st, byDay, uid, students) {
+  var recs=[];
+  Object.keys(byDay).forEach(function(iso){ byDay[iso].forEach(function(e){ recs.push(e.rec); }); });
+  var co='abgz';
+  recs.sort(function(a,b){
+    var ia=HR_EXAM_SUBJECTS.indexOf(a.session), ib=HR_EXAM_SUBJECTS.indexOf(b.session);
+    return ((ia<0?99:ia)-(ib<0?99:ib))||String(a.session||'').localeCompare(String(b.session||''),'he')||
+      (co.indexOf(a.cls||'z')-co.indexOf(b.cls||'z'))||((a.extra?1:0)-(b.extra?1:0))||(a.session_date<b.session_date?-1:a.session_date>b.session_date?1:0);
+  });
+  var html='', last=null;
+  recs.forEach(function(rec){
+    if(rec.session!==last){ last=rec.session; html+='<div class="arc-subj">'+esc(rec.session||'')+'</div>'; }
+    var sId=uid('s'+rec.client_id), mk=hrMarks(rec);
+    var name=rec.cls?(HR_CLS_NAME[rec.cls]||rec.cls)+(rec.extra?' · מבחן נוסף':''):hrRecLabel(rec);
+    html+='<div class="arc-sess-card">'+
+      '<div class="arc-sess-head" data-act="toggle-panel" data-panel="'+esc(sId)+'">'+
+        '<span class="arc-sess-name">'+esc(name)+'<small>'+esc(hrSessHebFmt(rec))+'</small></span>'+
+        '<div class="arc-sess-summary">'+hrExamSummaryHTML(rec)+'</div>'+
+        '<button data-act="'+st.p+'-arc-edit" data-id="'+esc(rec.client_id)+'" aria-label="עריכה" title="עריכה" class="arc-sess-edit">'+icon('edit')+'</button>'+
+        '<button data-act="'+st.p+'-del-session" data-id="'+esc(rec.client_id)+'" aria-label="מחיקה" title="מחיקה" class="arc-sess-del">'+icon('del')+'</button>'+
+      '</div>'+
+      '<div id="'+sId+'" class="arc-sess-body hidden">'+
+        (rec.material?'<div class="arc-ex-mat">'+esc(rec.material)+'</div>':'');
+    var list=hrSortStudents(students.filter(function(s){
+      var m=mk[String(s.client_id)];
+      var graded=m&&m.grade!=null&&m.grade!=='';
+      return (!rec.cls||hrExamGrp(s.cls)===rec.cls)&&(graded||hrStudentOn(s, rec.session_date));
+    }));
+    html+=list.length?list.map(function(s){
+      var m=mk[String(s.client_id)]||{}, g=m.grade!=null&&m.grade!=='';
+      return '<div class="arc-mark-row"><span>'+esc(s.name)+'</span>'+
+        '<span class="'+atvCls(m.status)+' arc-mark">'+esc(g?('ציון '+m.grade):'לא נבחן')+'</span></div>';
+    }).join(''):'<div class="empty-note">אין תלמידים</div>';
+    html+='</div></div>';
+  });
+  return html;
+}
+
+// עריכה מהארכיון — המבחן נפתח ברישום, כמו מבחן של החודש
+function hrArcEdit(st, id) {
+  S[st.v+'ArcEditing']=true;
+  hrShowTab(st, 'reg');
+  return hrEditSession(st, id);
 }
 
 function hrDeleteSession(st, id) {
@@ -291,4 +344,4 @@ async function _hrExportPdf(st, fromIso, toIso) {
   } catch(e){console.error('[pdf]',e); toast(MSG_PDF_FAIL+((e&&e.message)||e), null, 'bad');}
 }
 
-export { hrDeleteSession, hrExportConfirm, hrRenderArchive, hrShowExportDialog };
+export { hrArcEdit, hrDeleteSession, hrExportConfirm, hrRenderArchive, hrShowExportDialog };

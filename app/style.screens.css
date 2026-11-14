@@ -601,6 +601,11 @@
 @media (hover:hover){ .arc-sess-del:hover{opacity:1} .arc-day-head:hover{background:var(--card-2)} }
 .arc-sess-body{background:var(--card);border-radius:0 0 var(--r-4) var(--r-4)}
 .arc-mark-row{padding:var(--sp-3) 0}
+.arc-subj{font-size:var(--fs-2);font-weight:700;color:var(--text-2);padding:var(--sp-4) var(--sp-2) var(--sp-3)}
+.arc-sess-name small{display:block;font-size:var(--fs-1);font-weight:400;color:var(--text-3);margin-top:var(--sp-1)}
+.arc-sess-edit{border:none;background:var(--brand-soft);color:var(--brand-ink);cursor:pointer;padding:0;width:34px;height:34px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center}
+.arc-sess-edit .ico{width:16px;height:16px;margin:0}
+.arc-ex-mat{font-size:var(--fs-2);color:var(--text-2);padding-bottom:var(--sp-3);border-bottom:1px solid var(--border)}
 
 .hc-day-off{opacity:.35;cursor:default}
 .inact-search{margin-bottom:var(--sp-4)}

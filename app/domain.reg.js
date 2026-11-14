@@ -232,6 +232,7 @@ function _hrSessTime(st, sessName, fallback) {
 
 // הרשומה נקראת מהמטמון בלי המתנה — הכפתור שנלחץ צויר מאותו עותק, ולכן היא בו בוודאות
 async function hrEditSession(st, recId) {
+  S[st.v+'BackArc']=!!S[st.v+'ArcEditing']; S[st.v+'ArcEditing']=false;
   var data=hrCachedArr(st.v+'Data',st.table)||[];
   var rec=data.find(function(r){return idEq(r.client_id,recId);});
   if(!rec) return;
@@ -628,6 +629,8 @@ async function hrCloseSession(st) {
   document.getElementById(st.p+'-reg-picker').classList.remove('hidden');
   hrRenderTodaySessions(st);
   if(st.exam) hrExamClsPanel(st);
+  // מבחן שנפתח מהארכיון חוזר לארכיון, ומה שהיה פתוח בו נשאר פתוח
+  if(S[st.v+'BackArc']){ S[st.v+'BackArc']=false; hrShowTab(st, 'arc'); }
   toast(msg, null, 'good');
 }
 
