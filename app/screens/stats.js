@@ -103,14 +103,15 @@ function empty(msg) { return '<div class="stx-empty">' + esc(msg) + '</div>'; }
 function pct(v) { return v == null ? '—' : Math.round(v) + '%'; }
 function cnt(v) { return v == null ? '—' : String(v); }
 function num1(v) { return v == null ? '—' : (Math.round(v * 10) / 10).toLocaleString('he-IL'); }
-// שינוי מול השוואה: חץ וגוון — up=true כשעלייה היא שיפור
+// שינוי מול השוואה — תא: התווית קטנה מעל, והשינוי מתחתיה בחץ ובגוון; up=true כשעלייה היא שיפור
 function delta(cur, base, unit, up, label) {
-  if (cur == null || base == null) return '<span class="stx-d stx-d-na">' + esc(label) + ': אין נתונים</span>';
-  var d = Math.round((cur - base) * 10) / 10;
+  if (cur == null || base == null)
+    return '<span class="stx-d stx-d-na"><em>' + esc(label) + '</em><b>אין נתונים</b></span>';
+  var d = Math.round((cur - base) * 10) / 10 || 0; // בלי «-0»
   var tone = d === 0 ? 'eq' : ((d > 0) === up ? 'good' : 'bad');
   var arr = d === 0 ? '' : '<span class="stx-arr' + (d > 0 ? ' up' : '') + '">' + icon('down') + '</span>';
-  return '<span class="stx-d stx-d-' + tone + '">' + arr + (d > 0 ? '+' : '') + d.toLocaleString('he-IL') + unit +
-    ' <em>' + esc(label) + '</em></span>';
+  return '<span class="stx-d stx-d-' + tone + '"><em>' + esc(label) + '</em><b>' + arr +
+    '<bdi>' + (d > 0 ? '+' : '') + d.toLocaleString('he-IL') + '</bdi>' + unit + '</b></span>';
 }
 function big(value, caption, deltas) {
   return '<div class="stx-big"><div class="stx-big-n">' + value + '</div>' + (caption ? '<div class="stx-big-l">' + esc(caption) + '</div>' : '') +
@@ -120,7 +121,7 @@ function big(value, caption, deltas) {
 function duo(curV, lastV, fmt, curL, lastL, up) {
   return '<div class="stx-duo"><div class="stx-duo-c"><span>' + esc(curL) + '</span><b>' + fmt(curV) + '</b></div>' +
     '<div class="stx-duo-c stx-duo-ly"><span>' + esc(lastL) + '</span><b>' + fmt(lastV) + '</b></div></div>' +
-    '<div class="stx-ds">' + (lastV == null ? '<span class="stx-d stx-d-na">אין נתונים משנה שעברה</span>' : delta(curV, lastV, fmt === pct ? ' נק׳' : '', up, 'מול אשתקד')) + '</div>';
+    '<div class="stx-ds">' + delta(curV, lastV, fmt === pct ? ' נק׳' : '', up, 'מול אשתקד') + '</div>';
 }
 // עמודות לכל חודש — השנה (בצבע הזהות) ואשתקד (עמום); הסולם — מהערך הגבוה, או 100 באחוזים
 function monthBars(rows, fmt, isPct) {
@@ -451,7 +452,7 @@ function suspCards() {
   // 2 · השעיות החודש — מול אותו חודש אשתקד
   var cm = ofKeys([now]), lm = ly ? ofKeys([ly]) : [];
   out.push(card('השעיות החודש', mLabel(now), big(String(cm.length), days(cm) + ' ימי השעיה', [
-    ly ? delta(cm.length, lm.length, '', false, 'מול ' + mName(ly) + ' אשתקד') : '<span class="stx-d stx-d-na">אין נתונים משנה שעברה</span>'])));
+    ly ? delta(cm.length, lm.length, '', false, 'מול ' + mName(ly) + ' אשתקד') : delta(null, null, '', false, 'מול אשתקד')])));
 
   // 3 · השנה מול שנה שעברה — מספר וימים
   var lastHas = Y.last.length && Y.last[0] >= DS;
