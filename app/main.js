@@ -28,7 +28,7 @@ import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openE
          screenSettingsHTML, showSettingsHome, showSettingsModule,
          toggleUserActive } from './screens/settings.js';
 import { loadSleep, screenSleepHTML } from './screens/sleep.js';
-import { loadReports, renderReports, rpExport, rpNav, rpOpenFill, rpResetOpen, rpSaveFill, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
+import { loadReports, renderReports, rpExport, rpNav, rpFillOne, rpOpenFill, rpResetOpen, rpSetCls, rpToggleSec, screenReportsHTML } from './screens/reports.js';
 import { addContactGroup, addContactRow, contactsCopyLink, contactsView, saveContacts } from './screens/contacts.js';
 import { enrollAddStudent, enrollCopy, enrollDelete, enrollFieldAdd, enrollFile, enrollImgUpload, enrollResponses, enrollSave, enrollSettings, enrollTrack, enrollTrackAdd, enrollView, enrollYear, enrollOpenRow, enrollSearch } from './screens/enroll.js';
 import { intakeAddStudent, intakeCopy, intakeDelete, intakeFieldAdd, intakeFile, intakeItemAdd, intakeItemDocClear,
@@ -472,7 +472,6 @@ var DOM_ACTIONS = {
   'rp-nav':         function (el) { rpNav(Number(el.getAttribute('data-dir'))); },
   'rp-cls':         function (el) { rpSetCls(el.getAttribute('data-cls')); },
   'rp-fill':        function (el) { rpOpenFill(el.getAttribute('data-f')); },
-  'rp-fill-save':   function () { rpSaveFill(); },
   'rp-sec':         function (el) { rpToggleSec(el.getAttribute('data-k')); },
   'rp-export':      function (el) { return rpExport(el.getAttribute('data-id')); },
   'rp-export-all':  function () { return rpExport(null); },
@@ -650,7 +649,7 @@ var HR_WRITE_MODULE = {
   'student-status-save': 'students', 'status-abs-cancel': 'students', 'status-picker-open': 'students', 'per-add': 'students',
   'per-remove': 'students', 'manage-list-open': 'students', 'manage-pick': 'students', 'deact-st-confirm': 'students',
   'year-transition-confirm': 'students',
-  'rp-fill': 'reports', 'rp-fill-save': 'reports',
+  'rp-fill': 'reports',
   'file-event-save': 'files', 'file-event-del': 'files',
   'en-save': 'forms', 'en-field-add': 'forms', 'en-track-add': 'forms', 'en-del': 'forms', 'en-add-student': 'forms',
   'in-save': 'forms', 'in-field-add': 'forms', 'in-item-add': 'forms', 'in-item-doc-clear': 'forms',
@@ -708,6 +707,7 @@ document.addEventListener('input', function (e) {
   if (k === 'en-q') { enrollSearch(el.value); return; }
   if (k === 'in-q') { intakeSearch(el.value); return; }
   if (k === 'mt-q') { meetingSearch(el.value); return; }
+  if (k === 'rp-fill-one') { if (!canEdit('reports')) { _hrViewOnlyRevert(el); return; } rpFillOne(el, false); return; }
   Object.keys(HR_STREAMS).forEach(function (kind) {
     var st = HR_STREAMS[kind];
     if (k && k.indexOf(st.p + '-') === 0 && !canEdit(kind)) { _hrViewOnlyRevert(el); return; }
@@ -746,6 +746,7 @@ document.addEventListener('change', function (e) {
   if (c === 'in-doc-new' || c === 'in-doc-up' || c === 'in-item-doc') { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } intakeUpload(el); return; }
   if (el && el.hasAttribute && el.hasAttribute('data-in-key')) { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } intakeTrack(el); return; }
   if (el && el.classList && el.classList.contains('fc-chip-add')) { if (!canEdit('forms')) { _hrViewOnlyRevert(el); return; } fcChipAdd(el); }
+  if (c === 'rp-fill-one') { if (!canEdit('reports')) { _hrViewOnlyRevert(el); return; } rpFillOne(el, true); return; }
   _hrAutosave(el);
   if (c && c.indexOf(ex.p + '-') === 0 && !canEdit('exams')) { _hrViewOnlyRevert(el); return; }
   if (c === 'file-scan-pick') { if (!canEdit('files')) { _hrViewOnlyRevert(el); return; } fileScanPicked(el); }

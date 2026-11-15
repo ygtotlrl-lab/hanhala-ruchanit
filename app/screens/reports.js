@@ -3,7 +3,7 @@
 // השדות הידניים — שורה לכל חודש, תלמיד ושדה ב-hr_report_vals; החישוב — מהמראה, בכל ציור.
 import { pendMarkMany, schedulePush } from '../../core/sync.js';
 import { MIRROR, mirrorSave } from '../../core/mirror.js';
-import { closeModal, esc, openModal, toast } from '../../core/ui.js';
+import { esc, openModal, toast } from '../../core/ui.js';
 import { exportDataUrl, exportFontCss } from '../../core/export.js';
 import { printFile } from '../../core/share.js';
 import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
@@ -252,25 +252,25 @@ function rpOpenFill(f) {
   var rows = sts.map(function (s) {
     var v = rpGet(mk, s.client_id, f);
     var inp = isNote
-      ? '<textarea rows="2" data-rp-sid="' + esc(s.client_id) + '" placeholder="הערה">' + esc(v) + '</textarea>'
-      : '<select data-rp-sid="' + esc(s.client_id) + '">' + opts.replace('<option>' + esc(v) + '</option>', '<option selected>' + esc(v) + '</option>') + '</select>';
+      ? '<textarea rows="2" data-rp-sid="' + esc(s.client_id) + '" data-inp="rp-fill-one" data-chg="rp-fill-one" placeholder="הערה">' + esc(v) + '</textarea>'
+      : '<select data-rp-sid="' + esc(s.client_id) + '" data-chg="rp-fill-one">' + opts.replace('<option>' + esc(v) + '</option>', '<option selected>' + esc(v) + '</option>') + '</select>';
     return '<div class="rp-fill-row' + (isNote ? ' rp-fill-note' : '') + '"><span class="rp-fill-cls">' + (RP_CLS[s.cls] || '') + '</span>' +
       '<span class="rp-fill-name">' + esc(s.name) + '</span>' + inp + '</div>';
   }).join('');
   S._rpFillF = f;
   openModal(rpFieldLabel(f) + ' — ' + rpMonthLabel(m),
-    '<div class="rp-fill-box" data-ks>' + head + rows + '</div>',
-    '<button class="btn out" data-act="modal-close">ביטול</button>' +
-    '<button class="btn" data-act="rp-fill-save" data-ksave>' + icon('save') + 'שמור</button>');
+    '<div class="rp-fill-box">' + head + rows + '</div>',
+    '<span class="rp-fill-auto">' + icon('check') + 'נשמר מיד</span>' +
+    '<button class="btn" data-act="modal-close">סגור</button>');
 }
 
-function rpSaveFill() {
-  var f = S._rpFillF, mk = rpMonthKey(rpMonth()), items = [];
-  document.querySelectorAll('#modal-body [data-rp-sid]').forEach(function (el) { items.push({ sid: el.getAttribute('data-rp-sid'), f: f, v: el.value.trim() }); });
-  var n = rpSetMany(mk, items);
-  closeModal();
-  renderReports();
-  toast(n ? 'נשמר' : 'לא היה שינוי', null, n ? 'good' : null);
+// כל בחירה וכל הקלדה נשמרות מיד, בלי כפתור — סגירה ב-✕, ברקע או ב-Escape אינה מאבדת דבר.
+// redraw — בבחירה וביציאה מהשדה: המונים שעל כפתורי הסעיפים מתעדכנים מאחורי החלון.
+function rpFillOne(el, redraw) {
+  var sid = el && el.getAttribute('data-rp-sid');
+  if (!sid || !S._rpFillF) return;
+  rpSetMany(rpMonthKey(rpMonth()), [{ sid: sid, f: S._rpFillF, v: el.value.trim() }]);
+  if (redraw) renderReports();
 }
 
 // ── הגיליון להדפסה ──
@@ -428,5 +428,5 @@ async function rpExport(sid) {
   }
 }
 
-export { RP_SCALE, loadReports, rpResetOpen, rpToggleSec, renderReports, rpCompute, rpNav, rpExport, rpOpenFill, rpSaveFill, rpSetCls,
+export { RP_SCALE, loadReports, rpResetOpen, rpToggleSec, renderReports, rpCompute, rpNav, rpExport, rpFillOne, rpOpenFill, rpSetCls,
          screenReportsHTML };
