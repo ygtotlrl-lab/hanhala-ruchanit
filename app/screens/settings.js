@@ -269,9 +269,9 @@ function openEditUser(u) {
 function userFormHTML() {
   return '<input type="hidden" id="um-id">'+
     '<label for="um-name">שם מלא *</label>'+
-    '<input aria-label="ישראל ישראלי" type="text" id="um-name" placeholder="ישראל ישראלי">'+
+    '<input type="text" id="um-name">'+
     '<label for="um-username">שם משתמש * (לכניסה)</label>'+
-    '<input aria-label="israel" type="text" id="um-username" placeholder="israel" class="um-username">'+
+    '<input type="text" id="um-username">'+
     '<label for="um-role">תפקיד</label>'+
     '<select id="um-role" class="um-role">'+
       '<option value="admin">מנהל</option>'+
