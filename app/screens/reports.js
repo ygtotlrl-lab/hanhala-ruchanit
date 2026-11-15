@@ -260,7 +260,6 @@ function rpOpenFill(f) {
   S._rpFillF = f;
   openModal(rpFieldLabel(f) + ' — ' + rpMonthLabel(m),
     '<div class="rp-fill-box">' + head + rows + '</div>',
-    '<span class="rp-fill-auto">' + icon('check') + 'נשמר מיד</span>' +
     '<button class="btn" data-act="modal-close">סגור</button>');
 }
 

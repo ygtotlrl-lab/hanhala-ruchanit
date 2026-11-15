@@ -11,7 +11,7 @@ import { MIRROR, mirrorKey, mirrorTables } from '../core/mirror.js';
 import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
          usersSanitize } from '../core/auth.js';
 import { actWire, closeAsk, closeModal, comboInput, comboMore, comboPick, dragCancel, dragDown, dragMove,
-         dragUp, esc, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
+         dragUp, esc, modalDismiss, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
 import { HR_EXPORT_FONTS, HR_MIRROR_TABLES, HR_ORG, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
@@ -485,7 +485,7 @@ var DOM_ACTIONS = {
                    document.querySelectorAll('.bn').forEach(function (b) { b.classList.remove('on'); });
                    el.classList.add('on');
                  },
-  'modal-close': function () { closeModal(); },
+  'modal-close': function () { modalDismiss(); },
   'ask-no':      function () { closeAsk(false); },
   'ask-yes':     function () { closeAsk(true); },
   'manage-pick': function (el) {
