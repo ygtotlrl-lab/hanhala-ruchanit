@@ -1,7 +1,6 @@
 // app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות והגדרות הטופס
 // הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
-import { MSG_SAVED } from '../../core/util.js';
 import { gateCall, gateOpen } from '../gate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { ENROLL_DEFAULT } from '../constants.js';
@@ -93,7 +92,6 @@ async function enrollTrack(el) {
   if (r && r.ok) {
     var row = (S._enRows || []).filter(function (x) { return x.client_id === el.getAttribute('data-en-id'); })[0];
     if (row) row.track = r.track;
-    toast(MSG_SAVED, null, 'good');
   } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
 }
 function enrollFile(el) { return gateOpen(el.getAttribute('data-path')); }
@@ -294,7 +292,6 @@ function enrollSave() {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));
   });
   var p = hrCfgSet('enroll_form', next);
-  toast(MSG_SAVED, null, 'good');
   if (typeChanged) _settingsPaint(next); else _fcSyncRows(document.getElementById('en-set'));
   return p;
 }

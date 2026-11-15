@@ -1,5 +1,5 @@
 // app/domain.sup.js — סדרים ושינה: השגחה, טיפולים והגדרות המודול, לשני הזרמים
-import { MSG_DELETE, MSG_SAVED, dayToday, uniqHas } from '../core/util.js';
+import { MSG_DELETE, dayToday, uniqHas } from '../core/util.js';
 import { idEq, newClientId, tombKill } from '../core/sync.js';
 import { sessUserId, usersNameOf } from '../core/auth.js';
 import { ask, closeModal, esc, openModal, toast } from '../core/ui.js';
@@ -143,12 +143,12 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     html+='</div>';
     html+='<div class="sup-card-body hidden">';
     html+='<div class="treat-add">';
-    html+='<div class="panel-head-sm">הוסף טיפול</div>';
+    html+='<div class="panel-head-sm">הוספת טיפול</div>';
     html+='<div class="chip-row" data-ks>';
     html+='<select aria-label="סוג הטיפול" id="'+p+'-treat-type-'+sid+'" class="treat-select">'+
       cfg.treats.map(function(t){return '<option>'+esc(t)+'</option>';}).join('')+'</select>';
     html+='<input aria-label="הערה (אופציונלי)" id="'+p+'-treat-note-'+sid+'" placeholder="הערה (אופציונלי)" class="treat-note-input">';
-    html+='<button data-act="'+p+'-add-treat" data-ksave data-id="'+esc(sid)+'" class="treat-save-btn">שמור</button>';
+    html+='<button data-act="'+p+'-add-treat" data-ksave data-id="'+esc(sid)+'" class="treat-save-btn">' + icon('plus') + 'הוספה</button>';
     html+='</div></div>';
     if(stuTreats.length){
       html+='<div class="panel-head-sm">היסטוריית טיפולים</div>';
@@ -243,7 +243,7 @@ function hrSupDetail(st, sid) {
       rowsHTML+='<span class="mh-cal"><small>'+esc(hrDow(r.session_date))+'</small><b>'+esc(hebDayLabel(dh.day))+'</b><small>'+esc(_hcMN(dh.hy)[dh.mi]||'')+'</small></span>';
       rowsHTML+='<span class="mh-main"><span class="mark-hist-sess">'+esc(r.session)+'</span>'+
         '<span class="'+atvCls(r.mark)+' hist-mark">'+esc(lbl)+esc(noteStr)+'</span></span>';
-      rowsHTML+='<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" class="mark-edit-btn">'+icon('edit')+'ערוך</button>';
+      rowsHTML+='<button data-act="'+st.p+'-mark-edit" data-rec="'+esc(r.client_id)+'" data-sid="'+esc(sid)+'" data-code="'+esc(r.mark)+'" class="mark-edit-btn">'+icon('edit')+'עריכה</button>';
       rowsHTML+='</div>';
     });
   }
@@ -384,7 +384,6 @@ async function hrSaveSettingsCfg(st) {
   S[st.v+'Cfg']=null;
   await hrSaveCfg(st, cfg);
   S[st.v+'Cfg']=cfg;
-  toast(MSG_SAVED, null, 'good');
 }
 
 export { hrAddSessionRow, hrAddTreat, hrAddTreatRow, hrDeleteTreat, hrEditMark, hrRenderSettings,

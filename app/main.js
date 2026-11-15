@@ -407,7 +407,7 @@ function _hcToggle(){
     btn.innerHTML=icon('close')+'הסר תאריך סיום';
     var nb=document.getElementById('sfmN_btn'); if(nb) nb.classList.remove('on');
   } else {
-    btn.innerHTML=icon('plus')+'הוסף תאריך סיום';
+    btn.innerHTML=icon('plus')+'הוספת תאריך סיום';
     var isoEl=document.getElementById('sfmT_iso'),tEl=document.getElementById('sfmT_t'),lbl=document.getElementById('sfmT_lbl');
     if(isoEl)isoEl.value='';if(tEl)tEl.value='';if(lbl)lbl.textContent='בחר תאריך עברי';
   }}

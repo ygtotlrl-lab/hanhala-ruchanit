@@ -73,7 +73,7 @@ function openStatusForm(type) {
       '<div>' +
         // סיום הוא הכרעה מפורשת — תאריך, או «ללא»; השמירה חסומה עד שנבחר אחד מהם
         '<div class="sf-end-row">' +
-          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle sfm-t-btn">' + icon('plus') + 'הוסף תאריך סיום</button>' +
+          '<button id="sfmT_btn" data-act="hc-toggle" type="button" class="sf-end-toggle sfm-t-btn">' + icon('plus') + 'הוספת תאריך סיום</button>' +
           '<button id="sfmN_btn" data-act="hc-noend" type="button" class="sf-end-toggle sfm-n-btn">ללא תאריך סיום</button>' +
         '</div>' +
         '<div id="sfmT_wrap" class="hidden">' +
@@ -82,7 +82,7 @@ function openStatusForm(type) {
         '</div>' +
       '</div>' +
     '</div>',
-    '<button data-act="student-status-save" data-ksave class="abs-tone '+tyCls(type)+' sf-save">שמור</button>' +
+    '<button data-act="student-status-save" data-ksave class="abs-tone '+tyCls(type)+' sf-save">' + icon('save') + 'שמירה</button>' +
     '<button data-act="modal-close" class="sf-cancel">ביטול</button>', icon(ABS_TYPE_ICON[type]||'details'));
 }
 
@@ -288,7 +288,7 @@ function openInactiveDlg(){
   openModal('תלמידים לא פעילים',
     '<input aria-label="חיפוש" type="search" class="input-full inact-search" id="inact-search" data-inp="inact-search" placeholder="חיפוש תלמיד...">'+
     '<div id="inact-list" class="inact-list"></div>',
-    '<button class="btn out" data-act="modal-close">סגור</button>', icon('archive'));
+    '<button class="btn out" data-act="modal-close">סגירה</button>', icon('archive'));
   renderInactiveList();
 }
 function renderInactiveList(){
@@ -315,7 +315,7 @@ function openManageListDlg(){
   // קבוצות לפי עניין, כל השורות בצבע אחד — האזהרה בדיאלוג האישור שאחרי הבחירה
   var GROUPS=[
     {t:'תלמידים',items:[
-      {icon:'plus',label:'הוסף תלמיד',k:'add'},
+      {icon:'plus',label:'הוספת תלמיד',k:'add'},
       {icon:'minus',label:'סמן תלמיד כלא פעיל',k:'deact'},
       {icon:'archive',label:'לא פעילים',k:'inactive'}]},
     {t:'ייבוא',items:[
@@ -323,7 +323,7 @@ function openManageListDlg(){
       {icon:'upload',label:'ייבוא תלמידים',k:'import'}]},
     {t:'סוף שנה',items:[
       {icon:'retry',label:'מעבר שנתי',k:'year'},
-      {icon:'del',label:'מחק הכל',k:'delall'}]}
+      {icon:'del',label:'מחיקת הכל',k:'delall'}]}
   ];
   var rowsHTML=GROUPS.map(function(g){
     return '<div class="admin-grp"><div class="admin-grp-t">'+g.t+'</div>'+g.items.map(function(item){
@@ -346,7 +346,7 @@ function openDeactivateStudentDlg(){
     '</select>'+
     '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מ«לא פעילים» בניהול הרשימה.</div>',
     '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אשר</button>', icon('power'));
+    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אישור</button>', icon('power'));
 }
 
 // ── מעבר שנתי ──
@@ -448,14 +448,14 @@ function openCurrentStatusModal() {
           '<span class="abs-type-label">' + esc(ABS_TYPE_LBL[a.type]||a.type) + '</span>' +
           badgeHTML +
         '</div>' +
-        '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">בטל</button>' +
+        '<button data-act="status-abs-cancel" data-id="' + esc(String(a.id)) + '" class="abs-cancel">ביטול</button>' +
       '</div>' +
       (a.reason ? '<div class="abs-reason">סיבה: ' + esc(a.reason) + '</div>' : '') +
       '<div class="abs-dates">מ: ' + hrFmtAt(a.from_at) + '<br>עד: ' + (a.to_at ? hrFmtAt(a.to_at) : 'ללא תאריך סיום') + '</div>' +
     '</div>';
   }).join('');
   openModal(s.name, absencesHTML +
-    '<button data-act="status-picker-open" class="abs-add">' + icon('plus') + 'הוסף סיבה נוספת</button>' + '<button data-act="st-history" data-id="' + esc(S._statusSid) + '" class="st-hist-link">' + icon('history') + 'היסטוריית סטטוסים</button>', '');
+    '<button data-act="status-picker-open" class="abs-add">' + icon('plus') + 'הוספת סיבה נוספת</button>' + '<button data-act="st-history" data-id="' + esc(S._statusSid) + '" class="st-hist-link">' + icon('history') + 'היסטוריית סטטוסים</button>', '');
 }
 
 function hrRefreshSupervisionViews() {
@@ -604,7 +604,7 @@ function _histPaint(s, warn) {
 
 function studentFormFoot(){
   return '<button class="btn out" data-act="modal-close">ביטול</button>'+
-         '<button class="btn" data-act="student-save" data-ksave>'+icon('save')+'שמור</button>';
+         '<button class="btn" data-act="student-save" data-ksave>'+icon('save')+'שמירה</button>';
 }
 
 function openAddStudent(){
@@ -761,7 +761,7 @@ function importStudentsFromFile(input) {
       openModal(title,
         '<div class="import-done">' +
         (bodyHTML || '<div>הכל תקין!</div>') + '</div>',
-        '<button class="modal-ok btn" data-act="modal-close">סגור</button>', mood);
+        '<button class="modal-ok btn" data-act="modal-close">סגירה</button>', mood);
     } catch(err) {
       toast(MSG_FILE_READ_FAIL + (err.message||err), null, 'bad');
     }

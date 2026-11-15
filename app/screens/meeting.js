@@ -2,7 +2,6 @@
 // הדף עצמו — app/meeting.html, ציבורי: מספר הזהות של התלמיד פותח אותו (התלמיד והשיעור — מהמצבה, בשער), ובו עד שני רבנים ולכל אחד שעה פנויה.
 // ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · שעות תפוסות; הרבנים — תמיד מאנשי הקשר.
 import { ask, esc, openModal, toast } from '../../core/ui.js';
-import { MSG_SAVED } from '../../core/util.js';
 import { HR_CLS_NAME, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
@@ -330,7 +329,6 @@ function meetingSave() {
                open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer'), texts: textsRead(document.getElementById('mt-set')) };
   S._mtCfg = next;
   var p = hrCfgSet(MT_KEY, next);
-  toast(MSG_SAVED, null, 'good');
   var tl = document.getElementById('mt-tl-box'); if (tl) tl.innerHTML = _tlHTML(next);
   return p;
 }

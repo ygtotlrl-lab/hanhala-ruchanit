@@ -1,6 +1,5 @@
 // app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי app/contacts.html קורא את אותה הגדרה
 import { esc, openModal, toast } from '../../core/ui.js';
-import { MSG_SAVED } from '../../core/util.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS } from '../constants.js';
@@ -61,7 +60,7 @@ function contactsPaneHTML() {
         <div class="ct-acts"><button class="btn sm out" data-act="ct-view">${icon('watch')}צפייה בדף</button>
           <button class="btn sm out" data-act="ct-copy">${icon('copy')}העתקת קישור</button></div>
         <div id="ct-edit" class="set-stack"></div>
-        <button data-act="ct-group-add" class="add-dashed-btn ct-group-add">+ הוסף קבוצה</button>
+        <button data-act="ct-group-add" class="add-dashed-btn ct-group-add">+ הוספת קבוצה</button>
         <label class="field-label" for="ct-footer">שורת הכתובת שבתחתית הדף</label>
         <input id="ct-footer" class="input-full" placeholder="כתובת · דוא״ל">
       </div>
@@ -96,7 +95,7 @@ function _groupHTML(g) {
       }).join('') + '</select>' +
       '<button data-act="row-remove" class="row-del-btn" aria-label="הסרת הקבוצה">' + icon('del') + '</button></div>' +
     '<div data-ct-rows>' + (g.rows || []).map(_rowHTML).join('') + '</div>' +
-    '<button data-act="ct-row-add" class="add-dashed-btn">+ הוסף איש קשר</button>' +
+    '<button data-act="ct-row-add" class="add-dashed-btn">+ הוספת איש קשר</button>' +
   '</div>';
 }
 
@@ -148,7 +147,6 @@ async function saveContacts() {
   });
   var footer = ((document.getElementById('ct-footer') || {}).value || '').trim();
   await hrCfgSet('contacts', { groups: groups, footer: footer });
-  toast(MSG_SAVED, null, 'good');
 }
 
 export { addContactGroup, addContactRow, contactsCopyLink, contactsPaneHTML, contactsStaff, contactsUrl, contactsView, renderContactsSettings, saveContacts };

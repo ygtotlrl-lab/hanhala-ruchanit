@@ -223,7 +223,7 @@ var MSG_SWITCHED_AS = 'נכנסת כ-';
 
 var MSG_SOON_TITLE = 'המודול בבנייה';
 
-var MSG_ADD_STUDENT_TITLE = 'הוסף תלמיד';
+var MSG_ADD_STUDENT_TITLE = 'הוספת תלמיד';
 
 var MSG_EDIT_STUDENT_TITLE = 'עריכת תלמיד';
 

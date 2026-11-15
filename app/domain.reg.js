@@ -300,7 +300,7 @@ async function hrOpenSession(st, sessId, sessName, cls, extra) {
     openModal(st.msg.done,
       '<p class="md-note-center">'+esc(hrRecLabel(existing))+(cls&&!extra?' כבר נפתח החודש.':cls?' כבר נפתח ביום זה.':' כבר מולא היום.')+'<br>האם לפתוח לעריכה?</p>',
       '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-      '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">ערוך</button>', icon('details'));
+      '<button data-act="'+st.p+'-resume-go" data-id="'+esc(existing.client_id)+'" class="md-btn-primary">עריכה</button>', icon('details'));
     return;
   }
 
@@ -427,8 +427,8 @@ function hrShowOverrideDialog(st, sid, student) {
     '<div class="abs-tone '+tyCls(a.type)+' abs-type-head">'+esc(typeLbl)+'</div>'+
     reasonHTML+datesHTML+
     '<div class="md-question">האם לבטל את הסטטוס לגמרי?<br><span class="md-question-warn">אם כן הוא יימחק והתלמיד ייחשב בישיבה כרגיל</span></div>',
-    '<button data-act="modal-close" class="md-btn-close">סגור</button>'+
-    '<button data-act="'+st.p+'-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">בטל סטטוס</button>', typeIcon);
+    '<button data-act="modal-close" class="md-btn-close">סגירה</button>'+
+    '<button data-act="'+st.p+'-status-cancel" data-id="'+esc(sid)+'" class="md-btn-danger">ביטול הסטטוס</button>', typeIcon);
 }
 
 function hrCancelStudentStatusFromReg(st, sid) {
@@ -535,7 +535,7 @@ function hrRenderStudents(st) {
         'data-inp="'+st.p+'-late" data-id="'+esc(s.client_id)+'" '+
         ' class="late-input">'+
         '<span class="unit-hint">דק׳</span>'+
-        (isPendingLate?'<button data-act="'+st.p+'-confirm-late" data-ksave data-id="'+esc(s.client_id)+'" class="late-ok-btn">'+icon('check')+'אשר</button>':'')+
+        (isPendingLate?'<button data-act="'+st.p+'-confirm-late" data-ksave data-noguard data-id="'+esc(s.client_id)+'" class="late-ok-btn">'+icon('check')+'אישור</button>':'')+
       '</div>':'';
     var noteField=st.note?
       '<input aria-label="הערה" type="text" placeholder="הערה" value="'+esc(marks.note||'')+'" '+

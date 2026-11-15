@@ -1,7 +1,6 @@
 // app/screens/intake.js — קבלה לישיבה: הדיאלוג שמהמצבה, התגובות והגדרות הטופס — כמו טופס הרישום (app/screens/enroll.js), ובאותו שער.
 // הטופס עצמו — app/intake.html, דף ציבורי ששולח בלבד (hr_intake · והקבצים דרך השער, במאגר הפרטי תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
-import { MSG_SAVED } from '../../core/util.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { INTAKE_DEFAULT, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
@@ -92,7 +91,6 @@ async function intakeTrack(el) {
   if (r && r.ok) {
     var row = (S._inRows || []).filter(function (x) { return x.client_id === el.getAttribute('data-in-id'); })[0];
     if (row) row.track = r.track;
-    toast(MSG_SAVED, null, 'good');
   } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
 }
 function intakeFile(el) { return gateOpen(el.getAttribute('data-path')); }
@@ -292,7 +290,6 @@ function intakeSave() {
     var t = row.querySelector('[data-k="type"]'); return t && ((t.value === 'select') !== !!row.querySelector('[data-k="options"]') || (t.value === 'section') !== row.classList.contains('is-sec'));
   });
   var p = hrCfgSet('intake_form', next);
-  toast(MSG_SAVED, null, 'good');
   if (typeChanged) _settingsPaint(next); else fcSyncRows(document.getElementById('in-set'));
   return p;
 }

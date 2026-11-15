@@ -23,7 +23,7 @@ function openStudentFile(sid) {
   var s = getStudents().find(function (x) { return idEq(x.client_id, sid); });
   if (!s) return;
   S._fileSid = String(sid);
-  openModal('תיק אישי — ' + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגור</button>', icon('files'));
+  openModal('תיק אישי — ' + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגירה</button>', icon('files'));
 }
 
 function _fileBodyHTML(s) {
@@ -39,7 +39,7 @@ function _fileBodyHTML(s) {
       '<div class="file-form-foot">' +
         '<label class="ex-file-up">' + icon('upload') + '<span id="file-scan-lbl">צירוף סריקה</span>' +
           '<input type="file" id="file-scan" accept="image/*,application/pdf" class="hidden" data-chg="file-scan-pick"></label>' +
-        '<button class="btn" data-act="file-event-save" data-ksave>' + icon('plus') + 'הוסף אירוע</button>' +
+        '<button class="btn" data-act="file-event-save" data-ksave>' + icon('plus') + 'הוספה</button>' +
       '</div>' +
     '</div>') : '';
   var list = _fileEvents(s);

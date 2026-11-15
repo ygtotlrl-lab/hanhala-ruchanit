@@ -1,7 +1,7 @@
 // app/screens/settings.js — ההגדרות, המשתמשים וההרשאות
 import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE,
          MSG_PASS_CUR_BAD, MSG_PASS_SIX, MSG_PASS_UPDATE_FAIL, MSG_PASS_VERIFY_FAIL,
-         MSG_SAVED, MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
+         MSG_SERVER_ERR, uniqHas, netTimeout } from '../../core/util.js';
 import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, isAdminOf, usersRefresh,
          usersGet, usersSaveAll, usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
@@ -66,22 +66,22 @@ function screenSettingsHTML() {
           <div>
             <div class="reason-head-ok">${icon('approved')}אישור</div>
             <div id="reasons-approved" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="approved" class="reason-add-ok">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="approved" class="reason-add-ok">+ הוספת סיבה</button>
           </div>
           <div>
             <div class="reason-head-bad">${icon('suspended')}השעיה</div>
             <div id="reasons-suspended" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-bad">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="suspended" class="reason-add-bad">+ הוספת סיבה</button>
           </div>
           <div>
             <div class="reason-head-warn">${icon('suspended')}פנימייה</div>
             <div id="reasons-dorm" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="dorm" class="reason-add-warn">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="dorm" class="reason-add-warn">+ הוספת סיבה</button>
           </div>
           <div>
             <div class="reason-head-info">${icon('left')}לא שב</div>
             <div id="reasons-left" class="reason-list"></div>
-            <button data-act="absence-reason-add" data-kind="left" class="reason-add-info">+ הוסף סיבה</button>
+            <button data-act="absence-reason-add" data-kind="left" class="reason-add-info">+ הוספת סיבה</button>
           </div>
         </div>
       </div>
@@ -95,13 +95,13 @@ function screenSettingsHTML() {
           <div class="cfg-card">
             <div class="panel-head">רשימת סדרים</div>
             <div id="at-cfg-sessions" class="sess-list"></div>
-            <button data-act="at-session-add" class="add-dashed-btn">+ הוסף סדר</button>
+            <button data-act="at-session-add" class="add-dashed-btn">+ הוספת סדר</button>
           </div>
           <!-- טיפולים -->
           <div class="cfg-card">
             <div class="panel-head">סוגי טיפולים</div>
             <div id="at-cfg-treats" class="sess-list"></div>
-            <button data-act="at-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
+            <button data-act="at-treat-row-add" class="add-dashed-btn">+ הוספת טיפול</button>
           </div>
         </div>
       </div>
@@ -111,7 +111,7 @@ function screenSettingsHTML() {
         <div class="set-box">
           <div class="panel-head">סוגי טיפולים</div>
           <div id="sl-cfg-treats" class="sess-list"></div>
-          <button data-act="sl-treat-row-add" class="add-dashed-btn">+ הוסף טיפול</button>
+          <button data-act="sl-treat-row-add" class="add-dashed-btn">+ הוספת טיפול</button>
         </div>
       </div>
     </div>
@@ -188,7 +188,6 @@ async function saveAbsenceReasons() {
   });
   // הטוסט אחרי הכתיבה לדיסק, שסינכרונית בראש hrCfgSet; ההמתנה שאחריה היא הרשת בלבד.
   // ההבטחה מוחזרת כדי שנקודת הניתוב תשחרר את הכפתור לפיה.
-  toast(MSG_SAVED, null, 'good');
   return hrCfgSet('absence_reasons', reasons);
 }
 
@@ -251,14 +250,14 @@ function renderSettings() {
 // בכל מסלול כתיבה הטביעה נגזרת ליד הסיסמה ובאותה פעולה — גזירה מאוחרת היא חלון
 // שבו הכניסה האופליין עובדת עם הסיסמה הקודמת.
 function openAddUser() {
-  openUserModal('הוסף משתמש');
+  openUserModal('הוספת משתמש');
   document.getElementById('um-role').value = 'junior';
   document.getElementById('um-pass-hint').classList.add('hidden');
   document.getElementById('um-pass-label').textContent = 'סיסמה (6 ספרות) *';
 }
 
 function openEditUser(u) {
-  openUserModal('ערוך משתמש');
+  openUserModal('עריכת משתמש');
   document.getElementById('um-id').value = u.client_id;
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
@@ -288,7 +287,7 @@ function userFormHTML() {
 function openUserModal(title) {
   openModal(title, userFormHTML(),
     '<button class="btn out" data-act="modal-close">ביטול</button>'+
-    '<button class="btn" data-act="user-save" data-ksave>' + icon('save') + 'שמור</button>', icon('user'));
+    '<button class="btn" data-act="user-save" data-ksave>' + icon('save') + 'שמירה</button>', icon('user'));
 }
 
 // מגן השליחה הכפולה בנקודת הניתוב ולא כאן — שומר שני היה משחרר כפתור שהראשון עוד מחזיק.
@@ -384,7 +383,6 @@ async function savePerms() {
   });
   hrApplyPerms(p);
   await hrCfgSet('perms', p);
-  toast(MSG_SAVED, null, 'good');
 }
 
 // ── שינוי סיסמה אישית ──
@@ -402,7 +400,7 @@ function myPasswordModal() {
     '<input type="password" id="mp-new2" maxlength="6" inputmode="numeric" autocomplete="new-password" class="' + fld + '">' +
     '<div id="mp-err" class="mp-err"></div>',
     '<button data-act="modal-close" class="md-btn-ghost-lg">ביטול</button>' +
-    '<button id="mp-save" data-act="my-pass-save" data-ksave class="md-btn-primary-lg">שמירה</button>');
+    '<button id="mp-save" data-act="my-pass-save" data-ksave class="md-btn-primary-lg">' + icon('save') + 'שמירה</button>');
   document.getElementById('mp-cur').focus();
 }
 

@@ -260,7 +260,7 @@ function rpOpenFill(f) {
   S._rpFillF = f;
   openModal(rpFieldLabel(f) + ' — ' + rpMonthLabel(m),
     '<div class="rp-fill-box">' + head + rows + '</div>',
-    '<button class="btn" data-act="modal-close">סגור</button>');
+    '<button class="btn" data-act="modal-close">סגירה</button>');
 }
 
 // כל בחירה וכל הקלדה נשמרות מיד, בלי כפתור — סגירה ב-✕, ברקע או ב-Escape אינה מאבדת דבר.
