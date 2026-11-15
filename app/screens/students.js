@@ -82,7 +82,7 @@ function openStatusForm(type) {
         '</div>' +
       '</div>' +
     '</div>',
-    '<button data-act="student-status-save" class="abs-tone '+tyCls(type)+' sf-save">שמור</button>' +
+    '<button data-act="student-status-save" data-ksave class="abs-tone '+tyCls(type)+' sf-save">שמור</button>' +
     '<button data-act="modal-close" class="sf-cancel">ביטול</button>', icon(ABS_TYPE_ICON[type]||'details'));
 }
 

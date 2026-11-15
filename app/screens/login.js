@@ -337,7 +337,7 @@ function switchUser(id, name) {
     '<input type="password" aria-label="סיסמת המשתמש שאליו עוברים" id="switch-pass" placeholder="סיסמה" maxlength="6" inputmode="numeric" autocomplete="current-password" class="switch-pass">'+
     '<div id="switch-err" class="switch-err"></div>',
     '<button data-act="modal-close" class="md-btn-ghost-lg">'+cancelTxt+'</button>'+
-    '<button data-act="switch-confirm" data-ksave class="md-btn-primary-lg">'+enterTxt+'</button>', icon('user'));
+    '<button data-act="switch-confirm" data-ksave data-noguard class="md-btn-primary-lg">'+enterTxt+'</button>', icon('user'));
   document.getElementById('switch-name').textContent = name;
   document.getElementById('switch-pass').focus();
 }
