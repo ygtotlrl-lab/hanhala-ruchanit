@@ -357,7 +357,8 @@
 .um-edit{color:var(--brand-ink);font-weight:600}
 .um-pass-hint{font-size:var(--fs-2);color:var(--text-3);margin-top:calc(-1 * var(--sp-4))}
 .um-pass{font-size:var(--fs-5);letter-spacing:var(--ls-3);text-align:center}
-.um-role{border:2px solid var(--border);font-family:Heebo;font-size:var(--fs-4);padding:var(--sp-5);border-radius:var(--r-3);width:100%;margin-bottom:var(--sp-5)}
+.um-role{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
+.um-role:focus{outline:none;border-color:var(--brand-ink)}
 .users-empty{color:var(--warn)}
 .year-danger{font-size:var(--fs-3);background:var(--bad-soft);color:var(--bad);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3)}
 .year-go{font-weight:700;flex:1;border:1.5px solid var(--warn-line);background:var(--warn-soft);color:var(--warn);cursor:pointer;font-family:Heebo;padding:var(--sp-4);border-radius:var(--r-3)}
