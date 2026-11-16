@@ -75,6 +75,13 @@
 .stats{grid-template-columns:repeat(2,1fr)}
 .mods-wrap{padding:0 var(--sp-6);padding-bottom:calc(var(--tabbar-h) + var(--sp-6) + env(safe-area-inset-bottom,0px))}
 .kpi-wrap{padding:var(--sp-6)}
+/* התאריך של היום — בראש המסך הראשי, מעל «היום»: אייקון לוח בעיגול לבן, היום בשבוע קטן ומתחתיו התאריך העברי */
+.home-date{display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7)}
+.home-date-ic{width:46px;height:46px;flex:none;border-radius:50%;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--brand-ink)}
+.home-date-ic .ico{width:22px;height:22px}
+.home-date-t{display:flex;flex-direction:column;gap:var(--sp-1);line-height:var(--lh-2)}
+.home-dow{font-size:var(--fs-3);color:var(--text-2)}
+.home-heb{font-size:var(--fs-5);font-weight:800;color:var(--brand-ink);white-space:nowrap}
 .hero{padding:var(--sp-6) var(--sp-6) var(--sp-7)}
 .hero-title{font-size:var(--fs-5)}
 .stats{grid-template-columns:repeat(2,1fr)}
@@ -409,18 +416,6 @@
 @media (min-width:900px){
   .logo{width:60px;height:60px}
   .logo.hdr-logo{height:66px;width:auto}
-}
-@media (min-width:900px){
-  .hdiv{display:block}
-}
-@media (min-width:900px){
-  .htxt{display:block;font-size:var(--fs-3)}
-}
-@media (min-width:900px){
-  .htxt strong{font-size:var(--fs-4)}
-}
-@media (min-width:900px){
-  .htxt span{font-size:inherit}
 }
 @media (min-width:900px){
   .hl{gap:var(--sp-6)}

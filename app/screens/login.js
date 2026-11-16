@@ -409,8 +409,8 @@ function initDateFields(){
   if(dpEl) dpEl.value=dayToday();
   if(rmEl) rmEl.value=dayToday().substring(0,7);
   // שם היום מורכב כאן ולא במנוע — המנוע מחזיר תאריך עברי, ושם היום הוא לוח לועזי.
-  // בכותרת — היום בשבוע מעל, והתאריך העברי בגדול.
-  var dwEl=document.getElementById('hdr-dow'), hdEl=document.getElementById('hdr-date');
+  // בראש המסך הראשי — היום בשבוע מעל, והתאריך העברי בגדול.
+  var dwEl=document.getElementById('home-dow'), hdEl=document.getElementById('home-heb');
   var _now=new Date();
   if(dwEl) dwEl.textContent='יום '+HEB_DOW[_now.getDay()];
   if(hdEl) hdEl.textContent=hebrewDate(_now);

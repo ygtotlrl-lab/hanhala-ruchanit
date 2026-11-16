@@ -11,6 +11,7 @@ function screenHomeHTML() {
   return `
 <div class="pg on pg-home" id="pg-home">
   <div class="kpi-wrap">
+    <div class="home-date"><span class="home-date-ic">${icon('calendar')}</span><div class="home-date-t"><span class="home-dow" id="home-dow"></span><strong class="home-heb" id="home-heb"></strong></div></div>
     <div class="mods-lbl">היום</div>
     <div class="kpis">
       <div class="kpi kpi-brand"><div class="kpi-top"><span class="kpi-l">תלמידים רשומים</span><span class="kpi-ic">${icon('students')}</span></div><div class="kpi-n" id="s-tot">–</div><div class="kpi-sub">פעילים במצבה</div></div>
