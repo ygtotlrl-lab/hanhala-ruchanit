@@ -120,10 +120,9 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .logo.hdr-logo{height:58px;width:auto}
 .hdr-motto{font-size:var(--fs-1);font-weight:500;opacity:var(--op-5)}
 .hdr-name{font-size:var(--fs-4)}
-/* במסכים הפנימיים — שם המסך בפס העליון במקום הסמל והתאריך (header.is-inner, מ-showPageInternal) */
-.hdr-page{display:none;margin:0;font-size:1.45rem;font-weight:800;color:var(--bar-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-header.is-inner .hdr-page{display:block}
-header.is-inner .logo.hdr-logo,header.is-inner .hdr-logo-w{display:none}
+/* שם המסך — בפס העליון ליד הסמל, בכל המסכים (hdrTitle ב-showPageInternal); שם ארוך נחתך ואינו דוחף את שורת הניווט */
+.hl{min-width:0}
+.hdr-page{display:block;margin:0;font-size:1.45rem;font-weight:800;color:var(--bar-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 /* הסמל בצבע, בלי מסגרת — הרקע הלבן שבקובץ נבלע בפס (multiply); בערכה הכהה — הסמל בלבן */
 .logo.hdr-logo{display:block;height:50px;width:auto;background:none;padding:0;border-radius:0;mix-blend-mode:multiply}
 .hdr-logo-w{display:none;height:38px;width:auto}
