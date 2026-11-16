@@ -513,7 +513,7 @@ function stClassChanged(){
 
 // שני מסלולי הפתיחה בונים מכאן — טופס שנבנה פעמיים נבדל בשדה, ושדה שנשמט נקרא «ריק» ולא «לא נשאל»
 function studentFormHTML(sid){
-  return '<label for="st-name">שם התלמיד (משפחה שם)</label>'+
+  return '<label for="st-name">שם התלמיד (משפחה, שם)</label>'+
     '<input aria-label="לדוגמה: כהן יצחק" type="text" id="st-name" placeholder="לדוגמה: כהן יצחק" class="st-form-input">'+
     // מספר הזהות (או הדרכון) — מזהה את התלמיד בדפים הציבוריים (השיבוץ לאסיפת הורים)
     '<label for="st-idnum">מספר תעודת זהות (או מספר דרכון, אם אין)</label>'+
