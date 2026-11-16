@@ -78,7 +78,7 @@
 /* התאריך של היום — בראש המסך הראשי, מעל «היום»: אייקון לוח בעיגול לבן, היום בשבוע קטן ומתחתיו התאריך העברי */
 .home-date{display:flex;align-items:center;gap:var(--sp-5);margin-bottom:var(--sp-7)}
 .home-date-ic{width:46px;height:46px;flex:none;border-radius:50%;background:var(--card);border:1px solid var(--border);display:grid;place-items:center;color:var(--brand-ink)}
-.home-date-ic .ico{width:22px;height:22px}
+.home-date-ic .ico{width:22px;height:22px;margin:0;vertical-align:0}
 .home-date-t{display:flex;flex-direction:column;gap:var(--sp-1);line-height:var(--lh-2)}
 .home-dow{font-size:var(--fs-3);color:var(--text-2)}
 .home-heb{font-size:var(--fs-5);font-weight:800;color:var(--brand-ink);white-space:nowrap}
