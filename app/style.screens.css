@@ -361,6 +361,10 @@
 .set-box{border:1.5px solid var(--border);background:var(--card);max-width:400px;padding:var(--sp-6);border-radius:var(--radius)}
 .set-stack{display:flex;flex-direction:column;gap:var(--sp-6)}
 .set-tiles{display:grid;gap:var(--sp-6);grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-top:var(--sp-4)}
+/* במסך רחב — שלושה בשורה, ברוחב קריא וממורכז: שישה אריחים בשתי שורות שוות */
+@media (min-width:640px){
+  .set-tiles{grid-template-columns:repeat(3,1fr);max-width:760px;margin-inline:auto}
+}
 .um-edit{color:var(--brand-ink);font-weight:600}
 .um-pass-hint{font-size:var(--fs-2);color:var(--text-3);margin-top:calc(-1 * var(--sp-4))}
 .um-pass{font-size:var(--fs-5);letter-spacing:var(--ls-3);text-align:center}
