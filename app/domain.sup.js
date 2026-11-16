@@ -141,7 +141,7 @@ function _hrSupPaint(st, el, rawData, rawTreats, warn) {
     html+='</div>';
     html+='<button data-act="'+p+'-sup-detail" data-id="'+esc(sid)+'" class="sup-detail-btn">'+icon('search')+'פירוט</button>';
     html+='</div>';
-    html+='<div class="sup-card-body hidden">';
+    html+='<div class="sup-card-body hidden" data-ks-area>';
     html+='<div class="treat-add">';
     html+='<div class="panel-head-sm">הוספת טיפול</div>';
     html+='<div class="chip-row" data-ks>';

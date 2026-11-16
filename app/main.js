@@ -718,7 +718,7 @@ document.addEventListener('input', function (e) {
   });
 });
 
-// מסך הגדרות נשמר מיד, בלי כפתור (שורת «הגדרות נשמרות מיד»): מיכל שנושא data-autosave — שינוי שדה בו (ביציאה או בבחירה)
+// מסך הגדרות נשמר מיד, בלי כפתור («שמירה אוטומטית — נתון קיים» בטבלה): מיכל שנושא data-autosave — שינוי שדה בו (ביציאה או בבחירה)
 // והסרת שורה ממנו מפעילים את פעולת השמירה שלו; שדה בו נושא data-kent — Enter משחרר אותו ושומר.
 function _hrAutosave(el) {
   var box = el && el.closest ? el.closest('[data-autosave]') : null;
