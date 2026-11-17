@@ -57,7 +57,7 @@ function hrRegHTML(st) {
       <div id="${p}-reg-list" class="hidden">
         <div class="at-reg-bar">
           <div id="${p}-reg-header" class="at-reg-bar-info"></div>
-          <button data-act="${p}-session-close" class="at-close-btn">${icon('check')}שמור וסגור</button>
+          <button data-act="${p}-session-close" class="at-close-btn">${icon('check')}סגירה</button>
         </div>
         ${st.exam?`<div id="${p}-exam-info" class="ex-info"></div>`:''}
         <div id="${p}-students"></div>

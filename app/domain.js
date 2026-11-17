@@ -826,12 +826,13 @@ function hrDefaultCfg() {
 function atDefaultCfg() {
   return {
     sessions:[
-      {id:'sh',name:'שחרית'},
-      {id:'s1',name:'סדר א׳'},
-      {id:'s2',name:'סדר ב׳'},
-      {id:'s3',name:'סדר ג׳'},
-      {id:'ev',name:'ערבית'},
-      {id:'nl',name:'סדר לילה'}
+      {id:'cb',name:'חסידות בוקר',start_time:'07:00'},
+      {id:'sh',name:'שחרית',start_time:'09:00'},
+      {id:'nb',name:'נגלה בוקר',start_time:'11:00'},
+      {id:'mn',name:'מנחה',start_time:'14:00'},
+      {id:'nz',name:'נגלה צהריים',start_time:'16:00'},
+      {id:'mr',name:'מעריב',start_time:'19:00'},
+      {id:'ce',name:'חסידות ערב',start_time:'20:00'}
     ],
     treats:['שיחה אישית','אזהרה','שיחת הורים','זימון לרב','אחר']
   };
