@@ -1,14 +1,14 @@
-// app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי app/contacts.html קורא את אותה הגדרה
+// app/screens/contacts.js — אנשי הקשר: העריכה בהגדרות הדוחות, והדף הציבורי (dapim/contacts) קורא את אותה הגדרה
 import { esc, openModal, toast } from '../../core/ui.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS } from '../constants.js';
 
-// הכתובת שהגיליון מקשר אליה — הדף הציבורי שליד האפליקציה.
-function contactsUrl() {
-  var base = (self.APP && self.APP.android && self.APP.android.url) || (location.origin + location.pathname.replace(/[^/]*$/, ''));
-  return base.replace(/\/?$/, '/') + 'app/contacts.html';
-}
+// הדפים הציבוריים — בריפו הדפים (dapim) ולא ליד האפליקציה: מי שמקבל קישור אינו מגיע אליה.
+var PAGES_URL = 'https://ygtotlrl-lab.github.io/dapim/';
+function pageUrl(name) { return PAGES_URL + name + '/'; }
+// הכתובת שהגיליון מקשר אליה.
+function contactsUrl() { return pageUrl('contacts'); }
 
 var CT_CLS = ['a', 'b', 'g'];
 
@@ -37,7 +37,7 @@ function contactsStaff(cls) {
 
 // הדף הציבורי בתוך האפליקציה — בדיאלוג על כל המסך, ולא ניווט: ניווט במעטפת המותקנת מחליף את האפליקציה בדף
 function contactsView() {
-  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="app/contacts.html" title="דף אנשי הקשר"></iframe>', '', 'watch');
+  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="' + contactsUrl() + '" title="דף אנשי הקשר"></iframe>', '', 'watch');
 }
 
 // הקישור ללוח — להודעה שנשלחת עם הגיליונות; בלי גישה ללוח — הקישור מוצג בהודעה
@@ -149,4 +149,4 @@ async function saveContacts() {
   await hrCfgSet('contacts', { groups: groups, footer: footer });
 }
 
-export { addContactGroup, addContactRow, contactsCopyLink, contactsPaneHTML, contactsStaff, contactsUrl, contactsView, renderContactsSettings, saveContacts };
+export { addContactGroup, addContactRow, contactsCopyLink, contactsPaneHTML, contactsStaff, contactsUrl, contactsView, pageUrl, renderContactsSettings, saveContacts };

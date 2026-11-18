@@ -1,5 +1,5 @@
 // app/screens/intake.js — קבלה לישיבה: הדיאלוג שמהמצבה, התגובות והגדרות הטופס — כמו טופס הרישום (app/screens/enroll.js), ובאותו שער.
-// הטופס עצמו — app/intake.html, דף ציבורי ששולח בלבד (hr_intake · והקבצים דרך השער, במאגר הפרטי תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+// הטופס עצמו — dapim/intake, דף ציבורי ששולח בלבד (hr_intake · והקבצים דרך השער, במאגר הפרטי תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { INTAKE_DEFAULT, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
@@ -7,7 +7,7 @@ import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
 import { respListHTML, respScreenHTML, respSections } from './resp.js';
-import { contactsUrl } from './contacts.js';
+import { pageUrl } from './contacts.js';
 import { enrollFieldRow, fcRemember, fcSyncRows, gatePassHTML, privacyHTML, textsHTML, textsRead } from './enroll.js';
 import { fcCardHTML, fcOnLabel, fcOpenId, fcStatusHTML, fcSw } from './forms.js';
 import { gateCall, gateOpen } from '../gate.js';
@@ -17,9 +17,9 @@ var INTAKE_PUBLIC = 'hr-public';
 function _gate(action, body) { return gateCall('intake', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
-function intakeUrl() { return contactsUrl().replace(/contacts\.html$/, 'intake.html'); }
+function intakeUrl() { return pageUrl('intake'); }
 function intakeView() {
-  openModal('קבלה לישיבה', '<iframe class="ct-frame" src="app/intake.html" title="קבלה לישיבה"></iframe>', '', 'watch');
+  openModal('קבלה לישיבה', '<iframe class="ct-frame" src="' + intakeUrl() + '" title="קבלה לישיבה"></iframe>', '', 'watch');
 }
 async function intakeCopy() {
   var u = intakeUrl(), ok = false;

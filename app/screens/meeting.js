@@ -1,12 +1,12 @@
 // app/screens/meeting.js — שיבוץ לאסיפת הורים: הדיאלוג שמהמצבה, התגובות (השיבוצים) והגדרות האסיפה — כמו טופס הרישום ובאותו שער.
-// הדף עצמו — app/meeting.html, ציבורי: מספר הזהות של התלמיד פותח אותו (התלמיד והשיעור — מהמצבה, בשער), ובו עד שני רבנים ולכל אחד שעה פנויה.
+// הדף עצמו — dapim/meeting, ציבורי: מספר הזהות של התלמיד פותח אותו (התלמיד והשיעור — מהמצבה, בשער), ובו עד שני רבנים ולכל אחד שעה פנויה.
 // ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · שעות תפוסות; הרבנים — תמיד מאנשי הקשר.
 import { ask, esc, openModal, toast } from '../../core/ui.js';
 import { HR_CLS_NAME, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
-import { contactsUrl } from './contacts.js';
+import { pageUrl } from './contacts.js';
 import { gatePassHTML, textsHTML, textsRead } from './enroll.js';
 import { gateCall } from '../gate.js';
 import { hrDayHeb, hrDayHebFmt } from '../domain.hebdate.js';
@@ -18,9 +18,9 @@ var MT_CLS = ['a', 'b', 'g'];
 function _gate(action, body) { return gateCall('meeting', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
-function meetingUrl() { return contactsUrl().replace(/contacts\.html$/, 'meeting.html'); }
+function meetingUrl() { return pageUrl('meeting'); }
 function meetingView() {
-  openModal('שיבוץ לאסיפת הורים', '<iframe class="ct-frame" src="app/meeting.html" title="שיבוץ לאסיפת הורים"></iframe>', '', 'watch');
+  openModal('שיבוץ לאסיפת הורים', '<iframe class="ct-frame" src="' + meetingUrl() + '" title="שיבוץ לאסיפת הורים"></iframe>', '', 'watch');
 }
 async function meetingCopy() {
   var u = meetingUrl(), ok = false;

@@ -8,14 +8,14 @@ import { S } from '../state.js';
 import { hrDayHebFmt } from '../domain.hebdate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
 import { gateCall } from '../gate.js';
-import { contactsUrl } from './contacts.js';
+import { pageUrl } from './contacts.js';
 
 var FORMS = [
-  { k: 'en', mod: 'enroll', key: 'enroll_form', file: 'enroll.html', title: 'טופס רישום', ico: 'enroll', on: 'פתוח לרישום' },
-  { k: 'in', mod: 'intake', key: 'intake_form', file: 'intake.html', title: 'קבלה לישיבה', ico: 'intake', on: 'פתוח לחתימה' },
-  { k: 'mt', mod: 'meeting', key: 'meeting_cfg', file: 'meeting.html', title: 'אסיפת הורים', ico: 'meeting', on: 'פתוח לשיבוץ' }
+  { k: 'en', mod: 'enroll', key: 'enroll_form', page: 'enroll', title: 'טופס רישום', ico: 'enroll', on: 'פתוח לרישום' },
+  { k: 'in', mod: 'intake', key: 'intake_form', page: 'intake', title: 'קבלה לישיבה', ico: 'intake', on: 'פתוח לחתימה' },
+  { k: 'mt', mod: 'meeting', key: 'meeting_cfg', page: 'meeting', title: 'אסיפת הורים', ico: 'meeting', on: 'פתוח לשיבוץ' }
 ];
-function formUrl(file) { return contactsUrl().replace(/contacts\.html$/, file); }
+function formUrl(page) { return pageUrl(page); }
 
 // ── אבני הבניין ──
 // מתג — תיבת סימון בצורת מתג (fc-sw), ומאפייניה כמו בתיבה

@@ -1,5 +1,5 @@
 // app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות והגדרות הטופס
-// הטופס עצמו — app/enroll.html, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
+// הטופס עצמו — dapim/enroll, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { gateCall, gateOpen } from '../gate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
@@ -7,7 +7,7 @@ import { ENROLL_DEFAULT } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
-import { contactsUrl } from './contacts.js';
+import { pageUrl } from './contacts.js';
 import { openAddStudent } from './students.js';
 import '../form-texts.js';
 import { respListHTML, respScreenHTML, respSections } from './resp.js';
@@ -23,9 +23,9 @@ var EN_TYPES = [['text', 'טקסט'], ['idnum', 'מספר זהות'], ['tel', '�
 function _gate(action, body) { return gateCall('enroll', action, body); }
 
 // ── הדיאלוג שמהמצבה ──
-function enrollUrl() { return contactsUrl().replace(/contacts\.html$/, 'enroll.html'); }
+function enrollUrl() { return pageUrl('enroll'); }
 function enrollView() {
-  openModal('טופס רישום', '<iframe class="ct-frame" src="app/enroll.html" title="טופס רישום"></iframe>', '', 'watch');
+  openModal('טופס רישום', '<iframe class="ct-frame" src="' + enrollUrl() + '" title="טופס רישום"></iframe>', '', 'watch');
 }
 async function enrollCopy() {
   var u = enrollUrl(), ok = false;
