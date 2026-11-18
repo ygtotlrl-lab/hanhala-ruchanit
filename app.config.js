@@ -8,7 +8,7 @@ self.APP = Object.freeze({
   prefix: 'hr_',
   colors: { theme: '#1a3c6e', background: '#1a3c6e' },
   // דף האופליין של ה-service worker — הכהה לפי אסימוני הערכה הכהה של האפליקציה
-  offline: { light: { bg: '#1a3a6b', ink: '#FFFFFF' }, dark: { bg: '#0d151d', ink: '#e8eef5' }, mark: '📴' },
+  offline: { light: { bg: '#1a3a6b', ink: '#FFFFFF' }, dark: { bg: '#0d151d', ink: '#e8eef5' } },
   // מפתח anon ציבורי ולא מפתח שירות — ההרשאות נאכפות במסד.
   supabase: {
     url: 'https://kxbtskqobynewvnckaaz.supabase.co',
