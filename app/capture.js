@@ -8,6 +8,8 @@
   var JPEG_Q = 0.82;
   var PAGE_W = 595.28;   // רוחב A4 בנקודות; הגובה — לפי יחס הצילום
 
+  // ✕ כאייקון קווי ולא כתו — הקובץ נטען גם בדפים הציבוריים, שאין בהם את סט האייקונים של האפליקציה.
+  var X_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   var CAM_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
 
   function css() {
@@ -19,12 +21,13 @@
       '.cap-box{background:#fff;color:#1a2340;width:100%;max-width:520px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));direction:rtl;font-family:inherit;box-sizing:border-box}' +
       '@media (min-width:640px){.cap-veil{align-items:center}.cap-box{border-radius:20px}}' +
       '.cap-h{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:17px;margin-bottom:12px}' +
-      '.cap-x{border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:inherit;padding:4px 8px}' +
+      '.cap-x{border:0;background:transparent;cursor:pointer;color:inherit;width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center}' +
       '.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-bottom:14px}' +
       '.cap-th{position:relative;border:1px solid #d8e2f0;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:#f0f4fa}' +
       '.cap-th img{width:100%;height:100%;object-fit:cover;display:block}' +
       '.cap-th b{position:absolute;bottom:4px;right:6px;background:rgba(255,255,255,.9);border-radius:8px;padding:0 6px;font-size:12px}' +
-      '.cap-del{position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;font-size:15px;line-height:26px;cursor:pointer;padding:0}' +
+      '.cap-del{position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(15,23,42,.7);color:#fff;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}' +
+      '.cap-del svg{width:14px;height:14px}' +
       '.cap-empty{color:#8a97b0;text-align:center;padding:18px 0;font-size:14px}' +
       '.cap-row{display:flex;gap:10px}' +
       '.cap-btn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:12px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;border:1.5px solid var(--brand,#1a3a6b);background:#fff;color:var(--brand,#1a3a6b)}' +
@@ -119,7 +122,7 @@
       veil.setAttribute('role', 'dialog');
       veil.setAttribute('aria-modal', 'true');
       veil.innerHTML = '<div class="cap-box"><div class="cap-h"><span>' + (opts.title || 'צילום מסמך') + '</span>' +
-        '<button type="button" class="cap-x" data-cap="cancel" aria-label="ביטול">✕</button></div>' +
+        '<button type="button" class="cap-x" data-cap="cancel" aria-label="ביטול">' + X_SVG + '</button></div>' +
         '<div class="cap-grid"></div><div class="cap-msg"></div>' +
         '<div class="cap-row"><button type="button" class="cap-btn" data-cap="more">' + CAM_SVG + '<span>צילום</span></button>' +
         '<button type="button" class="cap-btn cap-go" data-cap="done" disabled>סיום</button></div></div>';
@@ -130,7 +133,7 @@
       function draw() {
         grid.innerHTML = shots.length ? shots.map(function (s, i) {
           return '<div class="cap-th"><img src="' + s.url + '" alt=""><b>עמוד ' + (i + 1) + '</b>' +
-            '<button type="button" class="cap-del" data-cap="del" data-i="' + i + '" aria-label="הסרת עמוד ' + (i + 1) + '">✕</button></div>';
+            '<button type="button" class="cap-del" data-cap="del" data-i="' + i + '" aria-label="הסרת עמוד ' + (i + 1) + '">' + X_SVG + '</button></div>';
         }).join('') : '';
         msg.innerHTML = shots.length ? '' : '<div class="cap-empty">עדיין אין צילום</div>';
         moreLbl.textContent = shots.length ? 'צילום נוסף' : 'צילום';
