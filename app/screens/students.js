@@ -5,7 +5,7 @@ import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { exportPdf, exportXlsx } from '../../core/export.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LETTER, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, TTL_INACTIVE } from '../constants.js';
+import { LBL_DEACT, LBL_REACT, MSG_DEACT_ASK_POST, MSG_DEACT_ASK_PRE, MSG_PL_NO_ACTIVE, MSG_PL_NO_INACTIVE, MSG_PL_NO_MATCH, ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LETTER, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, TTL_INACTIVE } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, hrAwayAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrSortStatuses, hrSortStudents, modalOpen,
@@ -34,7 +34,7 @@ function screenStudentsHTML() {
 
 <!-- Students Table -->
 <div class="st-table"><div class="st-scroll"><div class="st-grid">
-  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span class="st-c-act">מצב</span><span class="st-c-act">סטטוס</span></div>
+  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span class="st-c-act">שיעור</span><span class="st-c-act">מצב</span><span class="st-c-act">סטטוס</span></div>
   <div id="students-tbody"></div>
 </div></div></div>
 
@@ -299,10 +299,10 @@ function renderPickList(){
   var inp=document.getElementById('pl-search'),box=document.getElementById('pl-list'); if(!box||!inp) return;
   var q=(inp.value||'').trim().toLowerCase(),inact=inp.getAttribute('data-pl')==='inactive';
   var list=hrSortStudents(getStudents()).filter(function(s){return (inact?!hrStudentListed(s):hrStudentListed(s))&&(!q||s.name.toLowerCase().indexOf(q)>=0);});
-  if(!list.length){box.innerHTML='<div class="empty-note">'+(q?'אין תלמיד התואם את החיפוש':inact?'אין תלמידים לא פעילים':'אין תלמידים פעילים')+'</div>';return;}
+  if(!list.length){box.innerHTML='<div class="empty-note">'+(q?MSG_PL_NO_MATCH:inact?MSG_PL_NO_INACTIVE:MSG_PL_NO_ACTIVE)+'</div>';return;}
   box.innerHTML='<ol class="stx-pl">'+list.map(function(s){
-    if(inact){var yr=hrCycleLabel(hrCycleOf(s));return hrPickRowHTML(s,(CLS_NAME[s.cls]||'')+(yr?' · מחזור '+yr:''),'st-activate','החזר לפעיל','undo');}
-    return hrPickRowHTML(s,CLS_NAME[s.cls]||'','deact-st-pick','לא פעיל','power');
+    if(inact){var yr=hrCycleLabel(hrCycleOf(s));return hrPickRowHTML(s,(CLS_NAME[s.cls]||'')+(yr?' · מחזור '+yr:''),'st-activate',LBL_REACT,'undo');}
+    return hrPickRowHTML(s,CLS_NAME[s.cls]||'','deact-st-pick',LBL_DEACT,'power');
   }).join('')+'</ol>';
 }
 
@@ -346,7 +346,7 @@ function openDeactivateStudentDlg(){
 function confirmDeactivate(sid){
   var s=getStudents().find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
-  ask(MSG_MARK_INACTIVE_TITLE,'לסמן את '+s.name+' כלא פעיל? אפשר להחזיר אותו מ«לא פעילים» בניהול הרשימה.','לא פעיל',icon('power')).then(function(yes){
+  ask(MSG_MARK_INACTIVE_TITLE,MSG_DEACT_ASK_PRE+s.name+MSG_DEACT_ASK_POST,LBL_DEACT,icon('power')).then(function(yes){
     if(!yes)return;
     setStudentInactive(sid);
     renderPickList();
