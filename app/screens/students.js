@@ -5,7 +5,7 @@ import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { exportPdf, exportXlsx } from '../../core/export.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, TTL_INACTIVE } from '../constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LETTER, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, TTL_INACTIVE } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, hrAwayAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrSortStatuses, hrSortStudents, modalOpen,
@@ -34,7 +34,7 @@ function screenStudentsHTML() {
 
 <!-- Students Table -->
 <div class="st-table"><div class="st-scroll"><div class="st-grid">
-  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span>מצב</span><span class="st-c-act">פרטים</span><span class="st-c-act">סטטוס</span></div>
+  <div class="st-th" id="students-th"><span>#</span><span>מספר זהות</span><span>שם התלמיד</span><span>שיעור</span><span class="st-c-act">מצב</span><span class="st-c-act">סטטוס</span></div>
   <div id="students-tbody"></div>
 </div></div></div>
 
@@ -202,22 +202,22 @@ function renderStudents(){
   if(!tbody)return;
   var html='';
   filtered.forEach(function(s,i){
-    var clsLabel=s.cls==='s'?'הת׳ השלוחים':(CLS_NAME[s.cls]||s.cls);
+    // השיעור באות בלבד (א׳ · ב׳ · ג׳ · ש׳), והשם המלא ברמז
+    var clsLabel=HR_CLS_LETTER[s.cls]||s.cls;
     var isPresent=hrAwayAbsences(s).length===0;
-    // נוכח ואינו נוכח — אותה צורה, בלי וי ובלי איקס; ההבדל בגוון בלבד
+    // נוכח — וי ירוק, ואינו נוכח — איקס אדום, כמו במצבת משרד החינוך
     var presIcon=isPresent
-      ?'<span class="pill-present">נוכח</span>'
-      :'<span class="pill-absent">אינו נוכח</span>';
-    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס" aria-label="עריכת סטטוס">'+icon('plus')+'</button>';
+      ?'<span class="st-pres ok" title="נוכח" aria-label="נוכח">'+icon('check')+'</span>'
+      :'<span class="st-pres bad" title="אינו נוכח" aria-label="אינו נוכח">'+icon('close')+'</span>';
+    var statusBtn='<button data-act="st-attend" data-id="'+esc(s.client_id)+'" class="st-attend" title="עריכת סטטוס" aria-label="עריכת סטטוס">'+icon('details')+'</button>';
     html+='<div id="st-row-'+s.client_id+'" class="st-row">';
     html+='<span class="st-num">'+(i+1)+'</span>';
     html+=s.idnum
       ?'<button class="st-row-name st-c-id" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.idnum)+'</button>'
       :'<span class="st-c-id st-c-none">—</span>';
     html+='<button class="st-row-name" data-act="st-edit" data-id="'+esc(s.client_id)+'">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</button>';
-    html+='<span class="st-c-cls">'+esc(clsLabel)+'</span>';
-    html+='<span class="st-c-pres">'+presIcon+'</span>';
-    html+='<span class="st-c-act"><button data-act="st-edit" data-id="'+esc(s.client_id)+'" class="st-edit" title="פרטי תלמיד" aria-label="פרטי תלמיד">'+icon('details')+'</button></span>';
+    html+='<span class="st-c-cls" title="'+esc(CLS_NAME[s.cls]||'')+'">'+esc(clsLabel)+'</span>';
+    html+='<span class="st-c-act">'+presIcon+'</span>';
     html+='<span class="st-c-act">'+statusBtn+'</span>';
     html+='</div>';
   });
@@ -268,7 +268,7 @@ function setStudentActive(sid){
   saveStudents(students);
   schedulePush();
   renderStudents();
-  renderInactiveList();
+  renderPickList();
   toast(''+s.name+MSG_MARKED_ACTIVE, null, 'good');
 }
 
@@ -282,32 +282,35 @@ var MANAGE_PICK = {
   'inactive': function () { openInactiveDlg(); }
 };
 
+// ── רשימת תלמידים בחלון — «לא פעילים» ו«סמן תלמיד כלא פעיל»: חיפוש, ושורה לכל תלמיד כמו בסטטיסטיקה
+// (ראשי התיבות בעיגול · השם, ומתחתיו השיעור או המחזור · הפעולה בקצה). אין בורר של הדפדפן ואין פס אזהרה.
+function hrInitials(name){var p=String(name||'?').trim().split(/\s+/);return (p[0]||'?').charAt(0)+(p[1]?p[1].charAt(0):'');}
+function hrPickListHTML(kind){
+  return '<input aria-label="חיפוש תלמיד" type="search" class="input-full pl-search" id="pl-search" data-inp="pl-search" data-pl="'+kind+'" placeholder="חיפוש תלמיד..." autocomplete="off">'+
+    '<div id="pl-list" class="pl-scroll"></div>';
+}
+function hrPickRowHTML(s,sub,act,label,ic){
+  return '<li><span class="stx-pn">'+esc(hrInitials(s.name))+'</span>'+
+    '<span class="stx-pw"><b>'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</b><small>'+esc(sub)+'</small></span>'+
+    '<button data-act="'+act+'" data-id="'+esc(s.client_id)+'" class="pl-act">'+icon(ic)+label+'</button></li>';
+}
+// הרשימה מתעדכנת אחרי כל פעולה — מי שהוחזר לפעיל או סומן כלא פעיל יוצא ממנה.
+function renderPickList(){
+  var inp=document.getElementById('pl-search'),box=document.getElementById('pl-list'); if(!box||!inp) return;
+  var q=(inp.value||'').trim().toLowerCase(),inact=inp.getAttribute('data-pl')==='inactive';
+  var list=hrSortStudents(getStudents()).filter(function(s){return (inact?!hrStudentListed(s):hrStudentListed(s))&&(!q||s.name.toLowerCase().indexOf(q)>=0);});
+  if(!list.length){box.innerHTML='<div class="empty-note">'+(q?'אין תלמיד התואם את החיפוש':inact?'אין תלמידים לא פעילים':'אין תלמידים פעילים')+'</div>';return;}
+  box.innerHTML='<ol class="stx-pl">'+list.map(function(s){
+    if(inact){var yr=hrCycleLabel(hrCycleOf(s));return hrPickRowHTML(s,(CLS_NAME[s.cls]||'')+(yr?' · מחזור '+yr:''),'st-activate','החזר לפעיל','undo');}
+    return hrPickRowHTML(s,CLS_NAME[s.cls]||'','deact-st-pick','לא פעיל','power');
+  }).join('')+'</ol>';
+}
+
 // ── לא פעילים — בניהול הרשימה בלבד, למנהל: חיפוש והחזרה לפעיל ──
 function openInactiveDlg(){
   if(!isAdmin()){shell.showDenied();return;}
-  openModal(TTL_INACTIVE,
-    '<input aria-label="חיפוש" type="search" class="input-full inact-search" id="inact-search" data-inp="inact-search" placeholder="חיפוש תלמיד...">'+
-    '<div id="inact-list" class="inact-list"></div>',
-    '<button class="btn out" data-act="modal-close">סגירה</button>', icon('archive'));
-  renderInactiveList();
-}
-function renderInactiveList(){
-  var box=document.getElementById('inact-list'); if(!box) return;
-  var q=((document.getElementById('inact-search')||{}).value||'').toLowerCase();
-  var list=hrSortStudents(getStudents()).filter(function(s){return !hrStudentListed(s)&&(!q||s.name.toLowerCase().indexOf(q)>=0);});
-  if(!list.length){box.innerHTML='<div class="empty-note">אין תלמידים לא פעילים</div>';return;}
-  box.innerHTML=list.map(function(s,i){
-    var yr=hrCycleLabel(hrCycleOf(s));
-    return '<div class="'+(i%2===0?'zebra-a':'zebra-b')+' st-row-off">'+
-      '<div class="st-row-main">'+
-        '<span class="st-row-name">'+esc(s.name)+pendTag(PK_STUDENT+s.client_id)+'</span>'+
-        '<div class="badge-row">'+(yr?'<span class="cycle-badge">מחזור '+esc(yr)+'</span>':'')+'</div>'+
-      '</div>'+
-      '<div class="st-row-act">'+
-        '<button data-act="st-activate" data-id="'+esc(s.client_id)+'" class="st-activate">'+icon('undo')+'החזר לפעיל</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  openModal(TTL_INACTIVE,hrPickListHTML('inactive'),'<button class="btn out" data-act="modal-close">סגירה</button>', icon('archive'));
+  renderPickList();
 }
 
 function openManageListDlg(){
@@ -334,19 +337,20 @@ function openManageListDlg(){
   openModal(MSG_STUDENTS_ADMIN,'<div class="admin-list">'+rowsHTML+'</div>','', icon('settings'));
 }
 
-// ── סימון תלמיד כלא פעיל ──
+// ── סימון תלמיד כלא פעיל — אותה רשימה, והאישור בחלון השאלה ──
 function openDeactivateStudentDlg(){
-  var students=hrSortStudents(getStudents().filter(hrStudentListed));
-  var optsHTML=students.map(function(s){
-    return '<option value="'+esc(s.client_id)+'">'+esc(s.name)+' ('+esc(CLS_NAME[s.cls]||s.cls)+')</option>';
-  }).join('');
-  openModal(MSG_MARK_INACTIVE_TITLE,
-    '<select aria-label="תלמיד להשבתה" id="deact-st-sel" class="deact-sel">'+
-      '<option value="">-- בחר תלמיד --</option>'+optsHTML+
-    '</select>'+
-    '<div class="deact-note">שימו לב: הפעולה מיידית. ניתן לשחזר מ«לא פעילים» בניהול הרשימה.</div>',
-    '<button data-act="modal-close" class="md-btn-ghost">ביטול</button>'+
-    '<button data-act="deact-st-confirm" class="md-btn-primary">'+icon('check')+'אישור</button>', icon('power'));
+  if(!isAdmin()){shell.showDenied();return;}
+  openModal(MSG_MARK_INACTIVE_TITLE,hrPickListHTML('active'),'<button class="btn out" data-act="modal-close">סגירה</button>', icon('power'));
+  renderPickList();
+}
+function confirmDeactivate(sid){
+  var s=getStudents().find(function(x){return idEq(x.client_id, sid);});
+  if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
+  ask(MSG_MARK_INACTIVE_TITLE,'לסמן את '+s.name+' כלא פעיל? אפשר להחזיר אותו מ«לא פעילים» בניהול הרשימה.','לא פעיל',icon('power')).then(function(yes){
+    if(!yes)return;
+    setStudentInactive(sid);
+    renderPickList();
+  });
 }
 
 // ── מעבר שנתי ──
@@ -837,5 +841,5 @@ async function printStudents() {
 export { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, openAddStudent,
          importStudentsFromFile, openAttendanceEdit, openManageListDlg,
          openStatusForm, openStatusHistory, openStatusPickerModal, printStudents,
-         renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
-         setStudentActive, setStudentInactive, stClassChanged };
+         confirmDeactivate, renderPickList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML,
+         setStudentActive, stClassChanged };

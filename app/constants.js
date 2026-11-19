@@ -47,7 +47,6 @@ var MSG_ABSENCE_DUP = 'היעדרות זהה כבר רשומה לתלמיד';
 
 var MSG_ACCESS_LIMITED = 'ללא גישה';
 
-var MSG_PICK_STUDENT = 'יש לבחור תלמיד';
 
 var MSG_USER_SAVED_NO_FP = 'משתמש נשמר — אך ללא הכנה לכניסה ללא רשת';
 
@@ -313,6 +312,8 @@ var ENROLL_DEFAULT = {"interval": 4, "images": [], "fields": [{"id": "s1", "type
 // נכתבת ל-intake_form כשאין בה ערך, ונערכת ב«הגדרות הטופס» של «קבלה לישיבה». מסמך בלי קישור — בלי «צפייה במסמך».
 var INTAKE_DEFAULT = {"fields": [{"id": "s1", "type": "section", "label": "פרטי התלמיד"}, {"id": "first", "type": "text", "label": "שם פרטי", "req": true}, {"id": "last", "type": "text", "label": "שם משפחה", "req": true}, {"id": "idnum", "type": "idnum", "label": "מס' זהות", "req": true}], "docs": [{"id": "d1", "title": "מכתב פתיחת שנת הלימודים", "url": ""}, {"id": "d2", "title": "לוח זמני השנה", "url": ""}, {"id": "d3", "title": "רשימת אנשי קשר", "url": ""}, {"id": "d4", "title": "סדר היום", "url": ""}], "items": [{"id": "i1", "title": "חתימה על תקנון הישיבה", "doc": "", "fields": []}, {"id": "i2", "title": "חוזה שכר לימוד", "doc": "", "fields": []}, {"id": "i3", "title": "הצהרת בריאות", "doc": "", "fields": []}, {"id": "i4", "title": "אישורי יציאה ל'מבצעים' וטיולים", "doc": "", "fields": []}, {"id": "i5", "title": "צילום תעודת זהות של שני ההורים", "doc": "", "fields": [{"id": "fid", "type": "file", "label": "צילום תעודת זהות של האב", "req": true, "help": "אם אין תעודת זהות - צילום דרכון"}, {"id": "mid", "type": "file", "label": "צילום תעודת זהות של האם", "req": true, "help": "אם אין תעודת זהות - צילום דרכון"}]}, {"id": "i6", "title": "בהמשך השנה — פרטי תעסוקה", "doc": "", "fields": []}, {"id": "i7", "title": "כרטיס טיסה לתשרי", "doc": "", "fields": []}], "track": [], "privacy": "הפרטים נמסרים לישיבת תומכי תמימים ראשון לציון לצורך הרישום, הקשר עמכם וניהול הלימודים, ולא יועברו לאחרים אלא לפי דין (כגון דיווח למשרד החינוך). אפשר לעיין במידע ולבקש לתקנו בפנייה למזכירות הישיבה: ygtotlrl@gmail.com"};
 // שם השיעור בשבב הסינון — קצר, כדי שכל השבבים יהיו ברוחב אחד.
+// אות השיעור בטבלת המצבה — העמודה צרה, והשם המלא ברמז
+var HR_CLS_LETTER = { a: 'א׳', b: 'ב׳', g: 'ג׳', s: 'ש׳' };
 var HR_CLS_CHIP = { a: "שיעור א'", b: "שיעור ב'", g: "שיעור ג'", s: 'שלוחים' };
 
 // סוגי הסטטוס של תלמיד — התווית והסמל, רשימה אחת לכל המסכים.
@@ -362,7 +363,7 @@ var MSG_IMG_NEED_NET = 'העלאת תמונה דורשת רשת';
 var MSG_IMG_FAIL = 'העלאת התמונה נכשלה';
 var TTL_INACTIVE = 'תלמידים לא פעילים';
 
-export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_CLS, HR_EXAM_DIRS, HR_EXAM_HINTS, HR_EXAM_SUBJECTS, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
+export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LETTER, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_CLS, HR_EXAM_DIRS, HR_EXAM_HINTS, HR_EXAM_SUBJECTS, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_ALERT_ABS, HR_ALERT_LATE, HR_EXPORT_FONTS, HR_FRESH_MS, HR_LOGIN_NET_MS, HR_ORG, HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
          MSG_ACTION_FAILED, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_BAD_LOGIN,
@@ -379,7 +380,7 @@ export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, AB
          MSG_PASS_NEEDS_NET, MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X, MSG_PDF_BUILDING,
          MSG_PDF_FAIL, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE,
          MSG_PICK_END_CHOICE, MSG_END_BEFORE_START, MSG_PICK_END_DATE, MSG_PICK_REASON,
-         MSG_PICK_START_DATE, MSG_PICK_STUDENT, MSG_REPORT_DONE,
+         MSG_PICK_START_DATE, MSG_REPORT_DONE,
          MSG_REPORT_OPEN_ELSEWHERE, MSG_ROW_DELETED, MSG_ROW_MISSING,
          MSG_SERVER_DOWN_LOCAL, MSG_SESSION_DONE, MSG_SESSION_OPEN_ELSEWHERE,
          MSG_SESSION_OPEN_TODAY, MSG_SLEEP_OPEN, MSG_SOON_TITLE,

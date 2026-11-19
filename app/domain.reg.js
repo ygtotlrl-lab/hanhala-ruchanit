@@ -670,19 +670,19 @@ function hrCheckAlert(st) {
   // כל החורגים, מהחמור לקל (היחס לסף); הרשימה נגללת בתוך החלון, והכותרת והסף נשארים.
   var sev=function(s){return Math.max(s.absent/HR_ALERT_ABS, s.lateMin/HR_ALERT_LATE);};
   alerts.sort(function(a,b){return sev(b)-sev(a)||sortCompare(a.name,b.name);});
-  var pill=function(n,lim,unit,cls){
-    return '<span class="alert-pill'+(n>=lim?' '+cls:'')+'"><b>'+n+'</b> '+unit+'</span>';
+  // השורה — כמו רשימות התלמידים בסטטיסטיקה: מספר בעיגול · השם והשיעור · התגיות; החריגה בגוון שלה, והשנייה עמומה
+  var pill=function(n,lim,unit,tone){
+    return '<span class="stx-pill'+(n>=lim?' stx-pill-'+tone:'')+'">'+n+' '+unit+'</span>';
   };
-  var listHTML=alerts.map(function(s){
-    return '<div class="alert-row"><div class="alert-who"><b>'+esc(s.name)+'</b><span>'+esc(HR_CLS_NAME[s.cls]||'')+'</span></div>'+
-      '<div class="alert-pills">'+pill(s.absent,HR_ALERT_ABS,'חיסורים','alert-pill-bad')+pill(s.lateMin,HR_ALERT_LATE,'דק׳ איחור','alert-pill-warn')+'</div></div>';
-  }).join('');
+  var listHTML='<ol class="stx-pl">'+alerts.map(function(s,i){
+    return '<li><span class="stx-pn">'+(i+1)+'</span><span class="stx-pw"><b>'+esc(s.name)+'</b><small>'+esc(HR_CLS_NAME[s.cls]||'')+'</small></span>'+
+      '<span class="stx-pills">'+pill(s.absent,HR_ALERT_ABS,'חיסורים','bad')+pill(s.lateMin,HR_ALERT_LATE,'דק׳ איחור','warn')+'</span></li>';
+  }).join('')+'</ol>';
   var mName=_hcMN(curHY)[curMI]||'';
   var lead=alerts.length===1?'תלמיד אחד חרג מהסף ב'+mName:alerts.length+' תלמידים חרגו מהסף ב'+mName;
   openModal(MSG_ABSENCE_ALERT,
-    '<p class="alert-lead">'+esc(lead)+'</p>'+
-    '<div class="alert-th"><span>סף: '+HR_ALERT_ABS+' חיסורים</span><span>או '+HR_ALERT_LATE+' דקות איחור</span></div>'+
-    '<div class="alert-list">'+listHTML+'</div>', '', 'warn');
+    '<p class="pl-lead"><b>'+esc(lead)+'</b><span>הסף: '+HR_ALERT_ABS+' חיסורים או '+HR_ALERT_LATE+' דקות איחור בחודש</span></p>'+
+    '<div class="pl-scroll">'+listHTML+'</div>', '', 'warn');
 }
 
 export { _hrOpenRec, hrMarkDirty, hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,

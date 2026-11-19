@@ -246,8 +246,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .user-menu{background:var(--card);direction:rtl;left:0;min-width:190px;overflow:hidden;position:absolute;border-radius:var(--r-4);box-shadow:var(--shadow-lg);top:50px;z-index:var(--z-3)}
 .user-switch-ico{opacity:var(--op-4)}
 .user-switch{align-items:center;display:flex;font-size:var(--fs-3);border:none;background:none;color:var(--brand-ink);cursor:pointer;font-family:Heebo;gap:var(--sp-4);padding:var(--sp-4) var(--sp-6);text-align:right;width:100%}
-.zebra-a{background:var(--card)}
-.zebra-b{background:var(--bg)}
 .hc-day{background:none;color:var(--text);font-weight:400}
 .hc-day-sel{background:var(--brand-fill);color:var(--on-brand);font-weight:700}
 .hc-day-today{background:var(--bg);color:var(--brand-ink);font-weight:700}
@@ -324,7 +322,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 .user-switch-ico .ico{width:16px;height:16px}
 .hc-nav .ico,.sup-nav .ico{width:20px;height:20px;vertical-align:middle}
 .st-attend .ico{width:18px;height:18px}
-.st-edit .ico{width:17px;height:17px}
 .treat-del-btn .ico,.arc-sess-del .ico,.row-del-btn .ico,.at-clear-btn .ico{width:17px;height:17px;vertical-align:middle}
 .sup-chev-icon{display:inline-flex}
 .sup-chev-icon .ico,.arc-year-chev .ico,.arc-month-chev .ico,.arc-day-chev .ico{width:16px;height:16px;vertical-align:middle}

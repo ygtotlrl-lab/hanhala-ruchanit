@@ -13,7 +13,7 @@ import { authUsersTable, lkReset, sessActive, sessGet, sessSet,
 import { actWire, closeAsk, closeModal, comboInput, comboMore, comboPick, dragCancel, dragDown, dragMove,
          dragUp, esc, modalDismiss, openModal, swApply, swHideUpdate, toast } from '../core/ui.js';
 import { HEB_DOW, hebDayLabel, hebToGreg, hebYearInfo } from '../core/hebrew.js';
-import { HR_EXPORT_FONTS, HR_MIRROR_TABLES, HR_ORG, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_PICK_STUDENT, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
+import { HR_EXPORT_FONTS, HR_MIRROR_TABLES, HR_ORG, HR_PERMS_KEY, HR_SET_FLAT, KV_TABLE, MSG_ACCESS_LIMITED, MSG_SOON_TITLE, MSG_TABLES_MISSING, PEND_KV_PREFIX, PK_SET, PUSH_TABLES } from './constants.js';
 import { AUTH, S, shell } from './state.js';
 import { icon } from './icons.js';
 import { _hrMarkSynced, canAccess, canEdit, hrLocalRecs, hrPullFromCloud, hrPushToCloud, hrSendMarks, hrSendRecs, hrSetRows, hrSetSend, hrSyncNow, hrWriteFail, modalOpen, uiShown } from './domain.js';
@@ -40,7 +40,7 @@ import { renderStats, screenStatsHTML, statsOpen } from './screens/stats.js';
 import { GATE_KEY } from './gate.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
-import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, renderInactiveList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, setStudentInactive, stClassChanged } from './screens/students.js';
+import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, confirmDeactivate, renderPickList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, stClassChanged } from './screens/students.js';
 import { HR_STREAMS, hrRenderTodaySessions } from './domain.sessions.js';
 import { hrCancelStudentStatusFromReg, hrClearMark, hrCloseSession, hrConfirmLate, hrEditSession,
          hrFillSessionBtns, hrOpenSession, hrRenderStudents, hrSetLateMin, hrSetMark, hrSetNote,
@@ -492,12 +492,7 @@ var DOM_ACTIONS = {
                    closeModal();
                    if (f) f();
                  },
-  'deact-st-confirm': function () {
-                   var v = document.getElementById('deact-st-sel').value;
-                   if (!v) { toast(MSG_PICK_STUDENT, null, 'warn'); return; }
-                   setStudentInactive(v);
-                   closeModal();
-                 },
+  'deact-st-pick': function (el) { confirmDeactivate(el.getAttribute('data-id')); },
   'year-transition-confirm': function () { doYearTransition(); closeModal(); },
   'hc-nav':           function (el) { _hcNav(el.getAttribute('data-pfx'),
                                         Number(el.getAttribute('data-dir'))); },
@@ -646,7 +641,7 @@ var HR_STREAM_WRITES = ['add-treat', 'arc-edit', 'clear-mark', 'confirm-late', '
 var HR_WRITE_MODULE = {
   'st-activate': 'students', 'st-edit': 'students', 'st-attend': 'students', 'student-save': 'students', 'status-form': 'students',
   'student-status-save': 'students', 'status-abs-cancel': 'students', 'status-picker-open': 'students', 'per-add': 'students',
-  'per-remove': 'students', 'manage-list-open': 'students', 'manage-pick': 'students', 'deact-st-confirm': 'students',
+  'per-remove': 'students', 'manage-list-open': 'students', 'manage-pick': 'students', 'deact-st-pick': 'students',
   'year-transition-confirm': 'students',
   'rp-fill': 'reports',
   'file-event-save': 'files', 'file-event-del': 'files',
@@ -702,7 +697,7 @@ document.addEventListener('input', function (e) {
   if (comboInput(e)) return;
   var el = e.target; if (!el || !el.dataset) return;
   var k = el.dataset.inp;
-  if (k === 'inact-search') { renderInactiveList(); return; }
+  if (k === 'pl-search') { renderPickList(); return; }
   if (k === 'en-q') { enrollSearch(el.value); return; }
   if (k === 'in-q') { intakeSearch(el.value); return; }
   if (k === 'mt-q') { meetingSearch(el.value); return; }

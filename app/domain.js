@@ -13,6 +13,7 @@ import { HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS, HR_SET_FLAT,
          KV_TABLE, MSG_PERMS_CHANGED_POST, MSG_PERMS_CHANGED_PRE, PEND_KV_PREFIX, PK_SET,
          PK_STUDENT } from './constants.js';
 import { AUTH, S, shell } from './state.js';
+import { hrStudentOn } from './domain.periods.js';
 import { icon } from './icons.js';
 
 // רישום הגופן ל-PDF בנקודה אחת לשלושת מסלולי הייצוא.
@@ -774,9 +775,10 @@ function hrAwayAbsences(s, refDate) {
   return getActiveAbsences(s, refDate).filter(function (a) { return a.type !== 'dorm'; });
 }
 
+// תלמיד שאינו פעיל בחודש של התאריך — אין לו סטטוס פעיל: אינו נספר כמושעה, כנעדר או כבבית בשום מקום (מצבה, ראשי, סטטיסטיקה, סימון אוטומטי).
 function getActiveAbsences(s, refDate) {
   var now = refDate || new Date();
-  if (!Array.isArray(s.absences)) return [];
+  if (!Array.isArray(s.absences) || !hrStudentOn(s, dayIso(now))) return [];
   return s.absences.filter(function(a){ return !a.deleted && (!a.from_at || new Date(a.from_at) <= now) && (!a.to_at || new Date(a.to_at) >= now); });
 }
 

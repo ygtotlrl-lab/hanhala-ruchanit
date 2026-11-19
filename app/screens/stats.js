@@ -7,7 +7,7 @@ import { HR_ALERT_ABS, HR_ALERT_LATE, HR_CLS_LIST, HR_CLS_NAME, HR_EXAM_SUBJECTS
 import { S } from '../state.js';
 import { getActiveAbsences, getStudents, hrMarks, hrMirrorRecs } from '../domain.js';
 import { HR_STREAMS, hrExamGrp, hrIsLate, hrIsPrayer } from '../domain.sessions.js';
-import { HR_PER, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrMonthKeyOfIso } from '../domain.periods.js';
+import { HR_PER, hrKeyParts, hrMonthKey, hrMonthKeyAdd, hrMonthKeyNow, hrMonthKeyOfIso, hrStudentOn } from '../domain.periods.js';
 import { _hcMN, _hcYL } from '../domain.hebdate.js';
 import { icon } from '../icons.js';
 
@@ -409,6 +409,7 @@ function examCards() {
 
 // ═══════════════ השעיות ═══════════════
 // השעיה — סטטוס `suspended` בתלמיד; נזקפת לחודש שבו התחילה, ומשכה בימים — עד הסיום, ובלעדיו עד היום.
+// רק כשהתלמיד פעיל: השעיה שהתחילה מחוץ לתקופות אינה נספרת, וימיה נספרים עד החודש האחרון שבו היה פעיל.
 function suspIndex() {
   var L = [], today = dayToday();
   getStudents().forEach(function (s) {
@@ -417,7 +418,10 @@ function suspIndex() {
       var f = new Date(a.from_at); if (isNaN(f.getTime())) return;
       var t = a.to_at ? new Date(a.to_at) : null; if (t && isNaN(t.getTime())) t = null;
       var fi = dayIso(f), ti = t ? dayIso(t) : null;
-      L.push({ s: s, a: a, from: f, to: t, fi: fi, ti: ti, k: hrMonthKeyOfIso(fi), days: Math.max(1, dayDiff(fi, ti && ti < today ? ti : today) + 1) });
+      if (!hrStudentOn(s, fi)) return;
+      var end = ti && ti < today ? ti : today;
+      if (!hrStudentOn(s, end)) { var d = dayNoon(fi), last = fi; while (dayIso(d) <= end && hrStudentOn(s, dayIso(d))) { last = dayIso(d); d.setDate(d.getDate() + 1); } end = last; }
+      L.push({ s: s, a: a, from: f, to: t, fi: fi, ti: ti, k: hrMonthKeyOfIso(fi), days: Math.max(1, dayDiff(fi, end) + 1) });
     });
   });
   return L;
