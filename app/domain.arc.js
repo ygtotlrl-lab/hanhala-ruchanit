@@ -194,7 +194,7 @@ function hrArcEdit(st, id) {
 }
 
 function hrDeleteSession(st, id) {
-  ask(st.msg.delTitle, st.msg.delBody, MSG_DELETE, icon('del'))
+  ask(st.msg.delTitle, st.msg.delBody, MSG_DELETE, icon('del'), null, true)
     .then(function (yes) { if (yes) _hrDeleteSessionConfirmed(st, id); });
 }
 

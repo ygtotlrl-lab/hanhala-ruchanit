@@ -195,7 +195,7 @@ async function hrAddTreat(st, sid) {
 }
 
 function hrDeleteTreat(st, id) {
-  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE, icon('del'))
+  ask(MSG_DEL_CARE_TITLE, MSG_DEL_CARE_BODY, MSG_DELETE, icon('del'), null, true)
     .then(function (yes) { if (yes) _hrDeleteTreatConfirmed(st, id); });
 }
 

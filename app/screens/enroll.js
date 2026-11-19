@@ -1,9 +1,10 @@
 // app/screens/enroll.js — טופס הרישום: הדיאלוג שמהמצבה, התגובות והגדרות הטופס
 // הטופס עצמו — dapim/enroll, דף ציבורי ששולח בלבד. התגובות והקבצים נקראים רק דרך השער (app/gate.js), אחרי כניסה מקוונת.
+import { MSG_DELETE } from '../../core/util.js';
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { gateCall, gateOpen } from '../gate.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
-import { ENROLL_DEFAULT } from '../constants.js';
+import { ENROLL_DEFAULT, MSG_DEL_FAIL_NET, MSG_IMG_FAIL, MSG_IMG_NEED_NET, MSG_LINK_COPIED, MSG_RESP_DEL_PRE, MSG_RESP_DEL_TITLE, MSG_RESP_RELOGIN, MSG_SAVE_FAIL_NET, TTL_ENROLL, TTL_RESP_PRE, TTL_SET_POST } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
@@ -25,7 +26,7 @@ function _gate(action, body) { return gateCall('enroll', action, body); }
 // ── הדיאלוג שמהמצבה ──
 function enrollUrl() { return pageUrl('enroll'); }
 function enrollView() {
-  openModal('טופס רישום', '<iframe class="ct-frame" src="' + enrollUrl() + '" title="טופס רישום"></iframe>', '', 'watch');
+  openModal(TTL_ENROLL, '<iframe class="ct-frame" src="' + enrollUrl() + '" title="' + TTL_ENROLL + '"></iframe>', '', 'watch');
 }
 async function enrollCopy() {
   var u = enrollUrl(), ok = false;
@@ -34,7 +35,7 @@ async function enrollCopy() {
     try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
     t.remove();
   }
-  toast(ok ? 'הקישור הועתק' : u, null, ok ? 'good' : null);
+  toast(ok ? MSG_LINK_COPIED : u, null, ok ? 'good' : null);
 }
 
 // ── התצורה ──
@@ -46,7 +47,7 @@ function _yearLabel(y) { return hebYearLabelFull(y) || String(y); }
 
 // ── התגובות ──
 async function enrollResponses() {
-  openModal('התגובות — טופס רישום', '<div class="en-full" id="en-resp"><div class="ld">טוען…</div></div>', '', 'table');
+  openModal(TTL_RESP_PRE + TTL_ENROLL, '<div class="en-full" id="en-resp"><div class="ld">טוען…</div></div>', '', 'table');
   var r = await _gate('list');
   var box = document.getElementById('en-resp');
   if (!box) return;
@@ -92,16 +93,16 @@ async function enrollTrack(el) {
   if (r && r.ok) {
     var row = (S._enRows || []).filter(function (x) { return x.client_id === el.getAttribute('data-en-id'); })[0];
     if (row) row.track = r.track;
-  } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
+  } else toast(r && r.login ? MSG_RESP_RELOGIN : MSG_SAVE_FAIL_NET, null, 'bad');
 }
 function enrollFile(el) { return gateOpen(el.getAttribute('data-path')); }
 async function enrollDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._enRows || []).filter(function (x) { return x.client_id === id; })[0];
   var d = (row && row.data) || {};
-  if (!(await ask('מחיקת תגובה', 'למחוק את התגובה של ' + [d.first, d.last].filter(Boolean).join(' ') + '?', 'מחיקה', 'del'))) return;
+  if (!(await ask(MSG_RESP_DEL_TITLE, MSG_RESP_DEL_PRE + [d.first, d.last].filter(Boolean).join(' ') + '?', MSG_DELETE, 'del', null, true))) return;
   var r = await _gate('delete', { id: id });
-  if (!r || !r.ok) { toast('המחיקה נכשלה — אין חיבור לשרת', null, 'bad'); return; }
+  if (!r || !r.ok) { toast(MSG_DEL_FAIL_NET, null, 'bad'); return; }
   S._enRows = (S._enRows || []).filter(function (x) { return x.client_id !== id; });
   _respPaint();
 }
@@ -232,7 +233,7 @@ function _settingsPaint(cfg) {
       body: privacyHTML('en-privacy', cfg, ENROLL_DEFAULT.privacy) + textsHTML('enroll', cfg) }) +
     '</div>';
   if (old) old.outerHTML = html;
-  else openModal('טופס רישום — הגדרות', html, '', 'settings');
+  else openModal(TTL_ENROLL + TTL_SET_POST, html, '', 'settings');
 }
 function enrollFieldAdd(el) {
   var box = document.getElementById('en-fields'), sec = el && el.getAttribute && el.getAttribute('data-sec');
@@ -246,13 +247,13 @@ function enrollTrackAdd() {
 async function enrollImgUpload(input) {
   var files = Array.prototype.slice.call(input.files || []);
   if (!files.length) return;
-  if (!navigator.onLine) { toast('העלאת תמונה דורשת רשת', null, 'off'); return; }
+  if (!navigator.onLine) { toast(MSG_IMG_NEED_NET, null, 'off'); return; }
   var box = document.getElementById('en-imgs'), n = 0;
   for (var i = 0; i < files.length; i++) {
     var f = files[i], ext = (f.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'jpg';
     var path = 'enroll/' + Date.now().toString(36) + '-' + i + '.' + ext;
     var res = await S.SB.storage.from(ENROLL_PUBLIC).upload(path, f, { contentType: f.type || undefined, upsert: false });
-    if (!res || res.error) { toast('העלאת התמונה נכשלה', null, 'bad'); continue; }
+    if (!res || res.error) { toast(MSG_IMG_FAIL, null, 'bad'); continue; }
     var url = S.SB.storage.from(ENROLL_PUBLIC).getPublicUrl(path).data.publicUrl;
     if (box) box.insertAdjacentHTML('beforeend', _imgRow(url));
     n++;

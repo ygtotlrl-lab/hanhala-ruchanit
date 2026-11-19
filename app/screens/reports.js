@@ -8,7 +8,7 @@ import { exportDataUrl, exportFontCss } from '../../core/export.js';
 import { printFile } from '../../core/share.js';
 import { hebDayLabel, hebYearLabelFull } from '../../core/hebrew.js';
 import { HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_SUBJECTS, MSG_PDF_BUILDING,
-         MSG_PDF_FAIL, PK_RP_VAL, RP_ROLES } from '../constants.js';
+         MSG_PDF_FAIL, PK_RP_VAL, RP_ROLES, MSG_RP_EXAMS_PART } from '../constants.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, hrFilterChips, hrMarks, hrMirrorRecs, hrSortStudents } from '../domain.js';
 import { _hcH, _hcMN, hrDayHeb, hrHebMonthWin } from '../domain.hebdate.js';
@@ -399,7 +399,7 @@ async function _scanPages(comp, sts) {
       out[p] = /\.pdf$/i.test(p) || blob.type === 'application/pdf' ? await _pdfPages(blob) : await _imgPages(blob);
     } catch (e) { fail++; console.warn('[rp-scan]', p, e); }
   }));
-  if (fail || Object.keys(urls).length < Object.keys(paths).length) toast('חלק מטפסי המבחנים לא צורפו — אין חיבור לשרת', null, 'warn');
+  if (fail || Object.keys(urls).length < Object.keys(paths).length) toast(MSG_RP_EXAMS_PART, null, 'warn');
   return out;
 }
 

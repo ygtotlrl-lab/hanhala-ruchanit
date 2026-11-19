@@ -327,6 +327,41 @@ var MSG_PULL_STALE = 'הרענון מהענן נכשל — המוצג הוא ה�
 // מבחן נפתח רק אחרי שנבחר תאריך — השדה ריק כברירה.
 var MSG_EXAM_PICK_DATE = 'יש לבחור תאריך למבחן';
 
+
+// כותרות החלונות וההודעות — מחרוזת למשתמש היא קבוע.
+var MSG_NO_PERM = 'אין הרשאה';
+var MSG_FILE_NO_PERM = 'אין הרשאה לקובץ';
+var MSG_FILE_OPEN_FAIL = 'הקובץ לא נפתח — אין חיבור לשרת';
+var TTL_FILE = 'תיק אישי — ';
+var MSG_FILE_NEED = 'יש לכתוב את האירוע או לצרף סריקה';
+var MSG_FILE_ADDED = 'האירוע נוסף לתיק';
+var MSG_FILE_DEL_TITLE = 'מחיקת אירוע';
+var MSG_FILE_DEL_BODY = 'האירוע יימחק מהתיק האישי.';
+var TTL_CONTACTS = 'דף אנשי הקשר';
+var MSG_LINK_COPIED = 'הקישור הועתק';
+var TTL_MEETING = 'שיבוץ לאסיפת הורים';
+var TTL_RESP_PRE = 'התגובות — ';
+var MSG_MEET_CANCEL_TITLE = 'ביטול שיבוץ';
+var MSG_MEET_CANCEL_PRE = 'לבטל את השיבוץ של ';
+var MSG_MEET_CANCEL_AT = ' אצל ';
+var MSG_MEET_CANCEL_HOUR = ' בשעה ';
+var MSG_MEET_CANCEL_OK = 'ביטול השיבוץ';
+var MSG_MEET_CANCEL_FAIL = 'הביטול נכשל — אין חיבור לשרת';
+var TTL_MEETING_SET = 'אסיפת הורים — הגדרות';
+var MSG_MEET_NEW = 'נפתחה האסיפה של ';
+var MSG_RP_EXAMS_PART = 'חלק מטפסי המבחנים לא צורפו — אין חיבור לשרת';
+var TTL_INTAKE = 'קבלה לישיבה';
+var MSG_RESP_RELOGIN = 'נדרשת כניסה מחדש לתגובות';
+var MSG_SAVE_FAIL_NET = 'השמירה נכשלה — אין חיבור לשרת';
+var MSG_RESP_DEL_TITLE = 'מחיקת תגובה';
+var MSG_RESP_DEL_PRE = 'למחוק את התגובה של ';
+var MSG_DEL_FAIL_NET = 'המחיקה נכשלה — אין חיבור לשרת';
+var TTL_SET_POST = ' — הגדרות';
+var TTL_ENROLL = 'טופס רישום';
+var MSG_IMG_NEED_NET = 'העלאת תמונה דורשת רשת';
+var MSG_IMG_FAIL = 'העלאת התמונה נכשלה';
+var TTL_INACTIVE = 'תלמידים לא פעילים';
+
 export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, HR_CLS_SHORT, HR_EXAM_CLS, HR_EXAM_DIRS, HR_EXAM_HINTS, HR_EXAM_SUBJECTS, HR_MIRROR_TABLES, RP_ROLES, RP_ROLES_BY_CLS, ENROLL_DEFAULT, INTAKE_DEFAULT, HR_PRAYER_NAMES,
          MSG_FILE_TOO_BIG, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_UPLOAD_OK, HR_PERMS_KEY, HR_ROWS_KINDS, HR_ROWS_READ_KEYS,
          HR_ALERT_ABS, HR_ALERT_LATE, HR_EXPORT_FONTS, HR_FRESH_MS, HR_LOGIN_NET_MS, HR_ORG, HR_SET_FLAT, KV_TABLE, MSG_ABSENCE_ALERT, MSG_ABSENCE_DUP, MSG_ACCESS_LIMITED,
@@ -355,4 +390,5 @@ export { ABS_TYPE_ICON, HR_DORM_SESSIONS, MSG_EXAM_PICK_DATE, MSG_PULL_STALE, AB
          MSG_USER_SAVED_NO_FP, MSG_USER_SWITCHED_MID, MSG_WIPE_STUDENTS_BODY,
          MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C,
          MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PEND_KV_PREFIX, PK_AT_SESS, PK_SET,
-         PK_AT_MARK, PK_EX_MARK, PK_EX_SESS, PK_RP_VAL, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES };
+         PK_AT_MARK, PK_EX_MARK, PK_EX_SESS, PK_RP_VAL, PK_SL_MARK, PK_SL_SESS, PK_STUDENT, PUSH_TABLES,
+         MSG_NO_PERM, MSG_FILE_NO_PERM, MSG_FILE_OPEN_FAIL, TTL_FILE, MSG_FILE_NEED, MSG_FILE_ADDED, MSG_FILE_DEL_TITLE, MSG_FILE_DEL_BODY, TTL_CONTACTS, MSG_LINK_COPIED, TTL_MEETING, TTL_RESP_PRE, MSG_MEET_CANCEL_TITLE, MSG_MEET_CANCEL_PRE, MSG_MEET_CANCEL_AT, MSG_MEET_CANCEL_HOUR, MSG_MEET_CANCEL_OK, MSG_MEET_CANCEL_FAIL, TTL_MEETING_SET, MSG_MEET_NEW, MSG_RP_EXAMS_PART, TTL_INTAKE, MSG_RESP_RELOGIN, MSG_SAVE_FAIL_NET, MSG_RESP_DEL_TITLE, MSG_RESP_DEL_PRE, MSG_DEL_FAIL_NET, TTL_SET_POST, TTL_ENROLL, MSG_IMG_NEED_NET, MSG_IMG_FAIL, TTL_INACTIVE };

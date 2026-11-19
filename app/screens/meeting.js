@@ -2,7 +2,7 @@
 // הדף עצמו — dapim/meeting, ציבורי: מספר הזהות של התלמיד פותח אותו (התלמיד והשיעור — מהמצבה, בשער), ובו עד שני רבנים ולכל אחד שעה פנויה.
 // ההגדרה — meeting_cfg: התאריך · משעה ועד שעה · אורך פגישה · פתוח לשיבוץ · טלפון המזכירות · שעות תפוסות; הרבנים — תמיד מאנשי הקשר.
 import { ask, esc, openModal, toast } from '../../core/ui.js';
-import { HR_CLS_NAME, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
+import { HR_CLS_NAME, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_LINK_COPIED, MSG_MEET_CANCEL_AT, MSG_MEET_CANCEL_FAIL, MSG_MEET_CANCEL_HOUR, MSG_MEET_CANCEL_OK, MSG_MEET_CANCEL_PRE, MSG_MEET_CANCEL_TITLE, MSG_MEET_NEW, TTL_MEETING, TTL_MEETING_SET, TTL_RESP_PRE } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
@@ -20,7 +20,7 @@ function _gate(action, body) { return gateCall('meeting', action, body); }
 // ── הדיאלוג שמהמצבה ──
 function meetingUrl() { return pageUrl('meeting'); }
 function meetingView() {
-  openModal('שיבוץ לאסיפת הורים', '<iframe class="ct-frame" src="' + meetingUrl() + '" title="שיבוץ לאסיפת הורים"></iframe>', '', 'watch');
+  openModal(TTL_MEETING, '<iframe class="ct-frame" src="' + meetingUrl() + '" title="' + TTL_MEETING + '"></iframe>', '', 'watch');
 }
 async function meetingCopy() {
   var u = meetingUrl(), ok = false;
@@ -29,7 +29,7 @@ async function meetingCopy() {
     try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
     t.remove();
   }
-  toast(ok ? 'הקישור הועתק' : u, null, ok ? 'good' : null);
+  toast(ok ? MSG_LINK_COPIED : u, null, ok ? 'good' : null);
 }
 
 // ── התצורה ──
@@ -64,7 +64,7 @@ function meetingCfg() {
 
 // ── התגובות — השיבוצים: לפי תלמיד (מי נרשם ולמי) או לפי רב ──
 async function meetingResponses() {
-  openModal('התגובות — שיבוץ לאסיפת הורים', '<div class="en-full" id="mt-resp"><div class="ld">טוען…</div></div>', '', 'table');
+  openModal(TTL_RESP_PRE + TTL_MEETING, '<div class="en-full" id="mt-resp"><div class="ld">טוען…</div></div>', '', 'table');
   // ההגדרה — מהענן, כדי שהשעות ו«פתוח לשיבוץ» בכותרת יהיו המעודכנים ולא העותק שבמכשיר
   var both = await Promise.all([_gate('list'), hrCfgGet(MT_KEY, true).catch(function () { return null; }), hrCfgGet('meeting_past', true).catch(function () { return null; })]);
   var r = both[0], c = both[1], pp = both[2];
@@ -181,9 +181,9 @@ async function meetingDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._mtRows || []).filter(function (x) { return x.client_id === id; })[0];
   if (!row) return;
-  if (!(await ask('ביטול שיבוץ', 'לבטל את השיבוץ של ' + row.student_name + ' אצל ' + row.staff_name + ' בשעה ' + row.slot + '?', 'ביטול השיבוץ', 'del'))) return;
+  if (!(await ask(MSG_MEET_CANCEL_TITLE, MSG_MEET_CANCEL_PRE + row.student_name + MSG_MEET_CANCEL_AT + row.staff_name + MSG_MEET_CANCEL_HOUR + row.slot + '?', MSG_MEET_CANCEL_OK, 'del', null, true))) return;
   var r = await _gate('delete', { id: id });
-  if (!r || !r.ok) { toast('הביטול נכשל — אין חיבור לשרת', null, 'bad'); return; }
+  if (!r || !r.ok) { toast(MSG_MEET_CANCEL_FAIL, null, 'bad'); return; }
   S._mtRows = (S._mtRows || []).filter(function (x) { return x.client_id !== id; });
   _respPaint();
 }
@@ -279,7 +279,7 @@ function _settingsPaint(cfg) {
       body: '<label class="mt-ph">טלפון המזכירות (בהודעה כשהשיבוץ סגור)<input type="tel" id="mt-phone" dir="ltr" value="' + esc(cfg.phone || '') + '"></label>' + textsHTML('meeting', cfg) }) +
     '</div>';
   if (old) old.outerHTML = html;
-  else openModal('אסיפת הורים — הגדרות', html, '', 'settings');
+  else openModal(TTL_MEETING_SET, html, '', 'settings');
 }
 function meetingNew(on) { S._mtNew = !!on; _settingsPaint(_mtCfgNow()); }
 function meetingNewMake() {
@@ -295,7 +295,7 @@ function meetingNewMake() {
   hrCfgSet('meeting_past', past);
   S._mtCfg = next; S._mtNew = false; S._mtYear = null;
   hrCfgSet(MT_KEY, next);
-  toast('נפתחה האסיפה של ' + _yl(y + 1), null, 'good');
+  toast(MSG_MEET_NEW + _yl(y + 1), null, 'good');
   _settingsPaint(next);
 }
 // המודעה בראש דף השיבוץ — תמונה בדלי הציבורי hr-public, תחת meeting/, בנתיב חדש בכל העלאה; מחליפים בכל שנה

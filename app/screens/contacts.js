@@ -2,7 +2,7 @@
 import { esc, openModal, toast } from '../../core/ui.js';
 import { hrCfgGet, hrCfgLocalGet, hrCfgLocalSet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
-import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS } from '../constants.js';
+import { HR_CLS_NAME, RP_ROLES, RP_ROLES_BY_CLS, MSG_LINK_COPIED, TTL_CONTACTS } from '../constants.js';
 
 // הדפים הציבוריים — בריפו הדפים (dapim) ולא ליד האפליקציה: מי שמקבל קישור אינו מגיע אליה.
 var PAGES_URL = 'https://ygtotlrl-lab.github.io/dapim/';
@@ -37,7 +37,7 @@ function contactsStaff(cls) {
 
 // הדף הציבורי בתוך האפליקציה — בדיאלוג על כל המסך, ולא ניווט: ניווט במעטפת המותקנת מחליף את האפליקציה בדף
 function contactsView() {
-  openModal('דף אנשי הקשר', '<iframe class="ct-frame" src="' + contactsUrl() + '" title="דף אנשי הקשר"></iframe>', '', 'watch');
+  openModal(TTL_CONTACTS, '<iframe class="ct-frame" src="' + contactsUrl() + '" title="' + TTL_CONTACTS + '"></iframe>', '', 'watch');
 }
 
 // הקישור ללוח — להודעה שנשלחת עם הגיליונות; בלי גישה ללוח — הקישור מוצג בהודעה
@@ -50,7 +50,7 @@ async function contactsCopyLink() {
     try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
     t.remove();
   }
-  toast(ok ? 'הקישור הועתק' : u, null, ok ? 'good' : null);
+  toast(ok ? MSG_LINK_COPIED : u, null, ok ? 'good' : null);
 }
 
 function contactsPaneHTML() {

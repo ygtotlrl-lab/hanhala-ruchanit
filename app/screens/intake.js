@@ -1,8 +1,9 @@
 // app/screens/intake.js — קבלה לישיבה: הדיאלוג שמהמצבה, התגובות והגדרות הטופס — כמו טופס הרישום (app/screens/enroll.js), ובאותו שער.
 // הטופס עצמו — dapim/intake, דף ציבורי ששולח בלבד (hr_intake · והקבצים דרך השער, במאגר הפרטי תחת intake/). המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+import { MSG_DELETE } from '../../core/util.js';
 import { ask, closeModal, dragDef, esc, openModal, toast } from '../../core/ui.js';
 import { hebYearLabelFull } from '../../core/hebrew.js';
-import { INTAKE_DEFAULT, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
+import { INTAKE_DEFAULT, MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_DEL_FAIL_NET, MSG_LINK_COPIED, MSG_RESP_DEL_PRE, MSG_RESP_DEL_TITLE, MSG_RESP_RELOGIN, MSG_SAVE_FAIL_NET, TTL_INTAKE, TTL_RESP_PRE, TTL_SET_POST } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { canEdit, hrCfgGet, hrCfgLocalGet, hrCfgSet, hrSetPending } from '../domain.js';
 import { icon } from '../icons.js';
@@ -19,7 +20,7 @@ function _gate(action, body) { return gateCall('intake', action, body); }
 // ── הדיאלוג שמהמצבה ──
 function intakeUrl() { return pageUrl('intake'); }
 function intakeView() {
-  openModal('קבלה לישיבה', '<iframe class="ct-frame" src="' + intakeUrl() + '" title="קבלה לישיבה"></iframe>', '', 'watch');
+  openModal(TTL_INTAKE, '<iframe class="ct-frame" src="' + intakeUrl() + '" title="' + TTL_INTAKE + '"></iframe>', '', 'watch');
 }
 async function intakeCopy() {
   var u = intakeUrl(), ok = false;
@@ -28,7 +29,7 @@ async function intakeCopy() {
     try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
     t.remove();
   }
-  toast(ok ? 'הקישור הועתק' : u, null, ok ? 'good' : null);
+  toast(ok ? MSG_LINK_COPIED : u, null, ok ? 'good' : null);
 }
 
 // ── התצורה ──
@@ -46,7 +47,7 @@ function _allFields(cfg) {
 
 // ── התגובות ──
 async function intakeResponses() {
-  openModal('התגובות — קבלה לישיבה', '<div class="en-full" id="in-resp"><div class="ld">טוען…</div></div>', '', 'table');
+  openModal(TTL_RESP_PRE + TTL_INTAKE, '<div class="en-full" id="in-resp"><div class="ld">טוען…</div></div>', '', 'table');
   var r = await _gate('list');
   var box = document.getElementById('in-resp');
   if (!box) return;
@@ -91,16 +92,16 @@ async function intakeTrack(el) {
   if (r && r.ok) {
     var row = (S._inRows || []).filter(function (x) { return x.client_id === el.getAttribute('data-in-id'); })[0];
     if (row) row.track = r.track;
-  } else toast(r && r.login ? 'נדרשת כניסה מחדש לתגובות' : 'השמירה נכשלה — אין חיבור לשרת', null, 'bad');
+  } else toast(r && r.login ? MSG_RESP_RELOGIN : MSG_SAVE_FAIL_NET, null, 'bad');
 }
 function intakeFile(el) { return gateOpen(el.getAttribute('data-path')); }
 async function intakeDelete(el) {
   var id = el.getAttribute('data-id');
   var row = (S._inRows || []).filter(function (x) { return x.client_id === id; })[0];
   var d = (row && row.data) || {};
-  if (!(await ask('מחיקת תגובה', 'למחוק את התגובה של ' + [d.first, d.last].filter(Boolean).join(' ') + '?', 'מחיקה', 'del'))) return;
+  if (!(await ask(MSG_RESP_DEL_TITLE, MSG_RESP_DEL_PRE + [d.first, d.last].filter(Boolean).join(' ') + '?', MSG_DELETE, 'del', null, true))) return;
   var r = await _gate('delete', { id: id });
-  if (!r || !r.ok) { toast('המחיקה נכשלה — אין חיבור לשרת', null, 'bad'); return; }
+  if (!r || !r.ok) { toast(MSG_DEL_FAIL_NET, null, 'bad'); return; }
   S._inRows = (S._inRows || []).filter(function (x) { return x.client_id !== id; });
   _respPaint();
 }
@@ -194,7 +195,7 @@ function _settingsPaint(cfg) {
       body: privacyHTML('in-privacy', cfg, INTAKE_DEFAULT.privacy) + textsHTML('intake', cfg) }) +
     '</div>';
   if (old) old.outerHTML = html;
-  else openModal('קבלה לישיבה — הגדרות', html, '', 'settings');
+  else openModal(TTL_INTAKE + TTL_SET_POST, html, '', 'settings');
 }
 function _nid(p) { return p + Date.now().toString(36) + Math.floor(Math.random() * 36 * 36).toString(36); }
 // «+ הוספת שדה» — לפרטי התלמיד, או לפריט שהכפתור בתוכו

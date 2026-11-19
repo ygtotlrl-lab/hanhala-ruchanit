@@ -3,7 +3,7 @@
 // הקבצים — במאגר הפרטי hanhala-ruchanit-files, רק דרך השער: העלאה בגוף הבקשה, ופתיחה בקישור חתום שהשער מגיש.
 import { toast } from '../core/ui.js';
 import { lsGet, lsRemove, lsSet } from '../core/storage.js';
-import { MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET } from './constants.js';
+import { MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_FILE_NO_PERM, MSG_FILE_OPEN_FAIL, MSG_NO_PERM } from './constants.js';
 import { AUTH } from './state.js';
 
 var GATE_KEY = 'hr_gate';
@@ -103,7 +103,7 @@ async function gatePut(path, file) {
     var r = await put(t);
     if (r.status === 401) { t = await _tokEnsure(true); r = t ? await put(t) : r; }
     if (r.status === 401) { _drop(); toast(MSG_GATE_RELOGIN, null, 'warn'); return null; }
-    if (r.status === 403) { toast(MSG_UPLOAD_FAIL + 'אין הרשאה', null, 'bad'); return null; }
+    if (r.status === 403) { toast(MSG_UPLOAD_FAIL + MSG_NO_PERM, null, 'bad'); return null; }
     if (!r.ok) throw new Error(String(r.status));
     return path;
   } catch (e) { toast(MSG_UPLOAD_FAIL + ((e && e.message) || e), null, 'bad'); return null; }
@@ -125,7 +125,7 @@ async function gateOpen(path) {
   var url = r && r.urls && r.urls[path];
   if (url) { if (w) w.location.href = url; else window.location.href = url; return; }
   if (w) w.close();
-  toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? 'אין הרשאה לקובץ' : 'הקובץ לא נפתח — אין חיבור לשרת', null, 'bad');
+  toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? MSG_FILE_NO_PERM : MSG_FILE_OPEN_FAIL, null, 'bad');
 }
 
 export { GATE_KEY, gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };

@@ -5,7 +5,7 @@ import { isAdmin, sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, closeModal, comboDef, comboHTML, esc, openModal, toast } from '../../core/ui.js';
 import { exportPdf, exportXlsx } from '../../core/export.js';
 import { hebDate, hebYearInfo, hebYearLabelFull } from '../../core/hebrew.js';
-import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT } from '../constants.js';
+import { ABS_TYPE_ICON, ABS_TYPE_LBL, HR_CLS_CHIP, HR_CLS_LIST, HR_CLS_NAME, MSG_ABSENCE_DUP, MSG_ADD_STUDENT_TITLE, MSG_ADMINS_ONLY, MSG_EDIT_STUDENT_TITLE, MSG_END_BEFORE_START, MSG_FILE_READ_FAIL, MSG_LIB_LOADING, MSG_MARKED_ACTIVE, MSG_MARKED_INACTIVE, MSG_MARK_INACTIVE_TITLE, MSG_NEED_STUDENT_NAME, MSG_NO_STUDENTS_WIPE, MSG_EXPORT_FAIL, MSG_PDF_BUILDING, MSG_PDF_FAIL, MSG_PICK_END_CHOICE, MSG_PICK_END_DATE, MSG_PICK_REASON, MSG_PICK_START_DATE, MSG_PULL_STALE, MSG_STATUS_HISTORY, MSG_STATUS_REVERTED, MSG_STUDENTS_ADMIN, MSG_STUDENTS_UPDATED, MSG_STUDENTS_WIPED, MSG_STUDENT_MISSING, MSG_WIPE_STUDENTS_BODY, MSG_WIPE_STUDENTS_OK, MSG_WIPE_STUDENTS_TITLE, MSG_YEAR_ROLL_A, MSG_YEAR_ROLL_C, MSG_YEAR_ROLL_DONE, MSG_YEAR_ROLL_TITLE, MSG_YEAR_UNSET, PK_STUDENT, TTL_INACTIVE } from '../constants.js';
 import { AUTH, S, shell } from '../state.js';
 import { _hrStudentsRaw, _hrStudentsSaveRaw, getAbsenceReasons, getActiveAbsences, hrAwayAbsences, getStudents,
          canAccess, hrAtOfLocal, hrCfgLocalGet, hrCfgSet, hrStudentCloudGet, hrSortStatuses, hrSortStudents, modalOpen,
@@ -285,7 +285,7 @@ var MANAGE_PICK = {
 // ── לא פעילים — בניהול הרשימה בלבד, למנהל: חיפוש והחזרה לפעיל ──
 function openInactiveDlg(){
   if(!isAdmin()){shell.showDenied();return;}
-  openModal('תלמידים לא פעילים',
+  openModal(TTL_INACTIVE,
     '<input aria-label="חיפוש" type="search" class="input-full inact-search" id="inact-search" data-inp="inact-search" placeholder="חיפוש תלמיד...">'+
     '<div id="inact-list" class="inact-list"></div>',
     '<button class="btn out" data-act="modal-close">סגירה</button>', icon('archive'));
@@ -774,7 +774,7 @@ function openDeleteAllModal() {
   if (checkLoginNeeded()) return;
   ask(MSG_WIPE_STUDENTS_TITLE,
       MSG_WIPE_STUDENTS_BODY,
-      MSG_WIPE_STUDENTS_OK).then(function (yes) { if (yes) confirmDeleteAll(); });
+      MSG_WIPE_STUDENTS_OK, null, null, true).then(function (yes) { if (yes) confirmDeleteAll(); });
 }
 
 function confirmDeleteAll() {

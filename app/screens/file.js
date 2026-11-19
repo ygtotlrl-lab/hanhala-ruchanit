@@ -4,7 +4,7 @@ import { MSG_DELETE, dayToday } from '../../core/util.js';
 import { idEq, newClientId, schedulePush, tombKill } from '../../core/sync.js';
 import { sessUserId, usersNameOf } from '../../core/auth.js';
 import { ask, esc, openModal, toast } from '../../core/ui.js';
-import { MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET } from '../constants.js';
+import { MSG_FILE_TOO_BIG, MSG_UPLOAD_NEEDS_NET, MSG_FILE_ADDED, MSG_FILE_DEL_BODY, MSG_FILE_DEL_TITLE, MSG_FILE_NEED, TTL_FILE } from '../constants.js';
 import { gateExt, gatePut } from '../gate.js';
 import { S } from '../state.js';
 import { canEdit, getStudents, saveStudents } from '../domain.js';
@@ -23,7 +23,7 @@ function openStudentFile(sid) {
   var s = getStudents().find(function (x) { return idEq(x.client_id, sid); });
   if (!s) return;
   S._fileSid = String(sid);
-  openModal('תיק אישי — ' + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגירה</button>', icon('files'));
+  openModal(TTL_FILE + s.name, _fileBodyHTML(s), '<button class="btn out" data-act="modal-close">סגירה</button>', icon('files'));
 }
 
 function _fileBodyHTML(s) {
@@ -74,7 +74,7 @@ async function saveFileEvent() {
   var date = (document.getElementById('file-date') || { value: '' }).value || dayToday();
   var inp = document.getElementById('file-scan');
   var file = inp && inp.files && inp.files[0];
-  if (!text && !file) { toast('יש לכתוב את האירוע או לצרף סריקה', null, 'warn'); return; }
+  if (!text && !file) { toast(MSG_FILE_NEED, null, 'warn'); return; }
   var sid = S._fileSid, scan = null, eid = newClientId();
   if (file) {
     if (!navigator.onLine) { toast(MSG_UPLOAD_NEEDS_NET, null, 'off'); return; }
@@ -94,11 +94,11 @@ async function saveFileEvent() {
   saveStudents(students);
   schedulePush();
   _repaint();
-  toast('האירוע נוסף לתיק', null, 'good');
+  toast(MSG_FILE_ADDED, null, 'good');
 }
 
 function deleteFileEvent(id) {
-  ask('מחיקת אירוע', 'האירוע יימחק מהתיק האישי.', MSG_DELETE, icon('del')).then(function (yes) {
+  ask(MSG_FILE_DEL_TITLE, MSG_FILE_DEL_BODY, MSG_DELETE, icon('del'), null, true).then(function (yes) {
     if (!yes) return;
     var students = getStudents();
     var s = students.find(function (x) { return idEq(x.client_id, S._fileSid); });
