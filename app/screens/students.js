@@ -302,7 +302,7 @@ function renderPickList(){
   if(!list.length){box.innerHTML='<div class="empty-note">'+(q?MSG_PL_NO_MATCH:inact?MSG_PL_NO_INACTIVE:MSG_PL_NO_ACTIVE)+'</div>';return;}
   box.innerHTML='<ol class="stx-pl">'+list.map(function(s){
     if(inact){var yr=hrCycleLabel(hrCycleOf(s));return hrPickRowHTML(s,(CLS_NAME[s.cls]||'')+(yr?' · מחזור '+yr:''),'st-activate',LBL_REACT,'undo');}
-    return hrPickRowHTML(s,CLS_NAME[s.cls]||'','deact-st-pick',LBL_DEACT,'power');
+    return hrPickRowHTML(s,CLS_NAME[s.cls]||'','deact-st-pick',LBL_DEACT,'minus');
   }).join('')+'</ol>';
 }
 
@@ -340,13 +340,13 @@ function openManageListDlg(){
 // ── סימון תלמיד כלא פעיל — אותה רשימה, והאישור בחלון השאלה ──
 function openDeactivateStudentDlg(){
   if(!isAdmin()){shell.showDenied();return;}
-  openModal(MSG_MARK_INACTIVE_TITLE,hrPickListHTML('active'),'<button class="btn out" data-act="modal-close">סגירה</button>', icon('power'));
+  openModal(MSG_MARK_INACTIVE_TITLE,hrPickListHTML('active'),'<button class="btn out" data-act="modal-close">סגירה</button>', icon('minus'));
   renderPickList();
 }
 function confirmDeactivate(sid){
   var s=getStudents().find(function(x){return idEq(x.client_id, sid);});
   if(!s){toast(MSG_STUDENT_MISSING, null, 'warn');return;}
-  ask(MSG_MARK_INACTIVE_TITLE,MSG_DEACT_ASK_PRE+s.name+MSG_DEACT_ASK_POST,LBL_DEACT,icon('power')).then(function(yes){
+  ask(MSG_MARK_INACTIVE_TITLE,MSG_DEACT_ASK_PRE+s.name+MSG_DEACT_ASK_POST,LBL_DEACT,icon('minus')).then(function(yes){
     if(!yes)return;
     setStudentInactive(sid);
     renderPickList();
