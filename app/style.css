@@ -104,15 +104,15 @@ header{height:68px}
   color:var(--bar-ink-2);
   font-family:Heebo;font-size:var(--fs-1);font-weight:500;
   cursor:pointer;transition:all var(--dur-3);
-  padding:var(--sp-2) var(--sp-1);border-radius:var(--r-3);
+  padding:var(--sp-2) 0;border-radius:var(--r-3);
   -webkit-tap-highlight-color:transparent;
 }
-.bn .bn-ic{width:40px;height:30px;border-radius:var(--r-7);display:flex;align-items:center;justify-content:center;transition:background var(--dur-3)}
-/* הלשונית הפעילה — האייקון בגלולה מלאה בצבע הזהות, והתווית בדיו הכהה */
-.bn.on{color:var(--bar-ink);font-weight:700}
-.bn.on .bn-ic{background:var(--brand-fill);color:var(--on-brand)}
+.bn .bn-ic{width:var(--tab-pill-w);height:var(--tab-pill-h);border-radius:var(--r-7);display:flex;align-items:center;justify-content:center;transition:background var(--dur-3)}
+/* הלשונית הפעילה — האייקון בגלולה רכה ברך הזהות, והאייקון והתווית בדיו הזהות */
+.bn.on{color:var(--brand-ink);font-weight:700}
+.bn.on .bn-ic{background:var(--brand-soft);color:var(--brand-ink)}
 .bn:active .bn-ic{background:var(--bar-hover)}
-.bn.on:active .bn-ic{background:var(--brand-fill)}
+.bn.on:active .bn-ic{background:var(--brand-soft)}
 nav{display:none}
 header{justify-content:space-between;padding:0 var(--sp-6)}
 .hl{gap:var(--sp-5)}
