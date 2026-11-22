@@ -22,7 +22,7 @@ import { HR_PER, hrFirstMonthKey, hrKeyParts, hrMonthKey, hrMonthKeyAdd } from '
 import { loadAttend, screenAttendHTML } from './screens/attend.js';
 import { loadDash, refreshDashStats, screenHomeHTML } from './screens/home.js';
 import { closeUserMenu, confirmSwitch, doLogin, doLogout, onAfterLogin, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
-         switchUserEl, toggleUserMenu } from './screens/login.js';
+         switchUserEl, toggleUserMenu, pushModal, pushModalAct } from './screens/login.js';
 import { addAbsenceReason, changeMyPassword, myPasswordModal, openAddUser, openEditUser,
          renderSettings, renderUsersList, saveAbsenceReasons, savePerms, saveUser,
          screenSettingsHTML, showSettingsHome, showSettingsModule,
@@ -37,7 +37,7 @@ import { meetingBlockAdd, meetingCopy, meetingFlyerDel, meetingFlyerUpload, meet
          meetingMode, meetingNew, meetingNewMake, meetingSearch, meetingView, meetingYear } from './screens/meeting.js';
 import { fcChipAdd, fcChipDel, fcToggle, renderForms, screenFormsHTML } from './screens/forms.js';
 import { renderStats, screenStatsHTML, statsOpen } from './screens/stats.js';
-import { GATE_KEY } from './gate.js';
+import { GATE_KEY, gateToken } from './gate.js';
 import { deleteFileEvent, fileScanPicked, openStudentFile, saveFileEvent } from './screens/file.js';
 import { hrExamCamera, hrExamSetField, hrExamSetGrade, hrExamUpload, hrOpenFile } from './domain.exam.js';
 import { MANAGE_PICK, cancelSingleAbsence, doYearTransition, editStudent, filterClass, importStudentsFromFile, openAttendanceEdit, openManageListDlg, openStatusForm, openStatusHistory, openStatusPickerModal, printStudents, confirmDeactivate, renderPickList, renderStudents, saveStudent, saveStudentStatus, screenStudentsHTML, setStudentActive, stClassChanged } from './screens/students.js';
@@ -62,6 +62,7 @@ appConfigure({
   get MIRROR_CFG() { return MIRROR_CFG; },
   get PEND_CFG() { return PEND_CFG; },
   get PL_CFG() { return PL_CFG; },
+  get NOTIFY_CFG() { return NOTIFY_CFG; },
   get PUSH_CFG() { return PUSH_CFG; },
   get RTY_CFG() { return RTY_CFG; },
   get USER_CFG() { return USER_CFG; },
@@ -160,6 +161,11 @@ var PL_CFG = {
 // טבלאות הבן — שורת סימון נדחפת כפי שהיא במראה, בחותמת משלה.
 // hr_report_vals — שורה שטוחה לכל שדה בגיליון, נדחפת כפי שהיא במראה כמו שורות הבן.
 var HR_MARK_TABLES = { hr_marks: 1, hr_sleep_marks: 1, hr_exam_marks: 1, hr_report_vals: 1 };
+
+// ההתראות במכשיר (core/push.js) — המשתמש מזוהה מול שער ההתראות באסימון של שער השרת
+var NOTIFY_CFG = {
+  auth: async function () { return { body: { token: await gateToken() } }; }
+};
 
 var PUSH_CFG = {
   tables: PUSH_TABLES,
@@ -522,7 +528,8 @@ var DOM_ACTIONS = {
   'absence-reason-add':  function (el) { addAbsenceReason(el.getAttribute('data-kind')); },
   'status-form':         function (el) { openStatusForm(el.getAttribute('data-kind')); },
   'user-edit':           function (el) { openEditUser({
-                           id: el.getAttribute('data-uid'),
+                           client_id: el.getAttribute('data-uid'),
+                           notify: el.getAttribute('data-unotify') === '1',
                            full_name: el.getAttribute('data-uname'),
                            username: el.getAttribute('data-uusername'),
                            role: el.getAttribute('data-urole') }); },
@@ -590,6 +597,10 @@ var DOM_ACTIONS = {
   'gate-relogin':     function (el) { _hrBack = el.getAttribute('data-back') || ''; closeModal(); doLogout(); },
   'menu-logout':      function () { closeUserMenu(); doLogout(); },
   'my-pass':          function () { closeUserMenu(); myPasswordModal(); },
+  'my-push':          function () { closeUserMenu(); pushModal(); },
+  'push-on':          function () { return pushModalAct('on'); },
+  'push-off':         function () { return pushModalAct('off'); },
+  'push-test':        function () { return pushModalAct('test'); },
   'user-menu-toggle': function () { return toggleUserMenu(); },
   'user-add-open':    function () { openAddUser(); },
   'user-save':        function () { return saveUser(); },

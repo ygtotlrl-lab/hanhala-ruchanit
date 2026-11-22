@@ -24,6 +24,7 @@ var CORE = [
   './core/backup.js',
   './core/boot-run.js',
   './core/auth.js',
+  './core/push.js',
   './core/ui.js',
   './core/hebrew.js',
   './app/constants.js',

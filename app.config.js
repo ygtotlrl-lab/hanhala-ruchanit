@@ -30,6 +30,8 @@ self.APP = Object.freeze({
     launch: {},
     // כפתור «יציאה» שהמעטפת קולטת וסוגרת בו את האפליקציה
     exit: false,
+    // ההתראות — FCM במעטפת; google-services.json שב-android/app — של האפליקציה הזו בלבד
+    push: true,
     // גשר השיתוף (FileProvider ו-androidx) וגשר ההדפסה — בכל האפליקציות, אחידים
     share: { chooser: 'שיתוף הקובץ', print: true }
   },

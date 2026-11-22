@@ -23,6 +23,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.NotificationManagerCompat;
+import com.google.firebase.messaging.FirebaseMessaging;
 import android.print.PrintAttributes;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintManager;
@@ -41,6 +46,72 @@ public class MainActivity extends ShellActivity {
 
     @Override
     protected String accentColor() { return "#1a3c6e"; }
+
+    // ── התראות (FCM) ──
+    // הדף שואל את המעטפת על האסימון (op: token), ובלחיצה על «הפעלה» — גם על ההרשאה (op: enable, אנדרואיד 13+);
+    // הגשר מוגבל למקור של האפליקציה, כמו גשר השיתוף, והתשובה — { perm, token }. ההתראה עצמה — ShellPushService.
+    private static final String PUSH_ORIGIN = "https://ygtotlrl-lab.github.io";
+    private static final Set<String> PUSH_ORIGINS = new HashSet<>(Arrays.asList(PUSH_ORIGIN));
+    private static final int REQ_PUSH = 7301;
+    private JavaScriptReplyProxy pushReply;
+
+    @Override
+    protected void installPush() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return;
+        WebViewCompat.addWebMessageListener(
+            webView, "AndroidPush", PUSH_ORIGINS,
+            new WebViewCompat.WebMessageListener() {
+                @Override
+                public void onPostMessage(@NonNull WebView view, @NonNull WebMessageCompat message,
+                                          @NonNull Uri sourceOrigin, boolean isMainFrame,
+                                          @NonNull JavaScriptReplyProxy replyProxy) {
+                    if (!isMainFrame || !PUSH_ORIGIN.equals(String.valueOf(sourceOrigin))) return;
+                    String op = "";
+                    try { op = new JSONObject(String.valueOf(message.getData())).optString("op"); } catch (Exception e) { op = ""; }
+                    pushReply = replyProxy;
+                    // ההרשאה נשאלת רק מלחיצה של המשתמש — בכניסה (token) רק נבדק אם כבר ניתנה
+                    if ("enable".equals(op) && Build.VERSION.SDK_INT >= 33
+                            && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[] { Manifest.permission.POST_NOTIFICATIONS }, REQ_PUSH);
+                        return;
+                    }
+                    pushAnswer();
+                }
+            });
+    }
+
+    private boolean pushAllowed() {
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
+        return NotificationManagerCompat.from(this).areNotificationsEnabled();
+    }
+
+    private void pushAnswer() {
+        final JavaScriptReplyProxy r = pushReply;
+        if (r == null) return;
+        if (!pushAllowed()) { pushPost(r, "denied", ""); return; }
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            String t = task.isSuccessful() ? task.getResult() : null;
+            pushPost(r, "granted", t == null ? "" : t);
+        });
+    }
+
+    private void pushPost(final JavaScriptReplyProxy r, final String perm, final String token) {
+        runOnUiThread(() -> {
+            try {
+                JSONObject o = new JSONObject();
+                o.put("perm", perm);
+                o.put("token", token);
+                r.postMessage(o.toString());
+            } catch (Exception e) { /* הדף ממתין עד 20 שניות, ואז ממשיך בלי אסימון */ }
+        });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_PUSH) pushAnswer();
+    }
 
     // המקור היחיד שרשאי להגיע לגשר השיתוף — גשר על דף שנטען מרחוק נגיש לכל מי שמגיש את הדף.
     // נאכף פעמיים: רשימת ההיתר של הפלטפורמה ובדיקת המקור בתוך הגשר.

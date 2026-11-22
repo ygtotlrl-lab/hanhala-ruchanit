@@ -347,6 +347,16 @@
 .um-pass{font-size:var(--fs-5);letter-spacing:var(--ls-3);text-align:center}
 .um-role{width:100%;padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:Heebo;font-size:var(--fs-3)}
 .um-role:focus{outline:none;border-color:var(--brand-ink)}
+/* «מקבל התראות» — שורת מתג בטופס המשתמש, ופעמון קטן ליד התפקיד ברשימה */
+.modal-body .um-sw{display:flex;font-size:var(--fs-3);align-items:center;justify-content:space-between;gap:var(--sp-5);padding:var(--sp-5) var(--sp-6);margin-bottom:var(--sp-5);border:1.5px solid var(--border);border-radius:var(--radius);font-weight:600;color:var(--text);cursor:pointer}
+.modal-body .um-sw span{display:inline-flex;align-items:center;gap:var(--sp-4)}
+.modal-body .um-sw svg{width:18px;height:18px;color:var(--brand-ink)}
+.ur-bell{display:inline-flex;color:var(--brand-ink)}
+.ur-bell svg{width:16px;height:16px}
+/* התראות במכשיר הזה — המצב והסבר קצר */
+.push-st-l{display:flex;align-items:center;gap:var(--sp-4);font-size:var(--fs-4);color:var(--brand-ink);margin-bottom:var(--sp-4)}
+.push-st-l svg{width:22px;height:22px}
+.push-st p{margin:0;color:var(--text-2);line-height:var(--lh-4)}
 .users-empty{color:var(--warn)}
 .year-danger{font-size:var(--fs-3);background:var(--bad-soft);color:var(--bad);padding:var(--sp-4) var(--sp-5);border-radius:var(--r-3)}
 .year-go{font-weight:700;flex:1;border:1.5px solid var(--warn-line);background:var(--warn-soft);color:var(--warn);cursor:pointer;font-family:Heebo;padding:var(--sp-4);border-radius:var(--r-3)}

@@ -59,7 +59,9 @@ function androidManifest(A) {
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-${A.android.dnd === true ? `    <!-- «השתקה בזמן לימוד» — המעטפת מדליקה «נא לא להפריע» כשהיא בחזית -->
+${A.android.push === true ? `    <!-- התראות — אנדרואיד 13 ומעלה שואל את המשתמש, מלחיצה על «הפעלה» באפליקציה -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+` : ''}${A.android.dnd === true ? `    <!-- «השתקה בזמן לימוד» — המעטפת מדליקה «נא לא להפריע» כשהיא בחזית -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 ` : ''}${share ? `
     <!-- מ-API 30 resolveActivity() של גשר השיתוף רואה רק מה שמוצהר כאן -->
@@ -93,7 +95,19 @@ ${launch.map(p => `        <package android:name="${p}" />`).join('\n')}
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-${share ? `
+${A.android.push === true ? `
+        <!-- ההתראות (FCM) — ההודעה נבנית במעטפת, בערוץ אחד -->
+        <service
+            android:name=".ShellPushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="alerts" />
+` : ''}${share ? `
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="\${applicationId}.fileprovider"
@@ -112,7 +126,9 @@ ${share ? `
 function appGradle(A) {
   return `// ${MARK}
 plugins {
-    id 'com.android.application'
+    id 'com.android.application'${A.android.push === true ? `
+    // google-services.json שלצד הקובץ — רק הרישום של האפליקציה הזו (ר' pushCheck)
+    id 'com.google.gms.google-services'` : ''}
 }
 
 android {
@@ -144,9 +160,36 @@ dependencies {
     implementation 'androidx.core:core-splashscreen:1.0.1'${A.android.share ? `
     implementation 'androidx.core:core:1.13.1'
     // WebViewCompat.addWebMessageListener — רשימת המקורות של גשר השיתוף נאכפת ב-WebView עצמו, לכל frame
-    implementation 'androidx.webkit:webkit:1.11.0'` : ''}
+    implementation 'androidx.webkit:webkit:1.11.0'` : ''}${A.android.push === true ? `
+    // ההתראות — FCM
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'com.google.firebase:firebase-messaging'` : ''}
 }
 `;
+}
+
+// שורש הפרויקט — הגרסאות של התוספים; google-services רק באפליקציה עם התראות
+function rootGradle(A) {
+  return `// ${MARK}
+plugins {
+    id 'com.android.application' version '8.5.2' apply false${A.android.push === true ? `
+    id 'com.google.gms.google-services' version '4.4.2' apply false` : ''}
+}
+`;
+}
+
+// google-services.json — של האפליקציה הזו בלבד: פרויקט Firebase אחד, ורשומה אחת שהחבילה שלה היא android.package.
+// קובץ כללי שמחזיק את כל האפליקציות, או רשומה של אפליקציה אחרת — נעצרים כאן, לפני הבנייה.
+export const FCM_PROJECT = 'ygtotlrl-apps';
+export function pushCheck(A) {
+  if (A.android.push !== true) return;
+  if (!A.android.share) throw new Error('android.push — דורש android.share (הגשר יושב על אותה תשתית)');
+  const p = join(ROOT, 'android', 'app', 'google-services.json');
+  if (!existsSync(p)) throw new Error('android/app/google-services.json — חסר (android.push דולק)');
+  const j = JSON.parse(readFileSync(p, 'utf8'));
+  if (!j.project_info || j.project_info.project_id !== FCM_PROJECT) throw new Error(`google-services.json — הפרויקט אינו ${FCM_PROJECT}`);
+  const pk = (j.client || []).map(c => c && c.client_info && c.client_info.android_client_info && c.client_info.android_client_info.package_name);
+  if (pk.length !== 1 || pk[0] !== A.android.package) throw new Error(`google-services.json — צריכה רשומה אחת בדיוק, של ${A.android.package} (נמצאו: ${pk.join(', ') || 'אין'})`);
 }
 
 function settingsGradle(A) {
@@ -204,11 +247,11 @@ function javaFile(name) {
     };
     const tmpl = readFileSync(join(ROOT, 'tools', 'java', name + '.java.in'), 'utf8');
     if (typeof A.android.exit !== 'boolean') throw new Error('android.exit — לא מוצהר; true או false');
-    const on = { share: !!share, print: !!(share && share.print), launch: launch.length > 0, exit: A.android.exit, dnd: A.android.dnd === true };
+    const on = { share: !!share, print: !!(share && share.print), launch: launch.length > 0, exit: A.android.exit, dnd: A.android.dnd === true, push: A.android.push === true };
     // גשר ההדפסה יושב בתוך קטע השיתוף — הקטעים הפנימיים נפתרים ראשונים.
     const block = k => new RegExp(`^\\/\\/@@(${k})\\n([\\s\\S]*?)^\\/\\/@@end\\n`, 'gm');
     const body = tmpl.replace(block('print'), (m, k, inner) => on[k] ? inner : '')
-      .replace(block('share|launch|exit|dnd'), (m, k, inner) => on[k] ? inner : '');
+      .replace(block('share|launch|exit|dnd|push'), (m, k, inner) => on[k] ? inner : '');
     return body.replace(/@@([A-Z]+)@@/g, (m, k) => {
       if (!(k in vals)) throw new Error(`${name}.java.in — אין ערך ל-${k}`);
       return vals[k];
@@ -244,10 +287,12 @@ function splashTheme(A) {
 export const TARGETS = {
   [`${JAVA}/ShellActivity.java`]: javaFile('ShellActivity'),
   [`${JAVA}/MainActivity.java`]: javaFile('MainActivity'),
+  ...(APP.android.push === true ? { [`${JAVA}/ShellPushService.java`]: javaFile('ShellPushService') } : {}),
   ...(APP.android.share && APP.android.share.print ? { 'android/app/src/main/java/android/print/ShellPdfWriter.java': javaFile('ShellPdfWriter') } : {}),
   'manifest.json': manifest,
   'android/app/src/main/AndroidManifest.xml': androidManifest,
   'android/app/build.gradle': appGradle,
+  'android/build.gradle': rootGradle,
   'android/settings.gradle': settingsGradle,
   [`${RES}/drawable/ic_launcher_background.xml`]: launcherBg,
   [`${RES}/values/themes.xml`]: splashTheme,
@@ -266,6 +311,7 @@ function get(path) {
 async function main(argv) {
   if (argv[0] === '--get') { process.stdout.write(get(argv[1] || '') + '\n'); return; }
   const check = argv[0] === '--check';
+  pushCheck(APP);
   // האייקונים קודם — manifest.json נושא את שמותיהם.
   if (!check) await import('./gen-icons.mjs');
   let changed = 0;

@@ -262,6 +262,7 @@ function openEditUser(u) {
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
+  document.getElementById('um-notify').checked = !!u.notify;
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
 }
 
@@ -277,6 +278,8 @@ function userFormHTML() {
       '<option value="manager">צוות בכיר</option>'+
       '<option value="junior">צוות</option>'+
     '</select>'+
+    // התראות על טופס חדש (רישום · קבלה · אסיפת הורים) — במכשירים שהמשתמש הפעיל בהם התראות; המייל — לבעלים בלבד
+    '<label class="um-sw" for="um-notify"><span>'+icon('bell')+'מקבל התראות</span><input type="checkbox" class="fc-sw" id="um-notify"></label>'+
     // אין שדה «סיסמה נוכחית» — אין עמודת סיסמה גלויה לקרוא ממנה.
     '<label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>'+
     '<input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" class="um-pass">'+
@@ -300,7 +303,8 @@ async function saveUser() {
   var errEl = document.getElementById('um-err');
   errEl.textContent = '';
   if (!fullName || !username) { errEl.textContent = 'שם מלא ושם משתמש הם שדות חובה'; return; }
-  var obj = {full_name: fullName, username: username, role: role, active: true};
+  var obj = {full_name: fullName, username: username, role: role, active: true,
+             notify: document.getElementById('um-notify').checked};
   if (!id && !pass) { errEl.textContent = 'יש להזין סיסמה עבור משתמש חדש'; return; }
   var noFp = false;
   if (pass) {
@@ -491,10 +495,11 @@ function _usersHTML(data) {
     return '<div class="ur'+activeCls+'" data-drag="user" data-id="'+esc(u.client_id)+'" data-sort="'+esc(u.sort == null ? '' : u.sort)+'">' +
       '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
+      (u.notify ? '<span class="ur-bell" title="מקבל התראות" aria-label="מקבל התראות">'+icon('bell')+'</span>' : '') +
       '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
         '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
-        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
+        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" data-unotify="'+(u.notify?'1':'')+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
         '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'" aria-label="'+(u.active?'השבת':'הפעל')+'" class="'+(u.active?'ua-off':'ua-on')+'">'+icon('power')+'</button>' +
       '</div>' +
     '</div>';

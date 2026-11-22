@@ -18,6 +18,7 @@ import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
 import { gateForget, gateLogin, gateRenew } from '../gate.js';
+import { pushDisable, pushEnable, pushIsOn, pushRefresh, pushSignOut, pushSupported, pushTest } from '../../core/push.js';
 import { stIcon } from '../../core/icons.js';
 
 // ── המסכים ──
@@ -180,6 +181,8 @@ async function afterLogin(permsP) {
   function dbg(msg){ console.log('[login] '+msg); }
   dbg('[2/4] משתמש אומת — טוען הרשאות...');
   gateRenew(); // הצפייה בתגובות — מתחדשת בשקט, גם ברענון מהבאנר
+  // התראות שהופעלו במכשיר — נרשמות מחדש על שם מי שנכנס, אחרי שהשער התחבר ברקע
+  setTimeout(pushRefresh, 4000);
   try { await loadPerms(permsP); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('[3/4] מנווט לדף הבית...');
   // הסתרת מסך הכניסה והמעבר לבית רצים תמיד; כל עדכון משני עטוף בנפרד —
@@ -244,6 +247,8 @@ async function hrHandoffResume() {
 }
 
 function doLogout() {
+  // המכשיר יורד מרשימת ההתראות לפני שהאסימון של השער נמחק — הבקשה נושאת אותו
+  pushSignOut();
   gateForget();
   ctxSwitch();
   AUTH.user = null;
@@ -314,6 +319,42 @@ async function toggleUserMenu() {
 function menuPassSync(u) {
   var b = document.getElementById('user-menu-pass');
   if (b) b.classList.toggle('hidden', !isAdminOf(u));
+}
+
+// ── התראות במכשיר הזה ──
+// ההפעלה — מלחיצה בלבד (הדפדפן שואל על ההרשאה רק מפעולה של המשתמש); מה מגיע — לפי «מקבל התראות» שבניהול המשתמשים
+var MSG_PUSH = {
+  ok: 'ההתראות הופעלו במכשיר הזה', off: 'ההתראות כובו במכשיר הזה',
+  denied: 'ההתראות חסומות בהגדרות המכשיר — יש לאפשר אותן שם ולנסות שוב',
+  unsupported: 'המכשיר או הדפדפן אינם תומכים בהתראות', fail: 'ההפעלה נכשלה — בדקו את החיבור ונסו שוב',
+  test: 'נשלחה התראת בדיקה', testNone: 'לא נמצא מכשיר רשום — הפעילו שוב את ההתראות'
+};
+function pushModalBody() {
+  var on = pushIsOn(), sup = pushSupported();
+  var mine = !!(AUTH.user && AUTH.user.notify);
+  return '<div class="push-st">' +
+      '<div class="push-st-l">' + icon('bell') + '<b>' + (!sup ? 'לא נתמך' : on ? 'פועלות במכשיר הזה' : 'כבויות במכשיר הזה') + '</b></div>' +
+      '<p>' + (mine ? 'סומנת «מקבל התראות» — יגיעו לכאן התראות על טופס רישום, קבלה לישיבה ושיבוץ לאסיפת הורים.'
+                    : 'לא סומנת «מקבל התראות» — המכשיר יירשם, וההתראות יגיעו כשהמנהל יסמן אותך בניהול המשתמשים.') + '</p>' +
+    '</div>';
+}
+function pushModalFoot() {
+  if (!pushSupported()) return '<button class="btn out" data-act="modal-close">סגירה</button>';
+  return pushIsOn()
+    ? '<button class="btn out" data-act="push-off">כיבוי</button><button class="btn" data-act="push-test">' + icon('bell') + 'שליחת בדיקה</button>'
+    : '<button class="btn out" data-act="modal-close">ביטול</button><button class="btn" data-act="push-on">' + icon('bell') + 'הפעלה</button>';
+}
+function pushModal() { openModal('התראות במכשיר הזה', pushModalBody(), pushModalFoot(), icon('bell')); }
+async function pushModalAct(kind) {
+  if (kind === 'test') {
+    var r = await pushTest();
+    toast(r && (r.ok || 0) > 0 ? MSG_PUSH.test : MSG_PUSH.testNone, null, r && r.ok ? 'good' : 'warn');
+    return;
+  }
+  var res = kind === 'on' ? await pushEnable() : await pushDisable();
+  if (kind === 'off') { toast(MSG_PUSH.off, null, 'good'); closeModal(); return; }
+  toast(MSG_PUSH[res] || MSG_PUSH.fail, null, res === 'ok' ? 'good' : 'warn');
+  if (res === 'ok') pushModal();
 }
 
 function closeUserMenu() {
@@ -388,6 +429,7 @@ async function confirmSwitch() {
   AUTH.user=u;
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
   if(_gatePass) gateLogin(u.username,_gatePass);
+  setTimeout(pushRefresh, 4000);
   await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;
@@ -417,7 +459,7 @@ function initDateFields(){
 }
 
 export { closeUserMenu, confirmSwitch, doLogin, doLogout, hrHandoffResume, hrHandoffSave, loadPerms, screenLoginHTML,
-         switchUserEl, toggleUserMenu, onAfterLogin };
+         switchUserEl, toggleUserMenu, onAfterLogin, pushModal, pushModalAct };
 
 // ראשי התיבות לעיגול המשתמש בטלפון — אות ראשונה של שתי המילים הראשונות
 function hrSetInitials(name){
