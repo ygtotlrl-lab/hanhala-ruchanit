@@ -18,6 +18,7 @@ import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
 import { gateForget, gateLogin, gateRenew } from '../gate.js';
+import { pushPrompt, pushRefresh, pushSignOut } from '../../core/push.js';
 import { stIcon } from '../../core/icons.js';
 
 // ── המסכים ──
@@ -180,6 +181,8 @@ async function afterLogin(permsP) {
   function dbg(msg){ console.log('[login] '+msg); }
   dbg('[2/4] משתמש אומת — טוען הרשאות...');
   gateRenew(); // הצפייה בתגובות — מתחדשת בשקט, גם ברענון מהבאנר
+  // התראות שהופעלו במכשיר — נרשמות מחדש על שם מי שנכנס, אחרי שהשער התחבר ברקע
+  setTimeout(function () { pushRefresh(); pushPrompt(); }, 4000);
   try { await loadPerms(permsP); } catch(e) { console.warn('[login] loadPerms failed:', e); }
   dbg('[3/4] מנווט לדף הבית...');
   // הסתרת מסך הכניסה והמעבר לבית רצים תמיד; כל עדכון משני עטוף בנפרד —
@@ -244,6 +247,8 @@ async function hrHandoffResume() {
 }
 
 function doLogout() {
+  // המכשיר יורד מרשימת ההתראות לפני שהאסימון של השער נמחק — הבקשה נושאת אותו
+  pushSignOut();
   gateForget();
   ctxSwitch();
   AUTH.user = null;
@@ -388,6 +393,7 @@ async function confirmSwitch() {
   AUTH.user=u;
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
   if(_gatePass) gateLogin(u.username,_gatePass);
+  setTimeout(function () { pushRefresh(); pushPrompt(); }, 4000);
   await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;

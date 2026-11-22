@@ -23,6 +23,8 @@ var PATHS = {
   settings: '<path d="M4 6h8.5M16.5 6H20M4 12h2.5M10.5 12H20M4 18h6.5M14.5 18H20"/><circle cx="14.5" cy="6" r="2"/><circle cx="8.5" cy="12" r="2"/><circle cx="12.5" cy="18" r="2"/>',
   logout:   '<path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/>',
   user:     '<circle cx="12" cy="8.5" r="3.8"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/>',
+  // התראות — פעמון: «מקבל התראות» ברשימת המשתמשים, והתראות המכשיר בתפריט המשתמש
+  bell:     '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
   key:      '<circle cx="8" cy="15" r="4"/><path d="M11 12l8.5-8.5"/><path d="M16.5 6.5l2.5 2.5M14.5 8.5l2 2"/>',
   back:     '<path d="M5 12h14"/><path d="M13 6l6 6-6 6"/>',
   prev:     '<path d="M9 6l6 6-6 6"/>',
@@ -75,5 +77,6 @@ var icon = iconSet(PATHS);
 shellIcon('close', icon('close')); // ✕ של המעטפת והליבה — מהסט של האפליקציה
 shellIcon('refresh', icon('refresh')); // באנר העדכון
 ['good', 'bad', 'warn', 'off', 'wait'].forEach(function (n) { shellIcon(n, icon(n)); }); // אייקוני המצב
+['bell', 'user', 'power', 'logout', 'plus', 'save'].forEach(function (n) { shellIcon(n, icon(n)); }); // הכניסה והמשתמשים וההתראות
 
 export { icon };

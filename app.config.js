@@ -23,13 +23,15 @@ self.APP = Object.freeze({
     // צבע כפתור הניסיון החוזר בדף האופליין של המעטפת
     accent: '#1a3c6e',
     // לעולם אינו יורד — בלי קידום המכשיר המותקן אינו מקבל את ה-APK החדש.
-    versionCode: 33,
-    versionName: '16.0',
+    versionCode: 34,
+    versionName: '17.0',
     launcherBg: { kind: 'solid', color: '#FFFFFF' },
     // אפליקציות אחרות שקישור intent: רשאי לפתוח — שם ⟵ חבילה; ריק — המעטפת אינה פותחת אף אחת
     launch: {},
     // כפתור «יציאה» שהמעטפת קולטת וסוגרת בו את האפליקציה
     exit: false,
+    // ההתראות — FCM במעטפת; google-services.json שב-android/app — של האפליקציה הזו בלבד
+    push: true,
     // גשר השיתוף (FileProvider ו-androidx) וגשר ההדפסה — בכל האפליקציות, אחידים
     share: { chooser: 'שיתוף הקובץ', print: true }
   },

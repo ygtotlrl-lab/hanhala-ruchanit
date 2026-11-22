@@ -5,6 +5,7 @@ import { MSG_MY_PASS_TITLE, MSG_OFF_NO_CRYPTO, MSG_OFF_NO_FP, MSG_OFF_USER_WRITE
 import { AUTH_ROLE_ADMIN, authPassFields, authUsersTable, authVerify, isAdmin, isAdminOf, usersRefresh,
          usersGet, usersSaveAll, usersSaveOne, writeUser } from '../../core/auth.js';
 import { closeModal, dragDef, dragOrder, esc, openModal, toast, uiNoDialog } from '../../core/ui.js';
+import { bellHTML, pushDevices } from '../../core/push.js';
 import { MSG_ACTION_FAILED, MSG_FILL_ALL_X, MSG_NO_LINK,
          MSG_NO_USER_SESSION, MSG_PASS_MISMATCH_X, MSG_PASS_NEEDS_NET,
          MSG_PASS_UPDATED_NO_FP, MSG_PASS_UPDATED_X,
@@ -262,6 +263,7 @@ function openEditUser(u) {
   document.getElementById('um-name').value = u.full_name;
   document.getElementById('um-username').value = u.username;
   document.getElementById('um-role').value = u.role;
+  document.getElementById('um-notify').checked = !!u.notify;
   document.getElementById('um-pass-label').textContent = 'סיסמה חדשה (השאר ריק לשמור קיימת)';
 }
 
@@ -277,6 +279,8 @@ function userFormHTML() {
       '<option value="manager">צוות בכיר</option>'+
       '<option value="junior">צוות</option>'+
     '</select>'+
+    // התראות על טופס חדש (רישום · קבלה · אסיפת הורים) — במכשירים שהמשתמש הפעיל בהם התראות; המייל — לבעלים בלבד
+    '<label class="ga-sw" for="um-notify"><span>'+icon('bell')+'מקבל התראות</span><input type="checkbox" class="ga-swi" id="um-notify"></label>'+
     // אין שדה «סיסמה נוכחית» — אין עמודת סיסמה גלויה לקרוא ממנה.
     '<label id="um-pass-label" for="um-pass">סיסמה חדשה (6 ספרות)</label>'+
     '<input type="password" id="um-pass" placeholder="••••••" maxlength="6" inputmode="numeric" autocomplete="new-password" class="um-pass">'+
@@ -300,7 +304,8 @@ async function saveUser() {
   var errEl = document.getElementById('um-err');
   errEl.textContent = '';
   if (!fullName || !username) { errEl.textContent = 'שם מלא ושם משתמש הם שדות חובה'; return; }
-  var obj = {full_name: fullName, username: username, role: role, active: true};
+  var obj = {full_name: fullName, username: username, role: role, active: true,
+             notify: document.getElementById('um-notify').checked};
   if (!id && !pass) { errEl.textContent = 'יש להזין סיסמה עבור משתמש חדש'; return; }
   var noFp = false;
   if (pass) {
@@ -467,6 +472,8 @@ async function renderUsersList() {
   try { res = await netTimeout(S.SB.from('hr_users').select('*')
     .order('sort', { ascending: true, nullsFirst: false }).order('full_name')); }
   catch (e) { res = { error: { message: (e && e.message) || 'timeout' } }; }
+  // מי הפעיל התראות במכשיר — מהשער, למנהל בלבד; בלי רשת — הפעמון ריק
+  _devs = await pushDevices();
   if (!res || res.error || !Array.isArray(res.data)) {
     if (local.length) { toast(MSG_PULL_STALE, null, 'off'); return; }
     var em = (res && res.error && (res.error.message || res.error.code)) || MSG_NO_LINK;
@@ -483,6 +490,7 @@ async function renderUsersList() {
   el.innerHTML = _usersHTML(data);
 }
 
+var _devs = {};
 function _usersHTML(data) {
   return data.map(function(u) {
     var roleClass = 'role-'+u.role;
@@ -491,10 +499,11 @@ function _usersHTML(data) {
     return '<div class="ur'+activeCls+'" data-drag="user" data-id="'+esc(u.client_id)+'" data-sort="'+esc(u.sort == null ? '' : u.sort)+'">' +
       '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
+      bellHTML(u.notify, _devs[u.client_id]) +
       '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
       '<div class="ua">' +
         '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
-        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
+        '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" data-unotify="'+(u.notify?'1':'')+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
         '<button data-act="user-toggle" data-id="'+esc(u.client_id)+'" data-active="'+(u.active?'1':'0')+'" title="'+(u.active?'השבת':'הפעל')+'" aria-label="'+(u.active?'השבת':'הפעל')+'" class="'+(u.active?'ua-off':'ua-on')+'">'+icon('power')+'</button>' +
       '</div>' +
     '</div>';

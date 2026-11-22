@@ -69,6 +69,8 @@ async function _tokEnsure(fresh) {
   if (!t && _credOk()) { await gateLogin(_cred.u, _cred.p); t = _gateTok(); }
   return t;
 }
+// אסימון השער של המשתמש המחובר — גם לשער ההתראות (sh-gate), שמזהה בו את המשתמש
+function gateToken() { return _tokEnsure(false); }
 // mod — המודול שההרשאה שלו נבדקת, והטבלה שהשער קורא (enroll ⟵ hr_enroll · intake ⟵ hr_intake)
 async function gateCall(mod, action, body) {
   var t = await _tokEnsure(false);
@@ -128,4 +130,4 @@ async function gateOpen(path) {
   toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? MSG_FILE_NO_PERM : MSG_FILE_OPEN_FAIL, null, 'bad');
 }
 
-export { GATE_KEY, gateCall, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
+export { GATE_KEY, gateCall, gateToken, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
