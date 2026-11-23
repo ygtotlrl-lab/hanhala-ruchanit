@@ -499,8 +499,8 @@ function _usersHTML(data) {
     return '<div class="ur'+activeCls+'" data-drag="user" data-id="'+esc(u.client_id)+'" data-sort="'+esc(u.sort == null ? '' : u.sort)+'">' +
       '<span class="grip" data-grip aria-hidden="true">⠿</span>' +
       '<div class="ur-name">'+esc(u.full_name)+'<br><small class="user-handle">@'+esc(u.username)+'</small></div>' +
-      bellHTML(u.notify, _devs[u.client_id]) +
       '<span class="ur-role '+esc(roleClass)+'">'+esc(roleLabel)+'</span>' +
+      bellHTML(u.notify, _devs[u.client_id]) +
       '<div class="ua">' +
         '<button data-act="user-edit" data-uid="'+esc(u.client_id)+'" data-uname="'+esc(u.full_name)+
         '" data-uusername="'+esc(u.username)+'" data-urole="'+esc(u.role)+'" data-unotify="'+(u.notify?'1':'')+'" aria-label="עריכה" title="עריכה">'+icon('edit')+'</button>' +
