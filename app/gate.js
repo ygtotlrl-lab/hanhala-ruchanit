@@ -4,7 +4,7 @@
 import { toast } from '../core/ui.js';
 import { lsGet, lsRemove, lsSet } from '../core/storage.js';
 import { MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_FILE_NO_PERM, MSG_FILE_OPEN_FAIL, MSG_NO_PERM } from './constants.js';
-import { AUTH } from './state.js';
+import { AUTH, S } from './state.js';
 
 var GATE_KEY = 'hr_gate';
 var MSG_GATE_RELOGIN = 'הקבצים דורשים כניסה מקוונת — צא והיכנס שוב, עם רשת';
@@ -34,8 +34,25 @@ async function _gatePost(body) {
 // השער מתחבר מחדש בשקט, והתגובות אינן מבקשות שוב את הסיסמה.
 var _cred = null;
 function _credOk() { return !!(_cred && AUTH.user && AUTH.user.username === _cred.u); }
+// החשבון האישי במסד (hr-auth): השרת בודק את שם המשתמש והסיסמה ומחזיר סשן Supabase של אותו משתמש,
+// והלקוח של המסד עובר אליו — כך המסד יודע מי פונה, ואפשר לסגור אותו לכל מי שאינו משתמש. ברקע, כמו השער;
+// בלי רשת — כשהרשת חוזרת. הסשן נשמר במכשיר ומתחדש מעצמו, ויורד ביציאה.
+async function dbSession(username, pass) {
+  try {
+    var r = await fetch(self.APP.supabase.url + '/functions/v1/hr-auth', { method: 'POST', headers: _hdrs({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ username: username, password: pass }) });
+    var j = await r.json().catch(function () { return {}; });
+    if (r.status !== 200 || !j.session) return false;
+    var x = await S.SB.auth.setSession({ access_token: j.session.access_token, refresh_token: j.session.refresh_token });
+    return !x.error;
+  } catch (e) { console.warn('[auth] החשבון במסד — ינוסה שוב כשתהיה רשת', e); return false; }
+}
+async function dbSessionOk() {
+  try { var r = await S.SB.auth.getSession(); return !!(r && r.data && r.data.session); } catch (e) { return false; }
+}
 async function gateLogin(username, pass) {
   _cred = { u: username, p: pass };
+  dbSession(username, pass);
   try {
     var r = await _gatePost({ action: 'login', username: username, password: pass });
     if (r.status !== 200 || !r.body.token) { if (r.status === 401) _cred = null; return false; }
@@ -44,12 +61,16 @@ async function gateLogin(username, pass) {
     return true;
   } catch (e) { console.warn('[gate] הכניסה לשער נכשלה — תנוסה שוב כשתהיה רשת', e); return false; }
 }
-self.addEventListener('online', function () { if (_credOk() && !_gateTok()) gateLogin(_cred.u, _cred.p); });
+self.addEventListener('online', function () {
+  if (_credOk() && !_gateTok()) gateLogin(_cred.u, _cred.p);
+  else if (_credOk()) dbSessionOk().then(function (ok) { if (!ok) dbSession(_cred.u, _cred.p); });
+});
 // יציאה — האסימון של המשתמש היוצא והסיסמה שבזיכרון יורדים
 function gateForget() {
   var m = _gateMap(); delete m[_uid()];
   lsSet(GATE_KEY, JSON.stringify(m));
   _cred = null;
+  try { S.SB.auth.signOut({ scope: 'local' }); } catch (e) { /* בלי לקוח — אין סשן */ }
 }
 function _drop() { var m = _gateMap(); delete m[_uid()]; lsSet(GATE_KEY, JSON.stringify(m)); }
 // חידוש — אסימון שנשארו לו פחות מ-25 יום מוחלף בחדש ל-30 יום, בלי סיסמה (renew בשער);
