@@ -17,7 +17,7 @@ import { AUTH, S, shell } from '../state.js';
 import { hrApplyPerms, hrCfgGet, hrSetPending,
          uiShown } from '../domain.js';
 import { icon } from '../icons.js';
-import { gateForget, gateLogin, gateRenew } from '../gate.js';
+import { dbAuth, gateForget, gateLogin, gateRenew } from '../gate.js';
 import { pushPrompt, pushRefresh, pushSignOut } from '../../core/push.js';
 import { stIcon } from '../../core/icons.js';
 
@@ -70,41 +70,29 @@ async function _doLoginInner() {
   errEl.textContent='';
   if (!username || !pass) { showErr(MSG_FILL_LOGIN); return; }
   dbg('[1/4] שולח בקשה לשרת...');
-  // ההרשאות נמשכות במקביל לשורת המשתמש — בסיסמה שגויה הן פשוט אינן בשימוש, ובנכונה חוסכים פנייה שנייה לרשת.
-  var permsP = permsFetch();
-  var res = null, netFail = false;
+  // הכניסה בשרת (hr-auth): הוא בודק את הסיסמה מול הטביעה ומחזיר את שורת המשתמש וסשן במסד; ההרשאות — אחרי הסשן,
+  // כי המסד פתוח רק למשתמש מחובר. בלי רשת, פסק זמן או תקלה בשרת — העותק שבמכשיר.
+  var permsP = null, a = null, netFail = false;
   try {
     // בלי רשת כלל — אין למה לחכות לתקרת הזמן; ישר לעותק שבמכשיר.
     if (navigator.onLine === false) throw new Error('offline');
-    // השורה נשלפת לפי שם המשתמש בלבד וההכרעה מול הטביעה — סינון לפי סיסמה בשאילתה
-    // הופך ערך שבענן למפתח שכל מחזיק מפתח ה-anon יכול לקרוא.
-    res = await netTimeout(S.SB.from(authUsersTable())
-      .select(AUTH_USER_COLS.join(','))
-      .eq('username', username)
-      .eq('active', true)
-      .maybeSingle(), HR_LOGIN_NET_MS);
+    a = await netTimeout(dbAuth({ username: username }, pass), HR_LOGIN_NET_MS);
   } catch(e) {
     // פסק זמן נחשב כאין רשת שמישה.
-    console.error('[login] SB threw:', e && e.message);
+    console.error('[login] hr-auth threw:', e && e.message);
     netFail = true;
   }
-  if (!netFail && res && res.error && isNetErr(res.error)) netFail = true;
-
-  var serverErr = (!netFail && res && res.error) ? res.error : null;
-  // authoritativeNo — אין שורה או שהטביעה לא התאימה: תשובה סמכותית, ואסור ליפול אחריה לעותק המקומי,
+  if (a && a.kind === 'net') netFail = true;
+  var serverErr = (!netFail && a && a.kind === 'server') ? { message: MSG_SERVER_ERR } : null;
+  // authoritativeNo — אין משתמש פעיל כזה או שהסיסמה לא התאימה: תשובה סמכותית, ואסור ליפול אחריה לעותק המקומי,
   // אחרת סיסמה שהוחלפה בענן או משתמש שהושבת ממשיכים להיכנס מהמטמון.
-  var onlineRow = (!netFail && res && !res.error) ? res.data : null;
-  var onlineVerdict = onlineRow ? await authVerify(onlineRow, pass) : null;
-  if (onlineVerdict === 'no-fp') {
+  if (a && a.kind === 'bad' && a.why === 'nofp') {
     authLog(false, 'no_fp_online', username);
     showErr(MSG_NO_FP_ONLINE); return;
   }
-  if (onlineVerdict === 'no-crypto') {
-    authLog(false, 'no_crypto_online', username);
-    showErr(MSG_NO_CRYPTO); return;
-  }
-  var authoritativeNo = (!netFail && res && !res.error && (!res.data || onlineVerdict === 'bad'));
-  var onlineUser = (onlineVerdict === 'ok') ? onlineRow : null;
+  var authoritativeNo = !!(a && a.kind === 'bad');
+  var onlineUser = (a && a.kind === 'ok') ? a.user : null;
+  permsP = permsFetch();
 
   if (onlineUser) {
     ctxSwitch();
@@ -351,14 +339,14 @@ async function confirmSwitch() {
   var pass=document.getElementById('switch-pass').value.trim();
   var errEl=document.getElementById('switch-err');
   if(!pass){errEl.textContent=MSG_SWITCH_NEED_PASS;return;}
-  var res=null, netFail=false;
-  // כמו בכניסה: ההרשאות במקביל, ובלי רשת כלל — ישר לעותק שבמכשיר.
-  var permsP=permsFetch();
+  var a=null, netFail=false;
+  // כמו בכניסה: הבדיקה בשרת (hr-auth, לפי המזהה), וההרשאות — אחרי הסשן; בלי רשת או בתקלה — העותק שבמכשיר.
   try {
     if(navigator.onLine===false) throw new Error('offline');
-    res=await netTimeout(S.SB.from(authUsersTable()).select(AUTH_USER_COLS.join(',')).eq('client_id',S._hrSwitchId).eq('active',true).single(), HR_LOGIN_NET_MS);
+    a=await netTimeout(dbAuth({ id: String(S._hrSwitchId) }, pass), HR_LOGIN_NET_MS);
   } catch(eSw){ netFail=true; }
-  if(!netFail&&res&&res.error&&isNetErr(res.error)) netFail=true;
+  if(!a||a.kind==='net'||a.kind==='server') netFail=true;
+  var permsP=null;
   var u=null;
   // .single() מחזיר error גם כשאין שורה — אין כאן תשובה סמכותית, וכל כישלון מנסה את העותק המקומי.
   if(netFail){
@@ -377,12 +365,9 @@ async function confirmSwitch() {
     u=cu;
     AUTH.offlineLogin=true;
   } else {
-    if(res.error||!res.data){authLog(false,'switch_wrong_credentials_online',String(S._hrSwitchId));errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
-    var vOn=await authVerify(res.data,pass);
-    if(vOn==='no-fp'){authLog(false,'switch_no_fp_online',res.data.username);errEl.textContent=MSG_NO_FP_ONLINE;return;}
-    if(vOn==='no-crypto'){authLog(false,'switch_no_crypto_online',res.data.username);errEl.textContent=MSG_NO_CRYPTO;return;}
-    if(vOn!=='ok'){authLog(false,'switch_wrong_credentials_online',res.data.username);errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
-    u=res.data;
+    if(a.kind==='bad'&&a.why==='nofp'){authLog(false,'switch_no_fp_online',String(S._hrSwitchId));errEl.textContent=MSG_NO_FP_ONLINE;return;}
+    if(a.kind!=='ok'){authLog(false,'switch_wrong_credentials_online',String(S._hrSwitchId));errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
+    u=a.user;
     AUTH.offlineLogin=false;
     // u נשמר במפורש — הרענון המלא רץ מ-authLog, אחרי AUTH.user=u.
     usersSaveOne(u);
@@ -394,6 +379,7 @@ async function confirmSwitch() {
   authLog(true,AUTH.offlineLogin?'switch_offline':'switch_online',u.username);
   if(_gatePass) gateLogin(u.username,_gatePass);
   setTimeout(function () { pushRefresh(); pushPrompt(); }, 4000);
+  permsP=permsFetch();
   await loadPerms(permsP);
   var hdru=document.getElementById('hdr-username');
   if(hdru) hdru.textContent=u.full_name;

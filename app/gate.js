@@ -34,25 +34,30 @@ async function _gatePost(body) {
 // השער מתחבר מחדש בשקט, והתגובות אינן מבקשות שוב את הסיסמה.
 var _cred = null;
 function _credOk() { return !!(_cred && AUTH.user && AUTH.user.username === _cred.u); }
-// החשבון האישי במסד (hr-auth): השרת בודק את שם המשתמש והסיסמה ומחזיר סשן Supabase של אותו משתמש,
-// והלקוח של המסד עובר אליו — כך המסד יודע מי פונה, ואפשר לסגור אותו לכל מי שאינו משתמש. ברקע, כמו השער;
-// בלי רשת — כשהרשת חוזרת. הסשן נשמר במכשיר ומתחדש מעצמו, ויורד ביציאה.
-async function dbSession(username, pass) {
+// החשבון האישי במסד (hr-auth): הכניסה עצמה — השרת בודק את שם המשתמש (או המזהה, בהחלפת משתמש) והסיסמה מול הטביעה,
+// ומחזיר את שורת המשתמש וסשן Supabase שלו; הלקוח של המסד עובר אליו, והמסד פתוח רק למשתמש מחובר שברשימה (hr_is_user).
+// התשובה: ok — המשתמש; bad — תשובה סמכותית (why: nouser · bad · nofp); net — אין רשת שמישה; server — תקלה בשרת.
+async function dbAuth(who, pass) {
+  var r, j;
   try {
-    var r = await fetch(self.APP.supabase.url + '/functions/v1/hr-auth', { method: 'POST', headers: _hdrs({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ username: username, password: pass }) });
-    var j = await r.json().catch(function () { return {}; });
-    if (r.status !== 200 || !j.session) return false;
-    var x = await S.SB.auth.setSession({ access_token: j.session.access_token, refresh_token: j.session.refresh_token });
-    return !x.error;
-  } catch (e) { console.warn('[auth] החשבון במסד — ינוסה שוב כשתהיה רשת', e); return false; }
+    r = await fetch(self.APP.supabase.url + '/functions/v1/hr-auth', { method: 'POST', headers: _hdrs({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(Object.assign({ password: pass }, who)) });
+  } catch (e) { return { kind: 'net' }; }
+  j = await r.json().catch(function () { return {}; });
+  if (r.status === 401) return { kind: 'bad', why: j.why || 'bad' };
+  if (r.status !== 200 || !j.session || !j.user) return { kind: 'server' };
+  var x = await S.SB.auth.setSession({ access_token: j.session.access_token, refresh_token: j.session.refresh_token });
+  if (x.error) return { kind: 'server' };
+  return { kind: 'ok', user: j.user };
 }
+// כניסה אופליין — כשהרשת חוזרת, הסשן נוצר בשקט מהסיסמה שבזיכרון
+async function dbSession(username, pass) { var a = await dbAuth({ username: username }, pass); return a.kind === 'ok'; }
 async function dbSessionOk() {
   try { var r = await S.SB.auth.getSession(); return !!(r && r.data && r.data.session); } catch (e) { return false; }
 }
 async function gateLogin(username, pass) {
   _cred = { u: username, p: pass };
-  dbSession(username, pass);
+  dbSessionOk().then(function (ok) { if (!ok) dbSession(username, pass); });
   try {
     var r = await _gatePost({ action: 'login', username: username, password: pass });
     if (r.status !== 200 || !r.body.token) { if (r.status === 401) _cred = null; return false; }
@@ -151,4 +156,4 @@ async function gateOpen(path) {
   toast(r && r.login ? MSG_GATE_RELOGIN : r && r.perm ? MSG_FILE_NO_PERM : MSG_FILE_OPEN_FAIL, null, 'bad');
 }
 
-export { GATE_KEY, gateCall, gateToken, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew };
+export { GATE_KEY, gateCall, gateToken, gateExt, gateForget, gateLinks, gateLogin, gateOpen, gatePut, gateRenew, dbAuth };
