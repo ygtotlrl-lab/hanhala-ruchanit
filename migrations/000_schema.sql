@@ -3,6 +3,16 @@
 -- ── משותף לפרויקט ──
 
 create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+create table if not exists public.sh_auth_log (
+  id bigint generated always as identity,
+  created_at timestamp with time zone not null default now(),
+  app text not null,
+  login text not null,
+  reason text not null,
+  constraint sh_auth_log_pkey PRIMARY KEY (id)
+);
 
 create table if not exists public.sh_backup (
   id bigint generated always as identity,
@@ -10,6 +20,38 @@ create table if not exists public.sh_backup (
   key text,
   value text,
   constraint sh_backup_pkey PRIMARY KEY (id)
+);
+
+create table if not exists public.sh_keys (
+  key text not null,
+  value jsonb not null,
+  created_at timestamp with time zone not null default now(),
+  constraint sh_keys_pkey PRIMARY KEY (key)
+);
+
+create table if not exists public.sh_logins (
+  app text not null,
+  user_key text not null,
+  device text not null,
+  devname text,
+  login text,
+  first_at timestamp with time zone not null default now(),
+  last_at timestamp with time zone,
+  constraint sh_logins_pkey PRIMARY KEY (app, user_key, device)
+);
+
+create table if not exists public.sh_push (
+  id bigint generated always as identity,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now(),
+  app text not null,
+  device text not null,
+  user_key text not null,
+  kind text not null,
+  token text not null,
+  constraint sh_push_pkey PRIMARY KEY (id),
+  constraint sh_push_app_device_key UNIQUE (app, device),
+  constraint sh_push_kind_check CHECK ((kind = ANY (ARRAY['fcm'::text, 'web'::text])))
 );
 
 create table if not exists public.sh_sync_log (
@@ -26,30 +68,6 @@ create table if not exists public.sh_sync_log (
 
 create index if not exists sh_backup_key_created_idx ON public.sh_backup USING btree (key, created_at DESC);
 
--- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon
--- יומן תוספת-בלבד — ולכן אין לו UPDATE
-revoke all on table public.sh_backup from anon, authenticated;
-grant select, insert on table public.sh_backup to anon, authenticated;
-grant all on table public.sh_backup to service_role;
-revoke all on table public.sh_sync_log from anon, authenticated;
-grant select, insert on table public.sh_sync_log to anon, authenticated;
-grant all on table public.sh_sync_log to service_role;
-revoke all on sequence public.sh_backup_id_seq from anon, authenticated;
-grant usage, select, update on sequence public.sh_backup_id_seq to anon, authenticated, service_role;
-revoke all on sequence public.sh_sync_log_id_seq from anon, authenticated;
-grant usage, select, update on sequence public.sh_sync_log_id_seq to anon, authenticated, service_role;
-
-alter table public.sh_backup enable row level security;
-drop policy if exists sh_backup_insert on public.sh_backup;
-create policy sh_backup_insert on public.sh_backup as permissive for insert to anon, authenticated with check (true);
-drop policy if exists sh_backup_select on public.sh_backup;
-create policy sh_backup_select on public.sh_backup as permissive for select to anon, authenticated using (true);
-alter table public.sh_sync_log enable row level security;
-drop policy if exists sh_sync_log_insert on public.sh_sync_log;
-create policy sh_sync_log_insert on public.sh_sync_log as permissive for insert to anon, authenticated with check (true);
-drop policy if exists sh_sync_log_select on public.sh_sync_log;
-create policy sh_sync_log_select on public.sh_sync_log as permissive for select to anon, authenticated using (true);
-
 CREATE OR REPLACE FUNCTION public.bk_fn_def(p_name text)
  RETURNS text
  LANGUAGE sql
@@ -64,8 +82,8 @@ AS $function$
      and p_name in ('bk_retention_keys', 'bk_retention_sweep')
    limit 1;
 $function$;
-revoke all on function public.bk_fn_def(text) from public, anon, authenticated, service_role;
-grant execute on function public.bk_fn_def(text) to anon, authenticated, service_role;
+revoke all on function public.bk_fn_def(p_name text) from public, anon, authenticated, service_role;
+grant execute on function public.bk_fn_def(p_name text) to anon, authenticated, service_role;
 
 -- מפתח שאינו ברשימה אינו מתפנה לעולם · והרשימה אחת לשני הפרויקטים — הבלוק זהה בית-לבית, ומפתח של הפרויקט השני אינו קיים כאן
 -- כל מקור נכתב בשכבה — ANCHOR: או DIFF: לפני המפתח
@@ -120,8 +138,6 @@ $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
 grant execute on function public.bk_retention_keys() to anon, authenticated, service_role;
 
--- חתימה אחת — הגרסה בת שני הפרמטרים יורדת, וקריאה בחתימה הישנה נכשלת ברעש
-drop function if exists public.bk_retention_sweep(integer, integer);
 CREATE OR REPLACE FUNCTION public.bk_retention_sweep(p_days integer DEFAULT 30)
  RETURNS integer
  LANGUAGE plpgsql
@@ -170,13 +186,28 @@ begin
   return v_age + v_cap;
 end;
 $function$;
-revoke all on function public.bk_retention_sweep(integer) from public, anon, authenticated, service_role;
-grant execute on function public.bk_retention_sweep(integer) to service_role;
+revoke all on function public.bk_retention_sweep(p_days integer) from public, anon, authenticated, service_role;
+grant execute on function public.bk_retention_sweep(p_days integer) to service_role;
 
--- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
-select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30);');
-select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
-select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
+CREATE OR REPLACE FUNCTION public.sh_is_user()
+ RETURNS boolean
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare f record; ok boolean;
+begin
+  for f in select p.proname from pg_proc p
+           where p.pronamespace = 'public'::regnamespace and p.pronargs = 0
+             and p.proname like '%\_is\_user' and p.proname <> 'sh_is_user'
+           order by p.proname loop
+    execute format('select public.%I()', f.proname) into ok;
+    if ok then return true; end if;
+  end loop;
+  return false;
+end $function$;
+revoke all on function public.sh_is_user() from public, anon, authenticated, service_role;
+grant execute on function public.sh_is_user() to authenticated, service_role;
 
 -- גריעת המצבות — הגריעה היחידה במסד, בסף של TOMB_TTL_MS; רשימת הטבלאות נקראת מהמסד בכל ריצה ואינה מוקלדת
 CREATE OR REPLACE FUNCTION public.tomb_retention_sweep(p_days integer)
@@ -219,39 +250,101 @@ begin
   return v_all;
 end;
 $function$;
-revoke all on function public.tomb_retention_sweep(integer) from public, anon, authenticated, service_role;
-grant execute on function public.tomb_retention_sweep(integer) to service_role;
+revoke all on function public.tomb_retention_sweep(p_days integer) from public, anon, authenticated, service_role;
+grant execute on function public.tomb_retention_sweep(p_days integer) to service_role;
+
+-- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon.
+revoke all on table public.sh_auth_log from anon, authenticated;
+grant all on table public.sh_auth_log to service_role;
+revoke all on sequence public.sh_auth_log_id_seq from anon, authenticated;
+grant usage, select, update on sequence public.sh_auth_log_id_seq to anon, authenticated, service_role;
+revoke all on table public.sh_backup from anon, authenticated;
+grant select, insert on table public.sh_backup to anon, authenticated;
+grant all on table public.sh_backup to service_role;
+revoke all on sequence public.sh_backup_id_seq from anon, authenticated;
+grant usage, select, update on sequence public.sh_backup_id_seq to anon, authenticated, service_role;
+revoke all on table public.sh_keys from anon, authenticated;
+grant all on table public.sh_keys to service_role;
+revoke all on table public.sh_logins from anon, authenticated;
+grant select, insert, update on table public.sh_logins to anon, authenticated;
+grant all on table public.sh_logins to service_role;
+revoke all on table public.sh_push from anon, authenticated;
+grant all on table public.sh_push to service_role;
+revoke all on sequence public.sh_push_id_seq from anon, authenticated;
+grant usage, select, update on sequence public.sh_push_id_seq to anon, authenticated, service_role;
+revoke all on table public.sh_sync_log from anon, authenticated;
+grant select, insert on table public.sh_sync_log to anon, authenticated;
+grant all on table public.sh_sync_log to service_role;
+revoke all on sequence public.sh_sync_log_id_seq from anon, authenticated;
+grant usage, select, update on sequence public.sh_sync_log_id_seq to anon, authenticated, service_role;
+
+alter table public.sh_auth_log enable row level security;
+alter table public.sh_backup enable row level security;
+drop policy if exists sh_backup_insert on public.sh_backup;
+create policy sh_backup_insert on public.sh_backup as permissive for insert to authenticated with check (( SELECT sh_is_user() AS sh_is_user));
+drop policy if exists sh_backup_select on public.sh_backup;
+create policy sh_backup_select on public.sh_backup as permissive for select to authenticated using (( SELECT sh_is_user() AS sh_is_user));
+alter table public.sh_keys enable row level security;
+alter table public.sh_logins enable row level security;
+alter table public.sh_push enable row level security;
+alter table public.sh_sync_log enable row level security;
+drop policy if exists sh_sync_log_insert on public.sh_sync_log;
+create policy sh_sync_log_insert on public.sh_sync_log as permissive for insert to authenticated with check (( SELECT sh_is_user() AS sh_is_user));
+drop policy if exists sh_sync_log_select on public.sh_sync_log;
+create policy sh_sync_log_select on public.sh_sync_log as permissive for select to authenticated using (( SELECT sh_is_user() AS sh_is_user));
+
+-- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
+-- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
+-- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
+-- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
+select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30);');
+select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
+select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 select cron.schedule('tomb_retention_daily', '30 3 * * *', 'select public.tomb_retention_sweep(90);');
 
 -- ── הנהלה רוחנית ──
 
-create table if not exists public.hr_marks (
+-- טיוטות הטפסים הציבוריים (טופס הרישום · קבלה לישיבה) — רק דרך השער hr-gate; המפתח — גיבוב של הטופס ומספר הזהות.
+create table if not exists public.hr_drafts (
+  form text not null,
+  key text not null,
+  draft jsonb not null,
+  updated_at bigint not null,
+  constraint hr_drafts_pkey PRIMARY KEY (form, key)
+);
+
+-- טופס הרישום הציבורי: טבלת שליחה-בלבד — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, במפתח השירות).
+-- מספרי זהות, סריקות ומידע רפואי — ולכן אינה במראה, אינה ב-PUSH_TABLES ואינה בגיבוי.
+create table if not exists public.hr_enroll (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  school_year integer not null,
+  data jsonb not null,
+  files jsonb not null default '{}'::jsonb,
+  track jsonb not null default '{}'::jsonb,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_enroll_pkey PRIMARY KEY (client_id)
+);
+
+create table if not exists public.hr_exam_marks (
   client_id text not null,
   session_client_id text not null,
   student_client_id text not null,
   session_date date not null,
   status text,
   minutes smallint,
+  note text,
+  grade smallint,
+  scan text,
   deleted boolean not null default false,
   updated_at bigint not null,
   deleted_at timestamp with time zone,
   deleted_by text,
-  constraint hr_marks_pkey PRIMARY KEY (client_id)
-);
-
-create table if not exists public.hr_sessions (
-  client_id text not null,
-  session text not null,
-  session_date date not null,
-  created_by_client_id text,
-  filled_by_name text,
-  created_at timestamp with time zone,
-  deleted_by text,
-  open boolean,
-  deleted boolean not null default false,
-  updated_at bigint not null,
-  deleted_at timestamp with time zone,
-  constraint hr_sessions_pkey PRIMARY KEY (client_id)
+  constraint hr_exam_marks_pkey PRIMARY KEY (client_id),
+  constraint hr_exam_marks_grade_range CHECK (((grade IS NULL) OR ((grade >= 0) AND (grade <= 100))))
 );
 
 create table if not exists public.hr_exams (
@@ -271,27 +364,88 @@ create table if not exists public.hr_exams (
   draft_file text,
   in_report boolean,
   cls text,
+  extra boolean not null default false,
   constraint hr_exams_pkey PRIMARY KEY (client_id),
-  -- המבחן לפי שיעור — השלוחים נבחנים עם ג׳
-  constraint hr_exams_cls_check CHECK ((cls IS NULL) OR (cls = ANY (ARRAY['a'::text, 'b'::text, 'g'::text])))
+  constraint hr_exams_cls_check CHECK (((cls IS NULL) OR (cls = ANY (ARRAY['a'::text, 'b'::text, 'g'::text]))))
 );
 
-create table if not exists public.hr_exam_marks (
+-- קבלה לישיבה (app/intake.html): טבלת שליחה-בלבד כמו hr_enroll — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, mod:'intake').
+-- הקבצים — דרך השער, במאגר הפרטי תחת intake/<שנה>/<מזהה>/. המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
+create table if not exists public.hr_intake (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  school_year integer not null,
+  data jsonb not null,
+  files jsonb not null default '{}'::jsonb,
+  track jsonb not null default '{}'::jsonb,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_intake_pkey PRIMARY KEY (client_id)
+);
+
+create table if not exists public.hr_marks (
   client_id text not null,
   session_client_id text not null,
   student_client_id text not null,
   session_date date not null,
   status text,
   minutes smallint,
-  note text,
-  grade smallint,
-  scan text,
   deleted boolean not null default false,
   updated_at bigint not null,
   deleted_at timestamp with time zone,
   deleted_by text,
-  constraint hr_exam_marks_pkey PRIMARY KEY (client_id),
-  constraint hr_exam_marks_grade_range CHECK ((grade IS NULL) OR ((grade >= 0) AND (grade <= 100)))
+  constraint hr_marks_pkey PRIMARY KEY (client_id)
+);
+
+-- השיבוץ לאסיפת הורים (app/meeting.html · ההגדרה meeting_cfg) — רק דרך השער hr-gate; שעה אחת לרב, ורב אחד פעם אחת לתלמיד.
+create table if not exists public.hr_meeting (
+  client_id text not null,
+  created_at timestamp with time zone not null default now(),
+  meet_date date not null,
+  student_client_id text not null,
+  student_name text,
+  cls text,
+  staff_id text not null,
+  staff_name text,
+  slot text not null,
+  updated_at bigint not null,
+  deleted boolean not null default false,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_meeting_pkey PRIMARY KEY (client_id),
+  constraint hr_meeting_slot_check CHECK ((slot ~ '^[0-2][0-9]:[0-5][0-9]$'::text))
+);
+
+-- הקבצים (מבחנים, תיק אישי, טופס הרישום וקבלה לישיבה) — במאגר הפרטי hanhala-ruchanit-files שב-GitHub, רק דרך השער hr-gate; אין להם דלי במסד.
+-- גיליון הציונים וההנהגה: השדות שהרב ממלא — שורה לכל חודש עברי, תלמיד ושדה. client_id = <חודש>:<תלמיד>:<שדה>.
+create table if not exists public.hr_report_vals (
+  client_id text not null,
+  month text not null,
+  student_client_id text not null,
+  field text not null,
+  value text,
+  deleted boolean not null default false,
+  updated_at bigint not null,
+  deleted_at timestamp with time zone,
+  deleted_by text,
+  constraint hr_report_vals_pkey PRIMARY KEY (client_id)
+);
+
+create table if not exists public.hr_sessions (
+  client_id text not null,
+  session text not null,
+  session_date date not null,
+  created_by_client_id text,
+  filled_by_name text,
+  created_at timestamp with time zone,
+  deleted_by text,
+  open boolean,
+  deleted boolean not null default false,
+  updated_at bigint not null,
+  deleted_at timestamp with time zone,
+  constraint hr_sessions_pkey PRIMARY KEY (client_id)
 );
 
 create table if not exists public.hr_settings (
@@ -357,43 +511,79 @@ create table if not exists public.hr_users (
   pass_salt text,
   pass_fp text,
   sort integer,
+  notify boolean not null default false,
   constraint hr_users_pkey PRIMARY KEY (client_id),
   constraint hr_users_username_key UNIQUE (username),
   constraint hr_users_role_check CHECK ((role = ANY (ARRAY['admin'::text, 'manager'::text, 'junior'::text])))
 );
 
-create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (session_date DESC);
-create index if not exists hr_marks_session_idx ON public.hr_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_client_id);
-create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_client_id, session_date DESC);
-create index if not exists hr_exams_date_idx ON public.hr_exams USING btree (session_date DESC);
-create index if not exists hr_exams_updated_idx ON public.hr_exams USING btree (updated_at DESC);
+create index if not exists hr_enroll_year_idx ON public.hr_enroll USING btree (school_year);
 create index if not exists hr_exam_marks_date_idx ON public.hr_exam_marks USING btree (session_date DESC);
 create index if not exists hr_exam_marks_session_idx ON public.hr_exam_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_exam_marks_session_student ON public.hr_exam_marks USING btree (session_client_id, student_client_id);
+create unique index if not exists hr_exam_marks_session_student ON public.hr_exam_marks USING btree (session_client_id, student_client_id);
 create index if not exists hr_exam_marks_student_date_idx ON public.hr_exam_marks USING btree (student_client_id, session_date DESC);
+create index if not exists hr_exams_date_idx ON public.hr_exams USING btree (session_date DESC);
+create index if not exists hr_exams_updated_idx ON public.hr_exams USING btree (updated_at DESC);
+create index if not exists hr_intake_year_idx ON public.hr_intake USING btree (school_year);
+create index if not exists hr_marks_date_idx ON public.hr_marks USING btree (session_date DESC);
+create index if not exists hr_marks_session_idx ON public.hr_marks USING btree (session_client_id);
+create unique index if not exists hr_marks_session_student ON public.hr_marks USING btree (session_client_id, student_client_id);
+create index if not exists hr_marks_student_date_idx ON public.hr_marks USING btree (student_client_id, session_date DESC);
+create unique index if not exists hr_meeting_slot_uq ON public.hr_meeting USING btree (meet_date, staff_id, slot) WHERE (NOT deleted);
+create unique index if not exists hr_meeting_staff_uq ON public.hr_meeting USING btree (meet_date, student_client_id, staff_id) WHERE (NOT deleted);
+create index if not exists hr_report_vals_month_idx ON public.hr_report_vals USING btree (month);
+create index if not exists hr_report_vals_updated_idx ON public.hr_report_vals USING btree (updated_at DESC);
 create index if not exists hr_sessions_date_idx ON public.hr_sessions USING btree (session_date DESC);
 create index if not exists hr_sessions_session_date_idx ON public.hr_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sessions_updated_idx ON public.hr_sessions USING btree (updated_at DESC);
 create index if not exists hr_sleep_marks_date_idx ON public.hr_sleep_marks USING btree (session_date DESC);
 create index if not exists hr_sleep_marks_session_idx ON public.hr_sleep_marks USING btree (session_client_id);
-create UNIQUE index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_client_id);
+create unique index if not exists hr_sleep_marks_session_student ON public.hr_sleep_marks USING btree (session_client_id, student_client_id);
 create index if not exists hr_sleep_marks_student_date_idx ON public.hr_sleep_marks USING btree (student_client_id, session_date DESC);
 create index if not exists hr_sleep_sessions_date_idx ON public.hr_sleep_sessions USING btree (session_date DESC);
 create index if not exists hr_sleep_sessions_session_date_idx ON public.hr_sleep_sessions USING btree (session, session_date DESC);
 create index if not exists hr_sleep_sessions_updated_idx ON public.hr_sleep_sessions USING btree (updated_at DESC);
 create index if not exists hr_students_rows_updated_idx ON public.hr_students_rows USING btree (updated_at DESC);
 
+CREATE OR REPLACE FUNCTION public.hr_is_user()
+ RETURNS boolean
+ LANGUAGE sql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select exists (
+    select 1 from public.hr_users u
+    where u.active is true
+      and 'hr-' || lower(regexp_replace(u.client_id, '[^A-Za-z0-9-]', '', 'g')) || '@users.hanhala-ruchanit.ygtotlrl-lab.github.io'
+          = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+$function$;
+revoke all on function public.hr_is_user() from public, anon, authenticated, service_role;
+grant execute on function public.hr_is_user() to anon, authenticated, service_role;
+
 -- revoke לפני grant — GRANT מוסיף ואינו מחליף, וטבלה חדשה ב-Supabase נולדת עם DELETE ו-TRUNCATE ל-anon.
-revoke all on table public.hr_exams from anon, authenticated;
-grant select, insert, update on table public.hr_exams to anon, authenticated;
-grant all on table public.hr_exams to service_role;
+revoke all on table public.hr_drafts from anon, authenticated;
+grant all on table public.hr_drafts to service_role;
+revoke all on table public.hr_enroll from anon, authenticated;
+grant insert on table public.hr_enroll to anon, authenticated;
+grant all on table public.hr_enroll to service_role;
 revoke all on table public.hr_exam_marks from anon, authenticated;
 grant select, insert, update on table public.hr_exam_marks to anon, authenticated;
 grant all on table public.hr_exam_marks to service_role;
+revoke all on table public.hr_exams from anon, authenticated;
+grant select, insert, update on table public.hr_exams to anon, authenticated;
+grant all on table public.hr_exams to service_role;
+revoke all on table public.hr_intake from anon, authenticated;
+grant insert on table public.hr_intake to anon, authenticated;
+grant all on table public.hr_intake to service_role;
 revoke all on table public.hr_marks from anon, authenticated;
 grant select, insert, update on table public.hr_marks to anon, authenticated;
 grant all on table public.hr_marks to service_role;
+revoke all on table public.hr_meeting from anon, authenticated;
+grant all on table public.hr_meeting to service_role;
+revoke all on table public.hr_report_vals from anon, authenticated;
+grant select, insert, update on table public.hr_report_vals to anon, authenticated;
+grant all on table public.hr_report_vals to service_role;
 revoke all on table public.hr_sessions from anon, authenticated;
 grant select, insert, update on table public.hr_sessions to anon, authenticated;
 grant all on table public.hr_sessions to service_role;
@@ -413,143 +603,37 @@ revoke all on table public.hr_users from anon, authenticated;
 grant select, insert, update on table public.hr_users to anon, authenticated;
 grant all on table public.hr_users to service_role;
 
-alter table public.hr_exams enable row level security;
-drop policy if exists hr_exams_all on public.hr_exams;
-create policy hr_exams_all on public.hr_exams as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_exam_marks enable row level security;
-drop policy if exists hr_exam_marks_all on public.hr_exam_marks;
-create policy hr_exam_marks_all on public.hr_exam_marks as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_marks enable row level security;
-drop policy if exists hr_marks_all on public.hr_marks;
-create policy hr_marks_all on public.hr_marks as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_sessions enable row level security;
-drop policy if exists hr_sessions_all on public.hr_sessions;
-create policy hr_sessions_all on public.hr_sessions as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_settings enable row level security;
-drop policy if exists hr_settings_all on public.hr_settings;
-create policy hr_settings_all on public.hr_settings as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_sleep_marks enable row level security;
-drop policy if exists hr_sleep_marks_all on public.hr_sleep_marks;
-create policy hr_sleep_marks_all on public.hr_sleep_marks as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_sleep_sessions enable row level security;
-drop policy if exists hr_sleep_sessions_all on public.hr_sleep_sessions;
-create policy hr_sleep_sessions_all on public.hr_sleep_sessions as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_students_rows enable row level security;
-drop policy if exists hr_students_rows_all on public.hr_students_rows;
-create policy hr_students_rows_all on public.hr_students_rows as permissive for all to anon, authenticated using (true) with check (true);
-alter table public.hr_users enable row level security;
-drop policy if exists hr_users_all on public.hr_users;
-create policy hr_users_all on public.hr_users as permissive for all to anon, authenticated using (true) with check (true);
-
--- הקבצים (מבחנים, תיק אישי, טופס הרישום וקבלה לישיבה) — במאגר הפרטי hanhala-ruchanit-files שב-GitHub, רק דרך השער hr-gate; אין להם דלי במסד.
-
--- גיליון הציונים וההנהגה: השדות שהרב ממלא — שורה לכל חודש עברי, תלמיד ושדה. client_id = <חודש>:<תלמיד>:<שדה>.
-create table if not exists public.hr_report_vals (
-  client_id text not null,
-  month text not null,
-  student_client_id text not null,
-  field text not null,
-  value text,
-  deleted boolean not null default false,
-  updated_at bigint not null,
-  deleted_at timestamp with time zone,
-  deleted_by text,
-  constraint hr_report_vals_pkey primary key (client_id)
-);
-create index if not exists hr_report_vals_month_idx on public.hr_report_vals using btree (month);
-create index if not exists hr_report_vals_updated_idx on public.hr_report_vals using btree (updated_at desc);
-revoke all on table public.hr_report_vals from anon, authenticated;
-grant select, insert, update on table public.hr_report_vals to anon, authenticated;
-grant all on table public.hr_report_vals to service_role;
-alter table public.hr_report_vals enable row level security;
-drop policy if exists hr_report_vals_all on public.hr_report_vals;
-create policy hr_report_vals_all on public.hr_report_vals as permissive for all to anon, authenticated using (true) with check (true);
-
--- טופס הרישום הציבורי: טבלת שליחה-בלבד — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, במפתח השירות).
--- מספרי זהות, סריקות ומידע רפואי — ולכן אינה במראה, אינה ב-PUSH_TABLES ואינה בגיבוי.
-create table if not exists public.hr_enroll (
-  client_id text not null,
-  created_at timestamp with time zone not null default now(),
-  school_year integer not null,
-  data jsonb not null,
-  files jsonb not null default '{}'::jsonb,
-  track jsonb not null default '{}'::jsonb,
-  updated_at bigint not null,
-  deleted boolean not null default false,
-  deleted_at timestamp with time zone,
-  deleted_by text,
-  constraint hr_enroll_pkey primary key (client_id)
-);
-create index if not exists hr_enroll_year_idx on public.hr_enroll using btree (school_year);
-revoke all on table public.hr_enroll from anon, authenticated;
-grant insert on table public.hr_enroll to anon, authenticated;
-grant all on table public.hr_enroll to service_role;
-alter table public.hr_enroll enable row level security;
-drop policy if exists hr_enroll_insert on public.hr_enroll;
-create policy hr_enroll_insert on public.hr_enroll as permissive for insert to anon, authenticated
-  with check (deleted = false and track = '{}'::jsonb);
-
--- תמונות הדפים הציבוריים (המצגת שבראש טופס הרישום) — דלי ציבורי; ההעלאה מהגדרות הטופס.
-insert into storage.buckets (id, name, public) values ('hr-public', 'hr-public', true) on conflict (id) do nothing;
-drop policy if exists hr_public_insert on storage.objects;
-create policy hr_public_insert on storage.objects for insert to anon, authenticated with check (bucket_id = 'hr-public');
-
--- קבלה לישיבה (app/intake.html): טבלת שליחה-בלבד כמו hr_enroll — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, mod:'intake').
--- הקבצים — דרך השער, במאגר הפרטי תחת intake/<שנה>/<מזהה>/. המסמכים לצפייה ולחתימה — בדלי הציבורי hr-public, תחת intake/.
-create table if not exists public.hr_intake (
-  client_id text not null,
-  created_at timestamp with time zone not null default now(),
-  school_year integer not null,
-  data jsonb not null,
-  files jsonb not null default '{}'::jsonb,
-  track jsonb not null default '{}'::jsonb,
-  updated_at bigint not null,
-  deleted boolean not null default false,
-  deleted_at timestamp with time zone,
-  deleted_by text,
-  constraint hr_intake_pkey primary key (client_id)
-);
-create index if not exists hr_intake_year_idx on public.hr_intake using btree (school_year);
-revoke all on table public.hr_intake from anon, authenticated;
-grant insert on table public.hr_intake to anon, authenticated;
-grant all on table public.hr_intake to service_role;
-alter table public.hr_intake enable row level security;
-drop policy if exists hr_intake_insert on public.hr_intake;
-create policy hr_intake_insert on public.hr_intake as permissive for insert to anon, authenticated
-  with check (deleted = false and track = '{}'::jsonb);
-
--- טיוטות הטפסים הציבוריים (טופס הרישום · קבלה לישיבה) — רק דרך השער hr-gate; המפתח — גיבוב של הטופס ומספר הזהות.
-create table if not exists public.hr_drafts (
-  form text not null,
-  key text not null,
-  draft jsonb not null,
-  updated_at bigint not null,
-  constraint hr_drafts_pkey primary key (form, key)
-);
-revoke all on table public.hr_drafts from anon, authenticated;
-grant all on table public.hr_drafts to service_role;
 alter table public.hr_drafts enable row level security;
-
--- השיבוץ לאסיפת הורים (app/meeting.html · ההגדרה meeting_cfg) — רק דרך השער hr-gate; שעה אחת לרב, ורב אחד פעם אחת לתלמיד.
-create table if not exists public.hr_meeting (
-  client_id text not null,
-  created_at timestamp with time zone not null default now(),
-  meet_date date not null,
-  student_client_id text not null,
-  student_name text,
-  cls text,
-  staff_id text not null,
-  staff_name text,
-  slot text not null,
-  updated_at bigint not null,
-  deleted boolean not null default false,
-  deleted_at timestamp with time zone,
-  deleted_by text,
-  constraint hr_meeting_pkey primary key (client_id),
-  constraint hr_meeting_slot_check check (slot ~ '^[0-2][0-9]:[0-5][0-9]$')
-);
-create unique index if not exists hr_meeting_slot_uq on public.hr_meeting (meet_date, staff_id, slot) where not deleted;
-create unique index if not exists hr_meeting_staff_uq on public.hr_meeting (meet_date, student_client_id, staff_id) where not deleted;
-revoke all on table public.hr_meeting from anon, authenticated;
-grant all on table public.hr_meeting to service_role;
+alter table public.hr_enroll enable row level security;
+alter table public.hr_exam_marks enable row level security;
+drop policy if exists hr_exam_marks_users on public.hr_exam_marks;
+create policy hr_exam_marks_users on public.hr_exam_marks as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_exams enable row level security;
+drop policy if exists hr_exams_users on public.hr_exams;
+create policy hr_exams_users on public.hr_exams as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_intake enable row level security;
+alter table public.hr_marks enable row level security;
+drop policy if exists hr_marks_users on public.hr_marks;
+create policy hr_marks_users on public.hr_marks as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
 alter table public.hr_meeting enable row level security;
+alter table public.hr_report_vals enable row level security;
+drop policy if exists hr_report_vals_users on public.hr_report_vals;
+create policy hr_report_vals_users on public.hr_report_vals as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_sessions enable row level security;
+drop policy if exists hr_sessions_users on public.hr_sessions;
+create policy hr_sessions_users on public.hr_sessions as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_settings enable row level security;
+drop policy if exists hr_settings_users on public.hr_settings;
+create policy hr_settings_users on public.hr_settings as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_sleep_marks enable row level security;
+drop policy if exists hr_sleep_marks_users on public.hr_sleep_marks;
+create policy hr_sleep_marks_users on public.hr_sleep_marks as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_sleep_sessions enable row level security;
+drop policy if exists hr_sleep_sessions_users on public.hr_sleep_sessions;
+create policy hr_sleep_sessions_users on public.hr_sleep_sessions as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_students_rows enable row level security;
+drop policy if exists hr_students_rows_users on public.hr_students_rows;
+create policy hr_students_rows_users on public.hr_students_rows as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+alter table public.hr_users enable row level security;
+drop policy if exists hr_users_users on public.hr_users;
+create policy hr_users_users on public.hr_users as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
