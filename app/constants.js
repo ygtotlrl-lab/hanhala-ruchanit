@@ -183,14 +183,12 @@ var MSG_MARK_UPDATED = 'סימון עודכן';
 var MSG_ABSENCE_ALERT = 'התראת חיסורים';
 // שם המוסד — בראש כל מסמך מיוצא ובשוליו.
 var HR_ORG = 'ישיבת תומכי תמימים ראשון לציון';
-// גופני האפליקציה (Heebo, app/fonts) — מוטמעים בכל מסמך מיוצא.
+// גופן האפליקציה (Heebo המשתנה, core/fonts) — מוטמע בכל מסמך מיוצא.
 var HR_FONT_RANGE_HE = 'U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F';
 var HR_FONT_RANGE_LAT = 'U+0000-00FF,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD';
 var HR_EXPORT_FONTS = [
-  { url: 'app/fonts/heebo-hebrew-400.woff2', weight: 400, range: HR_FONT_RANGE_HE },
-  { url: 'app/fonts/heebo-hebrew-700.woff2', weight: 700, range: HR_FONT_RANGE_HE },
-  { url: 'app/fonts/heebo-latin-400.woff2', weight: 400, range: HR_FONT_RANGE_LAT },
-  { url: 'app/fonts/heebo-latin-700.woff2', weight: 700, range: HR_FONT_RANGE_LAT }
+  { url: 'core/fonts/heebo-hebrew.woff2', weight: '100 900', range: HR_FONT_RANGE_HE },
+  { url: 'core/fonts/heebo-latin.woff2', weight: '100 900', range: HR_FONT_RANGE_LAT }
 ];
 // סף החריגה החודשי — בהתראה ובמסגרת האריח בהשגחה.
 var HR_ALERT_ABS = 20, HR_ALERT_LATE = 300;
