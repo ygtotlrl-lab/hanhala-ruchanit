@@ -87,7 +87,7 @@ async function _doLoginInner() {
   // authoritativeNo — אין משתמש פעיל כזה או שהסיסמה לא התאימה: תשובה סמכותית, ואסור ליפול אחריה לעותק המקומי,
   // אחרת סיסמה שהוחלפה בענן או משתמש שהושבת ממשיכים להיכנס מהמטמון.
   if (a && a.kind === 'bad' && a.why === 'nofp') {
-    authLog(false, 'no_fp_online', username);
+    if (!a.logged) authLog(false, 'no_fp_online', username);
     showErr(MSG_NO_FP_ONLINE); return;
   }
   var authoritativeNo = !!(a && a.kind === 'bad');
@@ -104,7 +104,7 @@ async function _doLoginInner() {
     // שער השרת (התגובות לטפסים) — ברקע, בלי להמתין
     gateLogin(username, pass);
   } else if (authoritativeNo) {
-    authLog(false, 'wrong_credentials_online', username);
+    if (!a.logged) authLog(false, 'wrong_credentials_online', username);
     showErr(MSG_BAD_LOGIN, 'bad'); return;
   } else {
     // שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) אינה תשובה סמכותית — ולכן מנסים את העותק המקומי.
@@ -365,8 +365,8 @@ async function confirmSwitch() {
     u=cu;
     AUTH.offlineLogin=true;
   } else {
-    if(a.kind==='bad'&&a.why==='nofp'){authLog(false,'switch_no_fp_online',String(S._hrSwitchId));errEl.textContent=MSG_NO_FP_ONLINE;return;}
-    if(a.kind!=='ok'){authLog(false,'switch_wrong_credentials_online',String(S._hrSwitchId));errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
+    if(a.kind==='bad'&&a.why==='nofp'){if(!a.logged)authLog(false,'switch_no_fp_online',String(S._hrSwitchId));errEl.textContent=MSG_NO_FP_ONLINE;return;}
+    if(a.kind!=='ok'){if(!a.logged)authLog(false,'switch_wrong_credentials_online',String(S._hrSwitchId));errEl.textContent=MSG_SWITCH_WRONG_PASS;return;}
     u=a.user;
     AUTH.offlineLogin=false;
     // u נשמר במפורש — הרענון המלא רץ מ-authLog, אחרי AUTH.user=u.

@@ -257,7 +257,7 @@ function _settingsPaint(cfg) {
     fcCardHTML({ id: 'fc-mt-when', ico: 'calendar', title: 'מועד האסיפה', open: was ? was === 'fc-mt-when' : true,
       sum: cfg.date ? hrDayHebFmt(cfg.date) + ' · \u2066' + (cfg.from || '') + '–' + (cfg.to || '') + '\u2069' : 'לא נקבע תאריך',
       body: '<div class="mt-when"><label>תאריך<input type="date" id="mt-date" value="' + esc(cfg.date || '') + '"></label>' +
-          '<label>דקות לפגישה<input type="number" id="mt-slot" min="5" max="60" step="5" value="' + (cfg.slot || 10) + '"></label>' +
+          '<label>דקות לפגישה<input type="text" inputmode="numeric" maxlength="2" id="mt-slot" value="' + (cfg.slot || 10) + '"></label>' +
           '<label>משעה<input type="time" id="mt-from" value="' + esc(cfg.from || '17:00') + '"></label>' +
           '<label>עד שעה<input type="time" id="mt-to" value="' + esc(cfg.to || '21:00') + '"></label></div>' +
         '<div id="mt-tl-box">' + _tlHTML(cfg) + '</div>' +
@@ -325,7 +325,7 @@ function meetingSave() {
     return { from: row.querySelector('[data-k="from"]').value, to: row.querySelector('[data-k="to"]').value };
   }).filter(function (b) { return b.from && b.to; });
   var cur = _mtCfgNow();
-  var next = { year: _mtYearOf(cur), date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.max(5, parseInt(v('mt-slot'), 10) || 10),
+  var next = { year: _mtYearOf(cur), date: v('mt-date'), from: v('mt-from') || '17:00', to: v('mt-to') || '21:00', slot: Math.min(60, Math.max(5, parseInt(v('mt-slot'), 10) || 10)),
                open: !!(document.getElementById('mt-open') || {}).checked, phone: v('mt-phone').trim(), blocked: blocked, flyer: v('mt-flyer'), texts: textsRead(document.getElementById('mt-set')) };
   S._mtCfg = next;
   var p = hrCfgSet(MT_KEY, next);

@@ -219,7 +219,7 @@ function _settingsPaint(cfg) {
       sum: (cfg.images || []).length + ' תמונות · כל ' + (cfg.interval || 4) + ' שניות',
       body: '<div class="en-imgs" id="en-imgs">' + (cfg.images || []).map(_imgRow).join('') +
           '<label class="fc-addimg en-upl">' + icon('plus') + '<input type="file" accept="image/*" multiple data-chg="en-img" aria-label="הוספת תמונות"></label></div>' +
-        '<div class="en-int"><span>החלפת תמונה כל</span><input type="number" min="2" max="20" id="en-interval" aria-label="שניות" value="' + esc(cfg.interval || 4) + '"><span>שניות</span></div>' }) +
+        '<div class="en-int"><span>החלפת תמונה כל</span><input type="text" inputmode="numeric" maxlength="2" id="en-interval" aria-label="שניות" value="' + esc(cfg.interval || 4) + '"><span>שניות</span></div>' }) +
     fcCardHTML({ id: 'fc-en-fields', ico: 'fields', title: 'השדות', open: was === 'fc-en-fields',
       sum: cfg.fields.filter(function (f) { return f.type === 'section'; }).length + ' קבוצות · ' + fs.length + ' שדות · ' + fs.filter(function (f) { return f.req; }).length + ' חובה',
       body: '<div class="en-fields fc-fields fc-fields-top" id="en-fields">' + cfg.fields.map(function (f) { return _fieldRow(f); }).join('') + '</div>' +

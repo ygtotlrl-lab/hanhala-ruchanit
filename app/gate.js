@@ -3,6 +3,7 @@
 // הקבצים — במאגר הפרטי hanhala-ruchanit-files, רק דרך השער: העלאה בגוף הבקשה, ופתיחה בקישור חתום שהשער מגיש.
 import { toast } from '../core/ui.js';
 import { lsGet, lsRemove, lsSet } from '../core/storage.js';
+import { getDeviceId } from '../core/util.js';
 import { MSG_UPLOAD_FAIL, MSG_UPLOAD_NEEDS_NET, MSG_FILE_NO_PERM, MSG_FILE_OPEN_FAIL, MSG_NO_PERM } from './constants.js';
 import { AUTH, S } from './state.js';
 
@@ -37,14 +38,16 @@ function _credOk() { return !!(_cred && AUTH.user && AUTH.user.username === _cre
 // החשבון האישי במסד (hr-auth): הכניסה עצמה — השרת בודק את שם המשתמש (או המזהה, בהחלפת משתמש) והסיסמה מול הטביעה,
 // ומחזיר את שורת המשתמש וסשן Supabase שלו; הלקוח של המסד עובר אליו, והמסד פתוח רק למשתמש מחובר שברשימה (hr_is_user).
 // התשובה: ok — המשתמש; bad — תשובה סמכותית (why: nouser · bad · nofp); net — אין רשת שמישה; server — תקלה בשרת.
+function _device() { try { return getDeviceId(); } catch (e) { return ''; } }
 async function dbAuth(who, pass) {
   var r, j;
   try {
     r = await fetch(self.APP.supabase.url + '/functions/v1/hr-auth', { method: 'POST', headers: _hdrs({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify(Object.assign({ password: pass }, who)) });
+      body: JSON.stringify(Object.assign({ password: pass, device: _device() }, who)) });
   } catch (e) { return { kind: 'net' }; }
   j = await r.json().catch(function () { return {}; });
-  if (r.status === 401) return { kind: 'bad', why: j.why || 'bad' };
+  // logged — השרת רשם את הכישלון ביומן בעצמו, מיד; הלקוח רושם רק מה שהשרת לא ראה
+  if (r.status === 401) return { kind: 'bad', why: j.why || 'bad', logged: j.logged === true };
   if (r.status !== 200 || !j.session || !j.user) return { kind: 'server' };
   var x = await S.SB.auth.setSession({ access_token: j.session.access_token, refresh_token: j.session.refresh_token });
   if (x.error) return { kind: 'server' };

@@ -64,7 +64,7 @@ function hrRenderExam(st, forceInfo) {
     return '<div class="ex-row' + (g != null ? ' ex-row-done' : '') + '">' +
       '<div class="at-row-class">' + esc(cls) + '</div>' +
       '<div class="at-row-name">' + esc(s.name) + '</div>' +
-      '<input aria-label="ציון (0–100)" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="ציון" class="ex-grade" ' +
+      '<input aria-label="ציון (0–100)" type="text" inputmode="numeric" maxlength="3" placeholder="ציון" class="ex-grade" ' +
         'value="' + (g != null ? g : '') + '" data-inp="' + p + '-grade" data-chg="' + p + '-grade" data-id="' + sid + '">' +
       '<div class="ex-scan">' + scan +
         '<label class="ex-scan-up" title="' + (m.scan ? 'החלפת הסריקה בקובץ' : 'העלאת קובץ') + '">' + icon('upload') + '<span>' + (m.scan ? 'החלפה' : 'קובץ') + '</span>' +
