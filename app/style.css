@@ -335,7 +335,7 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
 
 /* כפתור המשתמש — עיגול ראשי התיבות בטלפון, השם המלא מ-900px */
 .avatar-ini{display:none}
-@media (max-width:899px){
+@media not all and (min-width:900px){
   .avatar-btn{width:44px;height:44px;padding:0;border-radius:50%;justify-content:center;font-size:var(--fs-3);font-weight:800}
   .avatar-btn .avatar-ico,.avatar-btn .hdr-username{display:none}
   .avatar-btn .avatar-ini{display:inline}

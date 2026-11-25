@@ -33,7 +33,7 @@
 .rp-sec.on{border-color:var(--brand-ink);background:var(--brand-soft)}.rp-sec.on .rp-sec-ch{transform:rotate(180deg)}
 .rp-sec + .rp-fills{margin-top:var(--sp-3)}
 .rp-fills{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:var(--sp-3)}
-@media (max-width:520px){ .rp-fills{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media not all and (min-width:480px){ .rp-fills{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .rp-fill-btn{display:flex;align-items:center;justify-content:space-between;gap:var(--sp-3);min-height:52px;padding:var(--sp-3) var(--sp-5);border:1.5px solid var(--border);border-radius:var(--r-4);background:var(--card);color:var(--text);font-family:Heebo;font-size:var(--fs-3);font-weight:600;cursor:pointer;text-align:right}
 .rp-fill-lbl{line-height:var(--lh-2)}
 .rp-fill-n{font-size:var(--fs-1);font-weight:700;color:var(--text-3);background:var(--card-2);border-radius:var(--r-5);padding:var(--sp-1) var(--sp-3);white-space:nowrap}
@@ -112,7 +112,7 @@
 .modal-body .en-int input{margin:0;flex:none;width:64px;border:1.5px solid var(--border);border-radius:var(--r-2);padding:var(--sp-2);font-family:Heebo;font-size:var(--fs-3);text-align:center;background:var(--card);color:var(--text)}
 /* ── הגדרות הטופס (טופס רישום · קבלה לישיבה) — חלון ברוחב קריאה, מקטעים בכותרות, שורות קומפקטיות ── */
 .veil-modal .sheet:has(.en-cfg){max-width:680px}
-@media (max-width:520px){ .veil-modal .sheet:has(.en-cfg){width:100%;max-height:100vh;border-radius:0;padding:var(--sp-6)} }
+@media not all and (min-width:480px){ .veil-modal .sheet:has(.en-cfg){width:100%;max-height:100vh;border-radius:0;padding:var(--sp-6)} }
 .en-cfg{display:flex;flex-direction:column;gap:var(--sp-3)}
 .en-cfg .ss-t{font-size:var(--fs-3);font-weight:700;color:var(--brand-ink);margin-top:var(--sp-7);padding-bottom:var(--sp-3);border-bottom:1px solid var(--border)}
 .en-cfg .ss-t:first-child{margin-top:0}
@@ -156,7 +156,7 @@
 .en-cfg .in-dline .row-del-btn{height:28px}
 .in-adds{display:flex;gap:var(--sp-3)}
 .in-adds>*{flex:1}
-@media (max-width:520px){
+@media not all and (min-width:480px){
   .en-fline{flex-wrap:wrap}
   .modal-body .en-fline input[data-k=label]{flex:1 0 100%}
   .modal-body .en-fline select{flex:1 1 auto;width:auto}
@@ -243,7 +243,7 @@
 .rs-x .ico{width:16px;height:16px}
 @media (hover:hover){ .rs-x:hover{color:var(--bad);background:var(--bad-soft)} .rs-head:not(.rs-static):hover{background:var(--card-2)} }
 .mt-none{font-size:var(--fs-2);color:var(--text-3);line-height:1.6;padding:0 var(--sp-2)}
-@media (max-width:520px){ .rs-search{max-width:none;flex-basis:100%} .mt-seg{flex:1} .mt-seg button{flex:1} }
+@media not all and (min-width:480px){ .rs-search{max-width:none;flex-basis:100%} .mt-seg{flex:1} .mt-seg button{flex:1} }
 
 /* מודול «טפסים» (forms.js) — כרטיס לכל טופס, ובהגדרות — שורה לכל טופס */
 .fm-list,.fm-rows{display:flex;flex-direction:column;gap:var(--sp-5)}
@@ -269,7 +269,7 @@
 
 /* דפי ההגדרות של הטפסים — מתג ומצב, קישור, כרטיסים מתקפלים, שדות בשורה ועריכה בלחיצה */
 .veil-modal .sheet:has(.fc-page){max-width:640px;background:var(--bg)}
-@media (max-width:640px){ .veil-modal .sheet:has(.fc-page){width:100%;max-height:100vh;height:100%;border-radius:0} }
+@media not all and (min-width:640px){ .veil-modal .sheet:has(.fc-page){width:100%;max-height:100vh;height:100%;border-radius:0} }
 .fc-page{gap:var(--sp-4)}
 .modal-body input.fc-sw{appearance:none;-webkit-appearance:none;flex:none;position:relative;width:42px;height:24px;margin:0;padding:0;border:0;border-radius:999px;background:var(--border);cursor:pointer;transition:background .15s}
 .modal-body input.fc-sw::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:right .15s}
