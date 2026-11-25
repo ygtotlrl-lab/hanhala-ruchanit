@@ -22,6 +22,19 @@ create table if not exists public.sh_backup (
   constraint sh_backup_pkey PRIMARY KEY (id)
 );
 
+create table if not exists public.sh_history (
+  id bigint generated always as identity,
+  changed_at timestamp with time zone not null default now(),
+  table_name text not null,
+  row_key text,
+  op text not null,
+  actor text,
+  old_row jsonb,
+  new_row jsonb,
+  constraint sh_history_pkey PRIMARY KEY (id),
+  constraint sh_history_op_check CHECK ((op = ANY (ARRAY['INSERT'::text, 'UPDATE'::text, 'DELETE'::text])))
+);
+
 create table if not exists public.sh_keys (
   key text not null,
   value jsonb not null,
@@ -67,6 +80,7 @@ create table if not exists public.sh_sync_log (
 );
 
 create index if not exists sh_backup_key_created_idx ON public.sh_backup USING btree (key, created_at DESC);
+create index if not exists sh_history_table_key_idx ON public.sh_history USING btree (table_name, row_key, changed_at DESC);
 
 CREATE OR REPLACE FUNCTION public.bk_fn_def(p_name text)
  RETURNS text
@@ -90,53 +104,17 @@ grant execute on function public.bk_fn_def(p_name text) to anon, authenticated, 
 CREATE OR REPLACE FUNCTION public.bk_retention_keys()
  RETURNS text[]
  LANGUAGE sql
- IMMUTABLE
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
 AS $function$
-  select array[
-    'ANCHOR:hr_sessions', 'DIFF:hr_sessions',
-    'ANCHOR:hr_marks', 'DIFF:hr_marks',
-    'ANCHOR:hr_students_rows', 'DIFF:hr_students_rows',
-    'ANCHOR:hr_sleep_sessions', 'DIFF:hr_sleep_sessions',
-    'ANCHOR:hr_sleep_marks', 'DIFF:hr_sleep_marks',
-    'ANCHOR:hr_exams', 'DIFF:hr_exams',
-    'ANCHOR:hr_exam_marks', 'DIFF:hr_exam_marks',
-    'ANCHOR:hr_report_vals', 'DIFF:hr_report_vals',
-    'ANCHOR:hr_settings', 'DIFF:hr_settings',
-    'ANCHOR:sl_students', 'DIFF:sl_students',
-    'ANCHOR:sl_transactions', 'DIFF:sl_transactions',
-    'ANCHOR:sl_settings', 'DIFF:sl_settings',
-    'ANCHOR:sl_lookups', 'DIFF:sl_lookups',
-    'ANCHOR:rishon_ya_entries', 'DIFF:rishon_ya_entries',
-    'ANCHOR:rishon_ya_settings_rishon', 'DIFF:rishon_ya_settings_rishon',
-    'ANCHOR:ramataviv_ya_entries', 'DIFF:ramataviv_ya_entries',
-    'ANCHOR:ramataviv_ya_settings_ramataviv', 'DIFF:ramataviv_ya_settings_ramataviv',
-    'ANCHOR:g_donors', 'DIFF:g_donors',
-    'ANCHOR:g_pledges', 'DIFF:g_pledges',
-    'ANCHOR:g_txns', 'DIFF:g_txns',
-    'ANCHOR:g_tasks', 'DIFF:g_tasks',
-    'ANCHOR:g_targets', 'DIFF:g_targets',
-    'ANCHOR:g_settings', 'DIFF:g_settings',
-    'ANCHOR:g_lookups', 'DIFF:g_lookups',
-    'ANCHOR:g_plan_items', 'DIFF:g_plan_items',
-    'ANCHOR:g_notes', 'DIFF:g_notes',
-    'ANCHOR:g_loans', 'DIFF:g_loans',
-    'ANCHOR:g_budget_items', 'DIFF:g_budget_items',
-    'ANCHOR:g_loan_moves', 'DIFF:g_loan_moves',
-    'ANCHOR:g_events', 'DIFF:g_events',
-    'ANCHOR:g_shtar_people', 'DIFF:g_shtar_people',
-    'ANCHOR:g_shtar_calls', 'DIFF:g_shtar_calls',
-    'ANCHOR:g_shtar_links', 'DIFF:g_shtar_links',
-    'ANCHOR:k_settings', 'DIFF:k_settings',
-    'ANCHOR:k_pledges', 'DIFF:k_pledges',
-    'ANCHOR:k_standing_orders', 'DIFF:k_standing_orders',
-    'ANCHOR:k_so_instances', 'DIFF:k_so_instances',
-    'ANCHOR:k_entries', 'DIFF:k_entries',
-    'ANCHOR:k_lookups', 'DIFF:k_lookups',
-    'ANCHOR:s_settings', 'DIFF:s_settings'
-  ]::text[];
+  select coalesce(array_agg(distinct b.key), '{}'::text[])
+    from (select distinct key from public.sh_backup) b
+   where exists (select 1 from pg_tables t
+                  where t.schemaname = 'public' and t.tablename not like 'sh\_%'
+                    and b.key ~ ('^(ANCHOR|DIFF):([a-z]+_)?' || t.tablename || '$'))
 $function$;
 revoke all on function public.bk_retention_keys() from public, anon, authenticated, service_role;
-grant execute on function public.bk_retention_keys() to anon, authenticated, service_role;
+grant execute on function public.bk_retention_keys() to service_role;
 
 CREATE OR REPLACE FUNCTION public.bk_retention_sweep(p_days integer DEFAULT 30)
  RETURNS integer
@@ -144,50 +122,86 @@ CREATE OR REPLACE FUNCTION public.bk_retention_sweep(p_days integer DEFAULT 30)
  SECURITY DEFINER
  SET search_path TO 'public'
 AS $function$
-declare
-  v_keys text[] := public.bk_retention_keys();
-  v_age  integer := 0;
-  v_cap  integer := 0;
+declare v_keys text[] := public.bk_retention_keys(); v_age integer := 0; v_cap integer := 0;
 begin
-  if v_keys is null or cardinality(v_keys) = 0 then
-    raise exception 'bk_retention_sweep: רשימת-ההיתר ריקה — מסרב לרוץ';
-  end if;
-  if p_days is null or p_days < 7 then
-    raise exception 'bk_retention_sweep: חלון קצר מ-7 ימים — מסרב לרוץ';
-  end if;
-
-  delete from public.sh_backup
-   where key = any (v_keys)
-     and created_at < now() - make_interval(days => p_days);
+  if p_days is null or p_days < 7 then raise exception 'bk_retention_sweep: חלון קצר מ-7 ימים — מסרב לרוץ'; end if;
+  if v_keys is null or cardinality(v_keys) = 0 then return 0; end if;
+  delete from public.sh_backup where key = any (v_keys) and created_at < now() - make_interval(days => p_days);
   get diagnostics v_age = row_count;
-
-  -- התקרה נגזרת מתחילית המפתח — תקרה אחת לכל המפתחות הייתה קוצצת את הדיפרנציאלים מתחת לחלון שהם מכסים
-  with ranked as (
-    select id, key,
-           row_number() over (partition by key
-                              order by created_at desc, id desc) as rn
-      from public.sh_backup
-     where key = any (v_keys)
-  )
-  delete from public.sh_backup b
-   using ranked r
-   where b.id = r.id
-     and r.rn > case when r.key like 'ANCHOR:%' then 4
-                     when r.key like 'DIFF:%'   then 30 end;
+  with ranked as (select id, key, row_number() over (partition by key order by created_at desc, id desc) as rn from public.sh_backup where key = any (v_keys))
+  delete from public.sh_backup b using ranked r where b.id = r.id
+     and r.rn > case when r.key like 'ANCHOR:%' then 4 when r.key like 'DIFF:%' then 30 end;
   get diagnostics v_cap = row_count;
-
   if (v_age + v_cap) > 0 then
     insert into public.sh_sync_log (device_id, user_name, action, key, record_count, details)
-    values ('pg_cron', null, 'retention', null, v_age + v_cap,
-            jsonb_build_object('days', p_days,
-                               'keys', cardinality(v_keys), 'aged', v_age, 'capped', v_cap));
+    values ('pg_cron', null, 'retention', null, v_age + v_cap, jsonb_build_object('days', p_days, 'keys', cardinality(v_keys), 'aged', v_age, 'capped', v_cap));
   end if;
-
   return v_age + v_cap;
-end;
-$function$;
+end $function$;
 revoke all on function public.bk_retention_sweep(p_days integer) from public, anon, authenticated, service_role;
 grant execute on function public.bk_retention_sweep(p_days integer) to service_role;
+
+CREATE OR REPLACE FUNCTION public.sh_history_attach()
+ RETURNS integer
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare r record; k text; v integer := 0;
+begin
+  for r in
+    select c.relname from pg_class c
+     where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+       and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'updated_at' and not a.attisdropped)
+       and c.relname not like 'sh\_%'
+  loop
+    k := case when exists (select 1 from pg_attribute a where a.attrelid = (quote_ident(r.relname))::regclass and a.attname = 'client_id' and not a.attisdropped)
+              and not exists (select 1 from pg_constraint p where p.conrelid = (quote_ident(r.relname))::regclass and p.contype = 'p'
+                              and pg_get_constraintdef(p.oid) not like '%client_id%')
+              then 'client_id' else 'key' end;
+    execute format('drop trigger if exists %I on public.%I', r.relname || '_history', r.relname);
+    execute format('create trigger %I after insert or update or delete on public.%I for each row execute function public.sh_history_log(%L)', r.relname || '_history', r.relname, k);
+    v := v + 1;
+  end loop;
+  return v;
+end $function$;
+revoke all on function public.sh_history_attach() from public, anon, authenticated, service_role;
+grant execute on function public.sh_history_attach() to service_role;
+
+CREATE OR REPLACE FUNCTION public.sh_history_attach_missing()
+ RETURNS integer
+ LANGUAGE sql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+  select case when exists (
+    select 1 from pg_class c
+     where c.relnamespace = 'public'::regnamespace and c.relkind = 'r' and c.relname not like 'sh\_%'
+       and exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'updated_at' and not a.attisdropped)
+       and not exists (select 1 from pg_trigger t where t.tgrelid = c.oid and t.tgname = c.relname || '_history'))
+  then public.sh_history_attach() else 0 end
+$function$;
+revoke all on function public.sh_history_attach_missing() from public, anon, authenticated, service_role;
+grant execute on function public.sh_history_attach_missing() to service_role;
+
+CREATE OR REPLACE FUNCTION public.sh_history_log()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  o jsonb := case when tg_op in ('UPDATE','DELETE') then to_jsonb(old) end;
+  n jsonb := case when tg_op in ('INSERT','UPDATE') then to_jsonb(new) end;
+begin
+  if tg_op = 'UPDATE' and o = n then return null; end if;
+  insert into public.sh_history (table_name, row_key, op, actor, old_row, new_row)
+  values (tg_table_name, coalesce(n, o) ->> coalesce(tg_argv[0], 'client_id'), tg_op,
+          coalesce(nullif(auth.jwt() ->> 'email', ''), current_user), o, n);
+  return null;
+end $function$;
+revoke all on function public.sh_history_log() from public, anon, authenticated, service_role;
+grant execute on function public.sh_history_log() to service_role;
 
 CREATE OR REPLACE FUNCTION public.sh_is_user()
  RETURNS boolean
@@ -263,6 +277,10 @@ grant select, insert on table public.sh_backup to anon, authenticated;
 grant all on table public.sh_backup to service_role;
 revoke all on sequence public.sh_backup_id_seq from anon, authenticated;
 grant usage, select, update on sequence public.sh_backup_id_seq to anon, authenticated, service_role;
+revoke all on table public.sh_history from anon, authenticated;
+grant all on table public.sh_history to service_role;
+revoke all on sequence public.sh_history_id_seq from anon, authenticated;
+grant usage, select, update on sequence public.sh_history_id_seq to anon, authenticated, service_role;
 revoke all on table public.sh_keys from anon, authenticated;
 grant all on table public.sh_keys to service_role;
 revoke all on table public.sh_logins from anon, authenticated;
@@ -284,6 +302,7 @@ drop policy if exists sh_backup_insert on public.sh_backup;
 create policy sh_backup_insert on public.sh_backup as permissive for insert to authenticated with check (( SELECT sh_is_user() AS sh_is_user));
 drop policy if exists sh_backup_select on public.sh_backup;
 create policy sh_backup_select on public.sh_backup as permissive for select to authenticated using (( SELECT sh_is_user() AS sh_is_user));
+alter table public.sh_history enable row level security;
 alter table public.sh_keys enable row level security;
 alter table public.sh_logins enable row level security;
 alter table public.sh_push enable row level security;
@@ -294,13 +313,12 @@ drop policy if exists sh_sync_log_select on public.sh_sync_log;
 create policy sh_sync_log_select on public.sh_sync_log as permissive for select to authenticated using (( SELECT sh_is_user() AS sh_is_user));
 
 -- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
--- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
--- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
--- cron.schedule בשם קיים מעדכן את המשימה ואינו מוסיף שנייה
 select cron.schedule('bk_retention_daily', '0 3 * * *', 'select public.bk_retention_sweep(30);');
 select cron.schedule('sh_sync_log_retention', '20 3 * * *', 'delete from public.sh_sync_log where created_at < now() - interval ''30 days'';');
 select cron.schedule('cron_run_log_retention', '25 3 * * *', 'delete from cron.job_run_details where start_time < now() - interval ''30 days'' or jobid not in (select jobid from cron.job);');
 select cron.schedule('tomb_retention_daily', '30 3 * * *', 'select public.tomb_retention_sweep(90);');
+select cron.schedule('sh_history_attach', '40 3 * * *', 'select public.sh_history_attach_missing();');
+select cron.schedule('sh_history_retention', '45 3 * * *', 'delete from public.sh_history where changed_at < now() - interval ''7 years'';');
 
 -- ── הנהלה רוחנית ──
 
@@ -637,3 +655,32 @@ create policy hr_students_rows_users on public.hr_students_rows as permissive fo
 alter table public.hr_users enable row level security;
 drop policy if exists hr_users_users on public.hr_users;
 create policy hr_users_users on public.hr_users as permissive for all to authenticated using (hr_is_user()) with check (hr_is_user());
+
+drop trigger if exists hr_drafts_history on public.hr_drafts;
+create trigger hr_drafts_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_drafts FOR EACH ROW EXECUTE FUNCTION sh_history_log('key');
+drop trigger if exists hr_enroll_history on public.hr_enroll;
+create trigger hr_enroll_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_enroll FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_exam_marks_history on public.hr_exam_marks;
+create trigger hr_exam_marks_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_exam_marks FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_exams_history on public.hr_exams;
+create trigger hr_exams_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_exams FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_intake_history on public.hr_intake;
+create trigger hr_intake_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_intake FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_marks_history on public.hr_marks;
+create trigger hr_marks_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_marks FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_meeting_history on public.hr_meeting;
+create trigger hr_meeting_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_meeting FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_report_vals_history on public.hr_report_vals;
+create trigger hr_report_vals_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_report_vals FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_sessions_history on public.hr_sessions;
+create trigger hr_sessions_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_sessions FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_settings_history on public.hr_settings;
+create trigger hr_settings_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_settings FOR EACH ROW EXECUTE FUNCTION sh_history_log('key');
+drop trigger if exists hr_sleep_marks_history on public.hr_sleep_marks;
+create trigger hr_sleep_marks_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_sleep_marks FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_sleep_sessions_history on public.hr_sleep_sessions;
+create trigger hr_sleep_sessions_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_sleep_sessions FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_students_rows_history on public.hr_students_rows;
+create trigger hr_students_rows_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_students_rows FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
+drop trigger if exists hr_users_history on public.hr_users;
+create trigger hr_users_history AFTER INSERT OR DELETE OR UPDATE ON public.hr_users FOR EACH ROW EXECUTE FUNCTION sh_history_log('client_id');
