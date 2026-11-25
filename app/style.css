@@ -340,3 +340,6 @@ header{justify-content:space-between;padding:0 var(--sp-6)}
   .avatar-btn .avatar-ico,.avatar-btn .hdr-username{display:none}
   .avatar-btn .avatar-ini{display:inline}
 }
+
+/* ── גופן הכותרות — Frank Ruhl Libre (core/fonts): הכותרות בלבד, וגוף הטקסט, המספרים והטבלאות — Heebo ── */
+.hdr-page,.auth-title,.hero-title,.cs h3,.sheet-hd h3,.panel-head,.soon-title,.arc-year-head,.arc-month-head{font-family:"Frank Ruhl Libre",serif}
