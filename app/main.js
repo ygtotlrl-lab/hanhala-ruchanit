@@ -107,19 +107,9 @@ var BK_CFG = {
   user: function () { try { return (AUTH.user && AUTH.user.full_name) ? AUTH.user.full_name : null; } catch (e) { return null; } },
   // ריק כי hr_users מוחרגת כולה מהגיבוי; מנגנון הסינון נשאר דרוך לסוד עתידי.
   secrets: [],
+  // המקורות — הטבלאות שהאפליקציה דוחפת (PUSH_TABLES), ולא רשימה שמוקלדת שנית: טבלה שנוספה לסנכרון נכנסת לגיבוי מעצמה.
   sources: function () {
-    // מפתח הגיבוי הוא שם הטבלה — והוא ברשימת-ההיתר של הפינוי במסד; מפתח שאינו שם אינו מתפנה לעולם.
-    return [
-      { name: 'hr_sessions',       order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_marks',          order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_students_rows',  order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_sleep_sessions', order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_sleep_marks',    order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_exams',          order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_exam_marks',     order: 'client_id', ts: 'updated_at' },
-      { name: 'hr_report_vals',    order: 'client_id', ts: 'updated_at' },
-      { name: KV_TABLE,            order: 'key',       ts: 'updated_at' }
-    ];
+    return PUSH_TABLES.map(function (t) { return { name: t, order: t === KV_TABLE ? 'key' : 'client_id', ts: 'updated_at' }; });
   }
 };
 
