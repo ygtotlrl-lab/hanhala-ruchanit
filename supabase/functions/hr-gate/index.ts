@@ -1,4 +1,5 @@
-// supabase/functions/hr-gate/index.ts — שער השרת של הנהלה רוחנית (Supabase Edge Function)
+// supabase/functions/hr-gate/index.ts — השער של הנהלה רוחנית (Supabase Edge Function): כל מה שהדפים הציבוריים והאפליקציה עושים מול השרת, חוץ מהכניסה (hr-auth).
+// cfg — הגדרה אחת מרשימה סגורה (הטפסים, האסיפה ואנשי הקשר); submit — שורת תגובה חדשה ל-hr_enroll או ל-hr_intake, הוספה בלבד, והתראה (sh-gate).
 // מה שהטפסים הציבוריים שולחים (טופס הרישום — hr_enroll; קבלה לישיבה — hr_intake) נקרא רק כאן, במפתח השירות, ואחרי כניסה מקוונת:
 // login מאמת שם וסיסמה מול hr_users (אותה גזירה כמו core/auth.js) ומחזיר אסימון חתום ל-30 יום, ו-renew מחליף אסימון תקף בחדש;
 // כל פעולה אחרת בודקת את האסימון, שהמשתמש עדיין פעיל, ואת ההרשאה שלו למודול — מההרשאות השמורות, ובלעדיהן מברירת המחדל.
@@ -31,6 +32,9 @@ const NEVER = 253402300799000;       // בלי תפוגה (סוף שנת 9999) �
 const MAX_BYTES = 15 * 1024 * 1024;
 const TABLES: Record<string, string> = { enroll: 'hr_enroll', intake: 'hr_intake', meeting: 'hr_meeting' };
 const DRAFT_FORMS = ['enroll', 'intake'];
+const CFG_KEYS = ['enroll_form', 'intake_form', 'meeting_cfg', 'contacts'];
+const FORM_NAME: Record<string, string> = { enroll: 'טופס רישום', intake: 'קבלה לישיבה' };
+const ROW_MAX = 200000;
 const DRAFT_MAX = 200000;
 // התחום ⟵ המודול שההרשאה שלו נבדקת; שלושת הטפסים — הרשאה אחת, forms
 const AREA_MOD: Record<string, string> = { enroll: 'forms', intake: 'forms', exams: 'exams', files: 'files' };
@@ -317,6 +321,45 @@ async function meeting(act: string, b: Record<string, any>) {
   return out({ mine: s3.mine, taken: s3.taken });
 }
 
+// ── הדפים הציבוריים: ההגדרה והתגובה ──
+const isObj = (v: unknown) => !!v && typeof v === 'object' && !Array.isArray(v);
+// ההתראה — שם התלמיד בלבד, והשיעור כשהוא כבר במצבה (לפי מספר הזהות); בלי שאר הפרטים
+async function notifyNew(form: string, data: Record<string, any>) {
+  const name = [data.first, data.last].map((x) => String(x || '').trim()).filter(Boolean).join(' ') || 'תלמיד';
+  let cls = '';
+  const id = String(data.idnum || '').trim().toUpperCase();
+  if (/^[0-9A-Z]{5,20}$/.test(id)) {
+    const r = await db.from('hr_students_rows').select('data').eq('deleted', false).eq('data->>idnum', id).limit(1);
+    const c = r.data && r.data[0] && r.data[0].data && r.data[0].data.cls;
+    if (c && CLS_NAME[c]) cls = CLS_NAME[c];
+  }
+  await fetch(URL_ + '/functions/v1/sh-gate', { method: 'POST',
+    headers: { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'send', app: APP_ID, mail: true, tag: form,
+      title: FORM_NAME[form] + ' — תגובה חדשה', body: name + (cls ? ' · ' + cls : '') }) }).catch(() => {});
+}
+// באותה צורה שהמסד מחזיר — מערך של { value } — כדי שהדף יקרא אותה כמו תמיד
+async function pubCfg(b: Record<string, any>) {
+  const key = String(b.key || '');
+  if (CFG_KEYS.indexOf(key) < 0) return out({ error: 'bad_request' }, 400);
+  const r = await db.from('hr_settings').select('value').eq('key', key).maybeSingle();
+  if (r.error) return out({ error: 'db' }, 500);
+  return out(r.data ? [{ value: r.data.value }] : []);
+}
+async function pubSubmit(b: Record<string, any>) {
+  const form = String(b.form || ''), table = DRAFT_FORMS.indexOf(form) >= 0 ? TABLES[form] : '', row = b.row;
+  if (!table || !isObj(row)) return out({ error: 'bad_request' }, 400);
+  const id = String(row.client_id || ''), year = Number(row.school_year);
+  if (!/^[0-9a-f]{16}$/.test(id) || !(year > 5700 && year < 6000) || !isObj(row.data) || !isObj(row.files || {})) return out({ error: 'bad_request' }, 400);
+  if (JSON.stringify(row).length > ROW_MAX) return out({ error: 'size' }, 413);
+  const r = await db.from(table).insert({ client_id: id, school_year: year, data: row.data, files: row.files || {}, updated_at: Date.now() });
+  if (r.error) { console.error('[hr-gate submit]', r.error); return out({ error: r.error.code === '23505' ? 'exists' : 'db' }, r.error.code === '23505' ? 409 : 500); }
+  // ברקע — ההורה אינו ממתין לשליחה
+  // @ts-ignore EdgeRuntime
+  try { EdgeRuntime.waitUntil(notifyNew(form, row.data)); } catch (_) { /* */ }
+  return out({ ok: true });
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS });
   const q = new URL(req.url).searchParams;
@@ -328,6 +371,8 @@ Deno.serve(async (req) => {
 
   if (act === 'draft_get' || act === 'draft_put' || act === 'draft_del') return drafts(act, b);
   if (act === 'meet_get' || act === 'meet_book') return meeting(act, b);
+  if (act === 'cfg') return pubCfg(b);
+  if (act === 'submit') return pubSubmit(b);
 
   if (act === 'login') {
     const r = await db.from(USERS).select('client_id,active,pass_salt,pass_fp').eq('username', String(b.username || '')).maybeSingle();
