@@ -13,7 +13,7 @@ android {
         applicationId "com.hanhala.ruchanit"
         minSdk 21
         targetSdk 34
-        versionCode 35
+        versionCode 36
         versionName "18.0"
     }
 
