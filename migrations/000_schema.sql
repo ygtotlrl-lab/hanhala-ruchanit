@@ -378,7 +378,8 @@ create table if not exists public.hr_exams (
   cls text,
   extra boolean not null default false,
   constraint hr_exams_pkey PRIMARY KEY (client_id),
-  constraint hr_exams_cls_check CHECK (((cls IS NULL) OR (cls = ANY (ARRAY['a'::text, 'b'::text, 'g'::text]))))
+  constraint hr_exams_cls_check CHECK (((cls IS NULL) OR (cls = ANY (ARRAY['a'::text, 'b'::text, 'g'::text])))),
+  constraint hr_exams_session_req CHECK ((deleted OR (session <> ''::text)))
 );
 
 -- קבלה לישיבה (app/intake.html): טבלת שליחה-בלבד כמו hr_enroll — anon מכניס ואינו קורא, מעדכן או מוחק; הקריאה והמעקב בשער השרת (hr-gate, mod:'intake').
@@ -457,7 +458,8 @@ create table if not exists public.hr_sessions (
   deleted boolean not null default false,
   updated_at bigint not null,
   deleted_at timestamp with time zone,
-  constraint hr_sessions_pkey PRIMARY KEY (client_id)
+  constraint hr_sessions_pkey PRIMARY KEY (client_id),
+  constraint hr_sessions_session_req CHECK ((deleted OR (session <> ''::text)))
 );
 
 create table if not exists public.hr_settings (
@@ -499,7 +501,8 @@ create table if not exists public.hr_sleep_sessions (
   deleted boolean not null default false,
   updated_at bigint not null,
   deleted_at timestamp with time zone,
-  constraint hr_sleep_sessions_pkey PRIMARY KEY (client_id)
+  constraint hr_sleep_sessions_pkey PRIMARY KEY (client_id),
+  constraint hr_sleep_sessions_session_req CHECK ((deleted OR (session <> ''::text)))
 );
 
 create table if not exists public.hr_students_rows (
@@ -509,7 +512,8 @@ create table if not exists public.hr_students_rows (
   data jsonb not null,
   deleted_at timestamp with time zone,
   deleted_by text,
-  constraint hr_students_rows_pkey PRIMARY KEY (client_id)
+  constraint hr_students_rows_pkey PRIMARY KEY (client_id),
+  constraint hr_students_rows_name_req CHECK ((deleted OR (COALESCE((data ->> 'name'::text), ''::text) <> ''::text)))
 );
 
 create table if not exists public.hr_users (
