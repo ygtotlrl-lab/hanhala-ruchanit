@@ -790,12 +790,7 @@ async function ensureFirstAdmin() {
       }
       return;
     }
-    if (!error && (!data || data.length === 0)) {
-      if (e) {
-        e.textContent = 'טבלת המשתמשים ריקה — יש ליצור משתמש ראשון ידנית ב-Supabase';
-        e.classList.add('users-empty');
-      }
-    }
+    // רשימה ריקה כאן אינה «טבלה ריקה»: לפני הכניסה אין סשן, והמסד סגור (RLS: hr_is_user()) — כל קריאה חוזרת ריקה.
   } catch(e) { console.error('[users] setup error:', e); }
 }
 
